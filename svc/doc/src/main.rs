@@ -2571,7 +2571,7 @@ async fn main() {
     }
 
     // 添加 300 秒（5分钟）超时以支持大文件上传
-    let timeout = TimeoutLayer::new(std::time::Duration::from_secs(300));
+    let timeout = TimeoutLayer::with_status_code(axum::http::StatusCode::REQUEST_TIMEOUT, std::time::Duration::from_secs(300));
 
     let app = Router::new()
         .route("/", get(home))

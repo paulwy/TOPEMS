@@ -15,18 +15,24 @@ import {
   FileCheck,
   Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ehsApi } from "../../api/ehs";
@@ -164,35 +170,37 @@ const EhsIncidentReportPage: React.FC = () => {
   };
 
   const getSeverityBadge = (severity: string) => {
-    const severityMap: Record<string, { color: string; label: string }> = {
-      fatal: { color: "bg-red-100 text-red-700", label: "致命" },
-      serious: { color: "bg-orange-100 text-orange-700", label: "严重" },
-      minor: { color: "bg-yellow-100 text-yellow-700", label: "轻微" },
-      near_miss: { color: "bg-blue-100 text-blue-700", label: "未遂" },
+    const severityMap: Record<string, { bg: string; color: string; label: string }> = {
+      fatal: { bg: '#fee2e2', color: '#dc2626', label: "致命" },
+      serious: { bg: '#fed7aa', color: '#ea580c', label: "严重" },
+      minor: { bg: '#fef9c3', color: '#ca8a04', label: "轻微" },
+      near_miss: { bg: '#dbeafe', color: '#2563eb', label: "未遂" },
     };
     const item = severityMap[severity] || {
-      color: "bg-gray-100 text-gray-700",
+      bg: '#f3f4f6',
+      color: '#4b5563',
       label: severity,
     };
-    return <Badge className={item.color}>{item.label}</Badge>;
+    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string; label: string }> = {
-      pending: { color: "bg-yellow-100 text-yellow-700", label: "待处理" },
-      待处理: { color: "bg-yellow-100 text-yellow-700", label: "待处理" },
-      investigating: { color: "bg-blue-100 text-blue-700", label: "调查中" },
-      调查中: { color: "bg-blue-100 text-blue-700", label: "调查中" },
-      resolved: { color: "bg-green-100 text-green-700", label: "已解决" },
-      已解决: { color: "bg-green-100 text-green-700", label: "已解决" },
-      closed: { color: "bg-gray-100 text-gray-700", label: "已关闭" },
-      已关闭: { color: "bg-gray-100 text-gray-700", label: "已关闭" },
+    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
+      pending: { bg: '#fef9c3', color: '#ca8a04', label: "待处理" },
+      待处理: { bg: '#fef9c3', color: '#ca8a04', label: "待处理" },
+      investigating: { bg: '#dbeafe', color: '#2563eb', label: "调查中" },
+      调查中: { bg: '#dbeafe', color: '#2563eb', label: "调查中" },
+      resolved: { bg: '#dcfce7', color: '#16a34a', label: "已解决" },
+      已解决: { bg: '#dcfce7', color: '#16a34a', label: "已解决" },
+      closed: { bg: '#f3f4f6', color: '#4b5563', label: "已关闭" },
+      已关闭: { bg: '#f3f4f6', color: '#4b5563', label: "已关闭" },
     };
     const item = statusMap[status] || {
-      color: "bg-gray-100 text-gray-700",
+      bg: '#f3f4f6',
+      color: '#4b5563',
       label: status,
     };
-    return <Badge className={item.color}>{item.label}</Badge>;
+    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
   };
 
   const getTypeLabel = (type: string) => {
@@ -218,9 +226,7 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "incident_type",
       header: "类型",
       cell: ({ row }) => (
-        <Badge className="bg-purple-100 text-purple-700">
-          {getTypeLabel(row.original.incident_type)}
-        </Badge>
+        <Chip label={getTypeLabel(row.original.incident_type)} size="small" sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }} />
       ),
     },
     {
@@ -248,24 +254,23 @@ const EhsIncidentReportPage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="ghost"
-            size="sm"
+            variant="text"
+            size="small"
             onClick={() => handleSelectIncident(row.original)}
+            startIcon={<Box component={Eye} sx={{ fontSize: 16 }} />}
           >
-            <Eye className="w-4 h-4 mr-1" />
             查看
           </Button>
           <Button
-            variant="ghost"
-            size="sm"
+            variant="text"
+            size="small"
             onClick={() => handleDeleteIncident(row.original.id)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
+            sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
+            startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
+          />
+        </Box>
       ),
     },
   ];
@@ -275,15 +280,19 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "action_type",
       header: "行动类型",
       cell: ({ row }) => (
-        <Badge className="bg-blue-100 text-blue-700">
-          {row.original.action_type === "investigation"
-            ? "调查"
-            : row.original.action_type === "correction"
-              ? "纠正"
-              : row.original.action_type === "prevention"
-                ? "预防"
-                : row.original.action_type}
-        </Badge>
+        <Chip 
+          size="small" 
+          sx={{ backgroundColor: '#dbeafe', color: '#2563eb' }}
+          label={
+            row.original.action_type === "investigation"
+              ? "调查"
+              : row.original.action_type === "correction"
+                ? "纠正"
+                : row.original.action_type === "prevention"
+                  ? "预防"
+                  : row.original.action_type
+          }
+        />
       ),
     },
     { accessorKey: "description", header: "行动描述" },
@@ -343,12 +352,11 @@ const EhsIncidentReportPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Button
-                variant="ghost"
-                size="icon"
+                variant="text"
                 onClick={() => navigate("/ehs")}
-                className="h-8 w-8"
+                sx={{ minWidth: 32, height: 32 }}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
               <div>
                 <h1 className="text-xl font-bold text-slate-900">事件报告</h1>
@@ -418,14 +426,14 @@ const EhsIncidentReportPage: React.FC = () => {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-orange-600" />
+          <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 2 }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component={FileText} sx={{ fontSize: 20, color: '#ea580c' }} />
               事件列表
-            </CardTitle>
-            <span className="text-sm text-slate-500">
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               共 {incidents.length} 条记录
-            </span>
+            </Typography>
           </CardHeader>
           <CardContent>
             {incidents.length > 0 ? (
@@ -439,12 +447,12 @@ const EhsIncidentReportPage: React.FC = () => {
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>暂无事件报告</p>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
+                  variant="outlined"
+                  size="small"
+                  sx={{ mt: 2 }}
                   onClick={() => setShowAddModal(true)}
+                  startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
                 >
-                  <Plus className="w-3 h-3 mr-1" />
                   上报第一个事件
                 </Button>
               </div>
@@ -453,76 +461,84 @@ const EhsIncidentReportPage: React.FC = () => {
         </Card>
       </main>
 
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>上报事件</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>事件标题 *</Label>
-              <Input
+      <Dialog open={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>上报事件</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>事件标题 *</Typography>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.title}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((prev) => ({ ...prev, title: e.target.value }))
                 }
                 placeholder="请输入事件标题"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>事件类型</Label>
-                <select
-                  value={formData.incident_type}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      incident_type: e.target.value as
-                        | "near_miss"
-                        | "accident"
-                        | "injury"
-                        | "environmental"
-                        | "equipment",
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="near_miss">未遂事件</option>
-                  <option value="accident">事故</option>
-                  <option value="injury">人员伤害</option>
-                  <option value="environmental">环境事件</option>
-                  <option value="equipment">设备故障</option>
-                </select>
-              </div>
-              <div>
-                <Label>严重程度</Label>
-                <select
-                  value={formData.severity}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      severity: e.target.value as
-                        | "near_miss"
-                        | "minor"
-                        | "serious"
-                        | "fatal",
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="near_miss">未遂</option>
-                  <option value="minor">轻微</option>
-                  <option value="serious">严重</option>
-                  <option value="fatal">致命</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>发生位置</Label>
-                <Input
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>事件类型</Typography>
+                <FormControl fullWidth size="small">
+                  <InputLabel>事件类型</InputLabel>
+                  <Select
+                    value={formData.incident_type}
+                    label="事件类型"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        incident_type: e.target.value as
+                          | "near_miss"
+                          | "accident"
+                          | "injury"
+                          | "environmental"
+                          | "equipment",
+                      }))
+                    }
+                  >
+                    <MenuItem value="near_miss">未遂事件</MenuItem>
+                    <MenuItem value="accident">事故</MenuItem>
+                    <MenuItem value="injury">人员伤害</MenuItem>
+                    <MenuItem value="environmental">环境事件</MenuItem>
+                    <MenuItem value="equipment">设备故障</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>严重程度</Typography>
+                <FormControl fullWidth size="small">
+                  <InputLabel>严重程度</InputLabel>
+                  <Select
+                    value={formData.severity}
+                    label="严重程度"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        severity: e.target.value as
+                          | "near_miss"
+                          | "minor"
+                          | "serious"
+                          | "fatal",
+                      }))
+                    }
+                  >
+                    <MenuItem value="near_miss">未遂</MenuItem>
+                    <MenuItem value="minor">轻微</MenuItem>
+                    <MenuItem value="serious">严重</MenuItem>
+                    <MenuItem value="fatal">致命</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>发生位置</Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.location}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({
                       ...prev,
                       location: e.target.value,
@@ -530,12 +546,14 @@ const EhsIncidentReportPage: React.FC = () => {
                   }
                   placeholder="请输入位置"
                 />
-              </div>
-              <div>
-                <Label>报告人</Label>
-                <Input
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>报告人</Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.reported_by}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({
                       ...prev,
                       reported_by: e.target.value,
@@ -543,138 +561,130 @@ const EhsIncidentReportPage: React.FC = () => {
                   }
                   placeholder="请输入报告人"
                 />
-              </div>
-            </div>
-            <div>
-              <Label>报告日期</Label>
-              <Input
+              </Box>
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>报告日期</Typography>
+              <TextField
                 type="date"
+                size="small"
+                fullWidth
                 value={formData.reported_at}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((prev) => ({
                     ...prev,
                     reported_at: e.target.value,
                   }))
                 }
               />
-            </div>
-            <div>
-              <Label>事件描述 *</Label>
-              <textarea
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>事件描述 *</Typography>
+              <TextField
+                multiline
+                rows={4}
+                fullWidth
                 value={formData.description}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setFormData((prev) => ({
                     ...prev,
                     description: e.target.value,
                   }))
                 }
                 placeholder="请详细描述事件经过..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-32"
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
-              取消
-            </Button>
-            <Button
-              onClick={handleCreateIncident}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              提交报告
-            </Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowAddModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleCreateIncident} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>提交报告</Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
-              {selectedIncident?.title}
-            </DialogTitle>
-          </DialogHeader>
+      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box component={AlertCircle} sx={{ fontSize: 20, color: '#ea580c' }} />
+          {selectedIncident?.title}
+        </DialogTitle>
+        <DialogContent>
           {selectedIncident && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-4 gap-4">
-                <div className="p-3 bg-orange-50 rounded-lg">
-                  <p className="text-sm text-orange-600">事件类型</p>
-                  <p className="font-medium text-orange-900 mt-1">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
+                <Box sx={{ p: 2, bgcolor: '#fff7ed', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#c2410c' }}>事件类型</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c2d12', mt: 0.5 }}>
                     {getTypeLabel(selectedIncident.incident_type)}
-                  </p>
-                </div>
-                <div className="p-3 bg-red-50 rounded-lg">
-                  <p className="text-sm text-red-600">严重程度</p>
-                  <p className="font-medium text-red-900 mt-1">
-                    {getSeverityBadge(selectedIncident.severity)}
-                  </p>
-                </div>
-                <div className="p-3 bg-yellow-50 rounded-lg">
-                  <p className="text-sm text-yellow-600">状态</p>
-                  <p className="font-medium text-yellow-900 mt-1">
-                    {getStatusBadge(selectedIncident.status)}
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-600">报告人</p>
-                  <p className="font-medium text-blue-900 mt-1 flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    {selectedIncident.reported_by || "-"}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#dc2626' }}>严重程度</Typography>
+                  <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedIncident.severity)}</Box>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: '#fefce8', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#ca8a04' }}>状态</Typography>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedIncident.status)}</Box>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: '#eff6ff', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#2563eb' }}>报告人</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                    <Box component={Users} sx={{ fontSize: 16 }} />
+                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#1e40af' }}>
+                      {selectedIncident.reported_by || "-"}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">发生位置</p>
-                  <p className="text-slate-900 mt-1 flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {selectedIncident.location || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">报告时间</p>
-                  <p className="text-slate-900 mt-1 flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {selectedIncident.reported_at
-                      ? new Date(selectedIncident.reported_at).toLocaleString(
-                          "zh-CN",
-                        )
-                      : "-"}
-                  </p>
-                </div>
-              </div>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>发生位置</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                    <Box component={MapPin} sx={{ fontSize: 16 }} />
+                    <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                      {selectedIncident.location || "-"}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>报告时间</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                    <Box component={Calendar} sx={{ fontSize: 16 }} />
+                    <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                      {selectedIncident.reported_at
+                        ? new Date(selectedIncident.reported_at).toLocaleString("zh-CN")
+                        : "-"}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
 
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">事件描述</p>
-                <p className="text-slate-900 mt-1 whitespace-pre-wrap">
+              <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>事件描述</Typography>
+                <Typography variant="body1" sx={{ mt: 1, whiteSpace: 'pre-wrap', color: 'text.primary' }}>
                   {selectedIncident.description || "暂无描述"}
-                </p>
-              </div>
+                </Typography>
+              </Box>
 
-              <div className="border-t border-slate-200 pt-4">
-                <h3 className="font-medium text-slate-900 mb-4 flex items-center gap-2">
-                  <FileCheck className="w-5 h-5" />
-                  处理措施 ({actions.length})
-                </h3>
+              <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Box component={FileCheck} sx={{ fontSize: 20, color: '#ea580c' }} />
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    处理措施 ({actions.length})
+                  </Typography>
+                </Box>
                 <DataTable
                   columns={actionColumns}
                   data={actions}
                   enablePagination={false}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowDetailModal(false)}
-            >
-              关闭
-            </Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowDetailModal(false)}>关闭</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

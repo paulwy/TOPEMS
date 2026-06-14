@@ -1,20 +1,11 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+  MenuItem,
+} from "@mui/material";
 import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -226,29 +217,28 @@ const CRMSalesForecastPage: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             销售预测
-          </CardTitle>
-          <CardDescription>基于历史数据预测未来销售趋势</CardDescription>
+          </Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>基于历史数据预测未来销售趋势</Typography>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">预测周期:</span>
-              <Select
-                value={String(forecastMonths)}
-                onValueChange={(value) => setForecastMonths(Number(value))}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3个月</SelectItem>
-                  <SelectItem value="6">6个月</SelectItem>
-                  <SelectItem value="12">12个月</SelectItem>
-                </SelectContent>
-              </Select>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>预测周期:</span>
+              <FormControl size="small" sx={{ width: 128 }}>
+                <InputLabel>周期</InputLabel>
+                <Select
+                  value={forecastMonths}
+                  label="周期"
+                  onChange={(e) => setForecastMonths(Number(e.target.value))}
+                >
+                  <MenuItem value={3}>3个月</MenuItem>
+                  <MenuItem value={6}>6个月</MenuItem>
+                  <MenuItem value={12}>12个月</MenuItem>
+                </Select>
+              </FormControl>
               <Button onClick={loadForecastData}>
                 <RefreshIcon className="w-4 h-4 mr-2" />
                 刷新预测
@@ -312,13 +302,13 @@ const CRMSalesForecastPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5" />
                   历史销售趋势
-                </CardTitle>
-                <CardDescription>
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
                   过去12个月的实际收入与目标对比
-                </CardDescription>
+                </Typography>
               </CardHeader>
               <CardContent>
                 <div className="h-72">
@@ -349,13 +339,13 @@ const CRMSalesForecastPage: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5" />
                   销售预测
-                </CardTitle>
-                <CardDescription>
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
                   未来{forecastMonths}个月的销售预测(95%置信区间)
-                </CardDescription>
+                </Typography>
               </CardHeader>
               <CardContent>
                 <div className="h-72">
@@ -406,7 +396,7 @@ const CRMSalesForecastPage: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>预测详情</CardTitle>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>预测详情</Typography>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -437,7 +427,7 @@ const CRMSalesForecastPage: React.FC = () => {
                           {item.upper.toLocaleString()}
                         </td>
                         <td className="text-center py-3 px-4">
-                          <Badge variant="secondary">95%</Badge>
+                          <Chip  size="small" variant="outlined" label="95%" />
                         </td>
                       </tr>
                     ))}

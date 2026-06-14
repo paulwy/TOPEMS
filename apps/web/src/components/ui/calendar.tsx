@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Button, Box, Typography } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
@@ -15,9 +16,6 @@ import {
   addDays,
 } from "date-fns";
 import { zhCN } from "date-fns/locale";
-
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 export type CalendarProps = {
   mode?: "single" | "range" | "multiple";
@@ -90,77 +88,85 @@ function Calendar({
       }
       newSelected = array;
     } else {
-      // range mode - for simplicity we only handle single here
       newSelected = date;
     }
 
     onSelect?.(newSelected);
   };
 
+  const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
+
   return (
-    <div className={cn("p-3", className)}>
-      <div className="flex items-center justify-between mb-4">
+    <Box sx={{ p: 2 }} className={className}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
         <Button
-          variant="outline"
-          className="h-7 w-7 bg-transparent p-0"
+          variant="outlined"
+          size="small"
           onClick={prevMonth}
+          sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
         >
-          <ChevronLeft className="h-4 w-4" />
-          <span className="sr-only">上月</span>
+          <ChevronLeft style={{ width: 16, height: 16 }} />
         </Button>
 
-        <div className="text-sm font-medium">
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
           {format(month, "yyyy年 MMMM", { locale: zhCN })}
-        </div>
+        </Typography>
 
         <Button
-          variant="outline"
-          className="h-7 w-7 bg-transparent p-0"
+          variant="outlined"
+          size="small"
           onClick={nextMonth}
+          sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
         >
-          <ChevronRight className="h-4 w-4" />
-          <span className="sr-only">下月</span>
+          <ChevronRight style={{ width: 16, height: 16 }} />
         </Button>
-      </div>
+      </Box>
 
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {["一", "二", "三", "四", "五", "六", "日"].map((day, i) => (
-          <div
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.5, mb: 1 }}>
+        {weekDays.map((day, i) => (
+          <Box
             key={i}
-            className="text-center text-xs text-muted-foreground py-2"
+            sx={{
+              textAlign: "center",
+              fontSize: 12,
+              color: "text.secondary",
+              py: 1,
+            }}
           >
             {day}
-          </div>
+          </Box>
         ))}
-      </div>
+      </Box>
 
-      <div className="grid grid-cols-7 gap-1">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.5 }}>
         {daysInMonth.map((date, dateIndex) => {
           const isOutsideMonth = !isSameMonth(date, month);
-          const selected = isSelected(date);
-          const disabled = isDisabled(date);
+          const selectedDay = isSelected(date);
+          const disabledDay = isDisabled(date);
 
           return (
             <Button
               key={dateIndex}
-              variant="ghost"
-              className={cn(
-                "h-9 w-9 p-0 font-normal",
-                isOutsideMonth && "text-muted-foreground opacity-50",
-                selected &&
-                  "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-                disabled &&
-                  "text-muted-foreground opacity-50 pointer-events-none",
-              )}
-              disabled={disabled}
+              variant={selectedDay ? "contained" : "text"}
+              size="small"
               onClick={() => handleDayClick(date)}
+              disabled={disabledDay}
+              sx={{
+                minWidth: 32,
+                width: 32,
+                height: 32,
+                p: 0,
+                fontWeight: 400,
+                opacity: isOutsideMonth ? 0.5 : disabledDay ? 0.5 : 1,
+                color: selectedDay ? undefined : "text.primary",
+              }}
             >
               {format(date, "d")}
             </Button>
           );
         })}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 

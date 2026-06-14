@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Package,
@@ -17,34 +18,21 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  Button as MuiButton,
+  TextField,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
+  MenuItem,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
+  Checkbox,
+} from "@mui/material";
+import { ModeToggle } from "@/components/ModeToggle";
 
 interface OfficeSuppliesManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -226,14 +214,11 @@ const OfficeSuppliesManagementPage: React.FC<
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<
-      string,
-      "default" | "secondary" | "destructive" | "outline"
-    > = {
-      active: "default",
-      inactive: "secondary",
-      low_stock: "outline",
-      out_of_stock: "destructive",
+    const colors: Record<string, "success" | "info" | "warning" | "error"> = {
+      active: "success",
+      inactive: "info",
+      low_stock: "warning",
+      out_of_stock: "error",
     };
     const labels: Record<string, string> = {
       active: "正常",
@@ -242,9 +227,12 @@ const OfficeSuppliesManagementPage: React.FC<
       out_of_stock: "缺货",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+        variant="outlined"
+      />
     );
   };
 
@@ -309,39 +297,29 @@ const OfficeSuppliesManagementPage: React.FC<
           const supply = row.original;
           return (
             <div className="flex items-center justify-end space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedSupply(supply);
-                        setShowEditModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="编辑">
+                <MuiButton
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedSupply(supply);
+                    setShowEditModal(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </MuiButton>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => handleDeleteSupply(supply.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>删除</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="删除">
+                <MuiButton
+                  variant="text"
+                  size="small"
+                  color="error"
+                  onClick={() => handleDeleteSupply(supply.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </MuiButton>
+              </Tooltip>
             </div>
           );
         },
@@ -356,9 +334,9 @@ const OfficeSuppliesManagementPage: React.FC<
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <MuiButton variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
-              </Button>
+              </MuiButton>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
                   <Package className="w-7 h-7 mr-3 text-green-600" />
@@ -371,10 +349,10 @@ const OfficeSuppliesManagementPage: React.FC<
             </div>
             <div className="flex items-center space-x-2">
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
+              <MuiButton variant="contained" onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-5 h-5 mr-2" />
                 新增物品
-              </Button>
+              </MuiButton>
             </div>
           </div>
         </div>
@@ -382,7 +360,7 @@ const OfficeSuppliesManagementPage: React.FC<
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
               <div className="p-8 text-center">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-green-600 border-t-transparent" />
@@ -394,9 +372,9 @@ const OfficeSuppliesManagementPage: React.FC<
               <div className="p-8 text-center">
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
                 <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadData}>
+                <MuiButton className="mt-4" onClick={loadData}>
                   重试
-                </Button>
+                </MuiButton>
               </div>
             ) : (
               <>
@@ -406,7 +384,7 @@ const OfficeSuppliesManagementPage: React.FC<
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           checked={selectedIds.length === supplies.length}
-                          onCheckedChange={(checked) => {
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
                             if (checked) {
                               setSelectedIds(supplies.map((s) => s.id));
                             } else {
@@ -420,14 +398,15 @@ const OfficeSuppliesManagementPage: React.FC<
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <MuiButton
+                        variant="outlined"
+                        size="small"
+                        color="error"
                         onClick={handleBatchDelete}
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
                         批量删除
-                      </Button>
+                      </MuiButton>
                     </div>
                   </div>
                 )}
@@ -477,274 +456,237 @@ const OfficeSuppliesManagementPage: React.FC<
         </Card>
       </div>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>新增办公用品</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>新增办公用品</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           <form onSubmit={handleCreateSupply}>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">物品名称 *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  required
-                  value={newSupply.name || ""}
+              <TextField
+                label="物品名称 *"
+                value={newSupply.name || ""}
+                onChange={(e) =>
+                  setNewSupply({ ...newSupply, name: e.target.value })
+                }
+                fullWidth
+                required
+              />
+
+              <div className="grid grid-cols-3 gap-4">
+                <TextField
+                  label="类别"
+                  value={newSupply.category || ""}
                   onChange={(e) =>
-                    setNewSupply({ ...newSupply, name: e.target.value })
+                    setNewSupply({ ...newSupply, category: e.target.value })
                   }
-                  placeholder="请输入物品名称"
+                  fullWidth
+                />
+                <TextField
+                  label="单位"
+                  value={newSupply.unit || ""}
+                  onChange={(e) =>
+                    setNewSupply({ ...newSupply, unit: e.target.value })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="数量 *"
+                  type="number"
+                  value={newSupply.quantity || ""}
+                  onChange={(e) =>
+                    setNewSupply({
+                      ...newSupply,
+                      quantity: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                  required
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">类别</Label>
-                  <Input
-                    id="category"
-                    type="text"
-                    value={newSupply.category || ""}
-                    onChange={(e) =>
-                      setNewSupply({ ...newSupply, category: e.target.value })
-                    }
-                    placeholder="如：文具、耗材等"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit">单位</Label>
-                  <Input
-                    id="unit"
-                    type="text"
-                    value={newSupply.unit || ""}
-                    onChange={(e) =>
-                      setNewSupply({ ...newSupply, unit: e.target.value })
-                    }
-                    placeholder="如：个、盒等"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">数量 *</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    required
-                    value={newSupply.quantity || ""}
-                    onChange={(e) =>
-                      setNewSupply({
-                        ...newSupply,
-                        quantity: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入数量"
-                  />
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="price">单价</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newSupply.price || ""}
-                    onChange={(e) =>
-                      setNewSupply({
-                        ...newSupply,
-                        price: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入单价"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">存放位置</Label>
-                  <Input
-                    id="location"
-                    type="text"
-                    value={newSupply.location || ""}
-                    onChange={(e) =>
-                      setNewSupply({ ...newSupply, location: e.target.value })
-                    }
-                    placeholder="请输入存放位置"
-                  />
-                </div>
+                <TextField
+                  label="单价"
+                  type="number"
+                  slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                  value={newSupply.price || ""}
+                  onChange={(e) =>
+                    setNewSupply({
+                      ...newSupply,
+                      price: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="存放位置"
+                  value={newSupply.location || ""}
+                  onChange={(e) =>
+                    setNewSupply({ ...newSupply, location: e.target.value })
+                  }
+                  fullWidth
+                />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">状态</Label>
+              <FormControl fullWidth>
+                <InputLabel>状态</InputLabel>
                 <Select
                   value={newSupply.status || "active"}
-                  onValueChange={(value) =>
-                    setNewSupply({ ...newSupply, status: value })
+                  label="状态"
+                  onChange={(e) =>
+                    setNewSupply({ ...newSupply, status: e.target.value })
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">正常</SelectItem>
-                    <SelectItem value="inactive">停用</SelectItem>
-                    <SelectItem value="low_stock">库存不足</SelectItem>
-                    <SelectItem value="out_of_stock">缺货</SelectItem>
-                  </SelectContent>
+                  <MenuItem value="active">正常</MenuItem>
+                  <MenuItem value="inactive">停用</MenuItem>
+                  <MenuItem value="low_stock">库存不足</MenuItem>
+                  <MenuItem value="out_of_stock">缺货</MenuItem>
                 </Select>
-              </div>
+              </FormControl>
             </div>
 
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="secondary"
+            <div className="mt-6 flex justify-end space-x-2">
+              <MuiButton
+                variant="outlined"
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
-              </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
+              </MuiButton>
+              <MuiButton variant="contained" type="submit">
+                创建
+              </MuiButton>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>编辑办公用品</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>编辑办公用品</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           {selectedSupply && (
             <form onSubmit={handleEditSupply}>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit_name">物品名称 *</Label>
-                  <Input
-                    id="edit_name"
-                    type="text"
-                    required
-                    value={selectedSupply.name}
+                <TextField
+                  label="物品名称 *"
+                  value={selectedSupply.name}
+                  onChange={(e) =>
+                    setSelectedSupply({
+                      ...selectedSupply,
+                      name: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  required
+                />
+
+                <div className="grid grid-cols-3 gap-4">
+                  <TextField
+                    label="类别"
+                    value={selectedSupply.category || ""}
                     onChange={(e) =>
                       setSelectedSupply({
                         ...selectedSupply,
-                        name: e.target.value,
+                        category: e.target.value,
                       })
                     }
+                    fullWidth
+                  />
+                  <TextField
+                    label="单位"
+                    value={selectedSupply.unit || ""}
+                    onChange={(e) =>
+                      setSelectedSupply({
+                        ...selectedSupply,
+                        unit: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="数量 *"
+                    type="number"
+                    value={selectedSupply.quantity}
+                    onChange={(e) =>
+                      setSelectedSupply({
+                        ...selectedSupply,
+                        quantity: Number(e.target.value),
+                      })
+                    }
+                    fullWidth
+                    required
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_category">类别</Label>
-                    <Input
-                      id="edit_category"
-                      type="text"
-                      value={selectedSupply.category || ""}
-                      onChange={(e) =>
-                        setSelectedSupply({
-                          ...selectedSupply,
-                          category: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_unit">单位</Label>
-                    <Input
-                      id="edit_unit"
-                      type="text"
-                      value={selectedSupply.unit || ""}
-                      onChange={(e) =>
-                        setSelectedSupply({
-                          ...selectedSupply,
-                          unit: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_quantity">数量 *</Label>
-                    <Input
-                      id="edit_quantity"
-                      type="number"
-                      required
-                      value={selectedSupply.quantity}
-                      onChange={(e) =>
-                        setSelectedSupply({
-                          ...selectedSupply,
-                          quantity: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_price">单价</Label>
-                    <Input
-                      id="edit_price"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={selectedSupply.price || ""}
-                      onChange={(e) =>
-                        setSelectedSupply({
-                          ...selectedSupply,
-                          price: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_location">存放位置</Label>
-                    <Input
-                      id="edit_location"
-                      type="text"
-                      value={selectedSupply.location || ""}
-                      onChange={(e) =>
-                        setSelectedSupply({
-                          ...selectedSupply,
-                          location: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
+                  <TextField
+                    label="单价"
+                    type="number"
+                    slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                    value={selectedSupply.price || ""}
+                    onChange={(e) =>
+                      setSelectedSupply({
+                        ...selectedSupply,
+                        price: Number(e.target.value),
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="存放位置"
+                    value={selectedSupply.location || ""}
+                    onChange={(e) =>
+                      setSelectedSupply({
+                        ...selectedSupply,
+                        location: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit_status">状态</Label>
+                <FormControl fullWidth>
+                  <InputLabel>状态</InputLabel>
                   <Select
                     value={selectedSupply.status}
-                    onValueChange={(value) =>
-                      setSelectedSupply({ ...selectedSupply, status: value })
+                    label="状态"
+                    onChange={(e) =>
+                      setSelectedSupply({
+                        ...selectedSupply,
+                        status: e.target.value,
+                      })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">正常</SelectItem>
-                      <SelectItem value="inactive">停用</SelectItem>
-                      <SelectItem value="low_stock">库存不足</SelectItem>
-                      <SelectItem value="out_of_stock">缺货</SelectItem>
-                    </SelectContent>
+                    <MenuItem value="active">正常</MenuItem>
+                    <MenuItem value="inactive">停用</MenuItem>
+                    <MenuItem value="low_stock">库存不足</MenuItem>
+                    <MenuItem value="out_of_stock">缺货</MenuItem>
                   </Select>
-                </div>
+                </FormControl>
               </div>
 
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="secondary"
+              <div className="mt-6 flex justify-end space-x-2">
+                <MuiButton
+                  variant="outlined"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedSupply(null);
                   }}
                 >
                   取消
-                </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
+                </MuiButton>
+                <MuiButton variant="contained" type="submit">
+                  保存
+                </MuiButton>
+              </div>
             </form>
           )}
         </DialogContent>

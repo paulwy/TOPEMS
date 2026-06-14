@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  TextField,
+  Menu,
+  MenuItem,
+  Tabs,
+  Tab,
+  Box,
+  Typography,
+} from "@mui/material";
+import {
   Bot,
   Send,
   MessageSquare,
@@ -39,17 +52,7 @@ import {
   AIAnalyzer,
 } from "../components/ai";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Message {
   id: string;
@@ -137,6 +140,7 @@ const AIPage: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false);
   const [showAnalyzer, setShowAnalyzer] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 从本地存储加载对话历史
@@ -617,49 +621,49 @@ const AIPage: React.FC = () => {
               AI 智能助手
             </h2>
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <ModeToggle />
             </div>
           </div>
           <Tabs
-            defaultValue={activeTab}
-            onValueChange={(v) =>
+            value={activeTab}
+            onChange={(_, v) =>
               setActiveTab(v as "chat" | "documents" | "analysis" | "manage")
             }
-            className="w-full mb-4"
+            sx={{ width: "100%", mb: 2 }}
           >
-            <TabsList className="w-full grid grid-cols-4">
-              <TabsTrigger
+            <Box sx={{ display: "flex", gridTemplateColumns: "repeat(4, 1fr)", width: "100%" }}>
+              <Tab
                 value="chat"
-                className="flex items-center gap-1 text-xs"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>AI 聊天</span>
-              </TabsTrigger>
-              <TabsTrigger
+                icon={<MessageSquare className="w-4 h-4" />}
+                iconPosition="start"
+                label="AI 聊天"
+                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              />
+              <Tab
                 value="documents"
-                className="flex items-center gap-1 text-xs"
-              >
-                <Wand2 className="w-4 h-4" />
-                <span>文档生成</span>
-              </TabsTrigger>
-              <TabsTrigger
+                icon={<Wand2 className="w-4 h-4" />}
+                iconPosition="start"
+                label="文档生成"
+                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              />
+              <Tab
                 value="analysis"
-                className="flex items-center gap-1 text-xs"
-              >
-                <BarChart2 className="w-4 h-4" />
-                <span>文本分析</span>
-              </TabsTrigger>
-              <TabsTrigger
+                icon={<BarChart2 className="w-4 h-4" />}
+                iconPosition="start"
+                label="文本分析"
+                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              />
+              <Tab
                 value="manage"
-                className="flex items-center gap-1 text-xs"
-              >
-                <FileStack className="w-4 h-4" />
-                <span>文档管理</span>
-              </TabsTrigger>
-            </TabsList>
+                icon={<FileStack className="w-4 h-4" />}
+                iconPosition="start"
+                label="文档管理"
+                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+              />
+            </Box>
           </Tabs>
           {activeTab === "chat" && (
             <Button onClick={handleNewConversation} className="w-full">
@@ -671,37 +675,43 @@ const AIPage: React.FC = () => {
 
         {activeTab === "chat" && (
           <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start">
+            <Button
+              variant="text"
+              onClick={(e) => setMenuAnchor(e.currentTarget)}
+              sx={{ width: "100%", justifyContent: "flex-start" }}
+            >
+              <div className="flex items-center space-x-2">
+                {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.icon}
+                <span className="text-sm">
+                  {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
+                </span>
+              </div>
+            </Button>
+            <Menu
+              anchorEl={menuAnchor}
+              open={Boolean(menuAnchor)}
+              onClose={() => setMenuAnchor(null)}
+            >
+              {ASSISTANT_ROLES.map((role) => (
+                <MenuItem
+                  key={role.id}
+                  onClick={() => {
+                    handleRoleChange(role.id);
+                    setMenuAnchor(null);
+                  }}
+                >
                   <div className="flex items-center space-x-2">
-                    {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.icon}
-                    <span className="text-sm">
-                      {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
-                    </span>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                {ASSISTANT_ROLES.map((role) => (
-                  <DropdownMenuItem
-                    key={role.id}
-                    onClick={() => handleRoleChange(role.id)}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      {role.icon}
-                      <div>
-                        <p className="text-sm font-medium">{role.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {role.description}
-                        </p>
-                      </div>
+                    {role.icon}
+                    <div>
+                      <p className="text-sm font-medium">{role.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {role.description}
+                      </p>
                     </div>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  </div>
+                </MenuItem>
+              ))}
+            </Menu>
           </div>
         )}
 
@@ -746,8 +756,8 @@ const AIPage: React.FC = () => {
                         </div>
                       </div>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="text"
+                        size="small"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConversation(conv.id);
@@ -802,7 +812,7 @@ const AIPage: React.FC = () => {
           <div className="space-y-2">
             {activeTab === "chat" && (
               <Button
-                variant="ghost"
+                variant="text"
                 onClick={handleToggleDocuments}
                 className="w-full justify-start"
               >
@@ -811,7 +821,7 @@ const AIPage: React.FC = () => {
               </Button>
             )}
             <Button
-              variant="ghost"
+              variant="text"
               onClick={handleSettings}
               className="w-full justify-start"
             >
@@ -857,23 +867,21 @@ const AIPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                      placeholder="搜索对话..."
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSearch}
-                      className="absolute right-2 top-1/2 -translate-y-1/2"
-                    >
-                      <Search className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <TextField
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    placeholder="搜索对话..."
+                    size="small"
+                    sx={{ width: 200 }}
+                  />
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={handleSearch}
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </header>
@@ -950,21 +958,21 @@ const AIPage: React.FC = () => {
             <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
               <div className="max-w-4xl mx-auto">
                 <div className="flex items-center space-x-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="text" size="small">
                     <Plus className="w-5 h-5" />
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="text" size="small">
                     <FileText className="w-5 h-5" />
                   </Button>
-                  <Input
-                    type="text"
+                  <TextField
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    onKeyPress={(e) =>
+                    onKeyDown={(e) =>
                       e.key === "Enter" && !e.shiftKey && handleSend()
                     }
                     placeholder="输入你的问题..."
-                    className="flex-1 bg-transparent border-none"
+                    sx={{ flex: 1, "& .MuiInputBase-input": { background: "transparent", border: "none" } }}
+                    size="small"
                   />
                   <Button
                     onClick={handleSend}
@@ -996,7 +1004,7 @@ const AIPage: React.FC = () => {
                       <Wand2 className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">AI 文档生成</CardTitle>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-xl">AI 文档生成</Typography>
                       <p className="text-sm text-gray-500">
                         选择模板，填写信息，AI 帮你生成专业文档
                       </p>
@@ -1027,7 +1035,7 @@ const AIPage: React.FC = () => {
                     <BarChart2 className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">AI 文本分析</CardTitle>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-xl">AI 文本分析</Typography>
                     <p className="text-sm text-gray-500">
                       对文本进行情感分析、分类、实体提取和关键词提取
                     </p>

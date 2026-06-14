@@ -59,7 +59,7 @@ const PerformanceMonitor: React.FC = () => {
     "idle" | "success" | "error"
   >("idle");
 
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const lastTimeRef = useRef<number>(performance.now());
   const frameCountRef = useRef<number>(0);
   const lastReportTimeRef = useRef<number>(0);

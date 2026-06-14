@@ -12,25 +12,24 @@ import {
   Trash2,
   Eye,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "react-toastify";
@@ -181,24 +180,22 @@ const QmsQualityControlPage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const colors = {
-      high: "bg-red-100 text-red-700",
-      medium: "bg-yellow-100 text-yellow-700",
-      low: "bg-green-100 text-green-700",
+      high: { bg: '#fee2e2', color: '#dc2626' },
+      medium: { bg: '#fef9c3', color: '#ca8a04' },
+      low: { bg: '#dcfce7', color: '#16a34a' },
     };
     const labels = { high: "严重", medium: "中等", low: "轻微" };
     return (
-      <Badge className={colors[severity as keyof typeof colors]}>
-        {labels[severity as keyof typeof labels]}
-      </Badge>
+      <Chip label={labels[severity as keyof typeof labels]} size="small" sx={{ backgroundColor: colors[severity as keyof typeof colors].bg, color: colors[severity as keyof typeof colors].color }} />
     );
   };
 
   const getStatusBadge = (status: string, type: string) => {
     if (type === "audit") {
       const colors = {
-        scheduled: "bg-blue-100 text-blue-700",
-        in_progress: "bg-yellow-100 text-yellow-700",
-        completed: "bg-green-100 text-green-700",
+        scheduled: { bg: '#dbeafe', color: '#2563eb' },
+        in_progress: { bg: '#fef9c3', color: '#ca8a04' },
+        completed: { bg: '#dcfce7', color: '#16a34a' },
       };
       const labels = {
         scheduled: "已计划",
@@ -206,21 +203,17 @@ const QmsQualityControlPage: React.FC = () => {
         completed: "已完成",
       };
       return (
-        <Badge className={colors[status as keyof typeof colors]}>
-          {labels[status as keyof typeof labels]}
-        </Badge>
+        <Chip label={labels[status as keyof typeof labels]} size="small" sx={{ backgroundColor: colors[status as keyof typeof colors].bg, color: colors[status as keyof typeof colors].color }} />
       );
     }
     const colors = {
-      open: "bg-red-100 text-red-700",
-      in_progress: "bg-yellow-100 text-yellow-700",
-      closed: "bg-green-100 text-green-700",
+      open: { bg: '#fee2e2', color: '#dc2626' },
+      in_progress: { bg: '#fef9c3', color: '#ca8a04' },
+      closed: { bg: '#dcfce7', color: '#16a34a' },
     };
     const labels = { open: "待处理", in_progress: "处理中", closed: "已关闭" };
     return (
-      <Badge className={colors[status as keyof typeof colors]}>
-        {labels[status as keyof typeof labels]}
-      </Badge>
+      <Chip label={labels[status as keyof typeof labels]} size="small" sx={{ backgroundColor: colors[status as keyof typeof colors].bg, color: colors[status as keyof typeof colors].color }} />
     );
   };
 
@@ -244,29 +237,27 @@ const QmsQualityControlPage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="ghost"
-            size="icon"
+            size="small"
             onClick={() => viewItem(row.original)}
           >
             <Eye className="w-4 h-4" />
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
+            size="small"
             onClick={() => editItem(row.original)}
           >
             <Edit className="w-4 h-4" />
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
+            size="small"
             onClick={() => deleteItem(row.original.id)}
+            sx={{ color: 'error.main' }}
           >
-            <Trash2 className="w-4 h-4 text-red-500" />
+            <Trash2 className="w-4 h-4" />
           </Button>
-        </div>
+        </Box>
       ),
     },
   ];
@@ -287,22 +278,20 @@ const QmsQualityControlPage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="ghost"
-            size="icon"
+            size="small"
             onClick={() => viewItem(row.original)}
           >
             <Eye className="w-4 h-4" />
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
+            size="small"
             onClick={() => editItem(row.original)}
           >
             <Edit className="w-4 h-4" />
           </Button>
-        </div>
+        </Box>
       ),
     },
   ];
@@ -540,17 +529,18 @@ const QmsQualityControlPage: React.FC = () => {
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px] relative">
+              <Box className="flex-1 min-w-[200px]" sx={{ position: 'relative' }}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
+                <TextField
+                  size="small"
+                  fullWidth
                   placeholder="搜索编号或标题..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  sx={{ pl: 5 }}
                 />
-              </div>
-              <Button onClick={() => setShowModal(true)}>
-                <Plus className="w-4 h-4 mr-2" />
+              </Box>
+              <Button variant="contained" onClick={() => setShowModal(true)} startIcon={<Plus className="w-4 h-4" />}>
                 {activeTab === "nonconformance" ? "新增不合格品" : "新增审核"}
               </Button>
             </div>
@@ -576,18 +566,18 @@ const QmsQualityControlPage: React.FC = () => {
         </Card>
       </main>
 
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditing ? "编辑不合格品" : "新增不合格品"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>编号</Label>
-                <Input
+      <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>
+          {isEditing ? "编辑不合格品" : "新增不合格品"}
+        </DialogTitle>
+        <DialogContent>
+          <Box className="space-y-4" sx={{ mt: 1 }}>
+            <Box className="grid grid-cols-2 gap-4">
+              <Box className="space-y-2">
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>编号</Box>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.code}
                   onChange={(e) => {
                     setFormData((prev) => ({ ...prev, code: e.target.value }));
@@ -595,39 +585,38 @@ const QmsQualityControlPage: React.FC = () => {
                       setErrors((prev) => ({ ...prev, code: "" }));
                   }}
                   placeholder="NC-XXXX-XXX"
-                  className={
-                    errors.code ? "border-red-300 focus:ring-red-500" : ""
-                  }
+                  error={!!errors.code}
                 />
                 {errors.code && (
                   <p className="text-sm text-red-500">{errors.code}</p>
                 )}
-              </div>
-              <div className="space-y-2">
-                <Label>严重程度</Label>
-                <Select
-                  value={formData.severity}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      severity: value as "high" | "medium" | "low",
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">严重</SelectItem>
-                    <SelectItem value="medium">中等</SelectItem>
-                    <SelectItem value="low">轻微</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>问题标题 *</Label>
-              <Input
+              </Box>
+              <Box className="space-y-2">
+                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>严重程度</Box>
+                <FormControl fullWidth size="small">
+                  <InputLabel>请选择</InputLabel>
+                  <Select
+                    value={formData.severity}
+                    label="请选择"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        severity: e.target.value as "high" | "medium" | "low",
+                      }))
+                    }
+                  >
+                    <MenuItem value="high">严重</MenuItem>
+                    <MenuItem value="medium">中等</MenuItem>
+                    <MenuItem value="low">轻微</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+            <Box className="space-y-2">
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>问题标题 *</Box>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.title}
                 onChange={(e) => {
                   setFormData((prev) => ({ ...prev, title: e.target.value }));
@@ -635,17 +624,17 @@ const QmsQualityControlPage: React.FC = () => {
                     setErrors((prev) => ({ ...prev, title: "" }));
                 }}
                 placeholder="请输入问题标题"
-                className={
-                  errors.title ? "border-red-300 focus:ring-red-500" : ""
-                }
+                error={!!errors.title}
               />
               {errors.title && (
                 <p className="text-sm text-red-500">{errors.title}</p>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label>问题类别</Label>
-              <Input
+            </Box>
+            <Box className="space-y-2">
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>问题类别</Box>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.category}
                 onChange={(e) => {
                   setFormData((prev) => ({
@@ -656,16 +645,14 @@ const QmsQualityControlPage: React.FC = () => {
                     setErrors((prev) => ({ ...prev, category: "" }));
                 }}
                 placeholder="外观缺陷、尺寸问题、包装问题等"
-                className={
-                  errors.category ? "border-red-300 focus:ring-red-500" : ""
-                }
+                error={!!errors.category}
               />
               {errors.category && (
                 <p className="text-sm text-red-500">{errors.category}</p>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label>问题描述</Label>
+            </Box>
+            <Box className="space-y-2">
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>问题描述</Box>
               <textarea
                 value={formData.description}
                 onChange={(e) => {
@@ -677,104 +664,98 @@ const QmsQualityControlPage: React.FC = () => {
                     setErrors((prev) => ({ ...prev, description: "" }));
                 }}
                 placeholder="请详细描述问题..."
-                className={`w-full p-3 rounded-md border resize-none h-32 ${errors.description ? "border-red-300" : "border-slate-200"}`}
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: `1px solid ${errors.description ? '#fca5a5' : '#e2e8f0'}`, resize: 'none', height: '128px' }}
               />
               {errors.description && (
                 <p className="text-sm text-red-500">{errors.description}</p>
               )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleSubmit}>
-              {isEditing ? "保存" : "创建"}
-            </Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleSubmit}>{isEditing ? "保存" : "创建"}</Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedItem?.code} - {selectedItem?.title}
-            </DialogTitle>
-          </DialogHeader>
+      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>
+          {selectedItem?.code} - {selectedItem?.title}
+        </DialogTitle>
+        <DialogContent>
           {selectedItem && (
-            <div className="space-y-4">
+            <Box className="space-y-4" sx={{ mt: 1 }}>
               {"severity" in selectedItem ? (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-slate-500">严重程度</Label>
-                      <div className="mt-1">
+                  <Box className="grid grid-cols-2 gap-4">
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>严重程度</Typography>
+                      <Box sx={{ mt: 0.5 }}>
                         {getSeverityBadge(selectedItem.severity)}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-slate-500">状态</Label>
-                      <div className="mt-1">
+                      </Box>
+                    </Box>
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>状态</Typography>
+                      <Box sx={{ mt: 0.5 }}>
                         {getStatusBadge(selectedItem.status, "nc")}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-slate-500">问题类别</Label>
-                    <p className="mt-1">{selectedItem.category}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-slate-500">问题描述</Label>
-                    <p className="mt-1">{selectedItem.description}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-slate-500">报告人</Label>
-                      <p className="mt-1">{selectedItem.reported_by}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-slate-500">报告日期</Label>
-                      <p className="mt-1">{selectedItem.reported_at}</p>
-                    </div>
-                  </div>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>问题类别</Typography>
+                    <Typography sx={{ mt: 0.5 }}>{selectedItem.category}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>问题描述</Typography>
+                    <Typography sx={{ mt: 0.5 }}>{selectedItem.description}</Typography>
+                  </Box>
+                  <Box className="grid grid-cols-2 gap-4">
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>报告人</Typography>
+                      <Typography sx={{ mt: 0.5 }}>{selectedItem.reported_by}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>报告日期</Typography>
+                      <Typography sx={{ mt: 0.5 }}>{selectedItem.reported_at}</Typography>
+                    </Box>
+                  </Box>
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-slate-500">审核类型</Label>
-                      <p className="mt-1">{selectedItem.type}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-slate-500">状态</Label>
-                      <div className="mt-1">
+                  <Box className="grid grid-cols-2 gap-4">
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>审核类型</Typography>
+                      <Typography sx={{ mt: 0.5 }}>{selectedItem.type}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>状态</Typography>
+                      <Box sx={{ mt: 0.5 }}>
                         {getStatusBadge(selectedItem.status, "audit")}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-slate-500">审核人</Label>
-                      <p className="mt-1">{selectedItem.auditor}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-slate-500">审核日期</Label>
-                      <p className="mt-1">{selectedItem.audit_date}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-slate-500">发现问题数</Label>
-                    <p className="mt-1">{selectedItem.findings_count} 个</p>
-                  </div>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box className="grid grid-cols-2 gap-4">
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>审核人</Typography>
+                      <Typography sx={{ mt: 0.5 }}>{selectedItem.auditor}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>审核日期</Typography>
+                      <Typography sx={{ mt: 0.5 }}>{selectedItem.audit_date}</Typography>
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>发现问题数</Typography>
+                    <Typography sx={{ mt: 0.5 }}>{selectedItem.findings_count} 个</Typography>
+                  </Box>
                 </>
               )}
-            </div>
+            </Box>
           )}
-          <DialogFooter>
-            <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

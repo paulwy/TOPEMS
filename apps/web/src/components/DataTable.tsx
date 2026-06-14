@@ -1,3 +1,4 @@
+import { Button, Box, Typography, IconButton, Menu, MenuItem, Divider, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import React from "react";
 import type {
   ColumnDef,
@@ -22,25 +23,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store";
 
 interface DataTableProps<TData, TValue> {
@@ -81,15 +63,13 @@ export function DataTable<TData, TValue>({
   responsive = true,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: currentPage,
     pageSize: 10,
   });
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const addNotification = useAppStore((state) => state.addNotification);
 
   const table = useReactTable({
@@ -109,6 +89,14 @@ export function DataTable<TData, TValue>({
       columnVisibility,
     },
   });
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const exportToCSV = () => {
     try {
@@ -163,111 +151,97 @@ export function DataTable<TData, TValue>({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
         {searchKey && (
-          <div className="w-full sm:w-auto sm:flex-1 sm:max-w-sm">
-            <Input
+          <Box sx={{ width: { xs: "100%", sm: "auto" }, flex: { sm: 1 }, maxWidth: { sm: 280 } }}>
+            <input
+              type="text"
               placeholder={searchPlaceholder}
-              value={
-                (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
-              }
-              onChange={(event) =>
-                table.getColumn(searchKey)?.setFilterValue(event.target.value)
-              }
-              className="w-full sm:w-auto"
+              value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
+              onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
+              style={{ width: "100%", padding: "8px 12px", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: 14 }}
             />
-          </div>
+          </Box>
         )}
 
-        <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Settings2 className="mr-2 h-4 w-4" />
-                列设置
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>显示/隐藏列</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {table.getAllLeafColumns().map((column) => (
-                <DropdownMenuItem
-                  key={column.id}
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => column.toggleVisibility()}
-                >
-                  <span>
-                    {(column.columnDef.header as string) || column.id}
-                  </span>
-                  {column.getIsVisible() ? (
-                    <Eye className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: { xs: "center", sm: "flex-end" } }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleMenuOpen}
+            startIcon={<Settings2 style={{ width: 16, height: 16 }} />}
+            sx={{ display: { xs: "none", sm: "flex" } }}
+          >
+            列设置
+          </Button>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem sx={{ fontWeight: 600, fontSize: 14 }}>显示/隐藏列</MenuItem>
+            <Divider />
+            {table.getAllLeafColumns().map((column) => (
+              <MenuItem
+                key={column.id}
+                onClick={() => column.toggleVisibility()}
+                sx={{ display: "flex", justifyContent: "space-between", minWidth: 180 }}
+              >
+                <span>{(column.columnDef.header as string) || column.id}</span>
+                {column.getIsVisible() ? (
+                  <Eye style={{ width: 16, height: 16, color: "green" }} />
+                ) : (
+                  <EyeOff style={{ width: 16, height: 16, color: "#999" }} />
+                )}
+              </MenuItem>
+            ))}
+          </Menu>
 
           <Button
-            variant="outline"
-            size="sm"
+            variant="outlined"
+            size="small"
             onClick={exportToCSV}
-            className="hidden sm:flex"
+            startIcon={<Download style={{ width: 16, height: 16 }} />}
+            sx={{ display: { xs: "none", sm: "flex" } }}
           >
-            <Download className="mr-2 h-4 w-4" />
             导出 CSV
           </Button>
 
-          <Button
-            variant="outline"
-            size="icon"
+          <IconButton
             onClick={exportToCSV}
-            className="sm:hidden"
+            sx={{ display: { xs: "flex", sm: "none" } }}
             title="导出 CSV"
           >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+            <Download style={{ width: 20, height: 20 }} />
+          </IconButton>
+        </Box>
+      </Box>
 
-      <div
-        className={`rounded-md border overflow-hidden ${
-          responsive ? "overflow-x-auto" : ""
-        }`}
-      >
-        <div className="min-w-[640px]">
-          <Table>
-            <TableHeader>
+      <Box sx={{ borderRadius: 1, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
+        <Box sx={{ overflowX: responsive ? "auto" : "hidden" }}>
+          <Table sx={{ minWidth: 640 }}>
+            <TableHead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id} className="whitespace-nowrap">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    );
-                  })}
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} sx={{ whiteSpace: "nowrap" }}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  ))}
                 </TableRow>
               ))}
-            </TableHeader>
+            </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                  <TableCell colSpan={columns.length} sx={{ height: 96, textAlign: "center" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                      <Box sx={{ width: 16, height: 16, border: 2, borderColor: "grey.300", borderTopColor: "grey.600", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
                       <span>加载中...</span>
-                    </div>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows.length ? (
@@ -276,63 +250,55 @@ export function DataTable<TData, TValue>({
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     onClick={() => onRowClick?.(row.original)}
-                    className={
-                      onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
-                    }
+                    sx={{ cursor: onRowClick ? "pointer" : "default", "&:hover": { backgroundColor: onRowClick ? "grey.50" : "inherit" } }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="whitespace-nowrap">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
+                      <TableCell key={cell.id} sx={{ whiteSpace: "nowrap" }}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
+                  <TableCell colSpan={columns.length} sx={{ height: 96, textAlign: "center" }}>
                     暂无数据
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {(enablePagination || table.getPageCount() > 1) && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="text-sm text-gray-500">
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "center", justifyContent: "space-between", gap: 2, py: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
+            <Typography variant="body2" color="text.secondary">
               {totalItems !== undefined
                 ? `共 ${totalItems} 条记录`
                 : `共 ${table.getFilteredRowModel().rows.length} 条记录`}
-            </div>
+            </Typography>
             {onPageSizeChange && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">每页</span>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Typography variant="body2" color="text.secondary">每页</Typography>
                 <select
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  style={{ border: "1px solid #e0e0e0", borderRadius: 4, padding: "4px 8px", fontSize: 14 }}
                 >
                   <option value={10}>10</option>
                   <option value={20}>20</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
                 </select>
-              </div>
+              </Box>
             )}
-          </div>
-          <div className="flex items-center space-x-2">
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
-              variant="outline"
-              size="icon"
+              variant="outlined"
+              size="small"
               onClick={() => {
                 if (enablePagination && onPageChange) {
                   onPageChange(currentPage - 1);
@@ -341,32 +307,29 @@ export function DataTable<TData, TValue>({
                 }
               }}
               disabled={currentPage <= 0 && !table.getCanPreviousPage()}
-              className="sm:hidden"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (enablePagination && onPageChange) {
-                  onPageChange(currentPage - 1);
-                } else {
-                  table.previousPage();
-                }
-              }}
-              disabled={currentPage <= 0 && !table.getCanPreviousPage()}
-              className="hidden sm:flex"
+              sx={{ display: { xs: "none", sm: "flex" } }}
             >
               上一页
             </Button>
-            <span className="text-sm text-gray-500 min-w-[100px] text-center">
-              第 {currentPage + 1} /{" "}
-              {totalPages || pageCount || table.getPageCount()} 页
-            </span>
+            <IconButton
+              onClick={() => {
+                if (enablePagination && onPageChange) {
+                  onPageChange(currentPage - 1);
+                } else {
+                  table.previousPage();
+                }
+              }}
+              disabled={currentPage <= 0 && !table.getCanPreviousPage()}
+              sx={{ display: { xs: "flex", sm: "none" } }}
+            >
+              <ChevronLeft style={{ width: 20, height: 20 }} />
+            </IconButton>
+            <Typography variant="body2" sx={{ minWidth: 100, textAlign: "center" }}>
+              第 {currentPage + 1} / {totalPages || pageCount || table.getPageCount()} 页
+            </Typography>
             <Button
-              variant="outline"
-              size="sm"
+              variant="outlined"
+              size="small"
               onClick={() => {
                 if (enablePagination && onPageChange) {
                   onPageChange(currentPage + 1);
@@ -374,16 +337,12 @@ export function DataTable<TData, TValue>({
                   table.nextPage();
                 }
               }}
-              disabled={
-                currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()
-              }
-              className="hidden sm:flex"
+              disabled={currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()}
+              sx={{ display: { xs: "none", sm: "flex" } }}
             >
               下一页
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
+            <IconButton
               onClick={() => {
                 if (enablePagination && onPageChange) {
                   onPageChange(currentPage + 1);
@@ -391,16 +350,14 @@ export function DataTable<TData, TValue>({
                   table.nextPage();
                 }
               }}
-              disabled={
-                currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()
-              }
-              className="sm:hidden"
+              disabled={currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()}
+              sx={{ display: { xs: "flex", sm: "none" } }}
             >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+              <ChevronRight style={{ width: 20, height: 20 }} />
+            </IconButton>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

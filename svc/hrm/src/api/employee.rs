@@ -206,7 +206,7 @@ async fn get_employee_details(
                 "department_name": row.department_name,
                 "position_id": row.position_id,
                 "position_name": row.position_name,
-                "employee_no": row.employee_number,
+                "employee_number": row.employee_number,
                 "name": row.name,
                 "gender": row.gender,
                 "hire_date": row.hire_date,

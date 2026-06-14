@@ -1,24 +1,22 @@
-import React, { useState, useEffect } from "react";
 import {
+  Box,
+  Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
+  Chip,
   Dialog,
+  DialogActions,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
+  InputLabel,
+  LinearProgress,
+  Paper,
+  Slider,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useState, useEffect } from "react";
 import type { Customer } from "@/api/crm";
 import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
@@ -251,9 +249,7 @@ const CRMCustomerScoringPage: React.FC = () => {
     };
     const config = gradeConfig[grade];
     return (
-      <Badge className={`${config.color} text-white font-bold text-lg px-3`}>
-        {config.label}
-      </Badge>
+      <Chip size="small" className={`${config.color} text-white font-bold text-lg px-3`} label={config.label} />
     );
   };
 
@@ -283,13 +279,13 @@ const CRMCustomerScoringPage: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
             <Award className="w-5 h-5" />
             客户价值评分
-          </CardTitle>
-          <CardDescription>
+          </Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
             根据客户数据自动计算客户价值评分和等级
-          </CardDescription>
+          </Typography>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -364,9 +360,9 @@ const CRMCustomerScoringPage: React.FC = () => {
                   </span>
                 </div>
                 <Slider
-                  value={[weights.revenue]}
-                  onValueChange={([value]) =>
-                    setWeights({ ...weights, revenue: value })
+                  value={weights.revenue}
+                  onChange={(_, value) =>
+                    setWeights({ ...weights, revenue: value as number })
                   }
                   max={50}
                   step={5}
@@ -383,9 +379,9 @@ const CRMCustomerScoringPage: React.FC = () => {
                   </span>
                 </div>
                 <Slider
-                  value={[weights.frequency]}
-                  onValueChange={([value]) =>
-                    setWeights({ ...weights, frequency: value })
+                  value={weights.frequency}
+                  onChange={(_, value) =>
+                    setWeights({ ...weights, frequency: value as number })
                   }
                   max={50}
                   step={5}
@@ -402,9 +398,9 @@ const CRMCustomerScoringPage: React.FC = () => {
                   </span>
                 </div>
                 <Slider
-                  value={[weights.recency]}
-                  onValueChange={([value]) =>
-                    setWeights({ ...weights, recency: value })
+                  value={weights.recency}
+                  onChange={(_, value) =>
+                    setWeights({ ...weights, recency: value as number })
                   }
                   max={30}
                   step={5}
@@ -419,9 +415,9 @@ const CRMCustomerScoringPage: React.FC = () => {
                   <span className="text-sm font-medium">{weights.growth}%</span>
                 </div>
                 <Slider
-                  value={[weights.growth]}
-                  onValueChange={([value]) =>
-                    setWeights({ ...weights, growth: value })
+                  value={weights.growth}
+                  onChange={(_, value) =>
+                    setWeights({ ...weights, growth: value as number })
                   }
                   max={30}
                   step={5}
@@ -438,16 +434,16 @@ const CRMCustomerScoringPage: React.FC = () => {
                   </span>
                 </div>
                 <Slider
-                  value={[weights.engagement]}
-                  onValueChange={([value]) =>
-                    setWeights({ ...weights, engagement: value })
+                  value={weights.engagement}
+                  onChange={(_, value) =>
+                    setWeights({ ...weights, engagement: value as number })
                   }
                   max={20}
                   step={5}
                 />
               </div>
               <div className="flex items-end">
-                <Button variant="outline" onClick={loadCustomerScores}>
+                <Button variant="outlined" onClick={loadCustomerScores}>
                   应用权重并刷新
                 </Button>
               </div>
@@ -506,65 +502,63 @@ const CRMCustomerScoringPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              {selectedCustomer?.customerName} - 评分详情
-            </DialogTitle>
-          </DialogHeader>
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)}>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Award style={{ width: 20, height: 20 }} />
+          {selectedCustomer?.customerName} - 评分详情
+        </DialogTitle>
+        <DialogContent sx={{ maxWidth: 550 }}>
           {selectedCustomer && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-center gap-6 py-4">
-                <div className="text-center">
-                  <p
-                    className={`text-4xl font-bold ${getScoreColor(selectedCustomer.score)}`}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <Box sx={{ display: "flex", justifyContent: "center", gap: 4, py: 2 }}>
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography
+                    variant="h3"
+                    sx={{ fontWeight: "bold", color: `${getScoreColor(selectedCustomer.score)}.main` }}
                   >
                     {selectedCustomer.score}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">综合评分</p>
-                </div>
-                <div className="text-center">
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>综合评分</Typography>
+                </Box>
+                <Box sx={{ textAlign: "center" }}>
                   {getGradeBadge(selectedCustomer.grade)}
-                  <p className="text-sm text-muted-foreground mt-1">客户等级</p>
-                </div>
-              </div>
+                  <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>客户等级</Typography>
+                </Box>
+              </Box>
 
-              <div className="space-y-4">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {selectedCustomer.factors.map((factor, index) => (
-                  <div key={index} className="bg-muted rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{factor.name}</span>
-                      <span className="text-sm text-muted-foreground">
+                  <Paper key={index} sx={{ p: 2, bgcolor: "grey.100" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{factor.name}</Typography>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
                         权重: {factor.weight}%
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="h-2 bg-background rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500 rounded-full transition-all"
-                            style={{ width: `${factor.score}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-sm font-medium w-16 text-right">
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={factor.score}
+                          sx={{ height: 8, borderRadius: 1, bgcolor: "grey.300" }}
+                        />
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500, width: 48, textAlign: "right" }}>
                         {factor.score}/{factor.maxScore}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                      </Typography>
+                    </Box>
+                    <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5, display: "block" }}>
                       {factor.description}
-                    </p>
-                  </div>
+                    </Typography>
+                  </Paper>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
-          <DialogFooter>
-            <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

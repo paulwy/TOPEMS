@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { Building2, Users, User } from "lucide-react";
 import {
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./select";
+  MenuItem,
+  Box,
+  Typography,
+} from "@mui/material";
 import { useOrganization } from "../../hooks/useOrganization";
 
 export interface OrganizationFilterValue {
@@ -92,116 +93,112 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
   const selectedEmployee = employees.find((e) => e.id === value.employeeId);
 
   return (
-    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
+    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }} className={className}>
       {showCompany && (
-        <div className="flex items-center space-x-2">
-          <Building2 className="w-4 h-4 text-slate-400" />
-          <Select
-            value={value.companyId || "all"}
-            onValueChange={(companyId) =>
-              onChange({
-                companyId: companyId === "all" ? undefined : companyId,
-                departmentId: undefined,
-                employeeId: undefined,
-              })
-            }
-            disabled={disabled}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="选择公司" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部公司</SelectItem>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Building2 style={{ width: 16, height: 16 }} />
+          <FormControl size="small" sx={{ minWidth: 160 }} disabled={disabled}>
+            <InputLabel>选择公司</InputLabel>
+            <Select
+              value={value.companyId || "all"}
+              label="选择公司"
+              onChange={(e) =>
+                onChange({
+                  companyId: e.target.value === "all" ? undefined : e.target.value,
+                  departmentId: undefined,
+                  employeeId: undefined,
+                })
+              }
+            >
+              <MenuItem value="all">全部公司</MenuItem>
               {companies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
+                <MenuItem key={company.id} value={company.id}>
                   {company.name}
-                </SelectItem>
+                </MenuItem>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </Select>
+          </FormControl>
+        </Box>
       )}
 
       {showDepartment && (
-        <div className="flex items-center space-x-2">
-          <Users className="w-4 h-4 text-slate-400" />
-          <Select
-            value={value.departmentId || "all"}
-            onValueChange={(departmentId) =>
-              onChange({
-                ...value,
-                departmentId: departmentId === "all" ? undefined : departmentId,
-                employeeId: undefined,
-              })
-            }
-            disabled={disabled || (!value.companyId && companies.length > 0)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="选择部门" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部部门</SelectItem>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Users style={{ width: 16, height: 16 }} />
+          <FormControl size="small" sx={{ minWidth: 160 }} disabled={disabled || (!value.companyId && companies.length > 0)}>
+            <InputLabel>选择部门</InputLabel>
+            <Select
+              value={value.departmentId || "all"}
+              label="选择部门"
+              onChange={(e) =>
+                onChange({
+                  ...value,
+                  departmentId: e.target.value === "all" ? undefined : e.target.value,
+                  employeeId: undefined,
+                })
+              }
+            >
+              <MenuItem value="all">全部部门</MenuItem>
               {filteredDepartments.map((department) => (
-                <SelectItem key={department.id} value={department.id}>
+                <MenuItem key={department.id} value={department.id}>
                   {department.name}
-                </SelectItem>
+                </MenuItem>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </Select>
+          </FormControl>
+        </Box>
       )}
 
       {showEmployee && (
-        <div className="flex items-center space-x-2">
-          <User className="w-4 h-4 text-slate-400" />
-          <Select
-            value={value.employeeId || "all"}
-            onValueChange={(employeeId) =>
-              onChange({
-                ...value,
-                employeeId: employeeId === "all" ? undefined : employeeId,
-              })
-            }
-            disabled={
-              disabled || (!value.departmentId && departments.length > 0)
-            }
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="选择员工" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部员工</SelectItem>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <User style={{ width: 16, height: 16 }} />
+          <FormControl size="small" sx={{ minWidth: 160 }} disabled={disabled || (!value.departmentId && departments.length > 0)}>
+            <InputLabel>选择员工</InputLabel>
+            <Select
+              value={value.employeeId || "all"}
+              label="选择员工"
+              onChange={(e) =>
+                onChange({
+                  ...value,
+                  employeeId: e.target.value === "all" ? undefined : e.target.value,
+                })
+              }
+            >
+              <MenuItem value="all">全部员工</MenuItem>
               {filteredEmployees.map((employee) => (
-                <SelectItem key={employee.id} value={employee.id}>
+                <MenuItem key={employee.id} value={employee.id}>
                   {employee.name}
-                </SelectItem>
+                </MenuItem>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </Select>
+          </FormControl>
+        </Box>
       )}
 
       {(selectedCompany || selectedDepartment || selectedEmployee) && (
-        <div className="flex items-center space-x-2 text-sm text-slate-500 ml-4">
-          <span>已选:</span>
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+          <Typography component="span" variant="body2" sx={{ fontWeight: 500 }}>
+            已选:
+          </Typography>
           {selectedCompany && (
-            <span className="text-slate-700">{selectedCompany.name}</span>
+            <Typography component="span" variant="body2" sx={{ ml: 0.5 }}>
+              {selectedCompany.name}
+            </Typography>
           )}
           {selectedDepartment && (
-            <span className="text-slate-700">
+            <Typography component="span" variant="body2" sx={{ ml: 0.5 }}>
               {selectedCompany ? " / " : ""}
               {selectedDepartment.name}
-            </span>
+            </Typography>
           )}
           {selectedEmployee && (
-            <span className="text-slate-700">
+            <Typography component="span" variant="body2" sx={{ ml: 0.5 }}>
               {selectedCompany || selectedDepartment ? " / " : ""}
               {selectedEmployee.name}
-            </span>
+            </Typography>
           )}
-        </div>
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 

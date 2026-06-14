@@ -18,3 +18,4 @@ export { AIAnalyzer } from "./AIAnalyzer";
 export type { AIAnalyzerProps, AnalysisResults } from "./AIAnalyzer";
 export { DocumentManager } from "./DocumentManager";
 export type { DocumentManagerProps } from "./DocumentManager";
+export { FloatingAIHelper } from "./FloatingAIHelper";

@@ -1,14 +1,7 @@
+import { Button, Box, Typography, Dialog, DialogContent, DialogTitle, DialogActions } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { Clock, RefreshCw, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
 const SessionExpiryWarning: React.FC = () => {
   const { isSessionExpiringSoon, getTimeUntilExpiry, refreshToken } = useAuth();
@@ -65,38 +58,37 @@ const SessionExpiryWarning: React.FC = () => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-            <AlertCircle className="h-8 w-8" />
-          </div>
-          <DialogTitle className="text-xl font-semibold">
-            会话即将过期
-          </DialogTitle>
-          <DialogDescription className="text-center">
-            您的登录会话即将过期，请点击下方按钮保持登录状态。
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog open={isOpen} onClose={() => setIsOpen(false)} maxWidth="sm" fullWidth>
+      <DialogContent sx={{ textAlign: "center" }}>
+        <Box sx={{ mx: "auto", mb: 3, width: 56, height: 56, borderRadius: "50%", backgroundColor: "warning.light", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <AlertCircle style={{ width: 32, height: 32, color: "#ed6c02" }} />
+        </Box>
+        <DialogTitle sx={{ fontSize: 20, fontWeight: 600, textAlign: "center" }}>
+          会话即将过期
+        </DialogTitle>
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", mb: 3 }}>
+          您的登录会话即将过期，请点击下方按钮保持登录状态。
+        </Typography>
 
-        <div className="mt-6 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-2 text-amber-600">
-            <Clock className="h-5 w-5" />
-            <span className="text-lg font-mono font-bold">
+        <Box sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "warning.main" }}>
+            <Clock style={{ width: 20, height: 20 }} />
+            <span style={{ fontSize: 24, fontFamily: "monospace", fontWeight: "bold" }}>
               {formatTime(countdown)}
             </span>
-          </div>
+          </Box>
 
-          <div className="w-full space-y-3">
+          <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 1.5 }}>
             <Button
-              className="w-full bg-amber-500 hover:bg-amber-600"
+              variant="contained"
               onClick={handleRefresh}
+              startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
+              sx={{ backgroundColor: "#ed6c02", "&:hover": { backgroundColor: "#e65100" } }}
             >
-              <RefreshCw className="mr-2 h-4 w-4" />
               继续使用
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
       </DialogContent>
     </Dialog>
   );

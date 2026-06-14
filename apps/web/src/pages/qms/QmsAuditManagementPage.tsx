@@ -14,18 +14,24 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { qmsApi } from "../../api/qms";
@@ -161,34 +167,36 @@ const QmsAuditManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string; label: string }> = {
-      planning: { color: "bg-blue-100 text-blue-700", label: "计划中" },
-      计划中: { color: "bg-blue-100 text-blue-700", label: "计划中" },
-      in_progress: { color: "bg-yellow-100 text-yellow-700", label: "进行中" },
-      进行中: { color: "bg-yellow-100 text-yellow-700", label: "进行中" },
-      completed: { color: "bg-green-100 text-green-700", label: "已完成" },
-      已完成: { color: "bg-green-100 text-green-700", label: "已完成" },
-      cancelled: { color: "bg-red-100 text-red-700", label: "已取消" },
-      已取消: { color: "bg-red-100 text-red-700", label: "已取消" },
+    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
+      planning: { bg: '#dbeafe', color: '#2563eb', label: "计划中" },
+      计划中: { bg: '#dbeafe', color: '#2563eb', label: "计划中" },
+      in_progress: { bg: '#fef9c3', color: '#ca8a04', label: "进行中" },
+      进行中: { bg: '#fef9c3', color: '#ca8a04', label: "进行中" },
+      completed: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
+      已完成: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
+      cancelled: { bg: '#fee2e2', color: '#dc2626', label: "已取消" },
+      已取消: { bg: '#fee2e2', color: '#dc2626', label: "已取消" },
     };
     const item = statusMap[status] || {
-      color: "bg-gray-100 text-gray-700",
+      bg: '#f3f4f6',
+      color: '#4b5563',
       label: status,
     };
-    return <Badge className={item.color}>{item.label}</Badge>;
+    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
   };
 
   const getPriorityBadge = (priority: string) => {
-    const priorityMap: Record<string, { color: string; label: string }> = {
-      high: { color: "bg-red-100 text-red-700", label: "高" },
-      medium: { color: "bg-yellow-100 text-yellow-700", label: "中" },
-      low: { color: "bg-green-100 text-green-700", label: "低" },
+    const priorityMap: Record<string, { bg: string; color: string; label: string }> = {
+      high: { bg: '#fee2e2', color: '#dc2626', label: "高" },
+      medium: { bg: '#fef9c3', color: '#ca8a04', label: "中" },
+      low: { bg: '#dcfce7', color: '#16a34a', label: "低" },
     };
     const item = priorityMap[priority] || {
-      color: "bg-gray-100 text-gray-700",
+      bg: '#f3f4f6',
+      color: '#4b5563',
       label: priority,
     };
-    return <Badge className={item.color}>{item.label}</Badge>;
+    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
   };
 
   const planColumns: ColumnDef<AuditPlan>[] = [
@@ -203,9 +211,7 @@ const QmsAuditManagementPage: React.FC = () => {
       accessorKey: "audit_type",
       header: "类型",
       cell: ({ row }) => (
-        <Badge className="bg-purple-100 text-purple-700">
-          {row.original.audit_type === "internal" ? "内部审核" : "外部审核"}
-        </Badge>
+        <Chip label={row.original.audit_type === "internal" ? "内部审核" : "外部审核"} size="small" sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }} />
       ),
     },
     {
@@ -240,11 +246,11 @@ const QmsAuditManagementPage: React.FC = () => {
       header: "操作",
       cell: ({ row }) => (
         <Button
-          variant="ghost"
-          size="sm"
+          variant="text"
+          size="small"
           onClick={() => handleSelectPlan(row.original)}
+          startIcon={<Box component={Eye} sx={{ fontSize: 16 }} />}
         >
-          <Eye className="w-4 h-4 mr-1" />
           查看
         </Button>
       ),
@@ -277,18 +283,17 @@ const QmsAuditManagementPage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
+        <Box sx={{ display: 'flex', gap: 1 }}>
           {row.original.status !== "completed" && (
             <Button
-              variant="ghost"
-              size="icon"
-              className="text-green-600"
+              variant="text"
+              size="small"
+              sx={{ color: '#16a34a' }}
               onClick={() => handleCompleteTask(row.original.id)}
-            >
-              <Check className="w-4 h-4" />
-            </Button>
+              startIcon={<Box component={Check} sx={{ fontSize: 16 }} />}
+            />
           )}
-        </div>
+        </Box>
       ),
     },
   ];
@@ -330,12 +335,11 @@ const QmsAuditManagementPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Button
-                variant="ghost"
-                size="icon"
+                variant="text"
                 onClick={() => navigate("/qms")}
-                className="h-8 w-8"
+                sx={{ minWidth: 32, height: 32 }}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
               <div>
                 <h1 className="text-xl font-bold text-slate-900">审核管理</h1>
@@ -397,11 +401,11 @@ const QmsAuditManagementPage: React.FC = () => {
         </div>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-blue-600" />
+          <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box component={ClipboardCheck} sx={{ fontSize: 20, color: '#2563eb' }} />
               审核计划列表
-            </CardTitle>
+            </Typography>
           </CardHeader>
           <CardContent>
             {plans.length > 0 ? (
@@ -415,12 +419,12 @@ const QmsAuditManagementPage: React.FC = () => {
                 <ClipboardCheck className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>暂无审核计划</p>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4"
+                  variant="outlined"
+                  size="small"
+                  sx={{ mt: 2 }}
                   onClick={() => setShowAddModal(true)}
+                  startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
                 >
-                  <Plus className="w-3 h-3 mr-1" />
                   创建第一个计划
                 </Button>
               </div>
@@ -429,44 +433,49 @@ const QmsAuditManagementPage: React.FC = () => {
         </Card>
       </main>
 
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>创建审核计划</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>计划名称 *</Label>
-              <Input
+      <Dialog open={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>创建审核计划</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>计划名称 *</Typography>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.title}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((prev) => ({ ...prev, title: e.target.value }))
                 }
                 placeholder="请输入审核计划名称"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>审核类型</Label>
-                <select
-                  value={formData.audit_type}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      audit_type: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                >
-                  <option value="internal">内部审核</option>
-                  <option value="external">外部审核</option>
-                </select>
-              </div>
-              <div>
-                <Label>审核员</Label>
-                <Input
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>审核类型</Typography>
+                <FormControl fullWidth size="small">
+                  <InputLabel>审核类型</InputLabel>
+                  <Select
+                    value={formData.audit_type}
+                    label="审核类型"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        audit_type: e.target.value,
+                      }))
+                    }
+                  >
+                    <MenuItem value="internal">内部审核</MenuItem>
+                    <MenuItem value="external">外部审核</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>审核员</Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.auditors}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({
                       ...prev,
                       auditors: e.target.value,
@@ -474,41 +483,47 @@ const QmsAuditManagementPage: React.FC = () => {
                   }
                   placeholder="多人用逗号分隔"
                 />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>开始日期</Label>
-                <Input
+              </Box>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>开始日期</Typography>
+                <TextField
                   type="date"
+                  size="small"
+                  fullWidth
                   value={formData.start_date}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({
                       ...prev,
                       start_date: e.target.value,
                     }))
                   }
                 />
-              </div>
-              <div>
-                <Label>结束日期</Label>
-                <Input
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>结束日期</Typography>
+                <TextField
                   type="date"
+                  size="small"
+                  fullWidth
                   value={formData.end_date}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({
                       ...prev,
                       end_date: e.target.value,
                     }))
                   }
                 />
-              </div>
-            </div>
-            <div>
-              <Label>涉及部门</Label>
-              <Input
+              </Box>
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>涉及部门</Typography>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.departments}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((prev) => ({
                     ...prev,
                     departments: e.target.value,
@@ -516,147 +531,138 @@ const QmsAuditManagementPage: React.FC = () => {
                 }
                 placeholder="多部门用逗号分隔"
               />
-            </div>
-            <div>
-              <Label>计划描述</Label>
-              <textarea
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>计划描述</Typography>
+              <TextField
+                multiline
+                rows={3}
+                fullWidth
                 value={formData.description}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setFormData((prev) => ({
                     ...prev,
                     description: e.target.value,
                   }))
                 }
                 placeholder="请描述审核计划的目的和范围..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24"
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleCreatePlan}>创建计划</Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowAddModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleCreatePlan}>创建计划</Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-blue-600" />
-              {selectedPlan?.title}
-            </DialogTitle>
-          </DialogHeader>
+      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box component={ClipboardCheck} sx={{ fontSize: 20, color: '#2563eb' }} />
+          {selectedPlan?.title}
+        </DialogTitle>
+        <DialogContent>
           {selectedPlan && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-600">审核类型</p>
-                  <p className="font-medium text-blue-900 mt-1">
-                    {selectedPlan.audit_type === "internal"
-                      ? "内部审核"
-                      : "外部审核"}
-                  </p>
-                </div>
-                <div className="p-3 bg-yellow-50 rounded-lg">
-                  <p className="text-sm text-yellow-600">审核状态</p>
-                  <p className="font-medium text-yellow-900 mt-1">
-                    {getStatusBadge(selectedPlan.status)}
-                  </p>
-                </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-600">任务进度</p>
-                  <p className="font-medium text-green-900 mt-1">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                <Box sx={{ p: 2, bgcolor: '#eff6ff', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#2563eb' }}>审核类型</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: '#1e40af', mt: 0.5 }}>
+                    {selectedPlan.audit_type === "internal" ? "内部审核" : "外部审核"}
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: '#fefce8', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#ca8a04' }}>审核状态</Typography>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedPlan.status)}</Box>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: '#f0fdf4', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: '#16a34a' }}>任务进度</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: '#166534', mt: 0.5 }}>
                     {completedTasks}/{totalTasks} 完成
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">审核员</p>
-                  <p className="text-slate-900 mt-1 flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    {selectedPlan.auditors?.join(", ") || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">涉及部门</p>
-                  <p className="text-slate-900 mt-1">
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>审核员</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                    <Box component={Users} sx={{ fontSize: 16 }} />
+                    <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                      {selectedPlan.auditors?.join(", ") || "-"}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>涉及部门</Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5 }}>
                     {selectedPlan.departments?.join(", ") || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">开始日期</p>
-                  <p className="text-slate-900 mt-1 flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {selectedPlan.start_date
-                      ? new Date(selectedPlan.start_date).toLocaleDateString(
-                          "zh-CN",
-                        )
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">结束日期</p>
-                  <p className="text-slate-900 mt-1 flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {selectedPlan.end_date
-                      ? new Date(selectedPlan.end_date).toLocaleDateString(
-                          "zh-CN",
-                        )
-                      : "-"}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>开始日期</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                    <Box component={Calendar} sx={{ fontSize: 16 }} />
+                    <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                      {selectedPlan.start_date ? new Date(selectedPlan.start_date).toLocaleDateString("zh-CN") : "-"}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>结束日期</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                    <Box component={Calendar} sx={{ fontSize: 16 }} />
+                    <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                      {selectedPlan.end_date ? new Date(selectedPlan.end_date).toLocaleDateString("zh-CN") : "-"}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
 
               {selectedPlan.description && (
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">计划描述</p>
-                  <p className="text-slate-900 mt-1">
+                <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>计划描述</Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
                     {selectedPlan.description}
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
               )}
 
-              <div className="border-t border-slate-200 pt-4">
-                <h3 className="font-medium text-slate-900 mb-4 flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  审核任务 ({completedTasks}/{totalTasks})
-                </h3>
+              <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Box component={FileText} sx={{ fontSize: 20 }} />
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    审核任务 ({completedTasks}/{totalTasks})
+                  </Typography>
+                </Box>
                 <DataTable
                   columns={taskColumns}
                   data={tasks}
                   enablePagination={false}
                 />
-              </div>
+              </Box>
 
               {findings.length > 0 && (
-                <div className="border-t border-slate-200 pt-4">
-                  <h3 className="font-medium text-slate-900 mb-4 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    审核发现 ({openFindings} 项待处理)
-                  </h3>
+                <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Box component={AlertCircle} sx={{ fontSize: 20 }} />
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      审核发现 ({openFindings} 项待处理)
+                    </Typography>
+                  </Box>
                   <DataTable
                     columns={findingColumns}
                     data={findings}
                     enablePagination={false}
                   />
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
           )}
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowDetailModal(false)}
-            >
-              关闭
-            </Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowDetailModal(false)}>关闭</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

@@ -7,9 +7,35 @@ import {
   Eye,
   X,
   Check,
-  Calendar,
-  User,
 } from "lucide-react";
+import {
+  Button,
+  TextField,
+  Card,
+  CardContent,
+  Typography,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Box,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
+  IconButton,
+  Chip,
+  CircularProgress,
+} from "@mui/material";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
 import { StatusBadge } from "../components/hrm/StatusBadge";
@@ -188,465 +214,509 @@ const LeaveManagementPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">休假管理</h2>
-          <button
+      <Box sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+            休假管理
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Plus size={18} />}
             onClick={handleAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <Plus size={18} />
             新增申请
-          </button>
-        </div>
+          </Button>
+        </Box>
 
-        <div className="bg-white rounded-lg shadow p-4 mb-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-                <input
-                  type="text"
-                  placeholder="搜索员工姓名"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div className="w-40">
-              <select
-                value={employeeFilter}
-                onChange={(e) => setEmployeeFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">全部员工</option>
-                {employees.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-32">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">全部类型</option>
-                {leaveTypes.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-32">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">全部状态</option>
-                <option value="pending">待审批</option>
-                <option value="approved">已批准</option>
-                <option value="rejected">已拒绝</option>
-                <option value="cancelled">已取消</option>
-              </select>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleSearch}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                搜索
-              </button>
-              <button
-                onClick={handleReset}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                重置
-              </button>
-            </div>
-          </div>
-        </div>
+        <Card sx={{ mb: 2, borderRadius: 2 }}>
+          <CardContent>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                alignItems: "center",
+              }}
+            >
+              <TextField
+                placeholder="搜索员工姓名"
+                size="small"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                sx={{ minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Box sx={{ display: "flex" }}>
+                          <Search size={18} />
+                        </Box>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>全部员工</InputLabel>
+                <Select
+                  value={employeeFilter}
+                  label="全部员工"
+                  onChange={(e) => setEmployeeFilter(e.target.value)}
+                >
+                  <MenuItem value="">全部员工</MenuItem>
+                  {employees.map((e) => (
+                    <MenuItem key={e.id} value={e.id}>
+                      {e.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>全部类型</InputLabel>
+                <Select
+                  value={typeFilter}
+                  label="全部类型"
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                >
+                  <MenuItem value="">全部类型</MenuItem>
+                  {leaveTypes.map((t) => (
+                    <MenuItem key={t.value} value={t.value}>
+                      {t.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>全部状态</InputLabel>
+                <Select
+                  value={statusFilter}
+                  label="全部状态"
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <MenuItem value="">全部状态</MenuItem>
+                  <MenuItem value="pending">待审批</MenuItem>
+                  <MenuItem value="approved">已批准</MenuItem>
+                  <MenuItem value="rejected">已拒绝</MenuItem>
+                  <MenuItem value="cancelled">已取消</MenuItem>
+                </Select>
+              </FormControl>
+              <Stack direction="row" spacing={1}>
+                <Button variant="outlined" onClick={handleSearch}>
+                  搜索
+                </Button>
+                <Button variant="outlined" onClick={handleReset}>
+                  重置
+                </Button>
+              </Stack>
+            </Box>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  员工
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  休假类型
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  开始日期
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  结束日期
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  天数
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  状态
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  </td>
-                </tr>
-              ) : data.items.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-center text-gray-500"
-                  >
-                    暂无数据
-                  </td>
-                </tr>
-              ) : (
-                data.items.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {employees.find((e) => e.id === item.employee_id)?.name ||
-                        "-"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getLeaveTypeText(item.leave_type)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {item.start_date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {item.end_date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{item.days}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getLeaveStatusBadge(item.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleView(item)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="查看"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="编辑"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        {item.status === "pending" && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(item.id)}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                              title="批准"
-                            >
-                              <Check size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleReject(item.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                              title="拒绝"
-                            >
-                              <X size={18} />
-                            </button>
-                          </>
-                        )}
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                          title="删除"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <Card sx={{ borderRadius: 2, overflow: "hidden" }}>
+          <TableContainer>
+            <Table>
+              <TableHead sx={{ bgcolor: "grey.50" }}>
+                <TableRow>
+                  <TableCell>员工</TableCell>
+                  <TableCell>休假类型</TableCell>
+                  <TableCell>开始日期</TableCell>
+                  <TableCell>结束日期</TableCell>
+                  <TableCell>天数</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell>操作</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} sx={{ textAlign: "center", py: 6 }}>
+                      <CircularProgress size={32} />
+                    </TableCell>
+                  </TableRow>
+                ) : data.items.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      sx={{ textAlign: "center", color: "text.secondary", py: 6 }}
+                    >
+                      暂无数据
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.items.map((item) => (
+                    <TableRow key={item.id} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>
+                        {employees.find((e) => e.id === item.employee_id)?.name ||
+                          "-"}
+                      </TableCell>
+                      <TableCell>{getLeaveTypeText(item.leave_type)}</TableCell>
+                      <TableCell>{item.start_date}</TableCell>
+                      <TableCell>{item.end_date}</TableCell>
+                      <TableCell>{item.days}</TableCell>
+                      <TableCell>{getLeaveStatusBadge(item.status)}</TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5}>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleView(item)}
+                            title="查看"
+                          >
+                            <Eye size={18} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEdit(item)}
+                            title="编辑"
+                          >
+                            <Edit size={18} />
+                          </IconButton>
+                          {item.status === "pending" && (
+                            <>
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() => handleApprove(item.id)}
+                                title="批准"
+                              >
+                                <Check size={18} />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleReject(item.id)}
+                                title="拒绝"
+                              >
+                                <X size={18} />
+                              </IconButton>
+                            </>
+                          )}
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(item.id)}
+                            title="删除"
+                          >
+                            <Trash2 size={18} />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
           {data.total > data.page_size && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <span className="text-sm text-gray-500">
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                px: 3,
+                py: 2,
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
                 显示第 {(data.page - 1) * data.page_size + 1} -{" "}
                 {Math.min(data.page * data.page_size, data.total)} 条，共{" "}
                 {data.total} 条
-              </span>
-              <div className="flex gap-2">
-                <button
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
                   onClick={() =>
                     data.page > 1 && fetchLeaveRequests({ page: data.page - 1 })
                   }
                   disabled={data.page <= 1}
-                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   上一页
-                </button>
+                </Button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                   (page) => (
-                    <button
+                    <Button
                       key={page}
+                      size="small"
+                      variant={page === data.page ? "contained" : "outlined"}
                       onClick={() => fetchLeaveRequests({ page })}
-                      className={`px-3 py-1 border rounded-lg text-sm ${
-                        page === data.page
-                          ? "bg-blue-600 text-white"
-                          : "hover:bg-gray-50"
-                      }`}
                     >
                       {page}
-                    </button>
+                    </Button>
                   ),
                 )}
-                <button
+                <Button
+                  size="small"
+                  variant="outlined"
                   onClick={() =>
                     data.page < totalPages &&
                     fetchLeaveRequests({ page: data.page + 1 })
                   }
                   disabled={data.page >= totalPages}
-                  className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   下一页
-                </button>
-              </div>
-            </div>
+                </Button>
+              </Stack>
+            </Box>
           )}
-        </div>
+        </Card>
 
-        {isModalVisible && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-              <div className="flex justify-between items-center p-4 border-b">
-                <h3 className="text-lg font-semibold">
-                  {editingLeave ? "编辑休假申请" : "新增休假申请"}
-                </h3>
-                <button
-                  onClick={() => setIsModalVisible(false)}
-                  className="p-1 hover:bg-gray-100 rounded"
+        {/* 新增/编辑 Dialog */}
+        <Dialog
+          open={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{
+            paper: {
+              sx: { borderRadius: 2 },
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: "bold" }}>
+            {editingLeave ? "编辑休假申请" : "新增休假申请"}
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+              <FormControl fullWidth>
+                <InputLabel>员工 *</InputLabel>
+                <Select
+                  value={(formData as LeaveRequest)?.employee_id || ""}
+                  label="员工 *"
+                  onChange={(e) =>
+                    handleInputChange("employee_id", e.target.value)
+                  }
                 >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-4 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    员工 *
-                  </label>
-                  <select
-                    value={(formData as LeaveRequest)?.employee_id || ""}
-                    onChange={(e) =>
-                      handleInputChange("employee_id", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">请选择员工</option>
-                    {employees.map((e) => (
-                      <option key={e.id} value={e.id}>
-                        {e.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    休假类型 *
-                  </label>
-                  <select
-                    value={(formData as LeaveRequest)?.leave_type || ""}
-                    onChange={(e) =>
-                      handleInputChange("leave_type", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">请选择休假类型</option>
-                    {leaveTypes.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      开始日期 *
-                    </label>
-                    <input
-                      type="date"
-                      value={(formData as LeaveRequest)?.start_date || ""}
-                      onChange={(e) =>
-                        handleInputChange("start_date", e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      结束日期 *
-                    </label>
-                    <input
-                      type="date"
-                      value={(formData as LeaveRequest)?.end_date || ""}
-                      onChange={(e) =>
-                        handleInputChange("end_date", e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    休假天数 *
-                  </label>
-                  <input
-                    type="number"
-                    value={(formData as LeaveRequest)?.days || ""}
-                    onChange={(e) =>
-                      handleInputChange("days", parseFloat(e.target.value) || 0)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="请输入休假天数"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    备注
-                  </label>
-                  <textarea
-                    value={(formData as LeaveRequest)?.reason || ""}
-                    onChange={(e) =>
-                      handleInputChange("reason", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    placeholder="请输入备注信息"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 p-4 border-t">
-                <button
-                  onClick={() => setIsModalVisible(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  <MenuItem value="">请选择员工</MenuItem>
+                  {employees.map((e) => (
+                    <MenuItem key={e.id} value={e.id}>
+                      {e.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>休假类型 *</InputLabel>
+                <Select
+                  value={(formData as LeaveRequest)?.leave_type || ""}
+                  label="休假类型 *"
+                  onChange={(e) =>
+                    handleInputChange("leave_type", e.target.value)
+                  }
                 >
-                  取消
-                </button>
-                <button
-                  onClick={handleModalOk}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <Check size={18} />
-                  确定
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+                  <MenuItem value="">请选择休假类型</MenuItem>
+                  {leaveTypes.map((t) => (
+                    <MenuItem key={t.value} value={t.value}>
+                      {t.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <TextField
+                  type="date"
+                  label="开始日期 *"
+                  value={(formData as LeaveRequest)?.start_date || ""}
+                  onChange={(e) =>
+                    handleInputChange("start_date", e.target.value)
+                  }
+                  fullWidth
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                  }}
+                />
+                <TextField
+                  type="date"
+                  label="结束日期 *"
+                  value={(formData as LeaveRequest)?.end_date || ""}
+                  onChange={(e) =>
+                    handleInputChange("end_date", e.target.value)
+                  }
+                  fullWidth
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                  }}
+                />
+              </Box>
+              <TextField
+                type="number"
+                label="休假天数 *"
+                value={(formData as LeaveRequest)?.days || ""}
+                onChange={(e) =>
+                  handleInputChange("days", parseFloat(e.target.value) || 0)
+                }
+                placeholder="请输入休假天数"
+                fullWidth
+              />
+              <TextField
+                label="备注"
+                value={(formData as LeaveRequest)?.reason || ""}
+                onChange={(e) => handleInputChange("reason", e.target.value)}
+                multiline
+                rows={3}
+                placeholder="请输入备注信息"
+                fullWidth
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={() => setIsModalVisible(false)} variant="outlined">
+              取消
+            </Button>
+            <Button
+              onClick={handleModalOk}
+              variant="contained"
+              startIcon={<Check size={18} />}
+            >
+              确定
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-        {isViewModalVisible && editingLeave && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-              <div className="flex justify-between items-center p-4 border-b">
-                <h3 className="text-lg font-semibold">休假详情</h3>
-                <button
-                  onClick={() => setIsViewModalVisible(false)}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">员工:</span>
-                  <span>
+        {/* 查看详情 Dialog */}
+        <Dialog
+          open={isViewModalVisible}
+          onClose={() => setIsViewModalVisible(false)}
+          maxWidth="sm"
+          fullWidth
+          slotProps={{
+            paper: {
+              sx: { borderRadius: 2 },
+            },
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: "bold" }}>休假详情</DialogTitle>
+          <DialogContent dividers>
+            {editingLeave && (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    员工:
+                  </Typography>
+                  <Typography variant="body2">
                     {employees.find((e) => e.id === editingLeave.employee_id)
                       ?.name || "-"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">休假类型:</span>
-                  <span>{getLeaveTypeText(editingLeave.leave_type)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">开始日期:</span>
-                  <span>{editingLeave.start_date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">结束日期:</span>
-                  <span>{editingLeave.end_date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">休假天数:</span>
-                  <span>{editingLeave.days}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">备注:</span>
-                  <span className="max-w-xs truncate">
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    休假类型:
+                  </Typography>
+                  <Typography variant="body2">
+                    {getLeaveTypeText(editingLeave.leave_type)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    开始日期:
+                  </Typography>
+                  <Typography variant="body2">
+                    {editingLeave.start_date}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    结束日期:
+                  </Typography>
+                  <Typography variant="body2">
+                    {editingLeave.end_date}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    休假天数:
+                  </Typography>
+                  <Typography variant="body2">{editingLeave.days}</Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    备注:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      maxWidth: 200,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {editingLeave.reason || "-"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">状态:</span>
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    状态:
+                  </Typography>
                   {getLeaveStatusBadge(editingLeave.status)}
-                </div>
+                </Box>
                 {editingLeave.approver_id && (
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">审批人:</span>
-                    <span>{editingLeave.approver_id}</span>
-                  </div>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      审批人:
+                    </Typography>
+                    <Typography variant="body2">
+                      {editingLeave.approver_id}
+                    </Typography>
+                  </Box>
                 )}
                 {editingLeave.rejection_reason && (
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-600">审批意见:</span>
-                    <span className="max-w-xs truncate">
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      审批意见:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        maxWidth: 200,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {editingLeave.rejection_reason}
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 )}
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">创建时间:</span>
-                  <span>{editingLeave.created_at}</span>
-                </div>
-              </div>
-              <div className="flex justify-end p-4 border-t">
-                <button
-                  onClick={() => setIsViewModalVisible(false)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  关闭
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    创建时间:
+                  </Typography>
+                  <Typography variant="body2">
+                    {editingLeave.created_at}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button
+              onClick={() => setIsViewModalVisible(false)}
+              variant="contained"
+            >
+              关闭
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Box>
   );
 };
 

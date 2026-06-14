@@ -28,34 +28,27 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TableContainer from "@mui/material/TableContainer";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
+import Chip from "@mui/material/Chip";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import MenuList from "@mui/material/MenuList";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Divider from "@mui/material/Divider";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useAppStore } from "@/store";
 import { useExportData } from "@/hooks/useDataTable";
 
@@ -135,6 +128,8 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   });
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
+  const [exportAnchorEl, setExportAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [settingsAnchorEl, setSettingsAnchorEl] = React.useState<null | HTMLElement>(null);
   const addNotification = useAppStore((state) => state.addNotification);
 
   const { exportToCSV, exportToExcel } = useExportData(columns);
@@ -202,6 +197,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   );
 
   const handleExportCSV = useCallback(() => {
+    setExportAnchorEl(null);
     const result = exportToCSV(
       table.getFilteredRowModel().rows.map((r) => r.original),
       exportFileName,
@@ -222,6 +218,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   }, [exportToCSV, table, exportFileName, addNotification]);
 
   const handleExportExcel = useCallback(() => {
+    setExportAnchorEl(null);
     const result = exportToExcel(
       table.getFilteredRowModel().rows.map((r) => r.original),
       exportFileName,
@@ -276,233 +273,187 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   }, [displayPageCount, enablePagination, displayPageIndex]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
-          {searchKey && (
-            <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder={searchPlaceholder}
-                value={localSearch}
-                onChange={(event) => handleSearchChange(event.target.value)}
-                className="w-full sm:w-auto pl-10"
-              />
-            </div>
-          )}
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, width: "100%" }}>
+            {searchKey && (
+              <Box sx={{ position: "relative", width: "100%", maxWidth: 320 }}>
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 16,
+                    height: 16,
+                    color: "rgba(0,0,0,0.25)",
+                  }}
+                />
+                <TextField
+                  size="small"
+                  placeholder={searchPlaceholder}
+                  value={localSearch}
+                  onChange={(event) => handleSearchChange(event.target.value)}
+                  sx={{ width: "100%", pl: 4 }}
+                />
+              </Box>
+            )}
 
-          {enableAdvancedFilter && advancedFilters.length > 0 && (
-            <Dialog
-              open={showAdvancedFilter}
-              onOpenChange={setShowAdvancedFilter}
-            >
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Filter className="w-4 h-4" />
-                  高级筛选
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>高级筛选</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  {advancedFilters.map((filter) => (
-                    <div key={String(filter.key)} className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700">
-                        {filter.label}
-                      </label>
-                      {filter.type === "select" && filter.options ? (
-                        <select
-                          className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm"
-                          value={filter.value || ""}
-                          onChange={(e) => filter.onChange?.(e.target.value)}
-                        >
-                          <option value="">全部</option>
-                          {filter.options.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <Input
-                          type={filter.type}
-                          value={filter.value || ""}
-                          onChange={(e) => filter.onChange?.(e.target.value)}
-                          className="w-full"
-                        />
-                      )}
-                    </div>
-                  ))}
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        advancedFilters.forEach((f) => f.onChange?.(""));
-                        setShowAdvancedFilter(false);
-                      }}
-                    >
-                      重置
-                    </Button>
-                    <Button onClick={() => setShowAdvancedFilter(false)}>
-                      应用筛选
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
-          {onRefresh && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefresh}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              刷新
-            </Button>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            {enableAdvancedFilter && advancedFilters.length > 0 && (
               <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
+                variant="outlined"
+                size="small"
+                onClick={() => setShowAdvancedFilter(true)}
+                startIcon={<Filter style={{ width: 16, height: 16 }} />}
               >
-                <Download className="w-4 h-4" />
-                导出
-                <ChevronDown className="w-4 h-4" />
+                高级筛选
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>选择导出格式</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleExportCSV}>
-                导出 CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel}>
-                导出 Excel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+          </Box>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Settings2 className="mr-2 h-4 w-4" />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+            {onRefresh && (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={onRefresh}
+                startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
+              >
+                刷新
+              </Button>
+            )}
+
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={(e) => setExportAnchorEl(e.currentTarget)}
+              endIcon={<ChevronDown style={{ width: 16, height: 16 }} />}
+              startIcon={<Download style={{ width: 16, height: 16 }} />}
+            >
+              导出
+            </Button>
+            <Menu
+              anchorEl={exportAnchorEl}
+              open={Boolean(exportAnchorEl)}
+              onClose={() => setExportAnchorEl(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <MenuItem onClick={handleExportCSV}>导出 CSV</MenuItem>
+              <MenuItem onClick={handleExportExcel}>导出 Excel</MenuItem>
+            </Menu>
+
+            <Box sx={{ display: { xs: "none", sm: "block" } }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={(e) => setSettingsAnchorEl(e.currentTarget)}
+                startIcon={<Settings2 style={{ width: 16, height: 16 }} />}
+              >
                 列设置
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>显示/隐藏列</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {table.getAllLeafColumns().map((column) => (
-                <DropdownMenuItem
-                  key={column.id}
-                  className="flex items-center justify-between cursor-pointer"
-                  onClick={() => column.toggleVisibility()}
-                >
-                  <span>
-                    {(column.columnDef.header as string) || column.id}
-                  </span>
-                  {column.getIsVisible() ? (
-                    <Eye className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+              <Menu
+                anchorEl={settingsAnchorEl}
+                open={Boolean(settingsAnchorEl)}
+                onClose={() => setSettingsAnchorEl(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+              >
+                <MenuList>
+                  <Box sx={{ px: 2, py: 1, fontWeight: 500, fontSize: "0.875rem" }}>
+                    显示/隐藏列
+                  </Box>
+                  <Divider />
+                  {table.getAllLeafColumns().map((column) => (
+                    <MenuItem
+                      key={column.id}
+                      onClick={() => column.toggleVisibility()}
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <span>
+                        {(column.columnDef.header as string) || column.id}
+                      </span>
+                      {column.getIsVisible() ? (
+                        <Eye style={{ width: 16, height: 16, color: "green" }} />
+                      ) : (
+                        <EyeOff style={{ width: 16, height: 16, color: "gray" }} />
+                      )}
+                    </MenuItem>
+                  ))}
+                </MenuList>
+              </Menu>
+            </Box>
+          </Box>
+        </Box>
 
-      {hasSelected && (
-        <div className="flex items-center justify-between bg-blue-50 px-4 py-3 rounded-lg">
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-blue-700">
-              已选择{" "}
-              <Badge variant="default" className="ml-2">
-                {selectedIds.length}
-              </Badge>{" "}
-              条记录
-            </span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onSelectionChange?.([])}
-          >
-            取消选择
-          </Button>
-        </div>
-      )}
+        {hasSelected && (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "primary.light", px: 2, py: 1.5, borderRadius: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <span style={{ fontSize: "0.875rem", color: "primary.dark" }}>
+                已选择{" "}
+                <Chip label={selectedIds.length} size="small" color="primary" sx={{ mx: 0.5 }} />
+                {" "}条记录
+              </span>
+            </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => onSelectionChange?.([])}
+            >
+              取消选择
+            </Button>
+          </Box>
+        )}
+      </Box>
 
-      <div
-        className={`rounded-md border overflow-hidden ${
-          responsive ? "overflow-x-auto" : ""
-        }`}
-      >
-        <div className="min-w-[640px]">
-          <Table>
-            <TableHeader>
+      <Box sx={{ borderRadius: 1, overflow: "hidden", border: 1, borderColor: "divider" }}>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table size={compact ? "small" : "medium"}>
+            <TableHead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {enableSelection && (
-                    <TableHead className="w-10">
+                    <TableCell sx={{ width: 40 }}>
                       <Checkbox
                         checked={isAllSelected}
-                        onCheckedChange={handleSelectAll}
-                        data-state={
-                          hasSelected && !isAllSelected
-                            ? "indeterminate"
-                            : undefined
-                        }
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        indeterminate={hasSelected && !isAllSelected}
                       />
-                    </TableHead>
+                    </TableCell>
                   )}
                   {headerGroup.headers.map((header) => (
-                    <TableHead
+                    <TableCell
                       key={header.id}
-                      className={`whitespace-nowrap ${compact ? "py-2 text-xs" : ""}`}
+                      sx={{ whiteSpace: "nowrap", ...(compact && { py: 1, fontSize: "0.75rem" }) }}
                     >
                       {header.isPlaceholder ? null : (
-                        <div className="flex items-center gap-1 cursor-pointer">
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, cursor: "pointer" }}>
                           {flexRender(
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
                           {header.column.getCanSort() && (
-                            <ChevronDown className="w-3 h-3 text-slate-400" />
+                            <ChevronDown style={{ width: 12, height: 12, color: "rgba(0,0,0,0.25)" }} />
                           )}
-                        </div>
+                        </Box>
                       )}
-                    </TableHead>
+                    </TableCell>
                   ))}
                 </TableRow>
               ))}
-            </TableHeader>
+            </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell
                     colSpan={columns.length + (enableSelection ? 1 : 0)}
-                    className="h-24 text-center"
+                    sx={{ height: 96, textAlign: "center" }}
                   >
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                      <CircularProgress size={16} />
                       <span>加载中...</span>
-                    </div>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ) : table.getRowModel().rows.length ? (
@@ -511,12 +462,15 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     onClick={() => onRowClick?.(row.original)}
-                    className={`${
-                      onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
-                    } ${striped && row.index % 2 === 0 ? "bg-slate-50/50" : ""} ${compact ? "text-sm" : ""}`}
+                    sx={{
+                      cursor: onRowClick ? "pointer" : "default",
+                      "&:hover": { bgcolor: onRowClick ? "action.hover" : "inherit" },
+                      bgcolor: striped && row.index % 2 === 0 ? "action.hover" : "inherit",
+                      ...(compact && { fontSize: "0.875rem" }),
+                    }}
                   >
                     {enableSelection && (
-                      <TableCell className="w-10">
+                      <TableCell sx={{ width: 40 }}>
                         <Checkbox
                           checked={
                             selectionKey
@@ -525,17 +479,18 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                                 )
                               : false
                           }
-                          onCheckedChange={() =>
+                          onChange={() =>
                             selectionKey &&
                             handleSelectRow(String(row.original[selectionKey]))
                           }
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </TableCell>
                     )}
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={`whitespace-nowrap ${compact ? "py-2" : ""}`}
+                        sx={{ whiteSpace: "nowrap", ...(compact && { py: 1 }) }}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -549,145 +504,225 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={columns.length + (enableSelection ? 1 : 0)}
-                    className="h-24 text-center"
+                    sx={{ height: 96, textAlign: "center" }}
                   >
                     {emptyState || (
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="text-slate-400">暂无数据</div>
-                        <Button variant="outline" size="sm" onClick={onRefresh}>
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                        <Box sx={{ color: "text.disabled" }}>暂无数据</Box>
+                        <Button variant="outlined" size="small" onClick={onRefresh}>
                           刷新数据
                         </Button>
-                      </div>
+                      </Box>
                     )}
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-        </div>
-      </div>
+        </TableContainer>
+      </Box>
 
       {(enablePagination || table.getPageCount() > 1) && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="text-sm text-gray-500">
-              {totalItems !== undefined
-                ? `共 ${totalItems} 条记录`
-                : `共 ${table.getFilteredRowModel().rows.length} 条记录`}
-            </div>
-            {(onPageSizeChange || !enablePagination) && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">每页</span>
-                <select
-                  value={enablePagination ? pageSize : pagination.pageSize}
-                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                if (enablePagination && onPageChange) {
-                  onPageChange(currentPage - 1);
-                } else {
-                  table.previousPage();
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <span style={{ fontSize: "0.875rem", color: "text.secondary" }}>
+                {totalItems !== undefined
+                  ? `共 ${totalItems} 条记录`
+                  : `共 ${table.getFilteredRowModel().rows.length} 条记录`}
+              </span>
+              {(onPageSizeChange || !enablePagination) && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <span style={{ fontSize: "0.875rem", color: "text.secondary" }}>每页</span>
+                  <Box
+                    component="select"
+                    value={enablePagination ? pageSize : pagination.pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    sx={{
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      fontSize: "0.875rem",
+                      outline: "none",
+                      "&:focus": { borderColor: "primary.main", boxShadow: 1 },
+                    }}
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  if (enablePagination && onPageChange) {
+                    onPageChange(currentPage - 1);
+                  } else {
+                    table.previousPage();
+                  }
+                }}
+                disabled={
+                  (enablePagination && currentPage <= 0) ||
+                  !table.getCanPreviousPage()
                 }
-              }}
-              disabled={
-                (enablePagination && currentPage <= 0) ||
-                !table.getCanPreviousPage()
-              }
-              className="sm:hidden"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (enablePagination && onPageChange) {
-                  onPageChange(currentPage - 1);
-                } else {
-                  table.previousPage();
+                sx={{ display: { xs: "flex", sm: "none" }, minWidth: 32, p: 0.5 }}
+              >
+                <ChevronLeft style={{ width: 16, height: 16 }} />
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  if (enablePagination && onPageChange) {
+                    onPageChange(currentPage - 1);
+                  } else {
+                    table.previousPage();
+                  }
+                }}
+                disabled={
+                  (enablePagination && currentPage <= 0) ||
+                  !table.getCanPreviousPage()
                 }
-              }}
-              disabled={
-                (enablePagination && currentPage <= 0) ||
-                !table.getCanPreviousPage()
-              }
-              className="hidden sm:flex"
-            >
-              上一页
-            </Button>
+                sx={{ display: { xs: "none", sm: "flex" } }}
+              >
+                上一页
+              </Button>
 
-            <div className="flex items-center gap-1">
-              {pageButtons.map((pageNum) => (
-                <Button
-                  key={pageNum}
-                  variant={displayPageIndex === pageNum ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    if (enablePagination && onPageChange) {
-                      onPageChange(pageNum);
-                    } else {
-                      table.setPageIndex(pageNum);
-                    }
-                  }}
-                  disabled={pageNum < 0 || pageNum >= displayPageCount}
-                >
-                  {pageNum + 1}
-                </Button>
-              ))}
-            </div>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                {pageButtons.map((pageNum) => (
+                  <Button
+                    key={pageNum}
+                    variant={displayPageIndex === pageNum ? "contained" : "outlined"}
+                    size="small"
+                    onClick={() => {
+                      if (enablePagination && onPageChange) {
+                        onPageChange(pageNum);
+                      } else {
+                        table.setPageIndex(pageNum);
+                      }
+                    }}
+                    disabled={pageNum < 0 || pageNum >= displayPageCount}
+                  >
+                    {pageNum + 1}
+                  </Button>
+                ))}
+              </Box>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (enablePagination && onPageChange) {
-                  onPageChange(currentPage + 1);
-                } else {
-                  table.nextPage();
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  if (enablePagination && onPageChange) {
+                    onPageChange(currentPage + 1);
+                  } else {
+                    table.nextPage();
+                  }
+                }}
+                disabled={
+                  (enablePagination && currentPage >= (totalPages || 1) - 1) ||
+                  !table.getCanNextPage()
                 }
-              }}
-              disabled={
-                (enablePagination && currentPage >= (totalPages || 1) - 1) ||
-                !table.getCanNextPage()
-              }
-              className="hidden sm:flex"
-            >
-              下一页
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                if (enablePagination && onPageChange) {
-                  onPageChange(currentPage + 1);
-                } else {
-                  table.nextPage();
+                sx={{ display: { xs: "none", sm: "flex" } }}
+              >
+                下一页
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  if (enablePagination && onPageChange) {
+                    onPageChange(currentPage + 1);
+                  } else {
+                    table.nextPage();
+                  }
+                }}
+                disabled={
+                  (enablePagination && currentPage >= (totalPages || 1) - 1) ||
+                  !table.getCanNextPage()
                 }
-              }}
-              disabled={
-                (enablePagination && currentPage >= (totalPages || 1) - 1) ||
-                !table.getCanNextPage()
-              }
-              className="sm:hidden"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+                sx={{ display: { xs: "flex", sm: "none" }, minWidth: 32, p: 0.5 }}
+              >
+                <ChevronRight style={{ width: 16, height: 16 }} />
+              </Button>
+            </Box>
+          </Box>
+        </Box>
       )}
-    </div>
+
+      {/* 高级筛选对话框 */}
+      <Dialog
+        open={showAdvancedFilter}
+        onClose={() => setShowAdvancedFilter(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>高级筛选</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+            {advancedFilters.map((filter) => (
+              <Box key={String(filter.key)} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ fontSize: "0.875rem", fontWeight: 500, color: "text.primary" }}>
+                  {filter.label}
+                </Box>
+                {filter.type === "select" && filter.options ? (
+                  <Box
+                    component="select"
+                    value={filter.value || ""}
+                    onChange={(e) => filter.onChange?.(e.target.value)}
+                    sx={{
+                      width: "100%",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: 1,
+                      px: 1.5,
+                      py: 1,
+                      fontSize: "0.875rem",
+                      outline: "none",
+                      "&:focus": { borderColor: "primary.main" },
+                    }}
+                  >
+                    <option value="">全部</option>
+                    {filter.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Box>
+                ) : (
+                  <TextField
+                    type={filter.type}
+                    size="small"
+                    value={filter.value || ""}
+                    onChange={(e) => filter.onChange?.(e.target.value)}
+                    sx={{ width: "100%" }}
+                  />
+                )}
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  advancedFilters.forEach((f) => f.onChange?.(""));
+                  setShowAdvancedFilter(false);
+                }}
+              >
+                重置
+              </Button>
+              <Button variant="contained" onClick={() => setShowAdvancedFilter(false)}>
+                应用筛选
+              </Button>
+            </Box>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </Box>
   );
 }

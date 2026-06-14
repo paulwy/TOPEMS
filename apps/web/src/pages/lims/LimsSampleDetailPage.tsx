@@ -16,18 +16,20 @@ import {
   Plus,
   BarChart3,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { limsApi } from "../../api/lims";
@@ -128,21 +130,22 @@ const LimsSampleDetailPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { color: string; label: string }> = {
-      pending: { color: "bg-yellow-100 text-yellow-700", label: "待测试" },
-      待测试: { color: "bg-yellow-100 text-yellow-700", label: "待测试" },
-      in_progress: { color: "bg-blue-100 text-blue-700", label: "测试中" },
-      测试中: { color: "bg-blue-100 text-blue-700", label: "测试中" },
-      completed: { color: "bg-green-100 text-green-700", label: "已完成" },
-      已完成: { color: "bg-green-100 text-green-700", label: "已完成" },
-      cancelled: { color: "bg-red-100 text-red-700", label: "已终止" },
-      已终止: { color: "bg-red-100 text-red-700", label: "已终止" },
+    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
+      pending: { bg: '#fef9c3', color: '#ca8a04', label: "待测试" },
+      待测试: { bg: '#fef9c3', color: '#ca8a04', label: "待测试" },
+      in_progress: { bg: '#dbeafe', color: '#2563eb', label: "测试中" },
+      测试中: { bg: '#dbeafe', color: '#2563eb', label: "测试中" },
+      completed: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
+      已完成: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
+      cancelled: { bg: '#fee2e2', color: '#dc2626', label: "已终止" },
+      已终止: { bg: '#fee2e2', color: '#dc2626', label: "已终止" },
     };
     const item = statusMap[status] || {
-      color: "bg-gray-100 text-gray-700",
+      bg: '#f3f4f6',
+      color: '#4b5563',
       label: status,
     };
-    return <Badge className={item.color}>{item.label}</Badge>;
+    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
   };
 
   const handleEdit = async () => {
@@ -435,25 +438,36 @@ const LimsSampleDetailPage: React.FC = () => {
                               {task.sample_name || "样品检验"}
                             </p>
                           </div>
-                          <Badge
-                            className={
+                          <Chip
+                            label={
                               task.status === "completed" ||
                               task.status === "已完成"
-                                ? "bg-green-100 text-green-700"
+                                ? "已完成"
                                 : task.status === "in_progress" ||
                                     task.status === "进行中"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-yellow-100 text-yellow-700"
+                                  ? "进行中"
+                                  : "待处理"
                             }
-                          >
-                            {task.status === "completed" ||
-                            task.status === "已完成"
-                              ? "已完成"
-                              : task.status === "in_progress" ||
-                                  task.status === "进行中"
-                                ? "进行中"
-                                : "待处理"}
-                          </Badge>
+                            size="small"
+                            sx={{
+                              backgroundColor:
+                                task.status === "completed" ||
+                                task.status === "已完成"
+                                  ? '#dcfce7'
+                                  : task.status === "in_progress" ||
+                                      task.status === "进行中"
+                                    ? '#dbeafe'
+                                    : '#fef9c3',
+                              color:
+                                task.status === "completed" ||
+                                task.status === "已完成"
+                                  ? '#16a34a'
+                                  : task.status === "in_progress" ||
+                                      task.status === "进行中"
+                                    ? '#2563eb'
+                                    : '#ca8a04',
+                            }}
+                          />
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
                           <span className="flex items-center gap-1">
@@ -606,24 +620,24 @@ const LimsSampleDetailPage: React.FC = () => {
         </div>
       </motion.main>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>编辑样品信息</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>样品名称 *</Label>
-              <Input
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>编辑样品信息</DialogTitle>
+        <DialogContent>
+          <Box className="space-y-4" sx={{ mt: 1 }}>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>样品名称 *</Box>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.name}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
                 placeholder="请输入样品名称"
               />
-            </div>
-            <div>
-              <Label>描述</Label>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>描述</Box>
               <textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -633,75 +647,66 @@ const LimsSampleDetailPage: React.FC = () => {
                   }))
                 }
                 placeholder="请输入样品描述"
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
               />
-            </div>
-            <div>
-              <Label>状态</Label>
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>状态</Box>
               <select
                 value={formData.status}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, status: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
               >
                 <option value="待测试">待测试</option>
                 <option value="测试中">测试中</option>
                 <option value="已完成">已完成</option>
                 <option value="已终止">已终止</option>
               </select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleEdit}>保存</Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowEditModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleEdit}>保存</Button>
+        </DialogActions>
       </Dialog>
 
-      <Dialog open={showRecordModal} onOpenChange={setShowRecordModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>添加检验记录</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>检验步骤</Label>
-              <Input placeholder="请输入检验步骤名称" />
-            </div>
-            <div>
-              <Label>检验员</Label>
-              <Input placeholder="请输入检验员姓名" />
-            </div>
-            <div>
-              <Label>检验结果</Label>
+      <Dialog open={showRecordModal} onClose={() => setShowRecordModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>添加检验记录</DialogTitle>
+        <DialogContent>
+          <Box className="space-y-4" sx={{ mt: 1 }}>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验步骤</Box>
+              <TextField size="small" fullWidth placeholder="请输入检验步骤名称" />
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验员</Box>
+              <TextField size="small" fullWidth placeholder="请输入检验员姓名" />
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验结果</Box>
               <textarea
                 placeholder="请输入检验结果"
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24"
+                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
               />
-            </div>
-            <div>
-              <Label>结论</Label>
-              <select className="w-full px-3 py-2 border border-slate-200 rounded-lg">
+            </Box>
+            <Box>
+              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>结论</Box>
+              <select style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <option value="">请选择结论</option>
                 <option value="合格">合格</option>
                 <option value="不合格">不合格</option>
                 <option value="待定">待定</option>
               </select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowRecordModal(false)}
-            >
-              取消
-            </Button>
-            <Button onClick={() => setShowRecordModal(false)}>保存</Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowRecordModal(false)}>取消</Button>
+          <Button variant="contained" onClick={() => setShowRecordModal(false)}>保存</Button>
+        </DialogActions>
       </Dialog>
     </motion.div>
   );

@@ -461,8 +461,8 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: result.created_at.unwrap(),
+            updated_at: result.updated_at.unwrap(),
         })
     }
 
@@ -652,8 +652,8 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: result.created_at.unwrap(),
+            updated_at: result.updated_at.unwrap(),
         })
     }
 
@@ -694,8 +694,8 @@ impl TemplateService {
             category: result.category,
             tags: result.tags,
             status: result.status,
-            created_at: result.created_at.unwrap_or_else(OffsetDateTime::now_utc),
-            updated_at: result.updated_at.unwrap_or_else(OffsetDateTime::now_utc),
+            created_at: result.created_at.unwrap(),
+            updated_at: result.updated_at.unwrap(),
         })
     }
 

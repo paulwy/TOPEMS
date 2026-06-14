@@ -2,23 +2,19 @@ import React, { useState, useEffect } from "react";
 import { employeeApi, type Employee } from "../../api/hrm";
 import { useAppStore } from "../../store";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+} from "@mui/material";
 
 interface EditEmployeeFormProps {
   open: boolean;
@@ -73,158 +69,169 @@ const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>编辑员工</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleEditEmployee}>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit_employee_no">工号 *</Label>
-                <Input
-                  id="edit_employee_no"
-                  type="text"
-                  required
-                  value={selectedEmployee.employee_no}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      employee_no: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit_name">姓名 *</Label>
-                <Input
-                  id="edit_name"
-                  type="text"
-                  required
-                  value={selectedEmployee.name}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      name: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>编辑员工</DialogTitle>
+      <DialogContent>
+        <Box component="form" onSubmit={handleEditEmployee} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <TextField
+              id="edit_employee_no"
+              label="工号 *"
+              type="text"
+              required
+              value={selectedEmployee.employee_no}
+              onChange={(e) =>
+                setSelectedEmployee({
+                  ...selectedEmployee,
+                  employee_no: e.target.value,
+                })
+              }
+              size="small"
+              fullWidth
+            />
+            <TextField
+              id="edit_name"
+              label="姓名 *"
+              type="text"
+              required
+              value={selectedEmployee.name}
+              onChange={(e) =>
+                setSelectedEmployee({
+                  ...selectedEmployee,
+                  name: e.target.value,
+                })
+              }
+              size="small"
+              fullWidth
+            />
+          </Box>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit_gender">性别</Label>
-                <Select
-                  value={selectedEmployee.gender || ""}
-                  onValueChange={(value) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      gender: value,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">请选择</SelectItem>
-                    <SelectItem value="male">男</SelectItem>
-                    <SelectItem value="female">女</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit_position">职位</Label>
-                <Input
-                  id="edit_position"
-                  type="text"
-                  value={selectedEmployee.position || ""}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      position: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel id="edit_gender-label">性别</InputLabel>
+              <Select
+                labelId="edit_gender-label"
+                id="edit_gender"
+                value={selectedEmployee.gender || ""}
+                label="性别"
+                onChange={(e) =>
+                  setSelectedEmployee({
+                    ...selectedEmployee,
+                    gender: e.target.value,
+                  })
+                }
+              >
+                <MenuItem value="none">请选择</MenuItem>
+                <MenuItem value="male">男</MenuItem>
+                <MenuItem value="female">女</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              id="edit_position"
+              label="职位"
+              type="text"
+              value={selectedEmployee.position || ""}
+              onChange={(e) =>
+                setSelectedEmployee({
+                  ...selectedEmployee,
+                  position: e.target.value,
+                })
+              }
+              size="small"
+              fullWidth
+            />
+          </Box>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit_birth_date">出生日期</Label>
-                <Input
-                  id="edit_birth_date"
-                  type="date"
-                  value={selectedEmployee.birth_date || ""}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      birth_date: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit_hire_date">入职日期</Label>
-                <Input
-                  id="edit_hire_date"
-                  type="date"
-                  value={selectedEmployee.hire_date || ""}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      hire_date: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <TextField
+              id="edit_birth_date"
+              label="出生日期"
+              type="date"
+              value={selectedEmployee.birth_date || ""}
+              onChange={(e) =>
+                setSelectedEmployee({
+                  ...selectedEmployee,
+                  birth_date: e.target.value,
+                })
+              }
+              size="small"
+              fullWidth
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+            />
+            <TextField
+              id="edit_hire_date"
+              label="入职日期"
+              type="date"
+              value={selectedEmployee.hire_date || ""}
+              onChange={(e) =>
+                setSelectedEmployee({
+                  ...selectedEmployee,
+                  hire_date: e.target.value,
+                })
+              }
+              size="small"
+              fullWidth
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+            />
+          </Box>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit_email">邮箱</Label>
-                <Input
-                  id="edit_email"
-                  type="email"
-                  value={selectedEmployee.email || ""}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      email: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit_phone">电话</Label>
-                <Input
-                  id="edit_phone"
-                  type="text"
-                  value={selectedEmployee.phone || ""}
-                  onChange={(e) =>
-                    setSelectedEmployee({
-                      ...selectedEmployee,
-                      phone: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          </div>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <TextField
+              id="edit_email"
+              label="邮箱"
+              type="email"
+              value={selectedEmployee.email || ""}
+              onChange={(e) =>
+                setSelectedEmployee({
+                  ...selectedEmployee,
+                  email: e.target.value,
+                })
+              }
+              size="small"
+              fullWidth
+            />
+            <TextField
+              id="edit_phone"
+              label="电话"
+              type="text"
+              value={selectedEmployee.phone || ""}
+              onChange={(e) =>
+                setSelectedEmployee({
+                  ...selectedEmployee,
+                  phone: e.target.value,
+                })
+              }
+              size="small"
+              fullWidth
+            />
+          </Box>
 
-          <DialogFooter className="mt-6">
+          <DialogActions sx={{ px: 0, mt: 2 }}>
             <Button
               type="button"
-              variant="secondary"
+              variant="outlined"
               onClick={() => onOpenChange(false)}
             >
               取消
             </Button>
-            <Button type="submit">保存</Button>
-          </DialogFooter>
-        </form>
+            <Button type="submit" variant="contained">
+              保存
+            </Button>
+          </DialogActions>
+        </Box>
       </DialogContent>
     </Dialog>
   );

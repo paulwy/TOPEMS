@@ -1,30 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import FormLabel from "@mui/material/FormLabel";
+import FormHelperText from "@mui/material/FormHelperText";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Checkbox from "@mui/material/Checkbox";
+import Box from "@mui/material/Box";
 import { useAppStore } from "@/store";
 import { isDevelopment } from "../config/runtime";
 
@@ -108,144 +98,179 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
   }
 
   return (
-    <div
-      className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 ${className}`}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
+      }}
+      className={className}
     >
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-blue-600">
-            TOPEMS
-          </CardTitle>
-          <CardDescription>企业数字化平台</CardDescription>
-          <h2 className="text-2xl font-semibold pt-4">
-            {isRegister ? "用户注册" : "用户登录"}
-          </h2>
-        </CardHeader>
+      <Card sx={{ width: "100%", maxWidth: 448, mx: 2 }}>
+        <CardHeader
+          sx={{ textAlign: "center", pt: 4 }}
+          title={
+            <Box>
+              <Box sx={{ fontSize: "1.875rem", fontWeight: "bold", color: "primary.main", mb: 1 }}>
+                TOPEMS
+              </Box>
+              <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mb: 2 }}>
+                企业数字化平台
+              </Box>
+              <Box sx={{ fontSize: "1.5rem", fontWeight: 600, pt: 2 }}>
+                {isRegister ? "用户注册" : "用户登录"}
+              </Box>
+            </Box>
+          }
+        />
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* 用户名 */}
-              <FormField
-                control={form.control}
+          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            {/* 用户名 */}
+            <Controller
+              name="username"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <FormControl error={!!fieldState.error}>
+                  <FormLabel>用户名</FormLabel>
+                  <TextField
+                    {...field}
+                    placeholder="请输入用户名"
+                    size="small"
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message || "字母或数字组合，最多20位"}
+                  />
+                </FormControl>
+              )}
+            />
+
+            {/* 邮箱 (仅注册时显示) */}
+            {isRegister && (
+              <Controller
                 name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>用户名</FormLabel>
-                    <FormControl>
-                      <Input placeholder="请输入用户名" {...field} />
-                    </FormControl>
-                    <FormDescription>字母或数字组合，最多20位</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* 邮箱 (仅注册时显示) */}
-              {isRegister && (
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>邮箱</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="请输入邮箱"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {/* 密码 */}
-              <FormField
                 control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>密码</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="请输入密码"
-                          {...field}
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field, fieldState }) => (
+                  <FormControl error={!!fieldState.error}>
+                    <FormLabel>邮箱</FormLabel>
+                    <TextField
+                      {...field}
+                      type="email"
+                      placeholder="请输入邮箱"
+                      size="small"
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
+                    />
+                  </FormControl>
                 )}
               />
+            )}
 
-              {/* 记住我 */}
-              {!isRegister && (
-                <FormField
-                  control={form.control}
-                  name="rememberMe"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>记住我</FormLabel>
-                        <FormDescription>
-                          在本设备上保持登录状态
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+            {/* 密码 */}
+            <Controller
+              name="password"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <FormControl error={!!fieldState.error}>
+                  <FormLabel>密码</FormLabel>
+                  <Box sx={{ position: "relative" }}>
+                    <TextField
+                      {...field}
+                      type={showPassword ? "text" : "password"}
+                      placeholder="请输入密码"
+                      size="small"
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
+                      sx={{ width: "100%", pr: 5 }}
+                    />
+                    <Box
+                      component="button"
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      sx={{
+                        position: "absolute",
+                        right: 12,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "text.secondary",
+                        "&:hover": { color: "text.primary" },
+                      }}
+                    >
+                      {showPassword ? <EyeOff style={{ width: 20, height: 20 }} /> : <Eye style={{ width: 20, height: 20 }} />}
+                    </Box>
+                  </Box>
+                </FormControl>
               )}
+            />
 
-              {/* 提交按钮 */}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "处理中..." : isRegister ? "注册" : "登录"}
-              </Button>
-            </form>
-          </Form>
+            {/* 记住我 */}
+            {!isRegister && (
+              <Controller
+                name="rememberMe"
+                control={form.control}
+                render={({ field }) => (
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                    <Checkbox
+                      checked={field.value || false}
+                      onChange={field.onChange}
+                      size="small"
+                    />
+                    <Box>
+                      <FormLabel sx={{ fontSize: "0.875rem", cursor: "pointer" }}>
+                        记住我
+                      </FormLabel>
+                      <FormHelperText sx={{ m: 0 }}>
+                        在本设备上保持登录状态
+                      </FormHelperText>
+                    </Box>
+                  </Box>
+                )}
+              />
+            )}
+
+            {/* 提交按钮 */}
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              sx={{ width: "100%" }}
+            >
+              {loading ? "处理中..." : isRegister ? "注册" : "登录"}
+            </Button>
+          </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <div className="text-center">
-            <button
+        <Box sx={{ pb: 4, pt: 2, px: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ textAlign: "center" }}>
+            <Box
+              component="button"
               type="button"
               onClick={() => setIsRegister(!isRegister)}
-              className="text-blue-600 hover:text-blue-700 text-sm"
+              sx={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "primary.main",
+                fontSize: "0.875rem",
+                "&:hover": { textDecoration: "underline" },
+              }}
             >
               {isRegister ? "已有账号？立即登录" : "没有账号？立即注册"}
-            </button>
-          </div>
+            </Box>
+          </Box>
 
           {/* 演示账号 */}
           {isDevelopment() && (
-            <div className="pt-4 border-t border-gray-200 w-full">
-              <p className="text-xs text-gray-500 text-center">
+            <Box sx={{ pt: 2, borderTop: 1, borderColor: "divider", width: "100%" }}>
+              <Box sx={{ fontSize: "0.75rem", color: "text.secondary", textAlign: "center" }}>
                 演示账号: admin / admin123 (管理员) | user / user123 (普通员工)
-              </p>
-            </div>
+              </Box>
+            </Box>
           )}
-        </CardFooter>
+        </Box>
       </Card>
-    </div>
+    </Box>
   );
 }

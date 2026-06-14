@@ -8,16 +8,17 @@ import {
 } from "../ai";
 import type { CompletionItem } from "../../types/ai";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  MenuItem,
+  Box,
+  InputAdornment,
+} from "@mui/material";
+import { Send } from "lucide-react";
 
 interface EmployeeFormProps {
   formData: Partial<Employee>;
@@ -74,142 +75,141 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
   return (
     <>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor={`${mode}-name`}>员工姓名 *</Label>
-            <Input
-              id={`${mode}-name`}
-              type="text"
-              required
-              value={(formData as Employee)?.name || ""}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder="请输入员工姓名"
-              aria-required={true}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${mode}-number`}>工号</Label>
-            <Input
-              id={`${mode}-number`}
-              type="text"
-              value={(formData as Employee)?.employee_no || ""}
-              onChange={(e) =>
-                handleInputChange("employee_no", e.target.value)
-              }
-              placeholder="请输入工号"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor={`${mode}-email`}>邮箱</Label>
-            <Input
-              id={`${mode}-email`}
-              type="email"
-              value={(formData as Employee)?.email || ""}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              placeholder="请输入邮箱"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${mode}-phone`}>电话</Label>
-            <Input
-              id={`${mode}-phone`}
-              type="text"
-              value={(formData as Employee)?.phone || ""}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="请输入电话"
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${mode}-department`}>所属部门</Label>
+      <Box component="form" onSubmit={onSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <TextField
+            id={`${mode}-name`}
+            label="员工姓名 *"
+            type="text"
+            required
+            value={(formData as Employee)?.name || ""}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            placeholder="请输入员工姓名"
+            size="small"
+            fullWidth
+          />
+          <TextField
+            id={`${mode}-number`}
+            label="工号"
+            type="text"
+            value={(formData as Employee)?.employee_no || ""}
+            onChange={(e) =>
+              handleInputChange("employee_no", e.target.value)
+            }
+            placeholder="请输入工号"
+            size="small"
+            fullWidth
+          />
+        </Box>
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <TextField
+            id={`${mode}-email`}
+            label="邮箱"
+            type="email"
+            value={(formData as Employee)?.email || ""}
+            onChange={(e) => handleInputChange("email", e.target.value)}
+            placeholder="请输入邮箱"
+            size="small"
+            fullWidth
+          />
+          <TextField
+            id={`${mode}-phone`}
+            label="电话"
+            type="text"
+            value={(formData as Employee)?.phone || ""}
+            onChange={(e) => handleInputChange("phone", e.target.value)}
+            placeholder="请输入电话"
+            size="small"
+            fullWidth
+          />
+        </Box>
+        <FormControl size="small" fullWidth>
+          <InputLabel id={`${mode}-department-label`}>所属部门</InputLabel>
           <Select
+            labelId={`${mode}-department-label`}
+            id={`${mode}-department`}
             value={(formData as Employee)?.department_id || "none"}
-            onValueChange={(value) =>
-              handleInputChange("department_id", value === "none" ? "" : value)
+            label="所属部门"
+            onChange={(e) =>
+              handleInputChange("department_id", e.target.value === "none" ? "" : e.target.value)
             }
           >
-            <SelectTrigger>
-              <SelectValue placeholder="请选择部门" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">无</SelectItem>
-              {departments.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            <MenuItem value="none">无</MenuItem>
+            {departments.map((d) => (
+              <MenuItem key={d.id} value={d.id}>
+                {d.name}
+              </MenuItem>
+            ))}
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${mode}-position`}>职位</Label>
-          <Input
-            id={`${mode}-position`}
-            type="text"
-            value={(formData as Employee)?.position || ""}
-            onChange={(e) => handleInputChange("position", e.target.value)}
-            placeholder="请输入职位"
-          />
-        </div>
+        </FormControl>
+        <TextField
+          id={`${mode}-position`}
+          label="职位"
+          type="text"
+          value={(formData as Employee)?.position || ""}
+          onChange={(e) => handleInputChange("position", e.target.value)}
+          placeholder="请输入职位"
+          size="small"
+          fullWidth
+        />
         {mode === "create" && (
-          <div className="space-y-2">
-            <Label htmlFor={`${mode}-hire-date`}>入职日期</Label>
-            <Input
-              id={`${mode}-hire-date`}
-              type="date"
-              value={(formData as Employee)?.hire_date || ""}
-              onChange={(e) => handleInputChange("hire_date", e.target.value)}
-            />
-          </div>
+          <TextField
+            id={`${mode}-hire-date`}
+            label="入职日期"
+            type="date"
+            value={(formData as Employee)?.hire_date || ""}
+            onChange={(e) => handleInputChange("hire_date", e.target.value)}
+            size="small"
+            fullWidth
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+          />
         )}
-        <div className="space-y-2">
-          <Label htmlFor={`${mode}-status`}>状态</Label>
+        <FormControl size="small" fullWidth>
+          <InputLabel id={`${mode}-status-label`}>状态</InputLabel>
           <Select
+            labelId={`${mode}-status-label`}
+            id={`${mode}-status`}
             value={(formData as Employee)?.status || "active"}
-            onValueChange={(value) => handleInputChange("status", value)}
+            label="状态"
+            onChange={(e) => handleInputChange("status", e.target.value)}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="请选择" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">在职</SelectItem>
-              <SelectItem value="inactive">离职</SelectItem>
-            </SelectContent>
+            <MenuItem value="active">在职</MenuItem>
+            <MenuItem value="inactive">离职</MenuItem>
           </Select>
-        </div>
-        <div className="flex items-center justify-between">
-          <Button type="button" variant="secondary" onClick={onCancel}>
+        </FormControl>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Button type="button" variant="outlined" onClick={onCancel}>
             取消
           </Button>
-          <div className="flex items-center gap-2">
+          <Box sx={{ display: "flex", gap: 1 }}>
             <AIHelperButton
               type="generate"
               onClick={() => setShowAICodeGenerator(true)}
-              size="sm"
               variant="secondary"
               label="生成工号"
             />
             <AIHelperButton
               type="complete"
               onClick={() => setShowAIDataCompleter(true)}
-              size="sm"
               variant="secondary"
               label="智能补全"
             />
             <AIHelperButton
               type="validate"
               onClick={() => setShowAIFormValidator(true)}
-              size="sm"
               variant="secondary"
               label="AI 校验"
             />
-            <Button type="submit">{mode === "create" ? "创建" : "保存"}</Button>
-          </div>
-        </div>
-      </form>
+            <Button type="submit" variant="contained">
+              {mode === "create" ? "创建" : "保存"}
+            </Button>
+          </Box>
+        </Box>
+      </Box>
 
       <AICodeGenerator
         isOpen={showAICodeGenerator}

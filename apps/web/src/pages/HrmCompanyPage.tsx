@@ -1,3 +1,24 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  InputAdornment,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  Tooltip,
+  Box,
+  Stack,
+  IconButton,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Building,
@@ -29,49 +50,6 @@ import { useAppStore } from "../store";
 import { HrmLayout } from "../components/HrmLayout";
 import type { TreeNode } from "../components/TreeView";
 import TreeView from "../components/TreeView";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 
 const HrmCompanyPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -310,23 +288,17 @@ const HrmCompanyPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, "default" | "secondary" | "outline"> = {
-      active: "default",
-      inactive: "secondary",
-      archived: "outline",
-    };
     const labels: Record<string, string> = {
       active: "启用",
       inactive: "禁用",
       archived: "归档",
     };
     return (
-      <Badge
-        variant={colors[status] || "outline"}
-        className="px-2 py-0.5 text-xs"
-      >
-        {labels[status] || status}
-      </Badge>
+      <Chip
+        size="small"
+        variant="outlined"
+        label={labels[status] || status}
+      />
     );
   };
 
@@ -343,6 +315,60 @@ const HrmCompanyPage: React.FC = () => {
 
   const pages = Math.ceil(total / pageSize);
 
+  const renderPagination = () => {
+    if (pages <= 1) return null;
+
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">每页显示</Typography>
+          <FormControl size="small" sx={{ minWidth: 80 }}>
+            <MuiSelect
+              value={String(pageSize)}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={20}>20</MenuItem>
+              <MenuItem value={50}>50</MenuItem>
+            </MuiSelect>
+          </FormControl>
+          <Typography variant="body2" color="text.secondary">条</Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            上一页
+          </Button>
+          {Array.from({ length: pages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={page}
+              size="small"
+              variant={currentPage === page ? "contained" : "outlined"}
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </Button>
+          ))}
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={currentPage === pages}
+            onClick={() => setCurrentPage((p) => Math.min(pages, p + 1))}
+          >
+            下一页
+          </Button>
+        </Stack>
+      </Box>
+    );
+  };
+
   return (
     <HrmLayout
       title="公司管理"
@@ -350,62 +376,60 @@ const HrmCompanyPage: React.FC = () => {
       showSidebar={false}
     >
       {showDetailView && currentCompany ? (
-        <div className="space-y-6">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  onClick={closeDetailView}
-                  className="p-2 -ml-2"
-                >
+            <CardHeader
+              sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", pb: 1 }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <IconButton onClick={closeDetailView} size="small">
                   <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <div>
-                  <CardTitle className="text-2xl">
+                </IconButton>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-2xl">
                     {currentCompany.name}
-                  </CardTitle>
+                  </Typography>
                   {currentCompany.short_name && (
-                    <CardDescription>
+                    <Typography variant="body2" sx={{ color: "grey.500" }}>
                       {currentCompany.short_name}
-                    </CardDescription>
+                    </Typography>
                   )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {getStatusBadge(currentCompany.status)}
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="outlined"
+                  size="small"
                   onClick={() => handleEdit(currentCompany)}
+                  startIcon={<Edit className="w-4 h-4" />}
                 >
-                  <Edit className="w-4 h-4 mr-2" />
                   编辑
                 </Button>
-              </div>
+              </Box>
             </CardHeader>
-            <CardContent className="pt-4">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                  <Card className="mb-4">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base">
+            <CardContent sx={{ pt: 2 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 2fr" }, gap: 3 }}>
+                <Box>
+                  <Card sx={{ mb: 2 }}>
+                    <CardHeader sx={{ pb: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }} className="text-base">
                         <Folder className="w-5 h-5 text-amber-500" />
                         组织架构
-                      </CardTitle>
+                      </Typography>
                     </CardHeader>
                     <CardContent>
                       {loading ? (
-                        <div className="p-8 text-center">
-                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                          <p className="mt-2 text-gray-500 text-sm">
+                        <Box sx={{ p: 4, textAlign: "center" }}>
+                          <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                          <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
                             加载中...
-                          </p>
-                        </div>
+                          </Typography>
+                        </Box>
                       ) : treeData.length === 0 ? (
-                        <div className="p-6 text-center text-slate-500 text-sm">
+                        <Box sx={{ p: 3, textAlign: "center", color: "text.secondary" }}>
                           暂无部门和员工数据
-                        </div>
+                        </Box>
                       ) : (
                         <TreeView data={treeData} />
                       )}
@@ -413,823 +437,606 @@ const HrmCompanyPage: React.FC = () => {
                   </Card>
 
                   <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base">
+                    <CardHeader sx={{ pb: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }} className="text-base">
                         <FileText className="w-5 h-5 text-slate-500" />
                         公司信息
-                      </CardTitle>
+                      </Typography>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-xs text-slate-500">
-                            公司名称
-                          </Label>
-                          <p className="font-medium text-sm mt-0.5">
+                    <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                        <Box>
+                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>公司名称</InputLabel>
+                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
                             {currentCompany.name}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-slate-500">简称</Label>
-                          <p className="font-medium text-sm mt-0.5">
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>简称</InputLabel>
+                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
                             {currentCompany.short_name || "-"}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-slate-500">
-                            注册号
-                          </Label>
-                          <p className="font-medium text-sm mt-0.5">
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>注册号</InputLabel>
+                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
                             {currentCompany.registration_number || "-"}
-                          </p>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-slate-500">税号</Label>
-                          <p className="font-medium text-sm mt-0.5">
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>税号</InputLabel>
+                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
                             {currentCompany.tax_number || "-"}
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-slate-500">地址</Label>
-                        <p className="font-medium text-sm mt-0.5">
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box>
+                        <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>地址</InputLabel>
+                        <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
                           {currentCompany.address || "-"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm">
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
                         {currentCompany.contact_phone && (
-                          <div className="flex items-center gap-1 text-slate-600">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
                             <Phone className="w-4 h-4" />
-                            <span>{currentCompany.contact_phone}</span>
-                          </div>
+                            <Typography variant="body2">{currentCompany.contact_phone}</Typography>
+                          </Box>
                         )}
                         {currentCompany.email && (
-                          <div className="flex items-center gap-1 text-slate-600">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
                             <Mail className="w-4 h-4" />
-                            <span>{currentCompany.email}</span>
-                          </div>
+                            <Typography variant="body2">{currentCompany.email}</Typography>
+                          </Box>
                         )}
                         {currentCompany.website && (
-                          <div className="flex items-center gap-1 text-slate-600">
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
                             <Globe className="w-4 h-4" />
-                            <span>{currentCompany.website}</span>
-                          </div>
+                            <Typography variant="body2">{currentCompany.website}</Typography>
+                          </Box>
                         )}
-                      </div>
+                      </Box>
                     </CardContent>
                   </Card>
-                </div>
+                </Box>
 
-                <div className="lg:col-span-2">
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-indigo-600">部门数量</p>
-                            <p className="text-2xl font-bold text-indigo-700">
+                <Box>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 3 }}>
+                    <Card sx={{ background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)", border: "1px solid #a5b4fc" }}>
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box>
+                            <Typography variant="body2" sx={{ color: "primary.main" }}>部门数量</Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 700, color: "primary.dark" }}>
                               {departments.length}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-white/60 rounded-full shadow-sm">
-                            <Folder className="w-6 h-6 text-indigo-600" />
-                          </div>
-                        </div>
+                            </Typography>
+                          </Box>
+                          <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: "50%", boxShadow: 1 }}>
+                            <Folder className="w-6 h-6 text-primary.main" />
+                          </Box>
+                        </Box>
                       </CardContent>
                     </Card>
-                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-green-600">员工数量</p>
-                            <p className="text-2xl font-bold text-green-700">
+                    <Card sx={{ background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)", border: "1px solid #6ee7b7" }}>
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box>
+                            <Typography variant="body2" sx={{ color: "success.main" }}>员工数量</Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 700, color: "success.dark" }}>
                               {employees.length}
-                            </p>
-                          </div>
-                          <div className="p-3 bg-white/60 rounded-full shadow-sm">
-                            <Users className="w-6 h-6 text-green-600" />
-                          </div>
-                        </div>
+                            </Typography>
+                          </Box>
+                          <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: "50%", boxShadow: 1 }}>
+                            <Users className="w-6 h-6 text-success.main" />
+                          </Box>
+                        </Box>
                       </CardContent>
                     </Card>
-                  </div>
+                  </Box>
 
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
                         <Users className="w-5 h-5 text-blue-500" />
                         部门列表
-                      </CardTitle>
+                      </Typography>
                     </CardHeader>
                     <CardContent>
                       {departments.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500">
-                          <Folder className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                          <p>暂无部门数据</p>
-                        </div>
+                        <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
+                          <Folder className="w-12 h-12 text-grey-400 mx-auto mb-2" />
+                          <Typography>暂无部门数据</Typography>
+                        </Box>
                       ) : (
-                        <div className="space-y-3">
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                           {departments.map((dept) => (
-                            <div
+                            <Box
                               key={dept.id}
-                              className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                              sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "grey.50", borderRadius: 1, "&:hover": { bgcolor: "grey.100" } }}
                             >
-                              <div>
-                                <p className="font-medium text-slate-900">
+                              <Box>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
                                   {dept.name}
-                                </p>
+                                </Typography>
                                 {dept.code && (
-                                  <p className="text-xs text-slate-500">
+                                  <Typography variant="caption" color="text.secondary">
                                     编码: {dept.code}
-                                  </p>
+                                  </Typography>
                                 )}
-                              </div>
-                              <Badge
-                                variant={
-                                  dept.status === "active"
-                                    ? "default"
-                                    : "secondary"
-                                }
-                                className="text-xs"
-                              >
-                                {dept.status === "active" ? "启用" : "禁用"}
-                              </Badge>
-                            </div>
+                              </Box>
+                              <Chip
+                                size="small"
+                                variant={dept.status === "active" ? "filled" : "outlined"}
+                                label={dept.status === "active" ? "启用" : "禁用"}
+                              />
+                            </Box>
                           ))}
-                        </div>
+                        </Box>
                       )}
                     </CardContent>
                   </Card>
-                </div>
-              </div>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
       ) : (
-        <div className="space-y-6">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">公司列表</CardTitle>
-                <CardDescription>共 {total} 家公司</CardDescription>
-              </div>
-              <Button onClick={handleAdd} className="gap-2">
-                <Plus className="w-4 h-4" />
+            <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">公司列表</Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>共 {total} 家公司</Typography>
+              </Box>
+              <Button onClick={handleAdd} startIcon={<Plus className="w-4 h-4" />}>
                 新增公司
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex-1 min-w-[200px] relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="搜索公司名称、编码或邮箱"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="pl-9 h-10"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px] h-10">
-                    <SelectValue placeholder="全部状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部状态</SelectItem>
-                    <SelectItem value="active">启用</SelectItem>
-                    <SelectItem value="inactive">禁用</SelectItem>
-                    <SelectItem value="archived">归档</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="secondary"
-                  onClick={handleSearch}
-                  className="h-10"
-                >
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
+                <TextField
+                  size="small"
+                  placeholder="搜索公司名称、编码或邮箱"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search className="w-4 h-4 text-grey-400" />
+                        </InputAdornment>
+                      ),
+                    }
+                  }}
+                  sx={{ flex: 1, minWidth: 200 }}
+                />
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>全部状态</InputLabel>
+                  <MuiSelect
+                    value={statusFilter}
+                    label="全部状态"
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">全部状态</MenuItem>
+                    <MenuItem value="active">启用</MenuItem>
+                    <MenuItem value="inactive">禁用</MenuItem>
+                    <MenuItem value="archived">归档</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+                <Button variant="contained" onClick={handleSearch}>
                   搜索
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleReset}
-                  className="h-10"
-                >
+                <Button variant="outlined" onClick={handleReset}>
                   重置
                 </Button>
-              </div>
+              </Box>
 
               {loading ? (
-                <div className="p-12 text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                  <p className="mt-2 text-gray-500">加载中...</p>
-                </div>
+                <Box sx={{ p: 6, textAlign: "center" }}>
+                  <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <Typography sx={{ mt: 1, color: "text.secondary" }}>加载中...</Typography>
+                </Box>
               ) : companies.length === 0 ? (
-                <div className="p-16 text-center">
-                  <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">暂无公司数据</p>
-                  <Button onClick={handleAdd} className="mt-4 gap-2">
-                    <Plus className="w-5 h-5" />
+                <Box sx={{ p: 8, textAlign: "center" }}>
+                  <Building className="w-16 h-16 text-grey-400 mx-auto mb-3" />
+                  <Typography sx={{ color: "text.secondary" }}>暂无公司数据</Typography>
+                  <Button onClick={handleAdd} sx={{ mt: 2 }} startIcon={<Plus className="w-5 h-5" />}>
                     新增公司
                   </Button>
-                </div>
+                </Box>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" }, gap: 2, mb: 3 }}>
                     {companies.map((company) => (
                       <Card
                         key={company.id}
-                        className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1 group"
+                        sx={{ cursor: "pointer", "&:hover": { boxShadow: 6, transform: "translateY(-2px)" }, transition: "all 0.2s" }}
                         onClick={() => openDetailView(company)}
                       >
-                        <CardContent className="p-5">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                        <CardContent sx={{ p: 2.5 }}>
+                          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                              <Box sx={{ width: 48, height: 48, borderRadius: 2, background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 2 }}>
                                 <Building className="w-6 h-6 text-white" />
-                              </div>
-                              <div>
-                                <h3 className="text-lg font-semibold text-slate-900">
+                              </Box>
+                              <Box>
+                                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem" }}>
                                   {company.name}
-                                </h3>
+                                </Typography>
                                 {company.short_name && (
-                                  <p className="text-sm text-slate-500">
+                                  <Typography variant="body2" color="text.secondary">
                                     {company.short_name}
-                                  </p>
+                                  </Typography>
                                 )}
-                              </div>
-                            </div>
+                              </Box>
+                            </Box>
                             {getStatusBadge(company.status)}
-                          </div>
-                          <div className="space-y-2 text-sm text-slate-600">
+                          </Box>
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.875rem", color: "text.secondary" }}>
                             {company.contact_phone && (
-                              <div className="flex items-center gap-2">
-                                <Phone className="w-3.5 h-3.5 text-slate-400" />
-                                <span>{company.contact_phone}</span>
-                              </div>
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                <Phone className="w-3.5 h-3.5" />
+                                <Typography variant="body2">{company.contact_phone}</Typography>
+                              </Box>
                             )}
                             {company.email && (
-                              <div className="flex items-center gap-2">
-                                <Mail className="w-3.5 h-3.5 text-slate-400" />
-                                <span className="truncate">
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                <Mail className="w-3.5 h-3.5" />
+                                <Typography variant="body2" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                   {company.email}
-                                </span>
-                              </div>
+                                </Typography>
+                              </Box>
                             )}
                             {company.address && (
-                              <div className="flex items-start gap-2">
-                                <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5" />
-                                <span className="truncate">
+                              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.5 }}>
+                                <MapPin className="w-3.5 h-3.5 mt-0.5" />
+                                <Typography variant="body2" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                   {company.address}
-                                </span>
-                              </div>
+                                </Typography>
+                              </Box>
                             )}
-                          </div>
-                          <div className="flex justify-end space-x-2 mt-4 pt-4 border-t border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleView(company);
-                                    }}
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>查看</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEdit(company);
-                                    }}
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>编辑</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDelete(company.id);
-                                    }}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>删除</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
+                          </Box>
+                          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2, pt: 2, borderTop: 1, borderColor: "divider", opacity: 0, transition: "opacity 0.2s", ".MuiCard-root:hover &": { opacity: 1 } }}>
+                            <Tooltip title="查看">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleView(company);
+                                }}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="编辑">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(company);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="删除">
+                              <IconButton
+                                size="small"
+                                sx={{ color: "error.main", "&:hover": { color: "error.dark" } }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(company.id);
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         </CardContent>
                       </Card>
                     ))}
-                  </div>
+                  </Box>
 
-                  {pages > 1 && (
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-slate-600">每页显示</span>
-                        <Select
-                          value={String(pageSize)}
-                          onValueChange={(v) => {
-                            setPageSize(Number(v));
-                            setCurrentPage(1);
-                          }}
-                        >
-                          <SelectTrigger className="w-[80px] h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="10">10</SelectItem>
-                            <SelectItem value="20">20</SelectItem>
-                            <SelectItem value="50">50</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <span className="text-sm text-slate-600">条</span>
-                      </div>
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              onClick={() =>
-                                setCurrentPage((p) => Math.max(1, p - 1))
-                              }
-                              className={
-                                currentPage === 1
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }
-                            />
-                          </PaginationItem>
-                          {Array.from({ length: pages }, (_, i) => i + 1).map(
-                            (page) => (
-                              <PaginationItem
-                                key={page}
-                                className={
-                                  currentPage === page
-                                    ? "bg-blue-600 text-white"
-                                    : ""
-                                }
-                              >
-                                <PaginationLink
-                                  onClick={() => setCurrentPage(page)}
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            ),
-                          )}
-                          <PaginationItem>
-                            <PaginationNext
-                              onClick={() =>
-                                setCurrentPage((p) => Math.min(pages, p + 1))
-                              }
-                              className={
-                                currentPage === pages
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
-                  )}
+                  {renderPagination()}
                 </>
               )}
             </CardContent>
           </Card>
-        </div>
+        </Box>
       )}
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg">新增公司</DialogTitle>
-            <DialogDescription>请填写公司信息</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="create-name" className="text-sm font-medium">
-                公司名称 <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="create-name"
-                type="text"
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>新增公司</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>请填写公司信息</Typography>
+          <Box component="form" onSubmit={handleCreate} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                公司名称 <Typography component="span" sx={{ color: "error.main" }}>*</Typography>
+              </InputLabel>
+              <TextField
+                fullWidth
+                size="small"
                 required
                 value={(formData as Company)?.name || ""}
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="请输入公司名称"
-                className="h-10"
               />
-            </div>
-            <div className="space-y-2">
-              <Label
-                htmlFor="create-short_name"
-                className="text-sm font-medium"
-              >
-                公司简称
-              </Label>
-              <Input
-                id="create-short_name"
-                type="text"
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司简称</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={(formData as Company)?.short_name || ""}
-                onChange={(e) =>
-                  handleInputChange("short_name", e.target.value)
-                }
+                onChange={(e) => handleInputChange("short_name", e.target.value)}
                 placeholder="请输入公司简称"
-                className="h-10"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="create-registration_number"
-                  className="text-sm font-medium"
-                >
-                  注册号
-                </Label>
-                <Input
-                  id="create-registration_number"
-                  type="text"
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>注册号</InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
                   value={(formData as Company)?.registration_number || ""}
-                  onChange={(e) =>
-                    handleInputChange("registration_number", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("registration_number", e.target.value)}
                   placeholder="请输入注册号"
-                  className="h-10"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="create-tax_number"
-                  className="text-sm font-medium"
-                >
-                  税号
-                </Label>
-                <Input
-                  id="create-tax_number"
-                  type="text"
+              </Box>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>税号</InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
                   value={(formData as Company)?.tax_number || ""}
-                  onChange={(e) =>
-                    handleInputChange("tax_number", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("tax_number", e.target.value)}
                   placeholder="请输入税号"
-                  className="h-10"
                 />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-address" className="text-sm font-medium">
-                地址
-              </Label>
-              <Textarea
-                id="create-address"
+              </Box>
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>地址</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={2}
                 value={(formData as Company)?.address || ""}
                 onChange={(e) => handleInputChange("address", e.target.value)}
-                rows={2}
                 placeholder="请输入地址"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="create-contact_phone"
-                  className="text-sm font-medium"
-                >
-                  联系电话
-                </Label>
-                <Input
-                  id="create-contact_phone"
-                  type="text"
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>联系电话</InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
                   value={(formData as Company)?.contact_phone || ""}
-                  onChange={(e) =>
-                    handleInputChange("contact_phone", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("contact_phone", e.target.value)}
                   placeholder="请输入联系电话"
-                  className="h-10"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="create-email" className="text-sm font-medium">
-                  邮箱
-                </Label>
-                <Input
-                  id="create-email"
+              </Box>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>邮箱</InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
                   type="email"
                   value={(formData as Company)?.email || ""}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="请输入邮箱"
-                  className="h-10"
                 />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-website" className="text-sm font-medium">
-                网站
-              </Label>
-              <Input
-                id="create-website"
-                type="text"
+              </Box>
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>网站</InputLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={(formData as Company)?.website || ""}
                 onChange={(e) => handleInputChange("website", e.target.value)}
                 placeholder="请输入网站地址"
-                className="h-10"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="create-status" className="text-sm font-medium">
-                状态
-              </Label>
-              <Select
-                value={(formData as Company)?.status || "active"}
-                onValueChange={(value) => handleInputChange("status", value)}
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="请选择" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">启用</SelectItem>
-                  <SelectItem value="inactive">禁用</SelectItem>
-                  <SelectItem value="archived">归档</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowCreateModal(false)}
-              >
+            </Box>
+            <Box>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+              <FormControl fullWidth size="small">
+                <MuiSelect
+                  value={(formData as Company)?.status || "active"}
+                  onChange={(e) => handleInputChange("status", e.target.value as string)}
+                >
+                  <MenuItem value="active">启用</MenuItem>
+                  <MenuItem value="inactive">禁用</MenuItem>
+                  <MenuItem value="archived">归档</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+              <Button variant="contained" onClick={() => setShowCreateModal(false)}>
                 取消
               </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
-          </form>
+              <Button type="submit" variant="contained" color="primary">
+                创建
+              </Button>
+            </Box>
+          </Box>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg">编辑公司</DialogTitle>
-            <DialogDescription>修改公司信息</DialogDescription>
-          </DialogHeader>
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>编辑公司</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>修改公司信息</Typography>
           {selectedCompany && (
-            <form onSubmit={handleUpdate} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name" className="text-sm font-medium">
-                  公司名称 <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="edit-name"
-                  type="text"
+            <Box component="form" onSubmit={handleUpdate} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  公司名称 <Typography component="span" sx={{ color: "error.main" }}>*</Typography>
+                </InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
                   required
                   value={(formData as Company)?.name || ""}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="h-10"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="edit-short_name"
-                  className="text-sm font-medium"
-                >
-                  公司简称
-                </Label>
-                <Input
-                  id="edit-short_name"
-                  type="text"
+              </Box>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司简称</InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
                   value={(formData as Company)?.short_name || ""}
-                  onChange={(e) =>
-                    handleInputChange("short_name", e.target.value)
-                  }
-                  className="h-10"
+                  onChange={(e) => handleInputChange("short_name", e.target.value)}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-registration_number"
-                    className="text-sm font-medium"
-                  >
-                    注册号
-                  </Label>
-                  <Input
-                    id="edit-registration_number"
-                    type="text"
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                <Box>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>注册号</InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
                     value={(formData as Company)?.registration_number || ""}
-                    onChange={(e) =>
-                      handleInputChange("registration_number", e.target.value)
-                    }
-                    className="h-10"
+                    onChange={(e) => handleInputChange("registration_number", e.target.value)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-tax_number"
-                    className="text-sm font-medium"
-                  >
-                    税号
-                  </Label>
-                  <Input
-                    id="edit-tax_number"
-                    type="text"
+                </Box>
+                <Box>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>税号</InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
                     value={(formData as Company)?.tax_number || ""}
-                    onChange={(e) =>
-                      handleInputChange("tax_number", e.target.value)
-                    }
-                    className="h-10"
+                    onChange={(e) => handleInputChange("tax_number", e.target.value)}
                   />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-address" className="text-sm font-medium">
-                  地址
-                </Label>
-                <Textarea
-                  id="edit-address"
+                </Box>
+              </Box>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>地址</InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
+                  multiline
+                  rows={2}
                   value={(formData as Company)?.address || ""}
                   onChange={(e) => handleInputChange("address", e.target.value)}
-                  rows={2}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-contact_phone"
-                    className="text-sm font-medium"
-                  >
-                    联系电话
-                  </Label>
-                  <Input
-                    id="edit-contact_phone"
-                    type="text"
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                <Box>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>联系电话</InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
                     value={(formData as Company)?.contact_phone || ""}
-                    onChange={(e) =>
-                      handleInputChange("contact_phone", e.target.value)
-                    }
-                    className="h-10"
+                    onChange={(e) => handleInputChange("contact_phone", e.target.value)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email" className="text-sm font-medium">
-                    邮箱
-                  </Label>
-                  <Input
-                    id="edit-email"
+                </Box>
+                <Box>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>邮箱</InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
                     type="email"
                     value={(formData as Company)?.email || ""}
                     onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="h-10"
                   />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-website" className="text-sm font-medium">
-                  网站
-                </Label>
-                <Input
-                  id="edit-website"
-                  type="text"
+                </Box>
+              </Box>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>网站</InputLabel>
+                <TextField
+                  fullWidth
+                  size="small"
                   value={(formData as Company)?.website || ""}
                   onChange={(e) => handleInputChange("website", e.target.value)}
-                  className="h-10"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-status" className="text-sm font-medium">
-                  状态
-                </Label>
-                <Select
-                  value={(formData as Company)?.status || "active"}
-                  onValueChange={(value) => handleInputChange("status", value)}
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="请选择" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">启用</SelectItem>
-                    <SelectItem value="inactive">禁用</SelectItem>
-                    <SelectItem value="archived">归档</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedCompany(null);
-                  }}
-                >
+              </Box>
+              <Box>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+                <FormControl fullWidth size="small">
+                  <MuiSelect
+                    value={(formData as Company)?.status || "active"}
+                    onChange={(e) => handleInputChange("status", e.target.value as string)}
+                  >
+                    <MenuItem value="active">启用</MenuItem>
+                    <MenuItem value="inactive">禁用</MenuItem>
+                    <MenuItem value="archived">归档</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+                <Button variant="contained" onClick={() => { setShowEditModal(false); setSelectedCompany(null); }}>
                   取消
                 </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
-            </form>
+                <Button type="submit" variant="contained" color="primary">
+                  保存
+                </Button>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg">公司详情</DialogTitle>
-            <DialogDescription>查看公司详细信息</DialogDescription>
-          </DialogHeader>
+      <Dialog open={showViewModal} onClose={() => setShowViewModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>公司详情</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>查看公司详细信息</Typography>
           {selectedCompany && (
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-500">公司名称</Label>
-                  <div className="font-medium mt-1 text-slate-900">
-                    {selectedCompany.name}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">公司简称</Label>
-                  <div className="font-medium mt-1 text-slate-900">
-                    {selectedCompany.short_name || "-"}
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-500">注册号</Label>
-                  <div className="font-medium mt-1 text-slate-900">
-                    {selectedCompany.registration_number || "-"}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">税号</Label>
-                  <div className="font-medium mt-1 text-slate-900">
-                    {selectedCompany.tax_number || "-"}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">地址</Label>
-                <div className="font-medium mt-1 text-slate-900">
-                  {selectedCompany.address || "-"}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-gray-500">联系电话</Label>
-                  <div className="font-medium mt-1 text-slate-900">
-                    {selectedCompany.contact_phone || "-"}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm text-gray-500">邮箱</Label>
-                  <div className="font-medium mt-1 text-slate-900">
-                    {selectedCompany.email || "-"}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">网站</Label>
-                <div className="font-medium mt-1 text-slate-900">
-                  {selectedCompany.website || "-"}
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">状态</Label>
-                <div className="mt-1">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                <Box>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>公司名称</InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.name}</Typography>
+                </Box>
+                <Box>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>公司简称</InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.short_name || "-"}</Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                <Box>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>注册号</InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.registration_number || "-"}</Typography>
+                </Box>
+                <Box>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>税号</InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.tax_number || "-"}</Typography>
+                </Box>
+              </Box>
+              <Box>
+                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>地址</InputLabel>
+                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.address || "-"}</Typography>
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                <Box>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>联系电话</InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.contact_phone || "-"}</Typography>
+                </Box>
+                <Box>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>邮箱</InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.email || "-"}</Typography>
+                </Box>
+              </Box>
+              <Box>
+                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>网站</InputLabel>
+                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.website || "-"}</Typography>
+              </Box>
+              <Box>
+                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>状态</InputLabel>
+                <Box sx={{ mt: 0.5 }}>
                   {getStatusBadge(selectedCompany.status)}
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           )}
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowViewModal(false)}
-            >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+            <Button variant="contained" onClick={() => setShowViewModal(false)}>
               关闭
             </Button>
-          </DialogFooter>
+          </Box>
         </DialogContent>
       </Dialog>
     </HrmLayout>

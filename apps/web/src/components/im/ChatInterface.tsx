@@ -20,8 +20,8 @@ import { CreateRoomModal } from "./CreateRoomModal";
 import { NotificationList } from "./NotificationList";
 import { ContactList } from "./ContactList";
 import { ChatSettingsModal } from "./ChatSettingsModal";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 import { useAppStore } from "../../store";
 
 type TabType = "all" | "direct" | "group" | "notifications" | "contacts";
@@ -473,8 +473,8 @@ export const ChatInterface: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Button
-                variant="ghost"
-                size="sm"
+                variant="text"
+                size="small"
                 onClick={() => navigate("/dashboard")}
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -486,8 +486,8 @@ export const ChatInterface: React.FC = () => {
                 className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
               />
               <Button
-                variant="ghost"
-                size="sm"
+                variant="text"
+                size="small"
                 onClick={() => setIsCreateModalOpen(true)}
               >
                 <Plus className="w-5 h-5" />
@@ -498,12 +498,12 @@ export const ChatInterface: React.FC = () => {
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              type="text"
+            <TextField
+              size="small"
               placeholder="搜索聊天..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              sx={{ pl: 5, width: "100%" }}
             />
           </div>
         </div>
@@ -592,15 +592,15 @@ export const ChatInterface: React.FC = () => {
               {/* Message Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  type="text"
+                <TextField
+                  size="small"
                   placeholder="搜索消息..."
                   value={messageSearchQuery}
                   onChange={(e) => {
                     setMessageSearchQuery(e.target.value);
                     searchMessages(e.target.value);
                   }}
-                  className="pl-10"
+                  sx={{ pl: 5, width: "100%" }}
                 />
               </div>
             </div>
@@ -667,7 +667,7 @@ export const ChatInterface: React.FC = () => {
                   : "选择一个聊天室开始聊天"}
               </p>
               {activeTab !== "notifications" && (
-                <Button onClick={() => setIsCreateModalOpen(true)}>
+                <Button onClick={() => setIsCreateModalOpen(true)} variant="contained">
                   创建聊天室
                 </Button>
               )}

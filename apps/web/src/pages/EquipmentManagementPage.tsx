@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
@@ -28,35 +29,23 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  Button,
+  TextField,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
+  MenuItem,
+  Tabs,
+  Tab,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
+  Checkbox,
+} from "@mui/material";
+import { ModeToggle } from "@/components/ModeToggle";
 
 interface EquipmentManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -345,14 +334,11 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<
-      string,
-      "default" | "secondary" | "destructive" | "outline"
-    > = {
-      in_use: "default",
-      idle: "secondary",
-      maintenance: "outline",
-      scrapped: "destructive",
+    const colors: Record<string, "success" | "info" | "warning" | "error"> = {
+      in_use: "success",
+      idle: "info",
+      maintenance: "warning",
+      scrapped: "error",
     };
     const labels: Record<string, string> = {
       in_use: "使用中",
@@ -361,9 +347,12 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
       scrapped: "报废",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+        variant="outlined"
+      />
     );
   };
 
@@ -443,75 +432,55 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
           const asset = row.original;
           return (
             <div className="flex items-center justify-end space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedAsset(asset);
-                        setShowEditModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="编辑">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedAsset(asset);
+                    setShowEditModal(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedForInspection(asset);
-                        setShowInspectionModal(true);
-                      }}
-                    >
-                      <ClipboardCheck className="w-4 h-4 text-blue-500" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>点检</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="点检">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedForInspection(asset);
+                    setShowInspectionModal(true);
+                  }}
+                >
+                  <ClipboardCheck className="w-4 h-4 text-blue-500" />
+                </Button>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedForMaintenance(asset);
-                        setShowMaintenanceModal(true);
-                      }}
-                    >
-                      <Wrench className="w-4 h-4 text-orange-500" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>维护</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="维护">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedForMaintenance(asset);
+                    setShowMaintenanceModal(true);
+                  }}
+                >
+                  <Wrench className="w-4 h-4 text-orange-500" />
+                </Button>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => handleDeleteAsset(asset.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>删除</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="删除">
+                <Button
+                  variant="text"
+                  size="small"
+                  color="error"
+                  onClick={() => handleDeleteAsset(asset.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </Tooltip>
             </div>
           );
         },
@@ -551,13 +520,11 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
         accessorKey: "status",
         header: "状态",
         cell: ({ row }) => (
-          <Badge
-            variant={
-              row.original.status === "normal" ? "default" : "destructive"
-            }
-          >
-            {row.original.status === "normal" ? "正常" : "异常"}
-          </Badge>
+          <Chip
+            size="small"
+            color={row.original.status === "normal" ? "success" : "error"}
+            label={row.original.status === "normal" ? "正常" : "异常"}
+          />
         ),
       },
       {
@@ -600,17 +567,23 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
         accessorKey: "status",
         header: "状态",
         cell: ({ row }) => (
-          <Badge
-            variant={
-              row.original.status === "completed" ? "default" : "outline"
+          <Chip
+            size="small"
+            color={
+              row.original.status === "completed"
+                ? "success"
+                : row.original.status === "in_progress"
+                  ? "warning"
+                  : "default"
             }
-          >
-            {row.original.status === "pending"
-              ? "待处理"
-              : row.original.status === "in_progress"
-                ? "进行中"
-                : "完成"}
-          </Badge>
+            label={
+              row.original.status === "pending"
+                ? "待处理"
+                : row.original.status === "in_progress"
+                  ? "进行中"
+                  : "完成"
+            }
+          />
         ),
       },
     ],
@@ -623,7 +596,7 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5 mr-1" />
                 返回
               </Button>
@@ -640,13 +613,14 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
             <div className="flex items-center space-x-2">
               <ModeToggle />
               {activeTab === "assets" && (
-                <Button onClick={() => setShowCreateModal(true)}>
+                <Button variant="contained" onClick={() => setShowCreateModal(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   新增设备
                 </Button>
               )}
               {activeTab === "inspections" && (
                 <Button
+                  variant="contained"
                   onClick={() => {
                     setSelectedForInspection(assets[0] || null);
                     setShowInspectionModal(true);
@@ -658,6 +632,7 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
               )}
               {activeTab === "maintenances" && (
                 <Button
+                  variant="contained"
                   onClick={() => {
                     setSelectedForMaintenance(assets[0] || null);
                     setShowMaintenanceModal(true);
@@ -674,679 +649,591 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs
-          defaultValue="assets"
           value={activeTab}
-          onValueChange={setActiveTab}
+          onChange={(_: React.SyntheticEvent, newValue: string) => setActiveTab(newValue)}
         >
-          <TabsList className="mb-6">
-            <TabsTrigger value="assets">
-              <Box className="w-4 h-4 mr-2" />
-              设备台账
-            </TabsTrigger>
-            <TabsTrigger value="inspections">
-              <ClipboardCheck className="w-4 h-4 mr-2" />
-              点检记录
-            </TabsTrigger>
-            <TabsTrigger value="maintenances">
-              <Wrench className="w-4 h-4 mr-2" />
-              维护维修
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="assets">
-            <Card>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                    <p className="mt-2 text-slate-500 dark:text-slate-400">
-                      加载中...
-                    </p>
-                  </div>
-                ) : error ? (
-                  <div className="p-8 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                    <p className="text-red-600 dark:text-red-400">{error}</p>
-                    <Button className="mt-4" onClick={loadData}>
-                      重试
-                    </Button>
-                  </div>
-                ) : (
-                  <DataTable
-                    columns={assetColumns}
-                    data={assets}
-                    searchPlaceholder="搜索设备名称、编号、品牌、型号..."
-                    searchKey="name"
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="inspections">
-            <Card>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                    <p className="mt-2 text-slate-500 dark:text-slate-400">
-                      加载中...
-                    </p>
-                  </div>
-                ) : (
-                  <DataTable
-                    columns={inspectionColumns}
-                    data={inspections}
-                    searchPlaceholder="搜索点检记录..."
-                    searchKey="equipment_name"
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="maintenances">
-            <Card>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                    <p className="mt-2 text-slate-500 dark:text-slate-400">
-                      加载中...
-                    </p>
-                  </div>
-                ) : (
-                  <DataTable
-                    columns={maintenanceColumns}
-                    data={maintenances}
-                    searchPlaceholder="搜索维护记录..."
-                    searchKey="description"
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <Tab
+            value="assets"
+            label={
+              <span className="flex items-center">
+                <Box className="w-4 h-4 mr-2" />
+                设备台账
+              </span>
+            }
+          />
+          <Tab
+            value="inspections"
+            label={
+              <span className="flex items-center">
+                <ClipboardCheck className="w-4 h-4 mr-2" />
+                点检记录
+              </span>
+            }
+          />
+          <Tab
+            value="maintenances"
+            label={
+              <span className="flex items-center">
+                <Wrench className="w-4 h-4 mr-2" />
+                维护维修
+              </span>
+            }
+          />
         </Tabs>
+
+        {activeTab === "assets" && (
+          <Card sx={{ mt: 3 }}>
+            <CardContent sx={{ p: 0 }}>
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
+                  <p className="mt-2 text-slate-500 dark:text-slate-400">
+                    加载中...
+                  </p>
+                </div>
+              ) : error ? (
+                <div className="p-8 text-center">
+                  <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                  <p className="text-red-600 dark:text-red-400">{error}</p>
+                  <Button className="mt-4" onClick={loadData}>
+                    重试
+                  </Button>
+                </div>
+              ) : (
+                <DataTable
+                  columns={assetColumns}
+                  data={assets}
+                  searchPlaceholder="搜索设备名称、编号、品牌、型号..."
+                  searchKey="name"
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "inspections" && (
+          <Card sx={{ mt: 3 }}>
+            <CardContent sx={{ p: 0 }}>
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
+                  <p className="mt-2 text-slate-500 dark:text-slate-400">
+                    加载中...
+                  </p>
+                </div>
+              ) : (
+                <DataTable
+                  columns={inspectionColumns}
+                  data={inspections}
+                  searchPlaceholder="搜索点检记录..."
+                  searchKey="equipment_name"
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "maintenances" && (
+          <Card sx={{ mt: 3 }}>
+            <CardContent sx={{ p: 0 }}>
+              {loading ? (
+                <div className="p-8 text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
+                  <p className="mt-2 text-slate-500 dark:text-slate-400">
+                    加载中...
+                  </p>
+                </div>
+              ) : (
+                <DataTable
+                  columns={maintenanceColumns}
+                  data={maintenances}
+                  searchPlaceholder="搜索维护记录..."
+                  searchKey="description"
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>新增设备</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>新增设备</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           <form onSubmit={handleCreateAsset}>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="asset_number">设备编号 *</Label>
-                  <Input
-                    id="asset_number"
-                    type="text"
-                    required
-                    value={newAsset.asset_number || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, asset_number: e.target.value })
-                    }
-                    placeholder="请输入设备编号"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">设备名称 *</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    required
-                    value={newAsset.name || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, name: e.target.value })
-                    }
-                    placeholder="请输入设备名称"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">类别</Label>
-                  <Input
-                    id="category"
-                    type="text"
-                    value={newAsset.category || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, category: e.target.value })
-                    }
-                    placeholder="请输入类别"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="brand">品牌</Label>
-                  <Input
-                    id="brand"
-                    type="text"
-                    value={newAsset.brand || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, brand: e.target.value })
-                    }
-                    placeholder="请输入品牌"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="model">型号</Label>
-                  <Input
-                    id="model"
-                    type="text"
-                    value={newAsset.model || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, model: e.target.value })
-                    }
-                    placeholder="请输入型号"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="serial_number">序列号</Label>
-                  <Input
-                    id="serial_number"
-                    type="text"
-                    value={newAsset.serial_number || ""}
-                    onChange={(e) =>
-                      setNewAsset({
-                        ...newAsset,
-                        serial_number: e.target.value,
-                      })
-                    }
-                    placeholder="请输入序列号"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="manufacturer">制造商</Label>
-                  <Input
-                    id="manufacturer"
-                    type="text"
-                    value={newAsset.manufacturer || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, manufacturer: e.target.value })
-                    }
-                    placeholder="请输入制造商"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="department">部门</Label>
-                  <Input
-                    id="department"
-                    type="text"
-                    value={newAsset.department || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, department: e.target.value })
-                    }
-                    placeholder="请输入部门"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rated_power">额定功率 (kW)</Label>
-                  <Input
-                    id="rated_power"
-                    type="number"
-                    step="0.01"
-                    value={newAsset.rated_power || ""}
-                    onChange={(e) =>
-                      setNewAsset({
-                        ...newAsset,
-                        rated_power: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入额定功率"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="rated_voltage">额定电压 (V)</Label>
-                  <Input
-                    id="rated_voltage"
-                    type="number"
-                    step="0.01"
-                    value={newAsset.rated_voltage || ""}
-                    onChange={(e) =>
-                      setNewAsset({
-                        ...newAsset,
-                        rated_voltage: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入额定电压"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="rated_current">额定电流 (A)</Label>
-                  <Input
-                    id="rated_current"
-                    type="number"
-                    step="0.01"
-                    value={newAsset.rated_current || ""}
-                    onChange={(e) =>
-                      setNewAsset({
-                        ...newAsset,
-                        rated_current: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入额定电流"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="purchase_date">采购日期</Label>
-                  <Input
-                    id="purchase_date"
-                    type="date"
-                    value={newAsset.purchase_date || ""}
-                    onChange={(e) =>
-                      setNewAsset({
-                        ...newAsset,
-                        purchase_date: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="purchase_amount">采购金额</Label>
-                  <Input
-                    id="purchase_amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newAsset.purchase_amount || ""}
-                    onChange={(e) =>
-                      setNewAsset({
-                        ...newAsset,
-                        purchase_amount: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入采购金额"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="location">存放位置</Label>
-                  <Input
-                    id="location"
-                    type="text"
-                    value={newAsset.location || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, location: e.target.value })
-                    }
-                    placeholder="请输入存放位置"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="responsible_id">负责人</Label>
-                  <Select
-                    value={newAsset.responsible_id || ""}
-                    onValueChange={(value) =>
-                      setNewAsset({ ...newAsset, responsible_id: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择负责人" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">无</SelectItem>
-                      {employees.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {emp.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="status">状态</Label>
-                  <Select
-                    value={newAsset.status || "idle"}
-                    onValueChange={(value) =>
-                      setNewAsset({ ...newAsset, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="idle">闲置</SelectItem>
-                      <SelectItem value="in_use">使用中</SelectItem>
-                      <SelectItem value="maintenance">维护中</SelectItem>
-                      <SelectItem value="scrapped">报废</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image_url">图片URL</Label>
-                  <Input
-                    id="image_url"
-                    type="text"
-                    value={newAsset.image_url || ""}
-                    onChange={(e) =>
-                      setNewAsset({ ...newAsset, image_url: e.target.value })
-                    }
-                    placeholder="请输入图片URL"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="specifications">技术规格</Label>
-                <Textarea
-                  id="specifications"
-                  value={newAsset.specifications || ""}
+                <TextField
+                  label="设备编号 *"
+                  value={newAsset.asset_number || ""}
                   onChange={(e) =>
-                    setNewAsset({ ...newAsset, specifications: e.target.value })
+                    setNewAsset({ ...newAsset, asset_number: e.target.value })
                   }
-                  placeholder="请输入技术规格或设备描述"
-                  rows={3}
+                  fullWidth
+                  required
+                />
+                <TextField
+                  label="设备名称 *"
+                  value={newAsset.name || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, name: e.target.value })
+                  }
+                  fullWidth
+                  required
                 />
               </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <TextField
+                  label="类别"
+                  value={newAsset.category || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, category: e.target.value })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="品牌"
+                  value={newAsset.brand || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, brand: e.target.value })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="型号"
+                  value={newAsset.model || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, model: e.target.value })
+                  }
+                  fullWidth
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <TextField
+                  label="序列号"
+                  value={newAsset.serial_number || ""}
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      serial_number: e.target.value,
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="制造商"
+                  value={newAsset.manufacturer || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, manufacturer: e.target.value })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="部门"
+                  value={newAsset.department || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, department: e.target.value })
+                  }
+                  fullWidth
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <TextField
+                  label="额定功率 (kW)"
+                  type="number"
+                  slotProps={{ htmlInput: { step: "0.01" } }}
+                  value={newAsset.rated_power || ""}
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      rated_power: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="额定电压 (V)"
+                  type="number"
+                  slotProps={{ htmlInput: { step: "0.01" } }}
+                  value={newAsset.rated_voltage || ""}
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      rated_voltage: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="额定电流 (A)"
+                  type="number"
+                  slotProps={{ htmlInput: { step: "0.01" } }}
+                  value={newAsset.rated_current || ""}
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      rated_current: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  label="采购日期"
+                  type="date"
+                  value={newAsset.purchase_date || ""}
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      purchase_date: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  label="采购金额"
+                  type="number"
+                  slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                  value={newAsset.purchase_amount || ""}
+                  onChange={(e) =>
+                    setNewAsset({
+                      ...newAsset,
+                      purchase_amount: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  label="存放位置"
+                  value={newAsset.location || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, location: e.target.value })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel>负责人</InputLabel>
+                  <Select
+                    value={newAsset.responsible_id || ""}
+                    label="负责人"
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, responsible_id: e.target.value })
+                    }
+                  >
+                    <MenuItem value="none">无</MenuItem>
+                    {employees.map((emp) => (
+                      <MenuItem key={emp.id} value={emp.id}>
+                        {emp.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormControl fullWidth>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={newAsset.status || "idle"}
+                    label="状态"
+                    onChange={(e) =>
+                      setNewAsset({ ...newAsset, status: e.target.value })
+                    }
+                  >
+                    <MenuItem value="idle">闲置</MenuItem>
+                    <MenuItem value="in_use">使用中</MenuItem>
+                    <MenuItem value="maintenance">维护中</MenuItem>
+                    <MenuItem value="scrapped">报废</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="图片URL"
+                  value={newAsset.image_url || ""}
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, image_url: e.target.value })
+                  }
+                  fullWidth
+                />
+              </div>
+
+              <TextField
+                label="技术规格"
+                multiline
+                rows={3}
+                value={newAsset.specifications || ""}
+                onChange={(e) =>
+                  setNewAsset({ ...newAsset, specifications: e.target.value })
+                }
+                fullWidth
+              />
             </div>
 
-            <DialogFooter className="mt-6">
+            <div className="mt-6 flex justify-end space-x-2">
               <Button
-                type="button"
-                variant="secondary"
+                variant="outlined"
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
               </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
+              <Button variant="contained" type="submit">
+                创建
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>编辑设备</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>编辑设备</DialogTitle>
+        <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           {selectedAsset && (
             <form onSubmit={handleEditAsset}>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_asset_number">设备编号 *</Label>
-                    <Input
-                      id="edit_asset_number"
-                      type="text"
-                      required
-                      value={selectedAsset.asset_number}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          asset_number: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_name">设备名称 *</Label>
-                    <Input
-                      id="edit_name"
-                      type="text"
-                      required
-                      value={selectedAsset.name}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          name: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_category">类别</Label>
-                    <Input
-                      id="edit_category"
-                      type="text"
-                      value={selectedAsset.category || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          category: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_brand">品牌</Label>
-                    <Input
-                      id="edit_brand"
-                      type="text"
-                      value={selectedAsset.brand || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          brand: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_model">型号</Label>
-                    <Input
-                      id="edit_model"
-                      type="text"
-                      value={selectedAsset.model || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          model: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_serial_number">序列号</Label>
-                    <Input
-                      id="edit_serial_number"
-                      type="text"
-                      value={selectedAsset.serial_number || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          serial_number: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_manufacturer">制造商</Label>
-                    <Input
-                      id="edit_manufacturer"
-                      type="text"
-                      value={selectedAsset.manufacturer || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          manufacturer: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_department">部门</Label>
-                    <Input
-                      id="edit_department"
-                      type="text"
-                      value={selectedAsset.department || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          department: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_rated_power">额定功率 (kW)</Label>
-                    <Input
-                      id="edit_rated_power"
-                      type="number"
-                      step="0.01"
-                      value={selectedAsset.rated_power || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          rated_power: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_rated_voltage">额定电压 (V)</Label>
-                    <Input
-                      id="edit_rated_voltage"
-                      type="number"
-                      step="0.01"
-                      value={selectedAsset.rated_voltage || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          rated_voltage: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_rated_current">额定电流 (A)</Label>
-                    <Input
-                      id="edit_rated_current"
-                      type="number"
-                      step="0.01"
-                      value={selectedAsset.rated_current || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          rated_current: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_purchase_date">采购日期</Label>
-                    <Input
-                      id="edit_purchase_date"
-                      type="date"
-                      value={selectedAsset.purchase_date || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          purchase_date: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_purchase_amount">采购金额</Label>
-                    <Input
-                      id="edit_purchase_amount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={selectedAsset.purchase_amount || ""}
-                      onChange={(e) =>
-                        setSelectedAsset({
-                          ...selectedAsset,
-                          purchase_amount: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit_location">存放位置</Label>
-                  <Input
-                    id="edit_location"
-                    type="text"
-                    value={selectedAsset.location || ""}
+                  <TextField
+                    label="设备编号 *"
+                    value={selectedAsset.asset_number}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
-                        location: e.target.value,
+                        asset_number: e.target.value,
                       })
                     }
+                    fullWidth
+                    required
+                  />
+                  <TextField
+                    label="设备名称 *"
+                    value={selectedAsset.name}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        name: e.target.value,
+                      })
+                    }
+                    fullWidth
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <TextField
+                    label="类别"
+                    value={selectedAsset.category || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        category: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="品牌"
+                    value={selectedAsset.brand || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        brand: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="型号"
+                    value={selectedAsset.model || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        model: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <TextField
+                    label="序列号"
+                    value={selectedAsset.serial_number || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        serial_number: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="制造商"
+                    value={selectedAsset.manufacturer || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        manufacturer: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="部门"
+                    value={selectedAsset.department || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        department: e.target.value,
+                      })
+                    }
+                    fullWidth
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <TextField
+                    label="额定功率 (kW)"
+                    type="number"
+                    slotProps={{ htmlInput: { step: "0.01" } }}
+                    value={selectedAsset.rated_power || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        rated_power: Number(e.target.value),
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="额定电压 (V)"
+                    type="number"
+                    slotProps={{ htmlInput: { step: "0.01" } }}
+                    value={selectedAsset.rated_voltage || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        rated_voltage: Number(e.target.value),
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="额定电流 (A)"
+                    type="number"
+                    slotProps={{ htmlInput: { step: "0.01" } }}
+                    value={selectedAsset.rated_current || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        rated_current: Number(e.target.value),
+                      })
+                    }
+                    fullWidth
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_responsible_id">负责人</Label>
+                  <TextField
+                    label="采购日期"
+                    type="date"
+                    value={selectedAsset.purchase_date || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        purchase_date: e.target.value,
+                      })
+                    }
+                    fullWidth
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                  <TextField
+                    label="采购金额"
+                    type="number"
+                    slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                    value={selectedAsset.purchase_amount || ""}
+                    onChange={(e) =>
+                      setSelectedAsset({
+                        ...selectedAsset,
+                        purchase_amount: Number(e.target.value),
+                      })
+                    }
+                    fullWidth
+                  />
+                </div>
+
+                <TextField
+                  label="存放位置"
+                  value={selectedAsset.location || ""}
+                  onChange={(e) =>
+                    setSelectedAsset({
+                      ...selectedAsset,
+                      location: e.target.value,
+                    })
+                  }
+                  fullWidth
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormControl fullWidth>
+                    <InputLabel>负责人</InputLabel>
                     <Select
                       value={selectedAsset.responsible_id || ""}
-                      onValueChange={(value) =>
+                      label="负责人"
+                      onChange={(e) =>
                         setSelectedAsset({
                           ...selectedAsset,
-                          responsible_id: value,
+                          responsible_id: e.target.value,
                         })
                       }
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择负责人" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">无</SelectItem>
-                        {employees.map((emp) => (
-                          <SelectItem key={emp.id} value={emp.id}>
-                            {emp.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                      <MenuItem value="none">无</MenuItem>
+                      {employees.map((emp) => (
+                        <MenuItem key={emp.id} value={emp.id}>
+                          {emp.name}
+                        </MenuItem>
+                      ))}
                     </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_status">状态</Label>
+                  </FormControl>
+                  <FormControl fullWidth>
+                    <InputLabel>状态</InputLabel>
                     <Select
                       value={selectedAsset.status}
-                      onValueChange={(value) =>
-                        setSelectedAsset({ ...selectedAsset, status: value })
+                      label="状态"
+                      onChange={(e) =>
+                        setSelectedAsset({
+                          ...selectedAsset,
+                          status: e.target.value,
+                        })
                       }
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择状态" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="idle">闲置</SelectItem>
-                        <SelectItem value="in_use">使用中</SelectItem>
-                        <SelectItem value="maintenance">维护中</SelectItem>
-                        <SelectItem value="scrapped">报废</SelectItem>
-                      </SelectContent>
+                      <MenuItem value="idle">闲置</MenuItem>
+                      <MenuItem value="in_use">使用中</MenuItem>
+                      <MenuItem value="maintenance">维护中</MenuItem>
+                      <MenuItem value="scrapped">报废</MenuItem>
                     </Select>
-                  </div>
+                  </FormControl>
                 </div>
               </div>
 
-              <DialogFooter className="mt-6">
+              <div className="mt-6 flex justify-end space-x-2">
                 <Button
-                  type="button"
-                  variant="secondary"
+                  variant="outlined"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedAsset(null);
@@ -1354,18 +1241,23 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
                 >
                   取消
                 </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
+                <Button variant="contained" type="submit">
+                  保存
+                </Button>
+              </div>
             </form>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showInspectionModal} onOpenChange={setShowInspectionModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>设备点检记录</DialogTitle>
-          </DialogHeader>
+      <Dialog
+        open={showInspectionModal}
+        onClose={() => setShowInspectionModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>设备点检记录</DialogTitle>
+        <DialogContent>
           <form onSubmit={handleCreateInspection}>
             <div className="space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg">
@@ -1376,160 +1268,142 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="inspector">点检人 *</Label>
-                  <Input
-                    id="inspector"
-                    type="text"
-                    required
-                    value={newInspection.inspector || ""}
-                    onChange={(e) =>
-                      setNewInspection({
-                        ...newInspection,
-                        inspector: e.target.value,
-                      })
-                    }
-                    placeholder="请输入点检人"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="inspection_date">点检日期 *</Label>
-                  <Input
-                    id="inspection_date"
-                    type="date"
-                    required
-                    value={newInspection.inspection_date || ""}
-                    onChange={(e) =>
-                      setNewInspection({
-                        ...newInspection,
-                        inspection_date: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+                <TextField
+                  label="点检人 *"
+                  value={newInspection.inspector || ""}
+                  onChange={(e) =>
+                    setNewInspection({
+                      ...newInspection,
+                      inspector: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  required
+                />
+                <TextField
+                  label="点检日期 *"
+                  type="date"
+                  value={newInspection.inspection_date || ""}
+                  onChange={(e) =>
+                    setNewInspection({
+                      ...newInspection,
+                      inspection_date: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  required
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="temperature">温度 (°C)</Label>
-                  <Input
-                    id="temperature"
-                    type="number"
-                    step="0.1"
-                    value={newInspection.temperature || ""}
-                    onChange={(e) =>
-                      setNewInspection({
-                        ...newInspection,
-                        temperature: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vibration">振动</Label>
-                  <Input
-                    id="vibration"
-                    type="number"
-                    step="0.01"
-                    value={newInspection.vibration || ""}
-                    onChange={(e) =>
-                      setNewInspection({
-                        ...newInspection,
-                        vibration: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="noise_level">噪音 (dB)</Label>
-                  <Input
-                    id="noise_level"
-                    type="number"
-                    step="0.1"
-                    value={newInspection.noise_level || ""}
-                    onChange={(e) =>
-                      setNewInspection({
-                        ...newInspection,
-                        noise_level: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
+                <TextField
+                  label="温度 (°C)"
+                  type="number"
+                  slotProps={{ htmlInput: { step: "0.1" } }}
+                  value={newInspection.temperature || ""}
+                  onChange={(e) =>
+                    setNewInspection({
+                      ...newInspection,
+                      temperature: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="振动"
+                  type="number"
+                  slotProps={{ htmlInput: { step: "0.01" } }}
+                  value={newInspection.vibration || ""}
+                  onChange={(e) =>
+                    setNewInspection({
+                      ...newInspection,
+                      vibration: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
+                <TextField
+                  label="噪音 (dB)"
+                  type="number"
+                  slotProps={{ htmlInput: { step: "0.1" } }}
+                  value={newInspection.noise_level || ""}
+                  onChange={(e) =>
+                    setNewInspection({
+                      ...newInspection,
+                      noise_level: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="inspection_status">点检状态</Label>
+              <FormControl fullWidth>
+                <InputLabel>点检状态</InputLabel>
                 <Select
                   value={newInspection.status || "normal"}
-                  onValueChange={(value) =>
-                    setNewInspection({ ...newInspection, status: value })
+                  label="点检状态"
+                  onChange={(e) =>
+                    setNewInspection({ ...newInspection, status: e.target.value })
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="normal">正常</SelectItem>
-                    <SelectItem value="abnormal">异常</SelectItem>
-                  </SelectContent>
+                  <MenuItem value="normal">正常</MenuItem>
+                  <MenuItem value="abnormal">异常</MenuItem>
                 </Select>
-              </div>
+              </FormControl>
 
-              <div className="space-y-2">
-                <Label htmlFor="abnormalities">异常情况</Label>
-                <Textarea
-                  id="abnormalities"
-                  value={newInspection.abnormalities || ""}
-                  onChange={(e) =>
-                    setNewInspection({
-                      ...newInspection,
-                      abnormalities: e.target.value,
-                    })
-                  }
-                  placeholder="请描述异常情况"
-                  rows={3}
-                />
-              </div>
+              <TextField
+                label="异常情况"
+                multiline
+                rows={3}
+                value={newInspection.abnormalities || ""}
+                onChange={(e) =>
+                  setNewInspection({
+                    ...newInspection,
+                    abnormalities: e.target.value,
+                  })
+                }
+                fullWidth
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="inspection_remarks">备注</Label>
-                <Textarea
-                  id="inspection_remarks"
-                  value={newInspection.remarks || ""}
-                  onChange={(e) =>
-                    setNewInspection({
-                      ...newInspection,
-                      remarks: e.target.value,
-                    })
-                  }
-                  placeholder="点检备注"
-                  rows={2}
-                />
-              </div>
+              <TextField
+                label="备注"
+                multiline
+                rows={2}
+                value={newInspection.remarks || ""}
+                onChange={(e) =>
+                  setNewInspection({
+                    ...newInspection,
+                    remarks: e.target.value,
+                  })
+                }
+                fullWidth
+              />
             </div>
 
-            <DialogFooter className="mt-6">
+            <div className="mt-6 flex justify-end space-x-2">
               <Button
-                type="button"
-                variant="secondary"
+                variant="outlined"
                 onClick={() => setShowInspectionModal(false)}
               >
                 取消
               </Button>
-              <Button type="submit">提交</Button>
-            </DialogFooter>
+              <Button variant="contained" type="submit">
+                提交
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog
         open={showMaintenanceModal}
-        onOpenChange={setShowMaintenanceModal}
+        onClose={() => setShowMaintenanceModal(false)}
+        maxWidth="md"
+        fullWidth
       >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>设备维护记录</DialogTitle>
-          </DialogHeader>
+        <DialogTitle>设备维护记录</DialogTitle>
+        <DialogContent>
           <form onSubmit={handleCreateMaintenance}>
             <div className="space-y-4">
               <div className="bg-slate-50 p-4 rounded-lg">
@@ -1539,168 +1413,147 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="maintenance_type">维护类型 *</Label>
+              <FormControl fullWidth>
+                <InputLabel>维护类型 *</InputLabel>
                 <Select
                   value={newMaintenance.maintenance_type || ""}
-                  onValueChange={(value) =>
-                    setNewMaintenance({
-                      ...newMaintenance,
-                      maintenance_type: value,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择维护类型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="定期维护">定期维护</SelectItem>
-                    <SelectItem value="故障维修">故障维修</SelectItem>
-                    <SelectItem value="预防性维护">预防性维护</SelectItem>
-                    <SelectItem value="大修">大修</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">维护描述 *</Label>
-                <Textarea
-                  id="description"
-                  required
-                  value={newMaintenance.description || ""}
+                  label="维护类型 *"
                   onChange={(e) =>
                     setNewMaintenance({
                       ...newMaintenance,
-                      description: e.target.value,
+                      maintenance_type: e.target.value,
                     })
                   }
-                  placeholder="请描述维护内容"
-                  rows={3}
+                >
+                  <MenuItem value="定期维护">定期维护</MenuItem>
+                  <MenuItem value="故障维修">故障维修</MenuItem>
+                  <MenuItem value="预防性维护">预防性维护</MenuItem>
+                  <MenuItem value="大修">大修</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                label="维护描述 *"
+                multiline
+                rows={3}
+                value={newMaintenance.description || ""}
+                onChange={(e) =>
+                  setNewMaintenance({
+                    ...newMaintenance,
+                    description: e.target.value,
+                  })
+                }
+                fullWidth
+                required
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  label="维护人员 *"
+                  value={newMaintenance.maintainer || ""}
+                  onChange={(e) =>
+                    setNewMaintenance({
+                      ...newMaintenance,
+                      maintainer: e.target.value,
+                    })
+                  }
+                  fullWidth
+                  required
+                />
+                <TextField
+                  label="开始时间 *"
+                  type="datetime-local"
+                  value={
+                    newMaintenance.start_time
+                      ? newMaintenance.start_time.substring(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setNewMaintenance({
+                      ...newMaintenance,
+                      start_time: new Date(e.target.value).toISOString(),
+                    })
+                  }
+                  fullWidth
+                  required
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maintainer">维护人员 *</Label>
-                  <Input
-                    id="maintainer"
-                    type="text"
-                    required
-                    value={newMaintenance.maintainer || ""}
-                    onChange={(e) =>
-                      setNewMaintenance({
-                        ...newMaintenance,
-                        maintainer: e.target.value,
-                      })
-                    }
-                    placeholder="请输入维护人员"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="start_time">开始时间 *</Label>
-                  <Input
-                    id="start_time"
-                    type="datetime-local"
-                    required
-                    value={
-                      newMaintenance.start_time
-                        ? newMaintenance.start_time.substring(0, 16)
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setNewMaintenance({
-                        ...newMaintenance,
-                        start_time: new Date(e.target.value).toISOString(),
-                      })
-                    }
-                  />
-                </div>
+                <TextField
+                  label="结束时间"
+                  type="datetime-local"
+                  value={
+                    newMaintenance.end_time
+                      ? newMaintenance.end_time.substring(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setNewMaintenance({
+                      ...newMaintenance,
+                      end_time: new Date(e.target.value).toISOString(),
+                    })
+                  }
+                  fullWidth
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  label="费用 (元)"
+                  type="number"
+                  slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                  value={newMaintenance.cost || ""}
+                  onChange={(e) =>
+                    setNewMaintenance({
+                      ...newMaintenance,
+                      cost: Number(e.target.value),
+                    })
+                  }
+                  fullWidth
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="end_time">结束时间</Label>
-                  <Input
-                    id="end_time"
-                    type="datetime-local"
-                    value={
-                      newMaintenance.end_time
-                        ? newMaintenance.end_time.substring(0, 16)
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setNewMaintenance({
-                        ...newMaintenance,
-                        end_time: new Date(e.target.value).toISOString(),
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cost">费用 (元)</Label>
-                  <Input
-                    id="cost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newMaintenance.cost || ""}
-                    onChange={(e) =>
-                      setNewMaintenance({
-                        ...newMaintenance,
-                        cost: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入费用"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maintenance_status">维护状态</Label>
+              <FormControl fullWidth>
+                <InputLabel>维护状态</InputLabel>
                 <Select
                   value={newMaintenance.status || "pending"}
-                  onValueChange={(value) =>
-                    setNewMaintenance({ ...newMaintenance, status: value })
+                  label="维护状态"
+                  onChange={(e) =>
+                    setNewMaintenance({ ...newMaintenance, status: e.target.value })
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">待处理</SelectItem>
-                    <SelectItem value="in_progress">进行中</SelectItem>
-                    <SelectItem value="completed">已完成</SelectItem>
-                  </SelectContent>
+                  <MenuItem value="pending">待处理</MenuItem>
+                  <MenuItem value="in_progress">进行中</MenuItem>
+                  <MenuItem value="completed">已完成</MenuItem>
                 </Select>
-              </div>
+              </FormControl>
 
-              <div className="space-y-2">
-                <Label htmlFor="maintenance_remarks">备注</Label>
-                <Textarea
-                  id="maintenance_remarks"
-                  value={newMaintenance.remarks || ""}
-                  onChange={(e) =>
-                    setNewMaintenance({
-                      ...newMaintenance,
-                      remarks: e.target.value,
-                    })
-                  }
-                  placeholder="维护备注"
-                  rows={2}
-                />
-              </div>
+              <TextField
+                label="备注"
+                multiline
+                rows={2}
+                value={newMaintenance.remarks || ""}
+                onChange={(e) =>
+                  setNewMaintenance({
+                    ...newMaintenance,
+                    remarks: e.target.value,
+                  })
+                }
+                fullWidth
+              />
             </div>
 
-            <DialogFooter className="mt-6">
+            <div className="mt-6 flex justify-end space-x-2">
               <Button
-                type="button"
-                variant="secondary"
+                variant="outlined"
                 onClick={() => setShowMaintenanceModal(false)}
               >
                 取消
               </Button>
-              <Button type="submit">提交</Button>
-            </DialogFooter>
+              <Button variant="contained" type="submit">
+                提交
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

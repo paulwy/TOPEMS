@@ -123,7 +123,7 @@ const RsProjectCreatePage: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 3 }}>
       {/* 页面标题 */}
       <div style={{ marginBottom: 12 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
           {isEdit ? "编辑研发项目" : "新建研发项目"}
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -137,14 +137,14 @@ const RsProjectCreatePage: React.FC = () => {
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={3}>
           {/* 基本信息 */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom>
               基本信息
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="项目名称"
@@ -157,7 +157,7 @@ const RsProjectCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="项目编码"
@@ -170,7 +170,7 @@ const RsProjectCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="项目描述"
@@ -182,7 +182,7 @@ const RsProjectCreatePage: React.FC = () => {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>项目类型</InputLabel>
               <Select
@@ -201,7 +201,7 @@ const RsProjectCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="项目负责人"
@@ -215,14 +215,14 @@ const RsProjectCreatePage: React.FC = () => {
           </Grid>
 
           {/* 时间和预算 */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               时间和预算
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="开始日期"
@@ -232,22 +232,22 @@ const RsProjectCreatePage: React.FC = () => {
               onChange={(e) => handleInputChange("start_date", e.target.value)}
               error={Boolean(errors.start_date)}
               helperText={errors.start_date}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="结束日期"
               type="date"
               value={formData.end_date}
               onChange={(e) => handleInputChange("end_date", e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="预算金额"
@@ -255,21 +255,21 @@ const RsProjectCreatePage: React.FC = () => {
               value={formData.budget}
               onChange={(e) => handleInputChange("budget", e.target.value)}
               placeholder="请输入预算金额"
-              InputProps={{
+              slotProps={{ input: {
                 endAdornment: <Typography variant="body2">元</Typography>,
-              }}
+               } }}
             />
           </Grid>
 
           {/* 风险和优先级 */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               风险评估
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>风险等级</InputLabel>
               <Select
@@ -288,7 +288,7 @@ const RsProjectCreatePage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth>
               <InputLabel>优先级</InputLabel>
               <Select
@@ -306,29 +306,20 @@ const RsProjectCreatePage: React.FC = () => {
           </Grid>
 
           {/* 团队成员 */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               团队成员
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Autocomplete
               multiple
               options={availableMembers}
               value={formData.team_members}
               onChange={(_, newValue) =>
                 handleInputChange("team_members", newValue)
-              }
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={option}
-                    {...getTagProps({ index })}
-                    key={option}
-                  />
-                ))
               }
               renderInput={(params) => (
                 <TextField
@@ -341,29 +332,20 @@ const RsProjectCreatePage: React.FC = () => {
           </Grid>
 
           {/* 标签 */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               项目标签
             </Typography>
             <Divider sx={{ mb: 2 }} />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Autocomplete
               multiple
               freeSolo
               options={availableTags}
               value={formData.tags}
               onChange={(_, newValue) => handleInputChange("tags", newValue)}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={option}
-                    {...getTagProps({ index })}
-                    key={option}
-                  />
-                ))
-              }
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -375,9 +357,9 @@ const RsProjectCreatePage: React.FC = () => {
           </Grid>
 
           {/* 操作按钮 */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 2 }} />
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end" }}>
               <Button
                 variant="outlined"
                 startIcon={<CancelIcon />}

@@ -1,3 +1,23 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Tabs,
+  Tab,
+  Box,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Mail,
@@ -37,35 +57,7 @@ import {
   PRIORITY_OPTIONS,
   TEMPLATE_CATEGORIES,
 } from "../api/mail";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -778,7 +770,7 @@ const MailPage: React.FC = () => {
       failed: { label: "发送失败", variant: "destructive" },
     };
     const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    return <Chip size="small" variant={s.variant === "outline" ? "outlined" : "filled"} label={s.label} />;
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -795,7 +787,7 @@ const MailPage: React.FC = () => {
       urgent: { label: "紧急", variant: "destructive" },
     };
     const p = priorityMap[priority] || { label: priority, variant: "outline" };
-    return <Badge variant={p.variant}>{p.label}</Badge>;
+    return <Chip size="small" variant={p.variant === "outline" ? "outlined" : "filled"} label={p.label} />;
   };
 
   const getCategoryLabel = (category: string) => {
@@ -838,7 +830,7 @@ const MailPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <div>
@@ -870,23 +862,18 @@ const MailPage: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="emails" className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              邮件记录
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              邮件模板
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ width: '100%' }}>
+          <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
+            <Tab value="emails" icon={<Mail size={16} />} iconPosition="start" sx={{ textTransform: 'none', minHeight: 48 }} label="邮件记录" />
+            <Tab value="templates" icon={<FileText size={16} />} iconPosition="start" sx={{ textTransform: 'none', minHeight: 48 }} label="邮件模板" />
+          </Box>
 
-          <TabsContent value="emails" className="mt-0">
+          {activeTab === 'emails' && (
+            <Box sx={{ mt: 0 }}>
             <div className="mb-6 flex items-center space-x-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
+                <TextField
                   type="text"
                   placeholder="搜索邮件主题、发件人..."
                   value={searchQuery}
@@ -894,47 +881,46 @@ const MailPage: React.FC = () => {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="pl-10"
+                  size="small"
+                  sx={{ pl: 5, width: '100%' }}
                 />
               </div>
-              <Select
-                value={statusFilter || "all"}
-                onValueChange={(v) => {
-                  setStatusFilter(v === "all" ? "" : v);
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={statusFilter || "all"}
+                  label="状态"
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value === "all" ? "" : e.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <MenuItem value="all">全部</MenuItem>
                   {STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <MenuItem key={opt.value} value={opt.value}>
                       {opt.label}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={priorityFilter || "all"}
-                onValueChange={(v) => {
-                  setPriorityFilter(v === "all" ? "" : v);
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="优先级" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>优先级</InputLabel>
+                <Select
+                  value={priorityFilter || "all"}
+                  label="优先级"
+                  onChange={(e) => {
+                    setPriorityFilter(e.target.value === "all" ? "" : e.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <MenuItem value="all">全部</MenuItem>
                   {PRIORITY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <MenuItem key={opt.value} value={opt.value}>
                       {opt.label}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </Select>
+              </FormControl>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -1009,8 +995,8 @@ const MailPage: React.FC = () => {
                     </span>
                     <div className="flex items-center space-x-2">
                       <Button
-                        variant="secondary"
-                        size="sm"
+                        variant="contained"
+                        size="small"
                         onClick={handleBatchResendEmails}
                         className="gap-2"
                       >
@@ -1018,8 +1004,8 @@ const MailPage: React.FC = () => {
                         批量重发
                       </Button>
                       <Button
-                        variant="destructive"
-                        size="sm"
+                        variant="contained"
+                        size="small"
                         onClick={handleBatchDeleteEmails}
                         className="gap-2"
                       >
@@ -1137,8 +1123,8 @@ const MailPage: React.FC = () => {
                             <td className="px-6 py-4">
                               <div className="flex items-center justify-end space-x-1">
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="text"
+                                  size="small"
                                   onClick={() =>
                                     copyToClipboard(
                                       email.id,
@@ -1154,8 +1140,8 @@ const MailPage: React.FC = () => {
                                   )}
                                 </Button>
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="text"
+                                  size="small"
                                   onClick={() => openEmailDetail(email)}
                                   title="查看详情"
                                 >
@@ -1163,8 +1149,8 @@ const MailPage: React.FC = () => {
                                 </Button>
                                 {email.status === "failed" && (
                                   <Button
-                                    variant="ghost"
-                                    size="sm"
+                                    variant="text"
+                                    size="small"
                                     onClick={() => handleResendEmail(email.id)}
                                     className="text-green-600 hover:text-green-700"
                                     title="重新发送"
@@ -1173,8 +1159,8 @@ const MailPage: React.FC = () => {
                                   </Button>
                                 )}
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="text"
+                                  size="small"
                                   className="text-red-600 hover:text-red-700"
                                   onClick={() => handleDeleteEmail(email.id)}
                                   title="删除"
@@ -1197,8 +1183,8 @@ const MailPage: React.FC = () => {
                   </span>
                   <div className="flex items-center space-x-2">
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={handlePrevPage}
                       disabled={currentPage === 1}
                     >
@@ -1208,8 +1194,8 @@ const MailPage: React.FC = () => {
                       {currentPage} / {Math.ceil(totalEmails / pageSize)}
                     </span>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={handleNextPage}
                       disabled={
                         currentPage >= Math.ceil(totalEmails / pageSize)
@@ -1221,13 +1207,14 @@ const MailPage: React.FC = () => {
                 </CardContent>
               )}
             </Card>
-          </TabsContent>
+            </Box>)}
 
-          <TabsContent value="templates" className="mt-0">
+          {activeTab === 'templates' && (
+            <Box sx={{ mt: 0 }}>
             <div className="mb-6 flex items-center space-x-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
+                <TextField
                   type="text"
                   placeholder="搜索模板名称、编码..."
                   value={searchQuery}
@@ -1235,28 +1222,28 @@ const MailPage: React.FC = () => {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="pl-10"
+                  size="small"
+                  sx={{ pl: 5, width: '100%' }}
                 />
               </div>
-              <Select
-                value={categoryFilter || "all"}
-                onValueChange={(v) => {
-                  setCategoryFilter(v === "all" ? "" : v);
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="分类" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>分类</InputLabel>
+                <Select
+                  value={categoryFilter || "all"}
+                  label="分类"
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value === "all" ? "" : e.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <MenuItem value="all">全部</MenuItem>
                   {TEMPLATE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
+                    <MenuItem key={cat.value} value={cat.value}>
                       {cat.label}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </Select>
+              </FormControl>
             </div>
 
             <Card>
@@ -1318,23 +1305,15 @@ const MailPage: React.FC = () => {
                               {template.code}
                             </td>
                             <td className="px-6 py-4">
-                              <Badge variant="outline">
-                                {getCategoryLabel(template.category)}
-                              </Badge>
+                              <Chip size="small" variant="outlined" label={getCategoryLabel(template.category)} />
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 truncate max-w-sm">
                               {template.subject_template}
                             </td>
                             <td className="px-6 py-4">
-                              <Badge
-                                variant={
-                                  template.status === "active"
-                                    ? "default"
-                                    : "outline"
-                                }
-                              >
-                                {template.status === "active" ? "启用" : "禁用"}
-                              </Badge>
+                              <Chip size="small"
+                                variant={template.status === "active" ? "filled" : "outlined"}
+                                label={template.status === "active" ? "启用" : "禁用"} />
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                               {new Date(template.created_at).toLocaleString(
@@ -1344,24 +1323,24 @@ const MailPage: React.FC = () => {
                             <td className="px-6 py-4">
                               <div className="flex items-center justify-end space-x-1">
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="text"
+                                  size="small"
                                   onClick={() => handleEyeTemplate(template)}
                                   title="预览模板"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </Button>
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="text"
+                                  size="small"
                                   onClick={() => openEditTemplate(template)}
                                   title="编辑"
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="text"
+                                  size="small"
                                   onClick={() =>
                                     handleToggleTemplateStatus(template)
                                   }
@@ -1383,8 +1362,8 @@ const MailPage: React.FC = () => {
                                   )}
                                 </Button>
                                 <Button
-                                  variant="ghost"
-                                  size="sm"
+                                  variant="text"
+                                  size="small"
                                   className="text-red-600 hover:text-red-700"
                                   onClick={() =>
                                     handleDeleteTemplate(template.id)
@@ -1409,8 +1388,8 @@ const MailPage: React.FC = () => {
                   </span>
                   <div className="flex items-center space-x-2">
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={handlePrevPage}
                       disabled={currentPage === 1}
                     >
@@ -1420,8 +1399,8 @@ const MailPage: React.FC = () => {
                       {currentPage} / {Math.ceil(totalTemplates / pageSize)}
                     </span>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={handleNextPage}
                       disabled={
                         currentPage >= Math.ceil(totalTemplates / pageSize)
@@ -1433,61 +1412,58 @@ const MailPage: React.FC = () => {
                 </CardContent>
               )}
             </Card>
-          </TabsContent>
+            </Box>)}
         </Tabs>
       </div>
 
-      <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <SendIcon className="w-5 h-5" />
-              发送邮件
-            </DialogTitle>
-          </DialogHeader>
+      <Dialog open={showSendModal} onClose={() => setShowSendModal(false)}>
+        <DialogContent sx={{ maxWidth: 720 }}>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SendIcon size={20} />
+            发送邮件
+          </DialogTitle>
           <form onSubmit={handleSendEmail}>
-            <div className="space-y-4 py-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">使用模板</Label>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <InputLabel sx={{ fontSize: '1rem', fontWeight: 500 }}>使用模板</InputLabel>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant="text"
+                  size="small"
                   onClick={() =>
                     setSendForm((prev) => ({
                       ...prev,
                       useTemplate: !prev.useTemplate,
                     }))
                   }
-                  className={sendForm.useTemplate ? "text-blue-600" : ""}
+                  sx={sendForm.useTemplate ? { color: 'primary.main' } : {}}
                 >
                   {sendForm.useTemplate ? "取消使用模板" : "使用模板"}
                 </Button>
-              </div>
+              </Box>
 
               {sendForm.useTemplate && (
-                <div className="space-y-2">
-                  <Label htmlFor="template-select">选择模板</Label>
-                  <Select
-                    value={sendForm.template_code}
-                    onValueChange={(v) => {
-                      setSendForm((prev) => ({ ...prev, template_code: v }));
-                      handleTemplateChange(v);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择邮件模板" />
-                    </SelectTrigger>
-                    <SelectContent>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <InputLabel htmlFor="template-select">选择模板</InputLabel>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={sendForm.template_code}
+                      onChange={(e) => {
+                        setSendForm((prev) => ({ ...prev, template_code: e.target.value }));
+                        handleTemplateChange(e.target.value);
+                      }}
+                      displayEmpty
+                    >
+                      <MenuItem value="" disabled>选择邮件模板</MenuItem>
                       {templates.map((t) => (
-                        <SelectItem key={t.code} value={t.code}>
+                        <MenuItem key={t.code} value={t.code}>
                           {t.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="space-y-2">
-                    <Label htmlFor="template-data">模板数据（JSON格式）</Label>
-                    <Textarea
+                    </Select>
+                  </FormControl>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <InputLabel htmlFor="template-data">模板数据（JSON格式）</InputLabel>
+                    <TextField
                       id="template-data"
                       placeholder={`{"user_name": "张三", "process_name": "报销申请"}`}
                       value={sendForm.templateData}
@@ -1497,25 +1473,19 @@ const MailPage: React.FC = () => {
                           templateData: e.target.value,
                         }))
                       }
-                      className={cn(
-                        "h-32 font-mono text-sm",
-                        formErrors.templateData &&
-                          "border-red-500 focus:border-red-500 focus:ring-red-500",
-                      )}
+                      multiline
+                      minRows={3}
+                      error={!!formErrors.templateData}
+                      helperText={formErrors.templateData}
+                      sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
                     />
-                    {formErrors.templateData && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {formErrors.templateData}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  </Box>
+                </Box>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="send-subject">主题 *</Label>
-                <Input
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="send-subject">主题 *</InputLabel>
+                <TextField
                   id="send-subject"
                   value={sendForm.subject}
                   onChange={(e) =>
@@ -1525,22 +1495,14 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="输入邮件主题"
-                  className={cn(
-                    formErrors.subject &&
-                      "border-red-500 focus:border-red-500 focus:ring-red-500",
-                  )}
+                  error={!!formErrors.subject}
+                  helperText={formErrors.subject}
                 />
-                {formErrors.subject && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {formErrors.subject}
-                  </p>
-                )}
-              </div>
+              </Box>
 
-              <div className="space-y-2">
-                <Label htmlFor="send-to">收件人 *</Label>
-                <Input
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="send-to">收件人 *</InputLabel>
+                <TextField
                   id="send-to"
                   value={sendForm.to_addresses}
                   onChange={(e) =>
@@ -1550,22 +1512,14 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="多个邮箱用逗号分隔"
-                  className={cn(
-                    formErrors.to_addresses &&
-                      "border-red-500 focus:border-red-500 focus:ring-red-500",
-                  )}
+                  error={!!formErrors.to_addresses}
+                  helperText={formErrors.to_addresses}
                 />
-                {formErrors.to_addresses && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {formErrors.to_addresses}
-                  </p>
-                )}
-              </div>
+              </Box>
 
-              <div className="space-y-2">
-                <Label htmlFor="send-cc">抄送</Label>
-                <Input
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="send-cc">抄送</InputLabel>
+                <TextField
                   id="send-cc"
                   value={sendForm.cc_addresses}
                   onChange={(e) =>
@@ -1575,22 +1529,14 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="多个邮箱用逗号分隔"
-                  className={cn(
-                    formErrors.cc_addresses &&
-                      "border-red-500 focus:border-red-500 focus:ring-red-500",
-                  )}
+                  error={!!formErrors.cc_addresses}
+                  helperText={formErrors.cc_addresses}
                 />
-                {formErrors.cc_addresses && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {formErrors.cc_addresses}
-                  </p>
-                )}
-              </div>
+              </Box>
 
-              <div className="space-y-2">
-                <Label htmlFor="send-bcc">密送</Label>
-                <Input
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="send-bcc">密送</InputLabel>
+                <TextField
                   id="send-bcc"
                   value={sendForm.bcc_addresses}
                   onChange={(e) =>
@@ -1600,65 +1546,47 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="多个邮箱用逗号分隔"
-                  className={cn(
-                    formErrors.bcc_addresses &&
-                      "border-red-500 focus:border-red-500 focus:ring-red-500",
-                  )}
+                  error={!!formErrors.bcc_addresses}
+                  helperText={formErrors.bcc_addresses}
                 />
-                {formErrors.bcc_addresses && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {formErrors.bcc_addresses}
-                  </p>
-                )}
-              </div>
+              </Box>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="send-body">邮件内容 *</Label>
-                  <Select
-                    value={sendForm.priority}
-                    onValueChange={(v) =>
-                      setSendForm((prev) => ({ ...prev, priority: v }))
-                    }
-                  >
-                    <SelectTrigger className="w-24">
-                      <SelectValue placeholder="优先级" />
-                    </SelectTrigger>
-                    <SelectContent>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <InputLabel htmlFor="send-body">邮件内容 *</InputLabel>
+                  <FormControl size="small" sx={{ minWidth: 100 }}>
+                    <Select
+                      value={sendForm.priority}
+                      onChange={(e) =>
+                        setSendForm((prev) => ({ ...prev, priority: e.target.value }))
+                      }
+                    >
                       {PRIORITY_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
+                        <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Textarea
+                    </Select>
+                  </FormControl>
+                </Box>
+                <TextField
                   id="send-body"
                   value={sendForm.body}
                   onChange={(e) =>
                     setSendForm((prev) => ({ ...prev, body: e.target.value }))
                   }
                   placeholder="输入邮件内容"
-                  className={cn(
-                    "h-40",
-                    formErrors.body &&
-                      "border-red-500 focus:border-red-500 focus:ring-red-500",
-                  )}
+                  multiline
+                  minRows={4}
+                  error={!!formErrors.body}
+                  helperText={formErrors.body}
                 />
-                {formErrors.body && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {formErrors.body}
-                  </p>
-                )}
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
+              </Box>
+            </Box>
+            <DialogActions sx={{ mt: 3 }}>
               <Button
                 type="button"
-                variant="secondary"
+                variant="contained"
                 onClick={() => {
                   setShowSendModal(false);
                   resetSendForm();
@@ -1667,132 +1595,128 @@ const MailPage: React.FC = () => {
                 取消
               </Button>
               <Button type="submit">发送邮件</Button>
-            </DialogFooter>
+            </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEmailDetail} onOpenChange={setShowEmailDetail}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{selectedEmail?.subject}</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showEmailDetail} onClose={() => setShowEmailDetail(false)}>
+        <DialogContent sx={{ maxWidth: 600 }}>
+          <DialogTitle>{selectedEmail?.subject}</DialogTitle>
           {selectedEmail && (
-            <div className="space-y-4 py-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
                     发件人
-                  </div>
-                  <div className="font-medium">
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
                     {selectedEmail.from_address}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
                 {getStatusBadge(selectedEmail.status)}
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary">
                   收件人
-                </div>
-                <div>
+                </Typography>
+                <Typography>
                   {Array.isArray(selectedEmail.to_addresses)
                     ? selectedEmail.to_addresses.join(", ")
                     : selectedEmail.to_addresses}
-                </div>
-              </div>
+                </Typography>
+              </Box>
               {selectedEmail.cc_addresses && (
-                <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
                     抄送
-                  </div>
-                  <div>
+                  </Typography>
+                  <Typography>
                     {Array.isArray(selectedEmail.cc_addresses)
                       ? selectedEmail.cc_addresses.join(", ")
                       : selectedEmail.cc_addresses}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
               )}
               {selectedEmail.bcc_addresses && (
-                <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
                     密送
-                  </div>
-                  <div>
+                  </Typography>
+                  <Typography>
                     {Array.isArray(selectedEmail.bcc_addresses)
                       ? selectedEmail.bcc_addresses.join(", ")
                       : selectedEmail.bcc_addresses}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
               )}
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+              <Box>
+                <Typography variant="body2" color="text.secondary">
                   优先级
-                </div>
+                </Typography>
                 {getPriorityBadge(selectedEmail.priority)}
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary">
                   创建时间
-                </div>
-                <div>
+                </Typography>
+                <Typography>
                   {new Date(selectedEmail.created_at).toLocaleString("zh-CN")}
-                </div>
-              </div>
+                </Typography>
+              </Box>
               {selectedEmail.sent_at && (
-                <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
                     发送时间
-                  </div>
-                  <div>
+                  </Typography>
+                  <Typography>
                     {new Date(selectedEmail.sent_at).toLocaleString("zh-CN")}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
               )}
               {selectedEmail.error_message && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                  <div className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
+                <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1, border: 1, borderColor: 'error.main' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.dark' }}>
+                    <AlertCircle size={16} />
                     发送失败
-                  </div>
-                  <div className="text-sm text-red-700 dark:text-red-300 mt-1">
+                  </Box>
+                  <Typography variant="body2" sx={{ mt: 1, color: 'error.dark' }}>
                     {selectedEmail.error_message}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
               )}
-              <div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+              <Box>
+                <Typography variant="body2" color="text.secondary">
                   邮件内容
-                </div>
-                <pre className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm whitespace-pre-wrap max-h-64 overflow-y-auto">
+                </Typography>
+                <Box component="pre" sx={{ mt: 1, p: 2, bgcolor: 'grey.100', borderRadius: 1, fontSize: '0.875rem', whiteSpace: 'pre-wrap', maxHeight: 256, overflow: 'auto' }}>
                   {selectedEmail.body}
-                </pre>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           )}
-          <DialogFooter>
+          <DialogActions>
             <Button
-              variant="secondary"
+              variant="contained"
               onClick={() => setShowEmailDetail(false)}
             >
               关闭
             </Button>
-          </DialogFooter>
+          </DialogActions>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showTemplateModal} onOpenChange={setShowTemplateModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>创建邮件模板</DialogTitle>
-            <DialogDescription>
-              创建新的邮件模板，支持变量替换
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={showTemplateModal} onClose={() => setShowTemplateModal(false)}>
+        <DialogContent sx={{ maxWidth: 600 }}>
+          <DialogTitle>创建邮件模板</DialogTitle>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            创建新的邮件模板，支持变量替换
+          </Typography>
           <form onSubmit={handleCreateTemplate}>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="template-code">模板编码 *</Label>
-                <Input
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-code">模板编码 *</InputLabel>
+                <TextField
                   id="template-code"
                   value={templateForm.code}
                   onChange={(e) =>
@@ -1803,11 +1727,12 @@ const MailPage: React.FC = () => {
                   }
                   placeholder="如: workflow_approval"
                   required
+                  size="small"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-name">模板名称 *</Label>
-                <Input
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-name">模板名称 *</InputLabel>
+                <TextField
                   id="template-name"
                   value={templateForm.name}
                   onChange={(e) =>
@@ -1818,11 +1743,12 @@ const MailPage: React.FC = () => {
                   }
                   placeholder="如: 流程审批通知"
                   required
+                  size="small"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-description">描述</Label>
-                <Input
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-description">描述</InputLabel>
+                <TextField
                   id="template-description"
                   value={templateForm.description}
                   onChange={(e) =>
@@ -1832,31 +1758,31 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="简要描述此模板的用途"
+                  size="small"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-category">分类</Label>
-                <Select
-                  value={templateForm.category}
-                  onValueChange={(v) =>
-                    setTemplateForm((prev) => ({ ...prev, category: v }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-category">分类</InputLabel>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={templateForm.category}
+                    onChange={(e) =>
+                      setTemplateForm((prev) => ({ ...prev, category: e.target.value }))
+                    }
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>选择分类</MenuItem>
                     {TEMPLATE_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
+                      <MenuItem key={cat.value} value={cat.value}>
                         {cat.label}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-tags">标签</Label>
-                <Input
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-tags">标签</InputLabel>
+                <TextField
                   id="template-tags"
                   value={templateForm.tags}
                   onChange={(e) =>
@@ -1866,11 +1792,12 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="多个标签用逗号分隔"
+                  size="small"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-subject">主题模板 *</Label>
-                <Input
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-subject">主题模板 *</InputLabel>
+                <TextField
                   id="template-subject"
                   value={templateForm.subject_template}
                   onChange={(e) =>
@@ -1881,11 +1808,12 @@ const MailPage: React.FC = () => {
                   }
                   placeholder="支持变量替换，如: 【TOPEMS】{{title}}"
                   required
+                  size="small"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-body">正文模板 *</Label>
-                <Textarea
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-body">正文模板 *</InputLabel>
+                <TextField
                   id="template-body"
                   value={templateForm.body_template}
                   onChange={(e) =>
@@ -1895,13 +1823,14 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="支持变量替换，如: 尊敬的{{user_name}}"
-                  className="h-40"
+                  multiline
+                  minRows={4}
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-body-html">HTML正文模板</Label>
-                <Textarea
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <InputLabel htmlFor="template-body-html">HTML正文模板</InputLabel>
+                <TextField
                   id="template-body-html"
                   value={templateForm.body_html_template}
                   onChange={(e) =>
@@ -1911,26 +1840,28 @@ const MailPage: React.FC = () => {
                     }))
                   }
                   placeholder="HTML格式的邮件内容"
-                  className="h-32 font-mono text-sm"
+                  multiline
+                  minRows={3}
+                  sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
                 />
-              </div>
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
+              </Box>
+              <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1, border: 1, borderColor: 'info.main' }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, color: 'info.dark', mb: 1 }}>
                   变量使用说明
-                </div>
-                <div className="text-sm text-blue-600 dark:text-blue-400">
+                </Typography>
+                <Typography variant="body2" color="info.dark">
                   在模板中使用{" "}
-                  <code className="bg-white dark:bg-gray-800 px-1 py-0.5 rounded">
+                  <Box component="code" sx={{ bgcolor: 'background.paper', px: 0.5, py: 0.25, borderRadius: 0.5 }}>
                     {"{{变量名}}"}
-                  </code>{" "}
+                  </Box>{" "}
                   格式的变量，发送邮件时传入数据即可替换。
-                </div>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
+                </Typography>
+              </Box>
+            </Box>
+            <DialogActions sx={{ mt: 3 }}>
               <Button
                 type="button"
-                variant="secondary"
+                variant="contained"
                 onClick={() => {
                   setShowTemplateModal(false);
                   resetTemplateForm();
@@ -1939,34 +1870,33 @@ const MailPage: React.FC = () => {
                 取消
               </Button>
               <Button type="submit">创建模板</Button>
-            </DialogFooter>
+            </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog
         open={showEditTemplateModal}
-        onOpenChange={setShowEditTemplateModal}
+        onClose={() => setShowEditTemplateModal(false)}
       >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>编辑邮件模板</DialogTitle>
-          </DialogHeader>
+        <DialogContent sx={{ maxWidth: 600 }}>
+          <DialogTitle>编辑邮件模板</DialogTitle>
           {selectedTemplate && (
             <form onSubmit={handleUpdateTemplate}>
-              <div className="space-y-4 py-2">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-code">模板编码</Label>
-                  <Input
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-code">模板编码</InputLabel>
+                  <TextField
                     id="edit-template-code"
                     value={templateForm.code}
                     disabled
-                    className="bg-gray-100 dark:bg-gray-800"
+                    size="small"
+                    sx={{ bgcolor: 'grey.100' }}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-name">模板名称</Label>
-                  <Input
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-name">模板名称</InputLabel>
+                  <TextField
                     id="edit-template-name"
                     value={templateForm.name}
                     onChange={(e) =>
@@ -1976,11 +1906,12 @@ const MailPage: React.FC = () => {
                       }))
                     }
                     placeholder="如: 流程审批通知"
+                    size="small"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-description">描述</Label>
-                  <Input
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-description">描述</InputLabel>
+                  <TextField
                     id="edit-template-description"
                     value={templateForm.description}
                     onChange={(e) =>
@@ -1990,31 +1921,31 @@ const MailPage: React.FC = () => {
                       }))
                     }
                     placeholder="简要描述此模板的用途"
+                    size="small"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-category">分类</Label>
-                  <Select
-                    value={templateForm.category}
-                    onValueChange={(v) =>
-                      setTemplateForm((prev) => ({ ...prev, category: v }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="选择分类" />
-                    </SelectTrigger>
-                    <SelectContent>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-category">分类</InputLabel>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={templateForm.category}
+                      onChange={(e) =>
+                        setTemplateForm((prev) => ({ ...prev, category: e.target.value }))
+                      }
+                      displayEmpty
+                    >
+                      <MenuItem value="" disabled>选择分类</MenuItem>
                       {TEMPLATE_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
+                        <MenuItem key={cat.value} value={cat.value}>
                           {cat.label}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-tags">标签</Label>
-                  <Input
+                    </Select>
+                  </FormControl>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-tags">标签</InputLabel>
+                  <TextField
                     id="edit-template-tags"
                     value={templateForm.tags}
                     onChange={(e) =>
@@ -2024,11 +1955,12 @@ const MailPage: React.FC = () => {
                       }))
                     }
                     placeholder="多个标签用逗号分隔"
+                    size="small"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-subject">主题模板</Label>
-                  <Input
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-subject">主题模板</InputLabel>
+                  <TextField
                     id="edit-template-subject"
                     value={templateForm.subject_template}
                     onChange={(e) =>
@@ -2038,11 +1970,12 @@ const MailPage: React.FC = () => {
                       }))
                     }
                     placeholder="支持变量替换"
+                    size="small"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-body">正文模板</Label>
-                  <Textarea
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-body">正文模板</InputLabel>
+                  <TextField
                     id="edit-template-body"
                     value={templateForm.body_template}
                     onChange={(e) =>
@@ -2051,12 +1984,13 @@ const MailPage: React.FC = () => {
                         body_template: e.target.value,
                       }))
                     }
-                    className="h-40"
+                    multiline
+                    minRows={4}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-template-body-html">HTML正文模板</Label>
-                  <Textarea
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <InputLabel htmlFor="edit-template-body-html">HTML正文模板</InputLabel>
+                  <TextField
                     id="edit-template-body-html"
                     value={templateForm.body_html_template}
                     onChange={(e) =>
@@ -2065,14 +1999,16 @@ const MailPage: React.FC = () => {
                         body_html_template: e.target.value,
                       }))
                     }
-                    className="h-32 font-mono text-sm"
+                    multiline
+                    minRows={3}
+                    sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
                   />
-                </div>
-              </div>
-              <DialogFooter className="mt-6">
+                </Box>
+              </Box>
+              <DialogActions sx={{ mt: 3 }}>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="contained"
                   onClick={() => {
                     setShowEditTemplateModal(false);
                     setSelectedTemplate(null);
@@ -2082,48 +2018,48 @@ const MailPage: React.FC = () => {
                   取消
                 </Button>
                 <Button type="submit">保存修改</Button>
-              </DialogFooter>
+              </DialogActions>
             </form>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEyeModal} onOpenChange={setShowEyeModal}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              模板预览
-            </DialogTitle>
-            <DialogDescription>以下是模板渲染后的预览效果</DialogDescription>
-          </DialogHeader>
+      <Dialog open={showEyeModal} onClose={() => setShowEyeModal(false)}>
+        <DialogContent sx={{ maxWidth: 600 }}>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Eye size={20} />
+            模板预览
+          </DialogTitle>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            以下是模板渲染后的预览效果
+          </Typography>
           {previewContent && (
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
                   主题
-                </div>
-                <div className="font-medium text-lg text-gray-900 dark:text-gray-100">
+                </Typography>
+                <Typography variant="h6">
                   {previewContent.subject}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
                   正文内容
-                </div>
-                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <pre className="text-sm whitespace-pre-wrap max-h-80 overflow-y-auto">
+                </Typography>
+                <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1, border: 1, borderColor: 'grey.300' }}>
+                  <Box component="pre" sx={{ fontSize: '0.875rem', whiteSpace: 'pre-wrap', maxHeight: 320, overflow: 'auto' }}>
                     {previewContent.body}
-                  </pre>
-                </div>
-              </div>
-            </div>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
           )}
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowEyeModal(false)}>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => setShowEyeModal(false)}>
               关闭
             </Button>
-          </DialogFooter>
+          </DialogActions>
         </DialogContent>
       </Dialog>
     </div>

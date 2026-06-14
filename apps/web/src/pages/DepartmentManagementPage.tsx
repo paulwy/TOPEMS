@@ -1,3 +1,23 @@
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+  Stack,
+  Tooltip,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Building2,
@@ -17,33 +37,7 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface DepartmentManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -211,9 +205,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
       archived: "归档",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip size="small" variant={(colors[status] || "outlined") as "filled" | "outlined"} label={labels[status] || status} />
     );
   };
 
@@ -247,74 +239,71 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
 
   const renderDepartmentTree = (depts: Department[], level: number = 0) => {
     return depts.map((dept) => (
-      <div key={dept.id} className="group">
-        <div
-          className={`flex items-center justify-between p-4 rounded-lg ${level > 0 ? "ml-8 border-l-2 border-gray-200 dark:border-gray-700" : ""}`}
+      <Box key={dept.id} sx={{ "&:hover .action-buttons": { opacity: 1 } }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 2,
+            borderRadius: 1,
+            ...(level > 0 && { ml: 4, borderLeft: 2, borderColor: "divider" }),
+          }}
         >
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <Folder className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h4 className="font-medium text-gray-900 dark:text-gray-100">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 40, height: 40, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Folder style={{ color: "var(--mui-palette-primary-main)", fontSize: 20 }} />
+            </Box>
+            <Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
                   {dept.name}
-                </h4>
+                </Typography>
                 {dept.code && (
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <Typography variant="body2" color="text.secondary">
                     ({dept.code})
-                  </span>
+                  </Typography>
                 )}
                 {getStatusBadge(dept.status)}
-              </div>
+              </Box>
               {dept.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Typography variant="body2" color="text.secondary">
                   {dept.description}
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-2 transition-opacity">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedDepartment(dept);
-                      setShowEditModal(true);
-                    }}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>编辑</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <Box className="action-buttons" sx={{ opacity: 0, transition: "opacity 0.2s" }}>
+            <Tooltip title="编辑">
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setSelectedDepartment(dept);
+                  setShowEditModal(true);
+                }}
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            </Tooltip>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400"
-                    onClick={() => handleDeleteDepartment(dept.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>删除</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </div>
+            <Tooltip title="删除">
+              <Button
+                variant="text"
+                size="small"
+                color="error"
+                onClick={() => handleDeleteDepartment(dept.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </Tooltip>
+          </Box>
+        </Box>
 
         {(dept as any).children?.length > 0 &&
           renderDepartmentTree((dept as any).children, level + 1)}
-      </div>
+      </Box>
     ));
   };
 
@@ -326,21 +315,23 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
         cell: ({ row }) => {
           const dept = row.original;
           return (
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                <Folder className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <div className="font-medium text-gray-900 dark:text-gray-100">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box sx={{ color: "primary.main" }}>
+                  <Folder size={20} />
+                </Box>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
                   {dept.name}
-                </div>
+                </Typography>
                 {dept.code && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <Typography variant="caption" color="text.secondary">
                     {dept.code}
-                  </div>
+                  </Typography>
                 )}
-              </div>
-            </div>
+              </Box>
+            </Box>
           );
         },
       },
@@ -353,9 +344,9 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
         accessorKey: "description",
         header: "描述",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <Typography variant="body2" color="text.secondary">
             {row.original.description || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
@@ -364,10 +355,10 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
         cell: ({ row }) => {
           const dept = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="text"
+                size="small"
                 onClick={() => {
                   setSelectedDepartment(dept);
                   setShowEditModal(true);
@@ -376,14 +367,14 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                 <Edit className="w-4 h-4" />
               </Button>
               <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:text-red-700 dark:text-red-400"
+                variant="text"
+                size="small"
+                color="error"
                 onClick={() => handleDeleteDepartment(dept.id)}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
-            </div>
+            </Box>
           );
         },
       },
@@ -392,267 +383,261 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Building2 className="w-7 h-7 mr-3 text-blue-600" />
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
+                  <Building2 className="w-7 h-7 mr-2" />
                   部门管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   管理组织架构、层级关系
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+              <Button variant="contained" onClick={() => setShowCreateModal(true)}>
+                <Plus className="w-5 h-5 mr-1" />
                 新增部门
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="搜索部门名称、编码、描述..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button variant="secondary" onClick={loadDepartments}>
+      <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 4 }}>
+        <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+          <TextField
+            placeholder="搜索部门名称、编码、描述..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            sx={{ flex: 1 }}
+            slotProps={{
+              input: {
+                startAdornment: <Search className="w-5 h-5 mr-1" />,
+              }
+            }}
+          />
+          <Button variant="outlined" onClick={loadDepartments}>
             刷新
           </Button>
-        </div>
+        </Box>
 
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Typography sx={{ mt: 2 }} color="text.secondary">
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadDepartments}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <AlertCircle style={{ fontSize: 48, color: "var(--mui-palette-error-main)", marginBottom: 8 }} />
+                <Typography color="error.main">{error}</Typography>
+                <Button sx={{ mt: 2 }} onClick={loadDepartments}>
                   重试
                 </Button>
-              </div>
+              </Box>
             ) : filteredDepartments.length === 0 ? (
-              <div className="p-8 text-center">
-                <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">暂无部门数据</p>
-              </div>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Building2 style={{ fontSize: 48, color: "var(--mui-palette-text-disabled)", marginBottom: 8 }} />
+                <Typography color="text.secondary">暂无部门数据</Typography>
+              </Box>
             ) : (
-              <div className="p-6">
+              <Box sx={{ p: 3 }}>
                 {renderDepartmentTree(buildDepartmentTree(filteredDepartments))}
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>新增部门</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateDepartment}>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">部门名称 *</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    required
-                    value={newDepartment.name || ""}
-                    onChange={(e) =>
-                      setNewDepartment({
-                        ...newDepartment,
-                        name: e.target.value,
-                      })
-                    }
-                    placeholder="请输入部门名称"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="code">部门编码</Label>
-                  <Input
-                    id="code"
-                    type="text"
-                    value={newDepartment.code || ""}
-                    onChange={(e) =>
-                      setNewDepartment({
-                        ...newDepartment,
-                        code: e.target.value,
-                      })
-                    }
-                    placeholder="请输入部门编码"
-                  />
-                </div>
-              </div>
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新增部门</DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handleCreateDepartment} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <TextField
+                id="name"
+                label="部门名称 *"
+                type="text"
+                required
+                value={newDepartment.name || ""}
+                onChange={(e) =>
+                  setNewDepartment({
+                    ...newDepartment,
+                    name: e.target.value,
+                  })
+                }
+                placeholder="请输入部门名称"
+                size="small"
+                fullWidth
+              />
+              <TextField
+                id="code"
+                label="部门编码"
+                type="text"
+                value={newDepartment.code || ""}
+                onChange={(e) =>
+                  setNewDepartment({
+                    ...newDepartment,
+                    code: e.target.value,
+                  })
+                }
+                placeholder="请输入部门编码"
+                size="small"
+                fullWidth
+              />
+            </Box>
 
-              <div className="space-y-2">
-                <Label htmlFor="parent">上级部门</Label>
-                <Select
-                  value={newDepartment.parent_id || ""}
-                  onValueChange={(value) =>
-                    setNewDepartment({
-                      ...newDepartment,
-                      parent_id: value || undefined,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="无（顶级部门）" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">无（顶级部门）</SelectItem>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <FormControl size="small" fullWidth>
+              <InputLabel id="parent-label">上级部门</InputLabel>
+              <Select
+                labelId="parent-label"
+                id="parent"
+                value={newDepartment.parent_id || ""}
+                label="上级部门"
+                onChange={(e) =>
+                  setNewDepartment({
+                    ...newDepartment,
+                    parent_id: e.target.value || undefined,
+                  })
+                }
+              >
+                <MenuItem value="none">无（顶级部门）</MenuItem>
+                {departments.map((dept) => (
+                  <MenuItem key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">描述</Label>
-                <Textarea
-                  id="description"
-                  value={newDepartment.description || ""}
-                  onChange={(e) =>
-                    setNewDepartment({
-                      ...newDepartment,
-                      description: e.target.value,
-                    })
-                  }
-                  rows={3}
-                  placeholder="请输入部门描述"
-                />
-              </div>
-            </div>
+            <TextField
+              id="description"
+              label="描述"
+              value={newDepartment.description || ""}
+              onChange={(e) =>
+                setNewDepartment({
+                  ...newDepartment,
+                  description: e.target.value,
+                })
+              }
+              rows={3}
+              placeholder="请输入部门描述"
+              size="small"
+              multiline
+              fullWidth
+            />
 
-            <DialogFooter className="mt-6">
+            <DialogActions sx={{ px: 0, mt: 2 }}>
               <Button
                 type="button"
-                variant="secondary"
+                variant="outlined"
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
               </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
-          </form>
+              <Button type="submit" variant="contained">
+                创建
+              </Button>
+            </DialogActions>
+          </Box>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>编辑部门</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>编辑部门</DialogTitle>
+        <DialogContent>
           {selectedDepartment && (
-            <form onSubmit={handleEditDepartment}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-name">部门名称 *</Label>
-                    <Input
-                      id="edit-name"
-                      type="text"
-                      required
-                      value={selectedDepartment.name}
-                      onChange={(e) =>
-                        setSelectedDepartment({
-                          ...selectedDepartment,
-                          name: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-code">部门编码</Label>
-                    <Input
-                      id="edit-code"
-                      type="text"
-                      value={selectedDepartment.code || ""}
-                      onChange={(e) =>
-                        setSelectedDepartment({
-                          ...selectedDepartment,
-                          code: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
+            <Box component="form" onSubmit={handleEditDepartment} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                <TextField
+                  id="edit-name"
+                  label="部门名称 *"
+                  type="text"
+                  required
+                  value={selectedDepartment.name}
+                  onChange={(e) =>
+                    setSelectedDepartment({
+                      ...selectedDepartment,
+                      name: e.target.value,
+                    })
+                  }
+                  size="small"
+                  fullWidth
+                />
+                <TextField
+                  id="edit-code"
+                  label="部门编码"
+                  type="text"
+                  value={selectedDepartment.code || ""}
+                  onChange={(e) =>
+                    setSelectedDepartment({
+                      ...selectedDepartment,
+                      code: e.target.value,
+                    })
+                  }
+                  size="small"
+                  fullWidth
+                />
+              </Box>
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-parent">上级部门</Label>
-                  <Select
-                    value={selectedDepartment.parent_id || ""}
-                    onValueChange={(value) =>
-                      setSelectedDepartment({
-                        ...selectedDepartment,
-                        parent_id: value || undefined,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="无（顶级部门）" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">无（顶级部门）</SelectItem>
-                      {departments
-                        .filter((d) => d.id !== selectedDepartment.id)
-                        .map((dept) => (
-                          <SelectItem key={dept.id} value={dept.id}>
-                            {dept.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <FormControl size="small" fullWidth>
+                <InputLabel id="edit-parent-label">上级部门</InputLabel>
+                <Select
+                  labelId="edit-parent-label"
+                  id="edit-parent"
+                  value={selectedDepartment.parent_id || ""}
+                  label="上级部门"
+                  onChange={(e) =>
+                    setSelectedDepartment({
+                      ...selectedDepartment,
+                      parent_id: e.target.value || undefined,
+                    })
+                  }
+                >
+                  <MenuItem value="none">无（顶级部门）</MenuItem>
+                  {departments
+                    .filter((d) => d.id !== selectedDepartment.id)
+                    .map((dept) => (
+                      <MenuItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-description">描述</Label>
-                  <Textarea
-                    id="edit-description"
-                    value={selectedDepartment.description || ""}
-                    onChange={(e) =>
-                      setSelectedDepartment({
-                        ...selectedDepartment,
-                        description: e.target.value,
-                      })
-                    }
-                    rows={3}
-                  />
-                </div>
-              </div>
+              <TextField
+                id="edit-description"
+                label="描述"
+                value={selectedDepartment.description || ""}
+                onChange={(e) =>
+                  setSelectedDepartment({
+                    ...selectedDepartment,
+                    description: e.target.value,
+                  })
+                }
+                rows={3}
+                size="small"
+                multiline
+                fullWidth
+              />
 
-              <DialogFooter className="mt-6">
+              <DialogActions sx={{ px: 0, mt: 2 }}>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outlined"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedDepartment(null);
@@ -660,13 +645,15 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                 >
                   取消
                 </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
-            </form>
+                <Button type="submit" variant="contained">
+                  保存
+                </Button>
+              </DialogActions>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

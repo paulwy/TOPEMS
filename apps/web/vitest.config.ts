@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'react-transition-group': path.resolve(__dirname, './node_modules/react-transition-group/cjs/index.js'),
     },
   },
   test: {

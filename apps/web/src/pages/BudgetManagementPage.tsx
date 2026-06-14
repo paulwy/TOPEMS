@@ -5,8 +5,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye,
-  CheckCircle,
   DollarSign,
   Calendar,
   Settings,
@@ -18,30 +16,30 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import {
+  MenuItem,
+  Card,
+  CardContent,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+  FormLabel,
+  Chip,
+  Checkbox,
+  FormControlLabel,
+  Box,
+  IconButton,
+} from "@mui/material";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from "../components/ui/OrganizationFilter";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const BudgetManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -152,23 +150,14 @@ const BudgetManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<
-      string,
-      {
-        variant: "default" | "secondary" | "destructive" | "outline";
-        label: string;
-      }
-    > = {
-      active: { variant: "default", label: "执行中" },
-      frozen: { variant: "secondary", label: "已冻结" },
-      exhausted: { variant: "destructive", label: "已耗尽" },
+    const config: Record<string, { color: "primary" | "default" | "error" | "warning"; label: string }> = {
+      active: { color: "primary", label: "执行中" },
+      frozen: { color: "warning", label: "已冻结" },
+      exhausted: { color: "error", label: "已耗尽" },
     };
 
-    const config = badges[status] || {
-      variant: "outline" as const,
-      label: status,
-    };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    const badgeConfig = config[status] || { color: "default" as const, label: status };
+    return <Chip size="small" label={badgeConfig.label} color={badgeConfig.color} />;
   };
 
   const getDepartmentName = (id: string) => {
@@ -388,21 +377,19 @@ const BudgetManagementPage: React.FC = () => {
         header: "操作",
         cell: ({ row }) => (
           <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
+            <IconButton
+              size="small"
               onClick={() => setEditingBudget(row.original)}
             >
               <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600"
+            </IconButton>
+            <IconButton
+              size="small"
               onClick={() => handleDelete(row.original.id)}
+              sx={{ color: "error.main" }}
             >
               <Trash2 className="w-4 h-4" />
-            </Button>
+            </IconButton>
           </div>
         ),
       },
@@ -426,9 +413,9 @@ const BudgetManagementPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
-              </Button>
+              </IconButton>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
                   <TrendingUp className="w-7 h-7 mr-3 text-green-600" />
@@ -441,7 +428,7 @@ const BudgetManagementPage: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
+              <Button variant="contained" onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-5 h-5 mr-2" />
                 新增预算
               </Button>
@@ -465,7 +452,7 @@ const BudgetManagementPage: React.FC = () => {
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <Card>
-            <CardContent className="p-6">
+            <CardContent sx={{ p: 3 }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -483,7 +470,7 @@ const BudgetManagementPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent sx={{ p: 3 }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -501,7 +488,7 @@ const BudgetManagementPage: React.FC = () => {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent sx={{ p: 3 }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -527,7 +514,7 @@ const BudgetManagementPage: React.FC = () => {
 
         {/* 预算列表 */}
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
               <div className="p-8 text-center">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
@@ -541,34 +528,36 @@ const BudgetManagementPage: React.FC = () => {
                   <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={selectedIds.length === budgets.length}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedIds(budgets.map((b) => b.id));
-                            } else {
-                              setSelectedIds([]);
-                            }
-                          }}
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={selectedIds.length === budgets.length}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedIds(budgets.map((b) => b.id));
+                                } else {
+                                  setSelectedIds([]);
+                                }
+                              }}
+                            />
+                          }
+                          label={<span className="text-sm text-slate-600">已选择 {selectedIds.length} 项</span>}
                         />
-                        <span className="text-sm text-slate-600">
-                          已选择 {selectedIds.length} 项
-                        </span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         onClick={handleBatchUpdateStatus}
                       >
                         <Settings className="w-4 h-4 mr-1" />
                         批量更新状态
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
+                        variant="outlined"
+                        size="small"
+                        color="error"
                         onClick={handleBatchDelete}
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
@@ -625,59 +614,61 @@ const BudgetManagementPage: React.FC = () => {
       </div>
 
       {/* 创建预算弹窗 */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新增预算</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>新增预算</DialogTitle>
-          </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="department">部门</Label>
-              <Select
-                value={newBudget.department_id}
-                onValueChange={(value) =>
-                  setNewBudget({ ...newBudget, department_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择部门" />
-                </SelectTrigger>
-                <SelectContent>
+            <div>
+              <FormLabel htmlFor="department">部门</FormLabel>
+              <FormControl size="small" fullWidth>
+                <Select
+                  value={newBudget.department_id}
+                  onChange={(e) =>
+                    setNewBudget({ ...newBudget, department_id: e.target.value })
+                  }
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    选择部门
+                  </MenuItem>
                   {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
+                    <MenuItem key={dept.id} value={dept.id}>
                       {dept.name}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </Select>
+              </FormControl>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="type">预算类型</Label>
-              <Select
-                value={newBudget.budget_type}
-                onValueChange={(value) =>
-                  setNewBudget({ ...newBudget, budget_type: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="office">办公费</SelectItem>
-                  <SelectItem value="marketing">市场费</SelectItem>
-                  <SelectItem value="development">研发费</SelectItem>
-                  <SelectItem value="travel">差旅费</SelectItem>
-                  <SelectItem value="training">培训费</SelectItem>
-                  <SelectItem value="other">其他</SelectItem>
-                </SelectContent>
-              </Select>
+            <div>
+              <FormLabel htmlFor="type">预算类型</FormLabel>
+              <FormControl size="small" fullWidth>
+                <Select
+                  value={newBudget.budget_type}
+                  onChange={(e) =>
+                    setNewBudget({ ...newBudget, budget_type: e.target.value })
+                  }
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    选择类型
+                  </MenuItem>
+                  <MenuItem value="office">办公费</MenuItem>
+                  <MenuItem value="marketing">市场费</MenuItem>
+                  <MenuItem value="development">研发费</MenuItem>
+                  <MenuItem value="travel">差旅费</MenuItem>
+                  <MenuItem value="training">培训费</MenuItem>
+                  <MenuItem value="other">其他</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="year">财年</Label>
-              <Input
+            <div>
+              <FormLabel htmlFor="year">财年</FormLabel>
+              <TextField
                 id="year"
+                size="small"
+                fullWidth
                 type="text"
                 value={newBudget.fiscal_year}
                 onChange={(e) =>
@@ -687,10 +678,12 @@ const BudgetManagementPage: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="amount">预算金额</Label>
-              <Input
+            <div>
+              <FormLabel htmlFor="amount">预算金额</FormLabel>
+              <TextField
                 id="amount"
+                size="small"
+                fullWidth
                 type="number"
                 value={newBudget.total_budget}
                 onChange={(e) =>
@@ -703,79 +696,83 @@ const BudgetManagementPage: React.FC = () => {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleCreate}>创建</Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={handleCreate}>创建</Button>
+        </DialogActions>
       </Dialog>
 
       {/* 编辑预算弹窗 */}
       <Dialog
         open={!!editingBudget}
-        onOpenChange={() => setEditingBudget(null)}
+        onClose={() => setEditingBudget(null)}
+        maxWidth="sm"
+        fullWidth
       >
+        <DialogTitle>编辑预算</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>编辑预算</DialogTitle>
-          </DialogHeader>
           {editingBudget && (
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-department">部门</Label>
-                <Select
-                  value={editingBudget.department_id || ""}
-                  onValueChange={(value) =>
-                    setEditingBudget({
-                      ...editingBudget,
-                      department_id: value || undefined,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择部门" />
-                  </SelectTrigger>
-                  <SelectContent>
+              <div>
+                <FormLabel htmlFor="edit-department">部门</FormLabel>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={editingBudget.department_id || ""}
+                    onChange={(e) =>
+                      setEditingBudget({
+                        ...editingBudget,
+                        department_id: e.target.value || undefined,
+                      })
+                    }
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>
+                      选择部门
+                    </MenuItem>
                     {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
+                      <MenuItem key={dept.id} value={dept.id}>
                         {dept.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-type">预算类型</Label>
-                <Select
-                  value={editingBudget.budget_type || ""}
-                  onValueChange={(value) =>
-                    setEditingBudget({
-                      ...editingBudget,
-                      budget_type: value || undefined,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择类型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="office">办公费</SelectItem>
-                    <SelectItem value="marketing">市场费</SelectItem>
-                    <SelectItem value="development">研发费</SelectItem>
-                    <SelectItem value="travel">差旅费</SelectItem>
-                    <SelectItem value="training">培训费</SelectItem>
-                    <SelectItem value="other">其他</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div>
+                <FormLabel htmlFor="edit-type">预算类型</FormLabel>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={editingBudget.budget_type || ""}
+                    onChange={(e) =>
+                      setEditingBudget({
+                        ...editingBudget,
+                        budget_type: e.target.value || undefined,
+                      })
+                    }
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>
+                      选择类型
+                    </MenuItem>
+                    <MenuItem value="office">办公费</MenuItem>
+                    <MenuItem value="marketing">市场费</MenuItem>
+                    <MenuItem value="development">研发费</MenuItem>
+                    <MenuItem value="travel">差旅费</MenuItem>
+                    <MenuItem value="training">培训费</MenuItem>
+                    <MenuItem value="other">其他</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-year">财年</Label>
-                <Input
+              <div>
+                <FormLabel htmlFor="edit-year">财年</FormLabel>
+                <TextField
                   id="edit-year"
+                  size="small"
+                  fullWidth
                   type="text"
                   value={editingBudget.fiscal_year}
                   onChange={(e) =>
@@ -787,10 +784,12 @@ const BudgetManagementPage: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-total">预算总额</Label>
-                <Input
+              <div>
+                <FormLabel htmlFor="edit-total">预算总额</FormLabel>
+                <TextField
                   id="edit-total"
+                  size="small"
+                  fullWidth
                   type="number"
                   value={editingBudget.total_budget}
                   onChange={(e) =>
@@ -802,10 +801,12 @@ const BudgetManagementPage: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-used">已使用金额</Label>
-                <Input
+              <div>
+                <FormLabel htmlFor="edit-used">已使用金额</FormLabel>
+                <TextField
                   id="edit-used"
+                  size="small"
+                  fullWidth
                   type="number"
                   value={editingBudget.used_amount}
                   onChange={(e) =>
@@ -817,56 +818,57 @@ const BudgetManagementPage: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-status">状态</Label>
-                <Select
-                  value={editingBudget.status}
-                  onValueChange={(value) =>
-                    setEditingBudget({ ...editingBudget, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">执行中</SelectItem>
-                    <SelectItem value="frozen">已冻结</SelectItem>
-                    <SelectItem value="exhausted">已耗尽</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div>
+                <FormLabel htmlFor="edit-status">状态</FormLabel>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={editingBudget.status}
+                    onChange={(e) =>
+                      setEditingBudget({ ...editingBudget, status: e.target.value })
+                    }
+                  >
+                    <MenuItem value="active">执行中</MenuItem>
+                    <MenuItem value="frozen">已冻结</MenuItem>
+                    <MenuItem value="exhausted">已耗尽</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingBudget(null)}>
-              取消
-            </Button>
-            <Button onClick={handleUpdate}>保存</Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setEditingBudget(null)}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={handleUpdate}>保存</Button>
+        </DialogActions>
       </Dialog>
 
       <Dialog
         open={showBatchStatusModal}
-        onOpenChange={setShowBatchStatusModal}
+        onClose={() => setShowBatchStatusModal(false)}
+        maxWidth="sm"
+        fullWidth
       >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>批量更新状态</DialogTitle>
-          </DialogHeader>
+        <DialogTitle>批量更新状态</DialogTitle>
+        <DialogContent>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="batch_status">选择新状态</Label>
-              <Select value={batchStatus} onValueChange={setBatchStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">进行中</SelectItem>
-                  <SelectItem value="frozen">已冻结</SelectItem>
-                  <SelectItem value="exhausted">已耗尽</SelectItem>
-                </SelectContent>
-              </Select>
+            <div>
+              <FormLabel htmlFor="batch_status">选择新状态</FormLabel>
+              <FormControl size="small" fullWidth>
+                <Select
+                  value={batchStatus}
+                  onChange={(e) => setBatchStatus(e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    请选择状态
+                  </MenuItem>
+                  <MenuItem value="active">进行中</MenuItem>
+                  <MenuItem value="frozen">已冻结</MenuItem>
+                  <MenuItem value="exhausted">已耗尽</MenuItem>
+                </Select>
+              </FormControl>
             </div>
             <p className="text-sm text-slate-500">
               将批量更新{" "}
@@ -874,26 +876,25 @@ const BudgetManagementPage: React.FC = () => {
               条预算的状态
             </p>
           </div>
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setShowBatchStatusModal(false);
-                setBatchStatus("");
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              type="button"
-              onClick={confirmBatchUpdateStatus}
-              disabled={!batchStatus}
-            >
-              确认更新
-            </Button>
-          </DialogFooter>
         </DialogContent>
+        <DialogActions sx={{ mt: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowBatchStatusModal(false);
+              setBatchStatus("");
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmBatchUpdateStatus}
+            disabled={!batchStatus}
+          >
+            确认更新
+          </Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

@@ -1,0 +1,574 @@
+import React, { useState, useCallback } from "react";
+import {
+  Box,
+  IconButton,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Fab,
+  Popover,
+  Divider,
+  Chip,
+  InputAdornment,
+  useTheme,
+  useMediaQuery,
+  Fade,
+  Zoom,
+} from "@mui/material";
+import {
+  Sparkles,
+  MessageSquare,
+  FileText,
+  BarChart3,
+  Wand2,
+  X,
+  Minus,
+  Send,
+  Search,
+  Calculator,
+  Calendar,
+  Code,
+  FileJson,
+  Shield,
+  ChevronRight,
+  Lightbulb,
+  Zap,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+interface QuickCommand {
+  id: string;
+  command: string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  action: () => void;
+}
+
+interface Tool {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+  action: () => void;
+}
+
+export const FloatingAIHelper: React.FC = () => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"chat" | "tools" | "help">("chat");
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  // 快捷命令
+  const quickCommands: QuickCommand[] = [
+    {
+      id: "approval",
+      command: "/审批",
+      label: "查看审批",
+      description: "查看待我审批的事项",
+      icon: <FileText style={{ width: 18, height: 18 }} />,
+      action: () => navigate("/workflow/approvals"),
+    },
+    {
+      id: "attendance",
+      command: "/考勤",
+      label: "查考勤",
+      description: "查看本月考勤情况",
+      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      action: () => navigate("/hrm/attendance"),
+    },
+    {
+      id: "customer",
+      command: "/客户",
+      label: "找客户",
+      description: "查找最近未联系的客户",
+      icon: <Search style={{ width: 18, height: 18 }} />,
+      action: () => navigate("/crm/customers"),
+    },
+    {
+      id: "report",
+      command: "/报表",
+      label: "生成报表",
+      description: "生成本月销售汇总",
+      icon: <BarChart3 style={{ width: 18, height: 18 }} />,
+      action: () => navigate("/bi/reports"),
+    },
+    {
+      id: "calculator",
+      command: "/计算",
+      label: "日期计算",
+      description: "日期间隔和工作日计算",
+      icon: <Calculator style={{ width: 18, height: 18 }} />,
+      action: () => {},
+    },
+  ];
+
+  // 实用工具
+  const tools: Tool[] = [
+    {
+      id: "json",
+      label: "JSON格式化",
+      icon: <FileJson style={{ width: 18, height: 18 }} />,
+      description: "格式化、压缩、校验JSON",
+      action: () => {},
+    },
+    {
+      id: "date",
+      label: "日期计算器",
+      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      description: "日期间隔、工作日计算",
+      action: () => {},
+    },
+    {
+      id: "unit",
+      label: "单位换算",
+      icon: <Calculator style={{ width: 18, height: 18 }} />,
+      description: "化工原料计量换算",
+      action: () => {},
+    },
+    {
+      id: "code",
+      label: "编码生成",
+      icon: <Code style={{ width: 18, height: 18 }} />,
+      description: "批量生成编号",
+      action: () => navigate("/ai?tool=code"),
+    },
+    {
+      id: "mask",
+      label: "数据脱敏",
+      icon: <Shield style={{ width: 18, height: 18 }} />,
+      description: "隐私数据处理",
+      action: () => {},
+    },
+  ];
+
+  // 上下文感知推荐（根据当前页面）
+  const contextAwareSuggestions = [
+    { label: "员工信息补全", desc: "AI智能补全员工档案", action: () => navigate("/hrm/employees") },
+    { label: "合同生成", desc: "根据信息生成合同文档", action: () => navigate("/hrm/contracts") },
+    { label: "客户评分", desc: "分析客户价值评分", action: () => navigate("/crm/scoring") },
+    { label: "报表解读", desc: "AI解读财务数据", action: () => navigate("/bi/reports") },
+  ];
+
+  const handleCommandClick = useCallback((command: QuickCommand) => {
+    command.action();
+    setIsOpen(false);
+  }, []);
+
+  const handleToolClick = useCallback((tool: Tool) => {
+    tool.action();
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    if (searchQuery.trim()) {
+      navigate(`/ai?query=${encodeURIComponent(searchQuery)}`);
+      setIsOpen(false);
+      setSearchQuery("");
+    }
+  }, [searchQuery, navigate]);
+
+  const handleFabClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+    setIsOpen(true);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setAnchorEl(null);
+    setIsOpen(false);
+    setIsMinimized(false);
+  }, []);
+
+  const handleMinimize = useCallback(() => {
+    setIsMinimized(true);
+  }, []);
+
+  const handleMaximize = useCallback(() => {
+    setIsMinimized(false);
+  }, []);
+
+  return (
+    <>
+      {/* 浮动按钮 */}
+      <Zoom in>
+        <Fab
+          color="primary"
+          aria-label="AI助手"
+          sx={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
+            },
+            boxShadow: "0 4px 14px rgba(59, 130, 246, 0.4)",
+          }}
+          onClick={handleFabClick}
+        >
+          <Sparkles style={{ width: 24, height: 24, color: "white" }} />
+        </Fab>
+      </Zoom>
+
+      {/* AI助手面板 */}
+      <Popover
+        open={isOpen && Boolean(anchorEl)}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        transformOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              width: isMinimized ? 320 : 400,
+              height: isMinimized ? 60 : 520,
+              borderRadius: 2,
+              overflow: "hidden",
+              transition: "all 0.3s ease",
+            },
+          },
+        }}
+      >
+        <Fade in={!isMinimized}>
+          <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            {/* 头部 */}
+            <Box
+              sx={{
+                p: 2,
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Sparkles style={{ width: 20, height: 20 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  TOPEMS AI 助手
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", gap: 0.5 }}>
+                <IconButton size="small" onClick={handleMinimize} sx={{ color: "white" }}>
+                  <Minus style={{ width: 16, height: 16 }} />
+                </IconButton>
+                <IconButton size="small" onClick={handleClose} sx={{ color: "white" }}>
+                  <X style={{ width: 16, height: 16 }} />
+                </IconButton>
+              </Box>
+            </Box>
+
+            {/* 搜索框 */}
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="搜索或提问... (按回车发送)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search style={{ width: 18, height: 18, color: "grey.500" }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={handleSearch}>
+                          <Send style={{ width: 16, height: 16 }} />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Tab切换 */}
+            <Box sx={{ px: 2, pt: 1.5, display: "flex", gap: 1 }}>
+              <Chip
+                icon={<MessageSquare style={{ width: 14, height: 14 }} />}
+                label="对话"
+                size="small"
+                variant={activeTab === "chat" ? "filled" : "outlined"}
+                onClick={() => setActiveTab("chat")}
+                color="primary"
+              />
+              <Chip
+                icon={<Zap style={{ width: 14, height: 14 }} />}
+                label="快捷命令"
+                size="small"
+                variant={activeTab === "tools" ? "filled" : "outlined"}
+                onClick={() => setActiveTab("tools")}
+              />
+              <Chip
+                icon={<Lightbulb style={{ width: 14, height: 14 }} />}
+                label="使用帮助"
+                size="small"
+                variant={activeTab === "help" ? "filled" : "outlined"}
+                onClick={() => setActiveTab("help")}
+              />
+            </Box>
+
+            {/* 内容区 */}
+            <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+              {activeTab === "chat" && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                    💡 上下文推荐
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    {contextAwareSuggestions.map((item, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: "divider",
+                          cursor: "pointer",
+                          "&:hover": {
+                            backgroundColor: "action.hover",
+                            borderColor: "primary.main",
+                          },
+                        }}
+                        onClick={item.action}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                          {item.label}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.desc}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                    🎯 常用功能
+                  </Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    <Chip
+                      icon={<Wand2 style={{ width: 14, height: 14 }} />}
+                      label="文档生成"
+                      size="small"
+                      onClick={() => navigate("/ai/documents")}
+                    />
+                    <Chip
+                      icon={<BarChart3 style={{ width: 14, height: 14 }} />}
+                      label="文本分析"
+                      size="small"
+                      onClick={() => navigate("/ai/analysis")}
+                    />
+                    <Chip
+                      icon={<FileText style={{ width: 14, height: 14 }} />}
+                      label="数据补全"
+                      size="small"
+                      onClick={() => navigate("/ai?tool=complete")}
+                    />
+                  </Box>
+                </Box>
+              )}
+
+              {activeTab === "tools" && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                    ⚡ 快捷命令
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+                    {quickCommands.map((cmd) => (
+                      <Box
+                        key={cmd.id}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: "divider",
+                          cursor: "pointer",
+                          "&:hover": {
+                            backgroundColor: "action.hover",
+                            borderColor: "primary.main",
+                          },
+                        }}
+                        onClick={() => handleCommandClick(cmd)}
+                      >
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 1,
+                            backgroundColor: "primary.light",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "primary.main",
+                          }}
+                        >
+                          {cmd.icon}
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {cmd.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {cmd.description}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={cmd.command}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontFamily: "monospace", fontSize: 11 }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                    🔧 实用工具
+                  </Typography>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                    {tools.map((tool) => (
+                      <Box
+                        key={tool.id}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: "divider",
+                          cursor: "pointer",
+                          textAlign: "center",
+                          "&:hover": {
+                            backgroundColor: "action.hover",
+                            borderColor: "primary.main",
+                          },
+                        }}
+                        onClick={() => handleToolClick(tool)}
+                      >
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1,
+                            backgroundColor: "secondary.light",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            mx: "auto",
+                            mb: 1,
+                            color: "secondary.main",
+                          }}
+                        >
+                          {tool.icon}
+                        </Box>
+                        <Typography variant="caption" sx={{ fontWeight: 500, display: "block" }}>
+                          {tool.label}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {activeTab === "help" && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                    📖 使用指南
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Box sx={{ p: 1.5, borderRadius: 1, backgroundColor: "grey.100" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+                        如何使用快捷命令？
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        在输入框中输入 /审批、/考勤 等命令，快速跳转到对应功能。
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: 1, backgroundColor: "grey.100" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+                        AI能做什么？
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        AI助手可以生成文档、分析文本、补全数据、解答问题。
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: 1, backgroundColor: "grey.100" }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+                        如何打开AI聊天？
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        点击右上角"AI聊天"Tab，或在任意页面使用浮动按钮。
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+
+            {/* 底部 */}
+            <Box
+              sx={{
+                p: 1.5,
+                borderTop: 1,
+                borderColor: "divider",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <Button
+                size="small"
+                endIcon={<ChevronRight style={{ width: 16, height: 16 }} />}
+                onClick={() => navigate("/ai")}
+              >
+                打开完整AI助手
+              </Button>
+            </Box>
+          </Box>
+        </Fade>
+
+        {/* 最小化状态 */}
+        <Fade in={isMinimized}>
+          <Box
+            sx={{
+              height: "100%",
+              display: isMinimized ? "flex" : "none",
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 2,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Sparkles style={{ width: 18, height: 18, color: "primary.main" }} />
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                AI 助手
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={handleMaximize}>
+              <ChevronRight style={{ width: 16, height: 16 }} />
+            </IconButton>
+          </Box>
+        </Fade>
+      </Popover>
+    </>
+  );
+};
+
+export default FloatingAIHelper;

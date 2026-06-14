@@ -11,7 +11,7 @@ use uuid::Uuid;
     "company_id": "550e8400-e29b-41d4-a716-446655440001",
     "department_id": "550e8400-e29b-41d4-a716-446655440002",
     "position_id": "550e8400-e29b-41d4-a716-446655440003",
-    "employee_no": "EMP001",
+    "employee_number": "EMP001",
     "name": "张三",
     "gender": "男",
     "hire_date": "2020-06-01",
@@ -31,8 +31,7 @@ pub struct Employee {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
     pub position_id: Option<Uuid>,
     #[schema(example = "EMP001")]
-    #[sqlx(rename = "employee_number")]
-    pub employee_no: String,
+    pub employee_number: String,
     #[schema(example = "张三")]
     pub name: String,
     #[schema(example = "男")]
@@ -78,7 +77,7 @@ pub struct EmployeeFinance {
     "company_id": "550e8400-e29b-41d4-a716-446655440001",
     "department_id": "550e8400-e29b-41d4-a716-446655440002",
     "position_id": "550e8400-e29b-41d4-a716-446655440003",
-    "employee_no": "EMP001",
+    "employee_number": "EMP001",
     "name": "张三",
     "gender": "男",
     "hire_date": "2024-01-01",
@@ -93,7 +92,7 @@ pub struct CreateEmployeeRequest {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
     pub position_id: Option<Uuid>,
     #[schema(example = "EMP001")]
-    pub employee_no: String,
+    pub employee_number: String,
     #[schema(example = "张三")]
     pub name: String,
     #[schema(example = "男")]
@@ -155,7 +154,7 @@ mod tests {
             company_id: Some(company_id),
             department_id: None,
             position_id: None,
-            employee_no: "EMP001".to_string(),
+            employee_number: "EMP001".to_string(),
             name: "John Doe".to_string(),
             gender: Some("male".to_string()),
             hire_date: Some(NaiveDate::from_ymd_opt(2024, 1, 15).unwrap()),
@@ -167,7 +166,7 @@ mod tests {
         };
 
         assert_eq!(employee.id, id);
-        assert_eq!(employee.employee_no, "EMP001");
+        assert_eq!(employee.employee_number, "EMP001");
         assert_eq!(employee.name, "John Doe");
         assert_eq!(employee.status, "active");
         assert!(employee.email.is_some());
@@ -180,7 +179,7 @@ mod tests {
             company_id,
             department_id: None,
             position_id: None,
-            employee_no: "EMP002".to_string(),
+            employee_number: "EMP002".to_string(),
             name: "Jane Smith".to_string(),
             gender: Some("female".to_string()),
             hire_date: None,
@@ -188,7 +187,7 @@ mod tests {
             phone: None,
         };
 
-        assert_eq!(request.employee_no, "EMP002");
+        assert_eq!(request.employee_number, "EMP002");
         assert_eq!(request.name, "Jane Smith");
     }
 

@@ -1,40 +1,5 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Checkbox, Box, TextField } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import type {
   Supplier,
   CreateSupplierRequest,
@@ -44,14 +9,6 @@ import { scmApi } from "@/api/scm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 
 const SupplierManagementPage: React.FC = () => {
@@ -227,7 +184,7 @@ const SupplierManagementPage: React.FC = () => {
       blocked: { label: "已冻结", variant: "destructive" },
     };
     const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    return <Chip size="small" variant={s.variant === "outline" ? "outlined" : "filled"} label={s.label} />;
   };
 
   if (loading) return <LoadingSpinner />;
@@ -236,44 +193,45 @@ const SupplierManagementPage: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>供应商管理</CardTitle>
-          <CardDescription>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>供应商管理</Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理供应商信息,包括基本信息、联系方式、银行账户等
-          </CardDescription>
+          </Typography>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索供应商名称或联系人..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="active">活跃</SelectItem>
-                <SelectItem value="inactive">非活跃</SelectItem>
-                <SelectItem value="blocked">已冻结</SelectItem>
-              </SelectContent>
-            </Select>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
+            <Box sx={{ flex: 1, position: 'relative' }}>
+              <Box sx={{ position: 'absolute', left: 1, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+                <Search className="w-4 h-4" />
+              </Box>
+              <TextField
+                placeholder="搜索供应商名称或联系人..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                size="small"
+                fullWidth
+                sx={{ pl: 4 }}
+              />
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>状态筛选</InputLabel>
+              <Select
+                value={statusFilter}
+                label="状态筛选"
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <MenuItem value="all">全部状态</MenuItem>
+                <MenuItem value="active">活跃</MenuItem>
+                <MenuItem value="inactive">非活跃</MenuItem>
+                <MenuItem value="blocked">已冻结</MenuItem>
+              </Select>
+            </FormControl>
             <Button
               onClick={() => {
                 resetForm();
@@ -283,34 +241,34 @@ const SupplierManagementPage: React.FC = () => {
               <Plus className="mr-2 h-4 w-4" />
               新增供应商
             </Button>
-          </div>
+          </Box>
 
           {selectedIds.length > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-              <span className="text-sm">
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="body2">
                 已选择 {selectedIds.length} 个供应商
-              </span>
+              </Typography>
               <Button
-                variant="destructive"
-                size="sm"
+                variant="contained"
+                size="small"
                 onClick={() => setSelectedIds([])}
               >
                 清除选择
               </Button>
-            </div>
+            </Box>
           )}
 
-          <div className="rounded-md border">
+          <Box sx={{ borderRadius: 1, border: 1, borderColor: 'divider' }}>
             <Table>
-              <TableHeader>
+              <TableHead>
                 <TableRow>
-                  <TableHead className="w-[50px]">
+                  <TableHead sx={{ width: 50 }}>
                     <Checkbox
                       checked={
                         selectedIds.length === suppliers.length &&
                         suppliers.length > 0
                       }
-                      onCheckedChange={toggleSelectAll}
+                      onChange={toggleSelectAll}
                     />
                   </TableHead>
                   <TableHead>供应商名称</TableHead>
@@ -319,13 +277,13 @@ const SupplierManagementPage: React.FC = () => {
                   <TableHead>联系电话</TableHead>
                   <TableHead>邮箱</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  <TableHead sx={{ textAlign: 'right' }}>操作</TableHead>
                 </TableRow>
-              </TableHeader>
+              </TableHead>
               <TableBody>
                 {suppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={8} sx={{ textAlign: 'center' }}>
                       <EmptyState
                         title="暂无供应商数据"
                         description="点击上方按钮添加第一个供应商"
@@ -338,10 +296,10 @@ const SupplierManagementPage: React.FC = () => {
                       <TableCell>
                         <Checkbox
                           checked={selectedIds.includes(supplier.id)}
-                          onCheckedChange={() => toggleSelect(supplier.id)}
+                          onChange={() => toggleSelect(supplier.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell sx={{ fontWeight: 500 }}>
                         {supplier.name}
                       </TableCell>
                       <TableCell>{supplier.short_name || "-"}</TableCell>
@@ -349,24 +307,24 @@ const SupplierManagementPage: React.FC = () => {
                       <TableCell>{supplier.contact_phone || "-"}</TableCell>
                       <TableCell>{supplier.email || "-"}</TableCell>
                       <TableCell>{getStatusBadge(supplier.status)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell sx={{ textAlign: 'right' }}>
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant="text"
+                          size="small"
                           onClick={() => handleViewDetail(supplier)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant="text"
+                          size="small"
                           onClick={() => handleEdit(supplier)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant="text"
+                          size="small"
                           onClick={() => handleDelete(supplier.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -377,235 +335,219 @@ const SupplierManagementPage: React.FC = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
+          </Box>
 
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-                {Array.from(
-                  { length: Math.min(5, Math.ceil(total / pageSize)) },
-                  (_, i) => {
-                    const page = i + 1;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  },
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(
-                        Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                      )
-                    }
-                    className={
-                      currentPage >= Math.ceil(total / pageSize)
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <Button
+                size="small"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                上一页
+              </Button>
+              {Array.from(
+                { length: Math.min(5, Math.ceil(total / pageSize)) },
+                (_, i) => {
+                  const page = i + 1;
+                  return (
+                    <Button
+                      key={page}
+                      size="small"
+                      variant={currentPage === page ? "contained" : "outlined"}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                },
+              )}
+              <Button
+                size="small"
+                onClick={() =>
+                  setCurrentPage(
+                    Math.min(Math.ceil(total / pageSize), currentPage + 1),
+                  )
+                }
+                disabled={currentPage >= Math.ceil(total / pageSize)}
+              >
+                下一页
+              </Button>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedSupplier ? "编辑供应商" : "新增供应商"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedSupplier ? "修改供应商信息" : "填写新供应商信息"}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md">
+        <DialogTitle>
+          {selectedSupplier ? "编辑供应商" : "新增供应商"}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            {selectedSupplier ? "修改供应商信息" : "填写新供应商信息"}
+          </Typography>
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">供应商名称 *</Label>
-                <Input
-                  id="name"
-                  required
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="供应商名称 *"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
+                  size="small"
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="short_name">简称</Label>
-                <Input
-                  id="short_name"
+                <TextField
+                  label="简称"
                   value={formData.short_name}
                   onChange={(e) =>
                     setFormData({ ...formData, short_name: e.target.value })
                   }
+                  size="small"
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact_name">联系人</Label>
-                <Input
-                  id="contact_name"
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="联系人"
                   value={formData.contact_name}
                   onChange={(e) =>
                     setFormData({ ...formData, contact_name: e.target.value })
                   }
+                  size="small"
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact_phone">联系电话</Label>
-                <Input
-                  id="contact_phone"
+                <TextField
+                  label="联系电话"
                   value={formData.contact_phone}
                   onChange={(e) =>
                     setFormData({ ...formData, contact_phone: e.target.value })
                   }
+                  size="small"
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">邮箱</Label>
-                <Input
-                  id="email"
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="邮箱"
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
+                  size="small"
+                  fullWidth
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bank_account">银行账户</Label>
-                <Input
-                  id="bank_account"
+                <TextField
+                  label="银行账户"
                   value={formData.bank_account}
                   onChange={(e) =>
                     setFormData({ ...formData, bank_account: e.target.value })
                   }
+                  size="small"
+                  fullWidth
                 />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="address">地址</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="tax_number">税号</Label>
-                <Input
-                  id="tax_number"
-                  value={formData.tax_number}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tax_number: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter>
+              </Box>
+              <TextField
+                label="地址"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label="税号"
+                value={formData.tax_number}
+                onChange={(e) =>
+                  setFormData({ ...formData, tax_number: e.target.value })
+                }
+                size="small"
+                fullWidth
+              />
+            </Box>
+            <DialogActions sx={{ mt: 3 }}>
               <Button
                 type="button"
-                variant="outline"
+                variant="outlined"
                 onClick={() => setShowDialog(false)}
               >
                 取消
               </Button>
               <Button type="submit">保存</Button>
-            </DialogFooter>
+            </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>供应商详情</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md">
+        <DialogTitle>供应商详情</DialogTitle>
+        <DialogContent>
           {selectedSupplier && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">供应商名称</Label>
-                  <p className="font-medium">{selectedSupplier.name}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">简称</Label>
-                  <p>{selectedSupplier.short_name || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">联系人</Label>
-                  <p>{selectedSupplier.contact_name || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">联系电话</Label>
-                  <p>{selectedSupplier.contact_phone || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">邮箱</Label>
-                  <p>{selectedSupplier.email || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">银行账户</Label>
-                  <p>{selectedSupplier.bank_account || "-"}</p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">地址</Label>
-                  <p>{selectedSupplier.address || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">税号</Label>
-                  <p>{selectedSupplier.tax_number || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">状态</Label>
-                  <div>{getStatusBadge(selectedSupplier.status)}</div>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">创建时间</Label>
-                  <p>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>供应商名称</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>{selectedSupplier.name}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>简称</Typography>
+                  <Typography>{selectedSupplier.short_name || "-"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>联系人</Typography>
+                  <Typography>{selectedSupplier.contact_name || "-"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>联系电话</Typography>
+                  <Typography>{selectedSupplier.contact_phone || "-"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>邮箱</Typography>
+                  <Typography>{selectedSupplier.email || "-"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>银行账户</Typography>
+                  <Typography>{selectedSupplier.bank_account || "-"}</Typography>
+                </Box>
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>地址</Typography>
+                  <Typography>{selectedSupplier.address || "-"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>税号</Typography>
+                  <Typography>{selectedSupplier.tax_number || "-"}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>状态</Typography>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedSupplier.status)}</Box>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>创建时间</Typography>
+                  <Typography>
                     {new Date(selectedSupplier.created_at).toLocaleString(
                       "zh-CN",
                     )}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">更新时间</Label>
-                  <p>
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>更新时间</Typography>
+                  <Typography>
                     {new Date(selectedSupplier.updated_at).toLocaleString(
                       "zh-CN",
                     )}
-                  </p>
-                </div>
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>

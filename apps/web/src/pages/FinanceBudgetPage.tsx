@@ -23,37 +23,30 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
+  Typography,
+  Box,
+  Button,
+  TextField,
+  Chip,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import {
+  MenuItem,
+  InputAdornment,
+  IconButton,
+  LinearProgress,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
-  TableHeader,
   TableRow,
-} from "@/components/ui/table";
+  Paper,
+} from "@mui/material";
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from "../components/ui/OrganizationFilter";
@@ -321,26 +314,15 @@ const FinanceBudgetPage: React.FC = () => {
     [budgets],
   );
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      active: "bg-green-100 text-green-700",
-      expired: "bg-red-100 text-red-700",
-      frozen: "bg-gray-100 text-gray-700",
-      completed: "bg-blue-100 text-blue-700",
+  const getStatusChip = (status: string) => {
+    const variants: Record<string, { color: "success" | "error" | "default" | "warning"; label: string }> = {
+      active: { color: "success", label: "执行中" },
+      expired: { color: "error", label: "已过期" },
+      frozen: { color: "default", label: "已冻结" },
+      completed: { color: "warning", label: "已完成" },
     };
-    const labels = {
-      active: "执行中",
-      expired: "已过期",
-      frozen: "已冻结",
-      completed: "已完成",
-    };
-    return (
-      <Badge
-        className={variants[status as keyof typeof variants] || variants.active}
-      >
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
-    );
+    const config = variants[status as keyof typeof variants] || variants.active;
+    return <Chip size="small" color={config.color} label={config.label} />;
   };
 
   const getTypeLabel = (type: string) => {
@@ -355,112 +337,28 @@ const FinanceBudgetPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">预算管理</h1>
-          <p className="text-slate-500 mt-1">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>预算管理</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             管理企业各项预算的分配与执行情况
-          </p>
-        </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>新增预算</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingBudget ? "编辑预算" : "新增预算"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="budget_type">预算类型</Label>
-                <Select
-                  value={formData.budget_type}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, budget_type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择预算类型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="operating">运营预算</SelectItem>
-                    <SelectItem value="capital">资本预算</SelectItem>
-                    <SelectItem value="project">项目预算</SelectItem>
-                    <SelectItem value="marketing">市场预算</SelectItem>
-                    <SelectItem value="personnel">人事预算</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="fiscal_year">预算年度</Label>
-                <Input
-                  id="fiscal_year"
-                  type="number"
-                  value={formData.fiscal_year}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fiscal_year: e.target.value })
-                  }
-                  placeholder="请输入预算年度"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="total_budget">预算金额</Label>
-                <Input
-                  id="total_budget"
-                  type="number"
-                  value={formData.total_budget}
-                  onChange={(e) =>
-                    setFormData({ ...formData, total_budget: e.target.value })
-                  }
-                  placeholder="请输入预算金额"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">状态</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">执行中</SelectItem>
-                    <SelectItem value="completed">已完成</SelectItem>
-                    <SelectItem value="frozen">已冻结</SelectItem>
-                    <SelectItem value="expired">已过期</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter className="mt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreateDialog(false);
-                  setEditingBudget(null);
-                  resetForm();
-                }}
-              >
-                取消
-              </Button>
-              <Button onClick={editingBudget ? handleUpdate : handleCreate}>
-                {editingBudget ? "更新" : "创建"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<Plus className="w-4 h-4" />}
+          onClick={() => {
+            setEditingBudget(null);
+            resetForm();
+            setShowCreateDialog(true);
+          }}
+        >
+          新增预算
+        </Button>
+      </Box>
 
-      <div className="bg-slate-100 rounded-lg p-4 mb-6">
+      <Box sx={{ bgcolor: "grey.100", borderRadius: 1, p: 2, mb: 3 }}>
         <OrganizationFilter
           value={organizationFilter}
           onChange={setOrganizationFilter}
@@ -468,9 +366,9 @@ const FinanceBudgetPage: React.FC = () => {
           showDepartment={true}
           showEmployee={false}
         />
-      </div>
+      </Box>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
         <MetricCard
           title="总预算"
           value={formatCurrency(budgetStats.totalBudget)}
@@ -499,9 +397,9 @@ const FinanceBudgetPage: React.FC = () => {
           trend={null}
           color="purple"
         />
-      </div>
+      </Box>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
         <MetricCard
           title="执行中预算"
           value={budgetStats.activeBudgets}
@@ -530,256 +428,314 @@ const FinanceBudgetPage: React.FC = () => {
           trend={null}
           color="red"
         />
-      </div>
+      </Box>
 
       {/* 图表区域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            预算类型分布
-          </h3>
-          <StatsChart type="pie" data={budgetTypeData} height={250} />
-        </div>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" }, gap: 3 }}>
+        <Card>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }} gutterBottom>
+              预算类型分布
+            </Typography>
+            <StatsChart type="pie" data={budgetTypeData} height={250} />
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            预算状态分布
-          </h3>
-          <StatsChart type="pie" data={budgetStatusData} height={250} />
-        </div>
-      </div>
+        <Card>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }} gutterBottom>
+              预算状态分布
+            </Typography>
+            <StatsChart type="pie" data={budgetStatusData} height={250} />
+          </CardContent>
+        </Card>
+      </Box>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>预算列表</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadBudgets}
-              className="h-8"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              刷新
-            </Button>
-          </CardTitle>
-        </CardHeader>
+        <CardHeader
+          title={
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Typography variant="h6">预算列表</Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={loadBudgets}
+                startIcon={<RefreshCw className="w-4 h-4" />}
+              >
+                刷新
+              </Button>
+            </Box>
+          }
+        />
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="搜索预算类型或年度..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="operating">运营预算</SelectItem>
-                  <SelectItem value="capital">资本预算</SelectItem>
-                  <SelectItem value="project">项目预算</SelectItem>
-                  <SelectItem value="marketing">市场预算</SelectItem>
-                  <SelectItem value="personnel">人事预算</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="active">执行中</SelectItem>
-                  <SelectItem value="completed">已完成</SelectItem>
-                  <SelectItem value="frozen">已冻结</SelectItem>
-                  <SelectItem value="expired">已过期</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 2 }}>
+            <TextField
+              size="small"
+              placeholder="搜索预算类型或年度..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search className="w-4 h-4 text-gray-400" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ flex: 1 }}
+            />
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>类型</InputLabel>
+                <Select
+                  value={filterType}
+                  label="类型"
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  <MenuItem value="">全部</MenuItem>
+                  <MenuItem value="operating">运营预算</MenuItem>
+                  <MenuItem value="capital">资本预算</MenuItem>
+                  <MenuItem value="project">项目预算</MenuItem>
+                  <MenuItem value="marketing">市场预算</MenuItem>
+                  <MenuItem value="personnel">人事预算</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={filterStatus}
+                  label="状态"
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <MenuItem value="">全部</MenuItem>
+                  <MenuItem value="active">执行中</MenuItem>
+                  <MenuItem value="completed">已完成</MenuItem>
+                  <MenuItem value="frozen">已冻结</MenuItem>
+                  <MenuItem value="expired">已过期</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
 
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-              <p className="mt-2 text-slate-500">加载中...</p>
-            </div>
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <LinearProgress />
+              <Typography sx={{ mt: 2 }} color="text.secondary">加载中...</Typography>
+            </Box>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>预算类型</TableHead>
-                  <TableHead>预算年度</TableHead>
-                  <TableHead className="text-right">预算金额</TableHead>
-                  <TableHead className="text-right">已使用</TableHead>
-                  <TableHead className="text-right">剩余</TableHead>
-                  <TableHead>使用率</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBudgets.length > 0 ? (
-                  filteredBudgets.map((budget) => (
-                    <TableRow key={budget.id}>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Building2 className="w-4 h-4 mr-2 text-slate-400" />
-                          {getTypeLabel(budget.budget_type || "")}
-                        </div>
-                      </TableCell>
-                      <TableCell>{budget.fiscal_year}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(budget.total_budget)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(budget.used_amount || 0)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(budget.remaining_amount || 0)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex-1 max-w-24">
-                            <Progress
-                              value={budget.usage_rate || 0}
-                              className="h-2"
-                            />
-                          </div>
-                          <span className="text-sm text-slate-500 w-14">
-                            {formatPercent(budget.usage_rate || 0)}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(budget.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDetailDialog(budget)}
-                          >
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>预算类型</TableCell>
+                    <TableCell>预算年度</TableCell>
+                    <TableCell align="right">预算金额</TableCell>
+                    <TableCell align="right">已使用</TableCell>
+                    <TableCell align="right">剩余</TableCell>
+                    <TableCell>使用率</TableCell>
+                    <TableCell>状态</TableCell>
+                    <TableCell align="right">操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredBudgets.length > 0 ? (
+                    filteredBudgets.map((budget) => (
+                      <TableRow key={budget.id}>
+                        <TableCell>
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Building2 className="w-4 h-4 mr-2 text-gray-400" />
+                            {getTypeLabel(budget.budget_type || "")}
+                          </Box>
+                        </TableCell>
+                        <TableCell>{budget.fiscal_year}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: "medium" }}>
+                          {formatCurrency(budget.total_budget)}
+                        </TableCell>
+                        <TableCell align="right">
+                          {formatCurrency(budget.used_amount || 0)}
+                        </TableCell>
+                        <TableCell align="right">
+                          {formatCurrency(budget.remaining_amount || 0)}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Box sx={{ flex: 1, maxWidth: 100 }}>
+                              <LinearProgress
+                                variant="determinate"
+                                value={budget.usage_rate || 0}
+                                sx={{ height: 8, borderRadius: 1 }}
+                              />
+                            </Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ width: 50 }}>
+                              {formatPercent(budget.usage_rate || 0)}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>{getStatusChip(budget.status)}</TableCell>
+                        <TableCell align="right">
+                          <IconButton size="small" onClick={() => openDetailDialog(budget)}>
                             <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(budget)}
-                          >
+                          </IconButton>
+                          <IconButton size="small" onClick={() => openEditDialog(budget)}>
                             <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-600"
-                            onClick={() => handleDelete(budget.id)}
-                          >
+                          </IconButton>
+                          <IconButton size="small" color="error" onClick={() => handleDelete(budget.id)}>
                             <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                        <AlertCircle className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                        <Typography color="text.secondary">暂无预算数据</Typography>
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      <AlertCircle className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-                      <p className="text-slate-500">暂无预算数据</p>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <PieChart className="w-5 h-5 mr-2 text-indigo-600" />
-              预算详情
-            </DialogTitle>
-          </DialogHeader>
+      {/* 新增/编辑对话框 */}
+      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingBudget ? "编辑预算" : "新增预算"}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>预算类型</InputLabel>
+              <Select
+                value={formData.budget_type}
+                label="预算类型"
+                onChange={(e) => setFormData({ ...formData, budget_type: e.target.value })}
+              >
+                <MenuItem value="operating">运营预算</MenuItem>
+                <MenuItem value="capital">资本预算</MenuItem>
+                <MenuItem value="project">项目预算</MenuItem>
+                <MenuItem value="marketing">市场预算</MenuItem>
+                <MenuItem value="personnel">人事预算</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              size="small"
+              type="number"
+              label="预算年度"
+              value={formData.fiscal_year}
+              onChange={(e) => setFormData({ ...formData, fiscal_year: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              size="small"
+              type="number"
+              label="预算金额"
+              value={formData.total_budget}
+              onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
+              fullWidth
+            />
+            <FormControl size="small" fullWidth>
+              <InputLabel>状态</InputLabel>
+              <Select
+                value={formData.status}
+                label="状态"
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              >
+                <MenuItem value="active">执行中</MenuItem>
+                <MenuItem value="completed">已完成</MenuItem>
+                <MenuItem value="frozen">已冻结</MenuItem>
+                <MenuItem value="expired">已过期</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => { setShowCreateDialog(false); setEditingBudget(null); resetForm(); }}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={editingBudget ? handleUpdate : handleCreate}>
+            {editingBudget ? "更新" : "创建"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 详情对话框 */}
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
+          <PieChart className="w-5 h-5 mr-2 text-indigo-600" />
+          预算详情
+        </DialogTitle>
+        <DialogContent>
           {selectedBudget && (
-            <div className="space-y-6 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">预算类型</p>
-                  <p className="font-medium mt-1">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">预算类型</Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {getTypeLabel(selectedBudget.budget_type || "")}
-                  </p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">预算年度</p>
-                  <p className="font-medium mt-1">
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">预算年度</Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedBudget.fiscal_year}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
 
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-slate-500">预算金额</span>
-                  <span className="text-2xl font-bold text-indigo-600">
+              <Box sx={{ p: 2, bgcolor: "linear-gradient(to right, #eff6ff, #eef2ff)", borderRadius: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">预算金额</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold" }} color="primary">
                     {formatCurrency(selectedBudget.total_budget)}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500">已使用</p>
-                    <p className="text-lg font-bold text-orange-600">
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">已使用</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: "bold" }} color="warning.main">
                       {formatCurrency(selectedBudget.used_amount || 0)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">剩余预算</p>
-                    <p className="text-lg font-bold text-green-600">
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">剩余预算</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: "bold" }} color="success.main">
                       {formatCurrency(selectedBudget.remaining_amount || 0)}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-slate-500">使用进度</span>
-                  <span className="font-medium">
+              <Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">使用进度</Typography>
+                  <Typography sx={{ fontWeight: "medium" }}>
                     {formatPercent(selectedBudget.usage_rate || 0)}
-                  </span>
-                </div>
-                <Progress
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
                   value={selectedBudget.usage_rate || 0}
-                  className="h-4"
+                  sx={{ height: 16, borderRadius: 1 }}
                 />
-              </div>
+              </Box>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                <span className="text-sm text-slate-500">状态</span>
-                {getStatusBadge(selectedBudget.status)}
-              </div>
+              <Box sx={{ display: "flex", justifyContent: "space-between", p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary">状态</Typography>
+                {getStatusChip(selectedBudget.status)}
+              </Box>
 
-              <div className="flex items-center justify-between text-sm text-slate-500">
-                <span>
-                  创建时间:{" "}
-                  {new Date(selectedBudget.created_at).toLocaleDateString()}
-                </span>
-                <span>
-                  更新时间:{" "}
-                  {new Date(selectedBudget.updated_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
+              <Box sx={{ display: "flex", justifyContent: "space-between", typography: "body2", color: "text.secondary" }}>
+                <span>创建时间: {new Date(selectedBudget.created_at).toLocaleDateString()}</span>
+                <span>更新时间: {new Date(selectedBudget.updated_at).toLocaleDateString()}</span>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

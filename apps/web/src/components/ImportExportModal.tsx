@@ -1,14 +1,5 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Dialog, DialogContent, DialogActions, DialogTitle, Box } from "@mui/material";
 import React, { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
 import {
   AlertCircle,
   Download,
@@ -44,9 +35,7 @@ export const ImportExportModal = <T extends Record<string, any>>({
   transform,
 }: ImportExportModalProps<T>) => {
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<ImportResult<T> | null>(
-    null,
-  );
+  const [importResult, setImportResult] = useState<ImportResult<T> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportExcel = () => {
@@ -96,135 +85,119 @@ export const ImportExportModal = <T extends Record<string, any>>({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>数据导入导出</DialogTitle>
-          <DialogDescription>选择导出格式或上传文件进行导入</DialogDescription>
-        </DialogHeader>
-
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>数据导入导出</DialogTitle>
+      <DialogContent>
         {importResult ? (
-          <div className="py-4">
+          <Box sx={{ py: 3 }}>
             {importResult.success ? (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-green-600 mb-2">
+              <Box sx={{ textAlign: "center" }}>
+                <Box sx={{ width: 64, height: 64, borderRadius: "50%", backgroundColor: "success.light", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
+                  <CheckCircle style={{ width: 32, height: 32, color: "green" }} />
+                </Box>
+                <Typography variant="h6" sx={{ color: "success.main", mb: 1 }}>
                   导入成功
-                </h3>
-                <p className="text-muted-foreground">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   成功导入 {importResult.data.length} 条记录
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-red-600">导入失败</p>
-                    <p className="text-sm text-red-500">
-                      共 {importResult.errors.length} 条错误
-                    </p>
-                  </div>
-                </div>
-                <div className="max-h-48 overflow-y-auto space-y-2">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, backgroundColor: "error.light", borderRadius: 1 }}>
+                  <AlertCircle style={{ width: 20, height: 20, color: "red", flexShrink: 0 }} />
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: "error.main" }}>导入失败</Typography>
+                    <Typography variant="body2" sx={{ color: "error.dark" }}>共 {importResult.errors.length} 条错误</Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ maxHeight: 192, overflowY: "auto", display: "flex", flexDirection: "column", gap: 1 }}>
                   {importResult.errors.slice(0, 10).map((error, index) => (
-                    <div key={index} className="text-sm text-red-500">
-                      <span className="font-medium">第 {error.row} 行:</span>{" "}
-                      {error.message}
-                    </div>
+                    <Typography key={index} variant="body2" sx={{ color: "error.main", fontSize: 14 }}>
+                      <strong>第 {error.row} 行:</strong> {error.message}
+                    </Typography>
                   ))}
                   {importResult.errors.length > 10 && (
-                    <div className="text-sm text-muted-foreground">
+                    <Typography variant="body2" color="text.secondary">
                       ... 还有 {importResult.errors.length - 10} 条错误
-                    </div>
+                    </Typography>
                   )}
-                </div>
-              </div>
+                </Box>
+              </Box>
             )}
-          </div>
+          </Box>
         ) : (
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">
-                导出数据
-              </p>
-              <div className="grid grid-cols-2 gap-2">
+          <Box sx={{ py: 2, display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">导出数据</Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
                 <Button
-                  variant="outline"
+                  variant="outlined"
                   onClick={handleExportExcel}
-                  className="gap-2"
+                  startIcon={<Download style={{ width: 16, height: 16 }} />}
                 >
-                  <Download className="w-4 h-4" />
                   导出 Excel
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="outlined"
                   onClick={handleExportCSV}
-                  className="gap-2"
+                  startIcon={<FileText style={{ width: 16, height: 16 }} />}
                 >
-                  <FileText className="w-4 h-4" />
                   导出 CSV
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className="h-px bg-muted" />
+            <Box sx={{ height: 1, backgroundColor: "divider" }} />
 
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">
-                导入数据
-              </p>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">导入数据</Typography>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept=".xlsx,.xls,.csv"
                 onChange={handleFileChange}
-                className="hidden"
+                style={{ display: "none" }}
                 id="import-file"
               />
               <label htmlFor="import-file">
                 <Button
-                  variant="outline"
-                  className="w-full gap-2"
+                  variant="outlined"
+                  component="span"
+                  fullWidth
+                  startIcon={<Upload style={{ width: 16, height: 16 }} />}
                   disabled={importing}
                 >
-                  <Upload className="w-4 h-4" />
                   {importing ? "导入中..." : "上传文件"}
                 </Button>
               </label>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="text"
+                size="small"
                 onClick={handleDownloadTemplate}
-                className="w-full"
+                startIcon={<Download style={{ width: 16, height: 16 }} />}
               >
-                <Download className="w-4 h-4 mr-2" />
                 下载导入模板
               </Button>
-              <p className="text-xs text-muted-foreground">
+              <Typography variant="caption" color="text.secondary">
                 支持 Excel (.xlsx, .xls) 和 CSV (.csv) 格式
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
         )}
-
-        <DialogFooter>
-          {importResult ? (
-            <>
-              {!importResult.success && (
-                <Button variant="outline" onClick={handleRetry}>
-                  重新导入
-                </Button>
-              )}
-              <Button onClick={handleClose}>确定</Button>
-            </>
-          ) : (
-            <Button onClick={handleClose}>关闭</Button>
-          )}
-        </DialogFooter>
       </DialogContent>
+      <DialogActions>
+        {importResult ? (
+          <Box sx={{ display: "flex", gap: 1, width: "100%", justifyContent: "flex-end" }}>
+            {!importResult.success && (
+              <Button variant="outlined" onClick={handleRetry}>重新导入</Button>
+            )}
+            <Button onClick={handleClose}>确定</Button>
+          </Box>
+        ) : (
+          <Button onClick={handleClose}>关闭</Button>
+        )}
+      </DialogActions>
     </Dialog>
   );
 };

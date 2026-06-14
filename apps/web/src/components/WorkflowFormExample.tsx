@@ -1,26 +1,7 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
+import { Button, Card, CardContent, CardActions, Typography, TextField, Box, Switch, FormControlLabel } from "@mui/material";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import { useAppStore } from "@/store";
 
 // 定义表单验证 schema
@@ -32,7 +13,6 @@ const workflowFormSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-// 使用 z.infer 并且确保与 schema 完全匹配
 type WorkflowFormValues = {
   name: string;
   description?: string;
@@ -50,7 +30,7 @@ export function WorkflowFormExample({
 }: WorkflowFormExampleProps) {
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const form = useForm<WorkflowFormValues>({
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<WorkflowFormValues>({
     resolver: zodResolver(workflowFormSchema) as any,
     defaultValues: {
       name: initialValues?.name || "",
@@ -59,7 +39,7 @@ export function WorkflowFormExample({
     },
   });
 
-  function handleSubmit(values: WorkflowFormValues) {
+  function onFormSubmit(values: WorkflowFormValues) {
     console.log("表单提交:", values);
     onSubmit?.(values);
 
@@ -71,70 +51,71 @@ export function WorkflowFormExample({
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>工作流表单示例</CardTitle>
-        <CardDescription>
-          使用 React Hook Form + Zod + shadcn/ui 的示例
-        </CardDescription>
-      </CardHeader>
+    <Card sx={{ maxWidth: 600, mx: "auto" }}>
       <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6"
-          >
-            <FormField
-              control={form.control as any}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>工作流名称</FormLabel>
-                  <FormControl>
-                    <Input placeholder="请输入工作流名称" {...field} />
-                  </FormControl>
-                  <FormDescription>这是工作流的显示名称</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>工作流表单示例</Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
+          使用 React Hook Form + Zod + MUI 的示例
+        </Typography>
 
-            <FormField
-              control={form.control as any}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>描述</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="请输入工作流描述"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <Box component="form" onSubmit={handleSubmit(onFormSubmit)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="工作流名称"
+                placeholder="请输入工作流名称"
+                fullWidth
+                size="small"
+                error={!!errors.name}
+                helperText={errors.name?.message || "这是工作流的显示名称"}
+              />
+            )}
+          />
 
-            <div className="flex items-center gap-2">
-              <Button type="submit">保存</Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => form.reset()}
-              >
-                重置
-              </Button>
-            </div>
-          </form>
-        </Form>
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="描述"
+                placeholder="请输入工作流描述"
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
+                error={!!errors.description}
+                helperText={errors.description?.message}
+                sx={{ "& .MuiInputBase-input": { resize: "none" } }}
+              />
+            )}
+          />
+
+          <Controller
+            name="isActive"
+            control={control}
+            render={({ field }) => (
+              <FormControlLabel
+                control={<Switch {...field} checked={field.value} />}
+                label="启用状态"
+              />
+            )}
+          />
+
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button type="submit" variant="contained">保存</Button>
+            <Button type="button" variant="outlined" onClick={() => reset()}>重置</Button>
+          </Box>
+        </Box>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <div className="text-sm text-gray-500">
+      <CardActions sx={{ px: 2, pb: 2 }}>
+        <Typography variant="caption" color="text.secondary">
           使用了 zodResolver 进行表单验证
-        </div>
-      </CardFooter>
+        </Typography>
+      </CardActions>
     </Card>
   );
 }

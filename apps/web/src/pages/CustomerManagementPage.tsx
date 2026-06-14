@@ -1,40 +1,31 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
+  Button,
+  TextField,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
+  MenuItem,
+  Chip,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
-  TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+  Checkbox,
+  Box,
+  Typography,
+  Stack,
+  Paper,
+} from "@mui/material";
 import type {
   Customer,
   CreateCustomerRequest,
@@ -44,14 +35,6 @@ import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { ImportExportModal } from "@/components/ImportExportModal";
 import { Search, Plus, Edit, Trash2, Eye, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -279,123 +262,111 @@ const CustomerManagementPage: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusChip = (status: string) => {
     const statusMap: Record<
       string,
-      {
-        label: string;
-        variant: "default" | "secondary" | "destructive" | "outline";
-      }
+      { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }
     > = {
-      active: { label: "活跃", variant: "default" },
-      inactive: { label: "非活跃", variant: "secondary" },
-      prospect: { label: "潜在", variant: "outline" },
+      active: { label: "活跃", color: "success" },
+      inactive: { label: "非活跃", color: "default" },
+      prospect: { label: "潜在", color: "info" },
     };
-    const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    const s = statusMap[status] || { label: status, color: "default" };
+    return <Chip label={s.label} color={s.color} size="small" />;
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ mt: 3 }}>
       <Card>
-        <CardHeader>
-          <CardTitle>客户管理</CardTitle>
-          <CardDescription>
-            管理客户信息,包括客户基本信息、联系方式等
-          </CardDescription>
-        </CardHeader>
+        <CardHeader title="客户管理" subheader="管理客户信息,包括客户基本信息、联系方式等" />
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索客户名称或代码..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="active">活跃</SelectItem>
-                <SelectItem value="inactive">非活跃</SelectItem>
-                <SelectItem value="prospect">潜在</SelectItem>
-              </SelectContent>
-            </Select>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <TextField
+                size="small"
+                placeholder="搜索客户名称或代码..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                sx={{ pl: 2, width: "100%" }}
+              />
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>状态筛选</InputLabel>
+              <Select
+                value={statusFilter}
+                label="状态筛选"
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <MenuItem value="all">全部状态</MenuItem>
+                <MenuItem value="active">活跃</MenuItem>
+                <MenuItem value="inactive">非活跃</MenuItem>
+                <MenuItem value="prospect">潜在</MenuItem>
+              </Select>
+            </FormControl>
             <Button
+              variant="contained"
               onClick={() => {
                 resetForm();
                 setShowDialog(true);
               }}
+              startIcon={<Plus className="w-4 h-4" />}
             >
-              <Plus className="mr-2 h-4 w-4" />
               新增客户
             </Button>
-            <Button variant="outline" onClick={() => setShowImportExport(true)}>
-              <Download className="mr-2 h-4 w-4" />
+            <Button variant="outlined" onClick={() => setShowImportExport(true)} startIcon={<Download className="w-4 h-4" />}>
               导入导出
             </Button>
-          </div>
+          </Stack>
 
           {selectedIds.length > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-              <span className="text-sm">
-                已选择 {selectedIds.length} 个客户
-              </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleBatchDelete}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                批量删除
-              </Button>
-            </div>
+            <Paper sx={{ p: 1.5, mb: 2, bgcolor: "grey.100" }}>
+              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+                <Typography variant="body2">已选择 {selectedIds.length} 个客户</Typography>
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={handleBatchDelete}
+                  startIcon={<Trash2 className="w-4 h-4" />}
+                >
+                  批量删除
+                </Button>
+              </Stack>
+            </Paper>
           )}
 
-          <div className="rounded-md border">
+          <TableContainer component={Paper} variant="outlined">
             <Table>
-              <TableHeader>
+              <TableHead>
                 <TableRow>
-                  <TableHead className="w-[50px]">
+                  <TableCell padding="checkbox">
                     <Checkbox
-                      checked={
-                        selectedIds.length === customers.length &&
-                        customers.length > 0
-                      }
-                      onCheckedChange={toggleSelectAll}
+                      checked={selectedIds.length === customers.length && customers.length > 0}
+                      onChange={toggleSelectAll}
                     />
-                  </TableHead>
-                  <TableHead>客户名称</TableHead>
-                  <TableHead>客户代码</TableHead>
-                  <TableHead>行业</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>电话</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  </TableCell>
+                  <TableCell>客户名称</TableCell>
+                  <TableCell>客户代码</TableCell>
+                  <TableCell>行业</TableCell>
+                  <TableCell>邮箱</TableCell>
+                  <TableCell>电话</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell align="right">操作</TableCell>
                 </TableRow>
-              </TableHeader>
+              </TableHead>
               <TableBody>
                 {customers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={8} align="center">
                       <EmptyState
                         title="暂无客户数据"
                         description="点击上方按钮添加第一个客户"
@@ -405,101 +376,69 @@ const CustomerManagementPage: React.FC = () => {
                 ) : (
                   customers.map((customer) => (
                     <TableRow key={customer.id}>
-                      <TableCell>
+                      <TableCell padding="checkbox">
                         <Checkbox
                           checked={selectedIds.includes(customer.id)}
-                          onCheckedChange={() => toggleSelect(customer.id)}
+                          onChange={() => toggleSelect(customer.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {customer.name}
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: "medium" }}>{customer.name}</TableCell>
                       <TableCell>{customer.code || "-"}</TableCell>
                       <TableCell>{customer.industry || "-"}</TableCell>
                       <TableCell>{customer.email || "-"}</TableCell>
                       <TableCell>{customer.phone || "-"}</TableCell>
-                      <TableCell>{getStatusBadge(customer.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetail(customer)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(customer)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(customer.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <TableCell>{getStatusChip(customer.status)}</TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+                          <Button size="small" onClick={() => handleViewDetail(customer)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button size="small" onClick={() => handleEdit(customer)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button size="small" color="error" onClick={() => handleDelete(customer.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
-          </div>
+          </TableContainer>
 
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              共 {total} 条记录,第 {currentPage} /{" "}
-              {Math.ceil(total / pageSize) || 1} 页
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-                {Array.from(
-                  { length: Math.min(5, Math.ceil(total / pageSize)) },
-                  (_, i) => {
-                    const page = i + 1;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  },
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(
-                        Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                      )
-                    }
-                    className={
-                      currentPage >= Math.ceil(total / pageSize)
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              共 {total} 条记录,第 {currentPage} / {Math.ceil(total / pageSize) || 1} 页
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Button
+                size="small"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              >
+                上一页
+              </Button>
+              {Array.from({ length: Math.min(5, Math.ceil(total / pageSize)) }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  size="small"
+                  variant={currentPage === page ? "contained" : "outlined"}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+              <Button
+                size="small"
+                disabled={currentPage >= Math.ceil(total / pageSize)}
+                onClick={() => setCurrentPage(Math.min(Math.ceil(total / pageSize), currentPage + 1))}
+              >
+                下一页
+              </Button>
+            </Stack>
+          </Stack>
         </CardContent>
       </Card>
 
@@ -514,176 +453,126 @@ const CustomerManagementPage: React.FC = () => {
       />
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedCustomer ? "编辑客户" : "新增客户"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedCustomer ? "修改客户信息" : "填写新客户信息"}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">客户名称 *</Label>
-                <Input
-                  id="name"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="code">客户代码</Label>
-                <Input
-                  id="code"
-                  value={formData.code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="industry">行业</Label>
-                <Input
-                  id="industry"
-                  value={formData.industry}
-                  onChange={(e) =>
-                    setFormData({ ...formData, industry: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="website">网站</Label>
-                <Input
-                  id="website"
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) =>
-                    setFormData({ ...formData, website: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">邮箱</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">电话</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="address">地址</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="notes">备注</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowDialog(false)}
-              >
-                取消
-              </Button>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>{selectedCustomer ? "编辑客户" : "新增客户"}</DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+              <TextField
+                label="客户名称 *"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="客户代码"
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="行业"
+                value={formData.industry}
+                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="网站"
+                type="url"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="邮箱"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="电话"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                fullWidth
+              />
+              <TextField
+                label="地址"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                fullWidth
+                sx={{ gridColumn: "span 2" }}
+              />
+              <TextField
+                label="备注"
+                multiline
+                rows={3}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                fullWidth
+                sx={{ gridColumn: "span 2" }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowDialog(false)}>取消</Button>
+            <Button type="submit" variant="contained">保存</Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>客户详情</DialogTitle>
-          </DialogHeader>
-          {selectedCustomer && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">客户名称</Label>
-                  <p className="font-medium">{selectedCustomer.name}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">客户代码</Label>
-                  <p>{selectedCustomer.code || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">行业</Label>
-                  <p>{selectedCustomer.industry || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">网站</Label>
-                  <p>{selectedCustomer.website || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">邮箱</Label>
-                  <p>{selectedCustomer.email || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">电话</Label>
-                  <p>{selectedCustomer.phone || "-"}</p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">地址</Label>
-                  <p>{selectedCustomer.address || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">状态</Label>
-                  <div>{getStatusBadge(selectedCustomer.status)}</div>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">创建时间</Label>
-                  <p>
-                    {new Date(selectedCustomer.created_at).toLocaleString(
-                      "zh-CN",
-                    )}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">备注</Label>
-                  <p>{selectedCustomer.notes || "-"}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>客户详情</DialogTitle>
+        {selectedCustomer && (
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">客户名称</Typography>
+                <Typography sx={{ fontWeight: "medium" }}>{selectedCustomer.name}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">客户代码</Typography>
+                <Typography>{selectedCustomer.code || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">行业</Typography>
+                <Typography>{selectedCustomer.industry || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">网站</Typography>
+                <Typography>{selectedCustomer.website || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">邮箱</Typography>
+                <Typography>{selectedCustomer.email || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">电话</Typography>
+                <Typography>{selectedCustomer.phone || "-"}</Typography>
+              </Box>
+              <Box sx={{ gridColumn: "span 2" }}>
+                <Typography variant="caption" color="text.secondary">地址</Typography>
+                <Typography>{selectedCustomer.address || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">状态</Typography>
+                <Box>{getStatusChip(selectedCustomer.status)}</Box>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">创建时间</Typography>
+                <Typography>{new Date(selectedCustomer.created_at).toLocaleString("zh-CN")}</Typography>
+              </Box>
+              <Box sx={{ gridColumn: "span 2" }}>
+                <Typography variant="caption" color="text.secondary">备注</Typography>
+                <Typography>{selectedCustomer.notes || "-"}</Typography>
+              </Box>
+            </Box>
+          </DialogContent>
+        )}
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

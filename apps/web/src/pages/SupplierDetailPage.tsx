@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Tabs, Tab, Box, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -16,19 +17,6 @@ import {
   TrendingUp,
   Clock,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { scmApi } from "@/api/scm";
 import { useNotification } from "@/hooks/useNotification";
 import type { Supplier } from "@/api/scm";
@@ -90,7 +78,7 @@ const SupplierDetailPage: React.FC = () => {
       blocked: { label: "已冻结", variant: "destructive" },
     };
     const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    return <Chip size="small" variant={s.variant === "outline" ? "outlined" : "filled"} label={s.label} />;
   };
 
   if (loading) {
@@ -116,454 +104,389 @@ const SupplierDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* 顶部导航 */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/srm/suppliers")}>
+      <Box sx={{ bgcolor: 'background.paper', boxShadow: 1, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button variant="text" onClick={() => navigate("/srm/suppliers")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               返回
             </Button>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">供应商详情</h1>
-              <p className="text-sm text-gray-500">查看和编辑供应商档案信息</p>
-            </div>
-            <div className="ml-auto">
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>供应商详情</Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>查看和编辑供应商档案信息</Typography>
+            </Box>
+            <Box sx={{ ml: 'auto' }}>
               <Button onClick={() => setIsEditing(!isEditing)}>
                 <Edit2 className="w-4 h-4 mr-2" />
                 编辑
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 3 }}>
         {/* 供应商概览卡片 */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start gap-6">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                <Truck className="w-8 h-8 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-2xl font-bold text-gray-900">
+        <Card sx={{ mb: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
+              <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'primary.light', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Truck className="w-8 h-8" />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700 }}>
                     {supplier.name}
-                  </h2>
+                  </Typography>
                   {getStatusBadge(supplier.status)}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: '0.875rem', color: 'text.secondary' }}>
                   {supplier.short_name && (
-                    <span className="flex items-center gap-1">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <FileText className="w-4 h-4" />
                       {supplier.short_name}
-                    </span>
+                    </Box>
                   )}
                   {supplier.contact_name && (
-                    <span className="flex items-center gap-1">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <FileText className="w-4 h-4" />
                       {supplier.contact_name}
-                    </span>
+                    </Box>
                   )}
                   {supplier.email && (
-                    <span className="flex items-center gap-1">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Mail className="w-4 h-4" />
                       {supplier.email}
-                    </span>
+                    </Box>
                   )}
                   {supplier.contact_phone && (
-                    <span className="flex items-center gap-1">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Phone className="w-4 h-4" />
                       {supplier.contact_phone}
-                    </span>
+                    </Box>
                   )}
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         {/* 财务概览 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-blue-100">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">应付账款</p>
-                  <p className="text-2xl font-bold text-gray-900">
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+          <Card sx={{ '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.2s' }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'primary.light' }}>
+                  <CreditCard className="w-5 h-5" />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>应付账款</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
                     {formatCurrency(0)}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-red-100">
-                  <Clock className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">逾期应付</p>
-                  <p className="text-2xl font-bold text-red-600">
+          <Card sx={{ '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.2s' }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'error.light' }}>
+                  <Clock className="w-5 h-5" />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>逾期应付</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'error.main' }}>
                     {formatCurrency(0)}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-green-100">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">累计采购</p>
-                  <p className="text-2xl font-bold text-green-600">
+          <Card sx={{ '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.2s' }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'success.light' }}>
+                  <TrendingUp className="w-5 h-5" />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>累计采购</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
                     {formatCurrency(0)}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-amber-100">
-                  <Wallet className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">累计付款</p>
-                  <p className="text-2xl font-bold text-amber-600">
+          <Card sx={{ '&:hover': { boxShadow: 3 }, transition: 'box-shadow 0.2s' }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'warning.light' }}>
+                  <Wallet className="w-5 h-5" />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>累计付款</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
                     {formatCurrency(0)}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         {/* 标签页 */}
-        <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList className="bg-slate-100 p-1">
-            <TabsTrigger value="basic" className="data-[state=active]:bg-white">
-              基本信息
-            </TabsTrigger>
-            <TabsTrigger
-              value="finance"
-              className="data-[state=active]:bg-white"
-            >
-              财务信息
-            </TabsTrigger>
-            <TabsTrigger
-              value="invoices"
-              className="data-[state=active]:bg-white"
-            >
-              采购发票
-            </TabsTrigger>
-            <TabsTrigger
-              value="payments"
-              className="data-[state=active]:bg-white"
-            >
-              付款记录
-            </TabsTrigger>
-          </TabsList>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs value="basic" sx={{ '& .MuiTab-root': { textTransform: 'none' } }}>
+            <Tab label="基本信息" value="basic" />
+            <Tab label="财务信息" value="finance" />
+            <Tab label="采购发票" value="invoices" />
+            <Tab label="付款记录" value="payments" />
+          </Tabs>
+        </Box>
 
-          {/* 基本信息 */}
-          <TabsContent value="basic" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">基本信息</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label className="text-sm text-gray-500">供应商名称</Label>
-                    <p className="font-medium mt-1">{supplier.name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-gray-500">简称</Label>
-                    <p className="font-medium mt-1">
-                      {supplier.short_name || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-gray-500">联系人</Label>
-                    <p className="font-medium mt-1">
-                      {supplier.contact_name || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-gray-500">联系电话</Label>
-                    <p className="font-medium mt-1">
-                      {supplier.contact_phone || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-gray-500">邮箱</Label>
-                    <p className="font-medium mt-1">{supplier.email || "-"}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-gray-500">银行账户</Label>
-                    <p className="font-medium mt-1">
-                      {supplier.bank_account || "-"}
-                    </p>
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-sm text-gray-500">地址</Label>
-                    <p className="font-medium mt-1">
-                      {supplier.address || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-gray-500">税号</Label>
-                    <p className="font-medium mt-1">
-                      {supplier.tax_number || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm text-gray-500">状态</Label>
-                    <div className="mt-1">
-                      {getStatusBadge(supplier.status)}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {/* 基本信息 */}
+        <Card sx={{ mb: 3 }}>
+          <CardHeader>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>基本信息</Typography>
+          </CardHeader>
+          <CardContent>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>供应商名称</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.name}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>简称</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.short_name || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>联系人</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.contact_name || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>联系电话</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.contact_phone || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>邮箱</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.email || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>银行账户</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.bank_account || "-"}</Typography>
+              </Box>
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>地址</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.address || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>税号</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.tax_number || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>状态</Typography>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(supplier.status)}</Box>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
 
-          {/* 财务信息 */}
-          <TabsContent value="finance" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 付款条款 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">付款条款</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">付款方式</span>
-                    <span className="font-medium text-gray-900">-</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">付款期限</span>
-                    <span className="font-medium text-gray-900">-</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">信用额度</span>
-                    <span className="font-medium text-gray-900">-</span>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* 财务信息 */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 3, mb: 3 }}>
+          {/* 付款条款 */}
+          <Card>
+            <CardHeader sx={{ pb: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>付款条款</Typography>
+            </CardHeader>
+            <CardContent sx={{ pt: 0 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>付款方式</Typography>
+                <Typography sx={{ fontWeight: 500 }}>-</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>付款期限</Typography>
+                <Typography sx={{ fontWeight: 500 }}>-</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                <Typography sx={{ color: 'text.secondary' }}>信用额度</Typography>
+                <Typography sx={{ fontWeight: 500 }}>-</Typography>
+              </Box>
+            </CardContent>
+          </Card>
 
-              {/* 应付款概览 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">应付款概览</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">应付账款</span>
-                    <span className="font-medium text-amber-600">
-                      {formatCurrency(0)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">逾期应付</span>
-                    <span className="font-medium text-red-600">
-                      {formatCurrency(0)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">平均付款天数</span>
-                    <span className="font-medium text-gray-900">0 天</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">最后交易日期</span>
-                    <span className="font-medium text-gray-900">-</span>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* 应付款概览 */}
+          <Card>
+            <CardHeader sx={{ pb: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>应付款概览</Typography>
+            </CardHeader>
+            <CardContent sx={{ pt: 0 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>应付账款</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'warning.main' }}>{formatCurrency(0)}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>逾期应付</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'error.main' }}>{formatCurrency(0)}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>平均付款天数</Typography>
+                <Typography sx={{ fontWeight: 500 }}>0 天</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                <Typography sx={{ color: 'text.secondary' }}>最后交易日期</Typography>
+                <Typography sx={{ fontWeight: 500 }}>-</Typography>
+              </Box>
+            </CardContent>
+          </Card>
 
-              {/* 交易统计 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">交易统计</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">累计采购</span>
-                    <span className="font-medium text-green-600">
-                      {formatCurrency(0)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">累计付款</span>
-                    <span className="font-medium text-blue-600">
-                      {formatCurrency(0)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">应付余额</span>
-                    <span className="font-medium text-amber-600">
-                      {formatCurrency(0)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* 交易统计 */}
+          <Card>
+            <CardHeader sx={{ pb: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>交易统计</Typography>
+            </CardHeader>
+            <CardContent sx={{ pt: 0 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>累计采购</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'success.main' }}>{formatCurrency(0)}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>累计付款</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'info.main' }}>{formatCurrency(0)}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                <Typography sx={{ color: 'text.secondary' }}>应付余额</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'warning.main' }}>{formatCurrency(0)}</Typography>
+              </Box>
+            </CardContent>
+          </Card>
 
-              {/* 银行账户信息 */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">银行账户信息</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">开户银行</span>
-                    <span className="font-medium text-gray-900">-</span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">银行账号</span>
-                    <span className="font-medium text-gray-900">
-                      {supplier.bank_account || "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">税号</span>
-                    <span className="font-medium text-gray-900">
-                      {supplier.tax_number || "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">供应商状态</span>
-                    <Badge
-                      variant={
-                        supplier.status === "active" ? "default" : "secondary"
-                      }
-                    >
-                      {supplier.status === "active"
-                        ? "正常"
-                        : supplier.status || "-"}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+          {/* 银行账户信息 */}
+          <Card>
+            <CardHeader sx={{ pb: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>银行账户信息</Typography>
+            </CardHeader>
+            <CardContent sx={{ pt: 0 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>开户银行</Typography>
+                <Typography sx={{ fontWeight: 500 }}>-</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>银行账号</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.bank_account || "-"}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography sx={{ color: 'text.secondary' }}>税号</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{supplier.tax_number || "-"}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                <Typography sx={{ color: 'text.secondary' }}>供应商状态</Typography>
+                <Chip size="small" variant={supplier.status === "active" ? "filled" : "outlined"} label={supplier.status === "active" ? "正常" : supplier.status || "-"} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
 
-          {/* 采购发票 */}
-          <TabsContent value="invoices" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">采购发票列表</CardTitle>
-                <Button variant="outline" size="sm">
-                  <Receipt className="w-4 h-4 mr-2" />
-                  新建发票
-                </Button>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>发票号</TableHead>
-                      <TableHead className="text-right">金额</TableHead>
-                      <TableHead className="text-right">税额</TableHead>
-                      <TableHead className="text-right">价税合计</TableHead>
-                      <TableHead>发票日期</TableHead>
-                      <TableHead>到期日</TableHead>
-                      <TableHead>状态</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        className="text-center py-12 text-gray-500"
-                      >
-                        暂无发票数据
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {/* 采购发票 */}
+        <Card sx={{ mb: 3 }}>
+          <CardHeader sx={{ pb: 1, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>采购发票列表</Typography>
+            <Button variant="outlined" size="small">
+              <Receipt className="w-4 h-4 mr-2" />
+              新建发票
+            </Button>
+          </CardHeader>
+          <CardContent sx={{ p: 0 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHead>发票号</TableHead>
+                  <TableHead sx={{ textAlign: 'right' }}>金额</TableHead>
+                  <TableHead sx={{ textAlign: 'right' }}>税额</TableHead>
+                  <TableHead sx={{ textAlign: 'right' }}>价税合计</TableHead>
+                  <TableHead>发票日期</TableHead>
+                  <TableHead>到期日</TableHead>
+                  <TableHead>状态</TableHead>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                    暂无发票数据
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-          {/* 付款记录 */}
-          <TabsContent value="payments" className="space-y-4">
-            <Card>
-              <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">付款记录列表</CardTitle>
-                <Button variant="outline" size="sm">
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  新建付款
-                </Button>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>付款单号</TableHead>
-                      <TableHead className="text-right">付款金额</TableHead>
-                      <TableHead>付款方式</TableHead>
-                      <TableHead>付款日期</TableHead>
-                      <TableHead>状态</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-center py-12 text-gray-500"
-                      >
-                        暂无付款记录数据
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* 付款记录 */}
+        <Card sx={{ mb: 3 }}>
+          <CardHeader sx={{ pb: 1, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>付款记录列表</Typography>
+            <Button variant="outlined" size="small">
+              <DollarSign className="w-4 h-4 mr-2" />
+              新建付款
+            </Button>
+          </CardHeader>
+          <CardContent sx={{ p: 0 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHead>付款单号</TableHead>
+                  <TableHead sx={{ textAlign: 'right' }}>付款金额</TableHead>
+                  <TableHead>付款方式</TableHead>
+                  <TableHead>付款日期</TableHead>
+                  <TableHead>状态</TableHead>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={5} sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
+                    暂无付款记录数据
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
         {/* 底部信息 */}
         <Card>
-          <CardContent className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500">创建时间</p>
-              <p className="font-medium mt-1">
-                {new Date(supplier.created_at).toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500">更新时间</p>
-              <p className="font-medium mt-1">
-                {new Date(supplier.updated_at).toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500">供应商ID</p>
-              <p className="font-medium mt-1 font-mono text-sm">
-                {supplier.id.substring(0, 8)}...
-              </p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-500">状态</p>
-              <div className="mt-1">{getStatusBadge(supplier.status)}</div>
-            </div>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+              <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>创建时间</Typography>
+                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                  {new Date(supplier.created_at).toLocaleString()}
+                </Typography>
+              </Box>
+              <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>更新时间</Typography>
+                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                  {new Date(supplier.updated_at).toLocaleString()}
+                </Typography>
+              </Box>
+              <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>供应商ID</Typography>
+                <Typography sx={{ fontWeight: 500, mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                  {supplier.id.substring(0, 8)}...
+                </Typography>
+              </Box>
+              <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 2 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>状态</Typography>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(supplier.status)}</Box>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

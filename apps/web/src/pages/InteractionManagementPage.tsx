@@ -1,40 +1,5 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Checkbox, Box, TablePagination } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import type {
   Interaction,
   CreateInteractionRequest,
@@ -44,14 +9,6 @@ import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 
 const InteractionManagementPage: React.FC = () => {
@@ -245,7 +202,7 @@ const InteractionManagementPage: React.FC = () => {
       other: { label: "其他", variant: "outline" },
     };
     const t = typeMap[type] || { label: type, variant: "outline" };
-    return <Badge variant={t.variant}>{t.label}</Badge>;
+    return <Chip size="small" variant={t.variant === "outline" ? "outlined" : "filled"} label={t.label} />;
   };
 
   const getStatusBadge = (status: string) => {
@@ -261,412 +218,371 @@ const InteractionManagementPage: React.FC = () => {
       cancelled: { label: "已取消", variant: "destructive" },
     };
     const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Badge variant={s.variant}>{s.label}</Badge>;
+    return <Chip size="small" variant={s.variant === "outline" ? "outlined" : "filled"} label={s.label} />;
+  };
+
+  const handleChangePage = (_: any, newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
-          <CardTitle>交互记录管理</CardTitle>
-          <CardDescription>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>交互记录管理</Typography>
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理客户交互记录,包括电话、邮件、会议、拜访等
-          </CardDescription>
+          </Typography>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ position: "relative" }}>
+                <Box sx={{ position: "absolute", left: 12, top: 14, display: "flex", alignItems: "center", zIndex: 1 }}>
+                  <Search size={16} />
+                </Box>
+                <TextField
                   placeholder="搜索交互主题..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
+                  size="small"
+                  sx={{ pl: 4, width: "100%" }}
                 />
-              </div>
-            </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="类型筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部类型</SelectItem>
-                <SelectItem value="call">电话</SelectItem>
-                <SelectItem value="email">邮件</SelectItem>
-                <SelectItem value="meeting">会议</SelectItem>
-                <SelectItem value="visit">拜访</SelectItem>
-                <SelectItem value="other">其他</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="scheduled">已计划</SelectItem>
-                <SelectItem value="completed">已完成</SelectItem>
-                <SelectItem value="cancelled">已取消</SelectItem>
-              </SelectContent>
-            </Select>
+              </Box>
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>类型筛选</InputLabel>
+              <Select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                label="类型筛选"
+              >
+                <MenuItem value="all">全部类型</MenuItem>
+                <MenuItem value="call">电话</MenuItem>
+                <MenuItem value="email">邮件</MenuItem>
+                <MenuItem value="meeting">会议</MenuItem>
+                <MenuItem value="visit">拜访</MenuItem>
+                <MenuItem value="other">其他</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>状态筛选</InputLabel>
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                label="状态筛选"
+              >
+                <MenuItem value="all">全部状态</MenuItem>
+                <MenuItem value="scheduled">已计划</MenuItem>
+                <MenuItem value="completed">已完成</MenuItem>
+                <MenuItem value="cancelled">已取消</MenuItem>
+              </Select>
+            </FormControl>
             <Button
+              variant="contained"
               onClick={() => {
                 resetForm();
                 setShowDialog(true);
               }}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus style={{ marginRight: 4, width: 16, height: 16 }} />
               新增交互
             </Button>
-          </div>
+          </Box>
 
           {selectedIds.length > 0 && (
-            <div className="mb-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-              <span className="text-sm">
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: "grey.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography variant="body2">
                 已选择 {selectedIds.length} 条交互记录
-              </span>
+              </Typography>
               <Button
-                variant="destructive"
-                size="sm"
+                variant="contained"
+                size="small"
                 onClick={handleBatchDelete}
+                color="error"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 style={{ marginRight: 4, width: 16, height: 16 }} />
                 批量删除
               </Button>
-            </div>
+            </Box>
           )}
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 50 }}>
+                  <Checkbox
+                    checked={
+                      selectedIds.length === interactions.length &&
+                      interactions.length > 0
+                    }
+                    onChange={toggleSelectAll}
+                  />
+                </TableCell>
+                <TableCell>主题</TableCell>
+                <TableCell>类型</TableCell>
+                <TableCell>计划时间</TableCell>
+                <TableCell>完成时间</TableCell>
+                <TableCell>状态</TableCell>
+                <TableCell sx={{ textAlign: "right" }}>操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {interactions.length === 0 ? (
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                      checked={
-                        selectedIds.length === interactions.length &&
-                        interactions.length > 0
-                      }
-                      onCheckedChange={toggleSelectAll}
+                  <TableCell colSpan={7} sx={{ textAlign: "center" }}>
+                    <EmptyState
+                      title="暂无交互记录"
+                      description="点击上方按钮添加第一条交互记录"
                     />
-                  </TableHead>
-                  <TableHead>主题</TableHead>
-                  <TableHead>类型</TableHead>
-                  <TableHead>计划时间</TableHead>
-                  <TableHead>完成时间</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {interactions.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center">
-                      <EmptyState
-                        title="暂无交互记录"
-                        description="点击上方按钮添加第一条交互记录"
+              ) : (
+                interactions.map((interaction) => (
+                  <TableRow key={interaction.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(interaction.id)}
+                        onChange={() => toggleSelect(interaction.id)}
                       />
                     </TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {interaction.subject || "-"}
+                    </TableCell>
+                    <TableCell>{getTypeBadge(interaction.type)}</TableCell>
+                    <TableCell>
+                      {interaction.scheduled_at
+                        ? new Date(interaction.scheduled_at).toLocaleString(
+                            "zh-CN",
+                          )
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {interaction.completed_at
+                        ? new Date(interaction.completed_at).toLocaleString(
+                            "zh-CN",
+                          )
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(interaction.status)}
+                    </TableCell>
+                    <TableCell sx={{ textAlign: "right" }}>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => handleViewDetail(interaction)}
+                      >
+                        <Eye style={{ width: 18, height: 18 }} />
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => handleEdit(interaction)}
+                      >
+                        <Edit style={{ width: 18, height: 18 }} />
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => handleDelete(interaction.id)}
+                        color="error"
+                      >
+                        <Trash2 style={{ width: 18, height: 18 }} />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                ) : (
-                  interactions.map((interaction) => (
-                    <TableRow key={interaction.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.includes(interaction.id)}
-                          onCheckedChange={() => toggleSelect(interaction.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {interaction.subject || "-"}
-                      </TableCell>
-                      <TableCell>{getTypeBadge(interaction.type)}</TableCell>
-                      <TableCell>
-                        {interaction.scheduled_at
-                          ? new Date(interaction.scheduled_at).toLocaleString(
-                              "zh-CN",
-                            )
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {interaction.completed_at
-                          ? new Date(interaction.completed_at).toLocaleString(
-                              "zh-CN",
-                            )
-                          : "-"}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(interaction.status)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetail(interaction)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(interaction)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(interaction.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
 
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+          <Box sx={{ mt: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="body2" color="text.secondary">
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
-            </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-                {Array.from(
-                  { length: Math.min(5, Math.ceil(total / pageSize)) },
-                  (_, i) => {
-                    const page = i + 1;
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(page)}
-                          isActive={currentPage === page}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  },
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setCurrentPage(
-                        Math.min(Math.ceil(total / pageSize), currentPage + 1),
-                      )
-                    }
-                    className={
-                      currentPage >= Math.ceil(total / pageSize)
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
+            </Typography>
+            <TablePagination
+              component="div"
+              count={total}
+              page={currentPage - 1}
+              rowsPerPage={pageSize}
+              onPageChange={handleChangePage}
+              rowsPerPageOptions={[10, 20, 50]}
+              labelRowsPerPage="每页"
+            />
+          </Box>
         </CardContent>
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedInteraction ? "编辑交互记录" : "新增交互记录"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedInteraction ? "修改交互记录信息" : "填写新交互记录信息"}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {selectedInteraction ? "编辑交互记录" : "新增交互记录"}
+        </DialogTitle>
+        <DialogContent dividers>
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="type">类型 *</Label>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, py: 1 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel htmlFor="type">类型 *</InputLabel>
                 <Select
                   value={formData.type}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="call">电话</SelectItem>
-                    <SelectItem value="email">邮件</SelectItem>
-                    <SelectItem value="meeting">会议</SelectItem>
-                    <SelectItem value="visit">拜访</SelectItem>
-                    <SelectItem value="other">其他</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="subject">主题</Label>
-                <Input
-                  id="subject"
-                  value={formData.subject}
                   onChange={(e) =>
-                    setFormData({ ...formData, subject: e.target.value })
+                    setFormData({ ...formData, type: e.target.value })
                   }
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="content">内容</Label>
-                <Textarea
-                  id="content"
+                  label="类型 *"
+                >
+                  <MenuItem value="call">电话</MenuItem>
+                  <MenuItem value="email">邮件</MenuItem>
+                  <MenuItem value="meeting">会议</MenuItem>
+                  <MenuItem value="visit">拜访</MenuItem>
+                  <MenuItem value="other">其他</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="主题"
+                size="small"
+                value={formData.subject}
+                onChange={(e) =>
+                  setFormData({ ...formData, subject: e.target.value })
+                }
+              />
+              <Box sx={{ gridColumn: "1 / -1" }}>
+                <TextField
+                  label="内容"
+                  size="small"
+                  multiline
+                  rows={4}
+                  fullWidth
                   value={formData.content}
                   onChange={(e) =>
                     setFormData({ ...formData, content: e.target.value })
                   }
-                  rows={4}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="scheduledAt">计划时间</Label>
-                <Input
-                  id="scheduledAt"
-                  type="datetime-local"
-                  value={formData.scheduled_at}
-                  onChange={(e) =>
-                    setFormData({ ...formData, scheduled_at: e.target.value })
-                  }
-                />
-              </div>
+              </Box>
+              <TextField
+                label="计划时间"
+                size="small"
+                type="datetime-local"
+                slotProps={{ inputLabel: { shrink: true } }}
+                value={formData.scheduled_at}
+                onChange={(e) =>
+                  setFormData({ ...formData, scheduled_at: e.target.value })
+                }
+              />
               {selectedInteraction && (
-                <div className="space-y-2">
-                  <Label htmlFor="status">状态</Label>
+                <FormControl fullWidth size="small">
+                  <InputLabel htmlFor="status">状态</InputLabel>
                   <Select
                     value={selectedInteraction.status}
-                    onValueChange={(value) =>
+                    onChange={(e) =>
                       setSelectedInteraction({
                         ...selectedInteraction,
-                        status: value,
+                        status: e.target.value,
                       })
                     }
+                    label="状态"
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="scheduled">已计划</SelectItem>
-                      <SelectItem value="completed">已完成</SelectItem>
-                      <SelectItem value="cancelled">已取消</SelectItem>
-                    </SelectContent>
+                    <MenuItem value="scheduled">已计划</MenuItem>
+                    <MenuItem value="completed">已完成</MenuItem>
+                    <MenuItem value="cancelled">已取消</MenuItem>
                   </Select>
-                </div>
+                </FormControl>
               )}
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="notes">备注</Label>
-                <Textarea
-                  id="notes"
+              <Box sx={{ gridColumn: "1 / -1" }}>
+                <TextField
+                  label="备注"
+                  size="small"
+                  multiline
+                  rows={3}
+                  fullWidth
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  rows={3}
                 />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowDialog(false)}
-              >
-                取消
-              </Button>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
+              </Box>
+            </Box>
           </form>
         </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => setShowDialog(false)}
+          >
+            取消
+          </Button>
+          <Button variant="contained" onClick={handleSubmit}>保存</Button>
+        </DialogActions>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>交互记录详情</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>交互记录详情</DialogTitle>
+        <DialogContent dividers>
           {selectedInteraction && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">类型</Label>
-                  <div>{getTypeBadge(selectedInteraction.type)}</div>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">主题</Label>
-                  <p className="font-medium">
-                    {selectedInteraction.subject || "-"}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-muted-foreground">内容</Label>
-                  <p>{selectedInteraction.content || "-"}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">计划时间</Label>
-                  <p>
-                    {selectedInteraction.scheduled_at
-                      ? new Date(
-                          selectedInteraction.scheduled_at,
-                        ).toLocaleString("zh-CN")
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">完成时间</Label>
-                  <p>
-                    {selectedInteraction.completed_at
-                      ? new Date(
-                          selectedInteraction.completed_at,
-                        ).toLocaleString("zh-CN")
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">状态</Label>
-                  <div>{getStatusBadge(selectedInteraction.status)}</div>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">创建时间</Label>
-                  <p>
-                    {new Date(selectedInteraction.created_at).toLocaleString(
-                      "zh-CN",
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">更新时间</Label>
-                  <p>
-                    {new Date(selectedInteraction.updated_at).toLocaleString(
-                      "zh-CN",
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">类型</Typography>
+                <Box>{getTypeBadge(selectedInteraction.type)}</Box>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">主题</Typography>
+                <Typography sx={{ fontWeight: 500 }}>
+                  {selectedInteraction.subject || "-"}
+                </Typography>
+              </Box>
+              <Box sx={{ gridColumn: "1 / -1" }}>
+                <Typography variant="caption" color="text.secondary">内容</Typography>
+                <Typography>{selectedInteraction.content || "-"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">计划时间</Typography>
+                <Typography>
+                  {selectedInteraction.scheduled_at
+                    ? new Date(
+                        selectedInteraction.scheduled_at,
+                      ).toLocaleString("zh-CN")
+                    : "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">完成时间</Typography>
+                <Typography>
+                  {selectedInteraction.completed_at
+                    ? new Date(
+                        selectedInteraction.completed_at,
+                      ).toLocaleString("zh-CN")
+                    : "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">状态</Typography>
+                <Box>{getStatusBadge(selectedInteraction.status)}</Box>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">创建时间</Typography>
+                <Typography>
+                  {new Date(selectedInteraction.created_at).toLocaleString(
+                    "zh-CN",
+                  )}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">更新时间</Typography>
+                <Typography>
+                  {new Date(selectedInteraction.updated_at).toLocaleString(
+                    "zh-CN",
+                  )}
+                </Typography>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

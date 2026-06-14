@@ -130,14 +130,10 @@ const RsExperimentDetailPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面头部 */}
       <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-        >
+        <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Typography variant="h4" fontWeight="bold">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                 {experiment.name}
               </Typography>
               <Chip
@@ -168,7 +164,7 @@ const RsExperimentDetailPage: React.FC = () => {
 
       {/* 试验概览 */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -186,22 +182,22 @@ const RsExperimentDetailPage: React.FC = () => {
               </Typography>
               <Divider sx={{ my: 2 }} />
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2">
                     开始日期: {experiment.started_at}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2">
                     完成日期: {experiment.completed_at || "进行中"}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2">
                     批次号: {experiment.batch_number}
                   </Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Typography variant="body2">
                     试验规模: {experiment.scale} {experiment.scale_unit}
                   </Typography>
@@ -211,7 +207,7 @@ const RsExperimentDetailPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -264,11 +260,7 @@ const RsExperimentDetailPage: React.FC = () => {
                 </TimelineSeparator>
                 <TimelineContent>
                   <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
+                    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
                       <div>
                         <Chip label={record.type} size="small" sx={{ mb: 1 }} />
                         <Typography variant="body2">

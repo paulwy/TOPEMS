@@ -188,13 +188,9 @@ const RsProjectListPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面标题和操作栏 */}
       <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
               研发项目管理
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -223,19 +219,19 @@ const RsProjectListPage: React.FC = () => {
 
       {/* 搜索和筛选 */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
           <TextField
             placeholder="搜索项目名称或编码..."
             size="small"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
+            slotProps={{ input: {
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchIcon />
                 </InputAdornment>
               ),
-            }}
+             } }}
             sx={{ width: 300 }}
           />
           <Button
@@ -317,7 +313,7 @@ const RsProjectListPage: React.FC = () => {
               .map((project) => (
                 <TableRow key={project.id} hover>
                   <TableCell>
-                    <Typography variant="body2" fontWeight="medium">
+                    <Typography variant="body2" sx={{ fontWeight: "medium" }}>
                       {project.code}
                     </Typography>
                   </TableCell>
@@ -340,7 +336,7 @@ const RsProjectListPage: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Stack direction="row" alignItems="center" spacing={1}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                       <LinearProgress
                         variant="determinate"
                         value={project.progress}
@@ -356,7 +352,7 @@ const RsProjectListPage: React.FC = () => {
                     {project.budget ? (project.budget / 10000).toFixed(1) : "-"}
                   </TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={1} justifyContent="center">
+                    <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
                       <Tooltip title="查看详情">
                         <IconButton
                           size="small"

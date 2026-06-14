@@ -1,53 +1,88 @@
-import React from "react";
+import { Button, Menu, MenuItem, Box } from "@mui/material";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Globe } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { SUPPORTED_LANGUAGES, type LanguageCode } from "../i18n";
 
 const LanguageSelector: React.FC = () => {
   const { i18n } = useTranslation();
   const currentLang = i18n.language as LanguageCode;
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleChangeLanguage = (code: LanguageCode) => {
     i18n.changeLanguage(code);
     localStorage.setItem("language", code);
+    setAnchorEl(null);
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Globe className="w-4 h-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+    <>
+      <Button
+        variant="text"
+        size="small"
+        onClick={handleMenuOpen}
+        sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
+      >
+        <Globe style={{ width: 20, height: 20 }} />
+      </Button>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+      >
         {SUPPORTED_LANGUAGES.map((lang) => (
-          <DropdownMenuItem
+          <MenuItem
             key={lang.code}
             onClick={() => handleChangeLanguage(lang.code)}
-            className={`${
-              currentLang === lang.code ? "bg-blue-50 text-blue-700" : ""
-            }`}
+            selected={currentLang === lang.code}
+            sx={{
+              backgroundColor: currentLang === lang.code ? "action.selected" : "inherit",
+              "&:hover": {
+                backgroundColor: currentLang === lang.code ? "action.selected" : "action.hover",
+              },
+            }}
           >
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 flex items-center justify-center text-xs font-bold bg-slate-100 rounded">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                  fontWeight: "bold",
+                  backgroundColor: "#f5f5f5",
+                  borderRadius: 0.5,
+                }}
+              >
                 {lang.flag}
-              </span>
+              </Box>
               <span>{lang.name}</span>
               {currentLang === lang.code && (
-                <span className="ml-auto text-xs text-slate-400">✓</span>
+                <Box component="span" sx={{ ml: 1, fontSize: 12, color: "text.disabled" }}>✓</Box>
               )}
-            </div>
-          </DropdownMenuItem>
+            </Box>
+          </MenuItem>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </Menu>
+    </>
   );
 };
 

@@ -45,25 +45,25 @@ import type { CompletionItem } from "../types/ai";
 import { MetricCard } from "../components/MetricCard";
 import { StatsChart } from "../components/StatsChart";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  Button,
+  TextField,
+  Card,
+  CardContent,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+  MenuItem,
+  Chip,
+  Box,
+  Typography,
+  Stack,
+  IconButton,
+} from "@mui/material";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "tree";
@@ -442,21 +442,20 @@ const HrmEmployeePage: React.FC = () => {
   );
 
   const getStatusBadge = useCallback((status: string) => {
-    const colors: Record<
-      string,
-      "default" | "secondary" | "destructive" | "outline"
-    > = {
-      active: "default",
-      inactive: "secondary",
+    const colors: Record<string, "default" | "primary" | "secondary" | "error"> = {
+      active: "primary",
+      inactive: "default",
     };
     const labels: Record<string, string> = {
       active: "在职",
       inactive: "离职",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+      />
     );
   }, []);
 
@@ -539,33 +538,30 @@ const HrmEmployeePage: React.FC = () => {
         accessorKey: "id",
         header: "操作",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
+          <Stack direction="row" spacing={1}>
+            <IconButton
+              size="small"
               onClick={() => handleView(row.original)}
               aria-label="查看员工详情"
             >
               <Eye className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+            </IconButton>
+            <IconButton
+              size="small"
               onClick={() => handleEdit(row.original)}
               aria-label="编辑员工"
             >
               <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+            </IconButton>
+            <IconButton
+              size="small"
               onClick={() => handleDelete(row.original.id)}
               aria-label="删除员工"
-              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              color="error"
             >
               <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+            </IconButton>
+          </Stack>
         ),
       },
     ],
@@ -768,19 +764,19 @@ const HrmEmployeePage: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div className="flex bg-slate-100 rounded-lg p-1">
                   <Button
-                    variant={viewMode === "list" ? "default" : "ghost"}
-                    size="sm"
+                    variant={viewMode === "list" ? "contained" : "text"}
+                    size="small"
                     onClick={() => setViewMode("list")}
-                    className="rounded-md"
+                    sx={{ borderRadius: 1 }}
                     aria-label="列表视图"
                   >
                     <List className="w-4 h-4" />
                   </Button>
                   <Button
-                    variant={viewMode === "tree" ? "default" : "ghost"}
-                    size="sm"
+                    variant={viewMode === "tree" ? "contained" : "text"}
+                    size="small"
                     onClick={() => setViewMode("tree")}
-                    className="rounded-md"
+                    sx={{ borderRadius: 1 }}
                     aria-label="树形视图"
                   >
                     <LayoutGrid className="w-4 h-4" />
@@ -829,47 +825,46 @@ const HrmEmployeePage: React.FC = () => {
                           transition={{ duration: 0.3, delay: 0.2 }}
                           style={{ transformOrigin: "left" }}
                         >
-                          <Input
+                          <TextField
+                            size="small"
                             placeholder="搜索员工姓名、工号、邮箱..."
                             value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            onKeyDown={(e) =>
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
+                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
                               e.key === "Enter" && handleSearch()
                             }
-                            className="pl-10"
+                            sx={{ pl: 10, width: "100%" }}
                             aria-label="搜索员工"
                           />
                         </motion.div>
                       </div>
-                      <Select
-                        value={departmentFilter}
-                        onValueChange={setDepartmentFilter}
-                      >
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="全部部门" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">全部部门</SelectItem>
+                      <FormControl size="small" sx={{ minWidth: 160 }}>
+                        <InputLabel>部门</InputLabel>
+                        <Select
+                          value={departmentFilter}
+                          label="部门"
+                          onChange={(e) => setDepartmentFilter(e.target.value)}
+                        >
+                          <MenuItem value="all">全部部门</MenuItem>
                           {departments.map((d) => (
-                            <SelectItem key={d.id} value={d.id}>
+                            <MenuItem key={d.id} value={d.id}>
                               {d.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={statusFilter}
-                        onValueChange={setStatusFilter}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue placeholder="全部状态" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">全部状态</SelectItem>
-                          <SelectItem value="active">在职</SelectItem>
-                          <SelectItem value="inactive">离职</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        </Select>
+                      </FormControl>
+                      <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <InputLabel>状态</InputLabel>
+                        <Select
+                          value={statusFilter}
+                          label="状态"
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                          <MenuItem value="all">全部状态</MenuItem>
+                          <MenuItem value="active">在职</MenuItem>
+                          <MenuItem value="inactive">离职</MenuItem>
+                        </Select>
+                      </FormControl>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -964,45 +959,41 @@ const HrmEmployeePage: React.FC = () => {
                         </div>
                       </div>
                       <div className="mb-4">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            type="text"
-                            placeholder="搜索部门"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            onKeyDown={(e) =>
-                              e.key === "Enter" && handleSearch()
-                            }
-                            className="pl-9 text-sm"
-                            aria-label="搜索部门"
-                          />
-                        </div>
+                        <TextField
+                          size="small"
+                          type="text"
+                          placeholder="搜索部门"
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleSearch()
+                          }
+                          sx={{ width: "100%" }}
+                        />
                       </div>
                       <div className="flex gap-2 mb-4">
-                        <Select
-                          value={statusFilter}
-                          onValueChange={setStatusFilter}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="全部状态" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">全部状态</SelectItem>
-                            <SelectItem value="active">在职</SelectItem>
-                            <SelectItem value="inactive">离职</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <InputLabel>状态</InputLabel>
+                          <Select
+                            value={statusFilter}
+                            label="状态"
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                          >
+                            <MenuItem value="all">全部状态</MenuItem>
+                            <MenuItem value="active">在职</MenuItem>
+                            <MenuItem value="inactive">离职</MenuItem>
+                          </Select>
+                        </FormControl>
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="outlined"
+                          size="small"
                           onClick={handleSearch}
                         >
                           搜索
                         </Button>
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="outlined"
+                          size="small"
                           onClick={handleReset}
                         >
                           重置
@@ -1034,7 +1025,7 @@ const HrmEmployeePage: React.FC = () => {
                     <div className="space-y-6">
                       <Card>
                         <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center justify-between mb-4">
                             <div>
                               <h2 className="text-xl font-bold text-slate-900">
                                 {selectedDept.name}
@@ -1045,7 +1036,7 @@ const HrmEmployeePage: React.FC = () => {
                                 </p>
                               )}
                             </div>
-                            <Badge>{selectedDeptEmployees.length} 人</Badge>
+                            <Chip size="small" label={`${selectedDeptEmployees.length} 人`} />
                           </div>
                         </CardContent>
                       </Card>
@@ -1082,25 +1073,25 @@ const HrmEmployeePage: React.FC = () => {
                                       {getStatusBadge(emp.status)}
                                     </span>
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
+                                      variant="text"
+                                      size="small"
                                       onClick={() => handleView(emp)}
                                       aria-label="查看详情"
                                     >
                                       <Eye className="w-4 h-4" />
                                     </Button>
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
+                                      variant="text"
+                                      size="small"
                                       onClick={() => handleEdit(emp)}
                                       aria-label="编辑"
                                     >
                                       <Edit className="w-4 h-4" />
                                     </Button>
                                     <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-600"
+                                      variant="text"
+                                      size="small"
+                                      color="error"
                                       onClick={() => handleDelete(emp.id)}
                                       aria-label="删除"
                                     >
@@ -1133,42 +1124,41 @@ const HrmEmployeePage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
+          <DialogTitle>新增员工</DialogTitle>
           <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>新增员工</DialogTitle>
-            </DialogHeader>
             <form onSubmit={handleCreate}>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="create-company">所属公司 *</Label>
-                  <Select
-                    value={(formData as Employee)?.company_id || ""}
-                    onValueChange={(value) =>
-                      handleInputChange("company_id", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择公司" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <Typography variant="body2" sx={{ mb: 1 }}>所属公司 *</Typography>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>请选择公司</InputLabel>
+                    <Select
+                      value={(formData as Employee)?.company_id || ""}
+                      label="请选择公司"
+                      onChange={(e) =>
+                        handleInputChange("company_id", e.target.value)
+                      }
+                    >
                       {companies.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
+                        <MenuItem key={c.id} value={c.id}>
                           {c.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </Select>
+                  </FormControl>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="create-name">员工姓名 *</Label>
-                    <Input
+                    <Typography variant="body2" sx={{ mb: 1 }}>员工姓名 *</Typography>
+                    <TextField
                       id="create-name"
+                      size="small"
                       type="text"
                       required
+                      fullWidth
                       value={(formData as Employee)?.name || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("name", e.target.value)
                       }
                       placeholder="请输入员工姓名"
@@ -1176,13 +1166,15 @@ const HrmEmployeePage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="create-number">工号</Label>
-                    <Input
+                    <Typography variant="body2" sx={{ mb: 1 }}>工号</Typography>
+                    <TextField
                       id="create-number"
+                      size="small"
                       type="text"
                       required
+                      fullWidth
                       value={(formData as Employee)?.employee_no || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("employee_no", e.target.value)
                       }
                       placeholder="请输入工号"
@@ -1192,24 +1184,28 @@ const HrmEmployeePage: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="create-email">邮箱</Label>
-                    <Input
+                    <Typography variant="body2" sx={{ mb: 1 }}>邮箱</Typography>
+                    <TextField
                       id="create-email"
+                      size="small"
                       type="email"
+                      fullWidth
                       value={(formData as Employee)?.email || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("email", e.target.value)
                       }
                       placeholder="请输入邮箱"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="create-phone">电话</Label>
-                    <Input
+                    <Typography variant="body2" sx={{ mb: 1 }}>电话</Typography>
+                    <TextField
                       id="create-phone"
+                      size="small"
                       type="text"
+                      fullWidth
                       value={(formData as Employee)?.phone || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("phone", e.target.value)
                       }
                       placeholder="请输入电话"
@@ -1217,74 +1213,76 @@ const HrmEmployeePage: React.FC = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="create-department">所属部门</Label>
-                  <Select
-                    value={(formData as Employee)?.department_id || "none"}
-                    onValueChange={(value) =>
-                      handleInputChange(
-                        "department_id",
-                        value === "none" ? "" : value,
-                      )
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择部门" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">无</SelectItem>
+                  <Typography variant="body2" sx={{ mb: 1 }}>所属部门</Typography>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>请选择部门</InputLabel>
+                    <Select
+                      value={(formData as Employee)?.department_id || "none"}
+                      label="请选择部门"
+                      onChange={(e) =>
+                        handleInputChange(
+                          "department_id",
+                          e.target.value === "none" ? "" : e.target.value,
+                        )
+                      }
+                    >
+                      <MenuItem value="none">无</MenuItem>
                       {departments.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
+                        <MenuItem key={d.id} value={d.id}>
                           {d.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </Select>
+                  </FormControl>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="create-position">职位</Label>
-                  <Input
+                  <Typography variant="body2" sx={{ mb: 1 }}>职位</Typography>
+                  <TextField
                     id="create-position"
+                    size="small"
                     type="text"
+                    fullWidth
                     value={(formData as Employee)?.position || ""}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("position", e.target.value)
                     }
                     placeholder="请输入职位"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="create-hire-date">入职日期</Label>
-                  <Input
+                  <Typography variant="body2" sx={{ mb: 1 }}>入职日期</Typography>
+                  <TextField
                     id="create-hire-date"
+                    size="small"
                     type="date"
+                    fullWidth
                     value={(formData as Employee)?.hire_date || ""}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange("hire_date", e.target.value)
                     }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="create-status">状态</Label>
-                  <Select
-                    value={(formData as Employee)?.status || "active"}
-                    onValueChange={(value) =>
-                      handleInputChange("status", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">在职</SelectItem>
-                      <SelectItem value="inactive">离职</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Typography variant="body2" sx={{ mb: 1 }}>状态</Typography>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel>请选择</InputLabel>
+                    <Select
+                      value={(formData as Employee)?.status || "active"}
+                      label="请选择"
+                      onChange={(e) =>
+                        handleInputChange("status", e.target.value)
+                      }
+                    >
+                      <MenuItem value="active">在职</MenuItem>
+                      <MenuItem value="inactive">离职</MenuItem>
+                    </Select>
+                  </FormControl>
                 </div>
               </div>
-              <DialogFooter className="mt-6 flex items-center justify-between">
+              <DialogActions sx={{ mt: 3, justifyContent: "space-between" }}>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outlined"
                   onClick={() => setShowCreateModal(false)}
                 >
                   取消
@@ -1294,79 +1292,80 @@ const HrmEmployeePage: React.FC = () => {
                     type="generate"
                     onClick={() => handleOpenAICodeGenerator("create")}
                     size="sm"
-                    variant="secondary"
+                    variant="default"
                     label="生成工号"
                   />
                   <AIHelperButton
                     type="complete"
                     onClick={() => handleOpenAIDataCompleter("create")}
                     size="sm"
-                    variant="secondary"
+                    variant="default"
                     label="智能补全"
                   />
                   <AIHelperButton
                     type="validate"
                     onClick={() => handleOpenAIFormValidator("create")}
                     size="sm"
-                    variant="secondary"
+                    variant="default"
                     label="AI 校验"
                   />
-                  <Button type="submit">创建</Button>
+                  <Button type="submit" variant="contained">创建</Button>
                 </div>
-              </DialogFooter>
+              </DialogActions>
             </form>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <Dialog open={showEditModal} onClose={() => setShowEditModal(false)}>
+          <DialogTitle>编辑员工</DialogTitle>
           <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>编辑员工</DialogTitle>
-            </DialogHeader>
             {selectedEmployee && (
               <form onSubmit={handleUpdate}>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edit-company">所属公司</Label>
-                    <Select
-                      value={(formData as Employee)?.company_id || ""}
-                      onValueChange={(value) =>
-                        handleInputChange("company_id", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择公司" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <Typography variant="body2" sx={{ mb: 1 }}>所属公司</Typography>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>请选择公司</InputLabel>
+                      <Select
+                        value={(formData as Employee)?.company_id || ""}
+                        label="请选择公司"
+                        onChange={(e) =>
+                          handleInputChange("company_id", e.target.value)
+                        }
+                      >
                         {companies.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
+                          <MenuItem key={c.id} value={c.id}>
                             {c.name}
-                          </SelectItem>
+                          </MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </Select>
+                    </FormControl>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-name">员工姓名 *</Label>
-                      <Input
+                      <Typography variant="body2" sx={{ mb: 1 }}>员工姓名 *</Typography>
+                      <TextField
                         id="edit-name"
+                        size="small"
                         type="text"
                         required
+                        fullWidth
                         value={(formData as Employee)?.name || ""}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleInputChange("name", e.target.value)
                         }
                         aria-required={true}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-number">工号</Label>
-                      <Input
+                      <Typography variant="body2" sx={{ mb: 1 }}>工号</Typography>
+                      <TextField
                         id="edit-number"
+                        size="small"
                         type="text"
+                        fullWidth
                         value={(formData as Employee)?.employee_no || ""}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleInputChange("employee_no", e.target.value)
                         }
                       />
@@ -1374,85 +1373,89 @@ const HrmEmployeePage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-email">邮箱</Label>
-                      <Input
+                      <Typography variant="body2" sx={{ mb: 1 }}>邮箱</Typography>
+                      <TextField
                         id="edit-email"
+                        size="small"
                         type="email"
+                        fullWidth
                         value={(formData as Employee)?.email || ""}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleInputChange("email", e.target.value)
                         }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-phone">电话</Label>
-                      <Input
+                      <Typography variant="body2" sx={{ mb: 1 }}>电话</Typography>
+                      <TextField
                         id="edit-phone"
+                        size="small"
                         type="text"
+                        fullWidth
                         value={(formData as Employee)?.phone || ""}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleInputChange("phone", e.target.value)
                         }
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-department">所属部门</Label>
-                    <Select
-                      value={(formData as Employee)?.department_id || "none"}
-                      onValueChange={(value) =>
-                        handleInputChange(
-                          "department_id",
-                          value === "none" ? "" : value,
-                        )
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">无</SelectItem>
+                    <Typography variant="body2" sx={{ mb: 1 }}>所属部门</Typography>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>请选择</InputLabel>
+                      <Select
+                        value={(formData as Employee)?.department_id || "none"}
+                        label="请选择"
+                        onChange={(e) =>
+                          handleInputChange(
+                            "department_id",
+                            e.target.value === "none" ? "" : e.target.value,
+                          )
+                        }
+                      >
+                        <MenuItem value="none">无</MenuItem>
                         {departments.map((d) => (
-                          <SelectItem key={d.id} value={d.id}>
+                          <MenuItem key={d.id} value={d.id}>
                             {d.name}
-                          </SelectItem>
+                          </MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </Select>
+                    </FormControl>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-position">职位</Label>
-                    <Input
+                    <Typography variant="body2" sx={{ mb: 1 }}>职位</Typography>
+                    <TextField
                       id="edit-position"
+                      size="small"
                       type="text"
+                      fullWidth
                       value={(formData as Employee)?.position || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("position", e.target.value)
                       }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-status">状态</Label>
-                    <Select
-                      value={(formData as Employee)?.status || "active"}
-                      onValueChange={(value) =>
-                        handleInputChange("status", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">在职</SelectItem>
-                        <SelectItem value="inactive">离职</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Typography variant="body2" sx={{ mb: 1 }}>状态</Typography>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>请选择</InputLabel>
+                      <Select
+                        value={(formData as Employee)?.status || "active"}
+                        label="请选择"
+                        onChange={(e) =>
+                          handleInputChange("status", e.target.value)
+                        }
+                      >
+                        <MenuItem value="active">在职</MenuItem>
+                        <MenuItem value="inactive">离职</MenuItem>
+                      </Select>
+                    </FormControl>
                   </div>
                 </div>
-                <DialogFooter className="mt-6 flex items-center justify-between">
+                <DialogActions sx={{ mt: 3, justifyContent: "space-between" }}>
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="outlined"
                     onClick={() => {
                       setShowEditModal(false);
                       setSelectedEmployee(null);
@@ -1465,106 +1468,104 @@ const HrmEmployeePage: React.FC = () => {
                       type="generate"
                       onClick={() => handleOpenAICodeGenerator("edit")}
                       size="sm"
-                      variant="secondary"
+                      variant="default"
                       label="生成工号"
                     />
                     <AIHelperButton
                       type="complete"
                       onClick={() => handleOpenAIDataCompleter("edit")}
                       size="sm"
-                      variant="secondary"
+                      variant="default"
                       label="智能补全"
                     />
                     <AIHelperButton
                       type="validate"
                       onClick={() => handleOpenAIFormValidator("edit")}
                       size="sm"
-                      variant="secondary"
+                      variant="default"
                       label="AI 校验"
                     />
-                    <Button type="submit">保存</Button>
+                    <Button type="submit" variant="contained">保存</Button>
                   </div>
-                </DialogFooter>
+                </DialogActions>
               </form>
             )}
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
+        <Dialog open={showViewModal} onClose={() => setShowViewModal(false)}>
+          <DialogTitle>员工详情</DialogTitle>
           <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>员工详情</DialogTitle>
-            </DialogHeader>
             {selectedEmployee && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-gray-500">员工姓名</Label>
-                    <div className="font-medium">{selectedEmployee.name}</div>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>员工姓名</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>{selectedEmployee.name}</Typography>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-gray-500">工号</Label>
-                    <div className="font-medium">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>工号</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedEmployee.employee_no || "-"}
-                    </div>
+                    </Typography>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-gray-500">邮箱</Label>
-                    <div className="font-medium">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>邮箱</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedEmployee.email || "-"}
-                    </div>
+                    </Typography>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-gray-500">电话</Label>
-                    <div className="font-medium">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>电话</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedEmployee.phone || "-"}
-                    </div>
+                    </Typography>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-gray-500">所属部门</Label>
-                    <div className="font-medium">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>所属部门</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {departments.find(
                         (d) => d.id === selectedEmployee.department_id,
                       )?.name || "-"}
-                    </div>
+                    </Typography>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-gray-500">职位</Label>
-                    <div className="font-medium">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>职位</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedEmployee.position || "-"}
-                    </div>
+                    </Typography>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-gray-500">入职日期</Label>
-                    <div className="font-medium">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>入职日期</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedEmployee.hire_date || "-"}
-                    </div>
+                    </Typography>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-gray-500">状态</Label>
-                    <div className="font-medium">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>状态</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {getStatusBadge(selectedEmployee.status)}
-                    </div>
+                    </Typography>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-gray-500">创建时间</Label>
-                  <div className="text-sm text-gray-500">
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>创建时间</Typography>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     {selectedEmployee.created_at}
-                  </div>
+                  </Typography>
                 </div>
               </div>
             )}
-            <DialogFooter>
-              <Button onClick={() => setShowViewModal(false)}>关闭</Button>
-            </DialogFooter>
           </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowViewModal(false)} variant="contained">关闭</Button>
+          </DialogActions>
         </Dialog>
 
         <AICodeGenerator

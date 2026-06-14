@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Bell, Check, CheckCheck, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@mui/material/Button";
 import { imApi, type Notification } from "../../api/im";
 import { useAppStore } from "../../store";
 
@@ -113,10 +113,10 @@ export const NotificationList: React.FC<NotificationListProps> = ({
           </h2>
           {unreadCount > 0 && (
             <Button
-              variant="ghost"
-              size="sm"
+              variant="text"
+              size="small"
               onClick={handleMarkAllAsRead}
-              className="text-sm"
+              sx={{ fontSize: 14 }}
             >
               <CheckCheck className="w-4 h-4 mr-1" />
               全部已读
@@ -158,9 +158,9 @@ export const NotificationList: React.FC<NotificationListProps> = ({
                         </span>
                         {!notification.is_read && (
                           <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
+                            variant="text"
+                            size="small"
+                            sx={{ minWidth: 24, width: 24, height: 24, p: 0 }}
                             onClick={() => handleMarkAsRead(notification.id)}
                           >
                             <Check className="w-3 h-3" />

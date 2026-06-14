@@ -10,11 +10,11 @@
       118.3
     ]
   ],
-  "minZoom": 6,
+  "minZoom": 4,
   "maxZoom": 10,
-  "downloadedAt": "2026-06-13T01:23:42.749Z",
-  "totalTiles": 79,
-  "successCount": 79,
-  "skippedCount": 79,
+  "downloadedAt": "2026-06-14T00:56:52.446Z",
+  "totalTiles": 81,
+  "successCount": 81,
+  "skippedCount": 81,
   "failedCount": 0
 }

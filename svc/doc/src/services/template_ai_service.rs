@@ -213,20 +213,18 @@ impl TemplateAIService {
 创建人：{{creator}}"#.to_string();
         }
 
-        format!(
-            r#"# {{title}}
+        r#"# {title}
 
-{{description}}
+{description}
 
-创建时间：{{today}}
-创建人：{{user_name}}"#
-        )
+创建时间：{today}
+创建人：{user_name}"#.to_string()
     }
 
     fn mock_ai_optimize(prompt: String) -> String {
         tracing::info!("AI优化模板内容: {}", prompt);
         
-        prompt.replace("{{", "{{").replace("}}", "}}")
+        prompt
     }
 }
 

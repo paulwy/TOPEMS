@@ -1,3 +1,18 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import WorkflowDesigner from "../components/WorkflowDesigner";
@@ -8,19 +23,7 @@ import type {
   UpdateWorkflowRequest,
 } from "../api/flow";
 import { flowApi } from "../api/flow";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2, Save, ArrowLeft } from "lucide-react";
+import { Save, ArrowLeft } from "lucide-react";
 
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -211,88 +214,94 @@ const WorkflowDesignerPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate("/workflows")}>
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              返回
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                {workflow ? `编辑: ${workflow.name}` : "新建工作流"}
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                设计工作流审批流程
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Card sx={{ borderRadius: 0, borderBottom: "1px solid", borderColor: "divider" }}>
+        <CardContent sx={{ p: 2 }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <Button variant="text" onClick={() => navigate("/workflows")} startIcon={<ArrowLeft size={20} />}>
+                返回
+              </Button>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  {workflow ? `编辑: ${workflow.name}` : "新建工作流"}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  设计工作流审批流程
+                </Typography>
+              </Box>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
 
       {/* Designer */}
-      <div className="flex-1">
+      <Box sx={{ flex: 1 }}>
         <WorkflowDesigner
           initialNodes={nodes}
           initialEdges={edges}
           onSave={handleSave}
         />
-      </div>
+      </Box>
 
       {/* Save Dialog */}
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>保存工作流</DialogTitle>
-            <DialogDescription>请输入工作流名称和描述</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">工作流名称 *</Label>
-              <Input
-                id="name"
+      <Dialog open={showSaveDialog} onClose={() => setShowSaveDialog(false)}>
+        <DialogContent sx={{ maxWidth: 400 }}>
+          <DialogTitle>保存工作流</DialogTitle>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            请输入工作流名称和描述
+          </Typography>
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                工作流名称 *
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
                 value={formData.name}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="请输入工作流名称"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">描述</Label>
-              <Textarea
-                id="description"
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                描述
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
                 value={formData.description}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="请输入工作流描述"
-                rows={3}
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+            </Box>
+          </Stack>
+          <DialogActions>
+            <Button variant="outlined" onClick={() => setShowSaveDialog(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveWorkflow} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              <Save className="w-4 h-4 mr-2" />
-              保存
+            <Button onClick={handleSaveWorkflow} disabled={saving} variant="contained" startIcon={saving ? undefined : <Save size={16} />}>
+              {saving ? "保存中..." : "保存"}
             </Button>
-          </DialogFooter>
+          </DialogActions>
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

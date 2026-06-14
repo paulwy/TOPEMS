@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
 /**
  * 凭证模板管理页面
  * 管理凭证自动生成规则和模板
@@ -17,10 +18,6 @@ import {
   X,
   Play,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   useVoucherTemplates,
   useCreateVoucherTemplate,
@@ -117,70 +114,72 @@ export default function VoucherTemplatePage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <Box sx={{ py: 3 }} className="container mx-auto">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">凭证模板管理</h1>
-          <p className="text-gray-500 mt-1">管理凭证自动生成规则和模板配置</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>凭证模板管理</Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>管理凭证自动生成规则和模板配置</Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Button variant="outlined" onClick={() => refetch()} startIcon={<RefreshCw className="w-4 h-4" />}>
             刷新
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
+          <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus className="w-4 h-4" />}>
             新建模板
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* 筛选栏 */}
-      <div className="flex items-center gap-4">
-        <Input
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+        <TextField
           placeholder="搜索模板名称或编码..."
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
-          className="max-w-xs"
+          size="small"
+          sx={{ maxWidth: 320 }}
         />
-        <select
-          value={filterType}
-          onChange={(e) =>
-            setFilterType(e.target.value as VoucherTemplateType | "")
-          }
-          className="p-2 border rounded-lg"
-        >
-          <option value="">全部类型</option>
-          {Object.entries(TEMPLATE_TYPE_CONFIG).map(([key, config]) => (
-            <option key={key} value={key}>
-              {config.label}
-            </option>
-          ))}
-        </select>
-      </div>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>全部类型</InputLabel>
+          <Select
+            value={filterType}
+            label="全部类型"
+            onChange={(e) =>
+              setFilterType(e.target.value as VoucherTemplateType | "")
+            }
+          >
+            <MenuItem value="">全部类型</MenuItem>
+            {Object.entries(TEMPLATE_TYPE_CONFIG).map(([key, config]) => (
+              <MenuItem key={key} value={key}>
+                {config.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
 
       {/* 模板列表 */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
           <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
-        </div>
+        </Box>
       ) : filteredTemplates.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="w-12 h-12 text-gray-400 mb-4" />
-            <p className="text-gray-500">暂无凭证模板</p>
+        <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6 }}>
+          <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <FileText className="w-12 h-12 text-gray-400 mb: 2" />
+            <Typography sx={{ color: "text.secondary", mb: 2 }}>暂无凭证模板</Typography>
             <Button
-              variant="outline"
-              className="mt-4"
+              variant="outlined"
               onClick={() => setShowCreateModal(true)}
+              sx={{ mt: 2 }}
             >
               创建第一个模板
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
           {filteredTemplates.map((template: any) => {
             const typeConfig = TEMPLATE_TYPE_CONFIG[
               template.type as VoucherTemplateType
@@ -190,87 +189,83 @@ export default function VoucherTemplatePage() {
             };
 
             return (
-              <Card key={template.id} className="relative">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-base">
+              <Card key={template.id} sx={{ position: "relative" }}>
+                <CardHeader sx={{ pb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: "primary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FileText className="w-5 h-5 text-primary.main" />
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem" }}>
                           {template.name}
-                        </CardTitle>
-                        <p className="text-xs text-gray-500 font-mono">
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>
                           {template.code}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge className={typeConfig.color}>
-                      {typeConfig.label}
-                    </Badge>
-                  </div>
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Chip size="small" label={typeConfig.label} sx={{ bgcolor: "primary.50", color: "primary.main" }} />
+                  </Box>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
+                <CardContent sx={{ pt: 0 }}>
                   {/* 描述 */}
                   {template.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2">
+                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                       {template.description}
-                    </p>
+                    </Typography>
                   )}
 
                   {/* 信息 */}
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">分录数</span>
-                      <span>{template.entries?.length || 0} 条</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">适用模块</span>
-                      <span>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.875rem" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>分录数</Typography>
+                      <Typography variant="body2">{template.entries?.length || 0} 条</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>适用模块</Typography>
+                      <Typography variant="body2">
                         {template.applicable_modules?.join(", ") || "全部"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">状态</span>
-                      <Badge
-                        variant={template.is_active ? "default" : "secondary"}
-                      >
-                        {template.is_active ? "启用" : "禁用"}
-                      </Badge>
-                    </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>状态</Typography>
+                      <Chip size="small"
+                        variant={template.is_active ? "filled" : "outlined"}
+                        label={template.is_active ? "启用" : "禁用"} />
+                    </Box>
                     {template.is_default && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-500">默认模板</span>
+                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>默认模板</Typography>
                         <Check className="w-4 h-4 text-green-600" />
-                      </div>
+                      </Box>
                     )}
-                  </div>
+                  </Box>
 
                   {/* 操作按钮 */}
-                  <div className="flex items-center gap-2 pt-2 border-t">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 2, borderTop: 1, borderColor: "divider" }}>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1"
+                      variant="text"
+                      size="small"
                       onClick={() => setEditingTemplate(template)}
+                      sx={{ flex: 1 }}
                     >
                       <Edit className="w-4 h-4 mr-1" />
                       编辑
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex-1"
+                      variant="text"
+                      size="small"
                       onClick={() => handleCopy(template)}
+                      sx={{ flex: 1 }}
                     >
                       <Copy className="w-4 h-4 mr-1" />
                       复制
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={() => handleToggle(template)}
                     >
                       {template.is_active ? (
@@ -280,55 +275,55 @@ export default function VoucherTemplatePage() {
                       )}
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={() => handleDelete(template.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      sx={{ color: "error.main", "&:hover": { bgcolor: "error.50" } }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
-                  </div>
+                  </Box>
 
                   {/* 快速操作 */}
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
+                    variant="outlined"
+                    size="small"
                     onClick={() =>
                       autoGenerate.mutate({
                         template_id: template.id,
                         period: new Date().toISOString().slice(0, 7),
                       })
                     }
+                    sx={{ width: "100%", mt: 2 }}
+                    startIcon={<Play className="w-4 h-4" />}
                   >
-                    <Play className="w-4 h-4 mr-2" />
                     试算生成
                   </Button>
                 </CardContent>
               </Card>
             );
           })}
-        </div>
+        </Box>
       )}
 
       {/* 生成规则入口 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">凭证自动生成规则</CardTitle>
+      <Card sx={{ mt: 3 }}>
+        <CardHeader sx={{ pb: 0 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>凭证自动生成规则</Typography>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
             配置业务单据自动生成凭证的规则，例如：项目结算自动生成收入凭证、工资计算自动生成工资凭证等。
-          </p>
+          </Typography>
           <Button
-            variant="outline"
+            variant="outlined"
             onClick={() => navigate("/finance/voucher-rules")}
+            startIcon={<Settings className="w-4 h-4" />}
           >
-            <Settings className="w-4 h-4 mr-2" />
             管理生成规则
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 }

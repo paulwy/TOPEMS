@@ -18,43 +18,42 @@ import type { Contract, ContractRenewal, Employee } from "../api/hrm";
 import { contractApi, contractRenewalApi, employeeApi } from "../api/hrm";
 import type { PaginatedResult } from "../api/hrm";
 
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
+  Typography,
+  Box,
+  Stack,
+  Chip,
+  TextField,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
+  MenuItem,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  FormControlLabel,
+  Tabs,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+  TableContainer,
+  Paper,
+  IconButton,
+  Tooltip,
+  Divider,
+  FormLabel,
+  Alert,
+  Snackbar,
+} from "@mui/material";
 
 const contractTypes = [
   { value: "labor", label: "劳动合同" },
@@ -64,18 +63,18 @@ const contractTypes = [
   { value: "consulting", label: "咨询合同" },
 ];
 
-const statusMap: Record<string, { text: string; color: string }> = {
-  active: { text: "生效中", color: "bg-green-100 text-green-800" },
-  expired: { text: "已到期", color: "bg-red-100 text-red-800" },
-  terminated: { text: "已终止", color: "bg-gray-100 text-gray-600" },
-  pending: { text: "待审批", color: "bg-orange-100 text-orange-800" },
+const statusMap: Record<string, { text: string; color: "success" | "error" | "default" | "warning" }> = {
+  active: { text: "生效中", color: "success" },
+  expired: { text: "已到期", color: "error" },
+  terminated: { text: "已终止", color: "default" },
+  pending: { text: "待审批", color: "warning" },
 };
 
-const renewalStatusMap: Record<string, { text: string; color: string }> = {
-  pending: { text: "待审批", color: "bg-orange-100 text-orange-800" },
-  approved: { text: "已批准", color: "bg-green-100 text-green-800" },
-  rejected: { text: "已拒绝", color: "bg-red-100 text-red-800" },
-  executed: { text: "已执行", color: "bg-blue-100 text-blue-800" },
+const renewalStatusMap: Record<string, { text: string; color: "success" | "error" | "default" | "warning" | "info" }> = {
+  pending: { text: "待审批", color: "warning" },
+  approved: { text: "已批准", color: "success" },
+  rejected: { text: "已拒绝", color: "error" },
+  executed: { text: "已执行", color: "info" },
 };
 
 const renewalTypes = [
@@ -171,7 +170,6 @@ export default function ContractManagementPage() {
   const showNotification = useCallback(
     (type: "success" | "error", message: string) => {
       setNotification({ type, message });
-      setTimeout(() => setNotification(null), 3000);
     },
     [],
   );
@@ -460,146 +458,141 @@ export default function ContractManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {notification && (
-        <div
-          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-            notification.type === "success"
-              ? "bg-green-500 text-white"
-              : "bg-red-500 text-white"
-          }`}
-        >
-          {notification.message}
-        </div>
-      )}
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={3000}
+        onClose={() => setNotification(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert severity={notification?.type} sx={{ width: "100%" }}>
+          {notification?.message}
+        </Alert>
+      </Snackbar>
 
-      {confirmDialog && (
-        <Dialog
-          open={!!confirmDialog}
-          onOpenChange={() => setConfirmDialog(null)}
-        >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{confirmDialog.title}</DialogTitle>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => setConfirmDialog(null)}
-              >
-                取消
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  confirmDialog.onConfirm();
-                  setConfirmDialog(null);
-                }}
-              >
-                确定
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        maxWidth="sm"
+      >
+        <DialogTitle>{confirmDialog?.title}</DialogTitle>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setConfirmDialog(null)}>
+            取消
+          </Button>
+          <Button
+            color="error"
+            onClick={() => {
+              confirmDialog?.onConfirm();
+              setConfirmDialog(null);
+            }}
+          >
+            确定
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">合同管理</h1>
-              <p className="text-sm text-gray-500 mt-1">
+      <Box sx={{ bgcolor: "white", borderBottom: 1, borderColor: "divider", boxShadow: 1 }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+                合同管理
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
                 管理员工合同信息，包括合同创建、到期提醒和续签流程
-              </p>
-            </div>
-            <Button onClick={handleCreate} className="flex items-center gap-2">
-              <Plus size={18} />
+              </Typography>
+            </Box>
+            <Button variant="contained" onClick={handleCreate} startIcon={<Plus size={18} />}>
               新建合同
             </Button>
-          </div>
-        </div>
-      </div>
+          </Stack>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="relative">
-                  <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={16}
-                  />
-                  <Input
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+        <Card sx={{ boxShadow: 1 }}>
+          <CardHeader
+            sx={{ pb: 1 }}
+            title={
+              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }} spacing={2}>
+                <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                  <TextField
+                    size="small"
                     type="text"
                     placeholder="搜索合同编号或员工姓名"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                    className="pl-10 w-64"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="全部状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部状态</SelectItem>
-                    <SelectItem value="active">生效中</SelectItem>
-                    <SelectItem value="expired">已到期</SelectItem>
-                    <SelectItem value="terminated">已终止</SelectItem>
-                  </SelectContent>
-                </Select>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={showExpiringOnly}
-                    onCheckedChange={(e) => {
-                      setShowExpiringOnly(Boolean(e));
-                      setCurrentPage(1);
+                    slotProps={{
+                      input: {
+                        startAdornment: <Search size={16} style={{ marginRight: 8, color: "#9ca3af" }} />,
+                      },
                     }}
+                    sx={{ width: 280 }}
                   />
-                  <span className="text-sm text-gray-600">
-                    仅显示即将到期(30天内)
-                  </span>
-                </label>
-              </div>
-              <Button
-                variant="outline"
-                onClick={loadData}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw size={16} />
-                刷新
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <ScrollArea className="max-h-[600px]">
-              <Table>
-                <TableHeader>
+                  <FormControl size="small" sx={{ width: 160 }}>
+                    <InputLabel>状态</InputLabel>
+                    <Select
+                      value={statusFilter}
+                      label="状态"
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                      <MenuItem value="">全部状态</MenuItem>
+                      <MenuItem value="active">生效中</MenuItem>
+                      <MenuItem value="expired">已到期</MenuItem>
+                      <MenuItem value="terminated">已终止</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={showExpiringOnly}
+                        onChange={(e) => {
+                          setShowExpiringOnly(e.target.checked);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    }
+                    label={<Typography variant="body2">仅显示即将到期(30天内)</Typography>}
+                  />
+                </Stack>
+                <Button
+                  variant="outlined"
+                  onClick={loadData}
+                  startIcon={<RefreshCw size={16} />}
+                >
+                  刷新
+                </Button>
+              </Stack>
+            }
+          />
+          <CardContent sx={{ pt: 0 }}>
+            <TableContainer sx={{ maxHeight: 600 }}>
+              <Table stickyHeader>
+                <TableHead>
                   <TableRow>
-                    <TableHead className="w-32">合同编号</TableHead>
-                    <TableHead>员工</TableHead>
-                    <TableHead>合同类型</TableHead>
-                    <TableHead className="w-24">薪资</TableHead>
-                    <TableHead className="w-48">有效期</TableHead>
-                    <TableHead className="w-20">状态</TableHead>
-                    <TableHead className="w-40">操作</TableHead>
+                    <TableCell sx={{ width: 128 }}>合同编号</TableCell>
+                    <TableCell>员工</TableCell>
+                    <TableCell>合同类型</TableCell>
+                    <TableCell sx={{ width: 96 }}>薪资</TableCell>
+                    <TableCell sx={{ width: 192 }}>有效期</TableCell>
+                    <TableCell sx={{ width: 80 }}>状态</TableCell>
+                    <TableCell sx={{ width: 160 }}>操作</TableCell>
                   </TableRow>
-                </TableHeader>
+                </TableHead>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                        <Box sx={{ display: "flex", justifyContent: "center" }}>
+                          <Box sx={{ animation: "spin 1s linear infinite", width: 32, height: 32, border: 2, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%" }} />
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ) : data.items.length === 0 ? (
                     <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        className="text-center py-12 text-gray-500"
-                      >
+                      <TableCell colSpan={7} align="center" sx={{ py: 6, color: "grey.500" }}>
                         暂无数据
                       </TableCell>
                     </TableRow>
@@ -609,14 +602,14 @@ export default function ContractManagementPage() {
                       const isExpiringSoon = hasExpiringSoon(item.end_date);
 
                       return (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableRow key={item.id} hover>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <FileTextIcon className="w-4 h-4 text-blue-500" />
-                              <span className="font-medium text-gray-900">
+                            <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
+                              <FileTextIcon size={16} style={{ color: "#3b82f6" }} />
+                              <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                                 {item.contract_no || "-"}
-                              </span>
-                            </div>
+                              </Typography>
+                            </Stack>
                           </TableCell>
                           <TableCell>
                             {getEmployeeName(item.employee_id)}
@@ -632,10 +625,11 @@ export default function ContractManagementPage() {
                               : "-"}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                              <span
-                                className={`text-sm ${isExpiringSoon ? "text-orange-600 font-medium" : "text-gray-600"}`}
+                            <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
+                              <Calendar size={14} style={{ color: "#9ca3af" }} />
+                              <Typography
+                                variant="body2"
+                                sx={{ color: isExpiringSoon ? "warning.main" : "grey.600", fontWeight: isExpiringSoon ? 500 : 400 }}
                               >
                                 {new Date(item.start_date).toLocaleDateString(
                                   "zh-CN",
@@ -646,68 +640,61 @@ export default function ContractManagementPage() {
                                       "zh-CN",
                                     )
                                   : "无固定期限"}
-                              </span>
-                            </div>
+                              </Typography>
+                            </Stack>
                             {isExpiringSoon && days !== null && (
-                              <div className="mt-1 flex items-center gap-1 text-xs text-orange-600">
-                                <AlertCircle className="w-3 h-3" />
-                                <span>剩余{days}天到期</span>
-                              </div>
+                              <Stack sx={{ display: "flex", flexDirection: "row", alignItems: "center", mt: 0.5 }}>
+                                <AlertCircle size={12} style={{ color: "#ea580c" }} />
+                                <Typography variant="caption" sx={{ color: "warning.main" }}>
+                                  剩余{days}天到期
+                                </Typography>
+                              </Stack>
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              className={
-                                statusMap[item.status]?.color ||
-                                "bg-gray-100 text-gray-600"
-                              }
-                            >
-                              {statusMap[item.status]?.text || item.status}
-                            </Badge>
+                            <Chip
+                              size="small"
+                              label={statusMap[item.status]?.text || item.status}
+                              color={statusMap[item.status]?.color || "default"}
+                            />
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleView(item)}
-                                title="查看"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEdit(item)}
-                                title="编辑"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
+                            <Stack direction="row" spacing={0.5}>
+                              <Tooltip title="查看">
+                                <IconButton size="small" onClick={() => handleView(item)}>
+                                  <Eye size={16} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="编辑">
+                                <IconButton size="small" onClick={() => handleEdit(item)}>
+                                  <Edit2 size={16} />
+                                </IconButton>
+                              </Tooltip>
                               {item.status === "active" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleRenew(item)}
-                                  title="续签"
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                >
-                                  <RefreshCw className="w-4 h-4" />
-                                </Button>
+                                <Tooltip title="续签">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleRenew(item)}
+                                    sx={{ color: "success.main", "&:hover": { bgcolor: "success.lighter" } }}
+                                  >
+                                    <RefreshCw size={16} />
+                                  </IconButton>
+                                </Tooltip>
                               )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  showConfirm("确定删除该合同吗?", () =>
-                                    handleDelete(item.id),
-                                  )
-                                }
-                                title="删除"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
+                              <Tooltip title="删除">
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    showConfirm("确定删除该合同吗?", () =>
+                                      handleDelete(item.id),
+                                    )
+                                  }
+                                  sx={{ color: "error.main", "&:hover": { bgcolor: "error.lighter" } }}
+                                >
+                                  <Trash2 size={16} />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       );
@@ -715,638 +702,608 @@ export default function ContractManagementPage() {
                   )}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </TableContainer>
 
-            <div className="flex items-center justify-between pt-4 border-t">
-              <span className="text-sm text-gray-500">
+            <Divider sx={{ my: 2 }} />
+            <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
                 共 {data.total} 条记录
-              </span>
-              <div className="flex gap-2">
+              </Typography>
+              <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
                 <Button
-                  variant="outline"
+                  variant="outlined"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => p - 1)}
-                  className="px-4 py-2"
                 >
                   上一页
                 </Button>
-                <span className="text-sm text-gray-600 px-2">
+                <Typography variant="body2" sx={{ px: 1, color: "grey.600" }}>
                   第 {currentPage} 页
-                </span>
+                </Typography>
                 <Button
-                  variant="outline"
+                  variant="outlined"
                   disabled={currentPage * data.page_size >= data.total}
                   onClick={() => setCurrentPage((p) => p + 1)}
-                  className="px-4 py-2"
                 >
                   下一页
                 </Button>
-              </div>
-            </div>
+              </Stack>
+            </Stack>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      <Dialog open={modalVisible} onOpenChange={setModalVisible}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>
-              {modalType === "create"
-                ? "新建合同"
-                : modalType === "edit"
-                  ? "编辑合同"
-                  : "合同详情"}
-            </DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="flex-1 py-4">
-            {modalType !== "view" ? (
-              <div className="space-y-4 px-4">
-                <div>
-                  <Label htmlFor="employee_id">员工 *</Label>
+      <Dialog
+        open={modalVisible}
+        onClose={() => setModalVisible(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {modalType === "create"
+            ? "新建合同"
+            : modalType === "edit"
+              ? "编辑合同"
+              : "合同详情"}
+        </DialogTitle>
+        <DialogContent dividers>
+          {modalType !== "view" ? (
+            <Stack spacing={2}>
+              <Box>
+                <FormLabel>员工 *</FormLabel>
+                <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                  <InputLabel>员工</InputLabel>
                   <Select
                     value={formState.employee_id}
-                    onValueChange={(value) =>
-                      setFormState((s) => ({ ...s, employee_id: value }))
+                    label="员工"
+                    onChange={(e) =>
+                      setFormState((s) => ({ ...s, employee_id: e.target.value }))
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择员工" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">请选择员工</SelectItem>
-                      {employees.map((e) => (
-                        <SelectItem key={e.id} value={e.id}>
-                          {e.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                    <MenuItem value="">请选择员工</MenuItem>
+                    {employees.map((e) => (
+                      <MenuItem key={e.id} value={e.id}>
+                        {e.name}
+                      </MenuItem>
+                    ))}
                   </Select>
-                </div>
+                </FormControl>
+              </Box>
 
-                <div>
-                  <Label htmlFor="contract_no">合同编号</Label>
-                  <Input
-                    id="contract_no"
-                    type="text"
-                    value={formState.contract_no}
-                    onChange={(e) =>
-                      setFormState((s) => ({
-                        ...s,
-                        contract_no: e.target.value,
-                      }))
-                    }
-                    disabled={modalType === "create"}
-                    placeholder={modalType === "create" ? "自动生成" : ""}
-                  />
-                </div>
+              <TextField
+                label="合同编号"
+                size="small"
+                fullWidth
+                value={formState.contract_no}
+                onChange={(e) =>
+                  setFormState((s) => ({
+                    ...s,
+                    contract_no: e.target.value,
+                  }))
+                }
+                disabled={modalType === "create"}
+                placeholder={modalType === "create" ? "自动生成" : ""}
+              />
 
-                <div>
-                  <Label htmlFor="contract_type">合同类型 *</Label>
+              <Box>
+                <FormLabel>合同类型 *</FormLabel>
+                <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                  <InputLabel>合同类型</InputLabel>
                   <Select
                     value={formState.contract_type}
-                    onValueChange={(value) =>
-                      setFormState((s) => ({ ...s, contract_type: value }))
+                    label="合同类型"
+                    onChange={(e) =>
+                      setFormState((s) => ({ ...s, contract_type: e.target.value }))
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择合同类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">请选择合同类型</SelectItem>
-                      {contractTypes.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                    <MenuItem value="">请选择合同类型</MenuItem>
+                    {contractTypes.map((t) => (
+                      <MenuItem key={t.value} value={t.value}>
+                        {t.label}
+                      </MenuItem>
+                    ))}
                   </Select>
-                </div>
+                </FormControl>
+              </Box>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="party_a_name">甲方名称</Label>
-                    <Input
-                      id="party_a_name"
-                      type="text"
-                      value={formState.party_a_name}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          party_a_name: e.target.value,
-                        }))
-                      }
-                      placeholder="公司名称"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="party_a_contact">甲方联系人</Label>
-                    <Input
-                      id="party_a_contact"
-                      type="text"
-                      value={formState.party_a_contact}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          party_a_contact: e.target.value,
-                        }))
-                      }
-                      placeholder="联系人姓名"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="party_b_name">乙方名称</Label>
-                    <Input
-                      id="party_b_name"
-                      type="text"
-                      value={formState.party_b_name}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          party_b_name: e.target.value,
-                        }))
-                      }
-                      placeholder="员工姓名"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="party_b_contact">乙方联系人</Label>
-                    <Input
-                      id="party_b_contact"
-                      type="text"
-                      value={formState.party_b_contact}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          party_b_contact: e.target.value,
-                        }))
-                      }
-                      placeholder="员工联系方式"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="start_date">开始日期 *</Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formState.start_date}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          start_date: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="end_date">结束日期</Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formState.end_date}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          end_date: e.target.value,
-                        }))
-                      }
-                      placeholder="无固定期限"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="salary">薪资</Label>
-                    <Input
-                      id="salary"
-                      type="number"
-                      value={formState.salary}
-                      onChange={(e) =>
-                        setFormState((s) => ({ ...s, salary: e.target.value }))
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="probation_period_days">试用期(天)</Label>
-                    <Input
-                      id="probation_period_days"
-                      type="number"
-                      value={formState.probation_period_days}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          probation_period_days: e.target.value,
-                        }))
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="reminder_days">提前提醒天数</Label>
-                    <Input
-                      id="reminder_days"
-                      type="number"
-                      value={formState.reminder_days}
-                      onChange={(e) =>
-                        setFormState((s) => ({
-                          ...s,
-                          reminder_days: e.target.value,
-                        }))
-                      }
-                      placeholder="30"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="contract_file_path">合同文件路径</Label>
-                  <Input
-                    id="contract_file_path"
-                    type="text"
-                    value={formState.contract_file_path}
-                    onChange={(e) =>
-                      setFormState((s) => ({
-                        ...s,
-                        contract_file_path: e.target.value,
-                      }))
-                    }
-                    placeholder="上传文件路径"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="notes">备注</Label>
-                  <textarea
-                    id="notes"
-                    value={formState.notes}
-                    onChange={(e) =>
-                      setFormState((s) => ({ ...s, notes: e.target.value }))
-                    }
-                    rows={3}
-                    placeholder="备注信息"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="px-4">
-                {currentContract && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">合同编号</p>
-                          <p className="font-medium">
-                            {currentContract.contract_no || "-"}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">员工</p>
-                          <p className="font-medium">
-                            {getEmployeeName(currentContract.employee_id)}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">合同类型</p>
-                          <p className="font-medium">
-                            {contractTypes.find(
-                              (t) => t.value === currentContract.contract_type,
-                            )?.label || currentContract.contract_type}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">状态</p>
-                          <Badge
-                            className={
-                              statusMap[currentContract.status]?.color ||
-                              "bg-gray-100 text-gray-600"
-                            }
-                          >
-                            {statusMap[currentContract.status]?.text ||
-                              currentContract.status}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">薪资</p>
-                          <p className="font-medium">
-                            {currentContract.salary?.toLocaleString() || "-"}
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">试用期</p>
-                          <p className="font-medium">
-                            {currentContract.probation_period_days || 0} 天
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    <Card className="bg-gray-50 border-none">
-                      <CardContent className="p-3">
-                        <p className="text-sm text-gray-500">有效期</p>
-                        <p className="font-medium">
-                          {new Date(
-                            currentContract.start_date,
-                          ).toLocaleDateString("zh-CN")}
-                          ~{" "}
-                          {currentContract.end_date
-                            ? new Date(
-                                currentContract.end_date,
-                              ).toLocaleDateString("zh-CN")
-                            : "无固定期限"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-gray-50 border-none">
-                      <CardContent className="p-3">
-                        <p className="text-sm text-gray-500">甲方信息</p>
-                        <p className="font-medium">
-                          {currentContract.party_a_name || "-"}
-                        </p>
-                        <p className="text-sm">
-                          {currentContract.party_a_contact || "-"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-gray-50 border-none">
-                      <CardContent className="p-3">
-                        <p className="text-sm text-gray-500">乙方信息</p>
-                        <p className="font-medium">
-                          {currentContract.party_b_name || "-"}
-                        </p>
-                        <p className="text-sm">
-                          {currentContract.party_b_contact || "-"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    {currentContract.notes && (
-                      <Card className="bg-gray-50 border-none">
-                        <CardContent className="p-3">
-                          <p className="text-sm text-gray-500">备注</p>
-                          <p className="font-medium">{currentContract.notes}</p>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
-                )}
-
-                {showRenewals && (
-                  <div className="mt-4 pt-4 border-t">
-                    <h3 className="font-medium mb-3">续签记录</h3>
-                    {renewals.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">
-                        暂无续签记录
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {renewals.map((renewal) => (
-                          <Card key={renewal.id} className="border">
-                            <CardContent className="p-3">
-                              <div className="flex justify-between items-start mb-2">
-                                <div>
-                                  <span className="font-medium">
-                                    {renewalTypes.find(
-                                      (t) => t.value === renewal.renewal_type,
-                                    )?.label || renewal.renewal_type}
-                                  </span>
-                                  <span className="ml-2 text-sm text-gray-500">
-                                    {new Date(
-                                      renewal.created_at,
-                                    ).toLocaleString("zh-CN")}
-                                  </span>
-                                </div>
-                                <Badge
-                                  className={
-                                    renewalStatusMap[renewal.status]?.color ||
-                                    "bg-gray-100 text-gray-600"
-                                  }
-                                >
-                                  {renewalStatusMap[renewal.status]?.text ||
-                                    renewal.status}
-                                </Badge>
-                              </div>
-                              <div className="text-sm text-gray-600 mb-2">
-                                新合同期限:{" "}
-                                {new Date(
-                                  renewal.new_start_date,
-                                ).toLocaleDateString("zh-CN")}{" "}
-                                ~{" "}
-                                {renewal.new_end_date
-                                  ? new Date(
-                                      renewal.new_end_date,
-                                    ).toLocaleDateString("zh-CN")
-                                  : "无固定期限"}
-                              </div>
-                              {renewal.new_salary && (
-                                <div className="text-sm text-gray-600 mb-2">
-                                  新薪资: {renewal.new_salary.toLocaleString()}
-                                </div>
-                              )}
-                              {renewal.renewal_reason && (
-                                <div className="text-sm text-gray-600 mb-2">
-                                  续签原因: {renewal.renewal_reason}
-                                </div>
-                              )}
-                              {renewal.rejection_reason && (
-                                <div className="text-sm text-red-600">
-                                  拒绝理由: {renewal.rejection_reason}
-                                </div>
-                              )}
-                              <div className="flex gap-2 mt-3">
-                                {renewal.status === "pending" && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      onClick={() =>
-                                        handleApproveRenewal(renewal.id)
-                                      }
-                                      className="flex items-center gap-1"
-                                    >
-                                      <Check className="w-3 h-3" />
-                                      批准
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="destructive"
-                                      onClick={() =>
-                                        handleRejectRenewal(renewal.id)
-                                      }
-                                      className="flex items-center gap-1"
-                                    >
-                                      <X className="w-3 h-3" />
-                                      拒绝
-                                    </Button>
-                                  </>
-                                )}
-                                {renewal.status === "approved" && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      handleExecuteRenewal(renewal.id)
-                                    }
-                                    className="flex items-center gap-1"
-                                  >
-                                    <RefreshCw className="w-3 h-3" />
-                                    执行续签
-                                  </Button>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </ScrollArea>
-          <DialogFooter>
-            {modalType !== "view" ? (
-              <>
-                <Button
-                  variant="secondary"
-                  onClick={() => setModalVisible(false)}
-                >
-                  取消
-                </Button>
-                <Button onClick={handleSave}>
-                  {modalType === "create" ? "创建" : "保存"}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowRenewals(!showRenewals)}
-                >
-                  {showRenewals ? "隐藏续签记录" : "查看续签记录"}
-                </Button>
-                <Button onClick={() => setModalVisible(false)}>关闭</Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={renewModalVisible} onOpenChange={setRenewModalVisible}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>合同续签申请</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="renewal_type">续签类型 *</Label>
-              <Select
-                value={renewFormState.renewal_type}
-                onValueChange={(value) =>
-                  setRenewFormState((s) => ({ ...s, renewal_type: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择续签类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">请选择续签类型</SelectItem>
-                  {renewalTypes.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="new_start_date">新合同开始日期 *</Label>
-                <Input
-                  id="new_start_date"
-                  type="date"
-                  value={renewFormState.new_start_date}
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="甲方名称"
+                  size="small"
+                  fullWidth
+                  value={formState.party_a_name}
                   onChange={(e) =>
-                    setRenewFormState((s) => ({
+                    setFormState((s) => ({
                       ...s,
-                      new_start_date: e.target.value,
+                      party_a_name: e.target.value,
                     }))
                   }
+                  placeholder="公司名称"
                 />
-              </div>
-              <div>
-                <Label htmlFor="new_end_date">新合同结束日期</Label>
-                <Input
-                  id="new_end_date"
-                  type="date"
-                  value={renewFormState.new_end_date}
+                <TextField
+                  label="甲方联系人"
+                  size="small"
+                  fullWidth
+                  value={formState.party_a_contact}
                   onChange={(e) =>
-                    setRenewFormState((s) => ({
+                    setFormState((s) => ({
                       ...s,
-                      new_end_date: e.target.value,
+                      party_a_contact: e.target.value,
+                    }))
+                  }
+                  placeholder="联系人姓名"
+                />
+              </Stack>
+
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="乙方名称"
+                  size="small"
+                  fullWidth
+                  value={formState.party_b_name}
+                  onChange={(e) =>
+                    setFormState((s) => ({
+                      ...s,
+                      party_b_name: e.target.value,
+                    }))
+                  }
+                  placeholder="员工姓名"
+                />
+                <TextField
+                  label="乙方联系人"
+                  size="small"
+                  fullWidth
+                  value={formState.party_b_contact}
+                  onChange={(e) =>
+                    setFormState((s) => ({
+                      ...s,
+                      party_b_contact: e.target.value,
+                    }))
+                  }
+                  placeholder="员工联系方式"
+                />
+              </Stack>
+
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="开始日期 *"
+                  size="small"
+                  type="date"
+                  fullWidth
+                  value={formState.start_date}
+                  onChange={(e) =>
+                    setFormState((s) => ({
+                      ...s,
+                      start_date: e.target.value,
+                    }))
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  label="结束日期"
+                  size="small"
+                  type="date"
+                  fullWidth
+                  value={formState.end_date}
+                  onChange={(e) =>
+                    setFormState((s) => ({
+                      ...s,
+                      end_date: e.target.value,
                     }))
                   }
                   placeholder="无固定期限"
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
-              </div>
-            </div>
+              </Stack>
 
-            <div>
-              <Label htmlFor="new_salary">新薪资</Label>
-              <Input
-                id="new_salary"
-                type="number"
-                value={renewFormState.new_salary}
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="薪资"
+                  size="small"
+                  type="number"
+                  fullWidth
+                  value={formState.salary}
+                  onChange={(e) =>
+                    setFormState((s) => ({ ...s, salary: e.target.value }))
+                  }
+                  placeholder="0"
+                />
+                <TextField
+                  label="试用期(天)"
+                  size="small"
+                  type="number"
+                  fullWidth
+                  value={formState.probation_period_days}
+                  onChange={(e) =>
+                    setFormState((s) => ({
+                      ...s,
+                      probation_period_days: e.target.value,
+                    }))
+                  }
+                  placeholder="0"
+                />
+                <TextField
+                  label="提前提醒天数"
+                  size="small"
+                  type="number"
+                  fullWidth
+                  value={formState.reminder_days}
+                  onChange={(e) =>
+                    setFormState((s) => ({
+                      ...s,
+                      reminder_days: e.target.value,
+                    }))
+                  }
+                  placeholder="30"
+                />
+              </Stack>
+
+              <TextField
+                label="合同文件路径"
+                size="small"
+                fullWidth
+                value={formState.contract_file_path}
                 onChange={(e) =>
-                  setRenewFormState((s) => ({
+                  setFormState((s) => ({
                     ...s,
-                    new_salary: e.target.value,
+                    contract_file_path: e.target.value,
                   }))
                 }
-                placeholder="不修改请留空"
+                placeholder="上传文件路径"
               />
-            </div>
 
-            <div>
-              <Label htmlFor="renewal_reason">续签原因</Label>
-              <textarea
-                id="renewal_reason"
-                value={renewFormState.renewal_reason}
-                onChange={(e) =>
-                  setRenewFormState((s) => ({
-                    ...s,
-                    renewal_reason: e.target.value,
-                  }))
-                }
+              <TextField
+                label="备注"
+                size="small"
+                fullWidth
+                multiline
                 rows={3}
-                placeholder="请说明续签原因"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={formState.notes}
+                onChange={(e) =>
+                  setFormState((s) => ({ ...s, notes: e.target.value }))
+                }
+                placeholder="备注信息"
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setRenewModalVisible(false)}
-            >
-              取消
-            </Button>
-            <Button onClick={handleSubmitRenew}>提交申请</Button>
-          </DialogFooter>
+            </Stack>
+          ) : (
+            <Box>
+              {currentContract && (
+                <Stack spacing={2}>
+                  <Stack direction="row" spacing={2}>
+                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>合同编号</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {currentContract.contract_no || "-"}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>员工</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {getEmployeeName(currentContract.employee_id)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Stack>
+                  <Stack direction="row" spacing={2}>
+                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>合同类型</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {contractTypes.find(
+                            (t) => t.value === currentContract.contract_type,
+                          )?.label || currentContract.contract_type}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>状态</Typography>
+                        <Chip
+                          size="small"
+                          label={statusMap[currentContract.status]?.text || currentContract.status}
+                          color={statusMap[currentContract.status]?.color || "default"}
+                        />
+                      </CardContent>
+                    </Card>
+                  </Stack>
+                  <Stack direction="row" spacing={2}>
+                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>薪资</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {currentContract.salary?.toLocaleString() || "-"}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>试用期</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {currentContract.probation_period_days || 0} 天
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Stack>
+                  <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>有效期</Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {new Date(
+                          currentContract.start_date,
+                        ).toLocaleDateString("zh-CN")}
+                        ~{" "}
+                        {currentContract.end_date
+                          ? new Date(
+                              currentContract.end_date,
+                            ).toLocaleDateString("zh-CN")
+                          : "无固定期限"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>甲方信息</Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {currentContract.party_a_name || "-"}
+                      </Typography>
+                      <Typography variant="body2">
+                        {currentContract.party_a_contact || "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>乙方信息</Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {currentContract.party_b_name || "-"}
+                      </Typography>
+                      <Typography variant="body2">
+                        {currentContract.party_b_contact || "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  {currentContract.notes && (
+                    <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
+                      <CardContent sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>备注</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>{currentContract.notes}</Typography>
+                      </CardContent>
+                    </Card>
+                  )}
+                </Stack>
+              )}
+
+              {showRenewals && (
+                <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+                  <Typography sx={{ fontWeight: 500, mb: 1.5 }}>续签记录</Typography>
+                  {renewals.length === 0 ? (
+                    <Typography sx={{ color: "grey.500", textAlign: "center", py: 2 }}>
+                      暂无续签记录
+                    </Typography>
+                  ) : (
+                    <Stack spacing={1}>
+                      {renewals.map((renewal) => (
+                        <Card key={renewal.id} sx={{ border: 1, borderColor: "divider" }}>
+                          <CardContent sx={{ p: 1.5 }}>
+                            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                              <Box>
+                                <Typography sx={{ fontWeight: 500 }}>
+                                  {renewalTypes.find(
+                                    (t) => t.value === renewal.renewal_type,
+                                  )?.label || renewal.renewal_type}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: "grey.500", ml: 1 }}>
+                                  {new Date(
+                                    renewal.created_at,
+                                  ).toLocaleString("zh-CN")}
+                                </Typography>
+                              </Box>
+                              <Chip
+                                size="small"
+                                label={renewalStatusMap[renewal.status]?.text || renewal.status}
+                                color={renewalStatusMap[renewal.status]?.color || "default"}
+                              />
+                            </Stack>
+                            <Typography variant="body2" sx={{ color: "grey.600", mb: 1 }}>
+                              新合同期限:{" "}
+                              {new Date(
+                                renewal.new_start_date,
+                              ).toLocaleDateString("zh-CN")}{" "}
+                              ~{" "}
+                              {renewal.new_end_date
+                                ? new Date(
+                                    renewal.new_end_date,
+                                  ).toLocaleDateString("zh-CN")
+                                : "无固定期限"}
+                            </Typography>
+                            {renewal.new_salary && (
+                              <Typography variant="body2" sx={{ color: "grey.600", mb: 1 }}>
+                                新薪资: {renewal.new_salary.toLocaleString()}
+                              </Typography>
+                            )}
+                            {renewal.renewal_reason && (
+                              <Typography variant="body2" sx={{ color: "grey.600", mb: 1 }}>
+                                续签原因: {renewal.renewal_reason}
+                              </Typography>
+                            )}
+                            {renewal.rejection_reason && (
+                              <Typography variant="body2" sx={{ color: "error.main" }}>
+                                拒绝理由: {renewal.rejection_reason}
+                              </Typography>
+                            )}
+                            <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                              {renewal.status === "pending" && (
+                                <>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={() =>
+                                      handleApproveRenewal(renewal.id)
+                                    }
+                                    startIcon={<Check size={12} />}
+                                  >
+                                    批准
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    color="error"
+                                    variant="contained"
+                                    onClick={() =>
+                                      handleRejectRenewal(renewal.id)
+                                    }
+                                    startIcon={<X size={12} />}
+                                  >
+                                    拒绝
+                                  </Button>
+                                </>
+                              )}
+                              {renewal.status === "approved" && (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() =>
+                                    handleExecuteRenewal(renewal.id)
+                                  }
+                                  startIcon={<RefreshCw size={12} />}
+                                >
+                                  执行续签
+                                </Button>
+                              )}
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
         </DialogContent>
+        <DialogActions>
+          {modalType !== "view" ? (
+            <>
+              <Button color="inherit" onClick={() => setModalVisible(false)}>
+                取消
+              </Button>
+              <Button variant="contained" onClick={handleSave}>
+                {modalType === "create" ? "创建" : "保存"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button color="inherit" onClick={() => setShowRenewals(!showRenewals)}>
+                {showRenewals ? "隐藏续签记录" : "查看续签记录"}
+              </Button>
+              <Button variant="contained" onClick={() => setModalVisible(false)}>关闭</Button>
+            </>
+          )}
+        </DialogActions>
       </Dialog>
-    </div>
+
+      <Dialog
+        open={renewModalVisible}
+        onClose={() => setRenewModalVisible(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>合同续签申请</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Box>
+              <FormLabel>续签类型 *</FormLabel>
+              <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                <InputLabel>续签类型</InputLabel>
+                <Select
+                  value={renewFormState.renewal_type}
+                  label="续签类型"
+                  onChange={(e) =>
+                    setRenewFormState((s) => ({ ...s, renewal_type: e.target.value }))
+                  }
+                >
+                  {renewalTypes.map((t) => (
+                    <MenuItem key={t.value} value={t.value}>
+                      {t.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="新合同开始日期 *"
+                size="small"
+                type="date"
+                fullWidth
+                value={renewFormState.new_start_date}
+                onChange={(e) =>
+                  setRenewFormState((s) => ({
+                    ...s,
+                    new_start_date: e.target.value,
+                  }))
+                }
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+              <TextField
+                label="新合同结束日期"
+                size="small"
+                type="date"
+                fullWidth
+                value={renewFormState.new_end_date}
+                onChange={(e) =>
+                  setRenewFormState((s) => ({
+                    ...s,
+                    new_end_date: e.target.value,
+                  }))
+                }
+                placeholder="无固定期限"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Stack>
+
+            <TextField
+              label="新薪资"
+              size="small"
+              type="number"
+              fullWidth
+              value={renewFormState.new_salary}
+              onChange={(e) =>
+                setRenewFormState((s) => ({
+                  ...s,
+                  new_salary: e.target.value,
+                }))
+              }
+              placeholder="不修改请留空"
+            />
+
+            <TextField
+              label="续签原因"
+              size="small"
+              fullWidth
+              multiline
+              rows={3}
+              value={renewFormState.renewal_reason}
+              onChange={(e) =>
+                setRenewFormState((s) => ({
+                  ...s,
+                  renewal_reason: e.target.value,
+                }))
+              }
+              placeholder="请说明续签原因"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button color="inherit" onClick={() => setRenewModalVisible(false)}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={handleSubmitRenew}>提交申请</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

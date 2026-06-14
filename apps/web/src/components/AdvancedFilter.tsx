@@ -1,21 +1,14 @@
 import { useState, type Key } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Filter, X, Plus, ChevronDown } from "lucide-react";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import Popover from "@mui/material/Popover";
+import { Filter, X, Plus } from "lucide-react";
 import dayjs from "dayjs";
 
 export interface FilterCondition {
@@ -43,7 +36,7 @@ export const AdvancedFilter = <T extends Record<string, any>>({
 }: AdvancedFilterProps<T>) => {
   const [conditions, setConditions] =
     useState<FilterCondition[]>(initialConditions);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const operators: Record<string, { label: string; value: string }[]> = {
     text: [
@@ -102,140 +95,156 @@ export const AdvancedFilter = <T extends Record<string, any>>({
 
   const applyFilters = () => {
     onFilterChange(conditions);
-    setShowDropdown(false);
+    setAnchorEl(null);
   };
 
   const resetFilters = () => {
     setConditions([]);
     onFilterChange([]);
-    setShowDropdown(false);
+    setAnchorEl(null);
   };
 
+  const open = Boolean(anchorEl);
+
   return (
-    <div className="relative">
-      <Popover open={showDropdown} onOpenChange={setShowDropdown}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            高级筛选
-            <ChevronDown className="w-4 h-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[480px] p-4" align="start">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-medium">高级筛选</h4>
+    <Box sx={{ position: "relative" }}>
+      <Button
+        variant="outlined"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        startIcon={<Filter style={{ width: 16, height: 16 }} />}
+        endIcon={<Plus style={{ width: 16, height: 16 }} />}
+        sx={{ gap: 1 }}
+      >
+        高级筛选
+      </Button>
+
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        sx={{ width: 480 }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box sx={{ fontWeight: 500 }}>高级筛选</Box>
             {conditions.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={resetFilters}>
-                <X className="w-4 h-4" />
+              <Button
+                variant="text"
+                size="small"
+                onClick={resetFilters}
+                startIcon={<X style={{ width: 16, height: 16 }} />}
+              >
                 重置
               </Button>
             )}
-          </div>
+          </Box>
 
-          <div className="space-y-3">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {conditions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>暂无筛选条件</p>
-                <p className="text-sm">点击下方按钮添加筛选条件</p>
-              </div>
+              <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                <Box component="p" sx={{ mb: 1 }}>暂无筛选条件</Box>
+                <Box component="p" sx={{ fontSize: "0.875rem" }}>点击下方按钮添加筛选条件</Box>
+              </Box>
             ) : (
               conditions.map((condition, index) => {
                 const fieldType = getFieldType(condition.field);
                 const options = selectOptions?.[condition.field];
 
                 return (
-                  <div
+                  <Box
                     key={index}
-                    className="flex items-center gap-2 p-2 bg-muted rounded-lg"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      p: 1,
+                      bgcolor: "action.hover",
+                      borderRadius: 1,
+                    }}
                   >
-                    <Select
-                      value={condition.field}
-                      onValueChange={(value) =>
-                        updateCondition(index, { field: value })
-                      }
-                    >
-                      <SelectTrigger className="w-28">
-                        <SelectValue placeholder="字段" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ width: 112 }}>
+                      <InputLabel>字段</InputLabel>
+                      <Select
+                        value={condition.field}
+                        label="字段"
+                        onChange={(e) =>
+                          updateCondition(index, { field: e.target.value })
+                        }
+                      >
                         {fields.map((field) => (
-                          <SelectItem
+                          <MenuItem
                             key={String(field.key) as Key}
                             value={String(field.key)}
                           >
                             {field.label}
-                          </SelectItem>
+                          </MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </Select>
+                    </FormControl>
 
-                    <Select
-                      value={condition.operator}
-                      onValueChange={(value) =>
-                        updateCondition(index, { operator: value })
-                      }
-                    >
-                      <SelectTrigger className="w-28">
-                        <SelectValue placeholder="操作" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <FormControl size="small" sx={{ width: 112 }}>
+                      <InputLabel>操作</InputLabel>
+                      <Select
+                        value={condition.operator}
+                        label="操作"
+                        onChange={(e) =>
+                          updateCondition(index, { operator: e.target.value })
+                        }
+                      >
                         {operators[fieldType]?.map((op) => (
-                          <SelectItem key={op.value} value={op.value}>
+                          <MenuItem key={op.value} value={op.value}>
                             {op.label}
-                          </SelectItem>
+                          </MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </Select>
+                    </FormControl>
 
                     {condition.operator !== "is_empty" && (
-                      <div className="flex-1">
+                      <Box sx={{ flex: 1 }}>
                         {fieldType === "select" && options ? (
-                          <Select
-                            value={String(condition.value || "")}
-                            onValueChange={(value) =>
-                              updateCondition(index, { value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="选择值" />
-                            </SelectTrigger>
-                            <SelectContent>
+                          <FormControl size="small" sx={{ width: "100%" }}>
+                            <InputLabel>选择值</InputLabel>
+                            <Select
+                              value={String(condition.value || "")}
+                              label="选择值"
+                              onChange={(e) =>
+                                updateCondition(index, { value: e.target.value })
+                              }
+                            >
                               {options.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>
+                                <MenuItem key={opt.value} value={opt.value}>
                                   {opt.label}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                            </SelectContent>
-                          </Select>
+                            </Select>
+                          </FormControl>
                         ) : fieldType === "date" ? (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className="w-full justify-start"
-                              >
-                                {condition.value
-                                  ? dayjs(condition.value).format("YYYY-MM-DD")
-                                  : "选择日期"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={condition.value as Date | undefined}
-                                onSelect={(date) =>
-                                  updateCondition(index, {
-                                    value:
-                                      (Array.isArray(date) ? date[0] : date) ||
-                                      null,
-                                  })
-                                }
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          <TextField
+                            type="date"
+                            size="small"
+                            value={
+                              condition.value
+                                ? dayjs(condition.value as Date).format("YYYY-MM-DD")
+                                : ""
+                            }
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              updateCondition(index, {
+                                value: e.target.value ? new Date(e.target.value) : null,
+                              })
+                            }
+                            sx={{ width: "100%" }}
+                            slotProps={{
+                              inputLabel: { shrink: true }
+                            }}
+                          />
                         ) : fieldType === "number" ? (
-                          <Input
+                          <TextField
                             type="number"
+                            size="small"
                             placeholder="输入数值"
                             value={condition.value as number | undefined}
                             onChange={(e) =>
@@ -243,60 +252,64 @@ export const AdvancedFilter = <T extends Record<string, any>>({
                                 value: Number(e.target.value),
                               })
                             }
+                            sx={{ width: "100%" }}
                           />
                         ) : (
-                          <Input
+                          <TextField
+                            size="small"
                             placeholder="输入值"
                             value={condition.value as string | undefined}
                             onChange={(e) =>
                               updateCondition(index, { value: e.target.value })
                             }
+                            sx={{ width: "100%" }}
                           />
                         )}
-                      </div>
+                      </Box>
                     )}
 
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="text"
+                      size="small"
                       onClick={() => removeCondition(index)}
+                      sx={{ minWidth: 32, p: 0.5 }}
                     >
-                      <X className="w-4 h-4" />
+                      <X style={{ width: 16, height: 16 }} />
                     </Button>
-                  </div>
+                  </Box>
                 );
               })
             )}
-          </div>
+          </Box>
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
             <Button
-              variant="outline"
-              size="sm"
+              variant="outlined"
+              size="small"
               onClick={addCondition}
-              className="gap-1"
+              startIcon={<Plus style={{ width: 16, height: 16 }} />}
+              sx={{ gap: 0.5 }}
             >
-              <Plus className="w-4 h-4" />
               添加条件
             </Button>
-            <div className="flex gap-2">
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDropdown(false)}
+                variant="outlined"
+                size="small"
+                onClick={() => setAnchorEl(null)}
               >
                 取消
               </Button>
-              <Button size="sm" onClick={applyFilters}>
+              <Button size="small" variant="contained" onClick={applyFilters}>
                 应用筛选
               </Button>
-            </div>
-          </div>
-        </PopoverContent>
+            </Box>
+          </Box>
+        </Box>
       </Popover>
 
-      {conditions.length > 0 && !showDropdown && (
-        <div className="mt-2 flex flex-wrap gap-2">
+      {conditions.length > 0 && !open && (
+        <Box sx={{ mt: 1, display: "flex", flexWrap: "wrap", gap: 1 }}>
           {conditions.map((condition, index) => {
             const field = fields.find((f) => f.key === condition.field);
             const fieldLabel = field?.label || condition.field;
@@ -304,29 +317,31 @@ export const AdvancedFilter = <T extends Record<string, any>>({
               (op) => op.value === condition.operator,
             );
             return (
-              <Badge key={index} variant="secondary" className="gap-1">
-                {fieldLabel} {operator?.label}
-                {condition.value && ` "${condition.value}"`}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 -ml-1"
-                  onClick={() => {
-                    const newConditions = conditions.filter(
-                      (_, i) => i !== index,
-                    );
-                    setConditions(newConditions);
-                    onFilterChange(newConditions);
-                  }}
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              </Badge>
+              <Chip
+                key={index}
+                label={
+                  <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    {fieldLabel} {operator?.label}
+                    {condition.value && ` "${condition.value}"`}
+                  </Box>
+                }
+                size="small"
+                variant="outlined"
+                onDelete={() => {
+                  const newConditions = conditions.filter(
+                    (_, i) => i !== index,
+                  );
+                  setConditions(newConditions);
+                  onFilterChange(newConditions);
+                }}
+                deleteIcon={<X style={{ width: 14, height: 14 }} />}
+                sx={{ gap: 0.5 }}
+              />
             );
           })}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 

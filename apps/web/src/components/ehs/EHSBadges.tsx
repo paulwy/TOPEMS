@@ -1,5 +1,16 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+import Chip from "@mui/material/Chip";
+
+const colorMap: Record<string, { bg: string; color: string }> = {
+  'bg-red-100': { bg: '#fee2e2', color: '#dc2626' },
+  'bg-yellow-100': { bg: '#fef9c3', color: '#ca8a04' },
+  'bg-green-100': { bg: '#dcfce7', color: '#16a34a' },
+  'bg-gray-100': { bg: '#f3f4f6', color: '#4b5563' },
+  'bg-blue-100': { bg: '#dbeafe', color: '#2563eb' },
+  'bg-orange-100': { bg: '#ffedd5', color: '#ea580c' },
+  'bg-purple-100': { bg: '#f3e8ff', color: '#7c3aed' },
+  'bg-emerald-100': { bg: '#d1fae5', color: '#059669' },
+};
 
 // EHS Hazard Status Types
 export type HazardStatus =
@@ -156,8 +167,10 @@ export const EHSStatusBadge: React.FC<EHSStatusBadgeProps> = ({
     label: status,
   };
 
+  const colors = colorMap[item.color.split(' ')[0]] || { bg: '#f3f4f6', color: '#4b5563' };
+
   return (
-    <Badge className={`${item.color} ${className} border`}>{item.label}</Badge>
+    <Chip label={item.label} size="small" sx={{ backgroundColor: colors.bg, color: colors.color, border: 'none' }} />
   );
 };
 
@@ -228,8 +241,10 @@ export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({
     label: severity,
   };
 
+  const colors = colorMap[item.color.split(' ')[0]] || { bg: '#f3f4f6', color: '#4b5563' };
+
   return (
-    <Badge className={`${item.color} ${className} border`}>{item.label}</Badge>
+    <Chip label={item.label} size="small" sx={{ backgroundColor: colors.bg, color: colors.color, border: 'none' }} />
   );
 };
 
@@ -274,10 +289,10 @@ export const EHSRiskLevelBadge: React.FC<EHSRiskLevelBadgeProps> = ({
     label: level,
   };
 
+  const colors = colorMap[item.color.split(' ')[0]] || { bg: '#f3f4f6', color: '#4b5563' };
+
   return (
-    <Badge className={`${item.color} ${className} border`}>
-      {showLabel ? item.label : level}
-    </Badge>
+    <Chip label={showLabel ? item.label : level} size="small" sx={{ backgroundColor: colors.bg, color: colors.color, border: 'none' }} />
   );
 };
 
@@ -332,8 +347,10 @@ export const EHSMeasureTypeBadge: React.FC<EHSMeasureTypeBadgeProps> = ({
     label: type,
   };
 
+  const colors = colorMap[item.color.split(' ')[0]] || { bg: '#f3f4f6', color: '#4b5563' };
+
   return (
-    <Badge className={`${item.color} ${className} border`}>{item.label}</Badge>
+    <Chip label={item.label} size="small" sx={{ backgroundColor: colors.bg, color: colors.color, border: 'none' }} />
   );
 };
 
@@ -402,7 +419,9 @@ export const EHSIncidentTypeBadge: React.FC<EHSIncidentTypeBadgeProps> = ({
     label: type,
   };
 
+  const colors = colorMap[item.color.split(' ')[0]] || { bg: '#f3f4f6', color: '#4b5563' };
+
   return (
-    <Badge className={`${item.color} ${className} border`}>{item.label}</Badge>
+    <Chip label={item.label} size="small" sx={{ backgroundColor: colors.bg, color: colors.color, border: 'none' }} />
   );
 };

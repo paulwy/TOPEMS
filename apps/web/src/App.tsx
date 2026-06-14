@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ProtectedRoute, GuestRoute } from "./components/ProtectedRoute";
@@ -10,6 +10,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { Toaster } from "./components/Toaster";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { TemplateDemoPage } from "./components/templates/index";
+import { GlobalLayout } from "./components/layout";
 
 import {
   authRoutes,
@@ -37,13 +38,19 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
+// 需要跳过 GlobalLayout 的模块（这些模块有自己的布局）
+const modulesWithOwnLayout = ["hrm", "crm", "system"];
+
 const ProtectedRouteWrapper: React.FC<{
   route: RouteConfig;
   children: React.ReactNode;
 }> = ({ route, children }) => {
-  if (route.requiredPermissions && route.requiredPermissions.length > 0) {
+  const hasOwnLayout = route.module && modulesWithOwnLayout.includes(route.module);
+
+  if (hasOwnLayout) {
+    // 使用简化包装，不添加 GlobalLayout
     return (
-      <ProtectedRoute requiredPermissions={route.requiredPermissions}>
+      <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
         {route.module && route.action ? (
           <ModuleGate module={route.module} action={route.action}>
             {children}
@@ -54,7 +61,25 @@ const ProtectedRouteWrapper: React.FC<{
       </ProtectedRoute>
     );
   }
-  return <ProtectedRoute>{children}</ProtectedRoute>;
+
+  if (route.requiredPermissions && route.requiredPermissions.length > 0) {
+    return (
+      <ProtectedRoute requiredPermissions={route.requiredPermissions}>
+        {route.module && route.action ? (
+          <ModuleGate module={route.module} action={route.action}>
+            <GlobalLayout>{children}</GlobalLayout>
+          </ModuleGate>
+        ) : (
+          <GlobalLayout>{children}</GlobalLayout>
+        )}
+      </ProtectedRoute>
+    );
+  }
+  return (
+    <ProtectedRoute>
+      <GlobalLayout>{children}</GlobalLayout>
+    </ProtectedRoute>
+  );
 };
 
 const AppContent: React.FC = () => {
@@ -107,9 +132,11 @@ const AppContent: React.FC = () => {
               path={route.path}
               element={
                 <ProtectedRoute>
-                  <Suspense fallback={<PageLoader />}>
-                    <Element />
-                  </Suspense>
+                  <GlobalLayout>
+                    <Suspense fallback={<PageLoader />}>
+                      <Element />
+                    </Suspense>
+                  </GlobalLayout>
                 </ProtectedRoute>
               }
             />

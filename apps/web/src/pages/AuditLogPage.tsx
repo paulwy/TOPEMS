@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, FormControl, InputLabel, Select, MenuItem, IconButton } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Clock,
@@ -18,17 +19,6 @@ import type { AuditLog as RsAuditLog } from "../api/rs";
 import { auditRsApi } from "../api/rs";
 import { useAppStore } from "../store";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ModeToggle } from "@/components/ModeToggle";
 
 interface AuditLogPageProps {
@@ -96,21 +86,17 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   }, [source, currentPage, filterStatus, filterAction, filterEntityType]);
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { variant: string; label: string }> = {
-      success: { variant: "bg-green-100 text-green-700", label: "成功" },
-      partial: { variant: "bg-yellow-100 text-yellow-700", label: "部分成功" },
-      error: { variant: "bg-red-100 text-red-700", label: "失败" },
+    const badges: Record<string, { color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"; label: string }> = {
+      success: { color: "success", label: "成功" },
+      partial: { color: "warning", label: "部分成功" },
+      error: { color: "error", label: "失败" },
     };
     const config = badges[status] || {
-      variant: "bg-gray-100 text-gray-700",
+      color: "default",
       label: status,
     };
     return (
-      <Badge
-        className={`${config.variant} ${status === "success" ? "" : status === "error" ? "text-red-700" : "text-yellow-700"}`}
-      >
-        {config.label}
-      </Badge>
+      <Chip size="small" color={config.color} label={config.label} />
     );
   };
 
@@ -148,255 +134,226 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   ).sort();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Shield className="w-7 h-7 mr-3 text-blue-600" />
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      {/* 顶部导航 */}
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft />
+              </IconButton>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                  <Shield size={28} color="#1976d2" />
                   安全审计
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   访问日志、操作审计
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <ModeToggle />
-              <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                <button
+              <Box sx={{ display: "flex", bgcolor: "grey.100", borderRadius: 2, p: 0.5 }}>
+                <Button
+                  size="small"
+                  variant={source === "lims" ? "contained" : "text"}
                   onClick={() => setSource("lims")}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    source === "lims"
-                      ? "bg-cyan-600 text-white"
-                      : "text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600"
-                  }`}
+                  startIcon={<FileText size={16} />}
                 >
-                  <FileText className="w-4 h-4 mr-1.5" />
                   LIMS
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="small"
+                  variant={source === "rs" ? "contained" : "text"}
                   onClick={() => setSource("rs")}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    source === "rs"
-                      ? "bg-orange-600 text-white"
-                      : "text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-600"
-                  }`}
+                  startIcon={<FlaskConical size={16} />}
                 >
-                  <FlaskConical className="w-4 h-4 mr-1.5" />
                   RS
-                </button>
-              </div>
-              <Button onClick={loadLogs}>
-                <Activity className="w-4 h-4 mr-2" />
+                </Button>
+              </Box>
+              <Button variant="contained" onClick={loadLogs} startIcon={<Activity size={16} />}>
                 刷新
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex-1 min-w-64 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  type="text"
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
+        {/* 搜索和筛选 */}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2 }}>
+              <Box sx={{ flex: 1, minWidth: 200, position: "relative" }}>
+                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "#9e9e9e" }} />
+                <TextField
+                  size="small"
                   placeholder="搜索用户名、操作、实体类型、IP..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  sx={{ width: "100%", pl: 5 }}
                 />
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <Filter className="w-4 h-4 text-gray-500" />
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="全部状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部状态</SelectItem>
-                      <SelectItem value="success">成功</SelectItem>
-                      <SelectItem value="partial">部分成功</SelectItem>
-                      <SelectItem value="error">失败</SelectItem>
-                    </SelectContent>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Filter size={16} color="#9e9e9e" />
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>全部状态</InputLabel>
+                  <Select
+                    value={filterStatus}
+                    label="全部状态"
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <MenuItem value="all">全部状态</MenuItem>
+                    <MenuItem value="success">成功</MenuItem>
+                    <MenuItem value="partial">部分成功</MenuItem>
+                    <MenuItem value="error">失败</MenuItem>
                   </Select>
-                </div>
-
-                <Select value={filterAction} onValueChange={setFilterAction}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="全部操作" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部操作</SelectItem>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>全部操作</InputLabel>
+                  <Select
+                    value={filterAction}
+                    label="全部操作"
+                    onChange={(e) => setFilterAction(e.target.value)}
+                  >
+                    <MenuItem value="all">全部操作</MenuItem>
                     {uniqueActions.map((action) => (
-                      <SelectItem key={action} value={action}>
+                      <MenuItem key={action} value={action}>
                         {formatAction(action)}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={filterEntityType}
-                  onValueChange={setFilterEntityType}
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="全部实体" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部实体</SelectItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>全部实体</InputLabel>
+                  <Select
+                    value={filterEntityType}
+                    label="全部实体"
+                    onChange={(e) => setFilterEntityType(e.target.value)}
+                  >
+                    <MenuItem value="all">全部实体</MenuItem>
                     {uniqueEntityTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
+                      <MenuItem key={type} value={type}>
                         {type}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
+        {/* 日志列表 */}
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTop: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : filteredLogs.length === 0 ? (
-              <div className="p-8 text-center">
-                <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">暂无审计日志</p>
-              </div>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Clock size={48} color="#9e9e9e" />
+                <Typography sx={{ color: "text.secondary", mt: 2 }}>暂无审计日志</Typography>
+              </Box>
             ) : (
               <>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          时间
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          用户
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          操作
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          实体类型
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          IP地址
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          状态
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          详情
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <Box sx={{ overflowX: "auto" }}>
+                  <Box component="table" sx={{ width: "100%", borderCollapse: "collapse" }}>
+                    <Box component="thead" sx={{ bgcolor: "grey.100" }}>
+                      <Box component="tr">
+                        <Box component="th" sx={{ px: 3, py: 2, textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>时间</Box>
+                        <Box component="th" sx={{ px: 3, py: 2, textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>用户</Box>
+                        <Box component="th" sx={{ px: 3, py: 2, textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>操作</Box>
+                        <Box component="th" sx={{ px: 3, py: 2, textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>实体类型</Box>
+                        <Box component="th" sx={{ px: 3, py: 2, textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>IP地址</Box>
+                        <Box component="th" sx={{ px: 3, py: 2, textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>状态</Box>
+                        <Box component="th" sx={{ px: 3, py: 2, textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "text.secondary", textTransform: "uppercase" }}>详情</Box>
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
                       {filteredLogs.map((log) => (
-                        <tr
-                          key={log.id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <Box component="tr" key={log.id} sx={{ "&:hover": { bgcolor: "grey.50" } }}>
+                          <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "text.secondary", whiteSpace: "nowrap" }}>
                             {new Date(log.created_at).toLocaleString("zh-CN")}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                              </div>
-                              <div className="ml-3">
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  {log.user_name || log.user_id || "-"}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <Box sx={{ width: 32, height: 32, borderRadius: "50%", bgcolor: "primary.light", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <User size={16} color="#1976d2" />
+                              </Box>
+                              <Box sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                                {log.user_name || log.user_id || "-"}
+                              </Box>
+                            </Box>
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem" }}>
                             {formatAction(log.action)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "text.secondary" }}>
                             {log.entity_type}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "text.secondary" }}>
                             {log.ip_address || "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2 }}>
                             {getStatusBadge(log.status)}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "text.secondary", maxWidth: 200 }}>
                             {log.error_message && (
-                              <span className="text-red-600 dark:text-red-400 text-xs">
+                              <Typography sx={{ fontSize: "0.75rem", color: "error.main" }}>
                                 {log.error_message}
-                              </span>
+                              </Typography>
                             )}
                             {!log.error_message && log.request_details && (
-                              <span className="text-gray-600 dark:text-gray-300 text-xs truncate">
+                              <Typography sx={{ fontSize: "0.75rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                 {JSON.stringify(log.request_details)}
-                              </span>
+                              </Typography>
                             )}
                             {!log.error_message && !log.request_details && "-"}
-                          </td>
-                        </tr>
+                          </Box>
+                        </Box>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </Box>
+                  </Box>
+                </Box>
 
                 {total > pageSize && (
-                  <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      显示第 {(currentPage - 1) * pageSize + 1} -{" "}
-                      {Math.min(currentPage * pageSize, total)} 条，共 {total}{" "}
-                      条
-                    </p>
-                    <div className="flex items-center space-x-2">
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2, borderTop: 1, borderColor: "divider", bgcolor: "grey.50" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      显示第 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, total)} 条，共 {total} 条
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1 }}>
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(1, prev - 1))
-                        }
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
                       >
                         上一页
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
+                        variant="outlined"
+                        size="small"
                         onClick={() => setCurrentPage((prev) => prev + 1)}
                         disabled={currentPage * pageSize >= total}
                       >
                         下一页
                       </Button>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
               </>
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

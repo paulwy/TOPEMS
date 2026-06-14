@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Tooltip, Box, TextField } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Calendar,
@@ -21,33 +22,7 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface MeetingRoomManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -253,9 +228,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
       cancelled: "已取消",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip size="small" variant={(colors[status] || "outlined") as "filled" | "outlined"} label={labels[status] || status} />
     );
   };
 
@@ -310,63 +283,48 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         cell: ({ row }) => {
           const room = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedBooking({
-                          room_id: room.id,
-                          room_name: room.name,
-                          status: "confirmed",
-                        });
-                        setShowBookingModal(true);
-                      }}
-                    >
-                      <Calendar className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>预约</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+              <Tooltip title="预约">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedBooking({
+                      room_id: room.id,
+                      room_name: room.name,
+                      status: "confirmed",
+                    });
+                    setShowBookingModal(true);
+                  }}
+                >
+                  <Calendar className="w-4 h-4" />
+                </Button>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedRoom(room);
-                        setShowEditModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip title="编辑">
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    setSelectedRoom(room);
+                    setShowEditModal(true);
+                  }}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              </Tooltip>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => handleDeleteRoom(room.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>删除</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+              <Tooltip title="删除">
+                <Button
+                  variant="text"
+                  size="small"
+                  sx={{ color: 'error.main' }}
+                  onClick={() => handleDeleteRoom(room.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </Tooltip>
+            </Box>
           );
         },
       },
@@ -436,7 +394,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+              <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <div>
@@ -463,7 +421,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle>会议室列表</CardTitle>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>会议室列表</Typography>
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
@@ -495,7 +453,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         {bookings.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>预约记录</CardTitle>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>预约记录</Typography>
             </CardHeader>
             <CardContent className="p-0">
               <DataTable
@@ -509,204 +467,174 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         )}
       </div>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>新增会议室</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="xl">
+        <DialogTitle>新增会议室</DialogTitle>
+        <DialogContent sx={{ maxWidth: 540, overflowY: 'auto' }}>
           <form onSubmit={handleCreateRoom}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">会议室名称 *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  required
-                  value={newRoom.name || ""}
-                  onChange={(e) =>
-                    setNewRoom({ ...newRoom, name: e.target.value })
-                  }
-                  placeholder="请输入会议室名称"
-                />
-              </div>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+              <TextField
+                label="会议室名称 *"
+                value={newRoom.name || ""}
+                onChange={(e) =>
+                  setNewRoom({ ...newRoom, name: e.target.value })
+                }
+                placeholder="请输入会议室名称"
+                size="small"
+                fullWidth
+              />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="capacity">容量 *</Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    required
-                    value={newRoom.capacity || ""}
-                    onChange={(e) =>
-                      setNewRoom({
-                        ...newRoom,
-                        capacity: Number(e.target.value),
-                      })
-                    }
-                    placeholder="请输入容量"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">位置</Label>
-                  <Input
-                    id="location"
-                    type="text"
-                    value={newRoom.location || ""}
-                    onChange={(e) =>
-                      setNewRoom({ ...newRoom, location: e.target.value })
-                    }
-                    placeholder="请输入位置"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="facilities">设施（用逗号分隔）</Label>
-                <Input
-                  id="facilities"
-                  type="text"
-                  value={(newRoom.facilities || []).join(", ")}
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="容量 *"
+                  type="number"
+                  value={newRoom.capacity || ""}
                   onChange={(e) =>
                     setNewRoom({
                       ...newRoom,
+                      capacity: Number(e.target.value),
+                    })
+                  }
+                  placeholder="请输入容量"
+                  size="small"
+                  fullWidth
+                />
+                <TextField
+                  label="位置"
+                  value={newRoom.location || ""}
+                  onChange={(e) =>
+                    setNewRoom({ ...newRoom, location: e.target.value })
+                  }
+                  placeholder="请输入位置"
+                  size="small"
+                  fullWidth
+                />
+              </Box>
+
+              <TextField
+                label="设施（用逗号分隔）"
+                value={(newRoom.facilities || []).join(", ")}
+                onChange={(e) =>
+                  setNewRoom({
+                    ...newRoom,
+                    facilities: e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter((s) => s),
+                  })
+                }
+                placeholder="如：投影仪, 麦克风, 白板"
+                size="small"
+                fullWidth
+              />
+
+              <FormControl size="small" fullWidth>
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={newRoom.status || "active"}
+                  label="状态"
+                  onChange={(e) =>
+                    setNewRoom({ ...newRoom, status: e.target.value })
+                  }
+                >
+                  <MenuItem value="active">可用</MenuItem>
+                  <MenuItem value="inactive">停用</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <DialogActions sx={{ mt: 3 }}>
+              <Button
+                type="button"
+                variant="contained"
+                onClick={() => setShowCreateModal(false)}
+              >
+                取消
+              </Button>
+              <Button type="submit">创建</Button>
+            </DialogActions>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="xl">
+        <DialogTitle>编辑会议室</DialogTitle>
+        <DialogContent sx={{ maxWidth: 540, overflowY: 'auto' }}>
+          {selectedRoom && (
+            <form onSubmit={handleEditRoom}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+                <TextField
+                  label="会议室名称 *"
+                  value={selectedRoom.name}
+                  onChange={(e) =>
+                    setSelectedRoom({ ...selectedRoom, name: e.target.value })
+                  }
+                  size="small"
+                  fullWidth
+                />
+
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <TextField
+                    label="容量 *"
+                    type="number"
+                    value={selectedRoom.capacity}
+                    onChange={(e) =>
+                      setSelectedRoom({
+                        ...selectedRoom,
+                        capacity: Number(e.target.value),
+                      })
+                    }
+                    size="small"
+                    fullWidth
+                  />
+                  <TextField
+                    label="位置"
+                    value={selectedRoom.location || ""}
+                    onChange={(e) =>
+                      setSelectedRoom({
+                        ...selectedRoom,
+                        location: e.target.value,
+                      })
+                    }
+                    size="small"
+                    fullWidth
+                  />
+                </Box>
+
+                <TextField
+                  label="设施（用逗号分隔）"
+                  value={(selectedRoom.facilities || []).join(", ")}
+                  onChange={(e) =>
+                    setSelectedRoom({
+                      ...selectedRoom,
                       facilities: e.target.value
                         .split(",")
                         .map((s) => s.trim())
                         .filter((s) => s),
                     })
                   }
-                  placeholder="如：投影仪, 麦克风, 白板"
+                  size="small"
+                  fullWidth
                 />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">状态</Label>
-                <Select
-                  value={newRoom.status || "active"}
-                  onValueChange={(value) =>
-                    setNewRoom({ ...newRoom, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">可用</SelectItem>
-                    <SelectItem value="inactive">停用</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowCreateModal(false)}
-              >
-                取消
-              </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>编辑会议室</DialogTitle>
-          </DialogHeader>
-          {selectedRoom && (
-            <form onSubmit={handleEditRoom}>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit_name">会议室名称 *</Label>
-                  <Input
-                    id="edit_name"
-                    type="text"
-                    required
-                    value={selectedRoom.name}
-                    onChange={(e) =>
-                      setSelectedRoom({ ...selectedRoom, name: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_capacity">容量 *</Label>
-                    <Input
-                      id="edit_capacity"
-                      type="number"
-                      required
-                      value={selectedRoom.capacity}
-                      onChange={(e) =>
-                        setSelectedRoom({
-                          ...selectedRoom,
-                          capacity: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_location">位置</Label>
-                    <Input
-                      id="edit_location"
-                      type="text"
-                      value={selectedRoom.location || ""}
-                      onChange={(e) =>
-                        setSelectedRoom({
-                          ...selectedRoom,
-                          location: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit_facilities">设施（用逗号分隔）</Label>
-                  <Input
-                    id="edit_facilities"
-                    type="text"
-                    value={(selectedRoom.facilities || []).join(", ")}
-                    onChange={(e) =>
-                      setSelectedRoom({
-                        ...selectedRoom,
-                        facilities: e.target.value
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter((s) => s),
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit_status">状态</Label>
+                <FormControl size="small" fullWidth>
+                  <InputLabel>状态</InputLabel>
                   <Select
                     value={selectedRoom.status}
-                    onValueChange={(value) =>
-                      setSelectedRoom({ ...selectedRoom, status: value })
+                    label="状态"
+                    onChange={(e) =>
+                      setSelectedRoom({ ...selectedRoom, status: e.target.value })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">可用</SelectItem>
-                      <SelectItem value="inactive">停用</SelectItem>
-                    </SelectContent>
+                    <MenuItem value="active">可用</MenuItem>
+                    <MenuItem value="inactive">停用</MenuItem>
                   </Select>
-                </div>
-              </div>
+                </FormControl>
+              </Box>
 
-              <DialogFooter className="mt-6">
+              <DialogActions sx={{ mt: 3 }}>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="contained"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedRoom(null);
@@ -715,113 +643,101 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                   取消
                 </Button>
                 <Button type="submit">保存</Button>
-              </DialogFooter>
+              </DialogActions>
             </form>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showBookingModal} onOpenChange={setShowBookingModal}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>预约会议室</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showBookingModal} onClose={() => setShowBookingModal(false)} maxWidth="xl">
+        <DialogTitle>预约会议室</DialogTitle>
+        <DialogContent sx={{ maxWidth: 540, overflowY: 'auto' }}>
           <form onSubmit={handleCreateBooking}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="booking_room">会议室</Label>
-                <Input
-                  id="booking_room"
-                  type="text"
-                  disabled
-                  value={selectedBooking.room_name || ""}
-                />
-              </div>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+              <TextField
+                label="会议室"
+                value={selectedBooking.room_name || ""}
+                disabled
+                size="small"
+                fullWidth
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="booking_title">会议主题 *</Label>
-                <Input
-                  id="booking_title"
-                  type="text"
-                  required
-                  value={selectedBooking.title || ""}
+              <TextField
+                label="会议主题 *"
+                value={selectedBooking.title || ""}
+                onChange={(e) =>
+                  setSelectedBooking({
+                    ...selectedBooking,
+                    title: e.target.value,
+                  })
+                }
+                placeholder="请输入会议主题"
+                size="small"
+                fullWidth
+              />
+
+              <TextField
+                label="组织者 *"
+                value={selectedBooking.organizer || ""}
+                onChange={(e) =>
+                  setSelectedBooking({
+                    ...selectedBooking,
+                    organizer: e.target.value,
+                  })
+                }
+                placeholder="请输入组织者"
+                size="small"
+                fullWidth
+              />
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <TextField
+                  label="开始时间 *"
+                  type="datetime-local"
+                  value={
+                    selectedBooking.start_time
+                      ? new Date(selectedBooking.start_time)
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
                   onChange={(e) =>
                     setSelectedBooking({
                       ...selectedBooking,
-                      title: e.target.value,
+                      start_time: e.target.value,
                     })
                   }
-                  placeholder="请输入会议主题"
+                  size="small"
+                  fullWidth
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="booking_organizer">组织者 *</Label>
-                <Input
-                  id="booking_organizer"
-                  type="text"
-                  required
-                  value={selectedBooking.organizer || ""}
+                <TextField
+                  label="结束时间 *"
+                  type="datetime-local"
+                  value={
+                    selectedBooking.end_time
+                      ? new Date(selectedBooking.end_time)
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
                   onChange={(e) =>
                     setSelectedBooking({
                       ...selectedBooking,
-                      organizer: e.target.value,
+                      end_time: e.target.value,
                     })
                   }
-                  placeholder="请输入组织者"
+                  size="small"
+                  fullWidth
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
-              </div>
+              </Box>
+            </Box>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="booking_start">开始时间 *</Label>
-                  <Input
-                    id="booking_start"
-                    type="datetime-local"
-                    required
-                    value={
-                      selectedBooking.start_time
-                        ? new Date(selectedBooking.start_time)
-                            .toISOString()
-                            .slice(0, 16)
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setSelectedBooking({
-                        ...selectedBooking,
-                        start_time: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="booking_end">结束时间 *</Label>
-                  <Input
-                    id="booking_end"
-                    type="datetime-local"
-                    required
-                    value={
-                      selectedBooking.end_time
-                        ? new Date(selectedBooking.end_time)
-                            .toISOString()
-                            .slice(0, 16)
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setSelectedBooking({
-                        ...selectedBooking,
-                        end_time: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="mt-6">
+            <DialogActions sx={{ mt: 3 }}>
               <Button
                 type="button"
-                variant="secondary"
+                variant="contained"
                 onClick={() => {
                   setShowBookingModal(false);
                   setSelectedBooking({});
@@ -830,7 +746,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                 取消
               </Button>
               <Button type="submit">预约</Button>
-            </DialogFooter>
+            </DialogActions>
           </form>
         </DialogContent>
       </Dialog>

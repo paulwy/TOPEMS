@@ -1,16 +1,38 @@
 import React, { useState, useEffect } from "react";
 import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Box,
+} from "@mui/material";
+import {
   Plus,
   Search,
   Edit2,
   Trash2,
   Eye,
   Users,
-  DollarSign,
   CreditCard,
   AlertCircle,
-  CheckCircle2,
-  Clock,
   RefreshCw,
   ArrowUpRight,
   ArrowDownRight,
@@ -22,35 +44,6 @@ import {
   type Payable,
 } from "../api/erp";
 import { useAppStore } from "../store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 const FinanceReceivablePayablePage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -340,14 +333,14 @@ const FinanceReceivablePayablePage: React.FC = () => {
     `¥${amount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}`;
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      pending: "bg-yellow-100 text-yellow-700",
-      partial: "bg-orange-100 text-orange-700",
-      paid: "bg-green-100 text-green-700",
-      overdue: "bg-red-100 text-red-700",
-      cancelled: "bg-gray-100 text-gray-700",
+    const colorMap: Record<string, "default" | "primary" | "secondary" | "success" | "error" | "info" | "warning"> = {
+      pending: "warning",
+      partial: "warning",
+      paid: "success",
+      overdue: "error",
+      cancelled: "default",
     };
-    const labels = {
+    const labelMap: Record<string, string> = {
       pending: "待收/待付",
       partial: "部分收/付",
       paid: "已结清",
@@ -355,13 +348,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
       cancelled: "已取消",
     };
     return (
-      <Badge
-        className={
-          variants[status as keyof typeof variants] || variants.pending
-        }
-      >
-        {labels[status as keyof typeof labels] || status}
-      </Badge>
+      <Chip size="small" color={colorMap[status] || "default"} label={labelMap[status] || status} />
     );
   };
 
@@ -410,405 +397,217 @@ const FinanceReceivablePayablePage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">应收应付管理</h1>
-          <p className="text-slate-500 mt-1">管理企业应收账款和应付账款</p>
-        </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>新增{activeTab === "receivable" ? "应收" : "应付"}</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingItem ? "编辑" : "新增"}
-                {activeTab === "receivable" ? "应收账款" : "应付账款"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="invoice_number">单据编号</Label>
-                <Input
-                  id="invoice_number"
-                  value={formData.invoice_number}
-                  onChange={(e) =>
-                    setFormData({ ...formData, invoice_number: e.target.value })
-                  }
-                  placeholder="请输入单据编号"
-                />
-              </div>
-              {activeTab === "receivable" ? (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="customer_name">客户名称</Label>
-                    <Input
-                      id="customer_name"
-                      value={formData.customer_name}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          customer_name: e.target.value,
-                        })
-                      }
-                      placeholder="请输入客户名称"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="project_name">项目名称</Label>
-                    <Input
-                      id="project_name"
-                      value={formData.project_name}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          project_name: e.target.value,
-                        })
-                      }
-                      placeholder="请输入项目名称"
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="supplier_name">供应商名称</Label>
-                    <Input
-                      id="supplier_name"
-                      value={formData.supplier_name}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          supplier_name: e.target.value,
-                        })
-                      }
-                      placeholder="请输入供应商名称"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">费用类别</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, category: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="选择费用类别" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="materials">材料采购</SelectItem>
-                        <SelectItem value="services">服务费用</SelectItem>
-                        <SelectItem value="salary">薪资福利</SelectItem>
-                        <SelectItem value="utilities">水电费用</SelectItem>
-                        <SelectItem value="other">其他</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="amount">金额</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
-                  placeholder="请输入金额"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="invoice_date">开票日期</Label>
-                  <Input
-                    id="invoice_date"
-                    type="date"
-                    value={formData.invoice_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, invoice_date: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="due_date">到期日期</Label>
-                  <Input
-                    id="due_date"
-                    type="date"
-                    value={formData.due_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, due_date: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">状态</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">待收/待付</SelectItem>
-                    <SelectItem value="partial">部分收/付</SelectItem>
-                    <SelectItem value="paid">已结清</SelectItem>
-                    <SelectItem value="overdue">已逾期</SelectItem>
-                    <SelectItem value="cancelled">已取消</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter className="mt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreateDialog(false);
-                  setEditingItem(null);
-                  resetForm();
-                }}
-              >
-                取消
-              </Button>
-              <Button
-                onClick={
-                  editingItem
-                    ? activeTab === "receivable"
-                      ? handleUpdateReceivable
-                      : handleUpdatePayable
-                    : activeTab === "receivable"
-                      ? handleCreateReceivable
-                      : handleCreatePayable
-                }
-              >
-                {editingItem ? "更新" : "创建"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+    <Box className="space-y-6">
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>应收应付管理</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>管理企业应收账款和应付账款</Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => setShowCreateDialog(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          <span>新增{activeTab === "receivable" ? "应收" : "应付"}</span>
+        </Button>
+      </Box>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-80">应收总额</p>
-                <p className="text-3xl font-bold mt-2">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
+        <Card sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", color: "white" }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>应收总额</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                   {formatCurrency(totalReceivable)}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-full">
+                </Typography>
+              </Box>
+              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
                 <ArrowUpRight className="w-6 h-6" />
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-emerald-500 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-80">应付总额</p>
-                <p className="text-3xl font-bold mt-2">
+        <Card sx={{ background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)", color: "white" }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>应付总额</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                   {formatCurrency(totalPayable)}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-full">
+                </Typography>
+              </Box>
+              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
                 <ArrowDownRight className="w-6 h-6" />
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-80">待收金额</p>
-                <p className="text-3xl font-bold mt-2">
+        <Card sx={{ background: "linear-gradient(135deg, #f97316 0%, #ef4444 100%)", color: "white" }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>待收金额</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                   {formatCurrency(pendingReceivable)}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-full">
-                <Clock className="w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500 to-violet-500 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm opacity-80">待付金额</p>
-                <p className="text-3xl font-bold mt-2">
-                  {formatCurrency(pendingPayable)}
-                </p>
-              </div>
-              <div className="p-3 bg-white/20 rounded-full">
+                </Typography>
+              </Box>
+              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
                 <CreditCard className="w-6 h-6" />
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
-      </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger
-            value="receivable"
-            className="flex items-center space-x-2"
-          >
-            <ArrowUpRight className="w-4 h-4" />
-            <span>应收账款</span>
-          </TabsTrigger>
-          <TabsTrigger value="payable" className="flex items-center space-x-2">
-            <ArrowDownRight className="w-4 h-4" />
-            <span>应付账款</span>
-          </TabsTrigger>
-        </TabsList>
+        <Card sx={{ background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", color: "white" }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>待付金额</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
+                  {formatCurrency(pendingPayable)}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+                <CreditCard className="w-6 h-6" />
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
-        <TabsContent value="receivable" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
+      <Card>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+            <Tab value="receivable" label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ArrowUpRight className="w-4 h-4" />
+                <span>应收账款</span>
+              </Box>
+            } />
+            <Tab value="payable" label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ArrowDownRight className="w-4 h-4" />
+                <span>应付账款</span>
+              </Box>
+            } />
+          </Tabs>
+        </Box>
+
+        <Box sx={{ p: 3 }} className={activeTab === "receivable" ? "" : "hidden"}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+            <Box sx={{ position: "relative", flex: 1 }}>
+              <Box sx={{ position: "absolute", left: 3, top: "50%", transform: "translateY(-50%)" }}>
+                <Search className="w-4 h-4 text-slate-400" />
+              </Box>
+              <TextField
+                size="small"
                 placeholder="搜索单据编号、客户名称或项目..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                sx={{ pl: 5, width: "100%" }}
               />
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部</SelectItem>
-                <SelectItem value="pending">待收</SelectItem>
-                <SelectItem value="partial">部分收</SelectItem>
-                <SelectItem value="paid">已结清</SelectItem>
-                <SelectItem value="overdue">已逾期</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={loadData}>
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">全部</MenuItem>
+                <MenuItem value="pending">待收</MenuItem>
+                <MenuItem value="partial">部分收</MenuItem>
+                <MenuItem value="paid">已结清</MenuItem>
+                <MenuItem value="overdue">已逾期</MenuItem>
+              </Select>
+            </FormControl>
+            <Button variant="outlined" size="small" onClick={loadData}>
               <RefreshCw className="w-4 h-4 mr-2" />
               刷新
             </Button>
-          </div>
+          </Box>
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center">
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   <Users className="w-5 h-5 mr-2 text-indigo-600" />
-                  应收账款列表
-                </span>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>应收账款列表</Typography>
+                </Box>
                 {overdueReceivable > 0 && (
-                  <Badge className="bg-red-500 text-white">
-                    {formatCurrency(overdueReceivable)} 逾期
-                  </Badge>
+                  <Chip size="small" color="error" label={`逾期 ${formatCurrency(overdueReceivable)}`} />
                 )}
-              </CardTitle>
+              </Box>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="p-8 text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                  <p className="mt-2 text-slate-500">加载中...</p>
-                </div>
+                <Box sx={{ p: 8, textAlign: "center" }}>
+                  <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>加载中...</Typography>
+                </Box>
               ) : (
                 <Table>
-                  <TableHeader>
+                  <TableHead>
                     <TableRow>
-                      <TableHead>单据编号</TableHead>
-                      <TableHead>客户名称</TableHead>
-                      <TableHead>项目名称</TableHead>
-                      <TableHead className="text-right">金额</TableHead>
-                      <TableHead className="text-right">已收</TableHead>
-                      <TableHead className="text-right">待收</TableHead>
-                      <TableHead>到期日期</TableHead>
-                      <TableHead>状态</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
+                      <TableCell>单据编号</TableCell>
+                      <TableCell>客户名称</TableCell>
+                      <TableCell>项目名称</TableCell>
+                      <TableCell align="right">金额</TableCell>
+                      <TableCell align="right">已收</TableCell>
+                      <TableCell align="right">待收</TableCell>
+                      <TableCell>到期日期</TableCell>
+                      <TableCell>状态</TableCell>
+                      <TableCell align="right">操作</TableCell>
                     </TableRow>
-                  </TableHeader>
+                  </TableHead>
                   <TableBody>
                     {filteredReceivables.length > 0 ? (
                       filteredReceivables.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">
+                          <TableCell sx={{ fontWeight: "medium" }}>
                             {item.invoice_number}
                           </TableCell>
                           <TableCell>{item.customer_name || "-"}</TableCell>
                           <TableCell>{item.project_name || "-"}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell align="right">
                             {formatCurrency(item.amount)}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell align="right">
                             {formatCurrency(item.received_amount || 0)}
                           </TableCell>
-                          <TableCell
-                            className={`text-right font-medium ${isOverdue(item.due_date) && item.status !== "paid" ? "text-red-600" : "text-orange-600"}`}
-                          >
+                          <TableCell align="right" sx={{ fontWeight: "medium", color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "warning.main" }}>
                             {formatCurrency(
                               item.amount - (item.received_amount || 0),
                             )}
                           </TableCell>
-                          <TableCell
-                            className={
-                              isOverdue(item.due_date) && item.status !== "paid"
-                                ? "text-red-600"
-                                : ""
-                            }
-                          >
+                          <TableCell sx={{ color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "text.primary" }}>
                             {item.due_date
                               ? new Date(item.due_date).toLocaleDateString()
                               : "-"}
                           </TableCell>
                           <TableCell>{getStatusBadge(item.status)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openDetailDialog(item)}
-                              >
+                          <TableCell align="right">
+                            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+                              <Button variant="text" size="small" onClick={() => openDetailDialog(item)}>
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditDialog(item)}
-                              >
+                              <Button variant="text" size="small" onClick={() => openEditDialog(item)}>
                                 <Edit2 className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500"
-                                onClick={() => handleDeleteReceivable(item.id)}
-                              >
+                              <Button variant="text" size="small" color="error" onClick={() => handleDeleteReceivable(item.id)}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
-                            </div>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8">
+                        <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                           <AlertCircle className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-                          <p className="text-slate-500">暂无应收账款数据</p>
+                          <Typography color="text.secondary">暂无应收账款数据</Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -817,139 +616,120 @@ const FinanceReceivablePayablePage: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        </Box>
 
-        <TabsContent value="payable" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
+        <Box sx={{ p: 3 }} className={activeTab === "payable" ? "" : "hidden"}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+            <Box sx={{ position: "relative", flex: 1 }}>
+              <Box sx={{ position: "absolute", left: 3, top: "50%", transform: "translateY(-50%)" }}>
+                <Search className="w-4 h-4 text-slate-400" />
+              </Box>
+              <TextField
+                size="small"
                 placeholder="搜索单据编号、供应商或类别..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                sx={{ pl: 5, width: "100%" }}
               />
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部</SelectItem>
-                <SelectItem value="pending">待付</SelectItem>
-                <SelectItem value="partial">部分付</SelectItem>
-                <SelectItem value="paid">已结清</SelectItem>
-                <SelectItem value="overdue">已逾期</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={loadData}>
+            </Box>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">全部</MenuItem>
+                <MenuItem value="pending">待付</MenuItem>
+                <MenuItem value="partial">部分付</MenuItem>
+                <MenuItem value="paid">已结清</MenuItem>
+                <MenuItem value="overdue">已逾期</MenuItem>
+              </Select>
+            </FormControl>
+            <Button variant="outlined" size="small" onClick={loadData}>
               <RefreshCw className="w-4 h-4 mr-2" />
               刷新
             </Button>
-          </div>
+          </Box>
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center">
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
                   <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
-                  应付账款列表
-                </span>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>应付账款列表</Typography>
+                </Box>
                 {overduePayable > 0 && (
-                  <Badge className="bg-red-500 text-white">
-                    {formatCurrency(overduePayable)} 逾期
-                  </Badge>
+                  <Chip size="small" color="error" label={`逾期 ${formatCurrency(overduePayable)}`} />
                 )}
-              </CardTitle>
+              </Box>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="p-8 text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                  <p className="mt-2 text-slate-500">加载中...</p>
-                </div>
+                <Box sx={{ p: 8, textAlign: "center" }}>
+                  <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>加载中...</Typography>
+                </Box>
               ) : (
                 <Table>
-                  <TableHeader>
+                  <TableHead>
                     <TableRow>
-                      <TableHead>单据编号</TableHead>
-                      <TableHead>供应商</TableHead>
-                      <TableHead>费用类别</TableHead>
-                      <TableHead className="text-right">金额</TableHead>
-                      <TableHead className="text-right">已付</TableHead>
-                      <TableHead className="text-right">待付</TableHead>
-                      <TableHead>到期日期</TableHead>
-                      <TableHead>状态</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
+                      <TableCell>单据编号</TableCell>
+                      <TableCell>供应商</TableCell>
+                      <TableCell>费用类别</TableCell>
+                      <TableCell align="right">金额</TableCell>
+                      <TableCell align="right">已付</TableCell>
+                      <TableCell align="right">待付</TableCell>
+                      <TableCell>到期日期</TableCell>
+                      <TableCell>状态</TableCell>
+                      <TableCell align="right">操作</TableCell>
                     </TableRow>
-                  </TableHeader>
+                  </TableHead>
                   <TableBody>
                     {filteredPayables.length > 0 ? (
                       filteredPayables.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">
+                          <TableCell sx={{ fontWeight: "medium" }}>
                             {item.invoice_number}
                           </TableCell>
                           <TableCell>{item.supplier_name || "-"}</TableCell>
                           <TableCell>{item.category || "-"}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell align="right">
                             {formatCurrency(item.amount)}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell align="right">
                             {formatCurrency(item.paid_amount || 0)}
                           </TableCell>
-                          <TableCell
-                            className={`text-right font-medium ${isOverdue(item.due_date) && item.status !== "paid" ? "text-red-600" : "text-orange-600"}`}
-                          >
+                          <TableCell align="right" sx={{ fontWeight: "medium", color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "warning.main" }}>
                             {formatCurrency(
                               item.amount - (item.paid_amount || 0),
                             )}
                           </TableCell>
-                          <TableCell
-                            className={
-                              isOverdue(item.due_date) && item.status !== "paid"
-                                ? "text-red-600"
-                                : ""
-                            }
-                          >
+                          <TableCell sx={{ color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "text.primary" }}>
                             {item.due_date
                               ? new Date(item.due_date).toLocaleDateString()
                               : "-"}
                           </TableCell>
                           <TableCell>{getStatusBadge(item.status)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openDetailDialog(item)}
-                              >
+                          <TableCell align="right">
+                            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+                              <Button variant="text" size="small" onClick={() => openDetailDialog(item)}>
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditDialog(item)}
-                              >
+                              <Button variant="text" size="small" onClick={() => openEditDialog(item)}>
                                 <Edit2 className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500"
-                                onClick={() => handleDeletePayable(item.id)}
-                              >
+                              <Button variant="text" size="small" color="error" onClick={() => handleDeletePayable(item.id)}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
-                            </div>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8">
+                        <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                           <AlertCircle className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-                          <p className="text-slate-500">暂无应付账款数据</p>
+                          <Typography color="text.secondary">暂无应付账款数据</Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -958,145 +738,295 @@ const FinanceReceivablePayablePage: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </Box>
+      </Card>
 
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              {selectedItem && "customer_name" in selectedItem ? (
-                <ArrowUpRight className="w-5 h-5 mr-2 text-indigo-600" />
-              ) : (
-                <ArrowDownRight className="w-5 h-5 mr-2 text-indigo-600" />
-              )}
-              {selectedItem && "customer_name" in selectedItem
-                ? "应收账款"
-                : "应付账款"}
-              详情
-            </DialogTitle>
-          </DialogHeader>
+      <Dialog open={showCreateDialog} onClose={() => { setShowCreateDialog(false); setEditingItem(null); resetForm(); }} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {editingItem ? "编辑" : "新增"}
+          {activeTab === "receivable" ? "应收账款" : "应付账款"}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              label="单据编号"
+              value={formData.invoice_number}
+              onChange={(e) =>
+                setFormData({ ...formData, invoice_number: e.target.value })
+              }
+              placeholder="请输入单据编号"
+              fullWidth
+              size="small"
+            />
+            {activeTab === "receivable" ? (
+              <>
+                <TextField
+                  label="客户名称"
+                  value={formData.customer_name}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      customer_name: e.target.value,
+                    })
+                  }
+                  placeholder="请输入客户名称"
+                  fullWidth
+                  size="small"
+                />
+                <TextField
+                  label="项目名称"
+                  value={formData.project_name}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      project_name: e.target.value,
+                    })
+                  }
+                  placeholder="请输入项目名称"
+                  fullWidth
+                  size="small"
+                />
+              </>
+            ) : (
+              <>
+                <TextField
+                  label="供应商名称"
+                  value={formData.supplier_name}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      supplier_name: e.target.value,
+                    })
+                  }
+                  placeholder="请输入供应商名称"
+                  fullWidth
+                  size="small"
+                />
+                <FormControl fullWidth size="small">
+                  <InputLabel>费用类别</InputLabel>
+                  <Select
+                    value={formData.category}
+                    label="费用类别"
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                  >
+                    <MenuItem value="materials">材料采购</MenuItem>
+                    <MenuItem value="services">服务费用</MenuItem>
+                    <MenuItem value="salary">薪资福利</MenuItem>
+                    <MenuItem value="utilities">水电费用</MenuItem>
+                    <MenuItem value="other">其他</MenuItem>
+                  </Select>
+                </FormControl>
+              </>
+            )}
+            <TextField
+              label="金额"
+              type="number"
+              value={formData.amount}
+              onChange={(e) =>
+                setFormData({ ...formData, amount: e.target.value })
+              }
+              placeholder="请输入金额"
+              fullWidth
+              size="small"
+            />
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <TextField
+                label="开票日期"
+                type="date"
+                value={formData.invoice_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, invoice_date: e.target.value })
+                }
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+              <TextField
+                label="到期日期"
+                type="date"
+                value={formData.due_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, due_date: e.target.value })
+                }
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Box>
+            <FormControl fullWidth size="small">
+              <InputLabel>状态</InputLabel>
+              <Select
+                value={formData.status}
+                label="状态"
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+              >
+                <MenuItem value="pending">待收/待付</MenuItem>
+                <MenuItem value="partial">部分收/付</MenuItem>
+                <MenuItem value="paid">已结清</MenuItem>
+                <MenuItem value="overdue">已逾期</MenuItem>
+                <MenuItem value="cancelled">已取消</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowCreateDialog(false);
+              setEditingItem(null);
+              resetForm();
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={
+              editingItem
+                ? activeTab === "receivable"
+                  ? handleUpdateReceivable
+                  : handleUpdatePayable
+                : activeTab === "receivable"
+                  ? handleCreateReceivable
+                  : handleCreatePayable
+            }
+          >
+            {editingItem ? "更新" : "创建"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
+          {selectedItem && "customer_name" in selectedItem ? (
+            <ArrowUpRight className="w-5 h-5 mr-2 text-indigo-600" />
+          ) : (
+            <ArrowDownRight className="w-5 h-5 mr-2 text-indigo-600" />
+          )}
+          {selectedItem && "customer_name" in selectedItem
+            ? "应收账款"
+            : "应付账款"}
+          详情
+        </DialogTitle>
+        <DialogContent>
           {selectedItem && (
-            <div className="space-y-6 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">单据编号</p>
-                  <p className="font-medium mt-1">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">单据编号</Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedItem.invoice_number}
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
                 {"customer_name" in selectedItem ? (
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <p className="text-sm text-slate-500">客户名称</p>
-                    <p className="font-medium mt-1">
+                  <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">客户名称</Typography>
+                    <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                       {selectedItem.customer_name || "-"}
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 ) : (
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <p className="text-sm text-slate-500">供应商</p>
-                    <p className="font-medium mt-1">
+                  <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                    <Typography variant="body2" color="text.secondary">供应商</Typography>
+                    <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                       {selectedItem.supplier_name || "-"}
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 )}
-              </div>
+              </Box>
 
               {"project_name" in selectedItem && selectedItem.project_name && (
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">项目名称</p>
-                  <p className="font-medium mt-1">
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">项目名称</Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedItem.project_name}
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
               )}
 
               {"category" in selectedItem && selectedItem.category && (
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">费用类别</p>
-                  <p className="font-medium mt-1">{selectedItem.category}</p>
-                </div>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">费用类别</Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>{selectedItem.category}</Typography>
+                </Box>
               )}
 
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-slate-500">总金额</span>
-                  <span className="text-2xl font-bold text-indigo-600">
+              <Box sx={{ p: 3, bgcolor: "linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%)", borderRadius: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">总金额</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main" }}>
                     {formatCurrency(selectedItem.amount)}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500">
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
                       {"received_amount" in selectedItem ? "已收" : "已付"}
-                    </p>
-                    <p className="text-lg font-bold text-green-600">
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", color: "success.main" }}>
                       {formatCurrency(
                         ("received_amount" in selectedItem
                           ? selectedItem.received_amount
                           : selectedItem.paid_amount) || 0,
                       )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500">
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
                       {"received_amount" in selectedItem ? "待收" : "待付"}
-                    </p>
-                    <p
-                      className={`text-lg font-bold ${isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "text-red-600" : "text-orange-600"}`}
-                    >
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", color: isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "error.main" : "warning.main" }}>
                       {formatCurrency(
                         selectedItem.amount -
                           (("received_amount" in selectedItem
                             ? selectedItem.received_amount
                             : selectedItem.paid_amount) || 0),
                       )}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <p className="text-sm text-slate-500">开票日期</p>
-                  <p className="font-medium mt-1">
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">开票日期</Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedItem.invoice_date
                       ? new Date(selectedItem.invoice_date).toLocaleDateString()
                       : "-"}
-                  </p>
-                </div>
-                <div
-                  className={`p-4 rounded-lg ${isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "bg-red-50" : "bg-slate-50"}`}
-                >
-                  <p className="text-sm text-slate-500">到期日期</p>
-                  <p
-                    className={`font-medium mt-1 ${isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "text-red-600" : ""}`}
-                  >
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "error.50" : "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">到期日期</Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5, color: isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "error.main" : "text.primary" }}>
                     {selectedItem.due_date
                       ? new Date(selectedItem.due_date).toLocaleDateString()
                       : "-"}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                <span className="text-sm text-slate-500">状态</span>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary">状态</Typography>
                 {getStatusBadge(selectedItem.status)}
-              </div>
+              </Box>
 
-              <div className="flex items-center justify-between text-sm text-slate-500">
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", typography: "body2", color: "text.secondary" }}>
                 <span>
                   创建时间: {new Date(selectedItem.created_at).toLocaleString()}
                 </span>
                 <span>
                   更新时间: {new Date(selectedItem.updated_at).toLocaleString()}
                 </span>
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

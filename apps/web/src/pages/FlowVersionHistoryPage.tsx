@@ -1,36 +1,35 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
+  Chip,
+  Tooltip,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   GitBranch,
   Plus,
-  Clock,
   User,
   CheckCircle,
   RotateCcw,
   Trash2,
-  Eye,
-  Search,
   Loader2,
   ArrowLeft,
-  GitCompare,
   Calendar,
-  ChevronDown,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Workflow, WorkflowVersion } from "../api/flow";
 import { flowApi } from "../api/flow";
 import { useAppStore } from "../store";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 const FlowVersionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -259,266 +258,249 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Loader2 size={32} className="animate-spin" style={{ color: "#7c3aed" }} />
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={() => navigate(`/flow/workflows`)}>
-              <ArrowLeft className="w-5 h-5" />
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <IconButton onClick={() => navigate(`/flow/workflows`)}>
+                <ArrowLeft size={20} />
+              </IconButton>
+              <Box sx={{ width: 48, height: 48, bgcolor: "secondary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <GitBranch size={24} style={{ color: "#7c3aed" }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>版本历史</Typography>
+                <Typography variant="body2" color="text.secondary">{workflow?.name}</Typography>
+              </Box>
+            </Stack>
+            <Button
+              variant="contained"
+              onClick={() => setShowCreateModal(true)}
+              sx={{ bgcolor: "secondary.main" }}
+              startIcon={<Plus size={20} />}
+            >
+              创建版本
             </Button>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <GitBranch className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">版本历史</h1>
-              <p className="text-sm text-gray-500">{workflow?.name}</p>
-            </div>
-          </div>
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            创建版本
-          </Button>
-        </div>
-      </div>
+          </Stack>
+        </CardContent>
+      </Card>
 
       {/* Version Timeline */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">版本列表</h2>
+      <Card>
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>版本列表</Typography>
 
-        {versions.length === 0 ? (
-          <div className="text-center py-12">
-            <GitBranch className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">暂无版本历史</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              创建第一个版本
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {versions.map((version, index) => (
-              <div
-                key={version.id}
-                className={`border rounded-lg p-4 transition-all ${
-                  version.is_active
-                    ? "border-purple-500 bg-purple-50"
-                    : "border-gray-200 hover:border-purple-300"
-                }`}
+          {versions.length === 0 ? (
+            <Box sx={{ textAlign: "center", py: 6 }}>
+              <GitBranch size={64} style={{ color: "#d1d5db", margin: "0 auto", marginBottom: 16 }} />
+              <Typography sx={{ color: "grey.500" }}>暂无版本历史</Typography>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                variant="contained"
+                sx={{ mt: 2, bgcolor: "secondary.main" }}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        version.is_active
-                          ? "bg-purple-600 text-white"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {version.is_active ? (
-                        <CheckCircle className="w-5 h-5" />
-                      ) : (
-                        <span className="text-sm font-bold">{index + 1}</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-3 mb-1">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          v{version.version}
-                        </h3>
-                        {version.is_active && (
-                          <span className="px-2 py-1 text-xs bg-purple-600 text-white rounded-full">
-                            当前版本
-                          </span>
+                创建第一个版本
+              </Button>
+            </Box>
+          ) : (
+            <Stack spacing={2}>
+              {versions.map((version, index) => (
+                <Box
+                  key={version.id}
+                  sx={{
+                    border: 1,
+                    borderColor: version.is_active ? "secondary.main" : "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    bgcolor: version.is_active ? "secondary.50" : "transparent",
+                  }}
+                >
+                  <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          bgcolor: version.is_active ? "secondary.main" : "grey.100",
+                          color: version.is_active ? "white" : "grey.600",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {version.is_active ? (
+                          <CheckCircle size={20} />
+                        ) : (
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{index + 1}</Typography>
                         )}
-                      </div>
-                      {version.change_description && (
-                        <p className="text-sm text-gray-600 mb-2">
-                          {version.change_description}
-                        </p>
+                      </Box>
+                      <Box>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 0.5 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>v{version.version}</Typography>
+                          {version.is_active && (
+                            <Chip label="当前版本" size="small" sx={{ bgcolor: "secondary.main", color: "white" }} />
+                          )}
+                        </Stack>
+                        {version.change_description && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{version.change_description}</Typography>
+                        )}
+                        <Stack direction="row" spacing={2}>
+                          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                            <User size={14} />
+                            <Typography variant="caption" color="text.secondary">{version.created_by || "系统"}</Typography>
+                          </Stack>
+                          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                            <Calendar size={14} />
+                            <Typography variant="caption" color="text.secondary">{new Date(version.created_at).toLocaleString()}</Typography>
+                          </Stack>
+                        </Stack>
+                      </Box>
+                    </Stack>
+                    <Stack direction="row" spacing={1}>
+                      {!version.is_active && (
+                        <>
+                          <Tooltip title="回滚到此版本">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setSelectedVersion(version);
+                                setShowRollbackModal(true);
+                              }}
+                              sx={{ color: "warning.main" }}
+                            >
+                              <RotateCcw size={20} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="删除版本">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteVersion(version)}
+                              sx={{ color: "error.main" }}
+                            >
+                              <Trash2 size={20} />
+                            </IconButton>
+                          </Tooltip>
+                        </>
                       )}
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <User className="w-4 h-4 mr-1" />
-                          {version.created_by || "系统"}
-                        </span>
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(version.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {!version.is_active && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedVersion(version);
-                            setShowRollbackModal(true);
-                          }}
-                          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                          title="回滚到此版本"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteVersion(version)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="删除版本"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                    <Button
-                      size="sm"
-                      onClick={() => handleActivateVersion(version)}
-                      disabled={version.is_active}
-                      className={
-                        version.is_active
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-purple-600 hover:bg-purple-700"
-                      }
-                    >
-                      {version.is_active ? "已激活" : "激活"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                      <Button
+                        size="small"
+                        onClick={() => handleActivateVersion(version)}
+                        disabled={version.is_active}
+                        variant={version.is_active ? "outlined" : "contained"}
+                        sx={version.is_active ? {} : { bgcolor: "secondary.main" }}
+                      >
+                        {version.is_active ? "已激活" : "激活"}
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Create Version Modal */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
+        <DialogTitle>创建新版本</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>创建新版本</DialogTitle>
-            <DialogDescription>创建一个新的工作流版本</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="version">版本号 *</Label>
-              <Input
-                id="version"
-                value={createForm.version}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, version: e.target.value })
-                }
-                placeholder="例如: 1.0.1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="change_description">变更说明</Label>
-              <Textarea
-                id="change_description"
-                value={createForm.change_description}
-                onChange={(e) =>
-                  setCreateForm({
-                    ...createForm,
-                    change_description: e.target.value,
-                  })
-                }
-                rows={4}
-                placeholder="描述本次变更内容"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowCreateModal(false)}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleCreateVersion}
-              disabled={actionLoading || !createForm.version.trim()}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {actionLoading && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
-              创建
-            </Button>
-          </DialogFooter>
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>创建一个新的工作流版本</Typography>
+          <Stack spacing={2}>
+            <TextField
+              size="small"
+              label="版本号 *"
+              value={createForm.version}
+              onChange={(e) => setCreateForm({ ...createForm, version: e.target.value })}
+              placeholder="例如: 1.0.1"
+              fullWidth
+            />
+            <TextField
+              size="small"
+              label="变更说明"
+              value={createForm.change_description}
+              onChange={(e) => setCreateForm({ ...createForm, change_description: e.target.value })}
+              placeholder="描述本次变更内容"
+              multiline
+              rows={4}
+              fullWidth
+            />
+          </Stack>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateVersion}
+            disabled={actionLoading || !createForm.version.trim()}
+            sx={{ bgcolor: "secondary.main" }}
+            startIcon={actionLoading ? <Loader2 size={16} className="animate-spin" /> : undefined}
+          >
+            创建
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Rollback Modal */}
-      <Dialog open={showRollbackModal} onOpenChange={setShowRollbackModal}>
+      <Dialog open={showRollbackModal} onClose={() => setShowRollbackModal(false)}>
+        <DialogTitle>回滚到 v{selectedVersion?.version}</DialogTitle>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>回滚到 v{selectedVersion?.version}</DialogTitle>
-            <DialogDescription>
-              {selectedVersion && (
-                <>
-                  <p>
-                    确定要回滚到版本 <strong>v{selectedVersion.version}</strong>{" "}
-                    吗？
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    当前工作流将被更新为该版本的内容。
-                  </p>
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="rollback_reason">回滚原因</Label>
-            <Textarea
-              id="rollback_reason"
-              value={rollbackForm.reason}
-              onChange={(e) =>
-                setRollbackForm({ ...rollbackForm, reason: e.target.value })
-              }
-              rows={3}
-              placeholder="可选：输入回滚原因"
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowRollbackModal(false);
-                setSelectedVersion(null);
-                setRollbackForm({ reason: "" });
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleRollback}
-              disabled={actionLoading}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              {actionLoading && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
-              确认回滚
-            </Button>
-          </DialogFooter>
+          {selectedVersion && (
+            <>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                确定要回滚到版本 <strong>v{selectedVersion.version}</strong> 吗？
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                当前工作流将被更新为该版本的内容。
+              </Typography>
+            </>
+          )}
+          <TextField
+            size="small"
+            label="回滚原因"
+            value={rollbackForm.reason}
+            onChange={(e) => setRollbackForm({ ...rollbackForm, reason: e.target.value })}
+            placeholder="可选：输入回滚原因"
+            multiline
+            rows={3}
+            fullWidth
+            sx={{ mt: 2 }}
+          />
         </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowRollbackModal(false);
+              setSelectedVersion(null);
+              setRollbackForm({ reason: "" });
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleRollback}
+            disabled={actionLoading}
+            sx={{ bgcolor: "warning.main" }}
+            startIcon={actionLoading ? <Loader2 size={16} className="animate-spin" /> : undefined}
+          >
+            确认回滚
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

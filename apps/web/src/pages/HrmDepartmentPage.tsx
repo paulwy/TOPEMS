@@ -1,3 +1,24 @@
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  TextField,
+  InputLabel,
+  FormControl,
+  Select,
+  MenuItem,
+  Tooltip,
+  Box,
+  Divider,
+  InputAdornment,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Building2,
@@ -35,39 +56,6 @@ import {
   AIFormValidator,
 } from "../components/ai";
 import type { ValidateRequest, ValidationIssue, Suggestion } from "../types/ai";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { TreeNode } from "../components/TreeView";
 import TreeView from "../components/TreeView";
 
@@ -398,21 +386,19 @@ const HrmDepartmentPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, "default" | "secondary" | "outline"> = {
-      active: "default",
-      inactive: "secondary",
+    const colors: Record<string, "filled" | "outlined"> = {
+      active: "filled",
+      inactive: "outlined",
     };
     const labels: Record<string, string> = {
       active: "启用",
       inactive: "禁用",
     };
     return (
-      <Badge
-        variant={colors[status] || "outline"}
+      <Chip size="small"
+        variant={colors[status] || "outlined"}
         className="px-2 py-0.5 text-xs"
-      >
-        {labels[status] || status}
-      </Badge>
+        label={labels[status] || status} />
     );
   };
 
@@ -498,7 +484,7 @@ const HrmDepartmentPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Button
-                variant="ghost"
+                variant="text"
                 onClick={() => {
                   fetchDepartments();
                   setSelectedDeptId(undefined);
@@ -511,10 +497,10 @@ const HrmDepartmentPage: React.FC = () => {
               <div className="w-px h-6 bg-emerald-200" />
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold">部门管理</CardTitle>
-              <CardDescription className="text-emerald-600">
+              <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg font-semibold">部门管理</Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }} className="text-emerald-600">
                 {totalDepartments} 个部门
-              </CardDescription>
+              </Typography>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -532,39 +518,44 @@ const HrmDepartmentPage: React.FC = () => {
           <div className="lg:col-span-1 border-r border-slate-200 bg-slate-50">
             <div className="p-4">
               <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
+                <TextField
                   type="text"
                   placeholder="搜索部门..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="pl-9 h-9"
+                  size="small"
+                  fullWidth
+                  slotProps={{
+                    input: { startAdornment: <InputAdornment position="start"><Search className="w-4 h-4 text-slate-400" /></InputAdornment> }
+                  }}
                 />
               </div>
 
               <div className="flex items-center gap-2 mb-4">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-9 w-[120px]">
-                    <SelectValue placeholder="全部状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部状态</SelectItem>
-                    <SelectItem value="active">启用</SelectItem>
-                    <SelectItem value="inactive">禁用</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>全部状态</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    label="全部状态"
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">全部状态</MenuItem>
+                    <MenuItem value="active">启用</MenuItem>
+                    <MenuItem value="inactive">禁用</MenuItem>
+                  </Select>
+                </FormControl>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="outlined"
+                  size="small"
                   onClick={handleSearch}
                   className="h-9"
                 >
                   搜索
                 </Button>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="outlined"
+                  size="small"
                   onClick={handleReset}
                   className="h-9"
                 >
@@ -583,7 +574,7 @@ const HrmDepartmentPage: React.FC = () => {
                 <div className="p-8 text-center text-slate-500">
                   <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-sm">暂无部门数据</p>
-                  <Button onClick={handleAdd} size="sm" className="mt-3 gap-2">
+                  <Button onClick={handleAdd} size="small" className="mt-3 gap-2">
                     <Plus className="w-4 h-4" />
                     新增部门
                   </Button>
@@ -607,61 +598,46 @@ const HrmDepartmentPage: React.FC = () => {
                           <Building2 className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <CardTitle className="text-xl">
+                          <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-xl">
                             {selectedDept.name}
-                          </CardTitle>
+                          </Typography>
                           {selectedDept.code && (
-                            <CardDescription>
+                            <Typography variant="body2" sx={{ color: "grey.500" }}>
                               编码: {selectedDept.code}
-                            </CardDescription>
+                            </Typography>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(selectedDept.status)}
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleView(selectedDept)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>查看详情</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(selectedDept)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>编辑</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600"
-                                onClick={() => handleDelete(selectedDept.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>删除</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <Tooltip title="查看详情">
+                          <Button
+                            variant="text"
+                            size="small"
+                            onClick={() => handleView(selectedDept)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title="编辑">
+                          <Button
+                            variant="text"
+                            size="small"
+                            onClick={() => handleEdit(selectedDept)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title="删除">
+                          <Button
+                            variant="text"
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(selectedDept.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardHeader>
@@ -740,9 +716,9 @@ const HrmDepartmentPage: React.FC = () => {
 
                     {selectedDept.description && (
                       <div className="mb-6">
-                        <Label className="text-sm text-slate-500">
+                        <Typography variant="body2" color="text.secondary">
                           部门描述
-                        </Label>
+                        </Typography>
                         <p className="font-medium mt-1 text-slate-700">
                           {selectedDept.description}
                         </p>
@@ -751,13 +727,11 @@ const HrmDepartmentPage: React.FC = () => {
 
                     <Card>
                       <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
+                        <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2 text-base">
                           <Users className="w-5 h-5 text-blue-500" />
                           部门成员
-                          <Badge variant="outline" className="ml-auto text-xs">
-                            {employees.length} 人
-                          </Badge>
-                        </CardTitle>
+                          <Chip size="small" variant="outlined" className="ml-auto text-xs" label={`${employees.length} 人`} />
+                        </Typography>
                       </CardHeader>
                       <CardContent>
                         {employees.length === 0 ? (
@@ -780,18 +754,10 @@ const HrmDepartmentPage: React.FC = () => {
                                     <p className="font-semibold text-slate-900">
                                       {emp.name}
                                     </p>
-                                    <Badge
-                                      variant={
-                                        emp.status === "active"
-                                          ? "default"
-                                          : "outline"
-                                      }
+                                    <Chip size="small"
+                                      variant={emp.status === "active" ? "filled" : "outlined"}
                                       className="text-xs"
-                                    >
-                                      {emp.status === "active"
-                                        ? "在职"
-                                        : "离职"}
-                                    </Badge>
+                                      label={emp.status === "active" ? "在职" : "离职"} />
                                   </div>
                                   <p className="text-sm text-slate-500 mt-0.5">
                                     {emp.employee_no} ·{" "}
@@ -844,141 +810,127 @@ const HrmDepartmentPage: React.FC = () => {
         </div>
       </Card>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-lg">新增部门</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4 mt-4">
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新增部门</DialogTitle>
+        <DialogContent>
+          <form onSubmit={handleCreate} className="space-y-4 mt-2">
             <div className="space-y-2">
-              <Label htmlFor="create-name" className="text-sm font-medium">
-                部门名称 <span className="text-red-500">*</span>
-              </Label>
-              <Input
+              <InputLabel htmlFor="create-name" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                部门名称 <span style={{ color: '#ef4444' }}>*</span>
+              </InputLabel>
+              <TextField
                 id="create-name"
                 type="text"
                 required
                 value={(formData as Department)?.name || ""}
-                onChange={(e) => handleInputChange("name", e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("name", e.target.value)}
                 placeholder="请输入部门名称"
-                className="h-10"
+                size="small"
+                fullWidth
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="create-code" className="text-sm font-medium">
+              <InputLabel htmlFor="create-code" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                 部门编码
-              </Label>
+              </InputLabel>
               <div className="flex gap-2">
-                <Input
+                <TextField
                   id="create-code"
                   type="text"
                   value={(formData as Department)?.code || ""}
-                  onChange={(e) => handleInputChange("code", e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("code", e.target.value)}
                   placeholder="请输入部门编码"
-                  className="h-10 flex-1"
+                  size="small"
+                  fullWidth
                 />
                 <AIHelperButton
                   type="generate"
                   onClick={() => handleOpenAICodeGenerator("create")}
                   size="sm"
                   label="AI生成"
-                  variant="secondary"
+                  variant="default"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="create-company" className="text-sm font-medium">
+              <InputLabel htmlFor="create-company" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                 所属公司
-              </Label>
-              <Select
-                value={(formData as Department)?.company_id || ""}
-                onValueChange={(value) =>
-                  handleInputChange("company_id", value === "none" ? "" : value)
-                }
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="请选择公司" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">无</SelectItem>
+              </InputLabel>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={(formData as Department)?.company_id || ""}
+                  onChange={(e) => handleInputChange("company_id", e.target.value === "none" ? "" : e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="none">无</MenuItem>
                   {companies.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
+                    <MenuItem key={c.id} value={c.id}>
                       {c.name}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </Select>
+              </FormControl>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="create-parent" className="text-sm font-medium">
+              <InputLabel htmlFor="create-parent" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                 上级部门
-              </Label>
-              <Select
-                value={(formData as Department)?.parent_id || ""}
-                onValueChange={(value) =>
-                  handleInputChange("parent_id", value === "none" ? "" : value)
-                }
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="请选择" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">无</SelectItem>
+              </InputLabel>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={(formData as Department)?.parent_id || ""}
+                  onChange={(e) => handleInputChange("parent_id", e.target.value === "none" ? "" : e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="none">无</MenuItem>
                   {availableParentDepts.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
+                    <MenuItem key={d.id} value={d.id}>
                       {d.name}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </Select>
+              </FormControl>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label
-                  htmlFor="create-description"
-                  className="text-sm font-medium"
-                >
+                <InputLabel htmlFor="create-description" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                   部门描述
-                </Label>
+                </InputLabel>
                 <AIHelperButton
                   type="optimize"
                   onClick={() => handleOpenAITextOptimizer("create")}
                   size="sm"
-                  variant="secondary"
+                  variant="default"
                   label="AI 优化"
                 />
               </div>
-              <Textarea
+              <TextField
                 id="create-description"
                 value={(formData as Department)?.description || ""}
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("description", e.target.value)}
                 rows={3}
                 placeholder="请输入部门描述"
+                multiline
+                fullWidth
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="create-status" className="text-sm font-medium">
+              <InputLabel htmlFor="create-status" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                 状态
-              </Label>
-              <Select
-                value={(formData as Department)?.status || "active"}
-                onValueChange={(value) => handleInputChange("status", value)}
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="请选择" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">启用</SelectItem>
-                  <SelectItem value="inactive">禁用</SelectItem>
-                </SelectContent>
-              </Select>
+              </InputLabel>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={(formData as Department)?.status || "active"}
+                  onChange={(e) => handleInputChange("status", e.target.value)}
+                >
+                  <MenuItem value="active">启用</MenuItem>
+                  <MenuItem value="inactive">禁用</MenuItem>
+                </Select>
+              </FormControl>
             </div>
-            <DialogFooter className="mt-6 flex items-center justify-between">
+            <DialogActions sx={{ mt: 3, px: 0 }}>
               <Button
                 type="button"
-                variant="secondary"
+                variant="contained"
                 onClick={() => setShowCreateModal(false)}
               >
                 取消
@@ -988,47 +940,47 @@ const HrmDepartmentPage: React.FC = () => {
                   type="validate"
                   onClick={() => handleOpenAIFormValidator("create")}
                   size="sm"
-                  variant="secondary"
+                  variant="default"
                   label="AI 校验"
                 />
                 <Button type="submit">创建</Button>
               </div>
-            </DialogFooter>
+            </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-lg">编辑部门</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>编辑部门</DialogTitle>
+        <DialogContent>
           {selectedDepartment && (
-            <form onSubmit={handleUpdate} className="space-y-4 mt-4">
+            <form onSubmit={handleUpdate} className="space-y-4 mt-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-name" className="text-sm font-medium">
-                  部门名称 <span className="text-red-500">*</span>
-                </Label>
-                <Input
+                <InputLabel htmlFor="edit-name" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+                  部门名称 <span style={{ color: '#ef4444' }}>*</span>
+                </InputLabel>
+                <TextField
                   id="edit-name"
                   type="text"
                   required
                   value={(formData as Department)?.name || ""}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  className="h-10"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("name", e.target.value)}
+                  size="small"
+                  fullWidth
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-code" className="text-sm font-medium">
+                <InputLabel htmlFor="edit-code" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                   部门编码
-                </Label>
+                </InputLabel>
                 <div className="flex gap-2">
-                  <Input
+                  <TextField
                     id="edit-code"
                     type="text"
                     value={(formData as Department)?.code || ""}
-                    onChange={(e) => handleInputChange("code", e.target.value)}
-                    className="h-10 flex-1"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("code", e.target.value)}
+                    size="small"
+                    fullWidth
                   />
                   <AIHelperButton
                     type="generate"
@@ -1039,103 +991,83 @@ const HrmDepartmentPage: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-company" className="text-sm font-medium">
+                <InputLabel htmlFor="edit-company" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                   所属公司
-                </Label>
-                <Select
-                  value={(formData as Department)?.company_id || ""}
-                  onValueChange={(value) =>
-                    handleInputChange(
-                      "company_id",
-                      value === "none" ? "" : value,
-                    )
-                  }
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="请选择公司" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">无</SelectItem>
+                </InputLabel>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={(formData as Department)?.company_id || ""}
+                    onChange={(e) => handleInputChange("company_id", e.target.value === "none" ? "" : e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="none">无</MenuItem>
                     {companies.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+                      <MenuItem key={c.id} value={c.id}>
                         {c.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-parent" className="text-sm font-medium">
+                <InputLabel htmlFor="edit-parent" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                   上级部门
-                </Label>
-                <Select
-                  value={(formData as Department)?.parent_id || ""}
-                  onValueChange={(value) =>
-                    handleInputChange(
-                      "parent_id",
-                      value === "none" ? "" : value,
-                    )
-                  }
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="请选择" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">无</SelectItem>
+                </InputLabel>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={(formData as Department)?.parent_id || ""}
+                    onChange={(e) => handleInputChange("parent_id", e.target.value === "none" ? "" : e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="none">无</MenuItem>
                     {availableParentDepts.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
+                      <MenuItem key={d.id} value={d.id}>
                         {d.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="edit-description"
-                    className="text-sm font-medium"
-                  >
+                  <InputLabel htmlFor="edit-description" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                     部门描述
-                  </Label>
+                  </InputLabel>
                   <AIHelperButton
                     type="optimize"
                     onClick={() => handleOpenAITextOptimizer("edit")}
                     size="sm"
-                    variant="secondary"
+                    variant="default"
                     label="AI 优化"
                   />
                 </div>
-                <Textarea
+                <TextField
                   id="edit-description"
                   value={(formData as Department)?.description || ""}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("description", e.target.value)}
                   rows={3}
+                  multiline
+                  fullWidth
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-status" className="text-sm font-medium">
+                <InputLabel htmlFor="edit-status" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
                   状态
-                </Label>
-                <Select
-                  value={(formData as Department)?.status || "active"}
-                  onValueChange={(value) => handleInputChange("status", value)}
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="请选择" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">启用</SelectItem>
-                    <SelectItem value="inactive">禁用</SelectItem>
-                  </SelectContent>
-                </Select>
+                </InputLabel>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={(formData as Department)?.status || "active"}
+                    onChange={(e) => handleInputChange("status", e.target.value)}
+                  >
+                    <MenuItem value="active">启用</MenuItem>
+                    <MenuItem value="inactive">禁用</MenuItem>
+                  </Select>
+                </FormControl>
               </div>
-              <DialogFooter className="mt-6 flex items-center justify-between">
+              <DialogActions sx={{ mt: 3, px: 0 }}>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="contained"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedDepartment(null);
@@ -1148,33 +1080,31 @@ const HrmDepartmentPage: React.FC = () => {
                     type="validate"
                     onClick={() => handleOpenAIFormValidator("edit")}
                     size="sm"
-                    variant="secondary"
+                    variant="default"
                     label="AI 校验"
                   />
                   <Button type="submit">保存</Button>
                 </div>
-              </DialogFooter>
+              </DialogActions>
             </form>
           )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-lg">部门详情</DialogTitle>
-          </DialogHeader>
+      <Dialog open={showViewModal} onClose={() => setShowViewModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>部门详情</DialogTitle>
+        <DialogContent>
           {selectedDepartment && (
-            <div className="space-y-4 mt-4">
+            <div className="space-y-4 mt-2">
               <div className="space-y-2">
-                <Label className="text-sm text-gray-500">部门名称</Label>
+                <Typography variant="body2" color="text.secondary">部门名称</Typography>
                 <div className="font-medium text-slate-900">
                   {selectedDepartment.name}
                 </div>
               </div>
               {selectedDepartment.code && (
                 <div className="space-y-2">
-                  <Label className="text-sm text-gray-500">部门编码</Label>
+                  <Typography variant="body2" color="text.secondary">部门编码</Typography>
                   <div className="font-medium text-slate-900">
                     {selectedDepartment.code}
                   </div>
@@ -1182,7 +1112,7 @@ const HrmDepartmentPage: React.FC = () => {
               )}
               {selectedDepartment.parent_id && (
                 <div className="space-y-2">
-                  <Label className="text-sm text-gray-500">上级部门</Label>
+                  <Typography variant="body2" color="text.secondary">上级部门</Typography>
                   <div className="font-medium text-slate-900">
                     {departments.find(
                       (d) => d.id === selectedDepartment.parent_id,
@@ -1192,33 +1122,33 @@ const HrmDepartmentPage: React.FC = () => {
               )}
               {selectedDepartment.description && (
                 <div className="space-y-2">
-                  <Label className="text-sm text-gray-500">部门描述</Label>
+                  <Typography variant="body2" color="text.secondary">部门描述</Typography>
                   <div className="font-medium text-slate-900">
                     {selectedDepartment.description}
                   </div>
                 </div>
               )}
               <div className="space-y-2">
-                <Label className="text-sm text-gray-500">状态</Label>
+                <Typography variant="body2" color="text.secondary">状态</Typography>
                 <div>{getStatusBadge(selectedDepartment.status)}</div>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm text-gray-500">创建时间</Label>
+                <Typography variant="body2" color="text.secondary">创建时间</Typography>
                 <div className="font-medium text-slate-900">
                   {new Date(selectedDepartment.created_at).toLocaleString()}
                 </div>
               </div>
             </div>
           )}
-          <DialogFooter className="mt-6">
+          <DialogActions sx={{ mt: 3 }}>
             <Button
               type="button"
-              variant="secondary"
+              variant="contained"
               onClick={() => setShowViewModal(false)}
             >
               关闭
             </Button>
-          </DialogFooter>
+          </DialogActions>
         </DialogContent>
       </Dialog>
 

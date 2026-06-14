@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Users,
@@ -13,25 +14,12 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNotification } from "../hooks/useNotification";
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  MenuItem,
+} from "@mui/material";
 
 interface EmployeeSummary {
   total_employees: number;
@@ -106,6 +94,7 @@ const HrmReportsPage: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("month");
+  const [activeTab, setActiveTab] = useState<string>("overview");
 
   useEffect(() => {
     loadReports();
@@ -171,23 +160,19 @@ const HrmReportsPage: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
+              <FormControl size="small" sx={{ width: 120 }}>
+                <InputLabel>时间范围</InputLabel>
                 <Select
                   value={timeRange}
-                  onValueChange={(v) => setTimeRange(v)}
+                  label="时间范围"
+                  onChange={(e) => setTimeRange(e.target.value)}
                 >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="时间范围" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="week">本周</SelectItem>
-                    <SelectItem value="month">本月</SelectItem>
-                    <SelectItem value="quarter">本季度</SelectItem>
-                    <SelectItem value="year">本年</SelectItem>
-                  </SelectContent>
+                  <MenuItem value="week">本周</MenuItem>
+                  <MenuItem value="month">本月</MenuItem>
+                  <MenuItem value="quarter">本季度</MenuItem>
+                  <MenuItem value="year">本年</MenuItem>
                 </Select>
-              </div>
+              </FormControl>
               <Button>
                 <BarChart3 className="w-4 h-4 mr-2" />
                 导出报表
@@ -284,32 +269,42 @@ const HrmReportsPage: React.FC = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-[480px] grid-cols-4">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              概览
-            </TabsTrigger>
-            <TabsTrigger value="employee" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              员工分析
-            </TabsTrigger>
-            <TabsTrigger value="training" className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              培训分析
-            </TabsTrigger>
-            <TabsTrigger value="payroll" className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
-              薪资分析
-            </TabsTrigger>
-          </TabsList>
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v as string)}>
+            <Tab value="overview" label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <BarChart3 className="w-4 h-4" />
+                概览
+              </Box>
+            } />
+            <Tab value="employee" label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Users className="w-4 h-4" />
+                员工分析
+              </Box>
+            } />
+            <Tab value="training" label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <BookOpen className="w-4 h-4" />
+                培训分析
+              </Box>
+            } />
+            <Tab value="payroll" label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <DollarSign className="w-4 h-4" />
+                薪资分析
+              </Box>
+            } />
+          </Tabs>
+        </Box>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2">
+          {activeTab === "overview" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>部门人员分布</CardTitle>
-                  <CardDescription>各部门员工数量统计</CardDescription>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>部门人员分布</Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>各部门员工数量统计</Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -344,8 +339,8 @@ const HrmReportsPage: React.FC = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>合同到期提醒</CardTitle>
-                  <CardDescription>即将到期的合同统计</CardDescription>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>合同到期提醒</Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>即将到期的合同统计</Typography>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
@@ -355,7 +350,7 @@ const HrmReportsPage: React.FC = () => {
                         {contractSummary?.expiring_this_month || 0}
                       </p>
                     </div>
-                    <Badge variant="destructive">紧急</Badge>
+                    <Chip  size="small" color="error" label="紧急" />
                   </div>
                   <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                     <div>
@@ -364,7 +359,7 @@ const HrmReportsPage: React.FC = () => {
                         {contractSummary?.expiring_next_month || 0}
                       </p>
                     </div>
-                    <Badge variant="secondary">提醒</Badge>
+                    <Chip  size="small" variant="outlined" label="提醒" />
                   </div>
                   <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                     <div>
@@ -373,7 +368,7 @@ const HrmReportsPage: React.FC = () => {
                         {contractSummary?.active_contracts || 0}
                       </p>
                     </div>
-                    <Badge variant="default">正常</Badge>
+                    <Chip  size="small" label="正常" />
                   </div>
                 </CardContent>
               </Card>
@@ -382,8 +377,8 @@ const HrmReportsPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>考勤统计</CardTitle>
-                  <CardDescription>近期考勤情况分析</CardDescription>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>考勤统计</Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>近期考勤情况分析</Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-4 gap-4">
@@ -417,8 +412,8 @@ const HrmReportsPage: React.FC = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>培训统计</CardTitle>
-                  <CardDescription>培训计划与课程完成情况</CardDescription>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>培训统计</Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>培训计划与课程完成情况</Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
@@ -460,14 +455,16 @@ const HrmReportsPage: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </Box>
+          )}
 
-          <TabsContent value="employee" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
+          {activeTab === "employee" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
                 <CardHeader>
-                  <CardTitle>员工基本信息</CardTitle>
-                  <CardDescription>员工总数与状态分布</CardDescription>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>员工基本信息</Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>员工总数与状态分布</Typography>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
@@ -501,8 +498,8 @@ const HrmReportsPage: React.FC = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>性别分布</CardTitle>
-                  <CardDescription>男女性员工比例</CardDescription>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>性别分布</Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>男女性员工比例</Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-center">
@@ -575,8 +572,8 @@ const HrmReportsPage: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>月度人员变动</CardTitle>
-                <CardDescription>本月入职与离职统计</CardDescription>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>月度人员变动</Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>本月入职与离职统计</Typography>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -615,13 +612,15 @@ const HrmReportsPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </Box>
+          )}
 
-          <TabsContent value="training" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {activeTab === "training" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>培训计划</CardTitle>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>培训计划</Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -643,7 +642,7 @@ const HrmReportsPage: React.FC = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>培训课程</CardTitle>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>培训课程</Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -665,7 +664,7 @@ const HrmReportsPage: React.FC = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>培训记录</CardTitle>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>培训记录</Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -688,8 +687,8 @@ const HrmReportsPage: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>培训完成率趋势</CardTitle>
-                <CardDescription>培训完成情况分析</CardDescription>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>培训完成率趋势</Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>培训完成情况分析</Typography>
               </CardHeader>
               <CardContent>
                 <div className="h-64 flex items-end justify-between gap-4">
@@ -717,10 +716,12 @@ const HrmReportsPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </Box>
+          )}
 
-          <TabsContent value="payroll" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {activeTab === "payroll" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-4">
                   <p className="text-sm text-gray-500">薪资总额</p>
@@ -757,8 +758,8 @@ const HrmReportsPage: React.FC = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>薪资结构分析</CardTitle>
-                <CardDescription>薪资构成比例</CardDescription>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>薪资结构分析</Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>薪资构成比例</Typography>
               </CardHeader>
               <CardContent>
                 <div className="flex justify-center">
@@ -832,8 +833,8 @@ const HrmReportsPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </Box>
+          )}
       </div>
     </div>
   );

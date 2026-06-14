@@ -18,10 +18,15 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import Button from "@mui/material/Button";
+import {
+  Card as MuiCard,
+  CardContent,
+  CardHeader,
+} from "@mui/material";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
 import {
   useErpConnections,
   useCreateErpConnection,
@@ -148,11 +153,11 @@ export default function ExternalErpConnectionsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => refetch()}>
+          <Button variant="outlined" onClick={() => refetch()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             刷新
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
+          <Button variant="contained" onClick={() => setShowCreateModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
             新建连接
           </Button>
@@ -161,10 +166,11 @@ export default function ExternalErpConnectionsPage() {
 
       {/* 搜索栏 */}
       <div className="flex items-center gap-4">
-        <Input
+        <TextField
           placeholder="搜索连接名称..."
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
+          size="small"
           className="max-w-xs"
         />
       </div>
@@ -175,19 +181,19 @@ export default function ExternalErpConnectionsPage() {
           <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
         </div>
       ) : filteredConnections.length === 0 ? (
-        <Card>
+        <MuiCard>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Settings className="w-12 h-12 text-gray-400 mb-4" />
             <p className="text-gray-500">暂无外部ERP连接</p>
             <Button
-              variant="outline"
+              variant="outlined"
               className="mt-4"
               onClick={() => setShowCreateModal(true)}
             >
               创建第一个连接
             </Button>
           </CardContent>
-        </Card>
+        </MuiCard>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredConnections.map((connection: any) => {
@@ -204,7 +210,7 @@ export default function ExternalErpConnectionsPage() {
             const StatusIcon = statusConfig.icon;
 
             return (
-              <Card key={connection.id} className="relative overflow-hidden">
+              <MuiCard key={connection.id} className="relative overflow-hidden">
                 {/* 顶部颜色条 */}
                 <div
                   className={`absolute top-0 left-0 right-0 h-1 ${typeConfig.color}`}
@@ -220,9 +226,9 @@ export default function ExternalErpConnectionsPage() {
                         {typeConfig.logo}
                       </div>
                       <div>
-                        <CardTitle className="text-lg">
+                        <Typography variant="h6" className="text-lg">
                           {connection.name}
-                        </CardTitle>
+                        </Typography>
                         <p className="text-sm text-gray-500">
                           {typeConfig.name}
                         </p>
@@ -230,10 +236,12 @@ export default function ExternalErpConnectionsPage() {
                     </div>
 
                     {/* 状态徽章 */}
-                    <Badge className={statusConfig.color}>
-                      <StatusIcon className="w-3 h-3 mr-1" />
-                      {statusConfig.label}
-                    </Badge>
+                    <Chip
+                      icon={<StatusIcon className="w-3 h-3 mr-1" />}
+                      label={statusConfig.label}
+                      className={statusConfig.color}
+                      size="small"
+                    />
                   </div>
                 </CardHeader>
 
@@ -282,8 +290,7 @@ export default function ExternalErpConnectionsPage() {
                   {/* 操作按钮 */}
                   <div className="flex items-center gap-2 pt-2 border-t">
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      size="small"
                       className="flex-1"
                       onClick={() => setEditingConnection(connection)}
                     >
@@ -291,8 +298,7 @@ export default function ExternalErpConnectionsPage() {
                       编辑
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      size="small"
                       className="flex-1"
                       onClick={() => handleTestConnection(connection)}
                       disabled={testConnection.isPending}
@@ -301,19 +307,17 @@ export default function ExternalErpConnectionsPage() {
                       测试
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      size="small"
                       onClick={() => handleToggle(connection)}
                       disabled={toggleConnection.isPending}
                     >
                       <Power className="w-4 h-4" />
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      size="small"
                       onClick={() => handleDelete(connection.id)}
                       disabled={deleteConnection.isPending}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      color="error"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -321,8 +325,8 @@ export default function ExternalErpConnectionsPage() {
 
                   {/* 映射管理入口 */}
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="outlined"
+                    size="small"
                     className="w-full"
                     onClick={() =>
                       navigate(
@@ -334,7 +338,7 @@ export default function ExternalErpConnectionsPage() {
                     映射管理
                   </Button>
                 </CardContent>
-              </Card>
+              </MuiCard>
             );
           })}
         </div>
@@ -404,9 +408,9 @@ function ConnectionFormModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <MuiCard className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <CardHeader>
-          <CardTitle>{connection ? "编辑连接" : "新建连接"}</CardTitle>
+          <Typography variant="h6">{connection ? "编辑连接" : "新建连接"}</Typography>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -439,12 +443,14 @@ function ConnectionFormModal({
             {/* 连接名称 */}
             <div className="space-y-2">
               <label className="text-sm font-medium">连接名称</label>
-              <Input
+              <TextField
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="例如：生产环境金蝶K3"
+                size="small"
+                fullWidth
                 required
               />
             </div>
@@ -452,12 +458,14 @@ function ConnectionFormModal({
             {/* API地址 */}
             <div className="space-y-2">
               <label className="text-sm font-medium">API地址</label>
-              <Input
+              <TextField
                 value={formData.api_url}
                 onChange={(e) =>
                   setFormData({ ...formData, api_url: e.target.value })
                 }
                 placeholder="https://api.example.com"
+                size="small"
+                fullWidth
                 required
               />
             </div>
@@ -465,25 +473,29 @@ function ConnectionFormModal({
             {/* App Key */}
             <div className="space-y-2">
               <label className="text-sm font-medium">App Key</label>
-              <Input
+              <TextField
                 value={formData.app_key}
                 onChange={(e) =>
                   setFormData({ ...formData, app_key: e.target.value })
                 }
                 placeholder="应用Key"
+                size="small"
+                fullWidth
               />
             </div>
 
             {/* App Secret */}
             <div className="space-y-2">
               <label className="text-sm font-medium">App Secret</label>
-              <Input
+              <TextField
                 type="password"
                 value={formData.app_secret}
                 onChange={(e) =>
                   setFormData({ ...formData, app_secret: e.target.value })
                 }
                 placeholder="应用密钥"
+                size="small"
+                fullWidth
               />
             </div>
 
@@ -521,14 +533,14 @@ function ConnectionFormModal({
 
             {/* 按钮 */}
             <div className="flex items-center justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outlined" onClick={onClose}>
                 取消
               </Button>
-              <Button type="submit">{connection ? "保存" : "创建"}</Button>
+              <Button type="submit" variant="contained">{connection ? "保存" : "创建"}</Button>
             </div>
           </form>
         </CardContent>
-      </Card>
+      </MuiCard>
     </div>
   );
 }

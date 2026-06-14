@@ -12,18 +12,24 @@ import {
   AlertCircle,
   Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ehsApi } from "../../api/ehs";
@@ -265,8 +271,14 @@ const EhsHazardDetailPage: React.FC = () => {
           row.original.severity || "medium",
           row.original.likelihood || "medium",
         );
+        const colorMap: Record<string, { bg: string; color: string }> = {
+          '高风险': { bg: '#fee2e2', color: '#dc2626' },
+          '中风险': { bg: '#fef9c3', color: '#ca8a04' },
+          '低风险': { bg: '#dcfce7', color: '#16a34a' },
+        };
+        const colors = colorMap[`${riskResult.level}风险`] || { bg: '#f3f4f6', color: '#4b5563' };
         return (
-          <Badge className={riskResult.bgColor}>{riskResult.level}风险</Badge>
+          <Chip label={`${riskResult.level}风险`} size="small" sx={{ backgroundColor: colors.bg, color: colors.color }} />
         );
       },
     },
@@ -316,13 +328,12 @@ const EhsHazardDetailPage: React.FC = () => {
       header: "操作",
       cell: ({ row }) => (
         <Button
-          variant="ghost"
-          size="sm"
+          variant="text"
+          size="small"
           onClick={() => handleDeleteControl(row.original.id)}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+          sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
+          startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
+        />
       ),
     },
   ];
@@ -364,12 +375,11 @@ const EhsHazardDetailPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Button
-                variant="ghost"
-                size="icon"
+                variant="text"
                 onClick={() => navigate("/ehs")}
-                className="h-8 w-8"
+                sx={{ minWidth: 32, height: 32 }}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
               <div>
                 <h1 className="text-xl font-bold text-slate-900">危险源详情</h1>
@@ -378,18 +388,17 @@ const EhsHazardDetailPage: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={() => setShowControlModal(true)}
+                startIcon={<Box component={Plus} sx={{ fontSize: 16 }} />}
               >
-                <Plus className="w-4 h-4 mr-2" />
                 添加控制措施
               </Button>
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={() => setShowEditModal(true)}
-                className="flex items-center gap-2"
+                startIcon={<Box component={Edit3} sx={{ fontSize: 16 }} />}
               >
-                <Edit3 className="w-4 h-4" />
                 编辑
               </Button>
             </div>
@@ -401,11 +410,11 @@ const EhsHazardDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-orange-600" />
+              <CardHeader sx={{ pb: 1 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box component={AlertTriangle} sx={{ fontSize: 20, color: '#ea580c' }} />
                   危险源信息
-                </CardTitle>
+                </Typography>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-start">
@@ -487,14 +496,14 @@ const EhsHazardDetailPage: React.FC = () => {
 
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-orange-600" />
+              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box component={AlertTriangle} sx={{ fontSize: 20, color: '#ea580c' }} />
                   风险评估记录
-                </CardTitle>
-                <span className="text-sm text-slate-500">
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   共 {assessments.length} 条记录
-                </span>
+                </Typography>
               </CardHeader>
               <CardContent>
                 {assessments.length > 0 ? (
@@ -513,14 +522,14 @@ const EhsHazardDetailPage: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
+              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box component={Shield} sx={{ fontSize: 20, color: '#2563eb' }} />
                   控制措施
-                </CardTitle>
-                <span className="text-sm text-slate-500">
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   共 {controls.length} 条措施
-                </span>
+                </Typography>
               </CardHeader>
               <CardContent>
                 {controls.length > 0 ? (
@@ -534,12 +543,12 @@ const EhsHazardDetailPage: React.FC = () => {
                     <Shield className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p>暂无控制措施</p>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
+                      variant="outlined"
+                      size="small"
+                      sx={{ mt: 2 }}
                       onClick={() => setShowControlModal(true)}
+                      startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
                     >
-                      <Plus className="w-3 h-3 mr-1" />
                       添加控制措施
                     </Button>
                   </div>
@@ -551,28 +560,30 @@ const EhsHazardDetailPage: React.FC = () => {
       </main>
 
       {/* Edit Hazard Modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>编辑危险源</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>危险源名称 *</Label>
-              <Input
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="lg" fullWidth>
+        <DialogTitle>编辑危险源</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>危险源名称 *</Typography>
+              <TextField
+                size="small"
+                fullWidth
                 value={formData.name}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
                 placeholder="请输入危险源名称"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>分类</Label>
-                <Input
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>分类</Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.category}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({
                       ...prev,
                       category: e.target.value,
@@ -580,12 +591,14 @@ const EhsHazardDetailPage: React.FC = () => {
                   }
                   placeholder="请输入分类"
                 />
-              </div>
-              <div>
-                <Label>位置</Label>
-                <Input
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>位置</Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={formData.location}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData((prev) => ({
                       ...prev,
                       location: e.target.value,
@@ -593,152 +606,164 @@ const EhsHazardDetailPage: React.FC = () => {
                   }
                   placeholder="请输入位置"
                 />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>严重程度</Label>
-                <select
-                  value={formData.severity}
+              </Box>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>严重程度</Typography>
+                <FormControl fullWidth size="small">
+                  <InputLabel>严重程度</InputLabel>
+                  <Select
+                    value={formData.severity}
+                    label="严重程度"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        severity: e.target.value as "high" | "medium" | "low",
+                      }))
+                    }
+                  >
+                    <MenuItem value="high">高</MenuItem>
+                    <MenuItem value="medium">中</MenuItem>
+                    <MenuItem value="low">低</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>暴露频率</Typography>
+                <FormControl fullWidth size="small">
+                  <InputLabel>暴露频率</InputLabel>
+                  <Select
+                    value={formData.exposure}
+                    label="暴露频率"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        exposure: e.target.value as "high" | "medium" | "low",
+                      }))
+                    }
+                  >
+                    <MenuItem value="high">高</MenuItem>
+                    <MenuItem value="medium">中</MenuItem>
+                    <MenuItem value="low">低</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>发生概率</Typography>
+                <FormControl fullWidth size="small">
+                  <InputLabel>发生概率</InputLabel>
+                  <Select
+                    value={formData.likelihood}
+                    label="发生概率"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        likelihood: e.target.value as "high" | "medium" | "low",
+                      }))
+                    }
+                  >
+                    <MenuItem value="high">高</MenuItem>
+                    <MenuItem value="medium">中</MenuItem>
+                    <MenuItem value="low">低</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>状态</Typography>
+              <FormControl fullWidth size="small">
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={formData.status}
+                  label="状态"
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      severity: e.target.value as any,
+                      status: e.target.value as "active" | "controlled" | "eliminated" | "archived",
                     }))
                   }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="high">高</option>
-                  <option value="medium">中</option>
-                  <option value="low">低</option>
-                </select>
-              </div>
-              <div>
-                <Label>暴露频率</Label>
-                <select
-                  value={formData.exposure}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      exposure: e.target.value as any,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="high">高</option>
-                  <option value="medium">中</option>
-                  <option value="low">低</option>
-                </select>
-              </div>
-              <div>
-                <Label>发生概率</Label>
-                <select
-                  value={formData.likelihood}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      likelihood: e.target.value as any,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="high">高</option>
-                  <option value="medium">中</option>
-                  <option value="low">低</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <Label>状态</Label>
-              <select
-                value={formData.status}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    status: e.target.value as any,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="active">活动中</option>
-                <option value="controlled">已控制</option>
-                <option value="eliminated">已消除</option>
-                <option value="archived">已归档</option>
-              </select>
-            </div>
-            <div>
-              <Label>描述</Label>
-              <textarea
+                  <MenuItem value="active">活动中</MenuItem>
+                  <MenuItem value="controlled">已控制</MenuItem>
+                  <MenuItem value="eliminated">已消除</MenuItem>
+                  <MenuItem value="archived">已归档</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>描述</Typography>
+              <TextField
+                multiline
+                rows={3}
+                fullWidth
                 value={formData.description}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setFormData((prev) => ({
                     ...prev,
                     description: e.target.value,
                   }))
                 }
                 placeholder="请描述危险源..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-              取消
-            </Button>
-            <Button
-              onClick={handleUpdateHazard}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              保存更改
-            </Button>
-          </DialogFooter>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowEditModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleUpdateHazard} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>保存更改</Button>
+        </DialogActions>
       </Dialog>
 
       {/* Add Control Measure Modal */}
-      <Dialog open={showControlModal} onOpenChange={setShowControlModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>添加控制措施</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>措施类型 *</Label>
-              <select
-                value={controlFormData.measure_type}
-                onChange={(e) =>
-                  setControlFormData((prev) => ({
-                    ...prev,
-                    measure_type: e.target.value as any,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="engineering">工程控制</option>
-                <option value="administrative">管理控制</option>
-                <option value="ppe">个人防护</option>
-              </select>
-            </div>
-            <div>
-              <Label>措施描述 *</Label>
-              <textarea
+      <Dialog open={showControlModal} onClose={() => setShowControlModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>添加控制措施</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>措施类型 *</Typography>
+              <FormControl fullWidth size="small">
+                <InputLabel>措施类型</InputLabel>
+                <Select
+                  value={controlFormData.measure_type}
+                  label="措施类型"
+                  onChange={(e) =>
+                    setControlFormData((prev) => ({
+                      ...prev,
+                      measure_type: e.target.value as "engineering" | "administrative" | "ppe",
+                    }))
+                  }
+                >
+                  <MenuItem value="engineering">工程控制</MenuItem>
+                  <MenuItem value="administrative">管理控制</MenuItem>
+                  <MenuItem value="ppe">个人防护</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>措施描述 *</Typography>
+              <TextField
+                multiline
+                rows={3}
+                fullWidth
                 value={controlFormData.description}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                   setControlFormData((prev) => ({
                     ...prev,
                     description: e.target.value,
                   }))
                 }
                 placeholder="请描述具体的控制措施..."
-                className="w-full p-3 rounded-md border border-slate-200 resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>负责人</Label>
-                <Input
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>负责人</Typography>
+                <TextField
+                  size="small"
+                  fullWidth
                   value={controlFormData.responsible}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setControlFormData((prev) => ({
                       ...prev,
                       responsible: e.target.value,
@@ -746,37 +771,29 @@ const EhsHazardDetailPage: React.FC = () => {
                   }
                   placeholder="请输入负责人"
                 />
-              </div>
-              <div>
-                <Label>完成期限</Label>
-                <Input
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>完成期限</Typography>
+                <TextField
                   type="date"
+                  size="small"
+                  fullWidth
                   value={controlFormData.deadline}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setControlFormData((prev) => ({
                       ...prev,
                       deadline: e.target.value,
                     }))
                   }
                 />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowControlModal(false)}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleAddControl}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              添加措施
-            </Button>
-          </DialogFooter>
+              </Box>
+            </Box>
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowControlModal(false)}>取消</Button>
+          <Button variant="contained" onClick={handleAddControl} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>添加措施</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );

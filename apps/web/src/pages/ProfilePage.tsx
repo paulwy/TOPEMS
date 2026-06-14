@@ -22,22 +22,28 @@ import { useForm } from "react-hook-form";
 import { authApi, type User as UserType, type AccessLog } from "../api/iam";
 import { useAppStore } from "../store";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Card,
+  CardContent,
+  CardHeader,
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+  DialogContent,
+  DialogActions,
+  Avatar,
+  Switch,
+  FormControlLabel,
+  Chip,
+  Tabs,
+  Tab,
+  IconButton,
+  CircularProgress,
+  Divider,
+} from "@mui/material";
 
 interface ActivityItem {
   id: string;
@@ -85,7 +91,7 @@ const ProfilePage: React.FC = () => {
   const [user, setUserState] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -387,653 +393,468 @@ const ProfilePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error || !user) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-          <p className="text-red-600 dark:text-red-400">
-            {error || "无法获取用户信息"}
-          </p>
-          <Button className="mt-4" onClick={loadUserProfile}>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <AlertCircle size={48} style={{ color: "#ef4444", marginBottom: 12 }} />
+          <Typography color="error">{error || "无法获取用户信息"}</Typography>
+          <Button sx={{ mt: 2 }} variant="contained" onClick={loadUserProfile}>
             重试
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <User className="w-7 h-7 mr-3 text-blue-600" />
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1152, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft size={20} />
+              </IconButton>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
+                  <User size={28} style={{ marginRight: 12, color: "#2563eb" }} />
                   个人中心
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   管理您的个人信息和账户安全
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardContent className="p-6">
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative">
-                    <Avatar className="w-24 h-24 mb-4">
-                      {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt="Avatar" />
-                      ) : null}
-                      <AvatarFallback className="text-3xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                        {user.full_name?.charAt(0).toUpperCase() ||
-                          user.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-4 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors shadow-lg"
+      <Box sx={{ maxWidth: 1152, mx: "auto", px: 3, py: 3 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 2fr" }, gap: 3 }}>
+          <Box>
+            <Card sx={{ position: "sticky", top: 64 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                  <Box sx={{ position: "relative" }}>
+                    <Avatar
+                      src={avatarUrl || undefined}
+                      sx={{
+                        width: 96,
+                        height: 96,
+                        mb: 2,
+                        bgcolor: "primary.main",
+                        fontSize: 36,
+                      }}
                     >
-                      <Camera className="w-4 h-4" />
-                    </button>
+                      {user.full_name?.charAt(0).toUpperCase() ||
+                        user.username.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <IconButton
+                      onClick={() => fileInputRef.current?.click()}
+                      sx={{
+                        position: "absolute",
+                        bottom: 8,
+                        right: 0,
+                        bgcolor: "primary.main",
+                        color: "white",
+                        "&:hover": { bgcolor: "primary.dark" },
+                        width: 32,
+                        height: 32,
+                      }}
+                      size="small"
+                    >
+                      <Camera size={16} />
+                    </IconButton>
                     <input
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
                       onChange={handleAvatarUpload}
-                      className="hidden"
+                      style={{ display: "none" }}
                     />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     {user.full_name || user.username}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                     {user.email}
-                  </p>
-                  <div className="mt-4 w-full space-y-2">
-                    <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                      <User className="w-4 h-4" />
-                      <span>用户名: {user.username}</span>
-                    </div>
-                    <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Shield className="w-4 h-4" />
-                      <span>角色: {user.role || "普通用户"}</span>
-                    </div>
-                    <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                      <RefreshCw className="w-4 h-4" />
-                      <span>
-                        创建于:{" "}
-                        {new Date(user.created_at).toLocaleDateString("zh-CN")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  </Typography>
+                  <Box sx={{ mt: 2, width: "100%" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
+                      <User size={16} />
+                      <Typography variant="body2" color="text.secondary">
+                        用户名: {user.username}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 1 }}>
+                      <Shield size={16} />
+                      <Typography variant="body2" color="text.secondary">
+                        角色: {user.role || "普通用户"}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                      <RefreshCw size={16} />
+                      <Typography variant="body2" color="text.secondary">
+                        创建于: {new Date(user.created_at).toLocaleDateString("zh-CN")}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
-          </div>
+          </Box>
 
-          <div className="lg:col-span-2">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <Card>
-                <CardHeader className="pb-2">
-                  <TabsList>
-                    <TabsTrigger value="profile">
-                      <User className="w-4 h-4 mr-2" />
-                      个人信息
-                    </TabsTrigger>
-                    <TabsTrigger value="security">
-                      <Shield className="w-4 h-4 mr-2" />
-                      账户安全
-                    </TabsTrigger>
-                    <TabsTrigger value="activities">
-                      <Activity className="w-4 h-4 mr-2" />
-                      最近活动
-                    </TabsTrigger>
-                    <TabsTrigger value="notifications">
-                      <Bell className="w-4 h-4 mr-2" />
-                      通知设置
-                    </TabsTrigger>
-                    <TabsTrigger value="shortcuts">
-                      <Star className="w-4 h-4 mr-2" />
-                      快捷方式
-                    </TabsTrigger>
-                  </TabsList>
-                </CardHeader>
-                <CardContent>
-                  <TabsContent value="profile" className="mt-0">
-                    <form
-                      onSubmit={profileForm.handleSubmit(handleProfileUpdate)}
-                      className="space-y-6"
-                    >
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="full_name">姓名</Label>
-                          <Input
-                            id="full_name"
-                            {...profileForm.register("full_name")}
-                            placeholder="请输入姓名"
+          <Box>
+            <Card>
+              <CardHeader
+                sx={{ pb: 0 }}
+                title={
+                  <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+                    <Tab icon={<User size={16} />} iconPosition="start" label="个人信息" />
+                    <Tab icon={<Shield size={16} />} iconPosition="start" label="账户安全" />
+                    <Tab icon={<Activity size={16} />} iconPosition="start" label="最近活动" />
+                    <Tab icon={<Bell size={16} />} iconPosition="start" label="通知设置" />
+                    <Tab icon={<Star size={16} />} iconPosition="start" label="快捷方式" />
+                  </Tabs>
+                }
+              />
+              <CardContent>
+                {activeTab === 0 && (
+                  <Box
+                    component="form"
+                    onSubmit={profileForm.handleSubmit(handleProfileUpdate)}
+                    sx={{ "& > :not(style)": { mb: 3 } }}
+                  >
+                    <TextField
+                      fullWidth
+                      label="姓名"
+                      {...profileForm.register("full_name")}
+                      placeholder="请输入姓名"
+                      size="small"
+                    />
+                    <Box>
+                      <TextField
+                        fullWidth
+                        label="邮箱 *"
+                        type="email"
+                        {...profileForm.register("email", {
+                          required: "邮箱是必填项",
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: "请输入有效的邮箱地址",
+                          },
+                        })}
+                        placeholder="请输入邮箱"
+                        error={!!profileForm.formState.errors.email}
+                        helperText={profileForm.formState.errors.email?.message}
+                        size="small"
+                      />
+                    </Box>
+                    <TextField
+                      fullWidth
+                      label="用户名"
+                      value={user.username}
+                      disabled
+                      size="small"
+                    />
+                    <Box sx={{ display: "flex", gap: 1.5, pt: 2 }}>
+                      <Button type="submit" variant="contained" startIcon={<Save size={16} />}>
+                        保存更改
+                      </Button>
+                      <Button type="button" variant="outlined" onClick={() => profileForm.reset()}>
+                        重置
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+
+                {activeTab === 1 && (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Shield size={20} style={{ color: "#2563eb" }} />
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>修改密码</Typography>
+                          <Typography variant="body2" color="text.secondary">定期更新密码以保护账户安全</Typography>
+                        </Box>
+                      </Box>
+                      <Button variant="contained" onClick={() => setShowPasswordDialog(true)}>
+                        修改密码
+                      </Button>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Mail size={20} style={{ color: "#16a34a" }} />
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>邮箱验证</Typography>
+                          <Typography variant="body2" color="text.secondary">{user.email} 已验证</Typography>
+                        </Box>
+                      </Box>
+                      <CheckCircle2 size={20} style={{ color: "#22c55e" }} />
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Settings size={20} style={{ color: "#9333ea" }} />
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>登录状态</Typography>
+                          <Typography variant="body2" color="text.secondary">当前会话活跃中</Typography>
+                        </Box>
+                      </Box>
+                      <Button variant="outlined" onClick={authApi.logout}>
+                        退出登录
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+
+                {activeTab === 2 && (
+                  <Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>最近活动记录</Typography>
+                      <Button variant="text" size="small" startIcon={<RefreshCw size={16} />} onClick={loadActivities}>
+                        刷新
+                      </Button>
+                    </Box>
+                    {loadingActivities ? (
+                      <Box sx={{ textAlign: "center", py: 4 }}>
+                        <CircularProgress size={32} />
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>加载中...</Typography>
+                      </Box>
+                    ) : activities.length === 0 ? (
+                      <Box sx={{ textAlign: "center", py: 4 }}>
+                        <Clock size={48} style={{ color: "#9ca3af", marginBottom: 12 }} />
+                        <Typography color="text.secondary">暂无活动记录</Typography>
+                      </Box>
+                    ) : (
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                        {activities.map((activity) => (
+                          <Box
+                            key={activity.id}
+                            sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, p: 1.5, bgcolor: "grey.100", borderRadius: 1 }}
+                          >
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: activity.success ? "success.main" : "error.main",
+                                mt: 1,
+                              }}
+                            />
+                            <Box sx={{ flex: 1 }}>
+                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>{activity.action}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {new Date(activity.created_at).toLocaleString("zh-CN")}
+                                </Typography>
+                              </Box>
+                              <Typography variant="body2" color="text.secondary">
+                                {activity.resource}{activity.ip_address && ` · ${activity.ip_address}`}
+                              </Typography>
+                              {activity.error_message && (
+                                <Typography variant="caption" color="error">
+                                  {activity.error_message}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {activeTab === 3 && (
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>通知偏好设置</Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      {[
+                        { key: "email_enabled" as const, icon: Mail, label: "邮件通知", desc: "接收重要信息的邮件通知", color: "#2563eb" },
+                        { key: "system_enabled" as const, icon: Bell, label: "系统通知", desc: "接收系统消息和公告", color: "#ca8a04" },
+                        { key: "workflow_enabled" as const, icon: Activity, label: "工作流通知", desc: "接收工作流审批和任务提醒", color: "#16a34a" },
+                        { key: "document_enabled" as const, icon: FileText, label: "文档通知", desc: "接收文档更新和评论提醒", color: "#9333ea" },
+                        { key: "security_enabled" as const, icon: Shield, label: "安全通知", desc: "接收登录和账户安全提醒", color: "#dc2626" },
+                      ].map(({ key, icon: Icon, label, desc, color }) => (
+                        <Box key={key} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            <Icon size={20} style={{ color }} />
+                            <Box>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{label}</Typography>
+                              <Typography variant="body2" color="text.secondary">{desc}</Typography>
+                            </Box>
+                          </Box>
+                          <Switch
+                            checked={notificationSettings[key]}
+                            onChange={() => handleNotificationSettingChange(key)}
                           />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">邮箱 *</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            {...profileForm.register("email", {
-                              required: "邮箱是必填项",
-                              pattern: {
-                                value:
-                                  /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                message: "请输入有效的邮箱地址",
-                              },
-                            })}
-                            placeholder="请输入邮箱"
-                          />
-                          {profileForm.formState.errors.email && (
-                            <p className="text-sm text-red-500">
-                              {profileForm.formState.errors.email.message}
-                            </p>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="username">用户名</Label>
-                          <Input
-                            id="username"
-                            value={user.username}
-                            disabled
-                            className="bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex space-x-3 pt-4">
-                        <Button type="submit">
-                          <Save className="w-4 h-4 mr-2" />
-                          保存更改
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => profileForm.reset()}
-                        >
-                          重置
-                        </Button>
-                      </div>
-                    </form>
-                  </TabsContent>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
 
-                  <TabsContent value="security" className="mt-0">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Shield className="w-5 h-5 text-blue-600" />
-                          <div>
-                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                              修改密码
-                            </h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              定期更新密码以保护账户安全
-                            </p>
-                          </div>
-                        </div>
-                        <Button onClick={() => setShowPasswordDialog(true)}>
-                          修改密码
-                        </Button>
-                      </div>
+                {activeTab === 4 && (
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>我的快捷方式</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      选择您常用的功能添加到快捷方式
+                    </Typography>
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 2 }}>
+                      {[
+                        { id: "1", title: "仪表盘", icon: Activity, path: "/dashboard", color: "#3b82f6" },
+                        { id: "2", title: "文档中心", icon: FileText, path: "/documents", color: "#22c55e" },
+                        { id: "3", title: "工作流", icon: Activity, path: "/workflows", color: "#a855f7" },
+                        { id: "4", title: "通知中心", icon: Bell, path: "/notifications", color: "#eab308" },
+                        { id: "5", title: "AI助手", icon: Activity, path: "/ai", color: "#ec4899" },
+                        { id: "6", title: "消息中心", icon: MessageSquare, path: "/im", color: "#6366f1" },
+                      ].map((item) => {
+                        const isSelected = shortcuts.some((s) => s.id === item.id);
+                        const Icon = item.icon;
+                        return (
+                          <Box
+                            key={item.id}
+                            onClick={() =>
+                              handleShortcutToggle({
+                                id: item.id,
+                                title: item.title,
+                                icon: String(item.icon),
+                                path: item.path,
+                              })
+                            }
+                            sx={{
+                              p: 2,
+                              borderRadius: 1,
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                              border: 2,
+                              borderColor: isSelected ? "primary.main" : "transparent",
+                              bgcolor: isSelected ? "primary.50" : "grey.100",
+                              "&:hover": { borderColor: isSelected ? "primary.main" : "primary.light" },
+                            }}
+                          >
+                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                              <Box
+                                sx={{
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 1,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  mb: 1.5,
+                                  bgcolor: item.color,
+                                }}
+                              >
+                                <Icon size={24} style={{ color: "white" }} />
+                              </Box>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>{item.title}</Typography>
+                              {isSelected && (
+                                <Chip label="已添加" size="small" sx={{ mt: 1 }} />
+                              )}
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Box>
 
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Mail className="w-5 h-5 text-green-600" />
-                          <div>
-                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                              邮箱验证
-                            </h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {user.email} 已验证
-                            </p>
-                          </div>
-                        </div>
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Settings className="w-5 h-5 text-purple-600" />
-                          <div>
-                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                              登录状态
-                            </h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              当前会话活跃中
-                            </p>
-                          </div>
-                        </div>
-                        <Button variant="outline" onClick={authApi.logout}>
-                          退出登录
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="activities" className="mt-0">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                          最近活动记录
-                        </h4>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={loadActivities}
-                        >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          刷新
-                        </Button>
-                      </div>
-                      {loadingActivities ? (
-                        <div className="text-center py-8">
-                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                          <p className="mt-2 text-sm text-gray-500">
-                            加载中...
-                          </p>
-                        </div>
-                      ) : activities.length === 0 ? (
-                        <div className="text-center py-8">
-                          <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                          <p className="text-gray-500 dark:text-gray-400">
-                            暂无活动记录
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {activities.map((activity) => (
-                            <div
-                              key={activity.id}
-                              className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                            >
-                              <div
-                                className={`w-2 h-2 rounded-full mt-2 ${
-                                  activity.success
-                                    ? "bg-green-500"
-                                    : "bg-red-500"
-                                }`}
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {activity.action}
-                                  </p>
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(
-                                      activity.created_at,
-                                    ).toLocaleString("zh-CN")}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {activity.resource}
-                                  {activity.ip_address &&
-                                    ` · ${activity.ip_address}`}
-                                </p>
-                                {activity.error_message && (
-                                  <p className="text-xs text-red-500 mt-1">
-                                    {activity.error_message}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
+                    {shortcuts.length > 0 && (
+                      <Box sx={{ mt: 3 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>当前快捷方式</Typography>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                          {shortcuts.map((shortcut) => (
+                            <Chip
+                              key={shortcut.id}
+                              label={`${shortcut.title} ×`}
+                              variant="outlined"
+                              onClick={() => handleShortcutToggle(shortcut)}
+                              sx={{ cursor: "pointer" }}
+                            />
                           ))}
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        </Box>
+      </Box>
 
-                  <TabsContent value="notifications" className="mt-0">
-                    <div className="space-y-6">
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                          通知偏好设置
-                        </h4>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <Mail className="w-5 h-5 text-blue-600" />
-                              <div>
-                                <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                                  邮件通知
-                                </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  接收重要信息的邮件通知
-                                </p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={notificationSettings.email_enabled}
-                              onCheckedChange={() =>
-                                handleNotificationSettingChange("email_enabled")
-                              }
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <Bell className="w-5 h-5 text-yellow-600" />
-                              <div>
-                                <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                                  系统通知
-                                </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  接收系统消息和公告
-                                </p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={notificationSettings.system_enabled}
-                              onCheckedChange={() =>
-                                handleNotificationSettingChange(
-                                  "system_enabled",
-                                )
-                              }
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <Activity className="w-5 h-5 text-green-600" />
-                              <div>
-                                <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                                  工作流通知
-                                </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  接收工作流审批和任务提醒
-                                </p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={notificationSettings.workflow_enabled}
-                              onCheckedChange={() =>
-                                handleNotificationSettingChange(
-                                  "workflow_enabled",
-                                )
-                              }
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <FileText className="w-5 h-5 text-purple-600" />
-                              <div>
-                                <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                                  文档通知
-                                </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  接收文档更新和评论提醒
-                                </p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={notificationSettings.document_enabled}
-                              onCheckedChange={() =>
-                                handleNotificationSettingChange(
-                                  "document_enabled",
-                                )
-                              }
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <Shield className="w-5 h-5 text-red-600" />
-                              <div>
-                                <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                                  安全通知
-                                </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  接收登录和账户安全提醒
-                                </p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={notificationSettings.security_enabled}
-                              onCheckedChange={() =>
-                                handleNotificationSettingChange(
-                                  "security_enabled",
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="shortcuts" className="mt-0">
-                    <div className="space-y-6">
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                          我的快捷方式
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                          选择您常用的功能添加到快捷方式
-                        </p>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {[
-                            {
-                              id: "1",
-                              title: "仪表盘",
-                              icon: Activity,
-                              path: "/dashboard",
-                              color: "bg-blue-500",
-                            },
-                            {
-                              id: "2",
-                              title: "文档中心",
-                              icon: FileText,
-                              path: "/documents",
-                              color: "bg-green-500",
-                            },
-                            {
-                              id: "3",
-                              title: "工作流",
-                              icon: Activity,
-                              path: "/workflows",
-                              color: "bg-purple-500",
-                            },
-                            {
-                              id: "4",
-                              title: "通知中心",
-                              icon: Bell,
-                              path: "/notifications",
-                              color: "bg-yellow-500",
-                            },
-                            {
-                              id: "5",
-                              title: "AI助手",
-                              icon: Activity,
-                              path: "/ai",
-                              color: "bg-pink-500",
-                            },
-                            {
-                              id: "6",
-                              title: "消息中心",
-                              icon: MessageSquare,
-                              path: "/im",
-                              color: "bg-indigo-500",
-                            },
-                          ].map((item) => {
-                            const isSelected = shortcuts.some(
-                              (s) => s.id === item.id,
-                            );
-                            const Icon = item.icon;
-                            return (
-                              <div
-                                key={item.id}
-                                onClick={() =>
-                                  handleShortcutToggle({
-                                    id: item.id,
-                                    title: item.title,
-                                    icon: String(item.icon),
-                                    path: item.path,
-                                  })
-                                }
-                                className={`p-4 rounded-lg cursor-pointer transition-all ${
-                                  isSelected
-                                    ? "bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500"
-                                    : "bg-gray-50 dark:bg-gray-800 border-2 border-transparent hover:border-blue-300"
-                                }`}
-                              >
-                                <div className="flex flex-col items-center text-center">
-                                  <div
-                                    className={`w-12 h-12 ${item.color} rounded-lg flex items-center justify-center mb-3`}
-                                  >
-                                    <Icon className="w-6 h-6 text-white" />
-                                  </div>
-                                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {item.title}
-                                  </p>
-                                  {isSelected && (
-                                    <Badge
-                                      variant="default"
-                                      className="mt-2 text-xs"
-                                    >
-                                      已添加
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {shortcuts.length > 0 && (
-                        <div>
-                          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">
-                            当前快捷方式
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {shortcuts.map((shortcut) => (
-                              <Badge
-                                key={shortcut.id}
-                                variant="secondary"
-                                className="px-3 py-1 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/20"
-                                onClick={() => handleShortcutToggle(shortcut)}
-                              >
-                                {shortcut.title} ×
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                </CardContent>
-              </Card>
-            </Tabs>
-          </div>
-        </div>
-      </div>
-
-      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>修改密码</DialogTitle>
-            <DialogDescription>
+      <Dialog open={showPasswordDialog} onClose={() => setShowPasswordDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>修改密码</DialogTitle>
+        <Box
+          component="form"
+          onSubmit={passwordForm.handleSubmit(handlePasswordChange)}
+        >
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography variant="body2" color="text.secondary">
               请输入当前密码和新密码来完成密码修改
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={passwordForm.handleSubmit(handlePasswordChange)}
-            className="space-y-4 py-2"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="current_password">当前密码 *</Label>
-              <Input
-                id="current_password"
-                type="password"
-                {...passwordForm.register("current_password", {
-                  required: "当前密码是必填项",
-                })}
-                placeholder="请输入当前密码"
-              />
-              {passwordForm.formState.errors.current_password && (
-                <p className="text-sm text-red-500">
-                  {passwordForm.formState.errors.current_password.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new_password">新密码 *</Label>
-              <Input
-                id="new_password"
-                type="password"
-                {...passwordForm.register("new_password", {
-                  required: "新密码是必填项",
-                  minLength: {
-                    value: 6,
-                    message: "密码长度至少为6位",
-                  },
-                })}
-                placeholder="请输入新密码（至少6位）"
-              />
-              {passwordForm.formState.errors.new_password && (
-                <p className="text-sm text-red-500">
-                  {passwordForm.formState.errors.new_password.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm_password">确认新密码 *</Label>
-              <Input
-                id="confirm_password"
-                type="password"
-                {...passwordForm.register("confirm_password", {
-                  required: "请再次输入新密码",
-                })}
-                placeholder="请再次输入新密码"
-              />
-              {passwordForm.formState.errors.confirm_password && (
-                <p className="text-sm text-red-500">
-                  {passwordForm.formState.errors.confirm_password.message}
-                </p>
-              )}
-            </div>
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setShowPasswordDialog(false);
-                  passwordForm.reset();
-                }}
-              >
-                取消
-              </Button>
-              <Button type="submit">
-                <Save className="w-4 h-4 mr-2" />
-                确认修改
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
+            </Typography>
+            <TextField
+              fullWidth
+              label="当前密码 *"
+              type="password"
+              {...passwordForm.register("current_password", {
+                required: "当前密码是必填项",
+              })}
+              placeholder="请输入当前密码"
+              error={!!passwordForm.formState.errors.current_password}
+              helperText={passwordForm.formState.errors.current_password?.message}
+              size="small"
+            />
+            <TextField
+              fullWidth
+              label="新密码 *"
+              type="password"
+              {...passwordForm.register("new_password", {
+                required: "新密码是必填项",
+                minLength: { value: 6, message: "密码长度至少为6位" },
+              })}
+              placeholder="请输入新密码（至少6位）"
+              error={!!passwordForm.formState.errors.new_password}
+              helperText={passwordForm.formState.errors.new_password?.message}
+              size="small"
+            />
+            <TextField
+              fullWidth
+              label="确认新密码 *"
+              type="password"
+              {...passwordForm.register("confirm_password", {
+                required: "请再次输入新密码",
+              })}
+              placeholder="请再次输入新密码"
+              error={!!passwordForm.formState.errors.confirm_password}
+              helperText={passwordForm.formState.errors.confirm_password?.message}
+              size="small"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setShowPasswordDialog(false);
+                passwordForm.reset();
+              }}
+            >
+              取消
+            </Button>
+            <Button type="submit" variant="contained" startIcon={<Save size={16} />}>
+              确认修改
+            </Button>
+          </DialogActions>
+        </Box>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

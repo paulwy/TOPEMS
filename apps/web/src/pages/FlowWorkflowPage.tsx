@@ -10,7 +10,6 @@ import {
   Pause,
   Copy,
   History,
-  Loader2,
   GitBranch,
   CheckCircle,
   XCircle,
@@ -22,29 +21,32 @@ import { flowApi, CreateWorkflowRequest } from "../api/flow";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  Box,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import {
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
+  InputAdornment,
+  IconButton,
+  Switch,
+  FormControlLabel,
   Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ModeToggle } from "@/components/ModeToggle";
+  Skeleton,
+  Tabs,
+  Tab,
+  CircularProgress,
+} from "@mui/material";
 
 const FlowWorkflowPage: React.FC = () => {
   const navigate = useNavigate();
@@ -207,125 +209,100 @@ const FlowWorkflowPage: React.FC = () => {
         accessorKey: "name",
         header: "工作流名称",
         cell: ({ row }) => (
-          <div className="flex items-center">
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             <GitBranch className="w-4 h-4 mr-2 text-gray-400" />
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {row.original.name}
-            </span>
-          </div>
+            <Typography sx={{ fontWeight: "medium" }}>{row.original.name}</Typography>
+          </Box>
         ),
       },
       {
         accessorKey: "description",
         header: "描述",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <Typography variant="body2" color="text.secondary">
             {row.original.description || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "is_active",
         header: "状态",
         cell: ({ row }) => (
-          <Badge variant={row.original.is_active ? "default" : "secondary"}>
-            {row.original.is_active ? "已启用" : "已停用"}
-          </Badge>
+          <Chip
+            size="small"
+            color={row.original.is_active ? "success" : "default"}
+            label={row.original.is_active ? "已启用" : "已停用"}
+          />
         ),
       },
       {
         accessorKey: "created_at",
         header: "创建时间",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <Typography variant="body2" color="text.secondary">
             {new Date(row.original.created_at).toLocaleString("zh-CN")}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "updated_at",
         header: "更新时间",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <Typography variant="body2" color="text.secondary">
             {new Date(row.original.updated_at).toLocaleString("zh-CN")}
-          </span>
+          </Typography>
         ),
       },
       {
         id: "actions",
         header: "操作",
         cell: ({ row }) => (
-          <div className="flex items-center space-x-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      navigate(`/workflow-designer?id=${row.original.id}`)
-                    }
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>编辑设计</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Tooltip title="编辑设计">
+              <IconButton
+                size="small"
+                onClick={() =>
+                  navigate(`/workflow-designer?id=${row.original.id}`)
+                }
+              >
+                <Edit className="w-4 h-4" />
+              </IconButton>
+            </Tooltip>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      navigate(`/flow/history?id=${row.original.id}`)
-                    }
-                  >
-                    <History className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>版本历史</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip title="版本历史">
+              <IconButton
+                size="small"
+                onClick={() =>
+                  navigate(`/flow/history?id=${row.original.id}`)
+                }
+              >
+                <History className="w-4 h-4" />
+              </IconButton>
+            </Tooltip>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleToggleActive(row.original)}
-                  >
-                    {row.original.is_active ? (
-                      <Pause className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {row.original.is_active ? "停用" : "启用"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip title={row.original.is_active ? "停用" : "启用"}>
+              <IconButton
+                size="small"
+                onClick={() => handleToggleActive(row.original)}
+              >
+                {row.original.is_active ? (
+                  <Pause className="w-4 h-4" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+              </IconButton>
+            </Tooltip>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteWorkflow(row.original.id)}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-600" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>删除</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+            <Tooltip title="删除">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleDeleteWorkflow(row.original.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         ),
       },
     ],
@@ -339,110 +316,106 @@ const FlowWorkflowPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-              <GitBranch className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                工作流管理
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                设计和管理审批流程
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <ModeToggle />
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="w-5 h-5 mr-2" />
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft className="w-5 h-5" />
+              </IconButton>
+              <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <GitBranch className="w-6 h-6 text-primary.main" />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold" }}>工作流管理</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  设计和管理审批流程
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<Plus className="w-5 h-5" />}
+              onClick={() => setShowCreateDialog(true)}
+            >
               创建工作流
             </Button>
-          </div>
-        </div>
-      </div>
+          </Box>
+        </CardContent>
+      </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2, mb: 3 }}>
         <Card
-          className={`cursor-pointer transition-all ${statusFilter === "all" ? "ring-2 ring-blue-500" : ""}`}
+          sx={{ cursor: "pointer", border: statusFilter === "all" ? 2 : 0, borderColor: "primary.main" }}
           onClick={() => setStatusFilter("all")}
         >
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {stats.total}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              全部工作流
-            </div>
+          <CardContent>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }}>{stats.total}</Typography>
+            <Typography variant="body2" color="text.secondary">全部工作流</Typography>
           </CardContent>
         </Card>
         <Card
-          className={`cursor-pointer transition-all ${statusFilter === "active" ? "ring-2 ring-blue-500" : ""}`}
+          sx={{ cursor: "pointer", border: statusFilter === "active" ? 2 : 0, borderColor: "primary.main" }}
           onClick={() => setStatusFilter("active")}
         >
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {stats.active}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              已启用
-            </div>
+          <CardContent>
+            <Typography variant="h4" color="success.main" sx={{ fontWeight: "bold" }}>{stats.active}</Typography>
+            <Typography variant="body2" color="text.secondary">已启用</Typography>
           </CardContent>
         </Card>
         <Card
-          className={`cursor-pointer transition-all ${statusFilter === "inactive" ? "ring-2 ring-blue-500" : ""}`}
+          sx={{ cursor: "pointer", border: statusFilter === "inactive" ? 2 : 0, borderColor: "primary.main" }}
           onClick={() => setStatusFilter("inactive")}
         >
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-              {stats.inactive}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              已停用
-            </div>
+          <CardContent>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }} color="text.secondary">{stats.inactive}</Typography>
+            <Typography variant="body2" color="text.secondary">已停用</Typography>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="text"
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              size="small"
               placeholder="搜索工作流名称..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search className="w-5 h-5 text-gray-400" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ flex: 1 }}
             />
-          </div>
-          <Button variant="secondary" onClick={loadWorkflows}>
-            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-            刷新
-          </Button>
-        </div>
-      </div>
+            <Button variant="outlined" onClick={loadWorkflows}>
+              {loading ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+              刷新
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent>
           {loading ? (
-            <div className="p-8 space-y-4">
+            <Box sx={{ p: 4, display: "flex", flexDirection: "column", gap: 2 }}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                </div>
+                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Skeleton variant="circular" width={48} height={48} />
+                  <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Skeleton variant="text" width="75%" />
+                    <Skeleton variant="text" width="50%" />
+                  </Box>
+                </Box>
               ))}
-            </div>
+            </Box>
           ) : (
             <DataTable
               columns={columns}
@@ -454,62 +427,54 @@ const FlowWorkflowPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>新建工作流</DialogTitle>
-            <DialogDescription>创建一个新的工作流定义</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">工作流名称 *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="请输入工作流名称"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">描述</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="请输入工作流描述"
-                rows={3}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_active: checked })
-                }
-              />
-              <Label htmlFor="is_active">启用工作流</Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateDialog(false)}
-            >
-              取消
-            </Button>
-            <Button onClick={handleCreateWorkflow} disabled={creating}>
-              {creating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              创建并设计
-            </Button>
-          </DialogFooter>
+      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新建工作流</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <TextField
+              size="small"
+              label="工作流名称 *"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="请输入工作流名称"
+              fullWidth
+            />
+            <TextField
+              size="small"
+              label="描述"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="请输入工作流描述"
+              multiline
+              rows={3}
+              fullWidth
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                />
+              }
+              label="启用工作流"
+            />
+          </Box>
         </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setShowCreateDialog(false)}>
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateWorkflow}
+            disabled={creating}
+            startIcon={creating ? <CircularProgress size={16} /> : null}
+          >
+            创建并设计
+          </Button>
+        </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

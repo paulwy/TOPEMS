@@ -1,15 +1,23 @@
 import React, { useCallback } from "react";
 import {
-  Input,
-  Textarea,
+  TextField,
   Select,
-  SelectItem,
+  MenuItem,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
   Checkbox,
-  DatePicker,
   Button,
-  Form,
   Card,
-} from "@nextui-org/react";
+  CardContent,
+  CardHeader,
+  InputLabel,
+  Box,
+} from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 
 export interface FormFieldConfig {
   name: string;
@@ -62,117 +70,197 @@ export default function FormBuilder({
   initialValues = {},
   colCount = 2,
 }: FormBuilderConfig) {
+  const [values, setValues] = React.useState<Record<string, any>>(() => {
+    const initial: Record<string, any> = {};
+    fields.forEach((field) => {
+      initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? "";
+    });
+    return initial;
+  });
+
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  const handleChange = useCallback((name: string, value: any) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  }, []);
+
+  const validateField = useCallback((field: FormFieldConfig, value: any): string => {
+    if (field.required && !value) {
+      return `${field.label}为必填项`;
+    }
+    if (field.validation) {
+      const { minLength, maxLength, min, max, pattern, custom } = field.validation;
+      if (minLength && value.length < minLength) {
+        return `${field.label}长度不能少于${minLength}个字符`;
+      }
+      if (maxLength && value.length > maxLength) {
+        return `${field.label}长度不能超过${maxLength}个字符`;
+      }
+      if (min !== undefined && Number(value) < min) {
+        return `${field.label}不能小于${min}`;
+      }
+      if (max !== undefined && Number(value) > max) {
+        return `${field.label}不能大于${max}`;
+      }
+      if (pattern && !pattern.test(value)) {
+        return `${field.label}格式不正确`;
+      }
+      if (custom) {
+        return custom(value) || "";
+      }
+    }
+    return "";
+  }, []);
+
   const handleSubmit = useCallback(
-    async (values: Record<string, any>) => {
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      const newErrors: Record<string, string> = {};
+      fields.forEach((field) => {
+        const error = validateField(field, values[field.name]);
+        if (error) newErrors[field.name] = error;
+      });
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+
       await onSubmit(values);
     },
-    [onSubmit],
+    [fields, values, validateField, onSubmit],
   );
+
+  const handleReset = useCallback(() => {
+    const initial: Record<string, any> = {};
+    fields.forEach((field) => {
+      initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? "";
+    });
+    setValues(initial);
+    setErrors({});
+  }, [fields, initialValues]);
 
   const renderField = useCallback(
     (field: FormFieldConfig) => {
       const isRequired = field.required ?? false;
       const isDisabled = field.disabled ?? false;
-      const defaultValue = initialValues[field.name] ?? field.defaultValue;
+      const value = values[field.name];
+      const error = errors[field.name];
 
       switch (field.type) {
         case "text":
         case "email":
         case "password":
+        case "number":
           return (
-            <Input
+            <TextField
               key={field.name}
               name={field.name}
               label={field.label}
               type={field.type}
               placeholder={field.placeholder}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue}
-            />
-          );
-        case "number":
-          return (
-            <Input
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              type="number"
-              placeholder={field.placeholder}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue?.toString()}
+              required={isRequired}
+              disabled={isDisabled}
+              value={value}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              error={!!error}
+              helperText={error}
+              fullWidth
+              size="small"
             />
           );
         case "textarea":
           return (
-            <Textarea
+            <TextField
               key={field.name}
               name={field.name}
               label={field.label}
               placeholder={field.placeholder}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue}
+              required={isRequired}
+              disabled={isDisabled}
+              value={value}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              error={!!error}
+              helperText={error}
+              fullWidth
+              multiline
+              rows={4}
+              size="small"
             />
           );
         case "select":
           return (
-            <Select
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultSelectedKeys={
-                defaultValue ? [String(defaultValue)] : undefined
-              }
-            >
-              {(field.options || []).map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </Select>
+            <FormControl key={field.name} fullWidth size="small" required={isRequired} disabled={isDisabled} error={!!error}>
+              <InputLabel>{field.label}</InputLabel>
+              <Select
+                name={field.name}
+                value={value}
+                label={field.label}
+                onChange={(e) => handleChange(field.name, e.target.value)}
+              >
+                {(field.options || []).map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           );
         case "checkbox":
           return (
-            <Checkbox
+            <FormControlLabel
               key={field.name}
-              name={field.name}
-              isSelected={defaultValue || false}
-              isDisabled={isDisabled}
-            >
-              {field.label}
-            </Checkbox>
+              control={
+                <Checkbox
+                  checked={!!value}
+                  disabled={isDisabled}
+                  onChange={(e) => handleChange(field.name, e.target.checked)}
+                />
+              }
+              label={field.label}
+            />
           );
         case "date":
           return (
-            <DatePicker
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-              defaultValue={defaultValue}
-            />
+            <LocalizationProvider key={field.name} dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label={field.label}
+                value={value ? dayjs(value) : null}
+                onChange={(newValue) => handleChange(field.name, newValue?.toISOString())}
+                disabled={isDisabled}
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    fullWidth: true,
+                    required: isRequired,
+                    error: !!error,
+                    helperText: error,
+                  },
+                }}
+              />
+            </LocalizationProvider>
           );
         case "file":
           return (
-            <Input
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              type="file"
-              isRequired={isRequired}
-              isDisabled={isDisabled}
-            />
+            <Button key={field.name} variant="outlined" component="label" disabled={isDisabled}>
+              {field.label}
+              <input
+                type="file"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  handleChange(field.name, file);
+                }}
+              />
+            </Button>
           );
         default:
           if (field.render) {
             return field.render({
               name: field.name,
-              defaultValue,
+              value,
+              onChange: (v: any) => handleChange(field.name, v),
               isRequired,
               isDisabled,
             });
@@ -180,67 +268,58 @@ export default function FormBuilder({
           return null;
       }
     },
-    [initialValues],
+    [values, errors, handleChange],
   );
 
   const renderForm = () => {
     if (fields.length === 1 || colCount === 1) {
       return (
-        <div className="flex flex-col gap-4">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {fields.map((field) => (
-            <div key={field.name}>{renderField(field)}</div>
+            <Box key={field.name}>{renderField(field)}</Box>
           ))}
-        </div>
+        </Box>
       );
     }
 
     return (
-      <div
-        className="grid gap-4"
-        style={{ gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))` }}
+      <Box
+        sx={{
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+        }}
       >
         {fields.map((field) => (
-          <div
+          <Box
             key={field.name}
-            style={{ gridColumn: `span ${field.colSpan || 1}` }}
+            sx={{ gridColumn: `span ${field.colSpan || 1}` }}
           >
             {renderField(field)}
-          </div>
+          </Box>
         ))}
-      </div>
+      </Box>
     );
   };
 
-  const handleReset = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-  }, []);
-
   return (
     <Card>
-      {title && (
-        <div className="px-6 pt-4">
-          <h3 className="text-lg font-semibold">{title}</h3>
-        </div>
-      )}
-      <div className="p-6">
-        <Form
-          onSubmit={handleSubmit}
-          onReset={handleReset}
-          className="flex flex-col gap-6"
-        >
+      {title && <CardHeader title={title} />}
+      <CardContent>
+        <form onSubmit={handleSubmit} onReset={handleReset}>
           {renderForm()}
-          <div className="flex gap-3 justify-end">
+          <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 3 }}>
             {showReset && (
-              <Button type="reset" variant="light">
+              <Button type="reset" variant="outlined">
                 {resetLabel}
               </Button>
             )}
-            <Button type="submit" color="primary">
+            <Button type="submit" variant="contained">
               {submitLabel}
             </Button>
-          </div>
-        </Form>
-      </div>
+          </Box>
+        </form>
+      </CardContent>
     </Card>
   );
 }

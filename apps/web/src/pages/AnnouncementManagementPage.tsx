@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Tooltip, IconButton } from "@mui/material";
 import {
   Bell,
   Search,
@@ -16,33 +17,7 @@ import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface AnnouncementManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -247,11 +222,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   const getStatusBadge = (status: string) => {
     const colors: Record<
       string,
-      "default" | "secondary" | "destructive" | "outline" | "success"
+      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
     > = {
-      draft: "secondary",
+      draft: "default",
       published: "success",
-      archived: "outline",
+      archived: "default",
     };
     const labels: Record<string, string> = {
       draft: "草稿",
@@ -259,21 +234,19 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       archived: "已归档",
     };
     return (
-      <Badge variant={colors[status] || "outline"}>
-        {labels[status] || status}
-      </Badge>
+      <Chip size="small" color={colors[status] || "default"} label={labels[status] || status} />
     );
   };
 
   const getPriorityBadge = (priority?: string) => {
     const colors: Record<
       string,
-      "default" | "secondary" | "destructive" | "outline"
+      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
     > = {
-      low: "outline",
-      normal: "secondary",
-      high: "default",
-      urgent: "destructive",
+      low: "default",
+      normal: "info",
+      high: "warning",
+      urgent: "error",
     };
     const labels: Record<string, string> = {
       low: "低",
@@ -282,9 +255,7 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       urgent: "紧急",
     };
     return (
-      <Badge variant={colors[priority || "normal"] || "outline"}>
-        {labels[priority || "normal"] || priority}
-      </Badge>
+      <Chip size="small" color={colors[priority || "normal"] || "default"} label={labels[priority || "normal"] || priority} />
     );
   };
 
@@ -294,19 +265,19 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         accessorKey: "title",
         header: "标题",
         cell: ({ row }) => (
-          <div className="font-medium text-slate-900 dark:text-slate-100">
+          <Box sx={{ fontWeight: "medium", color: "text.primary" }}>
             {row.original.title}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "author",
         header: "作者",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-900 dark:text-slate-100">
-            <User className="w-3 h-3 mr-1 text-blue-600" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem" }}>
+            <User size={12} style={{ marginRight: 4, color: "#1976d2" }} />
             {row.original.author}
-          </div>
+          </Box>
         ),
       },
       {
@@ -323,21 +294,21 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         accessorKey: "publish_at",
         header: "发布时间",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-            <Calendar className="w-3 h-3 mr-1" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.secondary" }}>
+            <Calendar size={12} style={{ marginRight: 4 }} />
             {row.original.publish_at
               ? new Date(row.original.publish_at).toLocaleString()
               : "-"}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "created_at",
         header: "创建时间",
         cell: ({ row }) => (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <Box sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
             {new Date(row.original.created_at).toLocaleDateString()}
-          </div>
+          </Box>
         ),
       },
       {
@@ -346,75 +317,52 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         cell: ({ row }) => {
           const announcement = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
               {announcement.status === "draft" && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-green-600 hover:text-green-700 dark:text-green-400"
-                        onClick={() => handlePublish(announcement.id)}
-                      >
-                        发布
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>发布公告</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip title="发布公告">
+                  <Button
+                    variant="text"
+                    size="small"
+                    sx={{ color: "success.main" }}
+                    onClick={() => handlePublish(announcement.id)}
+                  >
+                    发布
+                  </Button>
+                </Tooltip>
               )}
               {announcement.status === "published" && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-orange-600 hover:text-orange-700 dark:text-orange-400"
-                        onClick={() => handleUnpublish(announcement.id)}
-                      >
-                        下架
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>下架公告</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Tooltip title="下架公告">
+                  <Button
+                    variant="text"
+                    size="small"
+                    sx={{ color: "warning.main" }}
+                    onClick={() => handleUnpublish(announcement.id)}
+                  >
+                    下架
+                  </Button>
+                </Tooltip>
               )}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedAnnouncement(announcement);
-                        setShowEditModal(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>编辑</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 dark:text-red-400"
-                      onClick={() => handleDeleteAnnouncement(announcement.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>删除</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+              <Tooltip title="编辑">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setSelectedAnnouncement(announcement);
+                    setShowEditModal(true);
+                  }}
+                >
+                  <Edit size={16} />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="删除">
+                <IconButton
+                  size="small"
+                  sx={{ color: "error.main" }}
+                  onClick={() => handleDeleteAnnouncement(announcement.id)}
+                >
+                  <Trash2 size={16} />
+                </IconButton>
+              </Tooltip>
+            </Box>
           );
         },
       },
@@ -423,53 +371,53 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-                  <Bell className="w-7 h-7 mr-3 text-blue-600" />
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      {/* 顶部导航 */}
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft />
+              </IconButton>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                  <Bell size={28} color="#1976d2" />
                   公告管理
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   管理企业公告和通知
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus size={20} />}>
                 新增公告
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                <p className="mt-2 text-slate-500 dark:text-slate-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTop: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadData}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <AlertCircle size={48} color="#d32f2f" />
+                <Typography sx={{ color: "error.main", mt: 2 }}>{error}</Typography>
+                <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </Button>
-              </div>
+              </Box>
             ) : (
               <DataTable
                 columns={columns}
@@ -480,305 +428,242 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>新增公告</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateAnnouncement}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">标题 *</Label>
-                <Input
-                  id="title"
-                  type="text"
-                  required
-                  value={newAnnouncement.title || ""}
+      {/* 创建公告对话框 */}
+      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>新增公告</DialogTitle>
+        <form onSubmit={handleCreateAnnouncement}>
+          <DialogContent>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+              <TextField
+                label="标题 *"
+                required
+                value={newAnnouncement.title || ""}
+                onChange={(e) =>
+                  setNewAnnouncement({
+                    ...newAnnouncement,
+                    title: e.target.value,
+                  })
+                }
+                fullWidth
+              />
+              <FormControl fullWidth>
+                <InputLabel>优先级</InputLabel>
+                <Select
+                  value={newAnnouncement.priority || "normal"}
+                  label="优先级"
                   onChange={(e) =>
                     setNewAnnouncement({
                       ...newAnnouncement,
+                      priority: e.target.value,
+                    })
+                  }
+                >
+                  <MenuItem value="low">低</MenuItem>
+                  <MenuItem value="normal">普通</MenuItem>
+                  <MenuItem value="high">高</MenuItem>
+                  <MenuItem value="urgent">紧急</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="作者 *"
+                required
+                value={newAnnouncement.author || ""}
+                onChange={(e) =>
+                  setNewAnnouncement({
+                    ...newAnnouncement,
+                    author: e.target.value,
+                  })
+                }
+                fullWidth
+              />
+              <FormControl fullWidth>
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={newAnnouncement.status || "draft"}
+                  label="状态"
+                  onChange={(e) =>
+                    setNewAnnouncement({ ...newAnnouncement, status: e.target.value })
+                  }
+                >
+                  <MenuItem value="draft">草稿</MenuItem>
+                  <MenuItem value="published">发布</MenuItem>
+                  <MenuItem value="archived">归档</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="发布时间"
+                type="datetime-local"
+                value={newAnnouncement.publish_at || ""}
+                onChange={(e) =>
+                  setNewAnnouncement({
+                    ...newAnnouncement,
+                    publish_at: e.target.value,
+                  })
+                }
+                fullWidth
+
+              />
+              <TextField
+                label="过期时间"
+                type="datetime-local"
+                value={newAnnouncement.expire_at || ""}
+                onChange={(e) =>
+                  setNewAnnouncement({
+                    ...newAnnouncement,
+                    expire_at: e.target.value,
+                  })
+                }
+                fullWidth
+
+              />
+              <TextField
+                label="内容"
+                multiline
+                rows={6}
+                value={newAnnouncement.content || ""}
+                onChange={(e) =>
+                  setNewAnnouncement({
+                    ...newAnnouncement,
+                    content: e.target.value,
+                  })
+                }
+                fullWidth
+                sx={{ gridColumn: "span 2" }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowCreateModal(false)}>取消</Button>
+            <Button type="submit" variant="contained">创建</Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* 编辑公告对话框 */}
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>编辑公告</DialogTitle>
+        {selectedAnnouncement && (
+          <form onSubmit={handleEditAnnouncement}>
+            <DialogContent>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+                <TextField
+                  label="标题 *"
+                  required
+                  value={selectedAnnouncement.title}
+                  onChange={(e) =>
+                    setSelectedAnnouncement({
+                      ...selectedAnnouncement,
                       title: e.target.value,
                     })
                   }
-                  placeholder="请输入公告标题"
+                  fullWidth
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="author">作者 *</Label>
-                  <Input
-                    id="author"
-                    type="text"
-                    required
-                    value={newAnnouncement.author || ""}
-                    onChange={(e) =>
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        author: e.target.value,
-                      })
-                    }
-                    placeholder="请输入作者"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="priority">优先级</Label>
+                <FormControl fullWidth>
+                  <InputLabel>优先级</InputLabel>
                   <Select
-                    value={newAnnouncement.priority || "normal"}
-                    onValueChange={(value) =>
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        priority: value,
+                    value={selectedAnnouncement.priority || "normal"}
+                    label="优先级"
+                    onChange={(e) =>
+                      setSelectedAnnouncement({
+                        ...selectedAnnouncement,
+                        priority: e.target.value,
                       })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择优先级" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">低</SelectItem>
-                      <SelectItem value="normal">普通</SelectItem>
-                      <SelectItem value="high">高</SelectItem>
-                      <SelectItem value="urgent">紧急</SelectItem>
-                    </SelectContent>
+                    <MenuItem value="low">低</MenuItem>
+                    <MenuItem value="normal">普通</MenuItem>
+                    <MenuItem value="high">高</MenuItem>
+                    <MenuItem value="urgent">紧急</MenuItem>
                   </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">内容</Label>
-                <Textarea
-                  id="content"
-                  value={newAnnouncement.content || ""}
+                </FormControl>
+                <TextField
+                  label="作者 *"
+                  required
+                  value={selectedAnnouncement.author}
                   onChange={(e) =>
-                    setNewAnnouncement({
-                      ...newAnnouncement,
+                    setSelectedAnnouncement({
+                      ...selectedAnnouncement,
+                      author: e.target.value,
+                    })
+                  }
+                  fullWidth
+                />
+                <FormControl fullWidth>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={selectedAnnouncement.status}
+                    label="状态"
+                    onChange={(e) =>
+                      setSelectedAnnouncement({
+                        ...selectedAnnouncement,
+                        status: e.target.value,
+                      })
+                    }
+                  >
+                    <MenuItem value="draft">草稿</MenuItem>
+                    <MenuItem value="published">发布</MenuItem>
+                    <MenuItem value="archived">归档</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="发布时间"
+                  type="datetime-local"
+                  value={selectedAnnouncement.publish_at || ""}
+                  onChange={(e) =>
+                    setSelectedAnnouncement({
+                      ...selectedAnnouncement,
+                      publish_at: e.target.value,
+                    })
+                  }
+                  fullWidth
+  
+                />
+                <TextField
+                  label="过期时间"
+                  type="datetime-local"
+                  value={selectedAnnouncement.expire_at || ""}
+                  onChange={(e) =>
+                    setSelectedAnnouncement({
+                      ...selectedAnnouncement,
+                      expire_at: e.target.value,
+                    })
+                  }
+                  fullWidth
+  
+                />
+                <TextField
+                  label="内容"
+                  multiline
+                  rows={6}
+                  value={selectedAnnouncement.content || ""}
+                  onChange={(e) =>
+                    setSelectedAnnouncement({
+                      ...selectedAnnouncement,
                       content: e.target.value,
                     })
                   }
-                  placeholder="请输入公告内容"
-                  rows={8}
+                  fullWidth
+                  sx={{ gridColumn: "span 2" }}
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="publish_at">发布时间</Label>
-                  <Input
-                    id="publish_at"
-                    type="datetime-local"
-                    value={newAnnouncement.publish_at || ""}
-                    onChange={(e) =>
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        publish_at: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expire_at">过期时间</Label>
-                  <Input
-                    id="expire_at"
-                    type="datetime-local"
-                    value={newAnnouncement.expire_at || ""}
-                    onChange={(e) =>
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        expire_at: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">状态</Label>
-                <Select
-                  value={newAnnouncement.status || "draft"}
-                  onValueChange={(value) =>
-                    setNewAnnouncement({ ...newAnnouncement, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">草稿</SelectItem>
-                    <SelectItem value="published">发布</SelectItem>
-                    <SelectItem value="archived">归档</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter className="mt-6">
+              </Box>
+            </DialogContent>
+            <DialogActions>
               <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedAnnouncement(null);
+                }}
               >
                 取消
               </Button>
-              <Button type="submit">创建</Button>
-            </DialogFooter>
+              <Button type="submit" variant="contained">保存</Button>
+            </DialogActions>
           </form>
-        </DialogContent>
+        )}
       </Dialog>
-
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>编辑公告</DialogTitle>
-          </DialogHeader>
-          {selectedAnnouncement && (
-            <form onSubmit={handleEditAnnouncement}>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit_title">标题 *</Label>
-                  <Input
-                    id="edit_title"
-                    type="text"
-                    required
-                    value={selectedAnnouncement.title}
-                    onChange={(e) =>
-                      setSelectedAnnouncement({
-                        ...selectedAnnouncement,
-                        title: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_author">作者 *</Label>
-                    <Input
-                      id="edit_author"
-                      type="text"
-                      required
-                      value={selectedAnnouncement.author}
-                      onChange={(e) =>
-                        setSelectedAnnouncement({
-                          ...selectedAnnouncement,
-                          author: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_priority">优先级</Label>
-                    <Select
-                      value={selectedAnnouncement.priority || "normal"}
-                      onValueChange={(value) =>
-                        setSelectedAnnouncement({
-                          ...selectedAnnouncement,
-                          priority: value,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="请选择优先级" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">低</SelectItem>
-                        <SelectItem value="normal">普通</SelectItem>
-                        <SelectItem value="high">高</SelectItem>
-                        <SelectItem value="urgent">紧急</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit_content">内容</Label>
-                  <Textarea
-                    id="edit_content"
-                    value={selectedAnnouncement.content || ""}
-                    onChange={(e) =>
-                      setSelectedAnnouncement({
-                        ...selectedAnnouncement,
-                        content: e.target.value,
-                      })
-                    }
-                    rows={8}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_publish_at">发布时间</Label>
-                    <Input
-                      id="edit_publish_at"
-                      type="datetime-local"
-                      value={selectedAnnouncement.publish_at || ""}
-                      onChange={(e) =>
-                        setSelectedAnnouncement({
-                          ...selectedAnnouncement,
-                          publish_at: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit_expire_at">过期时间</Label>
-                    <Input
-                      id="edit_expire_at"
-                      type="datetime-local"
-                      value={selectedAnnouncement.expire_at || ""}
-                      onChange={(e) =>
-                        setSelectedAnnouncement({
-                          ...selectedAnnouncement,
-                          expire_at: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit_status">状态</Label>
-                  <Select
-                    value={selectedAnnouncement.status}
-                    onValueChange={(value) =>
-                      setSelectedAnnouncement({
-                        ...selectedAnnouncement,
-                        status: value,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">草稿</SelectItem>
-                      <SelectItem value="published">发布</SelectItem>
-                      <SelectItem value="archived">归档</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <DialogFooter className="mt-6">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedAnnouncement(null);
-                  }}
-                >
-                  取消
-                </Button>
-                <Button type="submit">保存</Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+    </Box>
   );
 };
 
