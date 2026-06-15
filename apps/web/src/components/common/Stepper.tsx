@@ -117,7 +117,11 @@ const CustomStepIcon: React.FC<
   };
 
   return (
-    <StepIconContainer status={status} variant={variant} active={active}>
+    <StepIconContainer
+      status={status}
+      variant={variant}
+      active={active ?? false}
+    >
       {renderIcon()}
     </StepIconContainer>
   );
@@ -151,15 +155,17 @@ const Stepper: React.FC<StepperProps> = ({
         return (
           <Step key={index} completed={status === "completed"}>
             <StepLabel
-              StepIconComponent={(props) => (
-                <CustomStepIcon
-                  {...props}
-                  status={status}
-                  variant={variant}
-                  customIcon={step.icon}
-                  active={status === "active"}
-                />
-              )}
+              slots={{
+                stepIcon: (props: StepIconProps) => (
+                  <CustomStepIcon
+                    {...props}
+                    status={status}
+                    variant={variant}
+                    customIcon={step.icon}
+                    active={status === "active"}
+                  />
+                ),
+              }}
               onClick={() => onStepClick?.(index)}
               sx={{
                 cursor: onStepClick ? "pointer" : "default",
@@ -172,7 +178,7 @@ const Stepper: React.FC<StepperProps> = ({
                 <Box>
                   <Typography
                     variant="body2"
-                    fontWeight={status === "active" ? 600 : 400}
+                    sx={{ fontWeight: status === "active" ? 600 : 400 }}
                     color={
                       status === "active"
                         ? "primary"
@@ -189,8 +195,7 @@ const Stepper: React.FC<StepperProps> = ({
                     <Typography
                       variant="caption"
                       color="text.secondary"
-                      display="block"
-                      sx={{ mt: 0.5 }}
+                      sx={{ mt: 0.5, display: "block" }}
                     >
                       {step.description}
                     </Typography>
