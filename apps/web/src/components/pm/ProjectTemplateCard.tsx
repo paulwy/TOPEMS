@@ -1,7 +1,11 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
-import { FileText, Clock, Tag, ArrowRight } from "lucide-react";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
+import { Clock, Tag, ArrowRight } from "lucide-react";
 
 export interface ProjectTemplate {
   id: string;
@@ -25,53 +29,117 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({
   onSelect,
 }) => {
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <FileText className="w-6 h-6 text-white" />
+    <Card
+      sx={{
+        "&:hover": { boxShadow: 6 },
+        transition: "box-shadow 0.2s",
+        cursor: "pointer",
+      }}
+    >
+      <CardHeader sx={{ pb: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Tag size={24} color="white" />
           </div>
           <div>
-            <CardTitle className="text-lg">{template.name}</CardTitle>
-            <p className="text-sm text-gray-500">{template.project_type}</p>
+            <Typography variant="h6" sx={{ fontSize: "1.125rem" }}>
+              {template.name}
+            </Typography>
+            <p style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+              {template.project_type}
+            </p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600 line-clamp-2">
+      <CardContent sx={{ pt: 1 }}>
+        <p
+          style={{
+            fontSize: "0.875rem",
+            color: "#374151",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {template.description}
         </p>
 
-        <div className="flex items-center gap-4 text-sm text-gray-500">
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            fontSize: "0.875rem",
+            color: "#6b7280",
+            marginTop: 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Clock size={16} />
             <span>{template.estimated_days}天</span>
           </div>
-          <div className="flex items-center gap-1">
-            <FileText className="w-4 h-4" />
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Tag size={16} />
             <span>{template.phases_count}个阶段</span>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginTop: 8,
+          }}
+        >
           {template.tags.map((tag) => (
-            <span
+            <Chip
               key={tag}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700"
-            >
-              <Tag className="w-3 h-3" />
-              {tag}
-            </span>
+              size="small"
+              label={
+                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <Tag size={12} />
+                  {tag}
+                </span>
+              }
+              sx={{
+                backgroundColor: "#eff6ff",
+                color: "#1d4ed8",
+                fontSize: "0.75rem",
+                height: 24,
+              }}
+            />
           ))}
         </div>
 
         <Button
-          variant="ghost"
-          className="w-full group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors gap-2"
+          variant="text"
+          sx={{
+            width: "100%",
+            marginTop: 8,
+            color: "#374151",
+            "&:hover": {
+              backgroundColor: "#eff6ff",
+              color: "#2563eb",
+            },
+            transition: "background-color 0.2s, color 0.2s",
+            gap: 1,
+          }}
           onClick={() => onSelect(template)}
         >
           使用模板
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight size={16} />
         </Button>
       </CardContent>
     </Card>

@@ -1,5 +1,6 @@
 import React from "react";
-import { Button } from "../ui/button";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
 import {
   ChevronLeft,
   ChevronRight,
@@ -52,35 +53,37 @@ const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="flex items-center justify-center gap-1">
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
       <Button
-        variant="outline"
-        size="icon"
+        variant="outlined"
+        size="small"
         disabled={disabled || currentPage === 1}
         onClick={() => onPageChange(1)}
+        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
       >
-        <ChevronsLeft className="w-4 h-4" />
+        <ChevronsLeft size={16} />
       </Button>
       <Button
-        variant="outline"
-        size="icon"
+        variant="outlined"
+        size="small"
         disabled={disabled || currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
+        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
       >
-        <ChevronLeft className="w-4 h-4" />
+        <ChevronLeft size={16} />
       </Button>
 
       {pages.map((page, index) => (
         <Button
           key={index}
-          variant={page === currentPage ? "default" : "outline"}
-          size="sm"
+          variant={page === currentPage ? "contained" : "outlined"}
+          size="small"
           disabled={disabled || typeof page === "string"}
           onClick={() => typeof page === "number" && onPageChange(page)}
-          className={
+          sx={
             page === currentPage
-              ? "bg-blue-600 hover:bg-blue-600 text-white"
-              : "min-w-[36px]"
+              ? { minWidth: "36px", height: "32px", backgroundColor: "#2563eb", "&:hover": { backgroundColor: "#2563eb" }, color: "white" }
+              : { minWidth: "36px", height: "32px" }
           }
         >
           {page}
@@ -88,22 +91,24 @@ const Pagination: React.FC<PaginationProps> = ({
       ))}
 
       <Button
-        variant="outline"
-        size="icon"
+        variant="outlined"
+        size="small"
         disabled={disabled || currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
+        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight size={16} />
       </Button>
       <Button
-        variant="outline"
-        size="icon"
+        variant="outlined"
+        size="small"
         disabled={disabled || currentPage === totalPages}
         onClick={() => onPageChange(totalPages)}
+        sx={{ minWidth: "32px", height: "32px", padding: "4px" }}
       >
-        <ChevronsRight className="w-4 h-4" />
+        <ChevronsRight size={16} />
       </Button>
-    </div>
+    </Box>
   );
 };
 

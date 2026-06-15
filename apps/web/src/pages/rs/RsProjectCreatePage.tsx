@@ -20,11 +20,7 @@ import {
   CardContent,
   Stack,
 } from "@mui/material";
-import {
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  Add as AddIcon,
-} from "@mui/icons-material";
+import { Save, X, Plus } from "lucide-react";
 
 const RsProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -362,7 +358,7 @@ const RsProjectCreatePage: React.FC = () => {
             <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end" }}>
               <Button
                 variant="outlined"
-                startIcon={<CancelIcon />}
+                startIcon={<X />}
                 onClick={handleCancel}
               >
                 取消

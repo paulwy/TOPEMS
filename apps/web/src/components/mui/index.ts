@@ -41,14 +41,12 @@ export type { Action, ActionBarProps, QuickActionBarProps } from "./ActionBar";
 export { ListPageTemplate } from "../templates/ListPageTemplate";
 export type {
   ColumnDef,
-  FilterConfig,
   RowAction,
   ListPageTemplateProps,
 } from "../templates/ListPageTemplate";
 
 export { DashboardTemplate } from "../templates/DashboardTemplate";
 export type {
-  StatCard,
   ChartCard,
   RecentItem,
   QuickAction,

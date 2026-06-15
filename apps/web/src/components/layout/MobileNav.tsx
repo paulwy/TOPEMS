@@ -129,13 +129,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             }}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>{icon}</ListItemIcon>
-            <ListItemText
-              primary={item.label}
-              primaryTypographyProps={{
+            <Typography
+              sx={{
                 fontWeight: isActive ? 600 : 400,
                 color: isActive ? "primary.main" : "text.primary",
               }}
-            />
+            >
+              {item.label}
+            </Typography>
             {hasChildren && (
               <Box
                 sx={{
@@ -188,12 +189,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                 <FolderOpen style={{ width: 20, height: 20 }} />
               )}
             </ListItemIcon>
-            <ListItemText
-              primary={item.label}
-              primaryTypographyProps={{
-                fontWeight: 500,
-              }}
-            />
+            <Typography sx={{ fontWeight: 500 }}>{item.label}</Typography>
             <Box
               sx={{
                 display: "flex",
@@ -244,14 +240,15 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                               : "transparent",
                         }}
                       >
-                        <ListItemText
-                          primary={child.label}
-                          primaryTypographyProps={{
+                        <Typography
+                          sx={{
                             fontWeight:
                               child.path === location.pathname ? 600 : 400,
                             fontSize: "0.9rem",
                           }}
-                        />
+                        >
+                          {child.label}
+                        </Typography>
                       </ListItemButton>
                     </ListItem>
                   ))}
@@ -282,8 +279,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         anchor="left"
         open={open}
         onClose={onClose}
-        PaperProps={{
-          sx: {
+        sx={{
+          "& .MuiDrawer-paper": {
             width: 300,
             maxWidth: "85vw",
           },

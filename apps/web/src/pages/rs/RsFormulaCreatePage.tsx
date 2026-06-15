@@ -22,12 +22,7 @@ import {
   IconButton,
   Stack,
 } from "@mui/material";
-import {
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon,
-} from "@mui/icons-material";
+import { Save, X, Plus, Trash2 } from "lucide-react";
 
 interface Component {
   name: string;
@@ -291,7 +286,7 @@ const RsFormulaCreatePage: React.FC = () => {
               </Button>
               <Button
                 variant="contained"
-                startIcon={<SaveIcon />}
+                startIcon={<Save />}
                 onClick={handleSubmit}
               >
                 {isEdit ? "保存修改" : "创建配方"}

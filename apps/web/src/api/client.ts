@@ -181,6 +181,23 @@ class ApiClient {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        paramsSerializer: {
+          serialize: (params) => {
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+              if (value !== undefined && value !== null) {
+                if (typeof value === 'number') {
+                  searchParams.set(key, value.toString());
+                } else if (typeof value === 'boolean') {
+                  searchParams.set(key, value ? 'true' : 'false');
+                } else {
+                  searchParams.set(key, String(value));
+                }
+              }
+            });
+            return searchParams.toString();
+          },
+        },
       });
 
       client.interceptors.request.use(

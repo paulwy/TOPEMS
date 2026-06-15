@@ -39,10 +39,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import MetricCard from "../components/MetricCard";
 import { ChartCard } from "../components/ChartCard";
 import { BIChartColors } from "../components/charts/chartTheme";
-import { Button } from "../components/ui/button";
-import { Skeleton } from "../components/ui/skeleton";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+import { Button, Skeleton, Box, Typography } from "@mui/material";
 
 const MetricCardSkeleton = () => (
   <Box

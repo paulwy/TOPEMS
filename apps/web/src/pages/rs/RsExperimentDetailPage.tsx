@@ -31,11 +31,11 @@ import {
 } from "@mui/lab";
 import {
   Edit as EditIcon,
-  Science as ScienceIcon,
-  Description as DescriptionIcon,
+  Flask as ScienceIcon,
+  FileText as DescriptionIcon,
   CheckCircle as CheckCircleIcon,
   TrendingUp as TrendingUpIcon,
-} from "@mui/icons-material";
+} from "lucide-react";
 
 const RsExperimentDetailPage: React.FC = () => {
   // 模拟试验详情数据

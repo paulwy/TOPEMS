@@ -7,8 +7,7 @@ import {
   Sparkles,
   RefreshCw,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
+import { Button, Card, CardContent, Box, Typography } from "@mui/material";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type {
@@ -26,9 +25,9 @@ export interface AIFormValidatorProps {
 }
 
 const issueIconMap: Record<string, React.ReactNode> = {
-  error: <AlertCircle className="w-5 h-5 text-red-500" />,
-  warning: <AlertTriangle className="w-5 h-5 text-amber-500" />,
-  info: <Info className="w-5 h-5 text-blue-500" />,
+  error: <AlertCircle style={{ width: 20, height: 20, color: "#ef4444" }} />,
+  warning: <AlertTriangle style={{ width: 20, height: 20, color: "#f59e0b" }} />,
+  info: <Info style={{ width: 20, height: 20, color: "#3b82f6" }} />,
 };
 
 const issueTitleMap: Record<string, string> = {
@@ -93,46 +92,46 @@ export function AIFormValidator({
       onConfirm={isValid ? onClose : undefined}
       confirmText={isValid ? "完成" : undefined}
     >
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {isValid ? (
               <>
-                <CheckCircle className="w-6 h-6 text-green-500" />
-                <span className="font-medium text-green-700">校验通过</span>
+                <CheckCircle style={{ width: 24, height: 24, color: "#22c55e" }} />
+                <Typography sx={{ fontWeight: 500, color: "#15803d" }}>校验通过</Typography>
               </>
             ) : (
               <>
-                <AlertCircle className="w-6 h-6 text-red-500" />
-                <span className="font-medium text-red-700">发现问题</span>
+                <AlertCircle style={{ width: 24, height: 24, color: "#ef4444" }} />
+                <Typography sx={{ fontWeight: 500, color: "#dc2626" }}>发现问题</Typography>
               </>
             )}
-          </div>
+          </Box>
           <Button
-            variant="secondary"
-            size="sm"
+            variant="outlined"
+            size="small"
             onClick={handleValidate}
             disabled={isLoading}
-            className="gap-1"
+            sx={{ gap: 0.5 }}
           >
             {isLoading ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
+              <RefreshCw style={{ width: 16, height: 16 }} className="animate-spin" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <Sparkles style={{ width: 16, height: 16 }} />
             )}
             重新校验
           </Button>
-        </div>
+        </Box>
 
         {issues.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">发现的问题</h4>
-            <div className="space-y-2">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Typography sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#374151" }}>发现的问题</Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {issues.map((issue, idx) => (
                 <Card
                   key={idx}
-                  className="border-l-4"
-                  style={{
+                  sx={{
+                    borderLeft: "4px solid",
                     borderLeftColor:
                       issue.type === "error"
                         ? "#ef4444"
@@ -141,84 +140,84 @@ export function AIFormValidator({
                           : "#3b82f6",
                   }}
                 >
-                  <CardContent className="p-3">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5">{issueIconMap[issue.type]}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                      <Box sx={{ mt: 0.125 }}>{issueIconMap[issue.type]}</Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Typography sx={{ fontWeight: 500, fontSize: "0.875rem" }}>
                             {issueTitleMap[issue.type]}: {issue.field}
-                          </span>
+                          </Typography>
                           {issue.fix && (
                             <Button
-                              variant="secondary"
-                              size="sm"
-                              className="h-7 text-xs px-2"
+                              variant="outlined"
+                              size="small"
+                              sx={{ height: 28, fontSize: "0.75rem", px: 1 }}
                               onClick={() => handleFixIssue(issue)}
                             >
                               修复
                             </Button>
                           )}
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">
+                        </Box>
+                        <Typography sx={{ fontSize: "0.875rem", color: "#4b5563", mt: 0.5 }}>
                           {issue.message}
-                        </p>
-                      </div>
-                    </div>
+                        </Typography>
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {suggestions.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-gray-700">优化建议</h4>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#374151" }}>优化建议</Typography>
               {onApplySuggestions && (
                 <Button
-                  variant="secondary"
-                  size="sm"
+                  variant="outlined"
+                  size="small"
                   onClick={handleApplyAllSuggestions}
                 >
                   全部应用
                 </Button>
               )}
-            </div>
-            <div className="space-y-2">
+            </Box>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {suggestions.map((suggestion, idx) => (
-                <Card key={idx} className="bg-blue-50">
-                  <CardContent className="p-3">
-                    <div className="flex items-start gap-3">
-                      <Info className="w-5 h-5 text-blue-500 mt-0.5" />
-                      <div className="flex-1">
-                        <span className="font-medium text-sm">
+                <Card key={idx} sx={{ bgcolor: "#eff6ff" }}>
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                      <Info style={{ width: 20, height: 20, color: "#3b82f6", marginTop: 2 }} />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontWeight: 500, fontSize: "0.875rem" }}>
                           {suggestion.field}
-                        </span>
-                        <p className="text-sm text-gray-600 mt-1">
+                        </Typography>
+                        <Typography sx={{ fontSize: "0.875rem", color: "#4b5563", mt: 0.5 }}>
                           {suggestion.reason}
-                        </p>
-                        <p className="text-sm font-mono text-blue-700 mt-1 bg-white px-2 py-1 rounded border border-blue-100">
+                        </Typography>
+                        <Typography sx={{ fontSize: "0.875rem", fontFamily: "monospace", color: "#1d4ed8", mt: 0.5, bgcolor: "#fff", px: 0.5, py: 0.5, borderRadius: 0.5, border: "1px solid #dbeafe" }}>
                           {suggestion.value}
-                        </p>
-                      </div>
-                    </div>
+                        </Typography>
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {issues.length === 0 && suggestions.length === 0 && !isLoading && (
-          <div className="text-center py-8 text-gray-500">
-            <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-            <p>表单校验通过！</p>
-            <p className="text-sm mt-1">未发现任何问题</p>
-          </div>
+          <Box sx={{ textAlign: "center", py: 4, color: "#6b7280" }}>
+            <CheckCircle style={{ width: 48, height: 48, margin: "0 auto 12px", color: "#22c55e" }} />
+            <Typography>表单校验通过！</Typography>
+            <Typography sx={{ fontSize: "0.875rem", mt: 0.25 }}>未发现任何问题</Typography>
+          </Box>
         )}
-      </div>
+      </Box>
     </AIGenerateModal>
   );
 }

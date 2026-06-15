@@ -21,13 +21,13 @@ import {
   Stack,
 } from "@mui/material";
 import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  Description as DescriptionIcon,
-} from "@mui/icons-material";
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  FileText,
+} from "lucide-react";
 
 interface Formula {
   id: string;
@@ -209,7 +209,7 @@ const RsFormulaListPage: React.FC = () => {
                           size="small"
                           onClick={() => navigate(`/rs/formulas/${formula.id}`)}
                         >
-                          <ViewIcon />
+                          <Eye />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="编辑">
@@ -219,12 +219,12 @@ const RsFormulaListPage: React.FC = () => {
                             navigate(`/rs/formulas/${formula.id}/edit`)
                           }
                         >
-                          <EditIcon />
+                          <Edit />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="删除">
                         <IconButton size="small" color="error">
-                          <DeleteIcon />
+                          <Trash2 />
                         </IconButton>
                       </Tooltip>
                     </Stack>

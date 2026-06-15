@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Badge } from "./ui/badge";
+import { Button, TextField, Chip, Paper } from "@mui/material";
 
 export interface Annotation {
   id: string;
@@ -92,24 +90,43 @@ export function ChartAnnotations({
   if (!enabled) return null;
 
   return (
-    <div className="relative">
+    <div style={{ position: "relative" }}>
       <Button
-        variant="ghost"
-        size="icon"
+        variant="text"
+        size="small"
         onClick={() => setShowAddMenu(!showAddMenu)}
-        className="absolute top-2 right-2 z-10 bg-white/80 hover:bg-white rounded-lg shadow-md"
+        sx={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          zIndex: 10,
+          backgroundColor: "rgba(255,255,255,0.8)",
+          "&:hover": { backgroundColor: "white" },
+          borderRadius: 1,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        }}
         title="添加标注"
       >
-        <Plus className="w-4 h-4 text-gray-600"></Plus>
+        <Plus sx={{ width: 16, height: 16, color: "text.secondary" }} />
       </Button>
 
       {showAddMenu && (
-        <div className="absolute top-12 right-2 z-20 bg-white rounded-lg shadow-xl p-3 w-64">
-          <div className="text-xs font-medium text-gray-500 mb-2">添加标注</div>
+        <Paper
+          sx={{
+            position: "absolute",
+            top: 40,
+            right: 8,
+            zIndex: 20,
+            padding: 2,
+            width: 256,
+            boxShadow: 3,
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 500, color: "text.secondary", marginBottom: 8 }}>添加标注</div>
 
-          <div className="mb-2">
-            <div className="text-xs text-gray-400 mb-1">类型</div>
-            <div className="flex gap-1">
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: "text.disabled", marginBottom: 4 }}>类型</div>
+            <div style={{ display: "flex", gap: 4 }}>
               {annotationTypes.map((type) => {
                 const Icon = type.icon;
                 return (
@@ -119,62 +136,74 @@ export function ChartAnnotations({
                       setSelectedType(type.id as "flag" | "note" | "tag");
                       setSelectedColor(type.colors[0]);
                     }}
-                    className={`p-2 rounded-lg transition-colors ${
-                      selectedType === type.id
-                        ? "bg-blue-100 text-blue-600"
-                        : "hover:bg-gray-100 text-gray-600"
-                    }`}
+                    style={{
+                      padding: 8,
+                      borderRadius: 8,
+                      border: "none",
+                      backgroundColor: selectedType === type.id ? "#DBEAFE" : "transparent",
+                      color: selectedType === type.id ? "#1D4ED8" : "text.secondary",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => { if (selectedType !== type.id) e.currentTarget.style.backgroundColor = "#F1F5F9"; }}
+                    onMouseLeave={(e) => { if (selectedType !== type.id) e.currentTarget.style.backgroundColor = "transparent"; }}
                     title={type.label}
                   >
-                    <Icon className="w-4 h-4"></Icon>
+                    <Icon style={{ width: 16, height: 16 }} />
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="mb-2">
-            <div className="text-xs text-gray-400 mb-1">颜色</div>
-            <div className="flex gap-1">
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: "text.disabled", marginBottom: 4 }}>颜色</div>
+            <div style={{ display: "flex", gap: 4 }}>
               {annotationTypes
                 .find((t) => t.id === selectedType)
                 ?.colors.map((color) => (
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
-                    className={`w-6 h-6 rounded-full transition-transform ${
-                      selectedColor === color
-                        ? "scale-125 ring-2 ring-offset-1 ring-gray-300"
-                        : "hover:scale-110"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  ></button>
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      border: "none",
+                      backgroundColor: color,
+                      cursor: "pointer",
+                      transform: selectedColor === color ? "scale(1.25)" : "scale(1)",
+                      boxShadow: selectedColor === color ? "0 0 0 2px rgba(0,0,0,0.1)" : "none",
+                      transition: "transform 0.2s",
+                    }}
+                  />
                 ))}
             </div>
           </div>
 
-          <Input
+          <TextField
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="输入标注内容..."
-            className="mb-2 text-sm"
+            size="small"
+            fullWidth
+            sx={{ marginBottom: 8 }}
             onKeyPress={(e) => e.key === "Enter" && handleAddAnnotation()}
-          ></Input>
+          />
 
-          <div className="flex gap-2">
+          <div style={{ display: "flex", gap: 8 }}>
             <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
+              variant="outlined"
+              size="small"
+              fullWidth
               onClick={() => setShowAddMenu(false)}
             >
               取消
             </Button>
-            <Button size="sm" className="flex-1" onClick={handleAddAnnotation}>
+            <Button size="small" fullWidth onClick={handleAddAnnotation}>
               添加
             </Button>
           </div>
-        </div>
+        </Paper>
       )}
 
       {annotations.map((annotation) => {
@@ -185,35 +214,40 @@ export function ChartAnnotations({
           return (
             <div
               key={annotation.id}
-              className="absolute bg-white rounded-lg shadow-lg p-2 z-30"
               style={{
+                position: "absolute",
+                backgroundColor: "white",
+                borderRadius: 8,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                padding: 8,
+                zIndex: 30,
                 left: `${annotation.position.x}%`,
                 top: `${annotation.position.y}%`,
                 transform: "translate(-50%, -50%)",
               }}
             >
-              <Input
+              <TextField
                 value={editingContent}
                 onChange={(e) => setEditingContent(e.target.value)}
-                className="text-sm mb-2"
+                size="small"
+                fullWidth
+                sx={{ marginBottom: 8 }}
                 autoFocus
-              ></Input>
-              <div className="flex gap-1">
+              />
+              <div style={{ display: "flex", gap: 4 }}>
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant="text"
+                  size="small"
                   onClick={handleSaveEdit}
-                  className="p-1"
                 >
-                  <Check className="w-3 h-3"></Check>
+                  <Check sx={{ width: 12, height: 12 }} />
                 </Button>
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  variant="text"
+                  size="small"
                   onClick={handleCancelEdit}
-                  className="p-1"
                 >
-                  <X className="w-3 h-3"></X>
+                  <X sx={{ width: 12, height: 12 }} />
                 </Button>
               </div>
             </div>
@@ -223,38 +257,43 @@ export function ChartAnnotations({
         return (
           <div
             key={annotation.id}
-            className="absolute bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-2 z-30 min-w-[120px] group"
             style={{
+              position: "absolute",
+              backgroundColor: "rgba(255,255,255,0.95)",
+              backdropFilter: "blur(8px)",
+              borderRadius: 8,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              padding: 8,
+              zIndex: 30,
+              minWidth: 120,
               left: `${annotation.position.x}%`,
               top: `${annotation.position.y}%`,
               transform: "translate(-50%, -50%)",
             }}
           >
-            <div className="flex items-start gap-2">
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
               <Icon
-                className="w-4 h-4 flex-shrink-0 mt-0.5"
-                style={{ color: annotation.color }}
-              ></Icon>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-700">{annotation.content}</p>
+                style={{ width: 16, height: 16, flexShrink: 0, marginTop: 2, color: annotation.color }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 14, color: "text.primary", margin: 0 }}>{annotation.content}</p>
               </div>
             </div>
-            <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div style={{ display: "flex", gap: 4, marginTop: 8, opacity: 0 }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
               <Button
-                variant="ghost"
-                size="icon"
+                variant="text"
+                size="small"
                 onClick={() => handleStartEdit(annotation)}
-                className="p-1"
               >
-                <Edit3 className="w-3 h-3"></Edit3>
+                <Edit3 sx={{ width: 12, height: 12 }} />
               </Button>
               <Button
-                variant="ghost"
-                size="icon"
+                variant="text"
+                size="small"
                 onClick={() => onDeleteAnnotation(annotation.id)}
-                className="p-1 text-red-500"
+                sx={{ color: "error.main" }}
               >
-                <X className="w-3 h-3"></X>
+                <X sx={{ width: 12, height: 12 }} />
               </Button>
             </div>
           </div>
@@ -262,10 +301,8 @@ export function ChartAnnotations({
       })}
 
       {annotations.length > 0 && (
-        <div className="absolute bottom-2 left-2 z-10 bg-white/80 backdrop-blur-sm rounded-lg px-2 py-1">
-          <Badge variant="outline" className="text-xs">
-            {annotations.length} 个标注
-          </Badge>
+        <div style={{ position: "absolute", bottom: 8, left: 8, zIndex: 10, backgroundColor: "rgba(255,255,255,0.8)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "4px 8px" }}>
+          <Chip size="small" label={`${annotations.length} 个标注`} variant="outlined" />
         </div>
       )}
     </div>

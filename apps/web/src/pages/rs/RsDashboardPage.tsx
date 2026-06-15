@@ -17,18 +17,15 @@ import {
   Stack,
 } from "@mui/material";
 import {
-  Science as ScienceIcon,
-  Folder as FolderIcon,
-  Description as DescriptionIcon,
-  Inventory as InventoryIcon,
-  Analytics as AnalyticsIcon,
-  Add as AddIcon,
+  Plus,
+  Folder,
+  FileText,
   TrendingUp,
-  TrendingDown,
-  Assignment,
   CheckCircle,
-  Warning,
-} from "@mui/icons-material";
+  AlertTriangle,
+  Flask,
+  BarChart3,
+} from "lucide-react";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -220,7 +217,7 @@ const RsDashboardPage: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="p-3 bg-green-50 rounded-xl"
             >
-              <DescriptionIcon style={{ color: "#16a34a" }} />
+              <FileText style={{ color: "#16a34a" }} />
             </motion.div>
           </div>
         </motion.div>
@@ -273,7 +270,7 @@ const RsDashboardPage: React.FC = () => {
             onClick={() => (window.location.href = "/rs/projects/create")}
             className="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition-colors"
           >
-            <AddIcon style={{ fontSize: 18 }} />
+            <Plus style={{ fontSize: 18 }} />
             新建项目
           </motion.button>
           <motion.button
@@ -293,7 +290,7 @@ const RsDashboardPage: React.FC = () => {
             onClick={() => (window.location.href = "/rs/formulas/create")}
             className="px-5 py-2.5 border border-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors"
           >
-            <DescriptionIcon style={{ fontSize: 18 }} />
+            <FileText style={{ fontSize: 18 }} />
             新增配方
           </motion.button>
           <motion.button
@@ -441,7 +438,7 @@ const RsDashboardPage: React.FC = () => {
                             </span>
                           ) : (
                             <span className="flex items-center gap-1">
-                              <Warning style={{ fontSize: 12 }} />
+                              <AlertTriangle style={{ fontSize: 12 }} />
                               {exp.status}
                             </span>
                           )}

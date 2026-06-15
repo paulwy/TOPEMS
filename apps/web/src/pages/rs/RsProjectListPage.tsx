@@ -28,14 +28,14 @@ import {
   Stack,
 } from "@mui/material";
 import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  FilterList as FilterIcon,
-  Download as DownloadIcon,
-} from "@mui/icons-material";
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  Filter,
+  Download,
+} from "lucide-react";
 
 interface Project {
   id: string;
@@ -236,7 +236,7 @@ const RsProjectListPage: React.FC = () => {
           />
           <Button
             variant="outlined"
-            startIcon={<FilterIcon />}
+            startIcon={<Filter />}
             onClick={(e) => setFilterMenuOpen(true)}
           >
             状态筛选
@@ -358,7 +358,7 @@ const RsProjectListPage: React.FC = () => {
                           size="small"
                           onClick={() => navigate(`/rs/projects/${project.id}`)}
                         >
-                          <ViewIcon />
+                          <Eye />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="编辑">
@@ -377,7 +377,7 @@ const RsProjectListPage: React.FC = () => {
                           color="error"
                           onClick={() => handleDeleteClick(project)}
                         >
-                          <DeleteIcon />
+                          <Trash2 />
                         </IconButton>
                       </Tooltip>
                     </Stack>

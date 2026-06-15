@@ -347,7 +347,8 @@ interface CrudOperations<T> {
 function createCrudApi<T>(endpoint: string): CrudOperations<T> {
   return {
     list: async (params?: ListParams) => {
-      return await apiClient.hrm.get(endpoint, { params });
+      const queryString = buildQueryString(params);
+      return await apiClient.hrm.get(`${endpoint}${queryString}`);
     },
 
     get: (id: string) => {
@@ -370,7 +371,8 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 
 export const companyApi: CrudOperations<Company> = {
   list: async (params?: ListParams) => {
-    return await apiClient.hrm.get(`/api/v1/companies`, { params });
+    const queryString = buildQueryString(params);
+    return await apiClient.hrm.get(`/api/v1/companies${queryString}`);
   },
 
   get: (id: string) => {
@@ -392,7 +394,8 @@ export const companyApi: CrudOperations<Company> = {
 
 export const departmentApi: CrudOperations<Department> = {
   list: async (params?: ListParams) => {
-    return await apiClient.hrm.get(`/api/v1/departments`, { params });
+    const queryString = buildQueryString(params);
+    return await apiClient.hrm.get(`/api/v1/departments${queryString}`);
   },
 
   get: (id: string) => {
@@ -414,7 +417,8 @@ export const departmentApi: CrudOperations<Department> = {
 
 export const employeeApi: CrudOperations<Employee> = {
   list: async (params?: ListParams) => {
-    return await apiClient.hrm.get(`/api/v1/employees`, { params });
+    const queryString = buildQueryString(params);
+    return await apiClient.hrm.get(`/api/v1/employees${queryString}`);
   },
 
   get: (id: string) => {
@@ -468,7 +472,8 @@ export const attendanceApi = {
   list(
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<AttendanceRecord>>> {
-    return apiClient.hrm.get(`/api/v1/attendance`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/attendance${queryString}`);
   },
 
   checkIn(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
@@ -484,7 +489,8 @@ export const jobOpeningApi = {
   ...createCrudApi<JobOpening>("/api/v1/job-openings"),
 
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<JobOpening>>> {
-    return apiClient.hrm.get(`/api/v1/job-openings`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/job-openings${queryString}`);
   },
 
   publish(id: string): Promise<ApiResponse<JobOpening>> {
@@ -500,7 +506,8 @@ export const interviewApi = {
   ...createCrudApi<Interview>("/api/v1/interviews"),
 
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<Interview>>> {
-    return apiClient.hrm.get(`/api/v1/interviews`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/interviews${queryString}`);
   },
 
   complete(
@@ -513,7 +520,8 @@ export const interviewApi = {
 
 export const payrollApi = {
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<PayrollRun>>> {
-    return apiClient.hrm.get(`/api/v1/payroll-runs`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/payroll-runs${queryString}`);
   },
 
   get(
@@ -543,7 +551,8 @@ export const payrollItemApi = {
   list(
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<PayrollItem>>> {
-    return apiClient.hrm.get(`/api/v1/payroll-items`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/payroll-items${queryString}`);
   },
 
   get(id: string): Promise<ApiResponse<{ item: PayrollItem; details: any[] }>> {
@@ -557,7 +566,8 @@ export const performanceReviewApi = {
   list(
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<PerformanceReview>>> {
-    return apiClient.hrm.get(`/api/v1/performance-reviews`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/performance-reviews${queryString}`);
   },
 
   submit(id: string): Promise<ApiResponse<PerformanceReview>> {
@@ -613,7 +623,8 @@ export const salaryAdjustmentApi = {
   list: async (
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<SalaryAdjustment>>> => {
-    return apiClient.hrm.get(`/api/v1/salary-adjustments`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/salary-adjustments${queryString}`);
   },
   get: async (id: string): Promise<ApiResponse<SalaryAdjustment>> => {
     return apiClient.hrm.get(`/api/v1/salary-adjustments/${id}`);
@@ -656,7 +667,8 @@ export const contractApi = {
   list: async (
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<Contract>>> => {
-    return apiClient.hrm.get(`/api/v1/contracts`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/contracts${queryString}`);
   },
 
   get: async (
@@ -687,7 +699,8 @@ export const contractApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<Contract>>> => {
-    return apiClient.hrm.get(`/api/v1/contracts/expiring`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/contracts/expiring${queryString}`);
   },
 
   renew: async (
@@ -702,7 +715,8 @@ export const contractRenewalApi = {
   list: async (
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<ContractRenewal>>> => {
-    return apiClient.hrm.get(`/api/v1/contract-renewals`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/contract-renewals${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
@@ -742,7 +756,8 @@ export const trainingPlanApi = {
   list: async (
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<TrainingPlan>>> => {
-    return apiClient.hrm.get(`/api/v1/training-plans`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/training-plans${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<TrainingPlan>> => {
@@ -779,7 +794,8 @@ export const trainingCourseApi = {
   list: async (
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<TrainingCourse>>> => {
-    return apiClient.hrm.get(`/api/v1/training-courses`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/training-courses${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<TrainingCourse>> => {
@@ -808,7 +824,8 @@ export const trainingRecordApi = {
   list: async (
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<TrainingRecord>>> => {
-    return apiClient.hrm.get(`/api/v1/training-records`, { params });
+    const queryString = buildQueryString(params);
+    return apiClient.hrm.get(`/api/v1/training-records${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<TrainingRecord>> => {

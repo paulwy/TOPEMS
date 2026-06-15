@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check } from "lucide-react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Label } from "../ui/label";
-import { Card, CardContent } from "../ui/card";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Box from "@mui/material/Box";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import { AI_TEMPLATES, getAITemplatesList } from "../../config/ai-templates";
@@ -100,143 +97,145 @@ export function AIDocumentGenerator({
       extraActions={
         hasResult ? (
           <Button
-            variant="secondary"
-            size="sm"
+            variant="outlined"
+            size="small"
             onClick={handleCopy}
-            className="flex items-center gap-1"
+            startIcon={copied ? <Check style={{ fontSize: 16 }} /> : <Copy style={{ fontSize: 16 }} />}
           >
-            {copied ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
             {copied ? "已复制" : "复制"}
           </Button>
         ) : null
       }
     >
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label>选择文档模板</Label>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <InputLabel shrink>选择文档模板</InputLabel>
           <Select
-            value={selectedTemplateId}
-            onValueChange={(value) => {
-              setSelectedTemplateId(value);
+            value={selectedTemplateId || ""}
+            onChange={(e) => {
+              setSelectedTemplateId(e.target.value);
               setFormData({});
             }}
+            displayEmpty
+            size="small"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="请选择模板" />
-            </SelectTrigger>
-            <SelectContent>
-              {templates.map((template) => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            <MenuItem value="" disabled>
+              请选择模板
+            </MenuItem>
+            {templates.map((template) => (
+              <MenuItem key={template.id} value={template.id}>
+                {template.name}
+              </MenuItem>
+            ))}
           </Select>
-        </div>
+        </Box>
 
         {selectedTemplate && (
-          <div className="space-y-4">
-            <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ fontSize: "0.875rem", color: "text.secondary", bgcolor: "grey.50", p: 2, borderRadius: 1 }}>
               {selectedTemplate.description}
-            </div>
+            </Box>
 
-            <div className="space-y-3">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {selectedTemplate.fields.map(
                 (field: AITemplate["fields"][number]) => (
-                  <div key={field.name} className="space-y-1">
-                    <Label className="flex items-center gap-1">
+                  <Box key={field.name} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <InputLabel shrink sx={{ fontSize: "0.875rem" }}>
                       {field.label}
                       {field.required && (
-                        <span className="text-red-500">*</span>
+                        <Box component="span" sx={{ color: "error.main", ml: 0.5 }}>*</Box>
                       )}
-                    </Label>
+                    </InputLabel>
                     {field.type === "textarea" ? (
-                      <Textarea
+                      <TextField
                         value={formData[field.name] || ""}
                         onChange={(e) =>
                           handleFieldChange(field.name, e.target.value)
                         }
                         placeholder={`请输入${field.label}`}
+                        multiline
                         rows={3}
+                        size="small"
+                        fullWidth
                       />
                     ) : field.type === "select" && field.options ? (
-                      <Select
-                        value={formData[field.name] || ""}
-                        onValueChange={(value) =>
-                          handleFieldChange(field.name, value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={`请选择${field.label}`} />
-                        </SelectTrigger>
-                        <SelectContent>
+                      <FormControl size="small" fullWidth>
+                        <Select
+                          value={formData[field.name] || ""}
+                          onChange={(e) =>
+                            handleFieldChange(field.name, e.target.value as string)
+                          }
+                          displayEmpty
+                        >
+                          <MenuItem value="" disabled>
+                            {`请选择${field.label}`}
+                          </MenuItem>
                           {field.options?.map(
                             (option: { label: string; value: string }) => (
-                              <SelectItem
+                              <MenuItem
                                 key={option.value}
                                 value={option.value}
                               >
                                 {option.label}
-                              </SelectItem>
+                              </MenuItem>
                             ),
                           )}
-                        </SelectContent>
-                      </Select>
+                        </Select>
+                      </FormControl>
                     ) : (
-                      <Input
+                      <TextField
                         type={field.type}
                         value={formData[field.name] || ""}
                         onChange={(e) =>
                           handleFieldChange(field.name, e.target.value)
                         }
                         placeholder={`请输入${field.label}`}
+                        size="small"
+                        fullWidth
                       />
                     )}
-                  </div>
+                  </Box>
                 ),
               )}
-            </div>
+            </Box>
 
             <Button
               onClick={handleGenerate}
               disabled={isLoading}
-              className="w-full"
+              variant="contained"
+              fullWidth
+              startIcon={<Sparkles style={{ fontSize: 16 }} />}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
               {isLoading ? "正在生成..." : "生成文档"}
             </Button>
 
             {hasResult && (
               <Card>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-purple-700 font-medium">
+                <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                    <InputLabel sx={{ color: "purple.700", fontWeight: 500, mb: 0 }}>
                       生成的文档
-                    </Label>
+                    </InputLabel>
                     <Button
-                      variant="secondary"
-                      size="sm"
+                      variant="outlined"
+                      size="small"
                       onClick={handleGenerate}
+                      startIcon={<RefreshCw style={{ fontSize: 16 }} />}
                     >
-                      <RefreshCw className="w-4 h-4 mr-1" />
                       重新生成
                     </Button>
-                  </div>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <pre className="text-gray-700 whitespace-pre-wrap text-sm">
+                  </Box>
+                  <Box sx={{ bgcolor: "purple.50", border: "1px solid", borderColor: "purple.200", borderRadius: 1, p: 2 }}>
+                    <Box component="pre" sx={{ color: "grey.700", whiteSpace: "pre-wrap", fontSize: "0.875rem", m: 0, fontFamily: "inherit" }}>
                       {result}
-                    </pre>
-                  </div>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
             )}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     </AIGenerateModal>
   );
 }

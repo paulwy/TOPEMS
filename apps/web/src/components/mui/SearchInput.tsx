@@ -6,7 +6,7 @@ import {
   IconButton,
   Paper,
   List,
-  ListItem,
+  ListItemButton,
   ListItemText,
   Typography,
   Divider,
@@ -64,9 +64,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 
   const [localValue, setLocalValue] = useState(value);
   const [showDropdown, setShowDropdown] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // 同步外部值
   useEffect(() => {
@@ -96,7 +95,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     setLocalValue("");
     onChange?.("");
     onClear?.();
-    inputRef.current?.focus();
   }, [onChange, onClear]);
 
   // 提交搜索
@@ -114,7 +112,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         handleSubmit();
       } else if (e.key === "Escape") {
         setShowDropdown(false);
-        inputRef.current?.blur();
       }
     },
     [handleSubmit],
@@ -167,7 +164,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       sx={{ position: "relative", width: fullWidth ? "100%" : "auto" }}
     >
       <TextField
-        inputRef={inputRef}
         value={localValue}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
@@ -175,26 +171,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         placeholder={placeholder}
         size={size}
         fullWidth={fullWidth}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search style={{ width: 18, height: 18 }} />
-            </InputAdornment>
-          ),
-          endAdornment: (
-            <InputAdornment position="end">
-              {loading ? (
-                <Typography variant="caption" color="text.secondary">
-                  搜索中...
-                </Typography>
-              ) : localValue ? (
-                <IconButton size="small" onClick={handleClear}>
-                  <X style={{ width: 16, height: 16 }} />
-                </IconButton>
-              ) : null}
-            </InputAdornment>
-          ),
-        }}
         sx={{
           "& .MuiOutlinedInput-root": {
             borderRadius: 2,
@@ -232,9 +208,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
               </Box>
               <List disablePadding dense>
                 {suggestions.map((suggestion) => (
-                  <ListItem
+                  <ListItemButton
                     key={suggestion.id}
-                    button
                     onClick={() => handleSuggestionClick(suggestion)}
                     sx={{
                       py: 1.5,
@@ -254,12 +229,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                           style={{ width: 16, height: 16, opacity: 0.5 }}
                         />
                       )}
-                      <ListItemText
-                        primary={suggestion.label}
-                        secondary={suggestion.description}
-                        primaryTypographyProps={{ variant: "body2" }}
-                        secondaryTypographyProps={{ variant: "caption" }}
-                      />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2">{suggestion.label}</Typography>
+                        {suggestion.description && (
+                          <Typography variant="caption" color="text.secondary">
+                            {suggestion.description}
+                          </Typography>
+                        )}
+                      </Box>
                       {suggestion.type && (
                         <Chip
                           label={
@@ -273,7 +250,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                         />
                       )}
                     </Box>
-                  </ListItem>
+                  </ListItemButton>
                 ))}
               </List>
               <Divider />
@@ -302,9 +279,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
               </Box>
               <List disablePadding dense>
                 {recentSearches.slice(0, 5).map((search, index) => (
-                  <ListItem
+                  <ListItemButton
                     key={index}
-                    button
                     onClick={() => handleRecentClick(search)}
                     sx={{
                       py: 1.5,
@@ -312,13 +288,10 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     }}
                   >
                     <History
-                      style={{ width: 16, height: 16, mr: 1.5, opacity: 0.5 }}
+                      style={{ width: 16, height: 16, marginRight: 12, opacity: 0.5 }}
                     />
-                    <ListItemText
-                      primary={search}
-                      primaryTypographyProps={{ variant: "body2" }}
-                    />
-                  </ListItem>
+                    <Typography variant="body2">{search}</Typography>
+                  </ListItemButton>
                 ))}
               </List>
             </>

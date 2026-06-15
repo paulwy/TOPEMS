@@ -34,8 +34,16 @@ import {
   ChevronRight,
   Lightbulb,
   Zap,
+  UserPlus,
+  FileCheck,
+  TrendingUp,
+  Target,
+  AlertTriangle,
+  Wallet,
+  FileEdit,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAIContext } from "../../hooks";
 import { AIToolsPanel } from "./AIToolsPanel";
 
 interface QuickCommand {
@@ -55,10 +63,34 @@ interface Tool {
   action: () => void;
 }
 
+const iconMap: Record<string, React.ReactNode> = {
+  "user-plus": <UserPlus style={{ width: 16, height: 16 }} />,
+  "file-text": <FileText style={{ width: 16, height: 16 }} />,
+  "calendar-check": <Calendar style={{ width: 16, height: 16 }} />,
+  "trending-up": <TrendingUp style={{ width: 16, height: 16 }} />,
+  star: <Lightbulb style={{ width: 16, height: 16 }} />,
+  "message-square": <MessageSquare style={{ width: 16, height: 16 }} />,
+  "bar-chart": <BarChart3 style={{ width: 16, height: 16 }} />,
+  target: <Target style={{ width: 16, height: 16 }} />,
+  briefcase: <FileText style={{ width: 16, height: 16 }} />,
+  "alert-triangle": <AlertTriangle style={{ width: 16, height: 16 }} />,
+  "file-check": <FileCheck style={{ width: 16, height: 16 }} />,
+  "bar-chart-2": <BarChart3 style={{ width: 16, height: 16 }} />,
+  "alert-circle": <AlertTriangle style={{ width: 16, height: 16 }} />,
+  wallet: <Wallet style={{ width: 16, height: 16 }} />,
+  "pie-chart": <BarChart3 style={{ width: 16, height: 16 }} />,
+  "file-edit": <FileEdit style={{ width: 16, height: 16 }} />,
+  search: <Search style={{ width: 16, height: 16 }} />,
+  code: <Code style={{ width: 16, height: 16 }} />,
+  "message-circle": <MessageSquare style={{ width: 16, height: 16 }} />,
+};
+
 export const FloatingAIHelper: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+  const { recommendations, quickCommands: contextQuickCommands } = useAIContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -67,7 +99,7 @@ export const FloatingAIHelper: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
 
-  // 快捷命令
+  // 快捷命令（合并默认命令和上下文感知命令）
   const quickCommands: QuickCommand[] = [
     {
       id: "approval",
@@ -147,30 +179,6 @@ export const FloatingAIHelper: React.FC = () => {
       icon: <Shield style={{ width: 18, height: 18 }} />,
       description: "隐私数据处理",
       action: () => setActiveTool("mask"),
-    },
-  ];
-
-  // 上下文感知推荐（根据当前页面）
-  const contextAwareSuggestions = [
-    {
-      label: "员工信息补全",
-      desc: "AI智能补全员工档案",
-      action: () => navigate("/hrm/employees"),
-    },
-    {
-      label: "合同生成",
-      desc: "根据信息生成合同文档",
-      action: () => navigate("/hrm/contracts"),
-    },
-    {
-      label: "客户评分",
-      desc: "分析客户价值评分",
-      action: () => navigate("/crm/scoring"),
-    },
-    {
-      label: "报表解读",
-      desc: "AI解读财务数据",
-      action: () => navigate("/bi/reports"),
     },
   ];
 
@@ -255,11 +263,16 @@ export const FloatingAIHelper: React.FC = () => {
         slotProps={{
           paper: {
             sx: {
-              width: isMinimized ? 320 : 400,
-              height: isMinimized ? 60 : 520,
+              width: isMinimized 
+                ? { xs: 280, sm: 320 } 
+                : { xs: "calc(100vw - 32px)", sm: 400, md: 420 },
+              height: isMinimized 
+                ? 60 
+                : { xs: "70vh", sm: "75vh", md: 520 },
               borderRadius: 2,
               overflow: "hidden",
               transition: "all 0.3s ease",
+              maxWidth: "100%",
             },
           },
         }}
@@ -396,9 +409,9 @@ export const FloatingAIHelper: React.FC = () => {
                   <Box
                     sx={{ display: "flex", flexDirection: "column", gap: 1 }}
                   >
-                    {contextAwareSuggestions.map((item, idx) => (
+                    {recommendations.map((item) => (
                       <Box
-                        key={idx}
+                        key={item.id}
                         sx={{
                           p: 1.5,
                           borderRadius: 1,
@@ -410,17 +423,35 @@ export const FloatingAIHelper: React.FC = () => {
                             borderColor: "primary.main",
                           },
                         }}
-                        onClick={item.action}
+                        onClick={() => navigate(item.action)}
                       >
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 500, mb: 0.5 }}
-                        >
-                          {item.label}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {item.desc}
-                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: 0.5,
+                              backgroundColor: "primary.light",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "primary.main",
+                            }}
+                          >
+                            {iconMap[item.icon || "star"] || <Lightbulb style={{ width: 14, height: 14 }} />}
+                          </Box>
+                          <Box>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500, mb: 0.5 }}
+                            >
+                              {item.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {item.description}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </Box>
                     ))}
                   </Box>
@@ -580,14 +611,14 @@ export const FloatingAIHelper: React.FC = () => {
                     ))}
                   </Box>
                 </Box>
-              ) : activeTab === "tools" ? (
+              ) : activeTab === "help" ? (
                 <Box>
                   <Typography
                     variant="caption"
                     color="text.secondary"
                     sx={{ mb: 1.5, display: "block" }}
                   >
-                    ⚡ 快捷命令
+                    📖 使用指南
                   </Typography>
                   <Box
                     sx={{

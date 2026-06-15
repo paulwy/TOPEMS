@@ -20,11 +20,7 @@ import {
   CardContent,
   Stack,
 } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Inventory as InventoryIcon,
-  Add as AddIcon,
-} from "@mui/icons-material";
+import { Search, Package, Plus } from "lucide-react";
 
 interface Material {
   id: string;
@@ -141,7 +137,7 @@ const RsMaterialListPage: React.FC = () => {
               管理研发物料、库存监控、物料申请
             </Typography>
           </div>
-          <Button variant="contained" startIcon={<AddIcon />}>
+          <Button variant="contained" startIcon={<Plus />}>
             新增物料
           </Button>
         </Stack>
@@ -160,7 +156,7 @@ const RsMaterialListPage: React.FC = () => {
                     {stats.total}
                   </Typography>
                 </div>
-                <InventoryIcon color="primary" fontSize="large" />
+                <Package color="primary" fontSize="large" />
               </Stack>
             </CardContent>
           </Card>
@@ -180,7 +176,7 @@ const RsMaterialListPage: React.FC = () => {
                     {stats.sufficient}
                   </Typography>
                 </div>
-                <InventoryIcon color="success" fontSize="large" />
+                <Package color="success" fontSize="large" />
               </Stack>
             </CardContent>
           </Card>
@@ -197,7 +193,7 @@ const RsMaterialListPage: React.FC = () => {
                     {stats.low}
                   </Typography>
                 </div>
-                <InventoryIcon color="error" fontSize="large" />
+                <Package color="error" fontSize="large" />
               </Stack>
             </CardContent>
           </Card>
@@ -213,7 +209,7 @@ const RsMaterialListPage: React.FC = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <Search />
               </InputAdornment>
             ),
            }}

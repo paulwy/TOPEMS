@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Bell, Filter, ChevronDown, ChevronUp } from "lucide-react";
+import { Card, CardContent, CardHeader, Typography, Badge, Button } from "@mui/material";
 import type { AlertLevel } from "./AlertCard";
 import { AlertCard } from "./AlertCard";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
 
 export interface AlertItem {
   id: string;
@@ -47,60 +46,64 @@ export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
   return (
     <Card>
       <CardHeader
-        className="flex flex-row items-center justify-between cursor-pointer"
+        sx={{ cursor: "pointer" }}
         onClick={() => setIsExpanded(!isExpanded)}
+        action={
+          isExpanded ? (
+            <ChevronUp sx={{ width: 20, height: 20, color: "text.secondary" }} />
+          ) : (
+            <ChevronDown sx={{ width: 20, height: 20, color: "text.secondary" }} />
+          )
+        }
       >
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Bell className="w-5 h-5 text-gray-600" />
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ position: "relative" }}>
+            <Bell sx={{ width: 20, height: 20, color: "text.secondary" }} />
             {alerts.length > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
-                {alerts.length}
-              </Badge>
+              <Badge
+                sx={{ position: "absolute", top: -4, right: -4, minWidth: 20, height: 20 }}
+                color="error"
+                badgeContent={alerts.length}
+              />
             )}
           </div>
           <div>
-            <CardTitle className="text-base font-semibold">数据预警</CardTitle>
-            <p className="text-sm text-gray-500">实时监控异常指标</p>
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>数据预警</Typography>
+            <Typography variant="body2" color="text.secondary">实时监控异常指标</Typography>
           </div>
         </div>
-        {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-gray-400" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400" />
-        )}
       </CardHeader>
 
       {isExpanded && (
         <CardContent>
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <div className="flex gap-2">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+            <Filter sx={{ width: 16, height: 16, color: "text.secondary" }} />
+            <div style={{ display: "flex", gap: 8 }}>
               {filterOptions.map((option) => (
-                <button
+                <Button
                   key={option.value}
                   onClick={(e) => {
                     e.stopPropagation();
                     setFilter(option.value);
                   }}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                    filter === option.value
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                  variant={filter === option.value ? "contained" : "outlined"}
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                  }}
                 >
-                  {option.label} (
-                  {levelCounts[option.value as keyof typeof levelCounts]})
-                </button>
+                  {option.label} ({levelCounts[option.value as keyof typeof levelCounts]})
+                </Button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: 320, overflowY: "auto", paddingRight: 8 }}>
             {filteredAlerts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Bell className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>暂无预警信息</p>
+              <div style={{ textAlign: "center", padding: 32, color: "text.secondary" }}>
+                <Bell sx={{ width: 48, height: 48, margin: "0 auto 8px", opacity: 0.5 }} />
+                <Typography variant="body1">暂无预警信息</Typography>
               </div>
             ) : (
               filteredAlerts.map((alert) => (

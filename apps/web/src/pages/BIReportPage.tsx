@@ -20,18 +20,8 @@ import {
   Grid3X3,
   List,
 } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Badge } from "../components/ui/badge";
-import { Skeleton } from "../components/ui/skeleton";
+import { Button, Card, CardContent, TextField, Badge, Skeleton, Menu, MenuItem } from "@mui/material";
 import { EmptyState } from "../components/EmptyState";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
 import {
   fetchReports,
   createReport,

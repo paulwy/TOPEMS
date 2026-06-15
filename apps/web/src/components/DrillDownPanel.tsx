@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { X, ChevronRight, Search, Filter, RefreshCw } from "lucide-react";
-import { Button } from "./ui/button";
-import { CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { Input } from "./ui/input";
+import { Card, CardHeader, CardContent, Button, TextField, Typography, Chip, Paper } from "@mui/material";
 
 interface DrillDownData extends Record<string, any> {
   id: string;
+}
+
+interface DrillDownColumn {
+  key: string;
+  label: string;
+  format?: (value: any) => string;
 }
 
 interface DrillDownPanelProps {
@@ -14,8 +17,8 @@ interface DrillDownPanelProps {
   onClose: () => void;
   title: string;
   data: DrillDownData[];
-  columns: { key: string; label: string; format?: (_value: any) => string }[];
-  onRowClick?: (_row: DrillDownData) => void;
+  columns: DrillDownColumn[];
+  onRowClick?: (row: DrillDownData) => void;
 }
 
 export function DrillDownPanel({
@@ -63,57 +66,62 @@ export function DrillDownPanel({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", justifyContent: "flex-end" }}>
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)" }}
         onClick={onClose}
-      ></div>
-      <div className="relative w-full max-w-2xl bg-white shadow-xl overflow-hidden flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between border-b">
-          <div className="flex items-center gap-3">
-            <ChevronRight className="w-5 h-5 text-blue-500"></ChevronRight>
-            <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-            <Badge variant="outline">{data.length} 条记录</Badge>
+      />
+      <Paper style={{ position: "relative", width: "100%", maxWidth: 800, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }} elevation={3}>
+        <CardHeader
+          sx={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}
+          action={
+            <Button variant="text" size="small" onClick={onClose}>
+              <X style={{ width: 20, height: 20 }} />
+            </Button>
+          }
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <ChevronRight style={{ width: 20, height: 20, color: "#3B82F6" }} />
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>{title}</Typography>
+            <Chip variant="outlined" size="small" label={`${data.length} 条记录`} />
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5"></X>
-          </Button>
         </CardHeader>
 
-        <div className="p-4 border-b flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></Search>
-            <Input
+        <div style={{ padding: 16, borderBottom: "1px solid rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "text.secondary" }} />
+            <TextField
               placeholder="搜索..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            ></Input>
+              size="small"
+              sx={{ width: "100%", input: { paddingLeft: 40 } }}
+            />
           </div>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Filter className="w-4 h-4"></Filter>
+          <Button variant="outlined" size="small" sx={{ textTransform: "none" }}>
+            <Filter style={{ width: 16, height: 16, marginRight: 4 }} />
             筛选
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <RefreshCw className="w-4 h-4"></RefreshCw>
+          <Button variant="outlined" size="small" sx={{ textTransform: "none" }}>
+            <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
             刷新
           </Button>
         </div>
 
-        <CardContent className="flex-1 overflow-auto">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+        <CardContent sx={{ flex: 1, overflow: "auto" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%" }}>
               <thead>
-                <tr className="bg-gray-50 sticky top-0">
-                  {columns.map((col) => (
+                <tr style={{ backgroundColor: "#F8FAFC", position: "sticky", top: 0 }}>
+                  {columns.map((column) => (
                     <th
-                      key={col.key}
-                      onClick={() => handleSort(col.key)}
-                      className="px-4 py-3 text-left text-sm font-medium text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                      key={column.key}
+                      onClick={() => handleSort(column.key)}
+                      style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, cursor: "pointer", color: "#64748B" }}
                     >
-                      <div className="flex items-center gap-1">
-                        {col.label}
-                        {sortKey === col.key && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        {column.label}
+                        {sortKey === column.key && (
                           <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
                         )}
                       </div>
@@ -122,50 +130,32 @@ export function DrillDownPanel({
                 </tr>
               </thead>
               <tbody>
-                {sortedData.map((row, index) => (
+                {sortedData.map((row) => (
                   <tr
                     key={row.id}
                     onClick={() => onRowClick?.(row)}
-                    className={`border-b hover:bg-blue-50 cursor-pointer transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}
+                    style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", cursor: onRowClick ? "pointer" : "default" }}
+                    onMouseEnter={(e) => {
+                      if (onRowClick) {
+                        e.currentTarget.style.backgroundColor = "#F8FAFC";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
                   >
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        className="px-4 py-3 text-sm text-gray-800"
-                      >
-                        {col.format ? col.format(row[col.key]) : row[col.key]}
+                    {columns.map((column) => (
+                      <td key={column.key} style={{ padding: "12px 16px", color: "#334155" }}>
+                        {column.format ? column.format(row[column.key]) : row[column.key]}
                       </td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
-
-            {sortedData.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                <Search className="w-12 h-12 mx-auto mb-2 opacity-50"></Search>
-                <p>没有找到匹配的数据</p>
-              </div>
-            )}
           </div>
         </CardContent>
-
-        <div className="p-4 border-t bg-gray-50 flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            显示 {sortedData.length} / {data.length} 条记录
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled>
-              上一页
-            </Button>
-            <Button variant="outline" size="sm" disabled>
-              下一页
-            </Button>
-          </div>
-        </div>
-      </div>
+      </Paper>
     </div>
   );
 }
-
-export default DrillDownPanel;

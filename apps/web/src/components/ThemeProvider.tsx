@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
 import { useAppStore } from "@/store";
+import { createCustomTheme } from "@/theme";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -10,18 +13,30 @@ type ThemeProviderProps = {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const theme = useAppStore((state) => state.theme);
 
-  // 监听系统主题变化
+  const [muiMode, setMuiMode] = React.useState<"light" | "dark">("light");
+
+  const getActiveTheme = (): "light" | "dark" => {
+    if (theme === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    return theme;
+  };
+
   React.useEffect(() => {
+    const activeTheme = getActiveTheme();
+    setMuiMode(activeTheme);
+    updateDOM(activeTheme);
+
     const handleSystemThemeChange = (e: MediaQueryListEvent) => {
       if (theme === "system") {
-        updateDOM(e.matches ? "dark" : "light");
+        const newTheme = e.matches ? "dark" : "light";
+        setMuiMode(newTheme);
+        updateDOM(newTheme);
       }
     };
 
-    // 初始设置主题
-    applyTheme();
-
-    // 监听系统主题变化
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     mediaQuery.addEventListener("change", handleSystemThemeChange);
 
@@ -29,20 +44,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       mediaQuery.removeEventListener("change", handleSystemThemeChange);
     };
   }, [theme]);
-
-  const applyTheme = () => {
-    let activeTheme: "light" | "dark";
-
-    if (theme === "system") {
-      activeTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    } else {
-      activeTheme = theme;
-    }
-
-    updateDOM(activeTheme);
-  };
 
   const updateDOM = (newTheme: "light" | "dark") => {
     const root = window.document.documentElement;
@@ -53,9 +54,15 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       root.classList.remove("dark");
     }
 
-    // 设置 data-theme 属性（可选，方便调试）
     root.setAttribute("data-theme", newTheme);
   };
 
-  return <>{children}</>;
+  const muiTheme = createCustomTheme(muiMode);
+
+  return (
+    <MuiThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      {children}
+    </MuiThemeProvider>
+  );
 }

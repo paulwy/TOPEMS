@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "../ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import FormLabel from "@mui/material/FormLabel";
+import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
 import {
   Download,
   Play,
@@ -314,6 +315,27 @@ const mockCategories: TemplateCategory[] = [
   },
 ];
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
 interface TemplateDemoPageProps {
   onClose?: () => void;
 }
@@ -328,7 +350,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
   >({});
   const [renderedContent, setRenderedContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("select");
+  const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
@@ -359,7 +381,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
   // 处理模板选择
   const handleTemplateSelect = (template: Template) => {
     setSelectedTemplate(template);
-    setActiveTab("config");
+    setActiveTab(1);
     const initialVariables: Record<string, any> = {};
     template.variables?.forEach((varDef: TemplateVariable) => {
       if (varDef.default_value) {
@@ -533,7 +555,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
 
     setRenderedContent(result);
     setIsLoading(false);
-    setActiveTab("preview");
+    setActiveTab(2);
   };
 
   // 应用模板
@@ -544,363 +566,622 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* 顶部导航 */}
-      <header className="bg-white shadow-sm border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">
-                工作流模板演示
-              </h1>
-              <p className="text-sm text-slate-500">
-                动态加载、配置和渲染工作流模板
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+  return (
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      {/* 顶部导航 */}
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1400,
+            mx: "auto",
+            px: 2,
+            py: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+                bgcolor: "secondary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FileText sx={{ width: 20, height: 20, color: "white" }} />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.800" }}>
+                工作流模板演示
+              </Typography>
+              <Typography variant="caption" sx={{ color: "grey.500" }}>
+                动态加载、配置和渲染工作流模板
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      <Box component="main" sx={{ maxWidth: 1400, mx: "auto", px: 2, py: 3 }}>
         {/* 功能介绍卡片 */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
-              模板功能演示
-            </CardTitle>
-            <CardDescription>
-              本演示展示了如何在前端应用中动态加载模板列表、选择模板、配置变量并渲染最终内容
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">1</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-slate-800">选择模板</h4>
-                <p className="text-sm text-slate-500">
+        <Card sx={{ mb: 3 }}>
+          <CardHeader
+            title={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Sparkles sx={{ color: "warning.main", fontSize: 20 }} />
+                <Typography variant="h6">模板功能演示</Typography>
+              </Box>
+            }
+            subheader="本演示展示了如何在前端应用中动态加载模板列表、选择模板、配置变量并渲染最终内容"
+          />
+          <CardContent
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+                p: 2,
+                bgcolor: "info.light",
+                borderRadius: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  bgcolor: "info.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Typography sx={{ color: "white", fontWeight: 700, fontSize: 14 }}>
+                  1
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                  选择模板
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
                   从模板库中选择合适的工作流模板
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">2</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-slate-800">配置变量</h4>
-                <p className="text-sm text-slate-500">
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+                p: 2,
+                bgcolor: "secondary.light",
+                borderRadius: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  bgcolor: "secondary.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Typography sx={{ color: "white", fontWeight: 700, fontSize: 14 }}>
+                  2
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                  配置变量
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
                   根据业务需求填写模板变量值
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">3</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-slate-800">渲染应用</h4>
-                <p className="text-sm text-slate-500">
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+                p: 2,
+                bgcolor: "success.light",
+                borderRadius: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  bgcolor: "success.main",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Typography sx={{ color: "white", fontWeight: 700, fontSize: 14 }}>
+                  3
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                  渲染应用
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
                   预览并应用模板到实际工作流
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         {/* 主内容区域 */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-6"
-        >
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="select">
-              <FileText className="w-4 h-4 mr-2" />
-              选择模板
-            </TabsTrigger>
-            <TabsTrigger value="config" disabled={!selectedTemplate}>
-              <Settings className="w-4 h-4 mr-2" />
-              配置变量
-            </TabsTrigger>
-            <TabsTrigger value="preview" disabled={!selectedTemplate}>
-              <Play className="w-4 h-4 mr-2" />
-              预览渲染
-            </TabsTrigger>
-          </TabsList>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="fullWidth"
+          >
+            <Tab
+              icon={<FileText sx={{ fontSize: 18 }} />}
+              iconPosition="start"
+              label="选择模板"
+            />
+            <Tab
+              icon={<Settings sx={{ fontSize: 18 }} />}
+              iconPosition="start"
+              label="配置变量"
+              disabled={!selectedTemplate}
+            />
+            <Tab
+              icon={<Play sx={{ fontSize: 18 }} />}
+              iconPosition="start"
+              label="预览渲染"
+              disabled={!selectedTemplate}
+            />
+          </Tabs>
+        </Box>
 
-          {/* 选择模板 */}
-          <TabsContent value="select" className="space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="font-semibold text-slate-800">可用模板</h3>
-                <p className="text-sm text-slate-500">
-                  共 {templates.length} 个模板
-                </p>
-              </div>
-              <div className="flex gap-3 w-full sm:w-auto">
-                <div className="relative flex-1 sm:flex-none">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    placeholder="搜索模板..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">全部分类</option>
-                  {mockCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
-                <span className="ml-2 text-slate-500">加载中...</span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredTemplates.map((template) => (
-                  <Card
-                    key={template.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg ${
-                      selectedTemplate?.id === template.id
-                        ? "ring-2 ring-blue-500 shadow-md"
-                        : ""
-                    }`}
-                    onClick={() => handleTemplateSelect(template)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-base">
-                            {template.name}
-                          </CardTitle>
-                          <CardDescription className="text-xs">
-                            {template.description}
-                          </CardDescription>
-                        </div>
-                        {template.ai_enabled && (
-                          <Sparkles className="w-4 h-4 text-amber-500" />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-2">
-                      <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                        <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">
-                          {template.template_type}
-                        </span>
-                        <span className="px-2 py-1 bg-green-50 text-green-600 rounded text-xs">
-                          {template.use_count} 次使用
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-slate-400">
-                        <span>版本 {template.version}</span>
-                        <span>查看 {template.view_count}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+        {/* 选择模板 */}
+        <TabPanel value={activeTab} index={0}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+              gap: 2,
+              mb: 3,
+            }}
+          >
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "grey.800" }}>
+                可用模板
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                共 {templates.length} 个模板
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", gap: 2, width: { xs: "100%", sm: "auto" } }}>
+              <Box sx={{ position: "relative", flex: { xs: 1, sm: "none" } }}>
+                <Search
+                  sx={{
+                    position: "absolute",
+                    left: 2,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    fontSize: 18,
+                    color: "grey.400",
+                  }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="搜索模板..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  sx={{ pl: 5, width: { xs: "100%", sm: 200 } }}
+                />
+              </Box>
+              <TextField
+                select
+                size="small"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                sx={{ minWidth: 120 }}
+                slotProps={{ select: { native: true } }}
+              >
+                <option value="">全部分类</option>
+                {mockCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
                 ))}
-              </div>
-            )}
-          </TabsContent>
+              </TextField>
+            </Box>
+          </Box>
 
-          {/* 配置变量 */}
-          <TabsContent value="config" className="space-y-4">
-            {selectedTemplate && (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{selectedTemplate.name}</CardTitle>
-                    <CardDescription>
-                      {selectedTemplate.description}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
-                      变量配置
-                    </CardTitle>
-                    <CardDescription>请填写以下变量值</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {selectedTemplate.variables?.map(
-                      (varDef: TemplateVariable) => (
-                        <div key={varDef.key} className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            {varDef.label}
-                            {varDef.required && (
-                              <span className="text-red-500">*</span>
-                            )}
-                          </Label>
-                          {varDef.type === "select" ? (
-                            <select
-                              value={templateVariables[varDef.key] || ""}
-                              onChange={(e) =>
-                                handleVariableChange(varDef.key, e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                              <option value="">请选择</option>
-                              {varDef.options?.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          ) : varDef.type === "number" ? (
-                            <Input
-                              type="number"
-                              value={templateVariables[varDef.key] || ""}
-                              onChange={(e) =>
-                                handleVariableChange(
-                                  varDef.key,
-                                  parseInt(e.target.value) || 0,
-                                )
-                              }
-                              placeholder={`请输入${varDef.label}`}
-                            />
-                          ) : varDef.type === "date" ? (
-                            <Input
-                              type="date"
-                              value={templateVariables[varDef.key] || ""}
-                              onChange={(e) =>
-                                handleVariableChange(varDef.key, e.target.value)
-                              }
-                            />
-                          ) : (
-                            <Input
-                              value={templateVariables[varDef.key] || ""}
-                              onChange={(e) =>
-                                handleVariableChange(varDef.key, e.target.value)
-                              }
-                              placeholder={`请输入${varDef.label}`}
-                            />
-                          )}
-                        </div>
-                      ),
-                    )}
+          {isLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 6,
+              }}
+            >
+              <RefreshCw
+                sx={{ fontSize: 24, color: "primary.main", animation: "spin 1s linear infinite", "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } } }}
+              />
+              <Typography sx={{ ml: 1, color: "grey.500" }}>加载中...</Typography>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                },
+                gap: 2,
+              }}
+            >
+              {filteredTemplates.map((template) => (
+                <Card
+                  key={template.id}
+                  sx={{
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      boxShadow: 4,
+                    },
+                    ...(selectedTemplate?.id === template.id && {
+                      outline: 2,
+                      outlineColor: "primary.main",
+                      boxShadow: 3,
+                    }),
+                  }}
+                  onClick={() => handleTemplateSelect(template)}
+                >
+                  <CardHeader
+                    subheader={
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            {template.name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "grey.500" }}>
+                            {template.description}
+                          </Typography>
+                        </Box>
+                        {template.ai_enabled && (
+                          <Sparkles sx={{ fontSize: 16, color: "warning.main" }} />
+                        )}
+                      </Box>
+                    }
+                  />
+                  <CardContent>
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                    >
+                      <Chip
+                        label={template.template_type}
+                        size="small"
+                        sx={{
+                          bgcolor: "info.light",
+                          color: "info.main",
+                          fontSize: 12,
+                        }}
+                      />
+                      <Chip
+                        label={`${template.use_count} 次使用`}
+                        size="small"
+                        sx={{
+                          bgcolor: "success.light",
+                          color: "success.main",
+                          fontSize: 12,
+                        }}
+                      />
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: 12,
+                        color: "grey.400",
+                      }}
+                    >
+                      <Typography variant="caption" sx={{ color: "grey.400" }}>
+                        版本 {template.version}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "grey.400" }}>
+                        查看 {template.view_count}
+                      </Typography>
+                    </Box>
                   </CardContent>
                 </Card>
+              ))}
+            </Box>
+          )}
+        </TabPanel>
 
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => setActiveTab("select")}
-                    variant="outline"
-                  >
-                    返回选择
-                  </Button>
-                  <Button
-                    onClick={handleRender}
-                    className="flex-1"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        渲染中...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4 mr-2" />
-                        渲染模板
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
-          </TabsContent>
+        {/* 配置变量 */}
+        <TabPanel value={activeTab} index={1}>
+          {selectedTemplate && (
+            <>
+              <Card sx={{ mb: 2 }}>
+                <CardHeader
+                  title={selectedTemplate.name}
+                  subheader={selectedTemplate.description}
+                />
+              </Card>
 
-          {/* 预览渲染 */}
-          <TabsContent value="preview" className="space-y-4">
-            {selectedTemplate && (
-              <>
-                <Card>
-                  <CardHeader className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Play className="w-4 h-4" />
-                      渲染结果预览
-                    </CardTitle>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Download className="w-4 h-4 mr-2" />
-                        导出
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <pre className="whitespace-pre-wrap font-sans text-slate-700 bg-slate-50 p-4 rounded-lg min-h-[300px]">
-                      {renderedContent || "点击上方「渲染模板」按钮查看结果"}
-                    </pre>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>变量配置摘要</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {Object.entries(templateVariables).map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="flex items-center justify-between p-2 bg-slate-50 rounded"
+              <Card sx={{ mb: 2 }}>
+                <CardHeader
+                  title={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Settings sx={{ fontSize: 18 }} />
+                      <Typography variant="h6">变量配置</Typography>
+                    </Box>
+                  }
+                  subheader="请填写以下变量值"
+                />
+                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {selectedTemplate.variables?.map(
+                    (varDef: TemplateVariable) => (
+                      <FormControl key={varDef.key} fullWidth>
+                        <FormLabel
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            mb: 1,
+                          }}
                         >
-                          <span className="text-sm text-slate-500">{key}</span>
-                          <span className="text-sm font-medium text-slate-800">
-                            {typeof value === "boolean"
-                              ? value
-                                ? "是"
-                                : "否"
-                              : String(value)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                          {varDef.label}
+                          {varDef.required && (
+                            <Typography sx={{ color: "error.main" }}>*</Typography>
+                          )}
+                        </FormLabel>
+                        {varDef.type === "select" ? (
+                          <TextField
+                            select
+                            size="small"
+                            value={templateVariables[varDef.key] || ""}
+                            onChange={(e) =>
+                              handleVariableChange(varDef.key, e.target.value)
+                            }
+                            slotProps={{ select: { native: true } }}
+                          >
+                            <option value="">请选择</option>
+                            {varDef.options?.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </TextField>
+                        ) : varDef.type === "number" ? (
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={templateVariables[varDef.key] || ""}
+                            onChange={(e) =>
+                              handleVariableChange(
+                                varDef.key,
+                                parseInt(e.target.value) || 0,
+                              )
+                            }
+                            placeholder={`请输入${varDef.label}`}
+                          />
+                        ) : varDef.type === "date" ? (
+                          <TextField
+                            type="date"
+                            size="small"
+                            value={templateVariables[varDef.key] || ""}
+                            onChange={(e) =>
+                              handleVariableChange(varDef.key, e.target.value)
+                            }
+                            slotProps={{ inputLabel: { shrink: true } }}
+                          />
+                        ) : (
+                          <TextField
+                            size="small"
+                            value={templateVariables[varDef.key] || ""}
+                            onChange={(e) =>
+                              handleVariableChange(varDef.key, e.target.value)
+                            }
+                            placeholder={`请输入${varDef.label}`}
+                          />
+                        )}
+                      </FormControl>
+                    ),
+                  )}
+                </CardContent>
+              </Card>
 
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => setActiveTab("config")}
-                    variant="outline"
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <Button
+                  onClick={() => setActiveTab(0)}
+                  variant="outlined"
+                >
+                  返回选择
+                </Button>
+                <Button
+                  onClick={handleRender}
+                  variant="contained"
+                  color="primary"
+                  sx={{ flex: 1 }}
+                  disabled={isLoading}
+                  startIcon={
+                    isLoading ? (
+                      <RefreshCw
+                        sx={{
+                          fontSize: 18,
+                          animation: "spin 1s linear infinite",
+                          "@keyframes spin": {
+                            "0%": { transform: "rotate(0deg)" },
+                            "100%": { transform: "rotate(360deg)" },
+                          },
+                        }}
+                      />
+                    ) : (
+                      <Play sx={{ fontSize: 18 }} />
+                    )
+                  }
+                >
+                  {isLoading ? "渲染中..." : "渲染模板"}
+                </Button>
+              </Box>
+            </>
+          )}
+        </TabPanel>
+
+        {/* 预览渲染 */}
+        <TabPanel value={activeTab} index={2}>
+          {selectedTemplate && (
+            <>
+              <Card sx={{ mb: 2 }}>
+                <CardHeader
+                  title={
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Play sx={{ fontSize: 18 }} />
+                        <Typography variant="h6">渲染结果预览</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button variant="outlined" size="small" startIcon={<Download sx={{ fontSize: 16 }} />}>
+                          导出
+                        </Button>
+                      </Box>
+                    </Box>
+                  }
+                />
+                <CardContent>
+                  <Box
+                    component="pre"
+                    sx={{
+                      whiteSpace: "pre-wrap",
+                      fontFamily: "inherit",
+                      color: "grey.700",
+                      bgcolor: "grey.50",
+                      p: 2,
+                      borderRadius: 1,
+                      minHeight: 300,
+                    }}
                   >
-                    返回配置
-                  </Button>
-                  <Button
-                    onClick={handleApplyTemplate}
-                    className="flex-1 bg-green-500 hover:bg-green-600"
+                    {renderedContent || "点击上方「渲染模板」按钮查看结果"}
+                  </Box>
+                </CardContent>
+              </Card>
+
+              <Card sx={{ mb: 2 }}>
+                <CardHeader title="变量配置摘要" />
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        md: "repeat(2, 1fr)",
+                        lg: "repeat(3, 1fr)",
+                      },
+                      gap: 1,
+                    }}
                   >
-                    <Play className="w-4 h-4 mr-2" />
-                    应用到工作流
-                  </Button>
-                </div>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
+                    {Object.entries(templateVariables).map(([key, value]) => (
+                      <Box
+                        key={key}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          p: 1,
+                          bgcolor: "grey.50",
+                          borderRadius: 1,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          {key}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                          {typeof value === "boolean"
+                            ? value
+                              ? "是"
+                              : "否"
+                            : String(value)}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <Button
+                  onClick={() => setActiveTab(1)}
+                  variant="outlined"
+                >
+                  返回配置
+                </Button>
+                <Button
+                  onClick={handleApplyTemplate}
+                  variant="contained"
+                  color="success"
+                  sx={{ flex: 1 }}
+                  startIcon={<Play sx={{ fontSize: 18 }} />}
+                >
+                  应用到工作流
+                </Button>
+              </Box>
+            </>
+          )}
+        </TabPanel>
+      </Box>
+    </Box>
   );
 };
 

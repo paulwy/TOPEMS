@@ -32,14 +32,14 @@ import {
   Stack,
 } from "@mui/material";
 import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  FilterList as FilterIcon,
-  Science as ScienceIcon,
-} from "@mui/icons-material";
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  Filter,
+  Flask,
+} from "lucide-react";
 
 interface Experiment {
   id: string;
@@ -247,7 +247,7 @@ const RsExperimentListPage: React.FC = () => {
           </div>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            startIcon={<Plus />}
             component={Link}
             to="/rs/experiments/create"
           >
@@ -260,9 +260,9 @@ const RsExperimentListPage: React.FC = () => {
       <Paper sx={{ mb: 3 }}>
         <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
           <Tab label="全部试验" />
-          <Tab label="小试阶段" icon={<ScienceIcon />} iconPosition="start" />
-          <Tab label="中试阶段" icon={<ScienceIcon />} iconPosition="start" />
-          <Tab label="放大试验" icon={<ScienceIcon />} iconPosition="start" />
+          <Tab label="小试阶段" icon={<Flask />} iconPosition="start" />
+          <Tab label="中试阶段" icon={<Flask />} iconPosition="start" />
+          <Tab label="放大试验" icon={<Flask />} iconPosition="start" />
         </Tabs>
       </Paper>
 
@@ -407,7 +407,7 @@ const RsExperimentListPage: React.FC = () => {
                           color="error"
                           onClick={() => handleDeleteClick(exp)}
                         >
-                          <DeleteIcon />
+                          <Trash2 />
                         </IconButton>
                       </Tooltip>
                     </Stack>

@@ -5,13 +5,15 @@ import * as React from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 6000;
 
-type ToasterToast = ToastProps & {
+type ToasterToast = Omit<ToastProps, "open" | "onOpenChange"> & {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const actionTypes = {
@@ -134,12 +136,12 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToasterToast, "id">;
+type Toast = Omit<ToasterToast, "id" | "open" | "onOpenChange">;
 
-function toast({ ...props }: Toast) {
+function toast({ variant = "default", ...props }: Toast) {
   const id = genId();
 
-  const update = (props: ToasterToast) =>
+  const update = (props: Partial<ToasterToast>) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
@@ -151,6 +153,7 @@ function toast({ ...props }: Toast) {
     toast: {
       ...props,
       id,
+      variant,
       open: true,
       onOpenChange: (open) => {
         if (!open) dismiss();
