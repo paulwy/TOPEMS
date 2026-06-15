@@ -19,7 +19,7 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Badge,
+  Chip,
   TextField,
   LinearProgress,
   Table,
@@ -27,28 +27,15 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
+  IconButton,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
 } from "@mui/material";
 import type { Project } from "../api/pm";
 import { pmApi } from "../api/pm";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import Pagination from "../components/pm/Pagination";
 
 const PROJECT_TYPES = [
   { value: "__ALL__", label: "全部类型" },
@@ -138,22 +125,22 @@ const PmProjectListPage: React.FC = () => {
     }).format(amount);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): "success" | "primary" | "warning" | "default" | "error" => {
     switch (status.toLowerCase()) {
       case "active":
-        return { bgcolor: "#dcfce7", color: "#166534" };
+        return "success";
       case "completed":
-        return { bgcolor: "#dbeafe", color: "#1e40af" };
+        return "primary";
       case "pending":
-        return { bgcolor: "#fef9c3", color: "#a16207" };
+        return "warning";
       case "approved":
-        return { bgcolor: "#f3e8ff", color: "#7c3aed" };
+        return "primary";
       case "cancelled":
-        return { bgcolor: "#f3f4f6", color: "#374151" };
+        return "default";
       case "draft":
-        return { bgcolor: "#f3f4f6", color: "#4b5563" };
+        return "default";
       default:
-        return { bgcolor: "#f3f4f6", color: "#374151" };
+        return "default";
     }
   };
 
@@ -194,7 +181,7 @@ const PmProjectListPage: React.FC = () => {
   ).length;
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "slate.50" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.50" }}>
       <Box sx={{ flex: 1, p: 3 }}>
         <Box
           sx={{
@@ -215,13 +202,16 @@ const PmProjectListPage: React.FC = () => {
               管理所有类型的项目，跟踪进度和状态
             </Typography>
           </Box>
-          <Button onClick={() => navigate("/pm/projects/create")}>
-            <Plus sx={{ width: 16, height: 16, mr: 1 }} />
+          <Button
+            variant="contained"
+            onClick={() => navigate("/pm/projects/create")}
+            startIcon={<Plus size={16} />}
+          >
             创建项目
           </Button>
         </Box>
 
-        <Card>
+        <Card sx={{ mb: 3 }}>
           <CardContent sx={{ p: 2 }}>
             <Box
               sx={{
@@ -232,54 +222,50 @@ const PmProjectListPage: React.FC = () => {
                 gap: 2,
               }}
             >
-              <Box sx={{ flex: 1, position: "relative" }}>
-                <Search
-                  sx={{
-                    position: "absolute",
-                    left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: 20,
-                    height: 20,
-                    color: "grey.400",
-                  }}
-                />
-                <Input
-                  type="text"
-                  placeholder="搜索项目名称或编号..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ pl: 5 }}
-                />
-              </Box>
+              <TextField
+                type="text"
+                placeholder="搜索项目名称或编号..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="small"
+                sx={{ flex: 1, minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <Search size={20} style={{ color: "#9ca3af", marginRight: 8 }} />
+                    ),
+                  },
+                }}
+              />
               <Box sx={{ display: "flex", gap: 1.5 }}>
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger sx={{ width: 144 }}>
-                    <SelectValue placeholder="选择类型" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <FormControl size="small" sx={{ minWidth: 144 }}>
+                  <InputLabel>类型</InputLabel>
+                  <Select
+                    value={selectedType}
+                    label="类型"
+                    onChange={(e) => setSelectedType(e.target.value)}
+                  >
                     {PROJECT_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
+                      <MenuItem key={type.value} value={type.value}>
                         {type.label}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={selectedStatus}
-                  onValueChange={setSelectedStatus}
-                >
-                  <SelectTrigger sx={{ width: 144 }}>
-                    <SelectValue placeholder="选择状态" />
-                  </SelectTrigger>
-                  <SelectContent>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 144 }}>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={selectedStatus}
+                    label="状态"
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                  >
                     {STATUS_OPTIONS.map((status) => (
-                      <SelectItem key={status.value} value={status.value}>
+                      <MenuItem key={status.value} value={status.value}>
                         {status.label}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </Box>
             </Box>
           </CardContent>
@@ -293,7 +279,7 @@ const PmProjectListPage: React.FC = () => {
             my: 3,
           }}
         >
-          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+          <Card>
             <CardContent
               sx={{
                 p: 2,
@@ -309,9 +295,7 @@ const PmProjectListPage: React.FC = () => {
                   bgcolor: "#dbeafe",
                 }}
               >
-                <FolderKanban
-                  sx={{ width: 24, height: 24, color: "#2563eb" }}
-                />
+                <FolderKanban size={24} style={{ color: "#2563eb" }} />
               </Box>
               <Box>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -327,7 +311,7 @@ const PmProjectListPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+          <Card>
             <CardContent
               sx={{
                 p: 2,
@@ -343,7 +327,7 @@ const PmProjectListPage: React.FC = () => {
                   bgcolor: "#dcfce7",
                 }}
               >
-                <TrendingUp sx={{ width: 24, height: 24, color: "#16a34a" }} />
+                <TrendingUp size={24} style={{ color: "#16a34a" }} />
               </Box>
               <Box>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -359,7 +343,7 @@ const PmProjectListPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+          <Card>
             <CardContent
               sx={{
                 p: 2,
@@ -375,7 +359,7 @@ const PmProjectListPage: React.FC = () => {
                   bgcolor: "#fef9c3",
                 }}
               >
-                <Calendar sx={{ width: 24, height: 24, color: "#ca8a04" }} />
+                <Calendar size={24} style={{ color: "#ca8a04" }} />
               </Box>
               <Box>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -391,7 +375,7 @@ const PmProjectListPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+          <Card>
             <CardContent
               sx={{
                 p: 2,
@@ -407,7 +391,7 @@ const PmProjectListPage: React.FC = () => {
                   bgcolor: "#dbeafe",
                 }}
               >
-                <Users sx={{ width: 24, height: 24, color: "#2563eb" }} />
+                <Users size={24} style={{ color: "#2563eb" }} />
               </Box>
               <Box>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -425,34 +409,39 @@ const PmProjectListPage: React.FC = () => {
         </Box>
 
         <Card>
-          <CardHeader sx={{ px: 3 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <CardTitle sx={{ fontSize: "1.125rem" }}>项目列表</CardTitle>
-              <Typography variant="body2" sx={{ color: "grey.500" }}>
-                共 {totalCount} 个项目
-              </Typography>
-            </Box>
-          </CardHeader>
+          <CardHeader
+            sx={{ px: 3 }}
+            title={
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography sx={{ fontSize: "1.125rem", fontWeight: 600 }}>
+                  项目列表
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  共 {totalCount} 个项目
+                </Typography>
+              </Box>
+            }
+          />
           <CardContent sx={{ p: 0 }}>
             <Box sx={{ overflowX: "auto" }}>
               <Table>
-                <TableHeader>
+                <TableHead>
                   <TableRow>
-                    <TableHead sx={{ width: 200 }}>项目名称</TableHead>
-                    <TableHead>类型</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead sx={{ width: 180 }}>进度</TableHead>
-                    <TableHead>预算</TableHead>
-                    <TableHead sx={{ width: 150 }}>时间</TableHead>
-                    <TableHead sx={{ width: 120 }}>操作</TableHead>
+                    <TableCell sx={{ width: 200 }}>项目名称</TableCell>
+                    <TableCell>类型</TableCell>
+                    <TableCell>状态</TableCell>
+                    <TableCell sx={{ width: 180 }}>进度</TableCell>
+                    <TableCell>预算</TableCell>
+                    <TableCell sx={{ width: 150 }}>时间</TableCell>
+                    <TableCell sx={{ width: 120 }}>操作</TableCell>
                   </TableRow>
-                </TableHeader>
+                </TableHead>
                 <TableBody>
                   {loading ? (
                     <TableRow>
@@ -517,9 +506,11 @@ const PmProjectListPage: React.FC = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Badge sx={getStatusColor(project.status)}>
-                            {getStatusLabel(project.status)}
-                          </Badge>
+                          <Chip
+                            size="small"
+                            label={getStatusLabel(project.status)}
+                            color={getStatusColor(project.status)}
+                          />
                         </TableCell>
                         <TableCell>
                           <Box
@@ -530,16 +521,17 @@ const PmProjectListPage: React.FC = () => {
                             }}
                           >
                             <Box sx={{ width: 96 }}>
-                              <Progress
-                                value={project.progress}
-                                sx={{ height: 8 }}
+                              <LinearProgress
+                                variant="determinate"
+                                value={project.progress || 0}
+                                sx={{ height: 8, borderRadius: 4 }}
                               />
                             </Box>
                             <Typography
                               variant="body2"
                               sx={{ color: "grey.600" }}
                             >
-                              {project.progress}%
+                              {project.progress || 0}%
                             </Typography>
                           </Box>
                         </TableCell>
@@ -564,43 +556,37 @@ const PmProjectListPage: React.FC = () => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                sx={{ width: 32, height: 32 }}
-                              >
-                                <MoreVertical sx={{ width: 16, height: 16 }} />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
+                          <Box sx={{ display: "flex", gap: 0.5 }}>
+                            <Tooltip title="查看详情">
+                              <IconButton
+                                size="small"
                                 onClick={() =>
                                   navigate(`/pm/projects/${project.id}`)
                                 }
                               >
-                                <Eye sx={{ width: 16, height: 16, mr: 1 }} />
-                                查看详情
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
+                                <Eye size={16} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="编辑">
+                              <IconButton
+                                size="small"
                                 onClick={() =>
                                   navigate(`/pm/projects/${project.id}/edit`)
                                 }
                               >
-                                <Edit sx={{ width: 16, height: 16, mr: 1 }} />
-                                编辑
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
+                                <Edit size={16} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="删除">
+                              <IconButton
+                                size="small"
                                 onClick={() => handleDelete(project.id)}
-                                sx={{ color: "#dc2626" }}
+                                sx={{ color: "error.main" }}
                               >
-                                <Trash2 sx={{ width: 16, height: 16, mr: 1 }} />
-                                删除
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                <Trash2 size={16} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ))
@@ -610,13 +596,33 @@ const PmProjectListPage: React.FC = () => {
             </Box>
             {!loading && totalPages > 1 && (
               <Box
-                sx={{ p: 2, borderTop: "1px solid", borderColor: "grey.200" }}
+                sx={{
+                  p: 2,
+                  borderTop: "1px solid",
+                  borderColor: "grey.200",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                }}
               >
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
+                <Button
+                  variant="outlined"
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
+                  上一页
+                </Button>
+                <Typography variant="body2" sx={{ color: "grey.600" }}>
+                  第 {currentPage} / {totalPages} 页
+                </Typography>
+                <Button
+                  variant="outlined"
+                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  下一页
+                </Button>
               </Box>
             )}
           </CardContent>

@@ -28,3 +28,12 @@ export type { StepperProps, StepItem } from "./Stepper";
 
 export { default as HelpButton } from "./HelpButton";
 export type { HelpButtonProps } from "./HelpButton";
+
+export { default as StatusBadge } from "./StatusBadge";
+export type { StatusBadgeProps } from "./StatusBadge";
+
+export { default as AmountDisplay } from "./AmountDisplay";
+export type { AmountDisplayProps } from "./AmountDisplay";
+
+export { default as DateRangePicker } from "./DateRangePicker";
+export type { DateRangePickerProps } from "./DateRangePicker";
