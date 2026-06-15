@@ -142,7 +142,9 @@ export function AISummarizer({
         {hasSummary ? (
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
+              >
                 <Quote style={{ width: 20, height: 20, color: "#9333ea" }} />
                 <FormLabel sx={{ color: "#7c3aed", fontWeight: 500 }}>
                   生成的摘要
@@ -156,7 +158,13 @@ export function AISummarizer({
                   p: 2,
                 }}
               >
-                <Typography sx={{ color: "#374151", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                <Typography
+                  sx={{
+                    color: "#374151",
+                    lineHeight: 1.7,
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
                   {result.summary}
                 </Typography>
               </Box>
@@ -174,7 +182,14 @@ export function AISummarizer({
         ) : (
           <Card>
             <CardContent sx={{ p: 3, textAlign: "center", color: "#6b7280" }}>
-              <Sparkles style={{ width: 40, height: 40, margin: "0 auto 12px", opacity: 0.5 }} />
+              <Sparkles
+                style={{
+                  width: 40,
+                  height: 40,
+                  margin: "0 auto 12px",
+                  opacity: 0.5,
+                }}
+              />
               <Typography>正在生成摘要...</Typography>
             </CardContent>
           </Card>

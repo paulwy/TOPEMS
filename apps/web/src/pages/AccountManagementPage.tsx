@@ -47,7 +47,13 @@ import type { Account, BalanceDirection } from "@/types/erp-finance";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
 /** 科目类型配置 */
-const ACCOUNT_TYPE_CONFIG: Record<string, { label: string; color: "primary" | "error" | "success" | "info" | "warning" | "default" }> = {
+const ACCOUNT_TYPE_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: "primary" | "error" | "success" | "info" | "warning" | "default";
+  }
+> = {
   asset: { label: "资产", color: "primary" },
   liability: { label: "负债", color: "error" },
   equity: { label: "权益", color: "success" },
@@ -228,7 +234,9 @@ export default function AccountManagementPage() {
       header: "科目编码",
       accessorKey: "code",
       cell: ({ row }) => (
-        <span style={{ fontFamily: "monospace", fontSize: "0.875rem" }}>{row.getValue("code")}</span>
+        <span style={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
+          {row.getValue("code")}
+        </span>
       ),
     },
     {
@@ -280,7 +288,11 @@ export default function AccountManagementPage() {
       header: "明细",
       accessorKey: "is_detail",
       cell: ({ row }) => (
-        <Chip size="small" variant={row.original.is_detail ? "filled" : "outlined"} label={row.original.is_detail ? "明细科目" : "总账科目"} />
+        <Chip
+          size="small"
+          variant={row.original.is_detail ? "filled" : "outlined"}
+          label={row.original.is_detail ? "明细科目" : "总账科目"}
+        />
       ),
     },
     {
@@ -288,7 +300,12 @@ export default function AccountManagementPage() {
       header: "状态",
       accessorKey: "is_active",
       cell: ({ row }) => (
-        <Chip size="small" variant={row.original.is_active ? "filled" : "outlined"} color={row.original.is_active ? "success" : "default"} label={row.original.is_active ? "启用" : "停用"} />
+        <Chip
+          size="small"
+          variant={row.original.is_active ? "filled" : "outlined"}
+          color={row.original.is_active ? "success" : "default"}
+          label={row.original.is_active ? "启用" : "停用"}
+        />
       ),
     },
     {
@@ -390,7 +407,14 @@ export default function AccountManagementPage() {
           </Box>
 
           {/* 科目编码 */}
-          <Box sx={{ width: 128, flexShrink: 0, fontFamily: "monospace", fontSize: "0.875rem" }}>
+          <Box
+            sx={{
+              width: 128,
+              flexShrink: 0,
+              fontFamily: "monospace",
+              fontSize: "0.875rem",
+            }}
+          >
             {account.code}
           </Box>
 
@@ -399,16 +423,33 @@ export default function AccountManagementPage() {
 
           {/* 科目类型 */}
           <Box sx={{ width: 80, flexShrink: 0 }}>
-            <Chip size="small" color={typeConfig.color} variant="outlined" label={typeConfig.label} />
+            <Chip
+              size="small"
+              color={typeConfig.color}
+              variant="outlined"
+              label={typeConfig.label}
+            />
           </Box>
 
           {/* 余额方向 */}
           <Box sx={{ width: 64, flexShrink: 0 }}>
-            <Chip size="small" color={directionConfig.color} variant="outlined" label={directionConfig.label} />
+            <Chip
+              size="small"
+              color={directionConfig.color}
+              variant="outlined"
+              label={directionConfig.label}
+            />
           </Box>
 
           {/* 余额 */}
-          <Box sx={{ width: 128, textAlign: "right", fontFamily: "monospace", fontSize: "0.875rem" }}>
+          <Box
+            sx={{
+              width: 128,
+              textAlign: "right",
+              fontFamily: "monospace",
+              fontSize: "0.875rem",
+            }}
+          >
             {balance ? (
               <span
                 style={{
@@ -431,7 +472,12 @@ export default function AccountManagementPage() {
 
           {/* 状态 */}
           <Box sx={{ width: 64, flexShrink: 0 }}>
-            <Chip size="small" variant={account.is_active ? "filled" : "outlined"} color={account.is_active ? "success" : "default"} label={account.is_active ? "启用" : "停用"} />
+            <Chip
+              size="small"
+              variant={account.is_active ? "filled" : "outlined"}
+              color={account.is_active ? "success" : "default"}
+              label={account.is_active ? "启用" : "停用"}
+            />
           </Box>
 
           {/* 操作 */}
@@ -473,7 +519,14 @@ export default function AccountManagementPage() {
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       <Box sx={{ maxWidth: 1280, mx: "auto" }}>
         {/* 头部 */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box
               sx={{
@@ -489,7 +542,9 @@ export default function AccountManagementPage() {
               <Building2 className="w-6 h-6 text-white" />
             </Box>
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: "bold" }}>会计科目管理</Typography>
+              <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+                会计科目管理
+              </Typography>
               <Typography variant="body2" color="text.secondary">
                 管理企业会计科目体系，支持多级科目结构
               </Typography>
@@ -524,40 +579,67 @@ export default function AccountManagementPage() {
         </Box>
 
         {/* 统计卡片 */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "primary.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "primary.main" }}
+              >
                 {accountsData?.data?.items?.length || 0}
               </Typography>
-              <Typography variant="body2" color="text.secondary">科目总数</Typography>
+              <Typography variant="body2" color="text.secondary">
+                科目总数
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "success.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "success.main" }}
+              >
                 {accountsData?.data?.items?.filter((a: Account) => a.is_detail)
                   .length || 0}
               </Typography>
-              <Typography variant="body2" color="text.secondary">明细科目</Typography>
+              <Typography variant="body2" color="text.secondary">
+                明细科目
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "info.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "info.main" }}
+              >
                 {accountsData?.data?.items?.filter((a: Account) => !a.is_detail)
                   .length || 0}
               </Typography>
-              <Typography variant="body2" color="text.secondary">总账科目</Typography>
+              <Typography variant="body2" color="text.secondary">
+                总账科目
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ pt: 3 }}>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "warning.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "warning.main" }}
+              >
                 {accountsData?.data?.items?.filter((a: Account) => !a.is_active)
                   .length || 0}
               </Typography>
-              <Typography variant="body2" color="text.secondary">已停用</Typography>
+              <Typography variant="body2" color="text.secondary">
+                已停用
+              </Typography>
             </CardContent>
           </Card>
         </Box>
@@ -565,19 +647,28 @@ export default function AccountManagementPage() {
         {/* 筛选和搜索 */}
         <Card sx={{ mb: 3 }}>
           <CardContent sx={{ pt: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                flexWrap: "wrap",
+              }}
+            >
               <Box sx={{ flex: 1, minWidth: 200 }}>
                 <TextField
                   size="small"
                   placeholder="搜索科目编码或名称..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <Box sx={{ mr: 1, display: "flex" }}>
-                        <Search className="w-4 h-4 text-gray-400" />
-                      </Box>
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Box sx={{ mr: 1, display: "flex" }}>
+                          <Search className="w-4 h-4 text-gray-400" />
+                        </Box>
+                      ),
+                    },
                   }}
                   sx={{ width: "100%" }}
                 />
@@ -625,52 +716,96 @@ export default function AccountManagementPage() {
         {/* 科目列表 */}
         <Card>
           <CardHeader>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>会计科目列表</Typography>
-              <Box sx={{ display: "flex", gap: 1, typography: "body2", color: "text.secondary" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                会计科目列表
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  typography: "body2",
+                  color: "text.secondary",
+                }}
+              >
                 <span>共 {filteredAccounts.length || 0} 个科目</span>
               </Box>
             </Box>
           </CardHeader>
           <CardContent>
             {isLoading || treeLoading ? (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 6,
+                }}
+              >
                 <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
               </Box>
             ) : viewMode === "tree" ? (
               // 树形视图
-              <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
-                {/* 表头 */}
-                <Box sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  bgcolor: "grey.100",
-                  borderBottom: 1,
+              <Box
+                sx={{
+                  border: 1,
                   borderColor: "divider",
-                  px: 2,
-                  py: 1.5,
-                  typography: "body2",
-                  fontWeight: 500,
-                  color: "grey.700"
-                }}>
+                  borderRadius: 1,
+                  overflow: "hidden",
+                }}
+              >
+                {/* 表头 */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    bgcolor: "grey.100",
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    px: 2,
+                    py: 1.5,
+                    typography: "body2",
+                    fontWeight: 500,
+                    color: "grey.700",
+                  }}
+                >
                   <Box sx={{ width: 24, flexShrink: 0 }} />
                   <Box sx={{ width: 128, flexShrink: 0 }}>科目编码</Box>
                   <Box sx={{ flex: 1 }}>科目名称</Box>
                   <Box sx={{ width: 80, flexShrink: 0 }}>类型</Box>
                   <Box sx={{ width: 64, flexShrink: 0 }}>方向</Box>
-                  <Box sx={{ width: 128, textAlign: "right", flexShrink: 0 }}>余额</Box>
+                  <Box sx={{ width: 128, textAlign: "right", flexShrink: 0 }}>
+                    余额
+                  </Box>
                   <Box sx={{ width: 64, flexShrink: 0 }}>状态</Box>
                   <Box sx={{ width: 96, flexShrink: 0 }}>操作</Box>
                 </Box>
                 {/* 树内容 */}
-                <Box>
-                  {treeData.map((account) => renderTreeNode(account))}
-                </Box>
+                <Box>{treeData.map((account) => renderTreeNode(account))}</Box>
                 {treeData.length === 0 && (
-                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6, color: "text.secondary" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      py: 6,
+                      color: "text.secondary",
+                    }}
+                  >
                     <Building2 className="w-12 h-12 mb-4 text-gray-300" />
                     <Typography>暂无科目数据</Typography>
-                    <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.disabled"
+                      sx={{ mt: 1 }}
+                    >
                       点击"新增科目"创建第一个会计科目
                     </Typography>
                   </Box>
@@ -716,10 +851,7 @@ export default function AccountManagementPage() {
       </Dialog>
 
       {/* 删除确认对话框 */}
-      <Dialog
-        open={!!deletingId}
-        onClose={() => setDeletingId(null)}
-      >
+      <Dialog open={!!deletingId} onClose={() => setDeletingId(null)}>
         <DialogTitle>确认删除</DialogTitle>
         <DialogContent>
           <Typography>确定要删除该科目吗？此操作不可恢复。</Typography>
@@ -733,7 +865,9 @@ export default function AccountManagementPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeletingId(null)}>取消</Button>
-          <Button color="error" onClick={handleDelete} variant="contained">删除</Button>
+          <Button color="error" onClick={handleDelete} variant="contained">
+            删除
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
@@ -773,7 +907,11 @@ function AccountForm({
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+    >
       <TextField
         label="科目编码 *"
         value={formData.code}
@@ -898,7 +1036,16 @@ function AccountForm({
         rows={2}
       />
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, pt: 2, borderTop: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1,
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+        }}
+      >
         <Button type="button" variant="outlined" onClick={onCancel}>
           取消
         </Button>

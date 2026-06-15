@@ -296,10 +296,9 @@ export const workflowApi = {
     createCrudApi<Workflow>("/api/v1/workflows").delete(id),
 
   getVersions: (workflowId: string, params?: ListParams) => {
-    return apiClient.flow.get(
-      `/api/v1/workflows/${workflowId}/versions`,
-      { params },
-    );
+    return apiClient.flow.get(`/api/v1/workflows/${workflowId}/versions`, {
+      params,
+    });
   },
 
   createVersion: (workflowId: string, data: CreateVersionRequest) => {

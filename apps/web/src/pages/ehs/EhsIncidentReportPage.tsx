@@ -170,37 +170,55 @@ const EhsIncidentReportPage: React.FC = () => {
   };
 
   const getSeverityBadge = (severity: string) => {
-    const severityMap: Record<string, { bg: string; color: string; label: string }> = {
-      fatal: { bg: '#fee2e2', color: '#dc2626', label: "致命" },
-      serious: { bg: '#fed7aa', color: '#ea580c', label: "严重" },
-      minor: { bg: '#fef9c3', color: '#ca8a04', label: "轻微" },
-      near_miss: { bg: '#dbeafe', color: '#2563eb', label: "未遂" },
+    const severityMap: Record<
+      string,
+      { bg: string; color: string; label: string }
+    > = {
+      fatal: { bg: "#fee2e2", color: "#dc2626", label: "致命" },
+      serious: { bg: "#fed7aa", color: "#ea580c", label: "严重" },
+      minor: { bg: "#fef9c3", color: "#ca8a04", label: "轻微" },
+      near_miss: { bg: "#dbeafe", color: "#2563eb", label: "未遂" },
     };
     const item = severityMap[severity] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: "#f3f4f6",
+      color: "#4b5563",
       label: severity,
     };
-    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
+    return (
+      <Chip
+        label={item.label}
+        size="small"
+        sx={{ backgroundColor: item.bg, color: item.color }}
+      />
+    );
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#fef9c3', color: '#ca8a04', label: "待处理" },
-      待处理: { bg: '#fef9c3', color: '#ca8a04', label: "待处理" },
-      investigating: { bg: '#dbeafe', color: '#2563eb', label: "调查中" },
-      调查中: { bg: '#dbeafe', color: '#2563eb', label: "调查中" },
-      resolved: { bg: '#dcfce7', color: '#16a34a', label: "已解决" },
-      已解决: { bg: '#dcfce7', color: '#16a34a', label: "已解决" },
-      closed: { bg: '#f3f4f6', color: '#4b5563', label: "已关闭" },
-      已关闭: { bg: '#f3f4f6', color: '#4b5563', label: "已关闭" },
+    const statusMap: Record<
+      string,
+      { bg: string; color: string; label: string }
+    > = {
+      pending: { bg: "#fef9c3", color: "#ca8a04", label: "待处理" },
+      待处理: { bg: "#fef9c3", color: "#ca8a04", label: "待处理" },
+      investigating: { bg: "#dbeafe", color: "#2563eb", label: "调查中" },
+      调查中: { bg: "#dbeafe", color: "#2563eb", label: "调查中" },
+      resolved: { bg: "#dcfce7", color: "#16a34a", label: "已解决" },
+      已解决: { bg: "#dcfce7", color: "#16a34a", label: "已解决" },
+      closed: { bg: "#f3f4f6", color: "#4b5563", label: "已关闭" },
+      已关闭: { bg: "#f3f4f6", color: "#4b5563", label: "已关闭" },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: "#f3f4f6",
+      color: "#4b5563",
       label: status,
     };
-    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
+    return (
+      <Chip
+        label={item.label}
+        size="small"
+        sx={{ backgroundColor: item.bg, color: item.color }}
+      />
+    );
   };
 
   const getTypeLabel = (type: string) => {
@@ -219,14 +237,20 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "title",
       header: "事件标题",
       cell: ({ row }) => (
-        <Typography sx={{ fontWeight: 500, color: "slate.900" }}>{row.original.title}</Typography>
+        <Typography sx={{ fontWeight: 500, color: "slate.900" }}>
+          {row.original.title}
+        </Typography>
       ),
     },
     {
       accessorKey: "incident_type",
       header: "类型",
       cell: ({ row }) => (
-        <Chip label={getTypeLabel(row.original.incident_type)} size="small" sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }} />
+        <Chip
+          label={getTypeLabel(row.original.incident_type)}
+          size="small"
+          sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
+        />
       ),
     },
     {
@@ -254,7 +278,7 @@ const EhsIncidentReportPage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="text"
             size="small"
@@ -267,7 +291,7 @@ const EhsIncidentReportPage: React.FC = () => {
             variant="text"
             size="small"
             onClick={() => handleDeleteIncident(row.original.id)}
-            sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
+            sx={{ color: "#dc2626", "&:hover": { backgroundColor: "#fef2f2" } }}
             startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
           />
         </Box>
@@ -280,9 +304,9 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "action_type",
       header: "行动类型",
       cell: ({ row }) => (
-        <Chip 
-          size="small" 
-          sx={{ backgroundColor: '#dbeafe', color: '#2563eb' }}
+        <Chip
+          size="small"
+          sx={{ backgroundColor: "#dbeafe", color: "#2563eb" }}
           label={
             row.original.action_type === "investigation"
               ? "调查"
@@ -300,7 +324,7 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "responsible",
       header: "负责人",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box component={Users} sx={{ fontSize: 16 }} />
           <span>{row.original.responsible || "-"}</span>
         </Box>
@@ -310,7 +334,7 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "due_date",
       header: "截止日期",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box component={Calendar} sx={{ fontSize: 16 }} />
           {row.original.due_date
             ? new Date(row.original.due_date).toLocaleDateString("zh-CN")
@@ -336,21 +360,64 @@ const EhsIncidentReportPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Box sx={{ width: 48, height: 48, border: 4, borderColor: '#fed7aa', borderTopColor: '#ea580c', borderRadius: '50%', animation: 'spin 1s linear infinite', mx: 'auto', mb: 2 }} />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
+        }}
+      >
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              border: 4,
+              borderColor: "#fed7aa",
+              borderTopColor: "#ea580c",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              mx: "auto",
+              mb: 2,
+            }}
+          />
+          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
         </Box>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}>
-      <Box component="header" sx={{ bgcolor: 'background.paper', boxShadow: 1, borderBottom: 1, borderColor: 'divider', position: 'sticky', top: 0, zIndex: 10 }}>
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 64 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
+      }}
+    >
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              height: 64,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Button
                 variant="text"
                 onClick={() => navigate("/ehs")}
@@ -359,13 +426,24 @@ const EhsIncidentReportPage: React.FC = () => {
                 <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'slate.900' }}>事件报告</Typography>
-                <Typography variant="caption" sx={{ color: 'slate.500' }}>Incident Reporting</Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  事件报告
+                </Typography>
+                <Typography variant="caption" sx={{ color: "slate.500" }}>
+                  Incident Reporting
+                </Typography>
               </Box>
             </Box>
             <Button
               onClick={() => setShowAddModal(true)}
-              sx={{ backgroundColor: '#ea580c', color: 'white', '&:hover': { backgroundColor: '#c2410c' } }}
+              sx={{
+                backgroundColor: "#ea580c",
+                color: "white",
+                "&:hover": { backgroundColor: "#c2410c" },
+              }}
             >
               <Plus sx={{ fontSize: 16, mr: 1 }} />
               上报事件
@@ -374,64 +452,160 @@ const EhsIncidentReportPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box component="main" sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 3, mb: 4 }}>
-          <Card sx={{ background: 'linear-gradient(to bottom right, #f97316, #ef4444)', color: 'white' }}>
+      <Box
+        component="main"
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 4 },
+            gap: 3,
+            mb: 4,
+          }}
+        >
+          <Card
+            sx={{
+              background: "linear-gradient(to bottom right, #f97316, #ef4444)",
+              color: "white",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: '#fed7aa', fontSize: 14 }}>事件总数</Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.total}</Typography>
+                  <Typography sx={{ color: "#fed7aa", fontSize: 14 }}>
+                    事件总数
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                    {stats.total}
+                  </Typography>
                 </Box>
-                <Box component={AlertCircle} sx={{ fontSize: 48, color: '#fed7aa' }} />
+                <Box
+                  component={AlertCircle}
+                  sx={{ fontSize: 48, color: "#fed7aa" }}
+                />
               </Box>
             </CardContent>
           </Card>
 
-          <Card sx={{ background: 'linear-gradient(to bottom right, #eab308, #f97316)', color: 'white' }}>
+          <Card
+            sx={{
+              background: "linear-gradient(to bottom right, #eab308, #f97316)",
+              color: "white",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: '#fef9c3', fontSize: 14 }}>待处理</Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.pending}</Typography>
+                  <Typography sx={{ color: "#fef9c3", fontSize: 14 }}>
+                    待处理
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                    {stats.pending}
+                  </Typography>
                 </Box>
-                <Box component={Clock} sx={{ fontSize: 48, color: '#fef9c3' }} />
+                <Box
+                  component={Clock}
+                  sx={{ fontSize: 48, color: "#fef9c3" }}
+                />
               </Box>
             </CardContent>
           </Card>
 
-          <Card sx={{ background: 'linear-gradient(to bottom right, #22c55e, #10b981)', color: 'white' }}>
+          <Card
+            sx={{
+              background: "linear-gradient(to bottom right, #22c55e, #10b981)",
+              color: "white",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: '#dcfce7', fontSize: 14 }}>已解决</Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.resolved}</Typography>
+                  <Typography sx={{ color: "#dcfce7", fontSize: 14 }}>
+                    已解决
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                    {stats.resolved}
+                  </Typography>
                 </Box>
-                <Box component={CheckCircle} sx={{ fontSize: 48, color: '#dcfce7' }} />
+                <Box
+                  component={CheckCircle}
+                  sx={{ fontSize: 48, color: "#dcfce7" }}
+                />
               </Box>
             </CardContent>
           </Card>
 
-          <Card sx={{ background: 'linear-gradient(to bottom right, #ef4444, #ec4899)', color: 'white' }}>
+          <Card
+            sx={{
+              background: "linear-gradient(to bottom right, #ef4444, #ec4899)",
+              color: "white",
+            }}
+          >
             <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: '#fee2e2', fontSize: 14 }}>严重事件</Typography>
-                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.serious}</Typography>
+                  <Typography sx={{ color: "#fee2e2", fontSize: 14 }}>
+                    严重事件
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>
+                    {stats.serious}
+                  </Typography>
                 </Box>
-                <Box component={AlertTriangle} sx={{ fontSize: 48, color: '#fee2e2' }} />
+                <Box
+                  component={AlertTriangle}
+                  sx={{ fontSize: 48, color: "#fee2e2" }}
+                />
               </Box>
             </CardContent>
           </Card>
         </Box>
 
         <Card>
-          <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 2 }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box component={FileText} sx={{ fontSize: 20, color: '#ea580c' }} />
+          <CardHeader
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              pb: 2,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <Box
+                component={FileText}
+                sx={{ fontSize: 20, color: "#ea580c" }}
+              />
               事件列表
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               共 {incidents.length} 条记录
             </Typography>
           </CardHeader>
@@ -443,8 +617,11 @@ const EhsIncidentReportPage: React.FC = () => {
                 enablePagination={false}
               />
             ) : (
-              <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>
-                <Box component={FileText} sx={{ fontSize: 64, color: 'slate.400', mx: 'auto', mb: 2 }} />
+              <Box sx={{ textAlign: "center", py: 6, color: "slate.500" }}>
+                <Box
+                  component={FileText}
+                  sx={{ fontSize: 64, color: "slate.400", mx: "auto", mb: 2 }}
+                />
                 <Typography>暂无事件报告</Typography>
                 <Button
                   variant="outlined"
@@ -461,12 +638,19 @@ const EhsIncidentReportPage: React.FC = () => {
         </Card>
       </Box>
 
-      <Dialog open={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle>上报事件</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>事件标题 *</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                事件标题 *
+              </Typography>
               <TextField
                 size="small"
                 fullWidth
@@ -477,9 +661,13 @@ const EhsIncidentReportPage: React.FC = () => {
                 placeholder="请输入事件标题"
               />
             </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>事件类型</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  事件类型
+                </Typography>
                 <FormControl fullWidth size="small">
                   <InputLabel>事件类型</InputLabel>
                   <Select
@@ -506,7 +694,9 @@ const EhsIncidentReportPage: React.FC = () => {
                 </FormControl>
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>严重程度</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  严重程度
+                </Typography>
                 <FormControl fullWidth size="small">
                   <InputLabel>严重程度</InputLabel>
                   <Select
@@ -531,9 +721,13 @@ const EhsIncidentReportPage: React.FC = () => {
                 </FormControl>
               </Box>
             </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>发生位置</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  发生位置
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
@@ -548,7 +742,9 @@ const EhsIncidentReportPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>报告人</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  报告人
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
@@ -564,7 +760,9 @@ const EhsIncidentReportPage: React.FC = () => {
               </Box>
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>报告日期</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                报告日期
+              </Typography>
               <TextField
                 type="date"
                 size="small"
@@ -579,7 +777,9 @@ const EhsIncidentReportPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>事件描述 *</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                事件描述 *
+              </Typography>
               <TextField
                 multiline
                 rows={4}
@@ -597,78 +797,162 @@ const EhsIncidentReportPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowAddModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCreateIncident} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>提交报告</Button>
+          <Button variant="outlined" onClick={() => setShowAddModal(false)}>
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateIncident}
+            sx={{
+              backgroundColor: "#ea580c",
+              "&:hover": { backgroundColor: "#c2410c" },
+            }}
+          >
+            提交报告
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="lg" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box component={AlertCircle} sx={{ fontSize: 20, color: '#ea580c' }} />
+      <Dialog
+        open={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            component={AlertCircle}
+            sx={{ fontSize: 20, color: "#ea580c" }}
+          />
           {selectedIncident?.title}
         </DialogTitle>
         <DialogContent>
           {selectedIncident && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
-                <Box sx={{ p: 2, bgcolor: '#fff7ed', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#c2410c' }}>事件类型</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c2d12', mt: 0.5 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}
+            >
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 2,
+                }}
+              >
+                <Box sx={{ p: 2, bgcolor: "#fff7ed", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "#c2410c" }}>
+                    事件类型
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: "#7c2d12", mt: 0.5 }}
+                  >
                     {getTypeLabel(selectedIncident.incident_type)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#dc2626' }}>严重程度</Typography>
-                  <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedIncident.severity)}</Box>
+                <Box sx={{ p: 2, bgcolor: "#fef2f2", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "#dc2626" }}>
+                    严重程度
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>
+                    {getSeverityBadge(selectedIncident.severity)}
+                  </Box>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#fefce8', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#ca8a04' }}>状态</Typography>
-                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedIncident.status)}</Box>
+                <Box sx={{ p: 2, bgcolor: "#fefce8", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "#ca8a04" }}>
+                    状态
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>
+                    {getStatusBadge(selectedIncident.status)}
+                  </Box>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#eff6ff', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#2563eb' }}>报告人</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                <Box sx={{ p: 2, bgcolor: "#eff6ff", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "#2563eb" }}>
+                    报告人
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      mt: 0.5,
+                    }}
+                  >
                     <Box component={Users} sx={{ fontSize: 16 }} />
-                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#1e40af' }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: 500, color: "#1e40af" }}
+                    >
                       {selectedIncident.reported_by || "-"}
                     </Typography>
                   </Box>
                 </Box>
               </Box>
 
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>发生位置</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    发生位置
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      mt: 0.5,
+                    }}
+                  >
                     <Box component={MapPin} sx={{ fontSize: 16 }} />
-                    <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                    <Typography variant="body1" sx={{ color: "text.primary" }}>
                       {selectedIncident.location || "-"}
                     </Typography>
                   </Box>
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>报告时间</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    报告时间
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      mt: 0.5,
+                    }}
+                  >
                     <Box component={Calendar} sx={{ fontSize: 16 }} />
-                    <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                    <Typography variant="body1" sx={{ color: "text.primary" }}>
                       {selectedIncident.reported_at
-                        ? new Date(selectedIncident.reported_at).toLocaleString("zh-CN")
+                        ? new Date(selectedIncident.reported_at).toLocaleString(
+                            "zh-CN",
+                          )
                         : "-"}
                     </Typography>
                   </Box>
                 </Box>
               </Box>
 
-              <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 1 }}>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>事件描述</Typography>
-                <Typography variant="body1" sx={{ mt: 1, whiteSpace: 'pre-wrap', color: 'text.primary' }}>
+              <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  事件描述
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ mt: 1, whiteSpace: "pre-wrap", color: "text.primary" }}
+                >
                   {selectedIncident.description || "暂无描述"}
                 </Typography>
               </Box>
 
-              <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Box component={FileCheck} sx={{ fontSize: 20, color: '#ea580c' }} />
+              <Box sx={{ borderTop: 1, borderColor: "divider", pt: 3 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
+                >
+                  <Box
+                    component={FileCheck}
+                    sx={{ fontSize: 20, color: "#ea580c" }}
+                  />
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     处理措施 ({actions.length})
                   </Typography>
@@ -683,7 +967,9 @@ const EhsIncidentReportPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowDetailModal(false)}>关闭</Button>
+          <Button variant="outlined" onClick={() => setShowDetailModal(false)}>
+            关闭
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

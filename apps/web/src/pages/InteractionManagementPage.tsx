@@ -1,4 +1,28 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Checkbox, Box, TablePagination } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Checkbox,
+  Box,
+  TablePagination,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import type {
   Interaction,
@@ -202,7 +226,13 @@ const InteractionManagementPage: React.FC = () => {
       other: { label: "其他", variant: "outline" },
     };
     const t = typeMap[type] || { label: type, variant: "outline" };
-    return <Chip size="small" variant={t.variant === "outline" ? "outlined" : "filled"} label={t.label} />;
+    return (
+      <Chip
+        size="small"
+        variant={t.variant === "outline" ? "outlined" : "filled"}
+        label={t.label}
+      />
+    );
   };
 
   const getStatusBadge = (status: string) => {
@@ -218,7 +248,13 @@ const InteractionManagementPage: React.FC = () => {
       cancelled: { label: "已取消", variant: "destructive" },
     };
     const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Chip size="small" variant={s.variant === "outline" ? "outlined" : "filled"} label={s.label} />;
+    return (
+      <Chip
+        size="small"
+        variant={s.variant === "outline" ? "outlined" : "filled"}
+        label={s.label}
+      />
+    );
   };
 
   const handleChangePage = (_: any, newPage: number) => {
@@ -231,16 +267,34 @@ const InteractionManagementPage: React.FC = () => {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>交互记录管理</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            交互记录管理
+          </Typography>
           <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理客户交互记录,包括电话、邮件、会议、拜访等
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              mb: 3,
+            }}
+          >
             <Box sx={{ flex: 1 }}>
               <Box sx={{ position: "relative" }}>
-                <Box sx={{ position: "absolute", left: 12, top: 14, display: "flex", alignItems: "center", zIndex: 1 }}>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    top: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    zIndex: 1,
+                  }}
+                >
                   <Search size={16} />
                 </Box>
                 <TextField
@@ -293,7 +347,17 @@ const InteractionManagementPage: React.FC = () => {
           </Box>
 
           {selectedIds.length > 0 && (
-            <Box sx={{ mb: 2, p: 1.5, bgcolor: "grey.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                mb: 2,
+                p: 1.5,
+                bgcolor: "grey.100",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography variant="body2">
                 已选择 {selectedIds.length} 条交互记录
               </Typography>
@@ -366,9 +430,7 @@ const InteractionManagementPage: React.FC = () => {
                           )
                         : "-"}
                     </TableCell>
-                    <TableCell>
-                      {getStatusBadge(interaction.status)}
-                    </TableCell>
+                    <TableCell>{getStatusBadge(interaction.status)}</TableCell>
                     <TableCell sx={{ textAlign: "right" }}>
                       <Button
                         variant="text"
@@ -399,7 +461,14 @@ const InteractionManagementPage: React.FC = () => {
             </TableBody>
           </Table>
 
-          <Box sx={{ mt: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
@@ -418,13 +487,25 @@ const InteractionManagementPage: React.FC = () => {
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           {selectedInteraction ? "编辑交互记录" : "新增交互记录"}
         </DialogTitle>
         <DialogContent dividers>
           <form onSubmit={handleSubmit}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, py: 1 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 2,
+                py: 1,
+              }}
+            >
               <FormControl fullWidth size="small">
                 <InputLabel htmlFor="type">类型 *</InputLabel>
                 <Select
@@ -508,62 +589,82 @@ const InteractionManagementPage: React.FC = () => {
           </form>
         </DialogContent>
         <DialogActions>
-          <Button
-            variant="outlined"
-            onClick={() => setShowDialog(false)}
-          >
+          <Button variant="outlined" onClick={() => setShowDialog(false)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleSubmit}>保存</Button>
+          <Button variant="contained" onClick={handleSubmit}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>交互记录详情</DialogTitle>
         <DialogContent dividers>
           {selectedInteraction && (
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
-                <Typography variant="caption" color="text.secondary">类型</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  类型
+                </Typography>
                 <Box>{getTypeBadge(selectedInteraction.type)}</Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">主题</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  主题
+                </Typography>
                 <Typography sx={{ fontWeight: 500 }}>
                   {selectedInteraction.subject || "-"}
                 </Typography>
               </Box>
               <Box sx={{ gridColumn: "1 / -1" }}>
-                <Typography variant="caption" color="text.secondary">内容</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  内容
+                </Typography>
                 <Typography>{selectedInteraction.content || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">计划时间</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  计划时间
+                </Typography>
                 <Typography>
                   {selectedInteraction.scheduled_at
-                    ? new Date(
-                        selectedInteraction.scheduled_at,
-                      ).toLocaleString("zh-CN")
+                    ? new Date(selectedInteraction.scheduled_at).toLocaleString(
+                        "zh-CN",
+                      )
                     : "-"}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">完成时间</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  完成时间
+                </Typography>
                 <Typography>
                   {selectedInteraction.completed_at
-                    ? new Date(
-                        selectedInteraction.completed_at,
-                      ).toLocaleString("zh-CN")
+                    ? new Date(selectedInteraction.completed_at).toLocaleString(
+                        "zh-CN",
+                      )
                     : "-"}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">状态</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  状态
+                </Typography>
                 <Box>{getStatusBadge(selectedInteraction.status)}</Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">创建时间</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  创建时间
+                </Typography>
                 <Typography>
                   {new Date(selectedInteraction.created_at).toLocaleString(
                     "zh-CN",
@@ -571,7 +672,9 @@ const InteractionManagementPage: React.FC = () => {
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">更新时间</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  更新时间
+                </Typography>
                 <Typography>
                   {new Date(selectedInteraction.updated_at).toLocaleString(
                     "zh-CN",

@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useState, useEffect } from "react";
 import { mobileApi } from "../api/mobile";
 import MobileHeader from "../components/MobileHeader";
@@ -20,7 +21,6 @@ import {
   Chip,
   Button,
   Typography,
-  Grid,
   CircularProgress,
 } from "@mui/material";
 
@@ -247,7 +247,12 @@ const MobileWorkstationPage: React.FC = () => {
                       p: 1.5,
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      mb={0.5}
+                    >
                       <MapPin size={16} />
                       <Typography variant="body2">巡检</Typography>
                     </Stack>
@@ -264,7 +269,12 @@ const MobileWorkstationPage: React.FC = () => {
                       p: 1.5,
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      mb={0.5}
+                    >
                       <QrCode size={16} />
                       <Typography variant="body2">扫码</Typography>
                     </Stack>
@@ -281,7 +291,12 @@ const MobileWorkstationPage: React.FC = () => {
                       p: 1.5,
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      mb={0.5}
+                    >
                       <Clock size={16} />
                       <Typography variant="body2">待处理</Typography>
                     </Stack>
@@ -298,7 +313,12 @@ const MobileWorkstationPage: React.FC = () => {
                       p: 1.5,
                     }}
                   >
-                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      mb={0.5}
+                    >
                       <CheckCircle size={16} />
                       <Typography variant="body2">已完成</Typography>
                     </Stack>
@@ -342,7 +362,11 @@ const MobileWorkstationPage: React.FC = () => {
                     >
                       <MapPin color="white" size={24} />
                     </Box>
-                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
                       巡检打卡
                     </Typography>
                   </Button>
@@ -374,7 +398,11 @@ const MobileWorkstationPage: React.FC = () => {
                     >
                       <QrCode color="white" size={24} />
                     </Box>
-                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
                       扫码入库
                     </Typography>
                   </Button>
@@ -406,7 +434,11 @@ const MobileWorkstationPage: React.FC = () => {
                     >
                       <Image color="white" size={24} />
                     </Box>
-                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
                       拍照记录
                     </Typography>
                   </Button>
@@ -438,7 +470,11 @@ const MobileWorkstationPage: React.FC = () => {
                     >
                       <CheckCircle color="white" size={24} />
                     </Box>
-                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      color="text.primary"
+                    >
                       处理任务
                     </Typography>
                   </Button>
@@ -462,19 +498,14 @@ const MobileWorkstationPage: React.FC = () => {
               ) : (
                 <Stack spacing={1.5}>
                   {patrols.slice(0, 3).map((patrol) => (
-                    <Paper
-                      key={patrol.id}
-                      sx={{ p: 2, borderRadius: 1.5 }}
-                    >
+                    <Paper key={patrol.id} sx={{ p: 2, borderRadius: 1.5 }}>
                       <Stack
                         direction="row"
                         justifyContent="space-between"
                         alignItems="flex-start"
                         mb={1}
                       >
-                        <Typography fontWeight={500}>
-                          {patrol.title}
-                        </Typography>
+                        <Typography fontWeight={500}>{patrol.title}</Typography>
                         <StatusChip status={patrol.status} />
                       </Stack>
                       <Stack direction="row" spacing={1} alignItems="center">
@@ -484,7 +515,11 @@ const MobileWorkstationPage: React.FC = () => {
                         </Typography>
                       </Stack>
                       {patrol.checked_at && (
-                        <Typography variant="caption" color="text.disabled" mt={0.5}>
+                        <Typography
+                          variant="caption"
+                          color="text.disabled"
+                          mt={0.5}
+                        >
                           {new Date(patrol.checked_at).toLocaleString("zh-CN")}
                         </Typography>
                       )}
@@ -527,7 +562,11 @@ const MobileWorkstationPage: React.FC = () => {
                 <Typography color="text.secondary" mb={2}>
                   暂无巡检记录
                 </Typography>
-                <Button variant="contained" color="primary" onClick={handleCreatePatrol}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCreatePatrol}
+                >
                   立即巡检
                 </Button>
               </Paper>
@@ -543,7 +582,11 @@ const MobileWorkstationPage: React.FC = () => {
                     >
                       <Box>
                         <Typography fontWeight={500}>{patrol.title}</Typography>
-                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          mt={0.5}
+                        >
                           {patrol.description}
                         </Typography>
                       </Box>
@@ -553,7 +596,12 @@ const MobileWorkstationPage: React.FC = () => {
                       direction="row"
                       spacing={2}
                       alignItems="center"
-                      sx={{ mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}
+                      sx={{
+                        mt: 1.5,
+                        pt: 1.5,
+                        borderTop: 1,
+                        borderColor: "divider",
+                      }}
                     >
                       <Stack direction="row" spacing={0.5} alignItems="center">
                         <MapPin size={16} color="#94a3b8" />
@@ -565,7 +613,9 @@ const MobileWorkstationPage: React.FC = () => {
                         <Clock size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           {patrol.checked_at
-                            ? new Date(patrol.checked_at).toLocaleDateString("zh-CN")
+                            ? new Date(patrol.checked_at).toLocaleDateString(
+                                "zh-CN",
+                              )
                             : "-"}
                         </Typography>
                       </Stack>
@@ -623,7 +673,11 @@ const MobileWorkstationPage: React.FC = () => {
                     >
                       <Box flex={1}>
                         <Typography fontWeight={500}>{task.title}</Typography>
-                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          mt={0.5}
+                        >
                           {task.description}
                         </Typography>
                       </Box>
@@ -635,7 +689,12 @@ const MobileWorkstationPage: React.FC = () => {
                       direction="row"
                       justifyContent="space-between"
                       alignItems="center"
-                      sx={{ mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}
+                      sx={{
+                        mt: 1.5,
+                        pt: 1.5,
+                        borderTop: 1,
+                        borderColor: "divider",
+                      }}
                     >
                       <Stack direction="row" spacing={0.5} alignItems="center">
                         <AlertCircle size={16} color="#94a3b8" />
@@ -703,7 +762,11 @@ const MobileWorkstationPage: React.FC = () => {
               <Stack spacing={1.5}>
                 {scans.map((scan) => (
                   <Paper key={scan.id} sx={{ p: 2, borderRadius: 1.5 }}>
-                    <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                    <Stack
+                      direction="row"
+                      spacing={1.5}
+                      alignItems="flex-start"
+                    >
                       <Box
                         sx={{
                           width: 40,
@@ -719,10 +782,18 @@ const MobileWorkstationPage: React.FC = () => {
                       </Box>
                       <Box flex={1}>
                         <Typography fontWeight={500}>{scan.barcode}</Typography>
-                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          mt={0.5}
+                        >
                           类型: {scan.item_type}
                         </Typography>
-                        <Typography variant="caption" color="text.disabled" mt={0.5}>
+                        <Typography
+                          variant="caption"
+                          color="text.disabled"
+                          mt={0.5}
+                        >
                           {scan.scanned_at
                             ? new Date(scan.scanned_at).toLocaleString("zh-CN")
                             : "-"}
@@ -835,9 +906,15 @@ const MobileWorkstationPage: React.FC = () => {
                         >
                           {item.description || "无描述"}
                         </Typography>
-                        <Typography variant="caption" color="text.disabled" mt={0.5}>
+                        <Typography
+                          variant="caption"
+                          color="text.disabled"
+                          mt={0.5}
+                        >
                           {item.created_at
-                            ? new Date(item.created_at).toLocaleDateString("zh-CN")
+                            ? new Date(item.created_at).toLocaleDateString(
+                                "zh-CN",
+                              )
                             : "-"}
                         </Typography>
                       </Box>

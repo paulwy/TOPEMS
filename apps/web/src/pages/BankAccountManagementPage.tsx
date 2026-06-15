@@ -35,7 +35,10 @@ import {
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
 /** 账户类型配置 */
-const ACCOUNT_TYPE_CONFIG: Record<string, { label: string; color: "primary" | "success" | "secondary" | "warning" }> = {
+const ACCOUNT_TYPE_CONFIG: Record<
+  string,
+  { label: string; color: "primary" | "success" | "secondary" | "warning" }
+> = {
   checking: { label: "基本户", color: "primary" },
   savings: { label: "一般户", color: "success" },
   dedicated: { label: "专用户", color: "secondary" },
@@ -43,7 +46,10 @@ const ACCOUNT_TYPE_CONFIG: Record<string, { label: string; color: "primary" | "s
 };
 
 /** 账户状态配置 */
-const STATUS_CONFIG: Record<string, { label: string; color: "success" | "error" | "default" }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: "success" | "error" | "default" }
+> = {
   active: { label: "正常", color: "success" },
   frozen: { label: "冻结", color: "error" },
   closed: { label: "销户", color: "default" },
@@ -143,7 +149,9 @@ export default function BankAccountManagementPage() {
       cell: ({ row }: { row: BankAccount }) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <CreditCard className="w-4 h-4 text-gray-400" />
-          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{row.account_number}</Typography>
+          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+            {row.account_number}
+          </Typography>
         </Box>
       ),
     },
@@ -182,7 +190,10 @@ export default function BankAccountManagementPage() {
       header: "余额",
       accessorKey: "balance",
       cell: ({ row }: { row: BankAccount }) => (
-        <Typography variant="body2" sx={{ fontFamily: "monospace", textAlign: "right" }}>
+        <Typography
+          variant="body2"
+          sx={{ fontFamily: "monospace", textAlign: "right" }}
+        >
           {row.balance.toLocaleString("zh-CN", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -210,7 +221,9 @@ export default function BankAccountManagementPage() {
         row.is_primary ? (
           <Chip size="small" color="warning" label="主账户" />
         ) : (
-          <Typography variant="body2" color="text.disabled">-</Typography>
+          <Typography variant="body2" color="text.disabled">
+            -
+          </Typography>
         ),
     },
     {
@@ -262,16 +275,44 @@ export default function BankAccountManagementPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
-      <Box sx={{ maxWidth: 1400, mx: "auto", display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{
+          maxWidth: 1400,
+          mx: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+        }}
+      >
         {/* 头部 */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 1,
+                bgcolor: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Building2 className="w-6 h-6 text-white" />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>银行账户管理</Typography>
-              <Typography variant="body2" color="text.secondary">管理企业银行账户信息</Typography>
+              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                银行账户管理
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                管理企业银行账户信息
+              </Typography>
             </Box>
           </Box>
           <Button
@@ -288,34 +329,58 @@ export default function BankAccountManagementPage() {
         </Box>
 
         {/* 统计卡片 */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(4, 1fr)" }, gap: 2 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(4, 1fr)" },
+            gap: 2,
+          }}
+        >
           <Card>
             <CardContent>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "primary.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "primary.main" }}
+              >
                 {bankAccounts.length}
               </Typography>
-              <Typography variant="body2" color="text.secondary">账户总数</Typography>
+              <Typography variant="body2" color="text.secondary">
+                账户总数
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "success.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "success.main" }}
+              >
                 {bankAccounts.filter((a) => a.status === "active").length}
               </Typography>
-              <Typography variant="body2" color="text.secondary">正常账户</Typography>
+              <Typography variant="body2" color="text.secondary">
+                正常账户
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "secondary.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "secondary.main" }}
+              >
                 {bankAccounts.filter((a) => a.currency !== "CNY").length}
               </Typography>
-              <Typography variant="body2" color="text.secondary">外币账户</Typography>
+              <Typography variant="body2" color="text.secondary">
+                外币账户
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent>
-              <Typography variant="h4" sx={{ fontWeight: "bold", color: "warning.main" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: "bold", color: "warning.main" }}
+              >
                 {bankAccounts
                   .reduce((sum, a) => sum + a.balance, 0)
                   .toLocaleString("zh-CN", {
@@ -323,7 +388,9 @@ export default function BankAccountManagementPage() {
                     maximumFractionDigits: 2,
                   })}
               </Typography>
-              <Typography variant="body2" color="text.secondary">账户总余额</Typography>
+              <Typography variant="body2" color="text.secondary">
+                账户总余额
+              </Typography>
             </CardContent>
           </Card>
         </Box>
@@ -431,13 +498,28 @@ export default function BankAccountManagementPage() {
       {deletingId && (
         <Alert
           severity="warning"
-          sx={{ position: "fixed", bottom: 24, right: 24, maxWidth: 400, zIndex: 1300 }}
+          sx={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            maxWidth: 400,
+            zIndex: 1300,
+          }}
           action={
             <Stack direction="row" spacing={1}>
-              <Button size="small" variant="outlined" onClick={() => setDeletingId(null)}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setDeletingId(null)}
+              >
                 取消
               </Button>
-              <Button size="small" variant="contained" color="error" onClick={handleDelete}>
+              <Button
+                size="small"
+                variant="contained"
+                color="error"
+                onClick={handleDelete}
+              >
                 删除
               </Button>
             </Stack>
@@ -481,13 +563,23 @@ function BankAccountForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24, marginTop: 24 }}>
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 24,
+        marginTop: 24,
+      }}
+    >
       <TextField
         size="small"
         label="账户名称 *"
         required
         value={formData.account_name}
-        onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, account_name: e.target.value })
+        }
         placeholder="例如：基本户"
         fullWidth
       />
@@ -497,7 +589,9 @@ function BankAccountForm({
         label="银行账号 *"
         required
         value={formData.account_number}
-        onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, account_number: e.target.value })
+        }
         placeholder="请输入银行账号"
         fullWidth
       />
@@ -507,7 +601,9 @@ function BankAccountForm({
         label="开户银行 *"
         required
         value={formData.bank_name}
-        onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, bank_name: e.target.value })
+        }
         placeholder="例如：中国工商银行"
         fullWidth
       />
@@ -516,18 +612,24 @@ function BankAccountForm({
         size="small"
         label="支行名称"
         value={formData.bank_branch || ""}
-        onChange={(e) => setFormData({ ...formData, bank_branch: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, bank_branch: e.target.value })
+        }
         placeholder="例如：北京分行中关村支行"
         fullWidth
       />
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+      <Box
+        sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}
+      >
         <FormControl size="small" fullWidth>
           <InputLabel>账户类型 *</InputLabel>
           <Select
             value={formData.account_type}
             label="账户类型 *"
-            onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, account_type: e.target.value })
+            }
           >
             <MenuItem value="checking">基本户</MenuItem>
             <MenuItem value="savings">一般户</MenuItem>
@@ -541,7 +643,9 @@ function BankAccountForm({
           <Select
             value={formData.currency}
             label="币种 *"
-            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, currency: e.target.value })
+            }
           >
             <MenuItem value="CNY">人民币 (CNY)</MenuItem>
             <MenuItem value="USD">美元 (USD)</MenuItem>
@@ -557,16 +661,29 @@ function BankAccountForm({
         size="small"
         label="描述"
         value={formData.description || ""}
-        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, description: e.target.value })
+        }
         placeholder="可选描述信息"
         fullWidth
       />
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, pt: 2, borderTop: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 1.5,
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+        }}
+      >
         <Button variant="outlined" onClick={onCancel}>
           取消
         </Button>
-        <Button variant="contained" type="submit">保存</Button>
+        <Button variant="contained" type="submit">
+          保存
+        </Button>
       </Box>
     </form>
   );

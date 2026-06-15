@@ -205,7 +205,11 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
       archived: "归档",
     };
     return (
-      <Chip size="small" variant={(colors[status] || "outlined") as "filled" | "outlined"} label={labels[status] || status} />
+      <Chip
+        size="small"
+        variant={(colors[status] || "outlined") as "filled" | "outlined"}
+        label={labels[status] || status}
+      />
     );
   };
 
@@ -251,8 +255,23 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{ width: 40, height: 40, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Folder style={{ color: "var(--mui-palette-primary-main)", fontSize: 20 }} />
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "primary.light",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Folder
+                style={{
+                  color: "var(--mui-palette-primary-main)",
+                  fontSize: 20,
+                }}
+              />
             </Box>
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -274,7 +293,10 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
             </Box>
           </Box>
 
-          <Box className="action-buttons" sx={{ opacity: 0, transition: "opacity 0.2s" }}>
+          <Box
+            className="action-buttons"
+            sx={{ opacity: 0, transition: "opacity 0.2s" }}
+          >
             <Tooltip title="编辑">
               <Button
                 variant="text"
@@ -316,7 +338,17 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           const dept = row.original;
           return (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box sx={{ width: 40, height: 40, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "primary.light",
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <Box sx={{ color: "primary.main" }}>
                   <Folder size={20} />
                 </Box>
@@ -384,15 +416,34 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
                   <Building2 className="w-7 h-7 mr-2" />
                   部门管理
                 </Typography>
@@ -403,7 +454,10 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)}>
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+              >
                 <Plus className="w-5 h-5 mr-1" />
                 新增部门
               </Button>
@@ -423,7 +477,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
             slotProps={{
               input: {
                 startAdornment: <Search className="w-5 h-5 mr-1" />,
-              }
+              },
             }}
           />
           <Button variant="outlined" onClick={loadDepartments}>
@@ -435,14 +489,31 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "primary.main",
+                    borderTopColor: "transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
                 <Typography sx={{ mt: 2 }} color="text.secondary">
                   加载中...
                 </Typography>
               </Box>
             ) : error ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle style={{ fontSize: 48, color: "var(--mui-palette-error-main)", marginBottom: 8 }} />
+                <AlertCircle
+                  style={{
+                    fontSize: 48,
+                    color: "var(--mui-palette-error-main)",
+                    marginBottom: 8,
+                  }}
+                />
                 <Typography color="error.main">{error}</Typography>
                 <Button sx={{ mt: 2 }} onClick={loadDepartments}>
                   重试
@@ -450,7 +521,13 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
               </Box>
             ) : filteredDepartments.length === 0 ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Building2 style={{ fontSize: 48, color: "var(--mui-palette-text-disabled)", marginBottom: 8 }} />
+                <Building2
+                  style={{
+                    fontSize: 48,
+                    color: "var(--mui-palette-text-disabled)",
+                    marginBottom: 8,
+                  }}
+                />
                 <Typography color="text.secondary">暂无部门数据</Typography>
               </Box>
             ) : (
@@ -462,11 +539,22 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
         </Card>
       </Box>
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新增部门</DialogTitle>
         <DialogContent>
-          <Box component="form" onSubmit={handleCreateDepartment} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <Box
+            component="form"
+            onSubmit={handleCreateDepartment}
+            sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+          >
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 id="name"
                 label="部门名称 *"
@@ -556,12 +644,23 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>编辑部门</DialogTitle>
         <DialogContent>
           {selectedDepartment && (
-            <Box component="form" onSubmit={handleEditDepartment} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              component="form"
+              onSubmit={handleEditDepartment}
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+            >
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <TextField
                   id="edit-name"
                   label="部门名称 *"

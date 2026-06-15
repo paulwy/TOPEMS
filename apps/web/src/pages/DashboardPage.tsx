@@ -6,7 +6,19 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Badge,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Checkbox,
+} from "@mui/material";
 import {
   FileText,
   GitBranch,
@@ -51,6 +63,10 @@ import {
   FolderKanban,
   Settings,
   CheckCircle,
+  Zap,
+  ListTodo,
+  Bell,
+  Clock3,
 } from "lucide-react";
 import { authApi } from "../api/iam";
 import { docApi } from "../api/doc";
@@ -75,6 +91,12 @@ import {
   RecentActivities,
   type ActivityItem,
   MobileMenu,
+  DashboardSection,
+  QuickAccessSection,
+  TodoListSection,
+  ModuleNavigationSection,
+  ServiceMonitorSection,
+  RecentActivitySection,
 } from "../components/dashboard";
 
 interface DashboardPageProps {
@@ -129,6 +151,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
+  const [todoTab, setTodoTab] = useState(0);
+  const [todos, setTodos] = useState([
+    { id: 1, title: "审批采购申请 #2024-001", type: "workflow", done: false },
+    { id: 2, title: "查看实验室检测报告", type: "lims", done: false },
+    { id: 3, title: "完成安全培训课程", type: "training", done: true },
+    { id: 4, title: "提交月度工作报告", type: "report", done: false },
+    { id: 5, title: "参加项目评审会议", type: "meeting", done: false },
+  ]);
 
   const moduleToService: Record<string, keyof typeof serviceStatuses> = {
     rs: "rs",
@@ -723,6 +753,30 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     return "晚上好";
   };
 
+  const pendingTodos = todos.filter((t) => !t.done);
+  const completedTodos = todos.filter((t) => t.done);
+
+  const handleTodoToggle = (id: number) => {
+    setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  };
+
+  const getTodoIcon = (type: string) => {
+    switch (type) {
+      case "workflow":
+        return <GitBranch size={18} />;
+      case "lims":
+        return <ClipboardList size={18} />;
+      case "training":
+        return <BookOpen size={18} />;
+      case "report":
+        return <FileText size={18} />;
+      case "meeting":
+        return <Calendar size={18} />;
+      default:
+        return <ListTodo size={18} />;
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -754,160 +808,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             py: 4,
           }}
         >
-          <Box className="mobile-only" sx={{ mb: 3 }}>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 1,
-                mb: 2,
-              }}
-            >
-              {coreModules.slice(0, 4).map((item) => (
-                <Box
-                  key={item.title}
-                  sx={{
-                    bgcolor: "background.paper",
-                    borderRadius: 1.5,
-                    p: 1.5,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => navigate(item.path)}
-                >
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: item.color.replace("bg-", ""),
-                      borderRadius: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      mb: 1,
-                    }}
-                  >
-                    <item.icon size={20} color="#fff" />
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontWeight: 500,
-                      color: "grey.900",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {item.title}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-
-            <Typography
-              sx={{
-                fontSize: "1.125rem",
-                fontWeight: 600,
-                color: "grey.900",
-                mb: 1.5,
-              }}
-            >
-              快速操作
-            </Typography>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 1,
-                mb: 3,
-              }}
-            >
-              {defaultQuickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Box
-                    key={action.label}
-                    component="button"
-                    onClick={() => handleQuickAccess(action.path)}
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      p: 1,
-                      bgcolor: "background.paper",
-                      borderRadius: 1,
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Icon size={20} color="#475569" />
-                    <Typography
-                      sx={{ fontSize: "0.75rem", color: "grey.700" }}
-                    >
-                      {action.label}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-
-            <Typography
-              sx={{
-                fontSize: "1.125rem",
-                fontWeight: 600,
-                color: "grey.900",
-                mb: 1.5,
-              }}
-            >
-              服务状态
-            </Typography>
-            <Box
-              sx={{
-                bgcolor: "background.paper",
-                borderRadius: 3,
-                p: 2,
-              }}
-            >
-              {[
-                { name: "身份认证", status: serviceStatuses.iam },
-                { name: "研发管理", status: serviceStatuses.rs },
-                { name: "实验室管理", status: serviceStatuses.lims },
-                { name: "文档管理", status: serviceStatuses.doc },
-                { name: "AI 服务", status: serviceStatuses.ai },
-                { name: "流程引擎", status: serviceStatuses.flow },
-                { name: "企业资源", status: serviceStatuses.erp },
-                { name: "人力资源", status: serviceStatuses.hrm },
-                { name: "通知服务", status: serviceStatuses.notification },
-                { name: "报表服务", status: serviceStatuses.report },
-                { name: "移动服务", status: serviceStatuses.mobile },
-              ].map((service, index) => (
-                <Box
-                  key={service.name}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    py: 1,
-                    borderBottom:
-                      index < 10 ? "1px solid" : "none",
-                    borderColor: "grey.100",
-                  }}
-                >
-                  <Typography
-                    sx={{ fontSize: "0.875rem", color: "grey.700" }}
-                  >
-                    {service.name}
-                  </Typography>
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      bgcolor: service.status ? "green.500" : "red.500",
-                    }}
-                  />
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
+          {/* 欢迎标题 */}
           <Box sx={{ mb: 4 }}>
             <Typography
               sx={{
@@ -920,288 +821,167 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               👋 欢迎回来，{user?.full_name || user?.username || "用户"}！
             </Typography>
             <Typography sx={{ color: "grey.600" }}>
-              {getGreeting()}，今天有 {defaultQuickActions.length} 个待处理事项
+              {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
             </Typography>
           </Box>
 
-          <DashboardQuickActions
-            quickActions={defaultQuickActions}
-            serviceStatuses={serviceStatuses}
-            onQuickAccess={handleQuickAccess}
-          />
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
-              gap: 3,
-              mb: 4,
-            }}
-          >
-            <MetricCard
-              title="在线服务"
-              value={String(onlineServices)}
-              icon={<Activity size={24} />}
-              color="green"
-              change={onlineServices > 5 ? 10 : -5}
-            />
-            <MetricCard
-              title="文件数量"
-              value={String(stats.fileCount)}
-              icon={<FileText size={24} />}
-              color="purple"
-              change={8}
-            />
-            <MetricCard
-              title="工作流"
-              value={String(stats.workflowCount)}
-              icon={<GitBranch size={24} />}
-              color="orange"
-              change={-3}
-            />
-            <MetricCard
-              title="待处理"
-              value={String(stats.notificationCount)}
-              icon={<Clock size={24} />}
-              color="blue"
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
-              gap: 3,
-              mb: 4,
-            }}
-          >
-            <StatsChart
-              type="pie"
-              title="业务模块分布"
-              data={
-                chartData.moduleDistribution.length > 0
-                  ? chartData.moduleDistribution
-                  : [
-                      { name: "质量管理", value: 25, color: "#6366f1" },
-                      { name: "安全管理", value: 20, color: "#8b5cf6" },
-                      { name: "供应商管理", value: 15, color: "#a855f7" },
-                      { name: "实验室管理", value: 20, color: "#d946ef" },
-                      { name: "研发管理", value: 20, color: "#ec4899" },
-                    ]
-              }
-              yKey="value"
-            />
-            <StatsChart
-              type="line"
-              title="月度趋势"
-              data={
-                chartData.monthlyTrend.length > 0
-                  ? chartData.monthlyTrend
-                  : [
-                      { name: "1月", value: 65 },
-                      { name: "2月", value: 78 },
-                      { name: "3月", value: 85 },
-                      { name: "4月", value: 72 },
-                      { name: "5月", value: 90 },
-                      { name: "6月", value: 88 },
-                    ]
-              }
-              yKey="value"
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-              gap: 2,
-              mb: 4,
-            }}
-          >
+          {/* 今日概览分区 */}
+          <DashboardSection title="今日概览" sx={{ mb: 4 }}>
             <Box
               sx={{
-                bgcolor: "background.paper",
-                borderRadius: 3,
-                boxShadow: 1,
-                p: 2,
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+                gap: 3,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "indigo.100",
-                    borderRadius: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Shield size={20} color="#4f46e5" />
-                </Box>
-                <Box>
-                  <Typography sx={{ fontSize: "0.875rem", color: "grey.600" }}>
-                    供应商
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "1.25rem",
-                      fontWeight: 700,
-                      color: "grey.900",
-                    }}
-                  >
-                    {moduleStats.srm.total}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box
-                sx={{
-                  mt: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  fontSize: "0.75rem",
-                }}
-              >
-                <CheckCircle size={12} color="#22c55e" />
-                <Typography
-                  sx={{
-                    ml: 0.5,
-                    fontSize: "0.75rem",
-                    color: "green.600",
-                  }}
-                >
-                  {moduleStats.srm.active} 活跃
-                </Typography>
-              </Box>
+              <MetricCard
+                title="在线服务"
+                value={String(onlineServices)}
+                icon={<Activity size={24} />}
+                color="green"
+                change={onlineServices > 5 ? 10 : -5}
+              />
+              <MetricCard
+                title="文件数量"
+                value={String(stats.fileCount)}
+                icon={<FileText size={24} />}
+                color="purple"
+                change={8}
+              />
+              <MetricCard
+                title="工作流"
+                value={String(stats.workflowCount)}
+                icon={<GitBranch size={24} />}
+                color="orange"
+                change={-3}
+              />
+              <MetricCard
+                title="待处理"
+                value={String(pendingTodos.length)}
+                icon={<Clock size={24} />}
+                color="blue"
+              />
             </Box>
-            <Box
-              sx={{
-                bgcolor: "background.paper",
-                borderRadius: 3,
-                boxShadow: 1,
-                p: 2,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "cyan.100",
-                    borderRadius: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ClipboardList size={20} color="#0891b2" />
-                </Box>
-                <Box>
-                  <Typography sx={{ fontSize: "0.875rem", color: "grey.600" }}>
-                    实验室
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "1.25rem",
-                      fontWeight: 700,
-                      color: "grey.900",
-                    }}
-                  >
-                    {moduleStats.lims.total}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box
-                sx={{
-                  mt: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  fontSize: "0.75rem",
-                }}
-              >
-                <CheckCircle size={12} color="#22c55e" />
-                <Typography
-                  sx={{
-                    ml: 0.5,
-                    fontSize: "0.75rem",
-                    color: "green.600",
-                  }}
-                >
-                  {moduleStats.lims.active} 活跃
-                </Typography>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: "background.paper",
-                borderRadius: 3,
-                boxShadow: 1,
-                p: 2,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "orange.100",
-                    borderRadius: 1.5,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <FlaskConical size={20} color="#ea580c" />
-                </Box>
-                <Box>
-                  <Typography sx={{ fontSize: "0.875rem", color: "grey.600" }}>
-                    研发
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "1.25rem",
-                      fontWeight: 700,
-                      color: "grey.900",
-                    }}
-                  >
-                    {moduleStats.rs.total}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box
-                sx={{
-                  mt: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  fontSize: "0.75rem",
-                }}
-              >
-                <CheckCircle size={12} color="#22c55e" />
-                <Typography
-                  sx={{
-                    ml: 0.5,
-                    fontSize: "0.75rem",
-                    color: "green.600",
-                  }}
-                >
-                  {moduleStats.rs.active} 活跃
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
+          </DashboardSection>
 
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              sx={{
-                fontSize: "1.25rem",
-                fontWeight: 600,
-                color: "grey.900",
-                mb: 2,
-              }}
-            >
-              🚀 核心功能
-            </Typography>
+          {/* 快捷入口分区 */}
+          <QuickAccessSection defaultExpanded={true}>
+            <DashboardQuickActions
+              quickActions={defaultQuickActions}
+              serviceStatuses={serviceStatuses}
+              onQuickAccess={handleQuickAccess}
+            />
+          </QuickAccessSection>
+
+          {/* 待办事项分区 */}
+          <TodoListSection>
+            <Box sx={{ mb: 2 }}>
+              <Tabs
+                value={todoTab}
+                onChange={(_, v) => setTodoTab(v)}
+                sx={{
+                  minHeight: 36,
+                  "& .MuiTabs-indicator": {
+                    bgcolor: "primary.main",
+                  },
+                }}
+              >
+                <Tab
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <ListTodo size={16} />
+                      <Typography sx={{ fontSize: "0.875rem" }}>
+                        待处理
+                      </Typography>
+                      <Badge
+                        badgeContent={pendingTodos.length}
+                        color="primary"
+                        sx={{ ml: 1 }}
+                      />
+                    </Box>
+                  }
+                  sx={{ minHeight: 36, py: 1 }}
+                />
+                <Tab
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CheckCircle size={16} />
+                      <Typography sx={{ fontSize: "0.875rem" }}>
+                        已完成
+                      </Typography>
+                      <Badge
+                        badgeContent={completedTodos.length}
+                        color="success"
+                        sx={{ ml: 1 }}
+                      />
+                    </Box>
+                  }
+                  sx={{ minHeight: 36, py: 1 }}
+                />
+              </Tabs>
+            </Box>
+            <List sx={{ py: 0 }}>
+              {(todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
+                <ListItem
+                  key={todo.id}
+                  sx={{
+                    px: 0,
+                    borderBottom: "1px solid",
+                    borderColor: "grey.100",
+                    "&:last-child": { borderBottom: "none" },
+                  }}
+                >
+                  <ListItemButton
+                    sx={{
+                      borderRadius: 1,
+                      "&:hover": { bgcolor: "grey.50" },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <Checkbox
+                        checked={todo.done}
+                        onChange={() => handleTodoToggle(todo.id)}
+                        size="small"
+                        sx={{
+                          color: "grey.400",
+                          "&.Mui-checked": { color: "success.main" },
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <Box
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: todo.done ? "grey.100" : "primary.50",
+                          color: todo.done ? "grey.500" : "primary.main",
+                        }}
+                      >
+                        {getTodoIcon(todo.type)}
+                      </Box>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={todo.title}
+                      sx={{
+                        "& .MuiListItemText-primary": {
+                          fontSize: "0.875rem",
+                          color: todo.done ? "grey.500" : "grey.900",
+                          textDecoration: todo.done ? "line-through" : "none",
+                        },
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </TodoListSection>
+
+          {/* 模块导航分区 - 核心功能 */}
+          <ModuleNavigationSection title="🚀 核心功能">
             <Box
               sx={{
                 display: "grid",
@@ -1222,19 +1002,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 />
               ))}
             </Box>
-          </Box>
+          </ModuleNavigationSection>
 
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              sx={{
-                fontSize: "1.25rem",
-                fontWeight: 600,
-                color: "grey.900",
-                mb: 2,
-              }}
-            >
-              📊 业务模块
-            </Typography>
+          {/* 模块导航分区 - 业务模块 */}
+          <ModuleNavigationSection title="📊 业务模块">
             <Box
               sx={{
                 display: "grid",
@@ -1255,20 +1026,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 />
               ))}
             </Box>
-          </Box>
+          </ModuleNavigationSection>
 
+          {/* 模块导航分区 - 系统服务 */}
           {systemServicesModules.length > 0 && (
-            <Box sx={{ mb: 4 }}>
-              <Typography
-                sx={{
-                  fontSize: "1.25rem",
-                  fontWeight: 600,
-                  color: "grey.900",
-                  mb: 2,
-                }}
-              >
-                ⚙️ 系统服务
-              </Typography>
+            <ModuleNavigationSection title="⚙️ 系统服务">
               <Box
                 sx={{
                   display: "grid",
@@ -1289,16 +1051,37 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   />
                 ))}
               </Box>
-            </Box>
+            </ModuleNavigationSection>
           )}
 
-          <ServiceStatusMonitor
-            serviceStatuses={serviceStatuses}
-            onRefresh={checkAllServicesStatus}
-          />
+          {/* 服务状态监测分区 */}
+          <ServiceMonitorSection collapsible={true} defaultExpanded={false}>
+            <ServiceStatusMonitor
+              serviceStatuses={serviceStatuses}
+              onRefresh={checkAllServicesStatus}
+            />
+          </ServiceMonitorSection>
 
-          <RecentActivities activities={recentActivities} />
+          {/* 最近活动分区 */}
+          <RecentActivitySection
+            defaultExpanded={false}
+            headerRight={
+              <Typography
+                sx={{
+                  fontSize: "0.875rem",
+                  color: "primary.main",
+                  cursor: "pointer",
+                  "&:hover": { color: "primary.dark" },
+                }}
+              >
+                查看全部
+              </Typography>
+            }
+          >
+            <RecentActivities activities={recentActivities} />
+          </RecentActivitySection>
 
+          {/* 页脚 */}
           <Box
             sx={{
               mt: 4,

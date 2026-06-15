@@ -15,7 +15,11 @@ export { useNotificationSettings } from "./useNotificationSettings";
 
 export { useAIHelper } from "./useAIHelper";
 export { useAIContext } from "./useAIContext";
-export type { AIRecommendation, AIContextState, QuickCommand } from "./useAIContext";
+export type {
+  AIRecommendation,
+  AIContextState,
+  QuickCommand,
+} from "./useAIContext";
 export { useTopNav } from "./useTopNav";
 export { useBatchSelection } from "./useBatchSelection";
 export { useDataTable, useExportData } from "./useDataTable";
@@ -24,6 +28,8 @@ export { useImportExport } from "./useImportExport";
 export { useWebSocket } from "./useWebSocket";
 export { usePerformanceMonitor } from "./usePerformanceMonitor";
 export { useToast } from "./use-toast";
+export { useResponsive } from "./useResponsive";
+export type { Breakpoint } from "./useResponsive";
 
 export {
   useAssets,

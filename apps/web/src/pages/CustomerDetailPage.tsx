@@ -1,4 +1,21 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab, Table, TableBody, TableCell, TableHead, TableRow, Paper, Stack } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Paper,
+  Stack,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -105,7 +122,14 @@ const CustomerDetailPage: React.FC = () => {
       string,
       {
         label: string;
-        color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
+        color:
+          | "default"
+          | "primary"
+          | "secondary"
+          | "error"
+          | "info"
+          | "success"
+          | "warning";
       }
     > = {
       active: { label: "活跃", color: "success" },
@@ -122,7 +146,14 @@ const CustomerDetailPage: React.FC = () => {
       string,
       {
         label: string;
-        color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
+        color:
+          | "default"
+          | "primary"
+          | "secondary"
+          | "error"
+          | "info"
+          | "success"
+          | "warning";
       }
     > = {
       draft: { label: "草稿", color: "default" },
@@ -138,7 +169,14 @@ const CustomerDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
         <Typography>加载中...</Typography>
       </Box>
     );
@@ -146,9 +184,18 @@ const CustomerDetailPage: React.FC = () => {
 
   if (!customer) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
         <Box sx={{ textAlign: "center" }}>
-          <Typography variant="h6" color="text.secondary">客户不存在</Typography>
+          <Typography variant="h6" color="text.secondary">
+            客户不存在
+          </Typography>
           <Button onClick={() => navigate("/crm/customers")} sx={{ mt: 2 }}>
             返回列表
           </Button>
@@ -164,7 +211,13 @@ const CustomerDetailPage: React.FC = () => {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       {/* 顶部导航 */}
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button variant="text" onClick={() => navigate("/crm/customers")}>
@@ -174,8 +227,12 @@ const CustomerDetailPage: React.FC = () => {
               返回
             </Button>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: "bold" }}>客户详情</Typography>
-              <Typography variant="body2" color="text.secondary">查看和编辑客户档案信息</Typography>
+              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                客户详情
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                查看和编辑客户档案信息
+              </Typography>
             </Box>
           </Box>
         </Box>
@@ -184,42 +241,67 @@ const CustomerDetailPage: React.FC = () => {
       <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
         {/* 客户概览卡片 */}
         <Card sx={{ mb: 3 }}>
-          <CardContent sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
-            <Box sx={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              bgcolor: "primary.light",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
+          <CardContent
+            sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}
+          >
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                bgcolor: "primary.light",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Building2 size={32} color="#1976d2" />
             </Box>
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+              >
                 <Typography variant="h5" sx={{ fontWeight: "bold" }}>
                   {customer.name}
                 </Typography>
                 {getStatusBadge(customer.status)}
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, color: "text.secondary" }}>
-                <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  color: "text.secondary",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                >
                   <FileText size={14} />
                   {customer.code || "-"}
                 </Typography>
-                <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                >
                   <Building2 size={14} />
                   {customer.industry || "-"}
                 </Typography>
                 {customer.email && (
-                  <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                  >
                     <Mail size={14} />
                     {customer.email}
                   </Typography>
                 )}
                 {customer.phone && (
-                  <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                  >
                     <Phone size={14} />
                     {customer.phone}
                   </Typography>
@@ -233,14 +315,25 @@ const CustomerDetailPage: React.FC = () => {
         </Card>
 
         {/* 财务概览 */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
-          <Card sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <Card
+            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
+          >
             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "primary.light" }}>
                 <CreditCard size={20} color="#1976d2" />
               </Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">信用额度</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  信用额度
+                </Typography>
                 <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                   {formatCurrency(finInfo?.credit_limit)}
                 </Typography>
@@ -248,42 +341,63 @@ const CustomerDetailPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+          <Card
+            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
+          >
             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "warning.light" }}>
                 <Wallet size={20} color="#ed6c02" />
               </Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">应收账款</Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold", color: "warning.main" }}>
+                <Typography variant="body2" color="text.secondary">
+                  应收账款
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "warning.main" }}
+                >
                   {formatCurrency(finInfo?.accounts_receivable)}
                 </Typography>
               </Box>
             </CardContent>
           </Card>
 
-          <Card sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+          <Card
+            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
+          >
             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "error.light" }}>
                 <Clock size={20} color="#d32f2f" />
               </Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">逾期应收</Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold", color: "error.main" }}>
+                <Typography variant="body2" color="text.secondary">
+                  逾期应收
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "error.main" }}
+                >
                   {formatCurrency(finInfo?.overdue_receivable)}
                 </Typography>
               </Box>
             </CardContent>
           </Card>
 
-          <Card sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}>
+          <Card
+            sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s" }}
+          >
             <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "success.light" }}>
                 <TrendingUp size={20} color="#2e7d32" />
               </Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">累计销售额</Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold", color: "success.main" }}>
+                <Typography variant="body2" color="text.secondary">
+                  累计销售额
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "success.main" }}
+                >
                   {formatCurrency(finInfo?.total_sales)}
                 </Typography>
               </Box>
@@ -293,8 +407,18 @@ const CustomerDetailPage: React.FC = () => {
 
         {/* 标签页 */}
         <Card>
-          <Box sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "grey.100" }}>
-            <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} sx={{ px: 2 }}>
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              bgcolor: "grey.100",
+            }}
+          >
+            <Tabs
+              value={tabValue}
+              onChange={(_, newValue) => setTabValue(newValue)}
+              sx={{ px: 2 }}
+            >
               <Tab label="基本信息" />
               <Tab label="财务信息" />
               <Tab label="销售发票" />
@@ -306,47 +430,91 @@ const CustomerDetailPage: React.FC = () => {
           <TabPanel value={tabValue} index={0}>
             <Card>
               <CardHeader>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>基本信息</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  基本信息
+                </Typography>
               </CardHeader>
               <CardContent>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+                    gap: 2,
+                  }}
+                >
                   <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>客户名称</InputLabel>
-                    <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>{customer.name}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      客户名称
+                    </InputLabel>
+                    <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+                      {customer.name}
+                    </Typography>
                   </Box>
                   <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>客户代码</InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>{customer.code || "-"}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      客户代码
+                    </InputLabel>
+                    <Typography sx={{ mt: 0.5 }}>
+                      {customer.code || "-"}
+                    </Typography>
                   </Box>
                   <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>行业</InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>{customer.industry || "-"}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      行业
+                    </InputLabel>
+                    <Typography sx={{ mt: 0.5 }}>
+                      {customer.industry || "-"}
+                    </Typography>
                   </Box>
                   <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>网站</InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>{customer.website || "-"}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      网站
+                    </InputLabel>
+                    <Typography sx={{ mt: 0.5 }}>
+                      {customer.website || "-"}
+                    </Typography>
                   </Box>
                   <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>邮箱</InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>{customer.email || "-"}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      邮箱
+                    </InputLabel>
+                    <Typography sx={{ mt: 0.5 }}>
+                      {customer.email || "-"}
+                    </Typography>
                   </Box>
                   <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>电话</InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>{customer.phone || "-"}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      电话
+                    </InputLabel>
+                    <Typography sx={{ mt: 0.5 }}>
+                      {customer.phone || "-"}
+                    </Typography>
                   </Box>
                   <Box sx={{ gridColumn: "span 2" }}>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>地址</InputLabel>
-                    <Typography sx={{ mt: 0.5 }}>{customer.address || "-"}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      地址
+                    </InputLabel>
+                    <Typography sx={{ mt: 0.5 }}>
+                      {customer.address || "-"}
+                    </Typography>
                   </Box>
                   <Box>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>状态</InputLabel>
-                    <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      状态
+                    </InputLabel>
+                    <Box sx={{ mt: 0.5 }}>
+                      {getStatusBadge(customer.status)}
+                    </Box>
                   </Box>
                 </Box>
                 {customer.notes && (
                   <Box sx={{ mt: 3 }}>
-                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>备注</InputLabel>
-                    <Typography sx={{ mt: 0.5, color: "text.secondary" }}>{customer.notes}</Typography>
+                    <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>
+                      备注
+                    </InputLabel>
+                    <Typography sx={{ mt: 0.5, color: "text.secondary" }}>
+                      {customer.notes}
+                    </Typography>
                   </Box>
                 )}
               </CardContent>
@@ -355,28 +523,84 @@ const CustomerDetailPage: React.FC = () => {
 
           {/* 财务信息 */}
           <TabPanel value={tabValue} index={1}>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: "repeat(2, 1fr)" }, gap: 3 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, lg: "repeat(2, 1fr)" },
+                gap: 3,
+              }}
+            >
               {/* 信用管理 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>信用管理</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    信用管理
+                  </Typography>
                 </CardHeader>
                 <CardContent>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">信用额度</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{formatCurrency(finInfo?.credit_limit)}</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {formatCurrency(finInfo?.credit_limit)}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
-                    <Typography color="text.secondary">信用期限（天）</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{finInfo?.credit_term_days || 0}</Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Typography color="text.secondary">
+                      信用期限（天）
+                    </Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {finInfo?.credit_term_days || 0}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">付款条款</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{finInfo?.payment_terms || "-"}</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {finInfo?.payment_terms || "-"}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
                     <Typography color="text.secondary">客户状态</Typography>
-                    <Chip size="small" color={finInfo?.status === "normal" ? "success" : "default"} label={finInfo?.status === "normal" ? "正常" : finInfo?.status || "-"} />
+                    <Chip
+                      size="small"
+                      color={
+                        finInfo?.status === "normal" ? "success" : "default"
+                      }
+                      label={
+                        finInfo?.status === "normal"
+                          ? "正常"
+                          : finInfo?.status || "-"
+                      }
+                    />
                   </Box>
                 </CardContent>
               </Card>
@@ -384,24 +608,68 @@ const CustomerDetailPage: React.FC = () => {
               {/* 应收款概览 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>应收款概览</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    应收款概览
+                  </Typography>
                 </CardHeader>
                 <CardContent>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">应收账款</Typography>
-                    <Typography sx={{ fontWeight: "medium", color: "warning.main" }}>{formatCurrency(finInfo?.accounts_receivable)}</Typography>
+                    <Typography
+                      sx={{ fontWeight: "medium", color: "warning.main" }}
+                    >
+                      {formatCurrency(finInfo?.accounts_receivable)}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">逾期应收</Typography>
-                    <Typography sx={{ fontWeight: "medium", color: "error.main" }}>{formatCurrency(finInfo?.overdue_receivable)}</Typography>
+                    <Typography
+                      sx={{ fontWeight: "medium", color: "error.main" }}
+                    >
+                      {formatCurrency(finInfo?.overdue_receivable)}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">平均回款天数</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{finInfo?.avg_collection_days || 0} 天</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {finInfo?.avg_collection_days || 0} 天
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
                     <Typography color="text.secondary">最后交易日期</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{formatDate(finInfo?.last_transaction_date)}</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {formatDate(finInfo?.last_transaction_date)}
+                    </Typography>
                   </Box>
                 </CardContent>
               </Card>
@@ -409,21 +677,58 @@ const CustomerDetailPage: React.FC = () => {
               {/* 交易统计 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>交易统计</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    交易统计
+                  </Typography>
                 </CardHeader>
                 <CardContent>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">累计销售额</Typography>
-                    <Typography sx={{ fontWeight: "medium", color: "success.main" }}>{formatCurrency(finInfo?.total_sales)}</Typography>
+                    <Typography
+                      sx={{ fontWeight: "medium", color: "success.main" }}
+                    >
+                      {formatCurrency(finInfo?.total_sales)}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">累计收款</Typography>
-                    <Typography sx={{ fontWeight: "medium", color: "primary.main" }}>{formatCurrency(finInfo?.total_received)}</Typography>
+                    <Typography
+                      sx={{ fontWeight: "medium", color: "primary.main" }}
+                    >
+                      {formatCurrency(finInfo?.total_received)}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
                     <Typography color="text.secondary">应收余额</Typography>
-                    <Typography sx={{ fontWeight: "medium", color: "warning.main" }}>
-                      {formatCurrency((finInfo?.accounts_receivable || 0) - (finInfo?.total_received || 0))}
+                    <Typography
+                      sx={{ fontWeight: "medium", color: "warning.main" }}
+                    >
+                      {formatCurrency(
+                        (finInfo?.accounts_receivable || 0) -
+                          (finInfo?.total_received || 0),
+                      )}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -432,24 +737,64 @@ const CustomerDetailPage: React.FC = () => {
               {/* 银行账户信息 */}
               <Card>
                 <CardHeader sx={{ pb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>银行账户信息</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    银行账户信息
+                  </Typography>
                 </CardHeader>
                 <CardContent>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">开户银行</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{finInfo?.bank_name || "-"}</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {finInfo?.bank_name || "-"}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">银行账号</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{finInfo?.bank_account || "-"}</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {finInfo?.bank_account || "-"}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography color="text.secondary">账户名称</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{finInfo?.account_name || "-"}</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {finInfo?.account_name || "-"}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", py: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
                     <Typography color="text.secondary">税号</Typography>
-                    <Typography sx={{ fontWeight: "medium" }}>{finInfo?.tax_number || "-"}</Typography>
+                    <Typography sx={{ fontWeight: "medium" }}>
+                      {finInfo?.tax_number || "-"}
+                    </Typography>
                   </Box>
                 </CardContent>
               </Card>
@@ -459,9 +804,23 @@ const CustomerDetailPage: React.FC = () => {
           {/* 销售发票 */}
           <TabPanel value={tabValue} index={2}>
             <Card>
-              <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", pb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>销售发票列表</Typography>
-                <Button variant="outlined" size="small" startIcon={<Receipt size={16} />}>
+              <CardHeader
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  pb: 2,
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  销售发票列表
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Receipt size={16} />}
+                >
                   新建发票
                 </Button>
               </CardHeader>
@@ -481,20 +840,36 @@ const CustomerDetailPage: React.FC = () => {
                   <TableBody>
                     {invoices.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 8, color: "text.secondary" }}>
+                        <TableCell
+                          colSpan={7}
+                          align="center"
+                          sx={{ py: 8, color: "text.secondary" }}
+                        >
                           暂无发票数据
                         </TableCell>
                       </TableRow>
                     ) : (
                       invoices.map((invoice: any) => (
                         <TableRow key={invoice.id} hover>
-                          <TableCell sx={{ fontWeight: "medium" }}>{invoice.invoice_no}</TableCell>
-                          <TableCell align="right">{formatCurrency(invoice.amount)}</TableCell>
-                          <TableCell align="right">{formatCurrency(invoice.tax_amount)}</TableCell>
-                          <TableCell align="right">{formatCurrency(invoice.total_amount)}</TableCell>
-                          <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
+                          <TableCell sx={{ fontWeight: "medium" }}>
+                            {invoice.invoice_no}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(invoice.amount)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(invoice.tax_amount)}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(invoice.total_amount)}
+                          </TableCell>
+                          <TableCell>
+                            {formatDate(invoice.invoice_date)}
+                          </TableCell>
                           <TableCell>{formatDate(invoice.due_date)}</TableCell>
-                          <TableCell>{getInvoiceStatusBadge(invoice.status)}</TableCell>
+                          <TableCell>
+                            {getInvoiceStatusBadge(invoice.status)}
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -507,9 +882,23 @@ const CustomerDetailPage: React.FC = () => {
           {/* 收款记录 */}
           <TabPanel value={tabValue} index={3}>
             <Card>
-              <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", pb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>收款记录列表</Typography>
-                <Button variant="outlined" size="small" startIcon={<Wallet size={16} />}>
+              <CardHeader
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  pb: 2,
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  收款记录列表
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Wallet size={16} />}
+                >
                   新建收款
                 </Button>
               </CardHeader>
@@ -527,15 +916,23 @@ const CustomerDetailPage: React.FC = () => {
                   <TableBody>
                     {collections.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} align="center" sx={{ py: 8, color: "text.secondary" }}>
+                        <TableCell
+                          colSpan={5}
+                          align="center"
+                          sx={{ py: 8, color: "text.secondary" }}
+                        >
                           暂无收款记录数据
                         </TableCell>
                       </TableRow>
                     ) : (
                       collections.map((record: any) => (
                         <TableRow key={record.id} hover>
-                          <TableCell sx={{ fontWeight: "medium" }}>{record.collection_no}</TableCell>
-                          <TableCell align="right">{formatCurrency(record.amount)}</TableCell>
+                          <TableCell sx={{ fontWeight: "medium" }}>
+                            {record.collection_no}
+                          </TableCell>
+                          <TableCell align="right">
+                            {formatCurrency(record.amount)}
+                          </TableCell>
                           <TableCell>
                             {record.payment_method === "bank_transfer"
                               ? "银行转账"
@@ -545,11 +942,27 @@ const CustomerDetailPage: React.FC = () => {
                                   ? "信用"
                                   : "其他"}
                           </TableCell>
-                          <TableCell>{formatDate(record.collection_date)}</TableCell>
                           <TableCell>
-                            <Chip size="small"
-                              color={record.status === "matched" ? "success" : record.status === "recorded" ? "info" : "default"}
-                              label={record.status === "matched" ? "已核销" : record.status === "recorded" ? "已记录" : "已取消"} />
+                            {formatDate(record.collection_date)}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              color={
+                                record.status === "matched"
+                                  ? "success"
+                                  : record.status === "recorded"
+                                    ? "info"
+                                    : "default"
+                              }
+                              label={
+                                record.status === "matched"
+                                  ? "已核销"
+                                  : record.status === "recorded"
+                                    ? "已记录"
+                                    : "已取消"
+                              }
+                            />
                           </TableCell>
                         </TableRow>
                       ))
@@ -563,27 +976,48 @@ const CustomerDetailPage: React.FC = () => {
 
         {/* 底部信息 */}
         <Card sx={{ mt: 3 }}>
-          <CardContent sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
+          <CardContent
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+              gap: 2,
+            }}
+          >
             <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">创建时间</Typography>
+              <Typography variant="body2" color="text.secondary">
+                创建时间
+              </Typography>
               <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                 {new Date(customer.created_at).toLocaleString()}
               </Typography>
             </Box>
             <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">更新时间</Typography>
+              <Typography variant="body2" color="text.secondary">
+                更新时间
+              </Typography>
               <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                 {new Date(customer.updated_at).toLocaleString()}
               </Typography>
             </Box>
             <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">客户ID</Typography>
-              <Typography sx={{ fontWeight: "medium", mt: 0.5, fontFamily: "monospace", fontSize: "0.875rem" }}>
+              <Typography variant="body2" color="text.secondary">
+                客户ID
+              </Typography>
+              <Typography
+                sx={{
+                  fontWeight: "medium",
+                  mt: 0.5,
+                  fontFamily: "monospace",
+                  fontSize: "0.875rem",
+                }}
+              >
                 {customer.id.substring(0, 8)}...
               </Typography>
             </Box>
             <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" color="text.secondary">状态</Typography>
+              <Typography variant="body2" color="text.secondary">
+                状态
+              </Typography>
               <Box sx={{ mt: 0.5 }}>{getStatusBadge(customer.status)}</Box>
             </Box>
           </CardContent>

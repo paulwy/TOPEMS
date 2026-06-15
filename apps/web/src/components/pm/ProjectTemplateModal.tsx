@@ -67,41 +67,50 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
   if (!template) return null;
 
   return (
-    <Dialog open={open} onClose={() => onOpenChange(false)} maxWidth="sm" fullWidth>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <DialogTitle>使用模板创建项目</DialogTitle>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">模板名称</Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            模板名称
+          </Typography>
           <TextField
             value={template.name}
             disabled
             size="small"
-            sx={{ bgcolor: 'grey.100' }}
+            sx={{ bgcolor: "grey.100" }}
           />
 
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>项目名称 *</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            项目名称 *
+          </Typography>
           <TextField
             value={formData.name}
-            onChange={(e) =>
-              setFormData({ ...formData, name: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="输入项目名称"
             size="small"
             sx={{ mt: 0.5 }}
           />
 
-          <Typography variant="body2" color="text.secondary">项目编号 *</Typography>
+          <Typography variant="body2" color="text.secondary">
+            项目编号 *
+          </Typography>
           <TextField
             value={formData.code}
-            onChange={(e) =>
-              setFormData({ ...formData, code: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
             placeholder="输入项目编号"
             size="small"
             sx={{ mt: 0.5 }}
           />
 
-          <Typography variant="body2" color="text.secondary">项目描述</Typography>
+          <Typography variant="body2" color="text.secondary">
+            项目描述
+          </Typography>
           <TextField
             value={formData.description}
             onChange={(e) =>
@@ -112,9 +121,11 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
             sx={{ mt: 0.5 }}
           />
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
             <Box>
-              <Typography variant="body2" color="text.secondary">开始日期</Typography>
+              <Typography variant="body2" color="text.secondary">
+                开始日期
+              </Typography>
               <TextField
                 type="date"
                 value={formData.start_date}
@@ -122,11 +133,13 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
                   setFormData({ ...formData, start_date: e.target.value })
                 }
                 size="small"
-                sx={{ mt: 0.5, '& input': { padding: 1 } }}
+                sx={{ mt: 0.5, "& input": { padding: 1 } }}
               />
             </Box>
             <Box>
-              <Typography variant="body2" color="text.secondary">预算</Typography>
+              <Typography variant="body2" color="text.secondary">
+                预算
+              </Typography>
               <TextField
                 type="number"
                 value={formData.budget}
@@ -140,23 +153,37 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, py: 3, bgcolor: 'grey.100', borderRadius: 1 }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 4,
+              py: 3,
+              bgcolor: "grey.100",
+              borderRadius: 1,
+            }}
+          >
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {template.phases_count}
               </Typography>
-              <Typography variant="body2" color="text.secondary">预设阶段</Typography>
+              <Typography variant="body2" color="text.secondary">
+                预设阶段
+              </Typography>
             </Box>
-            <Box sx={{ width: '1px', height: 48, bgcolor: 'grey.300' }} />
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            <Box sx={{ width: "1px", height: 48, bgcolor: "grey.300" }} />
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {template.estimated_days}天
               </Typography>
-              <Typography variant="body2" color="text.secondary">预估周期</Typography>
+              <Typography variant="body2" color="text.secondary">
+                预估周期
+              </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+          <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
             <Button
               variant="outlined"
               fullWidth
@@ -164,11 +191,7 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
             >
               取消
             </Button>
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={handleSubmit}
-            >
+            <Button variant="contained" fullWidth onClick={handleSubmit}>
               创建项目
             </Button>
           </Box>

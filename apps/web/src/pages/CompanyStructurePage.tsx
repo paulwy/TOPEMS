@@ -50,7 +50,17 @@ import type {
 // 关系类型配置
 const RELATION_TYPE_CONFIG: Record<
   CompanyRelationType,
-  { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }
+  {
+    label: string;
+    color:
+      | "default"
+      | "primary"
+      | "secondary"
+      | "error"
+      | "info"
+      | "success"
+      | "warning";
+  }
 > = {
   parent: { label: "母公司", color: "primary" },
   subsidiary: { label: "子公司", color: "success" },
@@ -109,10 +119,10 @@ const TreeNodeComponent: React.FC<{
         )}
         <Building2 className="w-4 h-4 text-primary.main" />
         <Typography sx={{ fontWeight: "medium" }}>{node.name}</Typography>
-        <Typography variant="caption" color="text.secondary">({node.code})</Typography>
-        {node.is_parent && (
-          <Chip label="母公司" color="primary" size="small" />
-        )}
+        <Typography variant="caption" color="text.secondary">
+          ({node.code})
+        </Typography>
+        {node.is_parent && <Chip label="母公司" color="primary" size="small" />}
         {node.relation_type && (
           <Chip
             label={RELATION_TYPE_CONFIG[node.relation_type]?.label}
@@ -233,7 +243,9 @@ export default function CompanyStructurePage() {
       cell: ({ row }) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Building2 className="w-4 h-4 text-success.main" />
-          <Typography sx={{ fontWeight: "medium" }}>{row.original.child_company_name}</Typography>
+          <Typography sx={{ fontWeight: "medium" }}>
+            {row.original.child_company_name}
+          </Typography>
           <Typography variant="caption" color="text.secondary">
             ({row.original.child_company_code})
           </Typography>
@@ -255,7 +267,9 @@ export default function CompanyStructurePage() {
       header: "控制比例",
       accessorKey: "control_percentage",
       cell: ({ row }) => (
-        <Typography sx={{ fontFamily: "monospace" }}>{row.getValue("control_percentage")}%</Typography>
+        <Typography sx={{ fontFamily: "monospace" }}>
+          {row.getValue("control_percentage")}%
+        </Typography>
       ),
     },
     {
@@ -263,7 +277,9 @@ export default function CompanyStructurePage() {
       header: "生效日期",
       accessorKey: "effective_date",
       cell: ({ row }) => (
-        <Typography variant="body2">{row.getValue("effective_date")}</Typography>
+        <Typography variant="body2">
+          {row.getValue("effective_date")}
+        </Typography>
       ),
     },
     {
@@ -299,9 +315,24 @@ export default function CompanyStructurePage() {
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
       {/* 页面标题 */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
             <Network className="w-6 h-6 text-primary.main" />
             公司架构管理
           </Typography>
@@ -309,7 +340,11 @@ export default function CompanyStructurePage() {
             管理母子公司关系，用于多公司合并报表
           </Typography>
         </Box>
-        <Button variant="contained" onClick={() => navigate("/finance/company-structure/create")} startIcon={<Plus className="w-4 h-4" />}>
+        <Button
+          variant="contained"
+          onClick={() => navigate("/finance/company-structure/create")}
+          startIcon={<Plus className="w-4 h-4" />}
+        >
           添加公司关系
         </Button>
       </Box>
@@ -336,18 +371,36 @@ export default function CompanyStructurePage() {
       {/* 公司架构内容 */}
       <Card>
         <CardContent>
-          <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-            <Tab label="架构视图" icon={<Network className="w-4 h-4" />} iconPosition="start" />
-            <Tab label="关系列表" icon={<Users className="w-4 h-4" />} iconPosition="start" />
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+          >
+            <Tab
+              label="架构视图"
+              icon={<Network className="w-4 h-4" />}
+              iconPosition="start"
+            />
+            <Tab
+              label="关系列表"
+              icon={<Users className="w-4 h-4" />}
+              iconPosition="start"
+            />
           </Tabs>
 
           {/* 架构树视图 */}
           {activeTab === 0 && (
             <Box sx={{ mt: 2 }}>
               {treeLoading ? (
-                <Typography sx={{ textAlign: "center", py: 4 }} color="text.secondary">加载中...</Typography>
+                <Typography
+                  sx={{ textAlign: "center", py: 4 }}
+                  color="text.secondary"
+                >
+                  加载中...
+                </Typography>
               ) : treeData?.data ? (
-                <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}>
+                <Box
+                  sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}
+                >
                   <TreeNodeComponent
                     node={treeData.data}
                     level={0}
@@ -356,7 +409,10 @@ export default function CompanyStructurePage() {
                   />
                 </Box>
               ) : (
-                <Typography sx={{ textAlign: "center", py: 4 }} color="text.secondary">
+                <Typography
+                  sx={{ textAlign: "center", py: 4 }}
+                  color="text.secondary"
+                >
                   暂无公司架构数据
                 </Typography>
               )}
@@ -377,20 +433,48 @@ export default function CompanyStructurePage() {
       </Card>
 
       {/* 统计信息 */}
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2, mt: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 2,
+          mt: 3,
+        }}
+      >
         {Object.entries(RELATION_TYPE_CONFIG).map(([key, config]) => {
           const count =
             relationsData?.data?.filter((r) => r.relation_type === key)
               .length || 0;
           return (
-            <Card key={key} sx={{ cursor: "pointer", "&:hover": { borderColor: "primary.light" } }}>
+            <Card
+              key={key}
+              sx={{
+                cursor: "pointer",
+                "&:hover": { borderColor: "primary.light" },
+              }}
+            >
               <CardContent>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Box>
-                    <Typography variant="body2" color="text.secondary">{config.label}</Typography>
-                    <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>{count}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {config.label}
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: "bold", mt: 0.5 }}
+                    >
+                      {count}
+                    </Typography>
                   </Box>
-                  <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "grey.100" }}>
+                  <Box
+                    sx={{ p: 1.5, borderRadius: "50%", bgcolor: "grey.100" }}
+                  >
                     <Building2 className="w-6 h-6" />
                   </Box>
                 </Box>
@@ -406,7 +490,9 @@ export default function CompanyStructurePage() {
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <AlertCircle className="w-5 h-5 text-info.main" />
             <Box>
-              <Typography sx={{ fontWeight: "medium", color: "info.dark" }}>使用提示</Typography>
+              <Typography sx={{ fontWeight: "medium", color: "info.dark" }}>
+                使用提示
+              </Typography>
               <Box component="ul" sx={{ mt: 1, pl: 2, color: "info.dark" }}>
                 <li>公司架构用于多公司合并报表的抵消计算</li>
                 <li>持股比例决定少数股东权益和归属母公司净利润的计算</li>

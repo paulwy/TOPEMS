@@ -77,7 +77,11 @@ const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
     >
       <DialogTitle>编辑员工</DialogTitle>
       <DialogContent>
-        <Box component="form" onSubmit={handleEditEmployee} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+        <Box
+          component="form"
+          onSubmit={handleEditEmployee}
+          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        >
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
             <TextField
               id="edit_employee_no"

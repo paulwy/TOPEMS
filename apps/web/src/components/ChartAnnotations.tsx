@@ -122,10 +122,23 @@ export function ChartAnnotations({
             boxShadow: 3,
           }}
         >
-          <div style={{ fontSize: 12, fontWeight: 500, color: "text.secondary", marginBottom: 8 }}>添加标注</div>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 500,
+              color: "text.secondary",
+              marginBottom: 8,
+            }}
+          >
+            添加标注
+          </div>
 
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: "text.disabled", marginBottom: 4 }}>类型</div>
+            <div
+              style={{ fontSize: 12, color: "text.disabled", marginBottom: 4 }}
+            >
+              类型
+            </div>
             <div style={{ display: "flex", gap: 4 }}>
               {annotationTypes.map((type) => {
                 const Icon = type.icon;
@@ -140,12 +153,20 @@ export function ChartAnnotations({
                       padding: 8,
                       borderRadius: 8,
                       border: "none",
-                      backgroundColor: selectedType === type.id ? "#DBEAFE" : "transparent",
-                      color: selectedType === type.id ? "#1D4ED8" : "text.secondary",
+                      backgroundColor:
+                        selectedType === type.id ? "#DBEAFE" : "transparent",
+                      color:
+                        selectedType === type.id ? "#1D4ED8" : "text.secondary",
                       cursor: "pointer",
                     }}
-                    onMouseEnter={(e) => { if (selectedType !== type.id) e.currentTarget.style.backgroundColor = "#F1F5F9"; }}
-                    onMouseLeave={(e) => { if (selectedType !== type.id) e.currentTarget.style.backgroundColor = "transparent"; }}
+                    onMouseEnter={(e) => {
+                      if (selectedType !== type.id)
+                        e.currentTarget.style.backgroundColor = "#F1F5F9";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedType !== type.id)
+                        e.currentTarget.style.backgroundColor = "transparent";
+                    }}
                     title={type.label}
                   >
                     <Icon style={{ width: 16, height: 16 }} />
@@ -156,7 +177,11 @@ export function ChartAnnotations({
           </div>
 
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: "text.disabled", marginBottom: 4 }}>颜色</div>
+            <div
+              style={{ fontSize: 12, color: "text.disabled", marginBottom: 4 }}
+            >
+              颜色
+            </div>
             <div style={{ display: "flex", gap: 4 }}>
               {annotationTypes
                 .find((t) => t.id === selectedType)
@@ -171,8 +196,12 @@ export function ChartAnnotations({
                       border: "none",
                       backgroundColor: color,
                       cursor: "pointer",
-                      transform: selectedColor === color ? "scale(1.25)" : "scale(1)",
-                      boxShadow: selectedColor === color ? "0 0 0 2px rgba(0,0,0,0.1)" : "none",
+                      transform:
+                        selectedColor === color ? "scale(1.25)" : "scale(1)",
+                      boxShadow:
+                        selectedColor === color
+                          ? "0 0 0 2px rgba(0,0,0,0.1)"
+                          : "none",
                       transition: "transform 0.2s",
                     }}
                   />
@@ -235,18 +264,10 @@ export function ChartAnnotations({
                 autoFocus
               />
               <div style={{ display: "flex", gap: 4 }}>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={handleSaveEdit}
-                >
+                <Button variant="text" size="small" onClick={handleSaveEdit}>
                   <Check sx={{ width: 12, height: 12 }} />
                 </Button>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={handleCancelEdit}
-                >
+                <Button variant="text" size="small" onClick={handleCancelEdit}>
                   <X sx={{ width: 12, height: 12 }} />
                 </Button>
               </div>
@@ -273,13 +294,25 @@ export function ChartAnnotations({
           >
             <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
               <Icon
-                style={{ width: 16, height: 16, flexShrink: 0, marginTop: 2, color: annotation.color }}
+                style={{
+                  width: 16,
+                  height: 16,
+                  flexShrink: 0,
+                  marginTop: 2,
+                  color: annotation.color,
+                }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 14, color: "text.primary", margin: 0 }}>{annotation.content}</p>
+                <p style={{ fontSize: 14, color: "text.primary", margin: 0 }}>
+                  {annotation.content}
+                </p>
               </div>
             </div>
-            <div style={{ display: "flex", gap: 4, marginTop: 8, opacity: 0 }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
+            <div
+              style={{ display: "flex", gap: 4, marginTop: 8, opacity: 0 }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
+            >
               <Button
                 variant="text"
                 size="small"
@@ -301,8 +334,23 @@ export function ChartAnnotations({
       })}
 
       {annotations.length > 0 && (
-        <div style={{ position: "absolute", bottom: 8, left: 8, zIndex: 10, backgroundColor: "rgba(255,255,255,0.8)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "4px 8px" }}>
-          <Chip size="small" label={`${annotations.length} 个标注`} variant="outlined" />
+        <div
+          style={{
+            position: "absolute",
+            bottom: 8,
+            left: 8,
+            zIndex: 10,
+            backgroundColor: "rgba(255,255,255,0.8)",
+            backdropFilter: "blur(8px)",
+            borderRadius: 8,
+            padding: "4px 8px",
+          }}
+        >
+          <Chip
+            size="small"
+            label={`${annotations.length} 个标注`}
+            variant="outlined"
+          />
         </div>
       )}
     </div>

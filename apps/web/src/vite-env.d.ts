@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 declare module "leaflet.heat" {
-  import * as L from "leaflet";
+  import type * as L from "leaflet";
   export function heatLayer(
     latlngs: Array<[number, number, number?]>,
     options?: {
@@ -11,12 +11,12 @@ declare module "leaflet.heat" {
       radius?: number;
       blur?: number;
       gradient?: Record<number, string>;
-    }
+    },
   ): L.Layer;
 }
 
 declare module "leaflet-3d-tiles" {
-  import * as L from "leaflet";
+  import type * as L from "leaflet";
   const L3DTiles: L.Layer;
   export default L3DTiles;
 }

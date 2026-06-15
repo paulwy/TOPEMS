@@ -58,7 +58,17 @@ import type {
 // 科目类别配置
 const CATEGORY_CONFIG: Record<
   AccountCategory,
-  { label: string; color: "default" | "primary" | "secondary" | "success" | "error" | "info" | "warning" }
+  {
+    label: string;
+    color:
+      | "default"
+      | "primary"
+      | "secondary"
+      | "success"
+      | "error"
+      | "info"
+      | "warning";
+  }
 > = {
   asset: { label: "资产类", color: "primary" },
   liability: { label: "负债类", color: "error" },
@@ -184,9 +194,24 @@ export default function OpeningBalancePage() {
   return (
     <Box sx={{ containerType: "inline-size", mx: "auto", p: 3 }}>
       {/* 页面标题 */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+        }}
+      >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
             <Calculator className="w-6 h-6 text-blue-600" />
             期初余额管理
           </Typography>
@@ -195,7 +220,10 @@ export default function OpeningBalancePage() {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="outlined" onClick={() => setShowCarryForwardModal(true)}>
+          <Button
+            variant="outlined"
+            onClick={() => setShowCarryForwardModal(true)}
+          >
             <Calendar className="w-4 h-4 mr-2" />
             结转余额
           </Button>
@@ -213,7 +241,13 @@ export default function OpeningBalancePage() {
       {/* 筛选条件 */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ pt: 3 }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+              gap: 2,
+            }}
+          >
             <TextField
               label="会计期间"
               type="month"
@@ -227,7 +261,9 @@ export default function OpeningBalancePage() {
               <Select
                 value={selectedCategory}
                 label="科目类别"
-                onChange={(e) => setSelectedCategory(e.target.value as AccountCategory)}
+                onChange={(e) =>
+                  setSelectedCategory(e.target.value as AccountCategory)
+                }
               >
                 <MenuItem value="">全部类别</MenuItem>
                 {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
@@ -243,12 +279,14 @@ export default function OpeningBalancePage() {
               placeholder="科目编码或名称..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <Box sx={{ mr: 1, display: "flex" }}>
-                    <Search className="w-4 h-4 text-gray-400" />
-                  </Box>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <Box sx={{ mr: 1, display: "flex" }}>
+                      <Search className="w-4 h-4 text-gray-400" />
+                    </Box>
+                  ),
+                },
               }}
             />
             <Button variant="outlined" onClick={() => refetch()}>
@@ -260,19 +298,44 @@ export default function OpeningBalancePage() {
       </Card>
 
       {/* 期初余额汇总 */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 2, mb: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Card sx={{ bgcolor: "primary.main", color: "white" }}>
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>借方合计</Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}>
-                  ¥{totals.totalDebit.toLocaleString("zh-CN", {
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  借方合计
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}
+                >
+                  ¥
+                  {totals.totalDebit.toLocaleString("zh-CN", {
                     minimumFractionDigits: 2,
                   })}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.2)",
+                }}
+              >
                 <DollarSign className="w-6 h-6" />
               </Box>
             </Box>
@@ -280,33 +343,77 @@ export default function OpeningBalancePage() {
         </Card>
         <Card sx={{ bgcolor: "error.main", color: "white" }}>
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>贷方合计</Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}>
-                  ¥{totals.totalCredit.toLocaleString("zh-CN", {
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  贷方合计
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}
+                >
+                  ¥
+                  {totals.totalCredit.toLocaleString("zh-CN", {
                     minimumFractionDigits: 2,
                   })}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.2)",
+                }}
+              >
                 <DollarSign className="w-6 h-6" />
               </Box>
             </Box>
           </CardContent>
         </Card>
-        <Card sx={{ bgcolor: totals.totalDebit - totals.totalCredit === 0 ? "success.main" : "warning.main", color: "white" }}>
+        <Card
+          sx={{
+            bgcolor:
+              totals.totalDebit - totals.totalCredit === 0
+                ? "success.main"
+                : "warning.main",
+            color: "white",
+          }}
+        >
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>差额</Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}>
-                  ¥{Math.abs(
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  差额
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", mt: 0.5, fontFamily: "monospace" }}
+                >
+                  ¥
+                  {Math.abs(
                     totals.totalDebit - totals.totalCredit,
                   ).toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.2)",
+                }}
+              >
                 {totals.totalDebit - totals.totalCredit === 0 ? (
                   <CheckCircle className="w-6 h-6" />
                 ) : (
@@ -323,7 +430,9 @@ export default function OpeningBalancePage() {
         <CardHeader>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FileText className="w-5 h-5 text-blue-600" />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>科目期初余额</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              科目期初余额
+            </Typography>
           </Box>
         </CardHeader>
         <CardContent sx={{ p: 0 }}>
@@ -342,26 +451,51 @@ export default function OpeningBalancePage() {
                 return (
                   <TableRow key={account.id}>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <BookOpen className="w-4 h-4 text-gray-400" />
-                        <Typography sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
+                        <Typography
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
                           {account.code}
                         </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Box sx={{ fontWeight: "medium" }}>{account.name}</Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mt: 0.5,
+                        }}
+                      >
                         <Chip
                           size="small"
-                          label={CATEGORY_CONFIG[account.category]?.label || account.category}
-                          color={CATEGORY_CONFIG[account.category]?.color || "default"}
+                          label={
+                            CATEGORY_CONFIG[account.category]?.label ||
+                            account.category
+                          }
+                          color={
+                            CATEGORY_CONFIG[account.category]?.color ||
+                            "default"
+                          }
                         />
                         <Typography
                           variant="body2"
-                          sx={{ color: account.balance_direction === "debit" ? "primary.main" : "error.main" }}
+                          sx={{
+                            color:
+                              account.balance_direction === "debit"
+                                ? "primary.main"
+                                : "error.main",
+                          }}
                         >
-                          {BALANCE_DIRECTION_CONFIG[account.balance_direction]?.label}
+                          {
+                            BALANCE_DIRECTION_CONFIG[account.balance_direction]
+                              ?.label
+                          }
                         </Typography>
                       </Box>
                     </TableCell>
@@ -372,45 +506,74 @@ export default function OpeningBalancePage() {
                     </TableCell>
                     <TableCell align="right">
                       {account.has_children ? (
-                        <Typography variant="body2" color="text.secondary">-</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          -
+                        </Typography>
                       ) : editingAccountId === account.id ? (
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-end",
+                            gap: 1,
+                          }}
+                        >
                           <TextField
                             type="number"
                             size="small"
                             sx={{ width: 100 }}
                             value={editDebitBalance}
                             onChange={(e) =>
-                              setEditDebitBalance(parseFloat(e.target.value) || 0)
+                              setEditDebitBalance(
+                                parseFloat(e.target.value) || 0,
+                              )
                             }
                             placeholder="借方"
                           />
-                          <Typography variant="body2" color="text.secondary">/</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            /
+                          </Typography>
                           <TextField
                             type="number"
                             size="small"
                             sx={{ width: 100 }}
                             value={editCreditBalance}
                             onChange={(e) =>
-                              setEditCreditBalance(parseFloat(e.target.value) || 0)
+                              setEditCreditBalance(
+                                parseFloat(e.target.value) || 0,
+                              )
                             }
                             placeholder="贷方"
                           />
                           <Button size="small" onClick={handleSaveBalance}>
                             <CheckCircle className="w-4 h-4" />
                           </Button>
-                          <Button size="small" variant="text" onClick={handleCancelEdit}>
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={handleCancelEdit}
+                          >
                             取消
                           </Button>
                         </Box>
                       ) : (
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 2, fontFamily: "monospace" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-end",
+                            gap: 2,
+                            fontFamily: "monospace",
+                          }}
+                        >
                           <Typography sx={{ color: "primary.main" }}>
                             {ob?.debit_balance?.toLocaleString("zh-CN", {
                               minimumFractionDigits: 2,
                             }) || "0.00"}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">/</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            /
+                          </Typography>
                           <Typography sx={{ color: "error.main" }}>
                             {ob?.credit_balance?.toLocaleString("zh-CN", {
                               minimumFractionDigits: 2,
@@ -435,7 +598,12 @@ export default function OpeningBalancePage() {
       </Card>
 
       {/* 结转余额Modal */}
-      <Dialog open={showCarryForwardModal} onClose={() => setShowCarryForwardModal(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={showCarryForwardModal}
+        onClose={() => setShowCarryForwardModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>结转期初余额</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -455,12 +623,33 @@ export default function OpeningBalancePage() {
               onChange={(e) => setCarryForwardTo(e.target.value)}
               LabelProps={{ shrink: true }}
             />
-            <Box sx={{ bgcolor: "warning.50", border: 1, borderColor: "warning.main", borderRadius: 1, p: 2 }}>
+            <Box
+              sx={{
+                bgcolor: "warning.50",
+                border: 1,
+                borderColor: "warning.main",
+                borderRadius: 1,
+                p: 2,
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
                 <AlertCircle className="w-5 h-5 text-warning.main mt-0.5" />
                 <Box>
-                  <Typography variant="body2" color="warning.main" sx={{ fontWeight: 500 }}>注意事项</Typography>
-                  <ul style={{ margin: "8px 0 0 0", paddingLeft: 16, fontSize: "0.875rem", color: "warning.dark" }}>
+                  <Typography
+                    variant="body2"
+                    color="warning.main"
+                    sx={{ fontWeight: 500 }}
+                  >
+                    注意事项
+                  </Typography>
+                  <ul
+                    style={{
+                      margin: "8px 0 0 0",
+                      paddingLeft: 16,
+                      fontSize: "0.875rem",
+                      color: "warning.dark",
+                    }}
+                  >
                     <li>结转会将源期间的期末余额作为目标期间的期初余额</li>
                     <li>目标期间原有的期初余额将被覆盖</li>
                     <li>请确认后再操作</li>
@@ -471,10 +660,15 @@ export default function OpeningBalancePage() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowCarryForwardModal(false)}>
+          <Button
+            variant="outlined"
+            onClick={() => setShowCarryForwardModal(false)}
+          >
             取消
           </Button>
-          <Button variant="contained" onClick={handleCarryForward}>确认结转</Button>
+          <Button variant="contained" onClick={handleCarryForward}>
+            确认结转
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

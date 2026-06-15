@@ -53,7 +53,14 @@ const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "4px",
+      }}
+    >
       <Button
         variant="outlined"
         size="small"
@@ -82,7 +89,13 @@ const Pagination: React.FC<PaginationProps> = ({
           onClick={() => typeof page === "number" && onPageChange(page)}
           sx={
             page === currentPage
-              ? { minWidth: "36px", height: "32px", backgroundColor: "#2563eb", "&:hover": { backgroundColor: "#2563eb" }, color: "white" }
+              ? {
+                  minWidth: "36px",
+                  height: "32px",
+                  backgroundColor: "#2563eb",
+                  "&:hover": { backgroundColor: "#2563eb" },
+                  color: "white",
+                }
               : { minWidth: "36px", height: "32px" }
           }
         >

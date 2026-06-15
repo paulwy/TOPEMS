@@ -1,4 +1,17 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Box } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+} from "@mui/material";
 /**
  * 凭证模板管理页面
  * 管理凭证自动生成规则和模板
@@ -116,16 +129,35 @@ export default function VoucherTemplatePage() {
   return (
     <Box sx={{ py: 3 }} className="container mx-auto">
       {/* 页面标题 */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+        }}
+      >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>凭证模板管理</Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>管理凭证自动生成规则和模板配置</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            凭证模板管理
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+            管理凭证自动生成规则和模板配置
+          </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Button variant="outlined" onClick={() => refetch()} startIcon={<RefreshCw className="w-4 h-4" />}>
+          <Button
+            variant="outlined"
+            onClick={() => refetch()}
+            startIcon={<RefreshCw className="w-4 h-4" />}
+          >
             刷新
           </Button>
-          <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus className="w-4 h-4" />}>
+          <Button
+            variant="contained"
+            onClick={() => setShowCreateModal(true)}
+            startIcon={<Plus className="w-4 h-4" />}
+          >
             新建模板
           </Button>
         </Box>
@@ -161,14 +193,37 @@ export default function VoucherTemplatePage() {
 
       {/* 模板列表 */}
       {isLoading ? (
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            py: 6,
+          }}
+        >
           <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
         </Box>
       ) : filteredTemplates.length === 0 ? (
-        <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6 }}>
-          <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <Card
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            py: 6,
+          }}
+        >
+          <CardContent
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
             <FileText className="w-12 h-12 text-gray-400 mb: 2" />
-            <Typography sx={{ color: "text.secondary", mb: 2 }}>暂无凭证模板</Typography>
+            <Typography sx={{ color: "text.secondary", mb: 2 }}>
+              暂无凭证模板
+            </Typography>
             <Button
               variant="outlined"
               onClick={() => setShowCreateModal(true)}
@@ -179,7 +234,17 @@ export default function VoucherTemplatePage() {
           </CardContent>
         </Card>
       ) : (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            },
+            gap: 3,
+          }}
+        >
           {filteredTemplates.map((template: any) => {
             const typeConfig = TEMPLATE_TYPE_CONFIG[
               template.type as VoucherTemplateType
@@ -191,60 +256,153 @@ export default function VoucherTemplatePage() {
             return (
               <Card key={template.id} sx={{ position: "relative" }}>
                 <CardHeader sx={{ pb: 1 }}>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: "primary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1,
+                          bgcolor: "primary.100",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         <FileText className="w-5 h-5 text-primary.main" />
                       </Box>
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem" }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 600, fontSize: "1rem" }}
+                        >
                           {template.name}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                            fontFamily: "monospace",
+                          }}
+                        >
                           {template.code}
                         </Typography>
                       </Box>
                     </Box>
-                    <Chip size="small" label={typeConfig.label} sx={{ bgcolor: "primary.50", color: "primary.main" }} />
+                    <Chip
+                      size="small"
+                      label={typeConfig.label}
+                      sx={{ bgcolor: "primary.50", color: "primary.main" }}
+                    />
                   </Box>
                 </CardHeader>
 
                 <CardContent sx={{ pt: 0 }}>
                   {/* 描述 */}
                   {template.description && (
-                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        mb: 2,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
                       {template.description}
                     </Typography>
                   )}
 
                   {/* 信息 */}
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.875rem" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>分录数</Typography>
-                      <Typography variant="body2">{template.entries?.length || 0} 条</Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        分录数
+                      </Typography>
+                      <Typography variant="body2">
+                        {template.entries?.length || 0} 条
+                      </Typography>
                     </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>适用模块</Typography>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        适用模块
+                      </Typography>
                       <Typography variant="body2">
                         {template.applicable_modules?.join(", ") || "全部"}
                       </Typography>
                     </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>状态</Typography>
-                      <Chip size="small"
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        状态
+                      </Typography>
+                      <Chip
+                        size="small"
                         variant={template.is_active ? "filled" : "outlined"}
-                        label={template.is_active ? "启用" : "禁用"} />
+                        label={template.is_active ? "启用" : "禁用"}
+                      />
                     </Box>
                     {template.is_default && (
-                      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>默认模板</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary" }}
+                        >
+                          默认模板
+                        </Typography>
                         <Check className="w-4 h-4 text-green-600" />
                       </Box>
                     )}
                   </Box>
 
                   {/* 操作按钮 */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 2, borderTop: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      pt: 2,
+                      borderTop: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Button
                       variant="text"
                       size="small"
@@ -278,7 +436,10 @@ export default function VoucherTemplatePage() {
                       variant="text"
                       size="small"
                       onClick={() => handleDelete(template.id)}
-                      sx={{ color: "error.main", "&:hover": { bgcolor: "error.50" } }}
+                      sx={{
+                        color: "error.main",
+                        "&:hover": { bgcolor: "error.50" },
+                      }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -309,7 +470,9 @@ export default function VoucherTemplatePage() {
       {/* 生成规则入口 */}
       <Card sx={{ mt: 3 }}>
         <CardHeader sx={{ pb: 0 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>凭证自动生成规则</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
+            凭证自动生成规则
+          </Typography>
         </CardHeader>
         <CardContent>
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>

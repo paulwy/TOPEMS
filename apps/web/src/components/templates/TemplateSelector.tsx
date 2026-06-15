@@ -159,13 +159,43 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       fullWidth
       sx={{ maxHeight: "90vh" }}
     >
-      <DialogContent sx={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>选择模板</Typography>
+      <DialogContent
+        sx={{ overflow: "hidden", display: "flex", flexDirection: "column" }}
+      >
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          选择模板
+        </Typography>
 
-        <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", gap: 2, p: 2 }}>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            p: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+            }}
+          >
             <Box sx={{ flex: 1, position: "relative" }}>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  color: "#9ca3af",
+                }}
+              />
               <TextField
                 placeholder="搜索模板..."
                 value={searchQuery}
@@ -202,7 +232,17 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
           {!selectedTemplate ? (
             <Box sx={{ flex: 1, overflow: "auto" }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "repeat(2, 1fr)",
+                    lg: "repeat(3, 1fr)",
+                  },
+                  gap: 2,
+                }}
+              >
                 {templates.map((template) => (
                   <Card
                     key={template.id}
@@ -214,16 +254,29 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     onClick={() => setSelectedTemplate(template)}
                   >
                     <CardHeader sx={{ pb: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Box sx={{ p: 1, bgcolor: "grey.100", borderRadius: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Box
+                            sx={{ p: 1, bgcolor: "grey.100", borderRadius: 1 }}
+                          >
                             {TYPE_ICONS[template.template_type]}
                           </Box>
                           <Box>
                             <Typography variant="subtitle1">
                               {template.name}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               {TYPE_LABELS[template.template_type]}
                             </Typography>
                           </Box>
@@ -231,7 +284,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         {template.ai_enabled && (
                           <Chip
                             size="small"
-                            icon={<Sparkles style={{ width: 12, height: 12 }} />}
+                            icon={
+                              <Sparkles style={{ width: 12, height: 12 }} />
+                            }
                             label="AI"
                             sx={{ bgcolor: "#fef3c7", color: "#b45309" }}
                           />
@@ -239,12 +294,35 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       </Box>
                     </CardHeader>
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          mb: 1.5,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
                         {template.description || "暂无描述"}
                       </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                          <Chip size="small" variant="outlined" label={template.category_name || "未分类"} />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={template.category_name || "未分类"}
+                          />
                           {template.is_public && (
                             <Chip size="small" label="公开" />
                           )}
@@ -259,10 +337,28 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               </Box>
 
               {templates.length === 0 && (
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6, color: "text.secondary" }}>
-                  <FileText style={{ width: 48, height: 48, marginBottom: 16, opacity: 0.5 }} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    py: 6,
+                    color: "text.secondary",
+                  }}
+                >
+                  <FileText
+                    style={{
+                      width: 48,
+                      height: 48,
+                      marginBottom: 16,
+                      opacity: 0.5,
+                    }}
+                  />
                   <Typography>暂无模板</Typography>
-                  <Typography variant="body2">请先在系统管理中创建模板</Typography>
+                  <Typography variant="body2">
+                    请先在系统管理中创建模板
+                  </Typography>
                 </Box>
               )}
             </Box>
@@ -270,14 +366,38 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             <Box sx={{ flex: 1, overflow: "auto" }}>
               <Card>
                 <CardHeader>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                      <Box sx={{ p: 1.5, bgcolor: "primary.light", borderRadius: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          bgcolor: "primary.light",
+                          borderRadius: 1,
+                        }}
+                      >
                         {TYPE_ICONS[selectedTemplate.template_type]}
                       </Box>
                       <Box>
-                        <Typography variant="h6">{selectedTemplate.name}</Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 14, color: "text.secondary" }}>
+                        <Typography variant="h6">
+                          {selectedTemplate.name}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            fontSize: 14,
+                            color: "text.secondary",
+                          }}
+                        >
                           <span>
                             {TYPE_LABELS[selectedTemplate.template_type]}
                           </span>
@@ -287,7 +407,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           {selectedTemplate.ai_enabled && (
                             <Chip
                               size="small"
-                              icon={<Sparkles style={{ width: 12, height: 12 }} />}
+                              icon={
+                                <Sparkles style={{ width: 12, height: 12 }} />
+                              }
                               label="AI 辅助"
                               sx={{ bgcolor: "#fef3c7", color: "#b45309" }}
                             />
@@ -310,7 +432,19 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
                   <Box sx={{ mb: 3 }}>
                     <InputLabel sx={{ mb: 1 }}>模板预览</InputLabel>
-                    <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1, border: "1px solid", borderColor: "grey.200", minHeight: 100, whiteSpace: "pre-wrap", fontFamily: "monospace", fontSize: 14 }}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        bgcolor: "grey.50",
+                        borderRadius: 1,
+                        border: "1px solid",
+                        borderColor: "grey.200",
+                        minHeight: 100,
+                        whiteSpace: "pre-wrap",
+                        fontFamily: "monospace",
+                        fontSize: 14,
+                      }}
+                    >
                       {selectedTemplate.content}
                     </Box>
                   </Box>
@@ -320,15 +454,30 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       <InputLabel sx={{ mb: 1.5, fontWeight: "bold" }}>
                         变量配置
                       </InputLabel>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1.5,
+                        }}
+                      >
                         {selectedTemplate.variables.map((variable) => (
                           <Box key={variable.key}>
-                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                mb: 0.5,
+                              }}
+                            >
                               <span style={{ fontSize: 14, fontWeight: 500 }}>
                                 {variable.label}
                               </span>
                               {variable.required && (
-                                <span style={{ fontSize: 12, color: "#ef4444" }}>
+                                <span
+                                  style={{ fontSize: 12, color: "#ef4444" }}
+                                >
                                   必填
                                 </span>
                               )}

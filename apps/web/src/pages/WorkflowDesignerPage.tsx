@@ -67,7 +67,12 @@ const WorkflowDesignerPage: React.FC = () => {
           );
           const convertedNodes = approvalNodes.map((node, index) => ({
             id: node.node_id,
-            type: index === 0 ? "start" : node.approvers?.length > 1 ? "approval" : "task",
+            type:
+              index === 0
+                ? "start"
+                : node.approvers?.length > 1
+                  ? "approval"
+                  : "task",
             x: 100 + (index % 3) * 250,
             y: 100 + Math.floor(index / 3) * 150,
             label: node.name || node.node_id,
@@ -214,7 +219,14 @@ const WorkflowDesignerPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -223,11 +235,24 @@ const WorkflowDesignerPage: React.FC = () => {
   return (
     <Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <Card sx={{ borderRadius: 0, borderBottom: "1px solid", borderColor: "divider" }}>
+      <Card
+        sx={{
+          borderRadius: 0,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <CardContent sx={{ p: 2 }}>
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <Button variant="text" onClick={() => navigate("/workflows")} startIcon={<ArrowLeft size={20} />}>
+              <Button
+                variant="text"
+                onClick={() => navigate("/workflows")}
+                startIcon={<ArrowLeft size={20} />}
+              >
                 返回
               </Button>
               <Box>
@@ -295,7 +320,12 @@ const WorkflowDesignerPage: React.FC = () => {
             <Button variant="outlined" onClick={() => setShowSaveDialog(false)}>
               取消
             </Button>
-            <Button onClick={handleSaveWorkflow} disabled={saving} variant="contained" startIcon={saving ? undefined : <Save size={16} />}>
+            <Button
+              onClick={handleSaveWorkflow}
+              disabled={saving}
+              variant="contained"
+              startIcon={saving ? undefined : <Save size={16} />}
+            >
               {saving ? "保存中..." : "保存"}
             </Button>
           </DialogActions>

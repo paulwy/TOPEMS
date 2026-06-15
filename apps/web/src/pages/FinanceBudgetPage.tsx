@@ -315,7 +315,10 @@ const FinanceBudgetPage: React.FC = () => {
   );
 
   const getStatusChip = (status: string) => {
-    const variants: Record<string, { color: "success" | "error" | "default" | "warning"; label: string }> = {
+    const variants: Record<
+      string,
+      { color: "success" | "error" | "default" | "warning"; label: string }
+    > = {
       active: { color: "success", label: "执行中" },
       expired: { color: "error", label: "已过期" },
       frozen: { color: "default", label: "已冻结" },
@@ -338,9 +341,17 @@ const FinanceBudgetPage: React.FC = () => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: "bold" }}>预算管理</Typography>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            预算管理
+          </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             管理企业各项预算的分配与执行情况
           </Typography>
@@ -368,7 +379,13 @@ const FinanceBudgetPage: React.FC = () => {
         />
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+          gap: 2,
+        }}
+      >
         <MetricCard
           title="总预算"
           value={formatCurrency(budgetStats.totalBudget)}
@@ -399,7 +416,13 @@ const FinanceBudgetPage: React.FC = () => {
         />
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+          gap: 2,
+        }}
+      >
         <MetricCard
           title="执行中预算"
           value={budgetStats.activeBudgets}
@@ -431,10 +454,20 @@ const FinanceBudgetPage: React.FC = () => {
       </Box>
 
       {/* 图表区域 */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" }, gap: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+          gap: 3,
+        }}
+      >
         <Card>
           <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: "semibold" }} gutterBottom>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: "semibold" }}
+              gutterBottom
+            >
               预算类型分布
             </Typography>
             <StatsChart type="pie" data={budgetTypeData} height={250} />
@@ -443,7 +476,11 @@ const FinanceBudgetPage: React.FC = () => {
 
         <Card>
           <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: "semibold" }} gutterBottom>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: "semibold" }}
+              gutterBottom
+            >
               预算状态分布
             </Typography>
             <StatsChart type="pie" data={budgetStatusData} height={250} />
@@ -454,7 +491,13 @@ const FinanceBudgetPage: React.FC = () => {
       <Card>
         <CardHeader
           title={
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <Typography variant="h6">预算列表</Typography>
               <Button
                 variant="outlined"
@@ -468,18 +511,29 @@ const FinanceBudgetPage: React.FC = () => {
           }
         />
         <CardContent>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              mb: 2,
+            }}
+          >
             <TextField
               size="small"
               placeholder="搜索预算类型或年度..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search
+                        sx={{ width: 16, height: 16, color: "grey.400" }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
               }}
               sx={{ flex: 1 }}
             />
@@ -519,7 +573,9 @@ const FinanceBudgetPage: React.FC = () => {
           {loading ? (
             <Box sx={{ p: 4, textAlign: "center" }}>
               <LinearProgress />
-              <Typography sx={{ mt: 2 }} color="text.secondary">加载中...</Typography>
+              <Typography sx={{ mt: 2 }} color="text.secondary">
+                加载中...
+              </Typography>
             </Box>
           ) : (
             <TableContainer component={Paper} variant="outlined">
@@ -542,7 +598,14 @@ const FinanceBudgetPage: React.FC = () => {
                       <TableRow key={budget.id}>
                         <TableCell>
                           <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Building2 sx={{ width: 16, height: 16, mr: 2, color: "grey.400" }} />
+                            <Building2
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                mr: 2,
+                                color: "grey.400",
+                              }}
+                            />
                             {getTypeLabel(budget.budget_type || "")}
                           </Box>
                         </TableCell>
@@ -557,7 +620,13 @@ const FinanceBudgetPage: React.FC = () => {
                           {formatCurrency(budget.remaining_amount || 0)}
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
                             <Box sx={{ flex: 1, maxWidth: 100 }}>
                               <LinearProgress
                                 variant="determinate"
@@ -565,20 +634,34 @@ const FinanceBudgetPage: React.FC = () => {
                                 sx={{ height: 8, borderRadius: 1 }}
                               />
                             </Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ width: 50 }}>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ width: 50 }}
+                            >
                               {formatPercent(budget.usage_rate || 0)}
                             </Typography>
                           </Box>
                         </TableCell>
                         <TableCell>{getStatusChip(budget.status)}</TableCell>
                         <TableCell align="right">
-                          <IconButton size="small" onClick={() => openDetailDialog(budget)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => openDetailDialog(budget)}
+                          >
                             <Eye sx={{ width: 16, height: 16 }} />
                           </IconButton>
-                          <IconButton size="small" onClick={() => openEditDialog(budget)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => openEditDialog(budget)}
+                          >
                             <Edit2 sx={{ width: 16, height: 16 }} />
                           </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDelete(budget.id)}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(budget.id)}
+                          >
                             <Trash2 sx={{ width: 16, height: 16 }} />
                           </IconButton>
                         </TableCell>
@@ -587,8 +670,18 @@ const FinanceBudgetPage: React.FC = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                        <AlertCircle sx={{ width: 48, height: 48, mx: "auto", color: "grey.300", mb: 1 }} />
-                        <Typography color="text.secondary">暂无预算数据</Typography>
+                        <AlertCircle
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            mx: "auto",
+                            color: "grey.300",
+                            mb: 1,
+                          }}
+                        />
+                        <Typography color="text.secondary">
+                          暂无预算数据
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -600,7 +693,12 @@ const FinanceBudgetPage: React.FC = () => {
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{editingBudget ? "编辑预算" : "新增预算"}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -609,7 +707,9 @@ const FinanceBudgetPage: React.FC = () => {
               <Select
                 value={formData.budget_type}
                 label="预算类型"
-                onChange={(e) => setFormData({ ...formData, budget_type: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, budget_type: e.target.value })
+                }
               >
                 <MenuItem value="operating">运营预算</MenuItem>
                 <MenuItem value="capital">资本预算</MenuItem>
@@ -623,7 +723,9 @@ const FinanceBudgetPage: React.FC = () => {
               type="number"
               label="预算年度"
               value={formData.fiscal_year}
-              onChange={(e) => setFormData({ ...formData, fiscal_year: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, fiscal_year: e.target.value })
+              }
               fullWidth
             />
             <TextField
@@ -631,7 +733,9 @@ const FinanceBudgetPage: React.FC = () => {
               type="number"
               label="预算金额"
               value={formData.total_budget}
-              onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, total_budget: e.target.value })
+              }
               fullWidth
             />
             <FormControl size="small" fullWidth>
@@ -639,7 +743,9 @@ const FinanceBudgetPage: React.FC = () => {
               <Select
                 value={formData.status}
                 label="状态"
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
               >
                 <MenuItem value="active">执行中</MenuItem>
                 <MenuItem value="completed">已完成</MenuItem>
@@ -650,56 +756,121 @@ const FinanceBudgetPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => { setShowCreateDialog(false); setEditingBudget(null); resetForm(); }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowCreateDialog(false);
+              setEditingBudget(null);
+              resetForm();
+            }}
+          >
             取消
           </Button>
-          <Button variant="contained" onClick={editingBudget ? handleUpdate : handleCreate}>
+          <Button
+            variant="contained"
+            onClick={editingBudget ? handleUpdate : handleCreate}
+          >
             {editingBudget ? "更新" : "创建"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
-          <PieChart sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
+          <PieChart
+            sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
+          />
           预算详情
         </DialogTitle>
         <DialogContent>
           {selectedBudget && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}
+            >
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                }}
+              >
                 <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">预算类型</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    预算类型
+                  </Typography>
                   <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {getTypeLabel(selectedBudget.budget_type || "")}
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">预算年度</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    预算年度
+                  </Typography>
                   <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedBudget.fiscal_year}
                   </Typography>
                 </Box>
               </Box>
 
-              <Box sx={{ p: 2, bgcolor: "linear-gradient(to right, #eff6ff, #eef2ff)", borderRadius: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">预算金额</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold" }} color="primary">
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: "linear-gradient(to right, #eff6ff, #eef2ff)",
+                  borderRadius: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    预算金额
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: "bold" }}
+                    color="primary"
+                  >
                     {formatCurrency(selectedBudget.total_budget)}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: 2,
+                  }}
+                >
                   <Box>
-                    <Typography variant="body2" color="text.secondary">已使用</Typography>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }} color="warning.main">
+                    <Typography variant="body2" color="text.secondary">
+                      已使用
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: "bold" }}
+                      color="warning.main"
+                    >
                       {formatCurrency(selectedBudget.used_amount || 0)}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">剩余预算</Typography>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }} color="success.main">
+                    <Typography variant="body2" color="text.secondary">
+                      剩余预算
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: "bold" }}
+                      color="success.main"
+                    >
                       {formatCurrency(selectedBudget.remaining_amount || 0)}
                     </Typography>
                   </Box>
@@ -707,8 +878,16 @@ const FinanceBudgetPage: React.FC = () => {
               </Box>
 
               <Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Typography variant="body2" color="text.secondary">使用进度</Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    使用进度
+                  </Typography>
                   <Typography sx={{ fontWeight: "medium" }}>
                     {formatPercent(selectedBudget.usage_rate || 0)}
                   </Typography>
@@ -720,14 +899,37 @@ const FinanceBudgetPage: React.FC = () => {
                 />
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "space-between", p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary">状态</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  p: 2,
+                  bgcolor: "grey.50",
+                  borderRadius: 1,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  状态
+                </Typography>
                 {getStatusChip(selectedBudget.status)}
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "space-between", typography: "body2", color: "text.secondary" }}>
-                <span>创建时间: {new Date(selectedBudget.created_at).toLocaleDateString()}</span>
-                <span>更新时间: {new Date(selectedBudget.updated_at).toLocaleDateString()}</span>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  typography: "body2",
+                  color: "text.secondary",
+                }}
+              >
+                <span>
+                  创建时间:{" "}
+                  {new Date(selectedBudget.created_at).toLocaleDateString()}
+                </span>
+                <span>
+                  更新时间:{" "}
+                  {new Date(selectedBudget.updated_at).toLocaleDateString()}
+                </span>
               </Box>
             </Box>
           )}

@@ -7,13 +7,7 @@ import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
-import {
-  Sparkles,
-  Wand2,
-  Lightbulb,
-  TrendingUp,
-  Send,
-} from "lucide-react";
+import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from "lucide-react";
 
 interface TemplateAIHelperProps {
   content: string;
@@ -246,19 +240,33 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   };
 
   return (
-    <Card sx={{ background: 'linear-gradient(to bottom right, #fffbeb, #ffedd5)', border: '1px solid #fcd34d' }}>
+    <Card
+      sx={{
+        background: "linear-gradient(to bottom right, #fffbeb, #ffedd5)",
+        border: "1px solid #fcd34d",
+      }}
+    >
       <CardHeader sx={{ pb: 1.5 }}>
-        <Typography variant="h6" component="h3" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#92400e' }}>
+        <Typography
+          variant="h6"
+          component="h3"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            color: "#92400e",
+          }}
+        >
           <Sparkles style={{ width: 20, height: 20 }} />
           AI 辅助助手
         </Typography>
-        <Typography variant="body2" sx={{ color: '#d97706', mt: 0.5 }}>
+        <Typography variant="body2" sx={{ color: "#d97706", mt: 0.5 }}>
           智能生成和优化模板内容
         </Typography>
       </CardHeader>
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <div>
-          <FormLabel sx={{ fontSize: 14, fontWeight: 500, color: '#b45309' }}>
+          <FormLabel sx={{ fontSize: 14, fontWeight: 500, color: "#b45309" }}>
             描述模板用途
           </FormLabel>
           <TextField
@@ -273,19 +281,37 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             variant="contained"
             onClick={handleGenerate}
             disabled={isGenerating || !description.trim()}
-            sx={{ width: '100%', mt: 1, backgroundColor: '#f59e0b', color: 'white', '&:hover': { backgroundColor: '#d97706' } }}
-            startIcon={isGenerating ? <CircularProgress size={16} color="inherit" /> : <Wand2 style={{ width: 16, height: 16 }} />}
+            sx={{
+              width: "100%",
+              mt: 1,
+              backgroundColor: "#f59e0b",
+              color: "white",
+              "&:hover": { backgroundColor: "#d97706" },
+            }}
+            startIcon={
+              isGenerating ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <Wand2 style={{ width: 16, height: 16 }} />
+              )
+            }
           >
             {isGenerating ? "生成中..." : "AI 生成模板"}
           </Button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+        >
           <Button
             variant="outlined"
             onClick={handleSuggestVariables}
             disabled={isAnalyzing || !content.trim()}
-            sx={{ borderColor: '#fcd34d', color: '#b45309', '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' } }}
+            sx={{
+              borderColor: "#fcd34d",
+              color: "#b45309",
+              "&:hover": { backgroundColor: "#fef3c7", borderColor: "#fcd34d" },
+            }}
             startIcon={<Lightbulb style={{ width: 16, height: 16 }} />}
           >
             建议变量
@@ -294,7 +320,11 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             variant="outlined"
             onClick={handleOptimize}
             disabled={isGenerating || !content.trim()}
-            sx={{ borderColor: '#fcd34d', color: '#b45309', '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' } }}
+            sx={{
+              borderColor: "#fcd34d",
+              color: "#b45309",
+              "&:hover": { backgroundColor: "#fef3c7", borderColor: "#fcd34d" },
+            }}
             startIcon={<TrendingUp style={{ width: 16, height: 16 }} />}
           >
             优化内容
@@ -305,22 +335,39 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
           variant="outlined"
           onClick={handleAnalyze}
           disabled={isAnalyzing}
-          sx={{ width: '100%', borderColor: '#fcd34d', color: '#b45309', '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' } }}
-          startIcon={isAnalyzing ? <CircularProgress size={16} color="inherit" /> : <Send style={{ width: 16, height: 16 }} />}
+          sx={{
+            width: "100%",
+            borderColor: "#fcd34d",
+            color: "#b45309",
+            "&:hover": { backgroundColor: "#fef3c7", borderColor: "#fcd34d" },
+          }}
+          startIcon={
+            isAnalyzing ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <Send style={{ width: 16, height: 16 }} />
+            )
+          }
         >
           {isAnalyzing ? "分析中..." : "分析变量使用"}
         </Button>
 
         {suggestions.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: '#b45309' }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: "#b45309" }}>
               AI 建议
             </FormLabel>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
-                  style={{ fontSize: 14, color: '#92400e', backgroundColor: '#fef3c7', borderRadius: 8, padding: '8px 12px' }}
+                  style={{
+                    fontSize: 14,
+                    color: "#92400e",
+                    backgroundColor: "#fef3c7",
+                    borderRadius: 8,
+                    padding: "8px 12px",
+                  }}
                 >
                   {suggestion}
                 </div>
@@ -330,20 +377,28 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
         )}
 
         {analysisResult && analysisResult.suggestions.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: '#b45309' }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: "#b45309" }}>
               分析结果
             </FormLabel>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {analysisResult.suggestions.map((suggestion, index) => (
                 <div
                   key={index}
                   style={{
                     fontSize: 14,
                     borderRadius: 8,
-                    padding: '8px 12px',
-                    backgroundColor: suggestion.includes("未使用") || suggestion.includes("未定义") ? '#fef2f2' : '#f0fdf4',
-                    color: suggestion.includes("未使用") || suggestion.includes("未定义") ? '#b91c1c' : '#15803d',
+                    padding: "8px 12px",
+                    backgroundColor:
+                      suggestion.includes("未使用") ||
+                      suggestion.includes("未定义")
+                        ? "#fef2f2"
+                        : "#f0fdf4",
+                    color:
+                      suggestion.includes("未使用") ||
+                      suggestion.includes("未定义")
+                        ? "#b91c1c"
+                        : "#15803d",
                   }}
                 >
                   {suggestion}

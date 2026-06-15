@@ -54,7 +54,9 @@ export function AIGenerateModal({
           <DialogTitle sx={{ padding: 0, margin: 0 }}>{title}</DialogTitle>
         </div>
         {description && (
-          <p style={{ marginTop: 8, color: "rgba(0,0,0,0.6)" }}>{description}</p>
+          <p style={{ marginTop: 8, color: "rgba(0,0,0,0.6)" }}>
+            {description}
+          </p>
         )}
 
         <div style={{ paddingTop: 16, paddingBottom: 16 }}>{children}</div>

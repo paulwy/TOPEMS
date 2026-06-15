@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -47,9 +48,13 @@ const ModuleCard = ({
 }) => {
   const getTrendIcon = () => {
     if (trend === "up")
-      return <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />;
+      return (
+        <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />
+      );
     if (trend === "down")
-      return <TrendingDown sx={{ width: 16, height: 16, color: "error.main" }} />;
+      return (
+        <TrendingDown sx={{ width: 16, height: 16, color: "error.main" }} />
+      );
     return <Minus sx={{ width: 16, height: 16, color: "grey.400" }} />;
   };
 
@@ -121,10 +126,20 @@ const ModuleCard = ({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Typography variant="h4">{icon}</Typography>
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "grey.900" }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 600, color: "grey.900" }}
+              >
                 {name}
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mt: 0.25,
+                }}
+              >
                 {getTrendIcon()}
                 <Typography
                   variant="caption"
@@ -166,12 +181,18 @@ const ModuleCard = ({
             .slice(0, 3)
             .map(([key, value]) => (
               <Box key={key} sx={{ textAlign: "center" }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900" }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "grey.900" }}
+                >
                   {typeof value === "number"
                     ? value.toLocaleString()
                     : String(value)}
                 </Typography>
-                <Typography variant="caption" sx={{ color: "grey.500", mt: 0.25 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "grey.500", mt: 0.25 }}
+                >
                   {key}
                 </Typography>
               </Box>
@@ -229,7 +250,13 @@ const BIAnalyticsPage = () => {
               gap: 3,
             }}
           >
-            <Skeleton sx={{ gridColumn: { lg: "span 2" }, height: 320, borderRadius: 3 }} />
+            <Skeleton
+              sx={{
+                gridColumn: { lg: "span 2" },
+                height: 320,
+                borderRadius: 3,
+              }}
+            />
             <Skeleton sx={{ height: 320, borderRadius: 3 }} />
           </Box>
           <Box
@@ -338,7 +365,10 @@ const BIAnalyticsPage = () => {
           }}
         >
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, color: "grey.900" }}
+            >
               概览分析
             </Typography>
             <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
@@ -491,7 +521,10 @@ const BIAnalyticsPage = () => {
             p: 3,
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.800", mb: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 600, color: "grey.800", mb: 2 }}
+          >
             系统状态
           </Typography>
           <Box
@@ -512,7 +545,10 @@ const BIAnalyticsPage = () => {
               <Typography variant="body2" sx={{ color: "grey.600" }}>
                 数据更新时间
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "grey.900" }}
+              >
                 {new Date().toLocaleString("zh-CN")}
               </Typography>
             </Box>

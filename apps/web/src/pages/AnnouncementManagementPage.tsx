@@ -1,5 +1,24 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Tooltip, IconButton } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 import {
   Bell,
   Search,
@@ -222,7 +241,13 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   const getStatusBadge = (status: string) => {
     const colors: Record<
       string,
-      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
+      | "default"
+      | "primary"
+      | "secondary"
+      | "error"
+      | "info"
+      | "success"
+      | "warning"
     > = {
       draft: "default",
       published: "success",
@@ -234,14 +259,24 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       archived: "已归档",
     };
     return (
-      <Chip size="small" color={colors[status] || "default"} label={labels[status] || status} />
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+      />
     );
   };
 
   const getPriorityBadge = (priority?: string) => {
     const colors: Record<
       string,
-      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
+      | "default"
+      | "primary"
+      | "secondary"
+      | "error"
+      | "info"
+      | "success"
+      | "warning"
     > = {
       low: "default",
       normal: "info",
@@ -255,7 +290,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       urgent: "紧急",
     };
     return (
-      <Chip size="small" color={colors[priority || "normal"] || "default"} label={labels[priority || "normal"] || priority} />
+      <Chip
+        size="small"
+        color={colors[priority || "normal"] || "default"}
+        label={labels[priority || "normal"] || priority}
+      />
     );
   };
 
@@ -274,7 +313,9 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         accessorKey: "author",
         header: "作者",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem" }}>
+          <Box
+            sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem" }}
+          >
             <User size={12} style={{ marginRight: 4, color: "#1976d2" }} />
             {row.original.author}
           </Box>
@@ -294,7 +335,14 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         accessorKey: "publish_at",
         header: "发布时间",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.secondary" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "0.875rem",
+              color: "text.secondary",
+            }}
+          >
             <Calendar size={12} style={{ marginRight: 4 }} />
             {row.original.publish_at
               ? new Date(row.original.publish_at).toLocaleString()
@@ -373,15 +421,35 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       {/* 顶部导航 */}
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft />
               </IconButton>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
                   <Bell size={28} color="#1976d2" />
                   公告管理
                 </Typography>
@@ -392,7 +460,11 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus size={20} />}>
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+                startIcon={<Plus size={20} />}
+              >
                 新增公告
               </Button>
             </Box>
@@ -405,7 +477,18 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTop: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "primary.main",
+                    borderTop: "transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
                 <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
                 </Typography>
@@ -413,7 +496,9 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
             ) : error ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
                 <AlertCircle size={48} color="#d32f2f" />
-                <Typography sx={{ color: "error.main", mt: 2 }}>{error}</Typography>
+                <Typography sx={{ color: "error.main", mt: 2 }}>
+                  {error}
+                </Typography>
                 <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </Button>
@@ -431,11 +516,23 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
       </Box>
 
       {/* 创建公告对话框 */}
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>新增公告</DialogTitle>
         <form onSubmit={handleCreateAnnouncement}>
           <DialogContent>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 2,
+                pt: 1,
+              }}
+            >
               <TextField
                 label="标题 *"
                 required
@@ -484,7 +581,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   value={newAnnouncement.status || "draft"}
                   label="状态"
                   onChange={(e) =>
-                    setNewAnnouncement({ ...newAnnouncement, status: e.target.value })
+                    setNewAnnouncement({
+                      ...newAnnouncement,
+                      status: e.target.value,
+                    })
                   }
                 >
                   <MenuItem value="draft">草稿</MenuItem>
@@ -503,7 +603,6 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   })
                 }
                 fullWidth
-
               />
               <TextField
                 label="过期时间"
@@ -516,7 +615,6 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                   })
                 }
                 fullWidth
-
               />
               <TextField
                 label="内容"
@@ -536,18 +634,32 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-            <Button type="submit" variant="contained">创建</Button>
+            <Button type="submit" variant="contained">
+              创建
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       {/* 编辑公告对话框 */}
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>编辑公告</DialogTitle>
         {selectedAnnouncement && (
           <form onSubmit={handleEditAnnouncement}>
             <DialogContent>
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                  pt: 1,
+                }}
+              >
                 <TextField
                   label="标题 *"
                   required
@@ -618,7 +730,6 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                     })
                   }
                   fullWidth
-  
                 />
                 <TextField
                   label="过期时间"
@@ -631,7 +742,6 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
                     })
                   }
                   fullWidth
-  
                 />
                 <TextField
                   label="内容"
@@ -658,7 +768,9 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
               >
                 取消
               </Button>
-              <Button type="submit" variant="contained">保存</Button>
+              <Button type="submit" variant="contained">
+                保存
+              </Button>
             </DialogActions>
           </form>
         )}

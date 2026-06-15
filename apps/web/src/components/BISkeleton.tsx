@@ -13,7 +13,14 @@ export const MetricCardSkeleton: React.FC<{ className?: string }> = ({
       border: "1px solid rgba(0,0,0,0.06)",
     }}
   >
-    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        mb: 2,
+      }}
+    >
       <Box sx={{ flex: 1 }}>
         <Skeleton sx={{ height: 16, width: 96, mb: 1 }} />
         <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
@@ -21,7 +28,13 @@ export const MetricCardSkeleton: React.FC<{ className?: string }> = ({
       </Box>
       <Skeleton sx={{ width: 48, height: 48, borderRadius: 1.5 }} />
     </Box>
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
       <Skeleton sx={{ height: 16, width: 64 }} />
       <Skeleton sx={{ height: 32, width: 80 }} />
     </Box>
@@ -46,7 +59,10 @@ export const ChartCardSkeleton: React.FC<{
       <Skeleton sx={{ height: 16, width: 96 }} />
     </Box>
     <Box sx={{ p: 3 }}>
-      <Skeleton sx={{ width: "100%", borderRadius: 1 }} style={{ height: height - 60 }} />
+      <Skeleton
+        sx={{ width: "100%", borderRadius: 1 }}
+        style={{ height: height - 60 }}
+      />
     </Box>
   </Box>
 );
@@ -63,7 +79,14 @@ export const ModuleCardSkeleton: React.FC<{ className?: string }> = ({
       p: 3,
     }}
   >
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2.5 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        mb: 2.5,
+      }}
+    >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         <Skeleton sx={{ width: 40, height: 40, borderRadius: 1.5 }} />
         <Box>
@@ -73,7 +96,15 @@ export const ModuleCardSkeleton: React.FC<{ className?: string }> = ({
       </Box>
       <Skeleton sx={{ width: 20, height: 20 }} />
     </Box>
-    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2, pt: 2, borderTop: "1px solid rgba(0,0,0,0.04)" }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: 2,
+        pt: 2,
+        borderTop: "1px solid rgba(0,0,0,0.04)",
+      }}
+    >
       {[1, 2, 3].map((i) => (
         <Box key={i} sx={{ textAlign: "center" }}>
           <Skeleton sx={{ height: 24, width: 48, mx: "auto", mb: 0.5 }} />
@@ -96,14 +127,28 @@ export const VisualizationCardSkeleton: React.FC<{ className?: string }> = ({
       overflow: "hidden",
     }}
   >
-    <Box sx={{ height: 160, background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <Box
+      sx={{
+        height: 160,
+        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <Skeleton sx={{ width: 64, height: 64, borderRadius: 1.5 }} />
     </Box>
     <Box sx={{ p: 2.5 }}>
       <Skeleton sx={{ height: 20, width: 128, mb: 1 }} />
       <Skeleton sx={{ height: 16, width: "100%", mb: 0.5 }} />
       <Skeleton sx={{ height: 16, width: "75%", mb: 1.5 }} />
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Skeleton sx={{ height: 16, width: 80 }} />
         <Skeleton sx={{ height: 16, width: 64 }} />
       </Box>
@@ -170,7 +215,14 @@ export const TableSkeleton: React.FC<{
 
 export const DashboardSkeleton: React.FC = () => (
   <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc", p: 3 }}>
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        mb: 3,
+      }}
+    >
       <Box>
         <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
         <Skeleton sx={{ height: 16, width: 96 }} />
@@ -181,18 +233,42 @@ export const DashboardSkeleton: React.FC = () => (
       </Box>
     </Box>
 
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(4, 1fr)",
+        },
+        gap: 2,
+        mb: 3,
+      }}
+    >
       {[1, 2, 3, 4].map((i) => (
         <MetricCardSkeleton key={i} />
       ))}
     </Box>
 
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "3fr 1fr" }, gap: 3, mb: 3 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", lg: "3fr 1fr" },
+        gap: 3,
+        mb: 3,
+      }}
+    >
       <ChartCardSkeleton height={280} />
       <ChartCardSkeleton height={280} />
     </Box>
 
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" },
+        gap: 3,
+      }}
+    >
       {[1, 2, 3].map((i) => (
         <ChartCardSkeleton key={i} height={260} />
       ))}
@@ -202,7 +278,14 @@ export const DashboardSkeleton: React.FC = () => (
 
 export const AnalyticsSkeleton: React.FC = () => (
   <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc", p: 3 }}>
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        mb: 3,
+      }}
+    >
       <Box>
         <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
         <Skeleton sx={{ height: 16, width: 96 }} />
@@ -211,22 +294,58 @@ export const AnalyticsSkeleton: React.FC = () => (
 
     <Skeleton sx={{ height: 64, width: "100%", borderRadius: 1.5, mb: 3 }} />
 
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "3fr 1fr" }, gap: 3, mb: 3 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", lg: "3fr 1fr" },
+        gap: 3,
+        mb: 3,
+      }}
+    >
       <ChartCardSkeleton height={300} />
       <ChartCardSkeleton height={300} />
     </Box>
 
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2, mb: 3 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(3, 1fr)",
+        },
+        gap: 2,
+        mb: 3,
+      }}
+    >
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <ModuleCardSkeleton key={i} />
       ))}
     </Box>
 
-    <Box sx={{ backgroundColor: "white", borderRadius: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.06)", p: 3 }}>
+    <Box
+      sx={{
+        backgroundColor: "white",
+        borderRadius: 1.5,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        border: "1px solid rgba(0,0,0,0.06)",
+        p: 3,
+      }}
+    >
       <Skeleton sx={{ height: 20, width: 96, mb: 2 }} />
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
+      <Box
+        sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}
+      >
         {[1, 2, 3].map((i) => (
-          <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1.5 }}>
+          <Box
+            key={i}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              py: 1.5,
+            }}
+          >
             <Skeleton sx={{ height: 16, width: 80 }} />
             <Skeleton sx={{ height: 24, width: 64 }} />
           </Box>
@@ -238,7 +357,14 @@ export const AnalyticsSkeleton: React.FC = () => (
 
 export const VisualizationSkeleton: React.FC = () => (
   <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc", p: 3 }}>
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        mb: 3,
+      }}
+    >
       <Box>
         <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
         <Skeleton sx={{ height: 16, width: 96 }} />
@@ -251,7 +377,17 @@ export const VisualizationSkeleton: React.FC = () => (
 
     <Skeleton sx={{ height: 56, width: "100%", borderRadius: 1.5, mb: 3 }} />
 
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(3, 1fr)",
+        },
+        gap: 2,
+      }}
+    >
       {[1, 2, 3, 4].map((i) => (
         <VisualizationCardSkeleton key={i} />
       ))}

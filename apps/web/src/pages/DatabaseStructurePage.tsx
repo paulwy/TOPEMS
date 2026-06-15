@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -28,7 +29,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
   Snackbar,
   Alert,
   MenuItem,
@@ -287,7 +287,11 @@ const DatabaseStructurePage: React.FC = () => {
                 <Database size={28} color="#2563eb" />
                 数据库结构管理
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5 }}
+              >
                 查看和管理数据库表结构，支持添加、修改、删除字段
               </Typography>
             </Box>
@@ -317,12 +321,14 @@ const DatabaseStructurePage: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{ mb: 2 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={16} color="#94a3b8" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search size={16} color="#94a3b8" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
 
@@ -365,9 +371,7 @@ const DatabaseStructurePage: React.FC = () => {
                             cursor: "pointer",
                             transition: "all 0.15s",
                             border: "1px solid",
-                            borderColor: isSelected
-                              ? "#2563eb"
-                              : "transparent",
+                            borderColor: isSelected ? "#2563eb" : "transparent",
                             bgcolor: isSelected ? "#eff6ff" : "transparent",
                             "&:hover": {
                               bgcolor: isSelected ? "#eff6ff" : "#f1f5f9",
@@ -387,9 +391,7 @@ const DatabaseStructurePage: React.FC = () => {
                               variant="body2"
                               fontWeight={isSelected ? 600 : 500}
                               sx={{
-                                color: isSelected
-                                  ? "#1d4ed8"
-                                  : "text.primary",
+                                color: isSelected ? "#1d4ed8" : "text.primary",
                                 wordBreak: "break-all",
                               }}
                             >
@@ -677,10 +679,7 @@ const DatabaseStructurePage: React.FC = () => {
                         }}
                       >
                         <Clock size={48} color="#94a3b8" />
-                        <Typography
-                          color="text.secondary"
-                          sx={{ mt: 2 }}
-                        >
+                        <Typography color="text.secondary" sx={{ mt: 2 }}>
                           暂无变更历史
                         </Typography>
                       </Box>
@@ -759,7 +758,9 @@ const DatabaseStructurePage: React.FC = () => {
                                       color: "text.secondary",
                                     }}
                                   >
-                                    {new Date(change.executed_at).toLocaleString()}
+                                    {new Date(
+                                      change.executed_at,
+                                    ).toLocaleString()}
                                   </TableCell>
                                   <TableCell>
                                     <Chip
@@ -829,7 +830,11 @@ const DatabaseStructurePage: React.FC = () => {
                   textAlign: "center",
                 }}
               >
-                <Database size={64} color="#94a3b8" style={{ marginBottom: 16 }} />
+                <Database
+                  size={64}
+                  color="#94a3b8"
+                  style={{ marginBottom: 16 }}
+                />
                 <Typography variant="h6" fontWeight={500} sx={{ mb: 1 }}>
                   请选择数据表
                 </Typography>

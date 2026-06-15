@@ -188,7 +188,11 @@ export function AITextOptimizer({
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {/* 原始文本 */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}>原始文本</InputLabel>
+          <InputLabel
+            sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}
+          >
+            原始文本
+          </InputLabel>
           <TextField
             value={originalText}
             placeholder="暂无原始文本"
@@ -202,10 +206,17 @@ export function AITextOptimizer({
         {/* 关键词输入 */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <Box
-            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+            }}
             onClick={() => setShowKeywords(!showKeywords)}
           >
-            <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}>
+            <InputLabel
+              sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}
+            >
               关键词（可选）
             </InputLabel>
             {showKeywords ? (
@@ -263,7 +274,11 @@ export function AITextOptimizer({
 
         {/* 优化风格选择 */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}>优化风格</InputLabel>
+          <InputLabel
+            sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}
+          >
+            优化风格
+          </InputLabel>
           <Select
             value={optimizationStyle}
             onChange={(e) => setOptimizationStyle(e.target.value)}
@@ -272,8 +287,13 @@ export function AITextOptimizer({
             {optimizationStyles.map((style) => (
               <MenuItem key={style.value} value={style.value}>
                 <Box>
-                  <Box component="span" sx={{ fontWeight: 500 }}>{style.label}</Box>
-                  <Box component="span" sx={{ fontSize: "0.75rem", color: "#6b7280", ml: 1 }}>
+                  <Box component="span" sx={{ fontWeight: 500 }}>
+                    {style.label}
+                  </Box>
+                  <Box
+                    component="span"
+                    sx={{ fontSize: "0.75rem", color: "#6b7280", ml: 1 }}
+                  >
                     {style.description}
                   </Box>
                 </Box>
@@ -285,9 +305,19 @@ export function AITextOptimizer({
         {/* 错误提示 */}
         {error && (
           <Card sx={{ borderColor: "#fecaca", bgcolor: "#fef2f2" }}>
-            <CardContent sx={{ p: 2, display: "flex", alignItems: "center", gap: 1, color: "#b91c1c" }}>
+            <CardContent
+              sx={{
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                color: "#b91c1c",
+              }}
+            >
               <AlertCircle style={{ width: 16, height: 16 }} />
-              <Box component="span" sx={{ fontSize: "0.875rem" }}>{error.message}</Box>
+              <Box component="span" sx={{ fontSize: "0.875rem" }}>
+                {error.message}
+              </Box>
               {retryCount < 2 && (
                 <Button
                   variant="outlined"
@@ -307,7 +337,13 @@ export function AITextOptimizer({
           <Button
             onClick={handleGenerate}
             disabled={isLoading}
-            startIcon={isLoading ? <RefreshCw style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 style={{ width: 16, height: 16 }} />}
+            startIcon={
+              isLoading ? (
+                <RefreshCw style={{ animation: "spin 1s linear infinite" }} />
+              ) : (
+                <Wand2 style={{ width: 16, height: 16 }} />
+              )
+            }
           >
             {isLoading ? "生成中..." : optimizedText ? "重新生成" : "AI 优化"}
           </Button>
@@ -316,8 +352,16 @@ export function AITextOptimizer({
         {/* 优化结果 */}
         {optimizedText && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#7c3aed" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <InputLabel
+                sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#7c3aed" }}
+              >
                 优化后的文本
               </InputLabel>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -331,7 +375,10 @@ export function AITextOptimizer({
                     >
                       ←
                     </Button>
-                    <Box component="span" sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                    <Box
+                      component="span"
+                      sx={{ fontSize: "0.75rem", color: "#6b7280" }}
+                    >
                       {historyIndex + 1}/{history.length}
                     </Box>
                     <Button
@@ -348,7 +395,13 @@ export function AITextOptimizer({
                   variant="outlined"
                   size="small"
                   onClick={handleCopy}
-                  startIcon={copied ? <Check style={{ width: 12, height: 12 }} /> : <Copy style={{ width: 12, height: 12 }} />}
+                  startIcon={
+                    copied ? (
+                      <Check style={{ width: 12, height: 12 }} />
+                    ) : (
+                      <Copy style={{ width: 12, height: 12 }} />
+                    )
+                  }
                 >
                   {copied ? "已复制" : "复制"}
                 </Button>

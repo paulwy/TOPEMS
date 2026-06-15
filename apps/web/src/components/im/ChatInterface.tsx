@@ -667,7 +667,10 @@ export const ChatInterface: React.FC = () => {
                   : "选择一个聊天室开始聊天"}
               </p>
               {activeTab !== "notifications" && (
-                <Button onClick={() => setIsCreateModalOpen(true)} variant="contained">
+                <Button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  variant="contained"
+                >
                   创建聊天室
                 </Button>
               )}

@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -16,7 +17,16 @@ import {
   Grid3X3,
   List,
 } from "lucide-react";
-import { Button, Card, CardContent, TextField, Badge, Skeleton, Box, Typography } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  TextField,
+  Badge,
+  Skeleton,
+  Box,
+  Typography,
+} from "@mui/material";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { EmptyState } from "../components/EmptyState";
 import { BIChartColors } from "../components/charts/chartTheme";
@@ -63,15 +73,35 @@ const VisualizationCard = ({
   const getTypeColor = (type: string) => {
     switch (type) {
       case "line":
-        return { bgcolor: "blue.50", color: "primary.main", borderColor: "blue.200" };
+        return {
+          bgcolor: "blue.50",
+          color: "primary.main",
+          borderColor: "blue.200",
+        };
       case "bar":
-        return { bgcolor: "green.50", color: "success.main", borderColor: "green.200" };
+        return {
+          bgcolor: "green.50",
+          color: "success.main",
+          borderColor: "green.200",
+        };
       case "pie":
-        return { bgcolor: "orange.50", color: "warning.main", borderColor: "orange.200" };
+        return {
+          bgcolor: "orange.50",
+          color: "warning.main",
+          borderColor: "orange.200",
+        };
       case "gauge":
-        return { bgcolor: "violet.50", color: "violet.main", borderColor: "violet.200" };
+        return {
+          bgcolor: "violet.50",
+          color: "violet.main",
+          borderColor: "violet.200",
+        };
       default:
-        return { bgcolor: "grey.50", color: "grey.600", borderColor: "grey.200" };
+        return {
+          bgcolor: "grey.50",
+          color: "grey.600",
+          borderColor: "grey.200",
+        };
     }
   };
 
@@ -161,7 +191,15 @@ const VisualizationCard = ({
             color: colors.color,
           }}
         >
-          <Box sx={{ width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             {getTypeIcon(viz.type)}
           </Box>
         </Box>
@@ -482,7 +520,10 @@ const BIVisualizationPage = () => {
           }}
         >
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, color: "grey.900" }}
+            >
               可视化图表
             </Typography>
             <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
@@ -569,7 +610,8 @@ const BIVisualizationPage = () => {
                     border: "none",
                     cursor: "pointer",
                     transition: "all 0.2s",
-                    bgcolor: viewMode === "grid" ? "background.paper" : "transparent",
+                    bgcolor:
+                      viewMode === "grid" ? "background.paper" : "transparent",
                     boxShadow: viewMode === "grid" ? 1 : 0,
                     color: viewMode === "grid" ? "primary.main" : "grey.500",
                     display: "flex",
@@ -588,7 +630,8 @@ const BIVisualizationPage = () => {
                     border: "none",
                     cursor: "pointer",
                     transition: "all 0.2s",
-                    bgcolor: viewMode === "list" ? "background.paper" : "transparent",
+                    bgcolor:
+                      viewMode === "list" ? "background.paper" : "transparent",
                     boxShadow: viewMode === "list" ? 1 : 0,
                     color: viewMode === "list" ? "primary.main" : "grey.500",
                     display: "flex",

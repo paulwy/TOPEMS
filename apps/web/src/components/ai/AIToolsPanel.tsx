@@ -165,12 +165,15 @@ const DateCalculator: React.FC = () => {
     setResult({ days: diffDays, workdays, weekends });
   }, [startDate, endDate]);
 
-  const addDays = useCallback((days: number) => {
-    const base = startDate || today;
-    const date = new Date(base);
-    date.setDate(date.getDate() + days);
-    setStartDate(date.toISOString().split("T")[0]);
-  }, [startDate]);
+  const addDays = useCallback(
+    (days: number) => {
+      const base = startDate || today;
+      const date = new Date(base);
+      date.setDate(date.getDate() + days);
+      setStartDate(date.toISOString().split("T")[0]);
+    },
+    [startDate],
+  );
 
   const setToToday = useCallback(() => {
     setStartDate(today);
@@ -589,13 +592,7 @@ const DataMasker: React.FC = () => {
       </Box>
 
       {output && (
-        <TextField
-          multiline
-          rows={3}
-          fullWidth
-          value={output}
-          disabled
-        />
+        <TextField multiline rows={3} fullWidth value={output} disabled />
       )}
     </Box>
   );

@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -146,19 +147,63 @@ const DataSourceCard = ({
   };
 
   return (
-    <Box sx={{ bgcolor: "background.paper", borderRadius: 4, boxShadow: 1, border: 1, borderColor: "grey.200", overflow: "hidden", transition: "all 0.3s", "&:hover": { boxShadow: 6, borderColor: "grey.300" } }}>
+    <Box
+      sx={{
+        bgcolor: "background.paper",
+        borderRadius: 4,
+        boxShadow: 1,
+        border: 1,
+        borderColor: "grey.200",
+        overflow: "hidden",
+        transition: "all 0.3s",
+        "&:hover": { boxShadow: 6, borderColor: "grey.300" },
+      }}
+    >
       {/* Header */}
-      <Box sx={{ position: "relative", px: 2.5, py: 2, bgcolor: "grey.50", borderBottom: 1, borderColor: "grey.100" }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          position: "relative",
+          px: 2.5,
+          py: 2,
+          bgcolor: "grey.50",
+          borderBottom: 1,
+          borderColor: "grey.100",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{ p: 1.25, borderRadius: 1.25, border: 1, borderColor: "divider", bgcolor: typeConfig.color }}>
-              <Typography component="span" sx={{ fontSize: "1.25rem", lineHeight: 1 }}>{typeConfig.icon}</Typography>
+            <Box
+              sx={{
+                p: 1.25,
+                borderRadius: 1.25,
+                border: 1,
+                borderColor: "divider",
+                bgcolor: typeConfig.color,
+              }}
+            >
+              <Typography
+                component="span"
+                sx={{ fontSize: "1.25rem", lineHeight: 1 }}
+              >
+                {typeConfig.icon}
+              </Typography>
             </Box>
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "grey.900" }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 600, color: "grey.900" }}
+              >
                 {datasource.name}
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}
+              >
                 <Box
                   sx={{
                     width: 8,
@@ -168,7 +213,10 @@ const DataSourceCard = ({
                     animation: "pulse 1.5s ease-in-out infinite",
                   }}
                 />
-                <Typography component="span" sx={{ fontSize: "0.75rem", color: "grey.500" }}>
+                <Typography
+                  component="span"
+                  sx={{ fontSize: "0.75rem", color: "grey.500" }}
+                >
                   {typeConfig.label}
                 </Typography>
               </Box>
@@ -199,34 +247,82 @@ const DataSourceCard = ({
       <Box sx={{ p: 2.5 }}>
         {/* Connection Info */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              fontSize: "0.875rem",
+            }}
+          >
             <Server size={16} color="#94a3b8" />
-            <Typography component="span" sx={{ color: "grey.500" }}>主机:</Typography>
-            <Typography component="span" sx={{ fontWeight: 500, color: "grey.700" }}>
+            <Typography component="span" sx={{ color: "grey.500" }}>
+              主机:
+            </Typography>
+            <Typography
+              component="span"
+              sx={{ fontWeight: 500, color: "grey.700" }}
+            >
               {datasource.host}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              fontSize: "0.875rem",
+            }}
+          >
             <HardDrive size={16} color="#94a3b8" />
-            <Typography component="span" sx={{ color: "grey.500" }}>数据库:</Typography>
-            <Typography component="span" sx={{ fontWeight: 500, color: "grey.700" }}>
+            <Typography component="span" sx={{ color: "grey.500" }}>
+              数据库:
+            </Typography>
+            <Typography
+              component="span"
+              sx={{ fontWeight: 500, color: "grey.700" }}
+            >
               {datasource.database}
             </Typography>
           </Box>
           {datasource.tables_count && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                fontSize: "0.875rem",
+              }}
+            >
               <Database size={16} color="#94a3b8" />
-              <Typography component="span" sx={{ color: "grey.500" }}>表数量:</Typography>
-              <Typography component="span" sx={{ fontWeight: 500, color: "grey.700" }}>
+              <Typography component="span" sx={{ color: "grey.500" }}>
+                表数量:
+              </Typography>
+              <Typography
+                component="span"
+                sx={{ fontWeight: 500, color: "grey.700" }}
+              >
                 {datasource.tables_count}
               </Typography>
             </Box>
           )}
           {datasource.last_sync && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                fontSize: "0.875rem",
+              }}
+            >
               <Clock size={16} color="#94a3b8" />
-              <Typography component="span" sx={{ color: "grey.500" }}>最后同步:</Typography>
-              <Typography component="span" sx={{ fontWeight: 500, color: "grey.700", fontSize: "0.75rem" }}>
+              <Typography component="span" sx={{ color: "grey.500" }}>
+                最后同步:
+              </Typography>
+              <Typography
+                component="span"
+                sx={{ fontWeight: 500, color: "grey.700", fontSize: "0.75rem" }}
+              >
                 {new Date(datasource.last_sync).toLocaleString("zh-CN")}
               </Typography>
             </Box>
@@ -256,12 +352,27 @@ const DataSourceCard = ({
           <IconButton size="small" onClick={handleMenuOpen}>
             <MoreVertical size={16} />
           </IconButton>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-            <MenuItem onClick={() => { onEdit(); handleMenuClose(); }}>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem
+              onClick={() => {
+                onEdit();
+                handleMenuClose();
+              }}
+            >
               <Edit size={16} sx={{ mr: 2 }} />
               编辑
             </MenuItem>
-            <MenuItem onClick={() => { onDelete(); handleMenuClose(); }} sx={{ color: "error.main" }}>
+            <MenuItem
+              onClick={() => {
+                onDelete();
+                handleMenuClose();
+              }}
+              sx={{ color: "error.main" }}
+            >
               <Trash2 size={16} sx={{ mr: 2 }} />
               删除
             </MenuItem>
@@ -273,9 +384,32 @@ const DataSourceCard = ({
 };
 
 const DataSourceCardSkeleton = () => (
-  <Box sx={{ bgcolor: "background.paper", borderRadius: 4, boxShadow: 1, border: 1, borderColor: "grey.200", overflow: "hidden" }}>
-    <Box sx={{ px: 2.5, py: 2, bgcolor: "grey.50", borderBottom: 1, borderColor: "grey.100" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+  <Box
+    sx={{
+      bgcolor: "background.paper",
+      borderRadius: 4,
+      boxShadow: 1,
+      border: 1,
+      borderColor: "grey.200",
+      overflow: "hidden",
+    }}
+  >
+    <Box
+      sx={{
+        px: 2.5,
+        py: 2,
+        bgcolor: "grey.50",
+        borderBottom: 1,
+        borderColor: "grey.100",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Skeleton variant="rounded" width={40} height={40} />
           <Box>
@@ -401,9 +535,24 @@ const BIDataSourcePage = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "grey.50",
+          p: 3,
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+        }}
+      >
         {/* Header skeleton */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box>
             <Skeleton variant="text" width={128} height={32} sx={{ mb: 1 }} />
             <Skeleton variant="text" width={96} height={16} />
@@ -418,7 +567,17 @@ const BIDataSourcePage = () => {
         <Skeleton variant="rounded" width="100%" height={56} />
 
         {/* Cards skeleton */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            },
+            gap: 2,
+          }}
+        >
           {[1, 2, 3, 4].map((i) => (
             <DataSourceCardSkeleton key={i} />
           ))}
@@ -428,12 +587,34 @@ const BIDataSourcePage = () => {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "grey.50",
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
+    >
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: "1.5rem", color: "grey.900" }}>数据源管理</Typography>
-          <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>配置和管理BI数据源连接</Typography>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, fontSize: "1.5rem", color: "grey.900" }}
+          >
+            数据源管理
+          </Typography>
+          <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
+            配置和管理BI数据源连接
+          </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Link to="/bi/dashboard">
@@ -456,8 +637,12 @@ const BIDataSourcePage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ flex: 1 }}
               size="small"
-              InputProps={{
-                startAdornment: <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />,
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />
+                  ),
+                },
               }}
             />
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -477,14 +662,23 @@ const BIDataSourcePage = () => {
                 </Select>
               </FormControl>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", bgcolor: "grey.100", borderRadius: 1, p: 0.5 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                bgcolor: "grey.100",
+                borderRadius: 1,
+                p: 0.5,
+              }}
+            >
               <Button
                 onClick={() => setViewMode("grid")}
                 size="small"
                 sx={{
                   p: 0.75,
                   borderRadius: 0.5,
-                  bgcolor: viewMode === "grid" ? "background.paper" : "transparent",
+                  bgcolor:
+                    viewMode === "grid" ? "background.paper" : "transparent",
                   boxShadow: viewMode === "grid" ? 1 : 0,
                   color: viewMode === "grid" ? "primary.main" : "grey.500",
                   minWidth: "auto",
@@ -498,7 +692,8 @@ const BIDataSourcePage = () => {
                 sx={{
                   p: 0.75,
                   borderRadius: 0.5,
-                  bgcolor: viewMode === "list" ? "background.paper" : "transparent",
+                  bgcolor:
+                    viewMode === "list" ? "background.paper" : "transparent",
                   boxShadow: viewMode === "list" ? 1 : 0,
                   color: viewMode === "list" ? "primary.main" : "grey.500",
                   minWidth: "auto",
@@ -526,7 +721,15 @@ const BIDataSourcePage = () => {
         <Box
           sx={
             viewMode === "grid"
-              ? { display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }
+              ? {
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    md: "repeat(2, 1fr)",
+                    lg: "repeat(3, 1fr)",
+                  },
+                  gap: 2,
+                }
               : { display: "flex", flexDirection: "column", gap: 2 }
           }
         >

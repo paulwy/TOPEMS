@@ -1,4 +1,12 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Box } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -180,11 +188,12 @@ const WarehouseManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, "success" | "info" | "warning" | "error"> = {
-      active: "success",
-      inactive: "info",
-      maintenance: "warning",
-    };
+    const statusMap: Record<string, "success" | "info" | "warning" | "error"> =
+      {
+        active: "success",
+        inactive: "info",
+        maintenance: "warning",
+      };
     const labels: Record<string, string> = {
       active: "活跃",
       inactive: "非活跃",
@@ -214,7 +223,14 @@ const WarehouseManagementPage: React.FC = () => {
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              mb: 3,
+            }}
+          >
             <Box sx={{ flex: 1 }}>
               <TextField
                 placeholder="搜索仓库名称或编码..."
@@ -228,7 +244,14 @@ const WarehouseManagementPage: React.FC = () => {
                 slotProps={{
                   input: {
                     startAdornment: (
-                      <Search sx={{ mr: 1, width: 16, height: 16, color: "text.secondary" }} />
+                      <Search
+                        sx={{
+                          mr: 1,
+                          width: 16,
+                          height: 16,
+                          color: "text.secondary",
+                        }}
+                      />
                     ),
                   },
                 }}
@@ -263,7 +286,17 @@ const WarehouseManagementPage: React.FC = () => {
           </Box>
 
           {selectedIds.length > 0 && (
-            <Box sx={{ mb: 2, p: 1.5, bgcolor: "grey.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                mb: 2,
+                p: 1.5,
+                bgcolor: "grey.100",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography variant="body2">
                 已选择 {selectedIds.length} 个仓库
               </Typography>
@@ -355,7 +388,14 @@ const WarehouseManagementPage: React.FC = () => {
             </TableBody>
           </Table>
 
-          <Box sx={{ mt: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Typography variant="body2" sx={{ color: "grey.500" }}>
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
@@ -386,9 +426,7 @@ const WarehouseManagementPage: React.FC = () => {
               )}
               <Button
                 size="small"
-                disabled={
-                  currentPage >= Math.ceil(total / pageSize)
-                }
+                disabled={currentPage >= Math.ceil(total / pageSize)}
                 onClick={() =>
                   setCurrentPage(
                     Math.min(Math.ceil(total / pageSize), currentPage + 1),
@@ -409,12 +447,17 @@ const WarehouseManagementPage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          {selectedWarehouse ? "编辑仓库" : "新增仓库"}
-        </DialogTitle>
+        <DialogTitle>{selectedWarehouse ? "编辑仓库" : "新增仓库"}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2, py: 2 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, md: 2 },
+                gap: 2,
+                py: 2,
+              }}
+            >
               <TextField
                 label="仓库名称 *"
                 value={formData.name}
@@ -480,7 +523,13 @@ const WarehouseManagementPage: React.FC = () => {
         <DialogContent>
           {selectedWarehouse && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gap: 2,
+                }}
+              >
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     仓库名称

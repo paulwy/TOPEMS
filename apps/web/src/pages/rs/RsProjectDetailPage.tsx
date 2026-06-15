@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
@@ -26,7 +27,6 @@ import {
   ListItemText,
   ListItemIcon,
   Avatar,
-  Grid,
   Stack,
 } from "@mui/material";
 import {
@@ -295,7 +295,10 @@ const RsProjectDetailPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面头部 */}
       <div style={{ marginBottom: 12 }}>
-        <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
+        >
           <div>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Typography variant="h4" sx={{ fontWeight: "bold" }}>
@@ -423,7 +426,11 @@ const RsProjectDetailPage: React.FC = () => {
               <div
                 style={{ textAlign: "center", paddingTop: 8, paddingBottom: 8 }}
               >
-                <Typography variant="h3" sx={{ fontWeight: "bold" }} color="primary">
+                <Typography
+                  variant="h3"
+                  sx={{ fontWeight: "bold" }}
+                  color="primary"
+                >
                   {project.progress}%
                 </Typography>
                 <LinearProgress
@@ -565,7 +572,10 @@ const RsProjectDetailPage: React.FC = () => {
                   </TimelineSeparator>
                   <TimelineContent>
                     <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ fontWeight: "bold" }}
+                      >
                         {milestone.name}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">

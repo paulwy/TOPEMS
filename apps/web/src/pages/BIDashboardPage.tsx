@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
 import {
   Activity,
@@ -91,11 +92,16 @@ const ChartCardSkeleton = ({ height = 300 }: { height?: number }) => (
       overflow: "hidden",
     }}
   >
-    <Box sx={{ px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+    <Box
+      sx={{ px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider" }}
+    >
       <Skeleton sx={{ height: 20, width: 128 }} />
     </Box>
     <Box sx={{ p: 3 }}>
-      <Skeleton sx={{ height: 240, width: "100%", borderRadius: 1 }} style={{ height }} />
+      <Skeleton
+        sx={{ height: 240, width: "100%", borderRadius: 1 }}
+        style={{ height }}
+      />
     </Box>
   </Box>
 );
@@ -110,11 +116,17 @@ const ActivityItem = ({
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "production":
-        return <BarChart3 sx={{ width: 16, height: 16, color: "primary.main" }} />;
+        return (
+          <BarChart3 sx={{ width: 16, height: 16, color: "primary.main" }} />
+        );
       case "quality":
-        return <Activity sx={{ width: 16, height: 16, color: "success.main" }} />;
+        return (
+          <Activity sx={{ width: 16, height: 16, color: "success.main" }} />
+        );
       case "maintenance":
-        return <TrendingUp sx={{ width: 16, height: 16, color: "warning.main" }} />;
+        return (
+          <TrendingUp sx={{ width: 16, height: 16, color: "warning.main" }} />
+        );
       default:
         return <Activity sx={{ width: 16, height: 16, color: "grey.600" }} />;
     }
@@ -171,7 +183,13 @@ const ActivityItem = ({
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           variant="body2"
-          sx={{ fontWeight: 500, color: "grey.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          sx={{
+            fontWeight: 500,
+            color: "grey.800",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
         >
           {activity.title}
         </Typography>
@@ -403,7 +421,10 @@ const BIDashboardPage = () => {
           }}
         >
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, color: "grey.900" }}
+            >
               数据大屏
             </Typography>
             <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
@@ -412,7 +433,13 @@ const BIDashboardPage = () => {
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box
-              sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 14, color: "grey.500" }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                fontSize: 14,
+                color: "grey.500",
+              }}
             >
               <Clock sx={{ width: 16, height: 16 }} />
               <Typography variant="body2" sx={{ color: "grey.500" }}>

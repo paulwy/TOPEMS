@@ -171,8 +171,10 @@ const HrmOrganizationPage: React.FC = () => {
             borderRadius: 1,
             cursor: "pointer",
             transition: "background-color 0.2s",
-            bgcolor: selectedNode?.id === node.id ? "primary.50" : "transparent",
-            color: selectedNode?.id === node.id ? "primary.main" : "text.primary",
+            bgcolor:
+              selectedNode?.id === node.id ? "primary.50" : "transparent",
+            color:
+              selectedNode?.id === node.id ? "primary.main" : "text.primary",
             "&:hover": { bgcolor: "grey.100" },
             pl: `${level * 16 + 12}px`,
           }}
@@ -200,7 +202,9 @@ const HrmOrganizationPage: React.FC = () => {
                 style={{
                   width: 16,
                   height: 16,
-                  transform: expandedIds.has(node.id) ? "rotate(90deg)" : "rotate(0deg)",
+                  transform: expandedIds.has(node.id)
+                    ? "rotate(90deg)"
+                    : "rotate(0deg)",
                   transition: "transform 0.2s",
                 }}
               />
@@ -210,9 +214,13 @@ const HrmOrganizationPage: React.FC = () => {
             <Box sx={{ width: 20 }} />
           )}
           {node.type === "company" ? (
-            <Building style={{ width: 16, height: 16, color: "primary.main" }} />
+            <Building
+              style={{ width: 16, height: 16, color: "primary.main" }}
+            />
           ) : (
-            <Building2 style={{ width: 16, height: 16, color: "success.main" }} />
+            <Building2
+              style={{ width: 16, height: 16, color: "success.main" }}
+            />
           )}
           <Box sx={{ fontWeight: 500, fontSize: "0.875rem" }}>{node.name}</Box>
           {node.type === "company" && (
@@ -531,11 +539,33 @@ const HrmOrganizationPage: React.FC = () => {
   return (
     <HrmLayout>
       <Box sx={{ display: "flex", height: "calc(100vh - 72px)" }}>
-        <Box sx={{ width: 320, borderRight: 1, borderColor: "divider", bgcolor: "background.paper", display: "flex", flexDirection: "column" }}>
+        <Box
+          sx={{
+            width: 320,
+            borderRight: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>组织架构</Typography>
-              <Button size="small" onClick={handleCreateCompany} startIcon={<Plus sx={{ width: 16, height: 16 }} />}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1.5,
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                组织架构
+              </Typography>
+              <Button
+                size="small"
+                onClick={handleCreateCompany}
+                startIcon={<Plus sx={{ width: 16, height: 16 }} />}
+              >
                 新增
               </Button>
             </Box>
@@ -549,24 +579,49 @@ const HrmOrganizationPage: React.FC = () => {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
+                      <Search
+                        sx={{ width: 16, height: 16, color: "grey.400" }}
+                      />
                     </InputAdornment>
                   ),
-                }
+                },
               }}
             />
           </Box>
 
           <Box sx={{ flex: 1, overflowY: "auto", p: 1 }}>
             {loading ? (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 128 }}>
-                <Box sx={{ animation: "spin 1s linear infinite", display: "flex", alignItems: "center" }}>
-                  <RefreshCw sx={{ width: 20, height: 20, color: "primary.main" }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: 128,
+                }}
+              >
+                <Box
+                  sx={{
+                    animation: "spin 1s linear infinite",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <RefreshCw
+                    sx={{ width: 20, height: 20, color: "primary.main" }}
+                  />
                 </Box>
               </Box>
             ) : filteredTreeData.length === 0 ? (
               <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-                <Building sx={{ width: 48, height: 48, mx: "auto", mb: 2, opacity: 0.5 }} />
+                <Building
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    mx: "auto",
+                    mb: 2,
+                    opacity: 0.5,
+                  }}
+                />
                 <Typography>暂无组织架构数据</Typography>
               </Box>
             ) : (
@@ -576,15 +631,32 @@ const HrmOrganizationPage: React.FC = () => {
         </Box>
 
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "background.paper" }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              bgcolor: "background.paper",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 {selectedNode ? (
                   <>
                     {selectedNode.type === "company" ? (
-                      <Building sx={{ width: 24, height: 24, color: "primary.main" }} />
+                      <Building
+                        sx={{ width: 24, height: 24, color: "primary.main" }}
+                      />
                     ) : (
-                      <Building2 sx={{ width: 24, height: 24, color: "success.main" }} />
+                      <Building2
+                        sx={{ width: 24, height: 24, color: "success.main" }}
+                      />
                     )}
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -597,7 +669,9 @@ const HrmOrganizationPage: React.FC = () => {
                   </>
                 ) : (
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>请选择组织</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      请选择组织
+                    </Typography>
                     <Typography variant="body2" color="text.secondary">
                       在左侧选择公司或部门查看详情
                     </Typography>
@@ -644,7 +718,14 @@ const HrmOrganizationPage: React.FC = () => {
                   <Button
                     variant="outlined"
                     size="small"
-                    sx={{ color: "error.main", borderColor: "error.main", "&:hover": { borderColor: "error.dark", color: "error.dark" } }}
+                    sx={{
+                      color: "error.main",
+                      borderColor: "error.main",
+                      "&:hover": {
+                        borderColor: "error.dark",
+                        color: "error.dark",
+                      },
+                    }}
                     onClick={
                       selectedNode.type === "company"
                         ? handleDeleteCompany
@@ -663,34 +744,92 @@ const HrmOrganizationPage: React.FC = () => {
             {selectedNode ? (
               <Card>
                 <CardHeader>
-                  <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
                     <Users sx={{ width: 20, height: 20 }} />
                     员工列表
                   </Typography>
                 </CardHeader>
                 <CardContent>
                   {employees.length === 0 ? (
-                    <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-                      <Users sx={{ width: 48, height: 48, mx: "auto", mb: 2, opacity: 0.5 }} />
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: 4,
+                        color: "text.secondary",
+                      }}
+                    >
+                      <Users
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          mx: "auto",
+                          mb: 2,
+                          opacity: 0.5,
+                        }}
+                      />
                       <Typography>暂无员工</Typography>
                     </Box>
                   ) : (
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1.5,
+                      }}
+                    >
                       {employees.map((emp) => (
                         <Box
                           key={emp.id}
-                          sx={{ display: "flex", alignItems: "center", gap: 2, p: 1.5, bgcolor: "grey.50", borderRadius: 1, "&:hover": { bgcolor: "grey.100" } }}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            p: 1.5,
+                            bgcolor: "grey.50",
+                            borderRadius: 1,
+                            "&:hover": { bgcolor: "grey.100" },
+                          }}
                         >
-                          <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Users sx={{ width: 20, height: 20, color: "primary.main" }} />
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: "50%",
+                              bgcolor: "primary.100",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Users
+                              sx={{
+                                width: 20,
+                                height: 20,
+                                color: "primary.main",
+                              }}
+                            />
                           </Box>
                           <Box sx={{ flex: 1 }}>
-                            <Typography sx={{ fontWeight: 500 }}>{emp.name}</Typography>
+                            <Typography sx={{ fontWeight: 500 }}>
+                              {emp.name}
+                            </Typography>
                             <Typography variant="body2" color="text.secondary">
                               {emp.position || "无职位"}
                             </Typography>
                           </Box>
-                          <Chip size="small" variant="outlined" label={emp.status === "active" ? "在职" : "离职"} />
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={emp.status === "active" ? "在职" : "离职"}
+                          />
                         </Box>
                       ))}
                     </Box>
@@ -698,11 +837,30 @@ const HrmOrganizationPage: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
                 <Box sx={{ textAlign: "center", color: "text.secondary" }}>
-                  <Building sx={{ width: 64, height: 64, mx: "auto", mb: 3, opacity: 0.5 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 500 }}>选择一个组织</Typography>
-                  <Typography variant="body2">在左侧树形结构中选择公司或部门</Typography>
+                  <Building
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      mx: "auto",
+                      mb: 3,
+                      opacity: 0.5,
+                    }}
+                  />
+                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                    选择一个组织
+                  </Typography>
+                  <Typography variant="body2">
+                    在左侧树形结构中选择公司或部门
+                  </Typography>
                 </Box>
               </Box>
             )}
@@ -710,7 +868,12 @@ const HrmOrganizationPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Dialog open={showCompanyModal} onClose={() => setShowCompanyModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCompanyModal}
+        onClose={() => setShowCompanyModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           {modalMode === "create"
             ? "创建公司"
@@ -721,7 +884,9 @@ const HrmOrganizationPage: React.FC = () => {
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司名称</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                公司名称
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -737,7 +902,9 @@ const HrmOrganizationPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司简称</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                公司简称
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -753,7 +920,9 @@ const HrmOrganizationPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司地址</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                公司地址
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -769,7 +938,9 @@ const HrmOrganizationPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司描述</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                公司描述
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -787,7 +958,9 @@ const HrmOrganizationPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                状态
+              </InputLabel>
               <FormControl fullWidth size="small">
                 <MuiSelect
                   value={companyFormData.status || ""}
@@ -805,14 +978,19 @@ const HrmOrganizationPage: React.FC = () => {
               </FormControl>
             </Box>
           </Box>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}
+          >
             {modalMode !== "view" && (
               <Button onClick={handleSaveCompany} variant="contained">
                 {modalMode === "create" ? "创建" : "保存"}
               </Button>
             )}
             {modalMode === "view" && (
-              <Button onClick={() => setShowCompanyModal(false)} variant="contained">
+              <Button
+                onClick={() => setShowCompanyModal(false)}
+                variant="contained"
+              >
                 关闭
               </Button>
             )}
@@ -820,7 +998,12 @@ const HrmOrganizationPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDeptModal} onClose={() => setShowDeptModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showDeptModal}
+        onClose={() => setShowDeptModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           {modalMode === "create"
             ? "创建部门"
@@ -831,7 +1014,9 @@ const HrmOrganizationPage: React.FC = () => {
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>部门名称</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                部门名称
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -844,7 +1029,9 @@ const HrmOrganizationPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>部门编码</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                部门编码
+              </InputLabel>
               <Box sx={{ display: "flex", gap: 1 }}>
                 <TextField
                   fullWidth
@@ -866,14 +1053,19 @@ const HrmOrganizationPage: React.FC = () => {
               </Box>
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>上级部门</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                上级部门
+              </InputLabel>
               <FormControl fullWidth size="small">
                 <MuiSelect
                   value={deptFormData.parent_id || "none"}
                   onChange={(e) =>
                     setDeptFormData({
                       ...deptFormData,
-                      parent_id: e.target.value === "none" ? undefined : e.target.value as string,
+                      parent_id:
+                        e.target.value === "none"
+                          ? undefined
+                          : (e.target.value as string),
                     })
                   }
                   disabled={modalMode === "view"}
@@ -888,7 +1080,9 @@ const HrmOrganizationPage: React.FC = () => {
               </FormControl>
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>部门描述</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                部门描述
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -906,7 +1100,9 @@ const HrmOrganizationPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                状态
+              </InputLabel>
               <FormControl fullWidth size="small">
                 <MuiSelect
                   value={deptFormData.status || ""}
@@ -924,14 +1120,19 @@ const HrmOrganizationPage: React.FC = () => {
               </FormControl>
             </Box>
           </Box>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 3 }}
+          >
             {modalMode !== "view" && (
               <Button onClick={handleSaveDepartment} variant="contained">
                 {modalMode === "create" ? "创建" : "保存"}
               </Button>
             )}
             {modalMode === "view" && (
-              <Button onClick={() => setShowDeptModal(false)} variant="contained">
+              <Button
+                onClick={() => setShowDeptModal(false)}
+                variant="contained"
+              >
                 关闭
               </Button>
             )}

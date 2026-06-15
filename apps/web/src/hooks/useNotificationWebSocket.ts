@@ -159,7 +159,7 @@ export const useNotificationWebSocket = ({
     try {
       const notificationServiceUrl = config.services.notification;
       const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-      
+
       let wsUrl: string;
 
       try {

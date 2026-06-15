@@ -23,7 +23,16 @@ interface StatusBadgeProps {
   showIcon?: boolean;
 }
 
-const variantToColor = (variant: string): "default" | "primary" | "secondary" | "error" | "success" | "warning" | "info" => {
+const variantToColor = (
+  variant: string,
+):
+  | "default"
+  | "primary"
+  | "secondary"
+  | "error"
+  | "success"
+  | "warning"
+  | "info" => {
   switch (variant) {
     case "default":
       return "primary";

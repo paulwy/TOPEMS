@@ -4,7 +4,18 @@
  */
 
 import React, { useState } from "react";
-import { Button, Card, CardContent, CardHeader, Chip, Typography, TextField, Box, Tabs, Tab } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  TextField,
+  Box,
+  Tabs,
+  Tab,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -140,7 +151,9 @@ export default function ConsolidationScopePage() {
           label: row.consolidation_method,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Chip size="small" className={config.color} label={config.label} />;
+        return (
+          <Chip size="small" className={config.color} label={config.label} />
+        );
       },
     },
     {
@@ -217,7 +230,11 @@ export default function ConsolidationScopePage() {
         <div className="flex items-center gap-2">
           <span className="font-medium">{row.getValue("company_name")}</span>
           {row.original.is_parent && (
-            <Chip  size="small" className="bg-blue-100 text-blue-800" label="母公司" />
+            <Chip
+              size="small"
+              className="bg-blue-100 text-blue-800"
+              label="母公司"
+            />
           )}
         </div>
       ),
@@ -234,7 +251,9 @@ export default function ConsolidationScopePage() {
           label: controlType,
           color: "bg-gray-100 text-gray-800",
         };
-        return <Chip size="small" className={config.color} label={config.label} />;
+        return (
+          <Chip size="small" className={config.color} label={config.label} />
+        );
       },
     },
     {
@@ -290,9 +309,24 @@ export default function ConsolidationScopePage() {
   return (
     <Box sx={{ p: 3 }} className="container mx-auto">
       {/* 页面标题 */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+        }}
+      >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
             <GitMerge className="w-6 h-6 text-blue-600" />
             合并范围管理
           </Typography>
@@ -329,21 +363,42 @@ export default function ConsolidationScopePage() {
       </Card>
 
       {/* 合并范围列表和详情 */}
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "5fr 7fr" }, gap: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "5fr 7fr" },
+          gap: 3,
+        }}
+      >
         {/* 左侧：合并范围列表 */}
         <Box>
           <Card>
             <CardHeader>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem", display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
                 <Network className="w-5 h-5 text-blue-600" />
                 合并范围列表
               </Typography>
             </CardHeader>
             <CardContent>
               {scopesLoading ? (
-                <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>加载中...</Box>
+                <Box
+                  sx={{ textAlign: "center", py: 4, color: "text.secondary" }}
+                >
+                  加载中...
+                </Box>
               ) : scopesData?.items?.length === 0 ? (
-                <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                <Box
+                  sx={{ textAlign: "center", py: 4, color: "text.secondary" }}
+                >
                   暂无合并范围，点击右上角新建
                 </Box>
               ) : (
@@ -357,21 +412,61 @@ export default function ConsolidationScopePage() {
                         border: 1,
                         cursor: "pointer",
                         transition: "all 0.2s",
-                        borderColor: selectedScope?.id === scope.id ? "primary.main" : "divider",
-                        bgcolor: selectedScope?.id === scope.id ? "primary.50" : "transparent",
-                        "&:hover": { borderColor: "primary.main", bgcolor: "primary.50" },
+                        borderColor:
+                          selectedScope?.id === scope.id
+                            ? "primary.main"
+                            : "divider",
+                        bgcolor:
+                          selectedScope?.id === scope.id
+                            ? "primary.50"
+                            : "transparent",
+                        "&:hover": {
+                          borderColor: "primary.main",
+                          bgcolor: "primary.50",
+                        },
                       }}
                       onClick={() => handleSelectScope(scope)}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{scope.name}</Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {scope.name}
+                            </Typography>
                             {STATUS_CONFIG[scope.status] && (
-                              <Chip size="small" label={STATUS_CONFIG[scope.status].label} sx={{ bgcolor: "success.100", color: "success.main" }} />
+                              <Chip
+                                size="small"
+                                label={STATUS_CONFIG[scope.status].label}
+                                sx={{
+                                  bgcolor: "success.100",
+                                  color: "success.main",
+                                }}
+                              />
                             )}
                           </Box>
-                          <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5, display: "block" }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "text.secondary",
+                              mt: 0.5,
+                              display: "block",
+                            }}
+                          >
                             {scope.code} |{" "}
                             {METHOD_CONFIG[scope.consolidation_method]?.label ||
                               scope.consolidation_method}
@@ -392,8 +487,23 @@ export default function ConsolidationScopePage() {
           {selectedScope ? (
             <Card>
               <CardHeader>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem", display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: "1rem",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
                     <Users className="w-5 h-5 text-blue-600" />
                     {selectedScope.name}
                   </Typography>
@@ -410,20 +520,36 @@ export default function ConsolidationScopePage() {
                     编辑
                   </Button>
                 </Box>
-                <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "text.secondary", mt: 1 }}
+                >
                   {selectedScope.code} | {selectedScope.description || "无说明"}
                 </Typography>
               </CardHeader>
               <CardContent>
-                <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 2 }}>
-                  <Tab value="companies" label={`成员公司 (${companiesData?.data?.length || 0})`} />
+                <Tabs
+                  value={activeTab}
+                  onChange={(_, v) => setActiveTab(v)}
+                  sx={{ mb: 2 }}
+                >
+                  <Tab
+                    value="companies"
+                    label={`成员公司 (${companiesData?.data?.length || 0})`}
+                  />
                   <Tab value="rules" label="抵消规则" />
                   <Tab value="transactions" label="内部交易" />
                 </Tabs>
 
                 {activeTab === "companies" && (
                   <Box>
-                    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        mb: 2,
+                      }}
+                    >
                       <Button
                         size="small"
                         variant="contained"
@@ -439,11 +565,23 @@ export default function ConsolidationScopePage() {
                     </Box>
 
                     {companiesLoading ? (
-                      <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                      <Box
+                        sx={{
+                          textAlign: "center",
+                          py: 4,
+                          color: "text.secondary",
+                        }}
+                      >
                         加载中...
                       </Box>
                     ) : companiesData?.data?.length === 0 ? (
-                      <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                      <Box
+                        sx={{
+                          textAlign: "center",
+                          py: 4,
+                          color: "text.secondary",
+                        }}
+                      >
                         暂无成员公司
                       </Box>
                     ) : (
@@ -458,7 +596,13 @@ export default function ConsolidationScopePage() {
 
                 {activeTab === "rules" && (
                   <Box>
-                    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        mb: 2,
+                      }}
+                    >
                       <Button
                         size="small"
                         variant="contained"
@@ -472,21 +616,36 @@ export default function ConsolidationScopePage() {
                         新建规则
                       </Button>
                     </Box>
-                    <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: 4,
+                        color: "text.secondary",
+                      }}
+                    >
                       点击上方按钮添加抵消规则
                     </Box>
                   </Box>
                 )}
 
                 {activeTab === "transactions" && (
-                  <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                  <Box
+                    sx={{ textAlign: "center", py: 4, color: "text.secondary" }}
+                  >
                     内部交易列表将显示在此处
                   </Box>
                 )}
               </CardContent>
             </Card>
           ) : (
-            <Card sx={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 384 }}>
+            <Card
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 384,
+              }}
+            >
               <Box sx={{ textAlign: "center", color: "text.secondary" }}>
                 <Network className="w-12 h-12 mx-auto mb: 2, text-gray-300" />
                 <Typography>请从左侧选择一个合并范围</Typography>

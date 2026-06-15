@@ -1,4 +1,11 @@
-import { Box, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Search,
@@ -612,7 +619,10 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
             <div className="flex items-center space-x-2">
               <ModeToggle />
               {activeTab === "assets" && (
-                <Button variant="contained" onClick={() => setShowCreateModal(true)}>
+                <Button
+                  variant="contained"
+                  onClick={() => setShowCreateModal(true)}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   新增设备
                 </Button>
@@ -649,7 +659,9 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs
           value={activeTab}
-          onChange={(_: React.SyntheticEvent, newValue: string) => setActiveTab(newValue)}
+          onChange={(_: React.SyntheticEvent, newValue: string) =>
+            setActiveTab(newValue)
+          }
         >
           <Tab
             value="assets"
@@ -929,7 +941,10 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
                     value={newAsset.responsible_id || ""}
                     label="负责人"
                     onChange={(e) =>
-                      setNewAsset({ ...newAsset, responsible_id: e.target.value })
+                      setNewAsset({
+                        ...newAsset,
+                        responsible_id: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="none">无</MenuItem>
@@ -1343,7 +1358,10 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
                   value={newInspection.status || "normal"}
                   label="点检状态"
                   onChange={(e) =>
-                    setNewInspection({ ...newInspection, status: e.target.value })
+                    setNewInspection({
+                      ...newInspection,
+                      status: e.target.value,
+                    })
                   }
                 >
                   <MenuItem value="normal">正常</MenuItem>
@@ -1518,7 +1536,10 @@ const EquipmentManagementPage: React.FC<EquipmentManagementPageProps> = ({
                   value={newMaintenance.status || "pending"}
                   label="维护状态"
                   onChange={(e) =>
-                    setNewMaintenance({ ...newMaintenance, status: e.target.value })
+                    setNewMaintenance({
+                      ...newMaintenance,
+                      status: e.target.value,
+                    })
                   }
                 >
                   <MenuItem value="pending">待处理</MenuItem>

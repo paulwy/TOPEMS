@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { topNavItems, moduleTabsConfig, getModuleFromPath, type NavItem, type TabItem } from "../config/navigation";
+import {
+  topNavItems,
+  moduleTabsConfig,
+  getModuleFromPath,
+  type NavItem,
+  type TabItem,
+} from "../config/navigation";
 
 interface NavState {
   activeModule: string | null;
@@ -72,17 +78,19 @@ export function useTopNav(): UseTopNavReturn {
     setState((prev) => ({ ...prev, openMenu: menu }));
   }, []);
 
-  const navigateTo = useCallback((path: string) => {
-    navigate(path);
-    setState((prev) => ({ ...prev, openMenu: null }));
-  }, [navigate]);
+  const navigateTo = useCallback(
+    (path: string) => {
+      navigate(path);
+      setState((prev) => ({ ...prev, openMenu: null }));
+    },
+    [navigate],
+  );
 
   const currentModuleTabs = (): TabItem[] => {
     if (!state.activeModule) return [];
 
-    const configTabs = moduleTabsConfig.find(
-      (c) => c.module === state.activeModule
-    )?.tabs || [];
+    const configTabs =
+      moduleTabsConfig.find((c) => c.module === state.activeModule)?.tabs || [];
 
     const customTabs = state.customTabs[state.activeModule] || [];
 
@@ -95,59 +103,70 @@ export function useTopNav(): UseTopNavReturn {
     return configTabs;
   };
 
-  const toggleTabPin = useCallback((tab: TabItem) => {
-    if (!state.activeModule) return;
+  const toggleTabPin = useCallback(
+    (tab: TabItem) => {
+      if (!state.activeModule) return;
 
-    const module = state.activeModule;
-    setState((prev) => {
-      const currentTabs = prev.customTabs[module] || [];
-      const updatedTabs = currentTabs.map((t: TabItem) =>
-        t.path === tab.path ? { ...t, pinned: !t.pinned } : t
-      );
-      return {
-        ...prev,
-        customTabs: {
-          ...prev.customTabs,
-          [module]: updatedTabs,
-        },
-      };
-    });
-  }, [state.activeModule]);
+      const module = state.activeModule;
+      setState((prev) => {
+        const currentTabs = prev.customTabs[module] || [];
+        const updatedTabs = currentTabs.map((t: TabItem) =>
+          t.path === tab.path ? { ...t, pinned: !t.pinned } : t,
+        );
+        return {
+          ...prev,
+          customTabs: {
+            ...prev.customTabs,
+            [module]: updatedTabs,
+          },
+        };
+      });
+    },
+    [state.activeModule],
+  );
 
-  const closeTab = useCallback((tab: TabItem) => {
-    if (!state.activeModule || tab.pinned) return;
+  const closeTab = useCallback(
+    (tab: TabItem) => {
+      if (!state.activeModule || tab.pinned) return;
 
-    const module = state.activeModule;
-    setState((prev) => {
-      const currentTabs = prev.customTabs[module] || [];
-      const updatedTabs = currentTabs.filter((t: TabItem) => t.path !== tab.path);
-      return {
-        ...prev,
-        customTabs: {
-          ...prev.customTabs,
-          [module]: updatedTabs,
-        },
-      };
-    });
-  }, [state.activeModule]);
+      const module = state.activeModule;
+      setState((prev) => {
+        const currentTabs = prev.customTabs[module] || [];
+        const updatedTabs = currentTabs.filter(
+          (t: TabItem) => t.path !== tab.path,
+        );
+        return {
+          ...prev,
+          customTabs: {
+            ...prev.customTabs,
+            [module]: updatedTabs,
+          },
+        };
+      });
+    },
+    [state.activeModule],
+  );
 
-  const reorderTabs = useCallback((fromIndex: number, toIndex: number) => {
-    if (!state.activeModule) return;
+  const reorderTabs = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (!state.activeModule) return;
 
-    const module = state.activeModule;
-    setState((prev) => {
-      const currentTabs = [...(prev.customTabs[module] || [])];
-      const [removed] = currentTabs.splice(fromIndex, 1);
-      currentTabs.splice(toIndex, 0, removed);
-      return {
-        ...prev,
-        customTabs: {
-          ...prev.customTabs,
-          [module]: currentTabs,
-        },
-      };
-    });
-  }, [state.activeModule]);
+      const module = state.activeModule;
+      setState((prev) => {
+        const currentTabs = [...(prev.customTabs[module] || [])];
+        const [removed] = currentTabs.splice(fromIndex, 1);
+        currentTabs.splice(toIndex, 0, removed);
+        return {
+          ...prev,
+          customTabs: {
+            ...prev.customTabs,
+            [module]: currentTabs,
+          },
+        };
+      });
+    },
+    [state.activeModule],
+  );
 
   return {
     activeModule: state.activeModule,

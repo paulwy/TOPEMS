@@ -1,4 +1,11 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Car,
@@ -591,7 +598,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
             </div>
             <div className="flex items-center space-x-2">
               <ModeToggle />
-              <MuiButton variant="contained" onClick={() => setShowCreateModal(true)}>
+              <MuiButton
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+              >
                 <Plus className="w-5 h-5 mr-2" />
                 添加车辆
               </MuiButton>
@@ -688,7 +698,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                     value={newVehicle.vehicle_type || ""}
                     label="车辆类型"
                     onChange={(e) =>
-                      setNewVehicle({ ...newVehicle, vehicle_type: e.target.value })
+                      setNewVehicle({
+                        ...newVehicle,
+                        vehicle_type: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="sedan">轿车</MenuItem>
@@ -715,7 +728,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                     value={newVehicle.fuel_type || ""}
                     label="燃料类型"
                     onChange={(e) =>
-                      setNewVehicle({ ...newVehicle, fuel_type: e.target.value })
+                      setNewVehicle({
+                        ...newVehicle,
+                        fuel_type: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="gasoline">汽油</MenuItem>
@@ -971,7 +987,9 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                   value={newRequest.vehicle_id || ""}
                   label="选择车辆"
                   onChange={(e) => {
-                    const vehicle = vehicles.find((v) => v.id === e.target.value);
+                    const vehicle = vehicles.find(
+                      (v) => v.id === e.target.value,
+                    );
                     setNewRequest({
                       ...newRequest,
                       vehicle_id: e.target.value,
@@ -983,8 +1001,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({
                     .filter((v) => v.status === "available")
                     .map((vehicle) => (
                       <MenuItem key={vehicle.id} value={vehicle.id}>
-                        {vehicle.plate_number} - {vehicle.brand}{" "}
-                        {vehicle.model}
+                        {vehicle.plate_number} - {vehicle.brand} {vehicle.model}
                       </MenuItem>
                     ))}
                 </Select>

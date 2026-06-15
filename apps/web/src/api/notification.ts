@@ -113,7 +113,6 @@ export const getNotifications = async (
   pageSize = 20,
   notificationType?: NotificationTypeEnum,
 ): Promise<ApiResponse<NotificationListResponse>> => {
-
   try {
     const params: Record<string, any> = {
       page,
@@ -279,9 +278,8 @@ export const runAutoArchive = async (): Promise<
 export const getMyNotificationStats = async (): Promise<
   ApiResponse<NotificationStats>
 > => {
-  const response = await apiClient.notification.get<NotificationStats>(
-    "/api/v1/stats/me",
-  );
+  const response =
+    await apiClient.notification.get<NotificationStats>("/api/v1/stats/me");
   return response;
 };
 

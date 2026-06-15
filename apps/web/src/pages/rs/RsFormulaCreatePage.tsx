@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -5,7 +6,6 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
   TextField,
   Button,
   MenuItem,
@@ -276,7 +276,11 @@ const RsFormulaCreatePage: React.FC = () => {
 
           <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 2 }} />
-            <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end" }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ justifyContent: "flex-end" }}
+            >
               <Button
                 variant="outlined"
                 startIcon={<CancelIcon />}

@@ -401,19 +401,34 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           </div>
           <div className="p-4 flex-1 overflow-y-auto">
             {selectedNode ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 16 }}
+              >
                 <div>
-                  <FormLabel sx={{ color: "text.secondary" }}>节点 ID</FormLabel>
+                  <FormLabel sx={{ color: "text.secondary" }}>
+                    节点 ID
+                  </FormLabel>
                   <TextField
                     value={selectedNode.id}
                     disabled
-                    sx={{ marginTop: 1, backgroundColor: "background.disabled" }}
+                    sx={{
+                      marginTop: 1,
+                      backgroundColor: "background.disabled",
+                    }}
                     fullWidth
                   />
                 </div>
                 <div>
                   <FormLabel sx={{ color: "text.secondary" }}>类型</FormLabel>
-                  <div style={{ marginTop: 8, fontSize: 14, padding: "4px 8px", borderRadius: 4, backgroundColor: "#f3f4f6" }}>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 14,
+                      padding: "4px 8px",
+                      borderRadius: 4,
+                      backgroundColor: "#f3f4f6",
+                    }}
+                  >
                     {selectedNode.type}
                   </div>
                 </div>

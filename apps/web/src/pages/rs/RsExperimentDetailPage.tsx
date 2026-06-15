@@ -1,10 +1,10 @@
+import { Grid } from "@/components/Grid";
 import React from "react";
 import { Link } from "react-router-dom";
 import {
   Box,
   Container,
   Typography,
-  Grid,
   Card,
   CardContent,
   Chip,
@@ -130,7 +130,10 @@ const RsExperimentDetailPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面头部 */}
       <div style={{ marginBottom: 12 }}>
-        <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
+        >
           <div>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Typography variant="h4" sx={{ fontWeight: "bold" }}>
@@ -260,7 +263,13 @@ const RsExperimentDetailPage: React.FC = () => {
                 </TimelineSeparator>
                 <TimelineContent>
                   <Paper variant="outlined" sx={{ p: 2 }}>
-                    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                    <Stack
+                      direction="row"
+                      sx={{
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <div>
                         <Chip label={record.type} size="small" sx={{ mb: 1 }} />
                         <Typography variant="body2">

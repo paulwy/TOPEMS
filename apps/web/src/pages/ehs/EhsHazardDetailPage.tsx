@@ -257,7 +257,7 @@ const EhsHazardDetailPage: React.FC = () => {
       accessorKey: "assessor",
       header: "评估人",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box component={Users} sx={{ fontSize: 16 }} />
           <span>{row.original.assessor || "-"}</span>
         </Box>
@@ -272,13 +272,20 @@ const EhsHazardDetailPage: React.FC = () => {
           row.original.likelihood || "medium",
         );
         const colorMap: Record<string, { bg: string; color: string }> = {
-          '高风险': { bg: '#fee2e2', color: '#dc2626' },
-          '中风险': { bg: '#fef9c3', color: '#ca8a04' },
-          '低风险': { bg: '#dcfce7', color: '#16a34a' },
+          高风险: { bg: "#fee2e2", color: "#dc2626" },
+          中风险: { bg: "#fef9c3", color: "#ca8a04" },
+          低风险: { bg: "#dcfce7", color: "#16a34a" },
         };
-        const colors = colorMap[`${riskResult.level}风险`] || { bg: '#f3f4f6', color: '#4b5563' };
+        const colors = colorMap[`${riskResult.level}风险`] || {
+          bg: "#f3f4f6",
+          color: "#4b5563",
+        };
         return (
-          <Chip label={`${riskResult.level}风险`} size="small" sx={{ backgroundColor: colors.bg, color: colors.color }} />
+          <Chip
+            label={`${riskResult.level}风险`}
+            size="small"
+            sx={{ backgroundColor: colors.bg, color: colors.color }}
+          />
         );
       },
     },
@@ -298,7 +305,7 @@ const EhsHazardDetailPage: React.FC = () => {
       accessorKey: "responsible",
       header: "负责人",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box component={Users} sx={{ fontSize: 16 }} />
           <span>{row.original.responsible || "-"}</span>
         </Box>
@@ -308,7 +315,7 @@ const EhsHazardDetailPage: React.FC = () => {
       accessorKey: "deadline",
       header: "完成期限",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box component={Clock} sx={{ fontSize: 16 }} />
           {row.original.deadline
             ? new Date(row.original.deadline).toLocaleDateString("zh-CN")
@@ -331,7 +338,7 @@ const EhsHazardDetailPage: React.FC = () => {
           variant="text"
           size="small"
           onClick={() => handleDeleteControl(row.original.id)}
-          sx={{ color: '#dc2626', '&:hover': { backgroundColor: '#fef2f2' } }}
+          sx={{ color: "#dc2626", "&:hover": { backgroundColor: "#fef2f2" } }}
           startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
         />
       ),
@@ -340,10 +347,30 @@ const EhsHazardDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Box sx={{ width: 48, height: 48, border: 4, borderColor: '#fed7aa', borderTopColor: '#ea580c', borderRadius: '50%', animation: 'spin 1s linear infinite', mx: 'auto', mb: 2 }} />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
+        }}
+      >
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              border: 4,
+              borderColor: "#fed7aa",
+              borderTopColor: "#ea580c",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              mx: "auto",
+              mb: 2,
+            }}
+          />
+          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
         </Box>
       </Box>
     );
@@ -351,10 +378,23 @@ const EhsHazardDetailPage: React.FC = () => {
 
   if (!hazard) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Box component={AlertCircle} sx={{ fontSize: 64, color: '#ef4444', mx: 'auto', mb: 2 }} />
-          <Typography sx={{ color: 'slate.600' }}>危险源不存在或已被删除</Typography>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
+        }}
+      >
+        <Box sx={{ textAlign: "center" }}>
+          <Box
+            component={AlertCircle}
+            sx={{ fontSize: 64, color: "#ef4444", mx: "auto", mb: 2 }}
+          />
+          <Typography sx={{ color: "slate.600" }}>
+            危险源不存在或已被删除
+          </Typography>
           <Button onClick={() => navigate("/ehs")} sx={{ mt: 2 }}>
             返回列表
           </Button>
@@ -369,11 +409,34 @@ const EhsHazardDetailPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}>
-      <Box component="header" sx={{ bgcolor: 'background.paper', boxShadow: 1, borderBottom: 1, borderColor: 'divider', position: 'sticky', top: 0, zIndex: 10 }}>
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 64 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
+      }}
+    >
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              height: 64,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Button
                 variant="text"
                 onClick={() => navigate("/ehs")}
@@ -382,11 +445,18 @@ const EhsHazardDetailPage: React.FC = () => {
                 <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'slate.900' }}>危险源详情</Typography>
-                <Typography variant="caption" sx={{ color: 'slate.500' }}>Hazard Detail</Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  危险源详情
+                </Typography>
+                <Typography variant="caption" sx={{ color: "slate.500" }}>
+                  Hazard Detail
+                </Typography>
               </Box>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Button
                 variant="outlined"
                 onClick={() => setShowControlModal(true)}
@@ -406,30 +476,83 @@ const EhsHazardDetailPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box component="main" sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, lg: 3 }, gap: 3 }}>
-          <Box sx={{ gridColumn: { lg: 'span 1' }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box
+        component="main"
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, lg: 3 },
+            gap: 3,
+          }}
+        >
+          <Box
+            sx={{
+              gridColumn: { lg: "span 1" },
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
+          >
             <Card>
               <CardHeader sx={{ pb: 1 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box component={AlertTriangle} sx={{ fontSize: 20, color: '#ea580c' }} />
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Box
+                    component={AlertTriangle}
+                    sx={{ fontSize: 20, color: "#ea580c" }}
+                  />
                   危险源信息
                 </Typography>
               </CardHeader>
-              <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <CardContent
+                sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
                   <Box>
-                    <Typography sx={{ color: 'slate.500', fontSize: 14 }}>危险源名称</Typography>
-                    <Typography sx={{ color: 'slate.900', fontWeight: 600, fontSize: 18, mt: 0.5 }}>
+                    <Typography sx={{ color: "slate.500", fontSize: 14 }}>
+                      危险源名称
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: "slate.900",
+                        fontWeight: 600,
+                        fontSize: 18,
+                        mt: 0.5,
+                      }}
+                    >
                       {hazard.name}
                     </Typography>
                   </Box>
                   {getStatusBadge(hazard.status)}
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 2, bgcolor: '#fff7ed', borderRadius: 2 }}>
-                  <Box component={Shield} sx={{ fontSize: 32, color: '#ea580c' }} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    p: 2,
+                    bgcolor: "#fff7ed",
+                    borderRadius: 2,
+                  }}
+                >
+                  <Box
+                    component={Shield}
+                    sx={{ fontSize: 32, color: "#ea580c" }}
+                  />
                   <Box>
-                    <Typography sx={{ color: '#ea580c', fontSize: 14 }}>风险等级</Typography>
+                    <Typography sx={{ color: "#ea580c", fontSize: 14 }}>
+                      风险等级
+                    </Typography>
                     <Typography
                       sx={{
                         fontSize: 20,
@@ -446,25 +569,60 @@ const EhsHazardDetailPage: React.FC = () => {
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 2,
+                  }}
+                >
                   <Box>
-                    <Typography sx={{ color: 'slate.500', fontSize: 14 }}>分类</Typography>
-                    <Typography sx={{ color: 'slate.900', mt: 0.5 }}>
+                    <Typography sx={{ color: "slate.500", fontSize: 14 }}>
+                      分类
+                    </Typography>
+                    <Typography sx={{ color: "slate.900", mt: 0.5 }}>
                       {hazard.category || "-"}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography sx={{ color: 'slate.500', fontSize: 14 }}>位置</Typography>
-                    <Typography sx={{ color: 'slate.900', mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography sx={{ color: "slate.500", fontSize: 14 }}>
+                      位置
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: "slate.900",
+                        mt: 0.5,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                      }}
+                    >
                       <Box component={MapPin} sx={{ fontSize: 16 }} />
                       {hazard.location || "-"}
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5 }}>
-                  <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: '#fef2f2', borderRadius: 1 }}>
-                    <Typography sx={{ color: '#dc2626', fontSize: 12 }}>严重程度</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#b91c1c', mt: 0.5 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: 1.5,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      p: 1.5,
+                      bgcolor: "#fef2f2",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "#dc2626", fontSize: 12 }}>
+                      严重程度
+                    </Typography>
+                    <Typography
+                      sx={{ fontWeight: 500, color: "#b91c1c", mt: 0.5 }}
+                    >
                       {hazard.severity === "high"
                         ? "高"
                         : hazard.severity === "medium"
@@ -472,9 +630,20 @@ const EhsHazardDetailPage: React.FC = () => {
                           : "低"}
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: '#fefce8', borderRadius: 1 }}>
-                    <Typography sx={{ color: '#ca8a04', fontSize: 12 }}>暴露频率</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#a16207', mt: 0.5 }}>
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      p: 1.5,
+                      bgcolor: "#fefce8",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "#ca8a04", fontSize: 12 }}>
+                      暴露频率
+                    </Typography>
+                    <Typography
+                      sx={{ fontWeight: 500, color: "#a16207", mt: 0.5 }}
+                    >
                       {hazard.exposure === "high"
                         ? "高"
                         : hazard.exposure === "medium"
@@ -482,9 +651,20 @@ const EhsHazardDetailPage: React.FC = () => {
                           : "低"}
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: '#eff6ff', borderRadius: 1 }}>
-                    <Typography sx={{ color: '#2563eb', fontSize: 12 }}>发生概率</Typography>
-                    <Typography sx={{ fontWeight: 500, color: '#1d4ed8', mt: 0.5 }}>
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      p: 1.5,
+                      bgcolor: "#eff6ff",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "#2563eb", fontSize: 12 }}>
+                      发生概率
+                    </Typography>
+                    <Typography
+                      sx={{ fontWeight: 500, color: "#1d4ed8", mt: 0.5 }}
+                    >
                       {hazard.likelihood === "high"
                         ? "高"
                         : hazard.likelihood === "medium"
@@ -493,9 +673,18 @@ const EhsHazardDetailPage: React.FC = () => {
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                  <Typography sx={{ color: 'slate.500', fontSize: 14 }}>描述</Typography>
-                  <Typography sx={{ color: 'slate.900', mt: 0.5, fontSize: 14, lineHeight: 1.6 }}>
+                <Box sx={{ pt: 2, borderTop: 1, borderColor: "divider" }}>
+                  <Typography sx={{ color: "slate.500", fontSize: 14 }}>
+                    描述
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: "slate.900",
+                      mt: 0.5,
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {hazard.description || "暂无描述"}
                   </Typography>
                 </Box>
@@ -503,14 +692,35 @@ const EhsHazardDetailPage: React.FC = () => {
             </Card>
           </Box>
 
-          <Box sx={{ gridColumn: { lg: 'span 2' }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box
+            sx={{
+              gridColumn: { lg: "span 2" },
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
+          >
             <Card>
-              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box component={AlertTriangle} sx={{ fontSize: 20, color: '#ea580c' }} />
+              <CardHeader
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  pb: 1,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Box
+                    component={AlertTriangle}
+                    sx={{ fontSize: 20, color: "#ea580c" }}
+                  />
                   风险评估记录
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   共 {assessments.length} 条记录
                 </Typography>
               </CardHeader>
@@ -522,8 +732,16 @@ const EhsHazardDetailPage: React.FC = () => {
                     enablePagination={false}
                   />
                 ) : (
-                  <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>
-                    <Box component={AlertTriangle} sx={{ fontSize: 64, color: 'slate.400', mx: 'auto', mb: 2 }} />
+                  <Box sx={{ textAlign: "center", py: 6, color: "slate.500" }}>
+                    <Box
+                      component={AlertTriangle}
+                      sx={{
+                        fontSize: 64,
+                        color: "slate.400",
+                        mx: "auto",
+                        mb: 2,
+                      }}
+                    />
                     <Typography>暂无风险评估记录</Typography>
                   </Box>
                 )}
@@ -531,12 +749,26 @@ const EhsHazardDetailPage: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box component={Shield} sx={{ fontSize: 20, color: '#2563eb' }} />
+              <CardHeader
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  pb: 1,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Box
+                    component={Shield}
+                    sx={{ fontSize: 20, color: "#2563eb" }}
+                  />
                   控制措施
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   共 {controls.length} 条措施
                 </Typography>
               </CardHeader>
@@ -548,8 +780,16 @@ const EhsHazardDetailPage: React.FC = () => {
                     enablePagination={false}
                   />
                 ) : (
-                  <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>
-                    <Box component={Shield} sx={{ fontSize: 64, color: 'slate.400', mx: 'auto', mb: 2 }} />
+                  <Box sx={{ textAlign: "center", py: 6, color: "slate.500" }}>
+                    <Box
+                      component={Shield}
+                      sx={{
+                        fontSize: 64,
+                        color: "slate.400",
+                        mx: "auto",
+                        mb: 2,
+                      }}
+                    />
                     <Typography>暂无控制措施</Typography>
                     <Button
                       variant="outlined"
@@ -569,12 +809,19 @@ const EhsHazardDetailPage: React.FC = () => {
       </Box>
 
       {/* Edit Hazard Modal */}
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle>编辑危险源</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>危险源名称 *</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                危险源名称 *
+              </Typography>
               <TextField
                 size="small"
                 fullWidth
@@ -585,9 +832,13 @@ const EhsHazardDetailPage: React.FC = () => {
                 placeholder="请输入危险源名称"
               />
             </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>分类</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  分类
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
@@ -602,7 +853,9 @@ const EhsHazardDetailPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>位置</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  位置
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
@@ -617,9 +870,17 @@ const EhsHazardDetailPage: React.FC = () => {
                 />
               </Box>
             </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 2,
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>严重程度</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  严重程度
+                </Typography>
                 <FormControl fullWidth size="small">
                   <InputLabel>严重程度</InputLabel>
                   <Select
@@ -639,7 +900,9 @@ const EhsHazardDetailPage: React.FC = () => {
                 </FormControl>
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>暴露频率</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  暴露频率
+                </Typography>
                 <FormControl fullWidth size="small">
                   <InputLabel>暴露频率</InputLabel>
                   <Select
@@ -659,7 +922,9 @@ const EhsHazardDetailPage: React.FC = () => {
                 </FormControl>
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>发生概率</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  发生概率
+                </Typography>
                 <FormControl fullWidth size="small">
                   <InputLabel>发生概率</InputLabel>
                   <Select
@@ -680,7 +945,9 @@ const EhsHazardDetailPage: React.FC = () => {
               </Box>
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>状态</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                状态
+              </Typography>
               <FormControl fullWidth size="small">
                 <InputLabel>状态</InputLabel>
                 <Select
@@ -689,7 +956,11 @@ const EhsHazardDetailPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      status: e.target.value as "active" | "controlled" | "eliminated" | "archived",
+                      status: e.target.value as
+                        | "active"
+                        | "controlled"
+                        | "eliminated"
+                        | "archived",
                     }))
                   }
                 >
@@ -701,7 +972,9 @@ const EhsHazardDetailPage: React.FC = () => {
               </FormControl>
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>描述</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                描述
+              </Typography>
               <TextField
                 multiline
                 rows={3}
@@ -719,18 +992,36 @@ const EhsHazardDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowEditModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleUpdateHazard} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>保存更改</Button>
+          <Button variant="outlined" onClick={() => setShowEditModal(false)}>
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleUpdateHazard}
+            sx={{
+              backgroundColor: "#ea580c",
+              "&:hover": { backgroundColor: "#c2410c" },
+            }}
+          >
+            保存更改
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Add Control Measure Modal */}
-      <Dialog open={showControlModal} onClose={() => setShowControlModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showControlModal}
+        onClose={() => setShowControlModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>添加控制措施</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>措施类型 *</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                措施类型 *
+              </Typography>
               <FormControl fullWidth size="small">
                 <InputLabel>措施类型</InputLabel>
                 <Select
@@ -739,7 +1030,10 @@ const EhsHazardDetailPage: React.FC = () => {
                   onChange={(e) =>
                     setControlFormData((prev) => ({
                       ...prev,
-                      measure_type: e.target.value as "engineering" | "administrative" | "ppe",
+                      measure_type: e.target.value as
+                        | "engineering"
+                        | "administrative"
+                        | "ppe",
                     }))
                   }
                 >
@@ -750,7 +1044,9 @@ const EhsHazardDetailPage: React.FC = () => {
               </FormControl>
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>措施描述 *</Typography>
+              <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                措施描述 *
+              </Typography>
               <TextField
                 multiline
                 rows={3}
@@ -765,9 +1061,13 @@ const EhsHazardDetailPage: React.FC = () => {
                 placeholder="请描述具体的控制措施..."
               />
             </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>负责人</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  负责人
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
@@ -782,7 +1082,9 @@ const EhsHazardDetailPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 0.5, display: 'block' }}>完成期限</Typography>
+                <Typography variant="body2" sx={{ mb: 0.5, display: "block" }}>
+                  完成期限
+                </Typography>
                 <TextField
                   type="date"
                   size="small"
@@ -800,8 +1102,19 @@ const EhsHazardDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowControlModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleAddControl} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>添加措施</Button>
+          <Button variant="outlined" onClick={() => setShowControlModal(false)}>
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleAddControl}
+            sx={{
+              backgroundColor: "#ea580c",
+              "&:hover": { backgroundColor: "#c2410c" },
+            }}
+          >
+            添加措施
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

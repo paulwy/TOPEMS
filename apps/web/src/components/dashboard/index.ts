@@ -11,3 +11,13 @@ export { ServiceStatusMonitor } from "./ServiceStatusMonitor";
 export { RecentActivities, type ActivityItem } from "./RecentActivities";
 export { MobileMenu } from "./MobileMenu";
 export { HeroSection } from "./HeroSection";
+export {
+  DashboardSection,
+  TodayOverviewSection,
+  QuickAccessSection,
+  TodoListSection,
+  ModuleNavigationSection,
+  ServiceMonitorSection,
+  RecentActivitySection,
+  type DashboardSectionProps,
+} from "./DashboardSections";

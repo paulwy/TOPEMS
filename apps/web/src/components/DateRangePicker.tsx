@@ -51,9 +51,19 @@ export const DateRangePicker = ({ value, onChange }: DateRangePickerProps) => {
         </span>
         <ChevronDown sx={{ width: 16, height: 16, marginLeft: 4 }} />
       </Button>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
         <Paper sx={{ padding: 2, minWidth: 300 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 8,
+            }}
+          >
             {presets.map((preset) => (
               <Button
                 key={preset.id}
@@ -66,8 +76,21 @@ export const DateRangePicker = ({ value, onChange }: DateRangePickerProps) => {
               </Button>
             ))}
           </div>
-          <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", marginTop: 16, paddingTop: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <div
+            style={{
+              borderTop: "1px solid rgba(0,0,0,0.1)",
+              marginTop: 16,
+              paddingTop: 16,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
               <TextField
                 type="date"
                 value={customStart}

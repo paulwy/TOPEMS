@@ -196,16 +196,42 @@ const NotificationCenter: React.FC = () => {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 4 }}>
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1 }}>
+        <Box
+          sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1 }}
+        >
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ width: 48, height: 48, bgcolor: "primary.100", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "primary.100",
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Bell size={24} color="#1976d2" />
                 </Box>
                 <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>通知中心</Typography>
-                  <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "grey.900" }}
+                  >
+                    通知中心
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "grey.500", mt: 0.5 }}
+                  >
                     共 {total} 条通知，{unreadCount} 条未读
                   </Typography>
                 </Box>
@@ -214,7 +240,14 @@ const NotificationCenter: React.FC = () => {
                 <Box
                   component="button"
                   onClick={() => navigate("/notifications/stats")}
-                  sx={{ p: 1, borderRadius: 2, bgcolor: "grey.200", color: "grey.600", "&:hover": { bgcolor: "grey.300" }, transition: "background-color 0.2s" }}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    bgcolor: "grey.200",
+                    color: "grey.600",
+                    "&:hover": { bgcolor: "grey.300" },
+                    transition: "background-color 0.2s",
+                  }}
                   title="统计"
                 >
                   <BarChart3 size={20} />
@@ -222,7 +255,14 @@ const NotificationCenter: React.FC = () => {
                 <Box
                   component="button"
                   onClick={() => navigate("/notifications/templates")}
-                  sx={{ p: 1, borderRadius: 2, bgcolor: "grey.200", color: "grey.600", "&:hover": { bgcolor: "grey.300" }, transition: "background-color 0.2s" }}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    bgcolor: "grey.200",
+                    color: "grey.600",
+                    "&:hover": { bgcolor: "grey.300" },
+                    transition: "background-color 0.2s",
+                  }}
                   title="模板管理"
                 >
                   <FileText size={20} />
@@ -230,7 +270,14 @@ const NotificationCenter: React.FC = () => {
                 <Box
                   component="button"
                   onClick={() => navigate("/notifications/archive")}
-                  sx={{ p: 1, borderRadius: 2, bgcolor: "grey.200", color: "grey.600", "&:hover": { bgcolor: "grey.300" }, transition: "background-color 0.2s" }}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    bgcolor: "grey.200",
+                    color: "grey.600",
+                    "&:hover": { bgcolor: "grey.300" },
+                    transition: "background-color 0.2s",
+                  }}
                   title="归档管理"
                 >
                   <Archive size={20} />
@@ -238,7 +285,18 @@ const NotificationCenter: React.FC = () => {
                 <Box
                   component="button"
                   onClick={() => toggleSetting("enableSound")}
-                  sx={{ p: 1, borderRadius: 2, bgcolor: settings.enableSound ? "primary.50" : "grey.200", color: settings.enableSound ? "primary.main" : "grey.600", "&:hover": { bgcolor: settings.enableSound ? "primary.100" : "grey.300" }, transition: "background-color 0.2s" }}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    bgcolor: settings.enableSound ? "primary.50" : "grey.200",
+                    color: settings.enableSound ? "primary.main" : "grey.600",
+                    "&:hover": {
+                      bgcolor: settings.enableSound
+                        ? "primary.100"
+                        : "grey.300",
+                    },
+                    transition: "background-color 0.2s",
+                  }}
                   title={settings.enableSound ? "关闭声音" : "开启声音"}
                 >
                   {settings.enableSound ? (
@@ -250,15 +308,37 @@ const NotificationCenter: React.FC = () => {
                 <Box
                   component="button"
                   onClick={() => toggleSetting("enableDesktop")}
-                  sx={{ p: 1, borderRadius: 2, bgcolor: settings.enableDesktop ? "primary.50" : "grey.200", color: settings.enableDesktop ? "primary.main" : "grey.600", "&:hover": { bgcolor: settings.enableDesktop ? "primary.100" : "grey.300" }, transition: "background-color 0.2s" }}
-                  title={settings.enableDesktop ? "关闭桌面通知" : "开启桌面通知"}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    bgcolor: settings.enableDesktop ? "primary.50" : "grey.200",
+                    color: settings.enableDesktop ? "primary.main" : "grey.600",
+                    "&:hover": {
+                      bgcolor: settings.enableDesktop
+                        ? "primary.100"
+                        : "grey.300",
+                    },
+                    transition: "background-color 0.2s",
+                  }}
+                  title={
+                    settings.enableDesktop ? "关闭桌面通知" : "开启桌面通知"
+                  }
                 >
                   <Monitor size={20} />
                 </Box>
                 <Box
                   component="button"
                   onClick={() => setShowSettings(!showSettings)}
-                  sx={{ p: 1, borderRadius: 2, bgcolor: showSettings ? "primary.50" : "grey.200", color: showSettings ? "primary.main" : "grey.600", "&:hover": { bgcolor: showSettings ? "primary.100" : "grey.300" }, transition: "background-color 0.2s" }}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    bgcolor: showSettings ? "primary.50" : "grey.200",
+                    color: showSettings ? "primary.main" : "grey.600",
+                    "&:hover": {
+                      bgcolor: showSettings ? "primary.100" : "grey.300",
+                    },
+                    transition: "background-color 0.2s",
+                  }}
                   title="通知设置"
                 >
                   <Settings size={20} />
@@ -273,10 +353,30 @@ const NotificationCenter: React.FC = () => {
             </Box>
           )}
 
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "grey.100" }}>
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              bgcolor: "grey.100",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                gap: 2,
+              }}
+            >
               <Box sx={{ flex: 1, position: "relative" }}>
-                <Box sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                  }}
+                >
                   <Search size={16} color="#666" />
                 </Box>
                 <Box
@@ -285,11 +385,31 @@ const NotificationCenter: React.FC = () => {
                   placeholder="搜索通知..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{ width: "100%", pl: 5, pr: 2, py: 1, border: 1, borderColor: "grey.300", borderRadius: 2, "&:focus": { outline: "none", borderColor: "primary.main", boxShadow: 2 } }}
+                  sx={{
+                    width: "100%",
+                    pl: 5,
+                    pr: 2,
+                    py: 1,
+                    border: 1,
+                    borderColor: "grey.300",
+                    borderRadius: 2,
+                    "&:focus": {
+                      outline: "none",
+                      borderColor: "primary.main",
+                      boxShadow: 2,
+                    },
+                  }}
                 />
               </Box>
 
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
                 {(
                   [
                     "all",
@@ -307,7 +427,25 @@ const NotificationCenter: React.FC = () => {
                       setActiveFilter(filter);
                       setPage(1);
                     }}
-                    sx={{ px: 1.5, py: 1, borderRadius: 2, fontSize: "0.875rem", fontWeight: 500, transition: "all 0.2s", bgcolor: activeFilter === filter ? "primary.main" : "background.paper", color: activeFilter === filter ? "white" : "grey.700", border: activeFilter === filter ? "none" : 1, borderColor: "grey.300", "&:hover": { bgcolor: activeFilter === filter ? "primary.dark" : "grey.100" } }}
+                    sx={{
+                      px: 1.5,
+                      py: 1,
+                      borderRadius: 2,
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      transition: "all 0.2s",
+                      bgcolor:
+                        activeFilter === filter
+                          ? "primary.main"
+                          : "background.paper",
+                      color: activeFilter === filter ? "white" : "grey.700",
+                      border: activeFilter === filter ? "none" : 1,
+                      borderColor: "grey.300",
+                      "&:hover": {
+                        bgcolor:
+                          activeFilter === filter ? "primary.dark" : "grey.100",
+                      },
+                    }}
                   >
                     {getFilterLabel(filter)}
                   </Box>
@@ -316,14 +454,36 @@ const NotificationCenter: React.FC = () => {
             </Box>
 
             {selectedNotifications.size > 0 && (
-              <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "primary.50", borderRadius: 2 }}>
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  p: 1.5,
+                  bgcolor: "primary.50",
+                  borderRadius: 2,
+                }}
+              >
                 <Typography variant="body2" sx={{ color: "grey.600" }}>
                   已选择 {selectedNotifications.size} 项
                 </Typography>
                 <Box
                   component="button"
                   onClick={handleBulkMarkAsRead}
-                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "primary.main", "&:hover": { bgcolor: "primary.100" }, borderRadius: 2, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 0.5 }}
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "primary.main",
+                    "&:hover": { bgcolor: "primary.100" },
+                    borderRadius: 2,
+                    transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                  }}
                 >
                   <Check size={16} />
                   批量标记已读
@@ -331,7 +491,19 @@ const NotificationCenter: React.FC = () => {
                 <Box
                   component="button"
                   onClick={handleBulkDelete}
-                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "error.main", "&:hover": { bgcolor: "error.50" }, borderRadius: 2, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 0.5 }}
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "error.main",
+                    "&:hover": { bgcolor: "error.50" },
+                    borderRadius: 2,
+                    transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                  }}
                 >
                   <Trash2 size={16} />
                   批量删除
@@ -339,7 +511,16 @@ const NotificationCenter: React.FC = () => {
                 <Box
                   component="button"
                   onClick={() => setSelectedNotifications(new Set())}
-                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.600", "&:hover": { bgcolor: "grey.100" }, borderRadius: 2, transition: "all 0.2s" }}
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "grey.600",
+                    "&:hover": { bgcolor: "grey.100" },
+                    borderRadius: 2,
+                    transition: "all 0.2s",
+                  }}
                 >
                   取消选择
                 </Box>
@@ -348,11 +529,26 @@ const NotificationCenter: React.FC = () => {
           </Box>
 
           {unreadCount > 0 && (
-            <Box sx={{ p: 2, bgcolor: "primary.50", borderBottom: 1, borderColor: "primary.100" }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: "primary.50",
+                borderBottom: 1,
+                borderColor: "primary.100",
+              }}
+            >
               <Box
                 component="button"
                 onClick={handleMarkAllAsRead}
-                sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.875rem", fontWeight: 500, color: "primary.main", "&:hover": { color: "primary.dark" } }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  color: "primary.main",
+                  "&:hover": { color: "primary.dark" },
+                }}
               >
                 <Check size={16} />
                 全部标记已读
@@ -362,11 +558,36 @@ const NotificationCenter: React.FC = () => {
 
           <Box sx={{ "& > * + *": { borderTop: 1, borderColor: "grey.200" } }}>
             {loading ? (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 10 }}>
-                <Box sx={{ width: 48, height: 48, borderRadius: "50%", border: 3, borderColor: "primary.light", borderTopColor: "primary.main", animation: "spin 1s linear infinite" }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 10,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    border: 3,
+                    borderColor: "primary.light",
+                    borderTopColor: "primary.main",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
               </Box>
             ) : filteredNotifications.length === 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 10 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 10,
+                }}
+              >
                 <Bell size={80} color="#666" style={{ marginBottom: 8 }} />
                 <Typography variant="body1" sx={{ color: "grey.500", mb: 1 }}>
                   {searchQuery
@@ -379,7 +600,11 @@ const NotificationCenter: React.FC = () => {
                   <Box
                     component="button"
                     onClick={() => setSearchQuery("")}
-                    sx={{ fontSize: "0.875rem", color: "primary.main", "&:hover": { color: "primary.dark" } }}
+                    sx={{
+                      fontSize: "0.875rem",
+                      color: "primary.main",
+                      "&:hover": { color: "primary.dark" },
+                    }}
                   >
                     清除搜索
                   </Box>
@@ -387,7 +612,16 @@ const NotificationCenter: React.FC = () => {
               </Box>
             ) : (
               <>
-                <Box sx={{ px: 2, py: 1.5, bgcolor: "grey.100", display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Box
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    bgcolor: "grey.100",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                  }}
+                >
                   <Box
                     component="input"
                     type="checkbox"
@@ -397,19 +631,44 @@ const NotificationCenter: React.FC = () => {
                       filteredNotifications.length > 0
                     }
                     onChange={toggleSelectAll}
-                    sx={{ width: 16, height: 16, color: "primary.main", borderColor: "grey.300", borderRadius: 0.5 }}
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      color: "primary.main",
+                      borderColor: "grey.300",
+                      borderRadius: 0.5,
+                    }}
                   />
-                  <Typography variant="body2" sx={{ color: "grey.600", fontSize: "0.75rem" }}>全选</Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "grey.600", fontSize: "0.75rem" }}
+                  >
+                    全选
+                  </Typography>
                 </Box>
                 {filteredNotifications.map((notification) => (
                   <Box key={notification.id} sx={{ position: "relative" }}>
-                    <Box sx={{ position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)", zIndex: 10 }}>
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        left: 4,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        zIndex: 10,
+                      }}
+                    >
                       <Box
                         component="input"
                         type="checkbox"
                         checked={selectedNotifications.has(notification.id)}
                         onChange={() => toggleSelect(notification.id)}
-                        sx={{ width: 16, height: 16, color: "primary.main", borderColor: "grey.300", borderRadius: 0.5 }}
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          color: "primary.main",
+                          borderColor: "grey.300",
+                          borderRadius: 0.5,
+                        }}
                       />
                     </Box>
                     <Box sx={{ pl: 6 }}>
@@ -426,7 +685,17 @@ const NotificationCenter: React.FC = () => {
           </Box>
 
           {!loading && total > 20 && (
-            <Box sx={{ p: 2, borderTop: 1, borderColor: "divider", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                p: 2,
+                borderTop: 1,
+                borderColor: "divider",
+                bgcolor: "grey.100",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography variant="body2" sx={{ color: "grey.600" }}>
                 第 {page} 页，共 {totalPages} 页
               </Typography>
@@ -435,7 +704,22 @@ const NotificationCenter: React.FC = () => {
                   component="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.700", bgcolor: "background.paper", border: 1, borderColor: "grey.300", borderRadius: 2, "&:hover": { bgcolor: "grey.50" }, disabled: { opacity: 0.5, cursor: "not-allowed" }, display: "flex", alignItems: "center", gap: 0.5 }}
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "grey.700",
+                    bgcolor: "background.paper",
+                    border: 1,
+                    borderColor: "grey.300",
+                    borderRadius: 2,
+                    "&:hover": { bgcolor: "grey.50" },
+                    disabled: { opacity: 0.5, cursor: "not-allowed" },
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                  }}
                 >
                   <ChevronLeft size={16} />
                   上一页
@@ -444,7 +728,22 @@ const NotificationCenter: React.FC = () => {
                   component="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.700", bgcolor: "background.paper", border: 1, borderColor: "grey.300", borderRadius: 2, "&:hover": { bgcolor: "grey.50" }, disabled: { opacity: 0.5, cursor: "not-allowed" }, display: "flex", alignItems: "center", gap: 0.5 }}
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "grey.700",
+                    bgcolor: "background.paper",
+                    border: 1,
+                    borderColor: "grey.300",
+                    borderRadius: 2,
+                    "&:hover": { bgcolor: "grey.50" },
+                    disabled: { opacity: 0.5, cursor: "not-allowed" },
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                  }}
                 >
                   下一页
                   <ChevronRight size={16} />

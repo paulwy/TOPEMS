@@ -36,31 +36,36 @@ const services: ServiceInfo[] = [
 ];
 
 export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
-  const [serviceStatuses, setServiceStatuses] = useState<Record<string, boolean>>({});
+  const [serviceStatuses, setServiceStatuses] = useState<
+    Record<string, boolean>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const intervalRef = useRef<number | null>(null);
 
-  const checkServiceStatus = useCallback(async (serviceKey: string): Promise<boolean> => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      
-      const response = await fetch(`/${serviceKey}/health`, {
-        signal: controller.signal,
-        method: "GET",
-        headers: { "Cache-Control": "no-cache" },
-      });
-      
-      clearTimeout(timeoutId);
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }, []);
+  const checkServiceStatus = useCallback(
+    async (serviceKey: string): Promise<boolean> => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+        const response = await fetch(`/${serviceKey}/health`, {
+          signal: controller.signal,
+          method: "GET",
+          headers: { "Cache-Control": "no-cache" },
+        });
+
+        clearTimeout(timeoutId);
+        return response.ok;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
 
   const checkAllServicesStatus = useCallback(async () => {
     setIsLoading(true);
-    
+
     const statusPromises = services.map(async (service) => {
       const status = await checkServiceStatus(service.key);
       return { [service.key]: status };
@@ -68,7 +73,7 @@ export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
 
     const results = await Promise.all(statusPromises);
     const newStatuses = Object.assign({}, ...results);
-    
+
     setServiceStatuses(newStatuses);
     setIsLoading(false);
   }, [checkServiceStatus]);
@@ -77,7 +82,10 @@ export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
     checkAllServicesStatus();
 
     if (autoRefreshInterval > 0) {
-      intervalRef.current = window.setInterval(checkAllServicesStatus, autoRefreshInterval);
+      intervalRef.current = window.setInterval(
+        checkAllServicesStatus,
+        autoRefreshInterval,
+      );
     }
 
     return () => {

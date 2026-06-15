@@ -150,14 +150,22 @@ const BudgetManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const config: Record<string, { color: "primary" | "default" | "error" | "warning"; label: string }> = {
+    const config: Record<
+      string,
+      { color: "primary" | "default" | "error" | "warning"; label: string }
+    > = {
       active: { color: "primary", label: "执行中" },
       frozen: { color: "warning", label: "已冻结" },
       exhausted: { color: "error", label: "已耗尽" },
     };
 
-    const badgeConfig = config[status] || { color: "default" as const, label: status };
-    return <Chip size="small" label={badgeConfig.label} color={badgeConfig.color} />;
+    const badgeConfig = config[status] || {
+      color: "default" as const,
+      label: status,
+    };
+    return (
+      <Chip size="small" label={badgeConfig.label} color={badgeConfig.color} />
+    );
   };
 
   const getDepartmentName = (id: string) => {
@@ -428,7 +436,10 @@ const BudgetManagementPage: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)}>
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+              >
                 <Plus className="w-5 h-5 mr-2" />
                 新增预算
               </Button>
@@ -541,7 +552,11 @@ const BudgetManagementPage: React.FC = () => {
                               }}
                             />
                           }
-                          label={<span className="text-sm text-slate-600">已选择 {selectedIds.length} 项</span>}
+                          label={
+                            <span className="text-sm text-slate-600">
+                              已选择 {selectedIds.length} 项
+                            </span>
+                          }
                         />
                       </div>
                     </div>
@@ -614,7 +629,12 @@ const BudgetManagementPage: React.FC = () => {
       </div>
 
       {/* 创建预算弹窗 */}
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新增预算</DialogTitle>
         <DialogContent>
           <div className="space-y-4 py-4">
@@ -624,7 +644,10 @@ const BudgetManagementPage: React.FC = () => {
                 <Select
                   value={newBudget.department_id}
                   onChange={(e) =>
-                    setNewBudget({ ...newBudget, department_id: e.target.value })
+                    setNewBudget({
+                      ...newBudget,
+                      department_id: e.target.value,
+                    })
                   }
                   displayEmpty
                 >
@@ -701,7 +724,9 @@ const BudgetManagementPage: React.FC = () => {
           <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleCreate}>创建</Button>
+          <Button variant="contained" onClick={handleCreate}>
+            创建
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -824,7 +849,10 @@ const BudgetManagementPage: React.FC = () => {
                   <Select
                     value={editingBudget.status}
                     onChange={(e) =>
-                      setEditingBudget({ ...editingBudget, status: e.target.value })
+                      setEditingBudget({
+                        ...editingBudget,
+                        status: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="active">执行中</MenuItem>
@@ -840,7 +868,9 @@ const BudgetManagementPage: React.FC = () => {
           <Button variant="outlined" onClick={() => setEditingBudget(null)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleUpdate}>保存</Button>
+          <Button variant="contained" onClick={handleUpdate}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 

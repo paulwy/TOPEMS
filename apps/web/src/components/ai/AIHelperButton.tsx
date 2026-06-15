@@ -39,7 +39,10 @@ export function AIHelperButton({
     >
       {loading ? (
         <>
-          <Loader2 style={{ width: 16, height: 16, marginRight: 8 }} className="animate-spin" />
+          <Loader2
+            style={{ width: 16, height: 16, marginRight: 8 }}
+            className="animate-spin"
+          />
           处理中...
         </>
       ) : (

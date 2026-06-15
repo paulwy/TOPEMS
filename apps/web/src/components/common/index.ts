@@ -25,3 +25,6 @@ export type { TreeNode, TreeViewProps } from "./TreeView";
 
 export { default as Stepper } from "./Stepper";
 export type { StepperProps, StepItem } from "./Stepper";
+
+export { default as HelpButton } from "./HelpButton";
+export type { HelpButtonProps } from "./HelpButton";

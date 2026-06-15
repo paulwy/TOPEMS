@@ -188,7 +188,10 @@ const RsProjectListPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* 页面标题和操作栏 */}
       <div style={{ marginBottom: 12 }}>
-        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", justifyContent: "space-between" }}
+        >
           <div>
             <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
               研发项目管理
@@ -225,13 +228,15 @@ const RsProjectListPage: React.FC = () => {
             size="small"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-             }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              },
+            }}
             sx={{ width: 300 }}
           />
           <Button
@@ -336,7 +341,11 @@ const RsProjectListPage: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: "center" }}
+                    >
                       <LinearProgress
                         variant="determinate"
                         value={project.progress}
@@ -352,7 +361,11 @@ const RsProjectListPage: React.FC = () => {
                     {project.budget ? (project.budget / 10000).toFixed(1) : "-"}
                   </TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ justifyContent: "center" }}
+                    >
                       <Tooltip title="查看详情">
                         <IconButton
                           size="small"

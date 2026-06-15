@@ -1137,7 +1137,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           size="small"
           value={(formData as Employee)?.hire_date || ""}
           onChange={(e) => onChange("hire_date", e.target.value)}
-          InputLabelProps={{ shrink: true }}
+          slotProps={{ inputLabel: { shrink: true } }}
         />
 
         <FormControl size="small" fullWidth>

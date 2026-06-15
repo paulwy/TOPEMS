@@ -652,9 +652,7 @@ const ProjectDashboardPage: React.FC = () => {
                 }}
               >
                 <Box>
-                  <Typography sx={{ fontWeight: 500 }}>
-                    {trend.date}
-                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>{trend.date}</Typography>
                   <Typography variant="caption" sx={{ color: "grey.500" }}>
                     新建 {trend.project_count} 个，完成 {trend.completed_count}{" "}
                     个

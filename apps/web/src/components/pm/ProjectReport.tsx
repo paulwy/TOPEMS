@@ -91,30 +91,58 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: "bold", color: "grey.900" }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: "bold", color: "grey.900" }}
+          >
             项目报表
           </Typography>
           <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
             生成时间: {new Date().toLocaleString("zh-CN")}
           </Typography>
         </Box>
-        <Button onClick={handleExport} startIcon={<Box component={Download} sx={{ width: 16, height: 16 }} />}>
+        <Button
+          onClick={handleExport}
+          startIcon={
+            <Box component={Download} sx={{ width: 16, height: 16 }} />
+          }
+        >
           导出报表
         </Button>
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+          gap: 2,
+        }}
+      >
         <Card>
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "blue.100" }}>
-                <Box component={Calendar} sx={{ width: 20, height: 20, color: "blue.600" }} />
+                <Box
+                  component={Calendar}
+                  sx={{ width: 20, height: 20, color: "blue.600" }}
+                />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>项目总数</Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", color: "grey.900" }}>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  项目总数
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", color: "grey.900" }}
+                >
                   {stats.total_projects}
                 </Typography>
               </Box>
@@ -126,11 +154,19 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "green.100" }}>
-                <Box component={CheckCircle} sx={{ width: 20, height: 20, color: "green.600" }} />
+                <Box
+                  component={CheckCircle}
+                  sx={{ width: 20, height: 20, color: "green.600" }}
+                />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>已完成</Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", color: "green.600" }}>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  已完成
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", color: "green.600" }}
+                >
                   {stats.completed_projects}
                 </Typography>
               </Box>
@@ -142,11 +178,19 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "orange.100" }}>
-                <Box component={DollarSign} sx={{ width: 20, height: 20, color: "orange.600" }} />
+                <Box
+                  component={DollarSign}
+                  sx={{ width: 20, height: 20, color: "orange.600" }}
+                />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>预算使用</Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", color: "orange.600" }}>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  预算使用
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", color: "orange.600" }}
+                >
                   {stats.budget_usage_rate}%
                 </Typography>
               </Box>
@@ -158,11 +202,19 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "red.100" }}>
-                <Box component={AlertTriangle} sx={{ width: 20, height: 20, color: "red.600" }} />
+                <Box
+                  component={AlertTriangle}
+                  sx={{ width: 20, height: 20, color: "red.600" }}
+                />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>高风险</Typography>
-                <Typography variant="h5" sx={{ fontWeight: "bold", color: "red.600" }}>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  高风险
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", color: "red.600" }}
+                >
                   {stats.high_risk_projects}
                 </Typography>
               </Box>
@@ -171,7 +223,13 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
         </Card>
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" }, gap: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
+          gap: 3,
+        }}
+      >
         <Card>
           <CardHeader>
             <Typography variant="h6">项目状态分布</Typography>
@@ -281,29 +339,87 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
           <Typography variant="h6">预算执行情况</Typography>
         </CardHeader>
         <CardContent sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="body2" sx={{ color: "grey.600" }}>预算利用率</Typography>
-            <Typography variant="body2" sx={{ fontWeight: "medium", color: "grey.900" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="body2" sx={{ color: "grey.600" }}>
+              预算利用率
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: "medium", color: "grey.900" }}
+            >
               {budgetUtilization.toFixed(1)}%
             </Typography>
           </Box>
-          <LinearProgress variant="determinate" value={budgetUtilization} sx={{ height: 16 }} />
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2, mt: 1 }}>
-            <Box sx={{ textAlign: "center", p: 2, bgcolor: "blue.50", borderRadius: 1 }}>
-              <Typography variant="body2" sx={{ color: "blue.600" }}>总预算</Typography>
-              <Typography variant="h6" sx={{ fontWeight: "bold", color: "blue.800" }}>
+          <LinearProgress
+            variant="determinate"
+            value={budgetUtilization}
+            sx={{ height: 16 }}
+          />
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 2,
+              mt: 1,
+            }}
+          >
+            <Box
+              sx={{
+                textAlign: "center",
+                p: 2,
+                bgcolor: "blue.50",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "blue.600" }}>
+                总预算
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: "bold", color: "blue.800" }}
+              >
                 {stats.total_budget.toLocaleString()}
               </Typography>
             </Box>
-            <Box sx={{ textAlign: "center", p: 2, bgcolor: "green.50", borderRadius: 1 }}>
-              <Typography variant="body2" sx={{ color: "green.600" }}>已使用</Typography>
-              <Typography variant="h6" sx={{ fontWeight: "bold", color: "green.800" }}>
+            <Box
+              sx={{
+                textAlign: "center",
+                p: 2,
+                bgcolor: "green.50",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "green.600" }}>
+                已使用
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: "bold", color: "green.800" }}
+              >
                 {stats.spent_budget.toLocaleString()}
               </Typography>
             </Box>
-            <Box sx={{ textAlign: "center", p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-              <Typography variant="body2" sx={{ color: "grey.600" }}>剩余</Typography>
-              <Typography variant="h6" sx={{ fontWeight: "bold", color: "grey.800" }}>
+            <Box
+              sx={{
+                textAlign: "center",
+                p: 2,
+                bgcolor: "grey.50",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
+                剩余
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: "bold", color: "grey.800" }}
+              >
                 {(stats.total_budget - stats.spent_budget).toLocaleString()}
               </Typography>
             </Box>
@@ -348,18 +464,47 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: "medium", color: "grey.600" }}>期间</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>CPI</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>SPI</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>CV</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>SV</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>ROI</TableCell>
+                    <TableCell sx={{ fontWeight: "medium", color: "grey.600" }}>
+                      期间
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: "medium", color: "grey.600" }}
+                    >
+                      CPI
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: "medium", color: "grey.600" }}
+                    >
+                      SPI
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: "medium", color: "grey.600" }}
+                    >
+                      CV
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: "medium", color: "grey.600" }}
+                    >
+                      SV
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: "medium", color: "grey.600" }}
+                    >
+                      ROI
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {benefits.map((benefit, index) => (
                     <TableRow key={benefit.id} hover>
-                      <TableCell sx={{ color: "grey.900" }}>第{index + 1}期</TableCell>
+                      <TableCell sx={{ color: "grey.900" }}>
+                        第{index + 1}期
+                      </TableCell>
                       <TableCell align="right">
                         <Badge
                           sx={{
@@ -389,7 +534,9 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                       <TableCell align="right">
                         <Typography
                           component="span"
-                          sx={{ color: benefit.roi >= 0 ? "green.600" : "red.600" }}
+                          sx={{
+                            color: benefit.roi >= 0 ? "green.600" : "red.600",
+                          }}
                         >
                           {(benefit.roi * 100).toFixed(2)}%
                         </Typography>
@@ -401,7 +548,16 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
             </Box>
           ) : (
             <Box sx={{ textAlign: "center", py: 4, color: "grey.500" }}>
-              <Box component={TrendingUp} sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "grey.300" }} />
+              <Box
+                component={TrendingUp}
+                sx={{
+                  width: 48,
+                  height: 48,
+                  mx: "auto",
+                  mb: 2,
+                  color: "grey.300",
+                }}
+              />
               <Typography>暂无效益数据</Typography>
             </Box>
           )}

@@ -222,7 +222,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                   {group.label}
                 </Typography>
                 <List component="div" disablePadding>
-                  {(group.children as NavItem[]).map((child) => (
+                  {group.children && (group.children as NavItem[]).map((child) => (
                     <ListItem key={child.label} disablePadding>
                       <ListItemButton
                         onClick={() => {

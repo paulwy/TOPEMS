@@ -12,7 +12,26 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Button, Card, CardContent, CardHeader, Badge, TextField, LinearProgress, Table, TableBody, TableCell, TableHead, TableRow, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Badge,
+  TextField,
+  LinearProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
 import type { Project } from "../api/pm";
 import { pmApi } from "../api/pm";
 import {
@@ -234,10 +253,7 @@ const PmProjectListPage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: "flex", gap: 1.5 }}>
-                <Select
-                  value={selectedType}
-                  onValueChange={setSelectedType}
-                >
+                <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger sx={{ width: 144 }}>
                     <SelectValue placeholder="选择类型" />
                   </SelectTrigger>
@@ -293,7 +309,9 @@ const PmProjectListPage: React.FC = () => {
                   bgcolor: "#dbeafe",
                 }}
               >
-                <FolderKanban sx={{ width: 24, height: 24, color: "#2563eb" }} />
+                <FolderKanban
+                  sx={{ width: 24, height: 24, color: "#2563eb" }}
+                />
               </Box>
               <Box>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -438,7 +456,10 @@ const PmProjectListPage: React.FC = () => {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} sx={{ textAlign: "center", py: 6 }}>
+                      <TableCell
+                        colSpan={7}
+                        sx={{ textAlign: "center", py: 6 }}
+                      >
                         <Box
                           sx={{
                             width: 32,
@@ -488,7 +509,10 @@ const PmProjectListPage: React.FC = () => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" sx={{ color: "grey.600" }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "grey.600" }}
+                          >
                             {getTypeLabel(project.project_type)}
                           </Typography>
                         </TableCell>
@@ -585,7 +609,9 @@ const PmProjectListPage: React.FC = () => {
               </Table>
             </Box>
             {!loading && totalPages > 1 && (
-              <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "grey.200" }}>
+              <Box
+                sx={{ p: 2, borderTop: "1px solid", borderColor: "grey.200" }}
+              >
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

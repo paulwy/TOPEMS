@@ -387,9 +387,7 @@ const PmContractListPage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box
-        sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1 }}
-      >
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1 }}>
         <Box sx={{ overflowX: "auto" }}>
           <Box component="table" sx={{ width: "100%" }}>
             <Box component="thead" sx={{ bgcolor: "grey.50" }}>
@@ -523,7 +521,12 @@ const PmContractListPage: React.FC = () => {
                   <Box
                     component="td"
                     colSpan={7}
-                    sx={{ px: 3, py: 6, textAlign: "center", color: "grey.500" }}
+                    sx={{
+                      px: 3,
+                      py: 6,
+                      textAlign: "center",
+                      color: "grey.500",
+                    }}
                   >
                     暂无合同数据
                   </Box>
@@ -557,7 +560,12 @@ const PmContractListPage: React.FC = () => {
                     </Box>
                     <Box
                       component="td"
-                      sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600" }}
+                      sx={{
+                        px: 3,
+                        py: 2,
+                        fontSize: "0.875rem",
+                        color: "grey.600",
+                      }}
                     >
                       {contract.party_b_name || "-"}
                     </Box>

@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -20,7 +21,16 @@ import {
   Grid3X3,
   List,
 } from "lucide-react";
-import { Button, Card, CardContent, TextField, Badge, Skeleton, Menu, MenuItem } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  TextField,
+  Badge,
+  Skeleton,
+  Menu,
+  MenuItem,
+} from "@mui/material";
 import { EmptyState } from "../components/EmptyState";
 import {
   fetchReports,
@@ -156,11 +166,22 @@ const ReportCard = ({
           open={Boolean(anchorEl)}
           onClose={() => setAnchorEl(null)}
         >
-          <MenuItem onClick={() => { onEdit(); setAnchorEl(null); }}>
+          <MenuItem
+            onClick={() => {
+              onEdit();
+              setAnchorEl(null);
+            }}
+          >
             <Edit className="w-4 h-4 mr-2" />
             编辑
           </MenuItem>
-          <MenuItem onClick={() => { onDelete(); setAnchorEl(null); }} sx={{ color: "red" }}>
+          <MenuItem
+            onClick={() => {
+              onDelete();
+              setAnchorEl(null);
+            }}
+            sx={{ color: "red" }}
+          >
             <Trash2 className="w-4 h-4 mr-2" />
             删除
           </MenuItem>
@@ -308,7 +329,9 @@ const BIReportPage = () => {
               <TextField
                 placeholder="搜索报表名称..."
                 value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchTerm(e.target.value)
+                }
                 className="pl-10"
                 size="small"
               />

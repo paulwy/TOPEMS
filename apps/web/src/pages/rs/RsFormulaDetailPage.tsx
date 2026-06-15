@@ -1,9 +1,9 @@
+import { Grid } from "@/components/Grid";
 import React from "react";
 import {
   Box,
   Container,
   Typography,
-  Grid,
   Card,
   CardContent,
   Chip,
@@ -55,7 +55,10 @@ const RsFormulaDetailPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <div style={{ marginBottom: 12 }}>
-        <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "flex-start", justifyContent: "space-between" }}
+        >
           <div>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Typography variant="h4" sx={{ fontWeight: "bold" }}>
@@ -129,7 +132,10 @@ const RsFormulaDetailPage: React.FC = () => {
               <Stack spacing={2}>
                 {versions.map((v, index) => (
                   <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                    <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+                    <Stack
+                      direction="row"
+                      sx={{ justifyContent: "space-between" }}
+                    >
                       <Chip label={v.version} size="small" />
                       <Typography variant="caption">{v.date}</Typography>
                     </Stack>

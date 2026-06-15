@@ -1,4 +1,12 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Box } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Package,
@@ -269,7 +277,14 @@ const OfficeSuppliesManagementPage: React.FC<
         accessorKey: "price",
         header: "单价",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.primary" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "0.875rem",
+              color: "text.primary",
+            }}
+          >
             <span style={{ marginRight: 4 }}>
               <DollarSign size={12} style={{ color: "green" }} />
             </span>
@@ -281,7 +296,14 @@ const OfficeSuppliesManagementPage: React.FC<
         accessorKey: "location",
         header: "存放位置",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.secondary" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "0.875rem",
+              color: "text.secondary",
+            }}
+          >
             <span style={{ marginRight: 4 }}>
               <MapPin size={12} style={{ color: "blue" }} />
             </span>
@@ -300,7 +322,14 @@ const OfficeSuppliesManagementPage: React.FC<
         cell: ({ row }) => {
           const supply = row.original;
           return (
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
+            >
               <Tooltip title="编辑">
                 <MuiButton
                   variant="text"
@@ -334,25 +363,57 @@ const OfficeSuppliesManagementPage: React.FC<
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <MuiButton variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft size={20} />
               </MuiButton>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "text.primary" }}
+                >
                   办公用品管理
                 </Typography>
-                <Typography sx={{ mt: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>
+                <Typography
+                  sx={{
+                    mt: 0.5,
+                    fontSize: "0.875rem",
+                    color: "text.secondary",
+                  }}
+                >
                   管理办公用品的库存、领用、归还等
                 </Typography>
               </Box>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <MuiButton variant="contained" onClick={() => setShowCreateModal(true)}>
+              <MuiButton
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+              >
                 <Plus size={20} sx={{ mr: 1 }} />
                 新增物品
               </MuiButton>
@@ -361,19 +422,35 @@ const OfficeSuppliesManagementPage: React.FC<
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
+      <Box
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
+      >
         <Card>
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", borderRadius: "50%", width: 32, height: 32, border: 4, borderColor: "success.main", borderTopColor: "transparent" }} />
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    animation: "spin 1s linear infinite",
+                    borderRadius: "50%",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "success.main",
+                    borderTopColor: "transparent",
+                  }}
+                />
                 <Typography sx={{ mt: 1, color: "text.secondary" }}>
                   加载中...
                 </Typography>
               </Box>
             ) : error ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle size={48} style={{ color: "red", margin: "0 auto 12px" }} />
+                <AlertCircle
+                  size={48}
+                  style={{ color: "red", margin: "0 auto 12px" }}
+                />
                 <Typography sx={{ color: "error.main" }}>{error}</Typography>
                 <MuiButton sx={{ mt: 2 }} onClick={loadData}>
                   重试
@@ -382,12 +459,28 @@ const OfficeSuppliesManagementPage: React.FC<
             ) : (
               <>
                 {selectedIds.length > 0 && (
-                  <Box sx={{ bgcolor: "grey.100", borderBottom: 1, borderColor: "divider", px: 3, py: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{
+                      bgcolor: "grey.100",
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      px: 3,
+                      py: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Checkbox
                           checked={selectedIds.length === supplies.length}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+                          onChange={(
+                            event: React.ChangeEvent<HTMLInputElement>,
+                            checked: boolean,
+                          ) => {
                             if (checked) {
                               setSelectedIds(supplies.map((s) => s.id));
                             } else {
@@ -395,7 +488,9 @@ const OfficeSuppliesManagementPage: React.FC<
                             }
                           }}
                         />
-                        <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
+                        <Typography
+                          sx={{ fontSize: "0.875rem", color: "text.secondary" }}
+                        >
                           已选择 {selectedIds.length} 项
                         </Typography>
                       </Box>
@@ -479,7 +574,13 @@ const OfficeSuppliesManagementPage: React.FC<
                 required
               />
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gap: 2,
+                }}
+              >
                 <TextField
                   label="类别"
                   value={newSupply.category || ""}
@@ -511,11 +612,19 @@ const OfficeSuppliesManagementPage: React.FC<
                 />
               </Box>
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gap: 2,
+                }}
+              >
                 <TextField
                   label="单价"
                   type="number"
-                  InputProps={{ inputProps: { min: 0, step: "0.01" } }}
+                  slotProps={{
+                    input: { inputProps: { min: 0, step: "0.01" } },
+                  }}
                   value={newSupply.price || ""}
                   onChange={(e) =>
                     setNewSupply({
@@ -552,7 +661,14 @@ const OfficeSuppliesManagementPage: React.FC<
               </FormControl>
             </Box>
 
-            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
+            >
               <MuiButton
                 variant="outlined"
                 onClick={() => setShowCreateModal(false)}
@@ -591,7 +707,13 @@ const OfficeSuppliesManagementPage: React.FC<
                   required
                 />
 
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     label="类别"
                     value={selectedSupply.category || ""}
@@ -629,11 +751,19 @@ const OfficeSuppliesManagementPage: React.FC<
                   />
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     label="单价"
                     type="number"
-                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
+                    slotProps={{
+                      input: { inputProps: { min: 0, step: "0.01" } },
+                    }}
                     value={selectedSupply.price || ""}
                     onChange={(e) =>
                       setSelectedSupply({
@@ -676,7 +806,14 @@ const OfficeSuppliesManagementPage: React.FC<
                 </FormControl>
               </Box>
 
-              <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+              <Box
+                sx={{
+                  mt: 3,
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 1,
+                }}
+              >
                 <MuiButton
                   variant="outlined"
                   onClick={() => {

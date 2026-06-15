@@ -1,5 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button, Box, Typography, Chip, Menu, MenuItem, Divider } from "@mui/material";
+import {
+  Button,
+  Box,
+  Typography,
+  Chip,
+  Menu,
+  MenuItem,
+  Divider,
+} from "@mui/material";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
@@ -11,7 +19,9 @@ export function WorkflowTableExample() {
   const [data, setData] = useState<Workflow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
+    null,
+  );
 
   useEffect(() => {
     loadWorkflows();
@@ -35,7 +45,10 @@ export function WorkflowTableExample() {
     }
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, workflow: Workflow) => {
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    workflow: Workflow,
+  ) => {
     setAnchorEl(event.currentTarget);
     setSelectedWorkflow(workflow);
   };
@@ -51,7 +64,9 @@ export function WorkflowTableExample() {
         accessorKey: "id",
         header: () => <Box sx={{ textAlign: "left" }}>ID</Box>,
         cell: ({ row }) => (
-          <Box sx={{ textAlign: "left", fontWeight: 500 }}>{row.getValue("id")}</Box>
+          <Box sx={{ textAlign: "left", fontWeight: 500 }}>
+            {row.getValue("id")}
+          </Box>
         ),
       },
       {
@@ -60,7 +75,9 @@ export function WorkflowTableExample() {
           return (
             <Button
               variant="text"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
               sx={{ p: 0, height: "auto", color: "text.primary" }}
             >
               工作流名称
@@ -102,7 +119,9 @@ export function WorkflowTableExample() {
         accessorKey: "created_by",
         header: () => <Box sx={{ textAlign: "left" }}>创建者</Box>,
         cell: ({ row }) => (
-          <Box sx={{ textAlign: "left" }}>{row.getValue("created_by") || "-"}</Box>
+          <Box sx={{ textAlign: "left" }}>
+            {row.getValue("created_by") || "-"}
+          </Box>
         ),
       },
       {
@@ -148,19 +167,42 @@ export function WorkflowTableExample() {
                   horizontal: "right",
                 }}
               >
-                <MenuItem disabled sx={{ fontWeight: 600 }}>操作</MenuItem>
+                <MenuItem disabled sx={{ fontWeight: 600 }}>
+                  操作
+                </MenuItem>
                 <Divider />
-                <MenuItem onClick={() => { console.log("查看工作流:", workflow.id); handleMenuClose(); }}>
+                <MenuItem
+                  onClick={() => {
+                    console.log("查看工作流:", workflow.id);
+                    handleMenuClose();
+                  }}
+                >
                   查看
                 </MenuItem>
-                <MenuItem onClick={() => { console.log("编辑工作流:", workflow.id); handleMenuClose(); }}>
+                <MenuItem
+                  onClick={() => {
+                    console.log("编辑工作流:", workflow.id);
+                    handleMenuClose();
+                  }}
+                >
                   编辑
                 </MenuItem>
-                <MenuItem onClick={() => { console.log("查看历史:", workflow.id); handleMenuClose(); }}>
+                <MenuItem
+                  onClick={() => {
+                    console.log("查看历史:", workflow.id);
+                    handleMenuClose();
+                  }}
+                >
                   版本历史
                 </MenuItem>
                 <Divider />
-                <MenuItem onClick={() => { console.log("删除工作流:", workflow.id); handleMenuClose(); }} sx={{ color: "error.main" }}>
+                <MenuItem
+                  onClick={() => {
+                    console.log("删除工作流:", workflow.id);
+                    handleMenuClose();
+                  }}
+                  sx={{ color: "error.main" }}
+                >
                   删除
                 </MenuItem>
               </Menu>
@@ -175,8 +217,18 @@ export function WorkflowTableExample() {
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>工作流列表</Typography>
-        <Box sx={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 1, p: 2, color: "#dc2626" }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+          工作流列表
+        </Typography>
+        <Box
+          sx={{
+            backgroundColor: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderRadius: 1,
+            p: 2,
+            color: "#dc2626",
+          }}
+        >
           {error}
           <Button variant="outlined" onClick={loadWorkflows} sx={{ ml: 2 }}>
             重试
@@ -188,7 +240,9 @@ export function WorkflowTableExample() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>工作流列表</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+        工作流列表
+      </Typography>
 
       <DataTable
         columns={columns}

@@ -45,7 +45,8 @@ const ProtectedRouteWrapper: React.FC<{
   route: RouteConfig;
   children: React.ReactNode;
 }> = ({ route, children }) => {
-  const hasOwnLayout = route.module && modulesWithOwnLayout.includes(route.module);
+  const hasOwnLayout =
+    route.module && modulesWithOwnLayout.includes(route.module);
 
   if (hasOwnLayout) {
     // 使用简化包装，不添加 GlobalLayout

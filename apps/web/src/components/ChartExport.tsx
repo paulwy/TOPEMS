@@ -87,9 +87,17 @@ export const ChartExport = ({
         <Image sx={{ width: 16, height: 16, marginRight: 4 }} />
         <Download sx={{ width: 16, height: 16 }} />
       </Button>
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
         <MenuItem disabled>
-          <span style={{ fontSize: 12, fontWeight: 500, color: "text.secondary" }}>导出格式</span>
+          <span
+            style={{ fontSize: 12, fontWeight: 500, color: "text.secondary" }}
+          >
+            导出格式
+          </span>
         </MenuItem>
         {exportFormats.map((format) => (
           <MenuItem
@@ -103,7 +111,9 @@ export const ChartExport = ({
         <MenuItem onClick={handleCopy}>
           {copied ? (
             <>
-              <Check sx={{ width: 16, height: 16, marginRight: 8, color: "#10B981" }} />
+              <Check
+                sx={{ width: 16, height: 16, marginRight: 8, color: "#10B981" }}
+              />
               已复制
             </>
           ) : (

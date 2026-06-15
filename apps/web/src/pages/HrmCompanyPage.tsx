@@ -294,11 +294,7 @@ const HrmCompanyPage: React.FC = () => {
       archived: "归档",
     };
     return (
-      <Chip
-        size="small"
-        variant="outlined"
-        label={labels[status] || status}
-      />
+      <Chip size="small" variant="outlined" label={labels[status] || status} />
     );
   };
 
@@ -319,9 +315,20 @@ const HrmCompanyPage: React.FC = () => {
     if (pages <= 1) return null;
 
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pt: 2, borderTop: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          pt: 2,
+          borderTop: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">每页显示</Typography>
+          <Typography variant="body2" color="text.secondary">
+            每页显示
+          </Typography>
           <FormControl size="small" sx={{ minWidth: 80 }}>
             <MuiSelect
               value={String(pageSize)}
@@ -335,7 +342,9 @@ const HrmCompanyPage: React.FC = () => {
               <MenuItem value={50}>50</MenuItem>
             </MuiSelect>
           </FormControl>
-          <Typography variant="body2" color="text.secondary">条</Typography>
+          <Typography variant="body2" color="text.secondary">
+            条
+          </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
           <Button
@@ -379,14 +388,23 @@ const HrmCompanyPage: React.FC = () => {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card>
             <CardHeader
-              sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", pb: 1 }}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                pb: 1,
+              }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <IconButton onClick={closeDetailView} size="small">
                   <ArrowLeft sx={{ width: 20, height: 20 }} />
                 </IconButton>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.5rem" }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, fontSize: "1.5rem" }}
+                  >
                     {currentCompany.name}
                   </Typography>
                   {currentCompany.short_name && (
@@ -409,25 +427,62 @@ const HrmCompanyPage: React.FC = () => {
               </Box>
             </CardHeader>
             <CardContent sx={{ pt: 2 }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 2fr" }, gap: 3 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", lg: "1fr 2fr" },
+                  gap: 3,
+                }}
+              >
                 <Box>
                   <Card sx={{ mb: 2 }}>
                     <CardHeader sx={{ pb: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1, fontSize: "1rem" }}>
-                        <Folder sx={{ width: 20, height: 20, color: "warning.main" }} />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 600,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          fontSize: "1rem",
+                        }}
+                      >
+                        <Folder
+                          sx={{ width: 20, height: 20, color: "warning.main" }}
+                        />
                         组织架构
                       </Typography>
                     </CardHeader>
                     <CardContent>
                       {loading ? (
                         <Box sx={{ p: 4, textAlign: "center" }}>
-                          <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                          <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
+                          <Box
+                            sx={{
+                              display: "inline-block",
+                              width: 32,
+                              height: 32,
+                              border: 4,
+                              borderColor: "primary.main",
+                              borderTopColor: "transparent",
+                              borderRadius: "50%",
+                              animation: "spin 1s linear infinite",
+                            }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{ mt: 1, color: "text.secondary" }}
+                          >
                             加载中...
                           </Typography>
                         </Box>
                       ) : treeData.length === 0 ? (
-                        <Box sx={{ p: 3, textAlign: "center", color: "text.secondary" }}>
+                        <Box
+                          sx={{
+                            p: 3,
+                            textAlign: "center",
+                            color: "text.secondary",
+                          }}
+                        >
                           暂无部门和员工数据
                         </Box>
                       ) : (
@@ -438,61 +493,153 @@ const HrmCompanyPage: React.FC = () => {
 
                   <Card>
                     <CardHeader sx={{ pb: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1, fontSize: "1rem" }}>
-                        <FileText sx={{ width: 20, height: 20, color: "grey.500" }} />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 600,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          fontSize: "1rem",
+                        }}
+                      >
+                        <FileText
+                          sx={{ width: 20, height: 20, color: "grey.500" }}
+                        />
                         公司信息
                       </Typography>
                     </CardHeader>
-                    <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                    <CardContent
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1.5,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: 2,
+                        }}
+                      >
                         <Box>
-                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>公司名称</InputLabel>
-                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
+                          <InputLabel
+                            sx={{ fontSize: 12, color: "text.secondary" }}
+                          >
+                            公司名称
+                          </InputLabel>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 500, mt: 0.5 }}
+                          >
                             {currentCompany.name}
                           </Typography>
                         </Box>
                         <Box>
-                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>简称</InputLabel>
-                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
+                          <InputLabel
+                            sx={{ fontSize: 12, color: "text.secondary" }}
+                          >
+                            简称
+                          </InputLabel>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 500, mt: 0.5 }}
+                          >
                             {currentCompany.short_name || "-"}
                           </Typography>
                         </Box>
                         <Box>
-                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>注册号</InputLabel>
-                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
+                          <InputLabel
+                            sx={{ fontSize: 12, color: "text.secondary" }}
+                          >
+                            注册号
+                          </InputLabel>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 500, mt: 0.5 }}
+                          >
                             {currentCompany.registration_number || "-"}
                           </Typography>
                         </Box>
                         <Box>
-                          <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>税号</InputLabel>
-                          <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
+                          <InputLabel
+                            sx={{ fontSize: 12, color: "text.secondary" }}
+                          >
+                            税号
+                          </InputLabel>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 500, mt: 0.5 }}
+                          >
                             {currentCompany.tax_number || "-"}
                           </Typography>
                         </Box>
                       </Box>
                       <Box>
-                        <InputLabel sx={{ fontSize: 12, color: "text.secondary" }}>地址</InputLabel>
-                        <Typography variant="body2" sx={{ fontWeight: 500, mt: 0.5 }}>
+                        <InputLabel
+                          sx={{ fontSize: 12, color: "text.secondary" }}
+                        >
+                          地址
+                        </InputLabel>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 500, mt: 0.5 }}
+                        >
                           {currentCompany.address || "-"}
                         </Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          flexWrap: "wrap",
+                        }}
+                      >
                         {currentCompany.contact_phone && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              color: "text.secondary",
+                            }}
+                          >
                             <Phone sx={{ width: 16, height: 16 }} />
-                            <Typography variant="body2">{currentCompany.contact_phone}</Typography>
+                            <Typography variant="body2">
+                              {currentCompany.contact_phone}
+                            </Typography>
                           </Box>
                         )}
                         {currentCompany.email && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              color: "text.secondary",
+                            }}
+                          >
                             <Mail sx={{ width: 16, height: 16 }} />
-                            <Typography variant="body2">{currentCompany.email}</Typography>
+                            <Typography variant="body2">
+                              {currentCompany.email}
+                            </Typography>
                           </Box>
                         )}
                         {currentCompany.website && (
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              color: "text.secondary",
+                            }}
+                          >
                             <Globe sx={{ width: 16, height: 16 }} />
-                            <Typography variant="body2">{currentCompany.website}</Typography>
+                            <Typography variant="body2">
+                              {currentCompany.website}
+                            </Typography>
                           </Box>
                         )}
                       </Box>
@@ -501,33 +648,106 @@ const HrmCompanyPage: React.FC = () => {
                 </Box>
 
                 <Box>
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 3 }}>
-                    <Card sx={{ background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)", border: "1px solid #a5b4fc" }}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 2,
+                      mb: 3,
+                    }}
+                  >
+                    <Card
+                      sx={{
+                        background:
+                          "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
+                        border: "1px solid #a5b4fc",
+                      }}
+                    >
                       <CardContent sx={{ p: 2 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
                           <Box>
-                            <Typography variant="body2" sx={{ color: "primary.main" }}>部门数量</Typography>
-                            <Typography variant="h5" sx={{ fontWeight: 700, color: "primary.dark" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "primary.main" }}
+                            >
+                              部门数量
+                            </Typography>
+                            <Typography
+                              variant="h5"
+                              sx={{ fontWeight: 700, color: "primary.dark" }}
+                            >
                               {departments.length}
                             </Typography>
                           </Box>
-                          <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: "50%", boxShadow: 1 }}>
-                            <Folder sx={{ width: 24, height: 24, color: "primary.main" }} />
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              bgcolor: "white",
+                              borderRadius: "50%",
+                              boxShadow: 1,
+                            }}
+                          >
+                            <Folder
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                color: "primary.main",
+                              }}
+                            />
                           </Box>
                         </Box>
                       </CardContent>
                     </Card>
-                    <Card sx={{ background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)", border: "1px solid #6ee7b7" }}>
+                    <Card
+                      sx={{
+                        background:
+                          "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
+                        border: "1px solid #6ee7b7",
+                      }}
+                    >
                       <CardContent sx={{ p: 2 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
                           <Box>
-                            <Typography variant="body2" sx={{ color: "success.main" }}>员工数量</Typography>
-                            <Typography variant="h5" sx={{ fontWeight: 700, color: "success.dark" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "success.main" }}
+                            >
+                              员工数量
+                            </Typography>
+                            <Typography
+                              variant="h5"
+                              sx={{ fontWeight: 700, color: "success.dark" }}
+                            >
                               {employees.length}
                             </Typography>
                           </Box>
-                          <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: "50%", boxShadow: 1 }}>
-                            <Users sx={{ width: 24, height: 24, color: "success.main" }} />
+                          <Box
+                            sx={{
+                              p: 1.5,
+                              bgcolor: "white",
+                              borderRadius: "50%",
+                              boxShadow: 1,
+                            }}
+                          >
+                            <Users
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                color: "success.main",
+                              }}
+                            />
                           </Box>
                         </Box>
                       </CardContent>
@@ -536,38 +756,88 @@ const HrmCompanyPage: React.FC = () => {
 
                   <Card>
                     <CardHeader>
-                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
-                        <Users sx={{ width: 20, height: 20, color: "primary.main" }} />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 600,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
+                        <Users
+                          sx={{ width: 20, height: 20, color: "primary.main" }}
+                        />
                         部门列表
                       </Typography>
                     </CardHeader>
                     <CardContent>
                       {departments.length === 0 ? (
-                        <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-                          <Folder sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
+                        <Box
+                          sx={{
+                            p: 4,
+                            textAlign: "center",
+                            color: "text.secondary",
+                          }}
+                        >
+                          <Folder
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              color: "grey.400",
+                              mx: "auto",
+                              mb: 2,
+                            }}
+                          />
                           <Typography>暂无部门数据</Typography>
                         </Box>
                       ) : (
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1.5,
+                          }}
+                        >
                           {departments.map((dept) => (
                             <Box
                               key={dept.id}
-                              sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "grey.50", borderRadius: 1, "&:hover": { bgcolor: "grey.100" } }}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                p: 1.5,
+                                bgcolor: "grey.50",
+                                borderRadius: 1,
+                                "&:hover": { bgcolor: "grey.100" },
+                              }}
                             >
                               <Box>
-                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 500 }}
+                                >
                                   {dept.name}
                                 </Typography>
                                 {dept.code && (
-                                  <Typography variant="caption" color="text.secondary">
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
                                     编码: {dept.code}
                                   </Typography>
                                 )}
                               </Box>
                               <Chip
                                 size="small"
-                                variant={dept.status === "active" ? "filled" : "outlined"}
-                                label={dept.status === "active" ? "启用" : "禁用"}
+                                variant={
+                                  dept.status === "active"
+                                    ? "filled"
+                                    : "outlined"
+                                }
+                                label={
+                                  dept.status === "active" ? "启用" : "禁用"
+                                }
                               />
                             </Box>
                           ))}
@@ -583,12 +853,29 @@ const HrmCompanyPage: React.FC = () => {
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card>
-            <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <CardHeader
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.125rem" }}>公司列表</Typography>
-                <Typography variant="body2" sx={{ color: "grey.500" }}>共 {total} 家公司</Typography>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, fontSize: "1.125rem" }}
+                >
+                  公司列表
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  共 {total} 家公司
+                </Typography>
               </Box>
-              <Button onClick={handleAdd} startIcon={<Plus sx={{ width: 16, height: 16 }} />}>
+              <Button
+                onClick={handleAdd}
+                startIcon={<Plus sx={{ width: 16, height: 16 }} />}
+              >
                 新增公司
               </Button>
             </CardHeader>
@@ -600,12 +887,16 @@ const HrmCompanyPage: React.FC = () => {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search
+                            sx={{ width: 16, height: 16, color: "grey.400" }}
+                          />
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                   sx={{ flex: 1, minWidth: 200 }}
                 />
@@ -632,38 +923,116 @@ const HrmCompanyPage: React.FC = () => {
 
               {loading ? (
                 <Box sx={{ p: 6, textAlign: "center" }}>
-                  <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                  <Typography sx={{ mt: 1, color: "text.secondary" }}>加载中...</Typography>
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      width: 32,
+                      height: 32,
+                      border: 4,
+                      borderColor: "primary.main",
+                      borderTopColor: "transparent",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                  <Typography sx={{ mt: 1, color: "text.secondary" }}>
+                    加载中...
+                  </Typography>
                 </Box>
               ) : companies.length === 0 ? (
                 <Box sx={{ p: 8, textAlign: "center" }}>
-                  <Building sx={{ width: 64, height: 64, color: "grey.400", mx: "auto", mb: 3 }} />
-                  <Typography sx={{ color: "text.secondary" }}>暂无公司数据</Typography>
-                  <Button onClick={handleAdd} sx={{ mt: 2 }} startIcon={<Plus sx={{ width: 20, height: 20 }} />}>
+                  <Building
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      color: "grey.400",
+                      mx: "auto",
+                      mb: 3,
+                    }}
+                  />
+                  <Typography sx={{ color: "text.secondary" }}>
+                    暂无公司数据
+                  </Typography>
+                  <Button
+                    onClick={handleAdd}
+                    sx={{ mt: 2 }}
+                    startIcon={<Plus sx={{ width: 20, height: 20 }} />}
+                  >
                     新增公司
                   </Button>
                 </Box>
               ) : (
                 <>
-                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" }, gap: 2, mb: 3 }}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        md: "1fr 1fr",
+                        lg: "1fr 1fr 1fr",
+                      },
+                      gap: 2,
+                      mb: 3,
+                    }}
+                  >
                     {companies.map((company) => (
                       <Card
                         key={company.id}
-                        sx={{ cursor: "pointer", "&:hover": { boxShadow: 6, transform: "translateY(-2px)" }, transition: "all 0.2s" }}
+                        sx={{
+                          cursor: "pointer",
+                          "&:hover": {
+                            boxShadow: 6,
+                            transform: "translateY(-2px)",
+                          },
+                          transition: "all 0.2s",
+                        }}
                         onClick={() => openDetailView(company)}
                       >
                         <CardContent sx={{ p: 2.5 }}>
-                          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                              <Box sx={{ width: 48, height: 48, borderRadius: 2, background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 2 }}>
-                                <Building sx={{ width: 24, height: 24, color: "white" }} />
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "flex-start",
+                              justifyContent: "space-between",
+                              mb: 2,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 2,
+                                  background:
+                                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  boxShadow: 2,
+                                }}
+                              >
+                                <Building
+                                  sx={{ width: 24, height: 24, color: "white" }}
+                                />
                               </Box>
                               <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem" }}>
+                                <Typography
+                                  variant="h6"
+                                  sx={{ fontWeight: 600, fontSize: "1rem" }}
+                                >
                                   {company.name}
                                 </Typography>
                                 {company.short_name && (
-                                  <Typography variant="body2" color="text.secondary">
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
                                     {company.short_name}
                                   </Typography>
                                 )}
@@ -671,31 +1040,88 @@ const HrmCompanyPage: React.FC = () => {
                             </Box>
                             {getStatusBadge(company.status)}
                           </Box>
-                          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.875rem", color: "text.secondary" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 1,
+                              fontSize: "0.875rem",
+                              color: "text.secondary",
+                            }}
+                          >
                             {company.contact_phone && (
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                }}
+                              >
                                 <Phone sx={{ width: 14, height: 14 }} />
-                                <Typography variant="body2">{company.contact_phone}</Typography>
+                                <Typography variant="body2">
+                                  {company.contact_phone}
+                                </Typography>
                               </Box>
                             )}
                             {company.email && (
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                }}
+                              >
                                 <Mail sx={{ width: 14, height: 14 }} />
-                                <Typography variant="body2" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
                                   {company.email}
                                 </Typography>
                               </Box>
                             )}
                             {company.address && (
-                              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.5 }}>
-                                <MapPin sx={{ width: 14, height: 14, mt: 0.5 }} />
-                                <Typography variant="body2" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 0.5,
+                                }}
+                              >
+                                <MapPin
+                                  sx={{ width: 14, height: 14, mt: 0.5 }}
+                                />
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
                                   {company.address}
                                 </Typography>
                               </Box>
                             )}
                           </Box>
-                          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2, pt: 2, borderTop: 1, borderColor: "divider", opacity: 0, transition: "opacity 0.2s", ".MuiCard-root:hover &": { opacity: 1 } }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                              gap: 1,
+                              mt: 2,
+                              pt: 2,
+                              borderTop: 1,
+                              borderColor: "divider",
+                              opacity: 0,
+                              transition: "opacity 0.2s",
+                              ".MuiCard-root:hover &": { opacity: 1 },
+                            }}
+                          >
                             <Tooltip title="查看">
                               <IconButton
                                 size="small"
@@ -721,7 +1147,10 @@ const HrmCompanyPage: React.FC = () => {
                             <Tooltip title="删除">
                               <IconButton
                                 size="small"
-                                sx={{ color: "error.main", "&:hover": { color: "error.dark" } }}
+                                sx={{
+                                  color: "error.main",
+                                  "&:hover": { color: "error.dark" },
+                                }}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDelete(company.id);
@@ -744,14 +1173,28 @@ const HrmCompanyPage: React.FC = () => {
         </Box>
       )}
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>新增公司</DialogTitle>
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>请填写公司信息</Typography>
-          <Box component="form" onSubmit={handleCreate} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            请填写公司信息
+          </Typography>
+          <Box
+            component="form"
+            onSubmit={handleCreate}
+            sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+          >
             <Box>
               <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
-                公司名称 <Typography component="span" sx={{ color: "error.main" }}>*</Typography>
+                公司名称{" "}
+                <Typography component="span" sx={{ color: "error.main" }}>
+                  *
+                </Typography>
               </InputLabel>
               <TextField
                 fullWidth
@@ -763,39 +1206,55 @@ const HrmCompanyPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司简称</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                公司简称
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
                 value={(formData as Company)?.short_name || ""}
-                onChange={(e) => handleInputChange("short_name", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("short_name", e.target.value)
+                }
                 placeholder="请输入公司简称"
               />
             </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>注册号</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  注册号
+                </InputLabel>
                 <TextField
                   fullWidth
                   size="small"
                   value={(formData as Company)?.registration_number || ""}
-                  onChange={(e) => handleInputChange("registration_number", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("registration_number", e.target.value)
+                  }
                   placeholder="请输入注册号"
                 />
               </Box>
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>税号</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  税号
+                </InputLabel>
                 <TextField
                   fullWidth
                   size="small"
                   value={(formData as Company)?.tax_number || ""}
-                  onChange={(e) => handleInputChange("tax_number", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("tax_number", e.target.value)
+                  }
                   placeholder="请输入税号"
                 />
               </Box>
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>地址</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                地址
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -806,19 +1265,27 @@ const HrmCompanyPage: React.FC = () => {
                 placeholder="请输入地址"
               />
             </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>联系电话</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  联系电话
+                </InputLabel>
                 <TextField
                   fullWidth
                   size="small"
                   value={(formData as Company)?.contact_phone || ""}
-                  onChange={(e) => handleInputChange("contact_phone", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("contact_phone", e.target.value)
+                  }
                   placeholder="请输入联系电话"
                 />
               </Box>
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>邮箱</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  邮箱
+                </InputLabel>
                 <TextField
                   fullWidth
                   size="small"
@@ -830,7 +1297,9 @@ const HrmCompanyPage: React.FC = () => {
               </Box>
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>网站</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                网站
+              </InputLabel>
               <TextField
                 fullWidth
                 size="small"
@@ -840,11 +1309,15 @@ const HrmCompanyPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+              <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                状态
+              </InputLabel>
               <FormControl fullWidth size="small">
                 <MuiSelect
                   value={(formData as Company)?.status || "active"}
-                  onChange={(e) => handleInputChange("status", e.target.value as string)}
+                  onChange={(e) =>
+                    handleInputChange("status", e.target.value as string)
+                  }
                 >
                   <MenuItem value="active">启用</MenuItem>
                   <MenuItem value="inactive">禁用</MenuItem>
@@ -852,8 +1325,18 @@ const HrmCompanyPage: React.FC = () => {
                 </MuiSelect>
               </FormControl>
             </Box>
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
-              <Button variant="contained" onClick={() => setShowCreateModal(false)}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+                mt: 2,
+              }}
+            >
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(false)}
+              >
                 取消
               </Button>
               <Button type="submit" variant="contained" color="primary">
@@ -864,15 +1347,29 @@ const HrmCompanyPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>编辑公司</DialogTitle>
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>修改公司信息</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            修改公司信息
+          </Typography>
           {selectedCompany && (
-            <Box component="form" onSubmit={handleUpdate} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Box
+              component="form"
+              onSubmit={handleUpdate}
+              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+            >
               <Box>
                 <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
-                  公司名称 <Typography component="span" sx={{ color: "error.main" }}>*</Typography>
+                  公司名称{" "}
+                  <Typography component="span" sx={{ color: "error.main" }}>
+                    *
+                  </Typography>
                 </InputLabel>
                 <TextField
                   fullWidth
@@ -883,36 +1380,52 @@ const HrmCompanyPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>公司简称</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  公司简称
+                </InputLabel>
                 <TextField
                   fullWidth
                   size="small"
                   value={(formData as Company)?.short_name || ""}
-                  onChange={(e) => handleInputChange("short_name", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("short_name", e.target.value)
+                  }
                 />
               </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <Box>
-                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>注册号</InputLabel>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                    注册号
+                  </InputLabel>
                   <TextField
                     fullWidth
                     size="small"
                     value={(formData as Company)?.registration_number || ""}
-                    onChange={(e) => handleInputChange("registration_number", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("registration_number", e.target.value)
+                    }
                   />
                 </Box>
                 <Box>
-                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>税号</InputLabel>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                    税号
+                  </InputLabel>
                   <TextField
                     fullWidth
                     size="small"
                     value={(formData as Company)?.tax_number || ""}
-                    onChange={(e) => handleInputChange("tax_number", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("tax_number", e.target.value)
+                    }
                   />
                 </Box>
               </Box>
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>地址</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  地址
+                </InputLabel>
                 <TextField
                   fullWidth
                   size="small"
@@ -922,18 +1435,26 @@ const HrmCompanyPage: React.FC = () => {
                   onChange={(e) => handleInputChange("address", e.target.value)}
                 />
               </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <Box>
-                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>联系电话</InputLabel>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                    联系电话
+                  </InputLabel>
                   <TextField
                     fullWidth
                     size="small"
                     value={(formData as Company)?.contact_phone || ""}
-                    onChange={(e) => handleInputChange("contact_phone", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("contact_phone", e.target.value)
+                    }
                   />
                 </Box>
                 <Box>
-                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>邮箱</InputLabel>
+                  <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                    邮箱
+                  </InputLabel>
                   <TextField
                     fullWidth
                     size="small"
@@ -944,7 +1465,9 @@ const HrmCompanyPage: React.FC = () => {
                 </Box>
               </Box>
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>网站</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  网站
+                </InputLabel>
                 <TextField
                   fullWidth
                   size="small"
@@ -953,11 +1476,15 @@ const HrmCompanyPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
+                <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
+                  状态
+                </InputLabel>
                 <FormControl fullWidth size="small">
                   <MuiSelect
                     value={(formData as Company)?.status || "active"}
-                    onChange={(e) => handleInputChange("status", e.target.value as string)}
+                    onChange={(e) =>
+                      handleInputChange("status", e.target.value as string)
+                    }
                   >
                     <MenuItem value="active">启用</MenuItem>
                     <MenuItem value="inactive">禁用</MenuItem>
@@ -965,8 +1492,21 @@ const HrmCompanyPage: React.FC = () => {
                   </MuiSelect>
                 </FormControl>
               </Box>
-              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
-                <Button variant="contained" onClick={() => { setShowEditModal(false); setSelectedCompany(null); }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 1,
+                  mt: 2,
+                }}
+              >
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedCompany(null);
+                  }}
+                >
                   取消
                 </Button>
                 <Button type="submit" variant="contained" color="primary">
@@ -978,52 +1518,99 @@ const HrmCompanyPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showViewModal} onClose={() => setShowViewModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>公司详情</DialogTitle>
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>查看公司详细信息</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            查看公司详细信息
+          </Typography>
           {selectedCompany && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <Box>
-                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>公司名称</InputLabel>
-                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.name}</Typography>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                    公司名称
+                  </InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {selectedCompany.name}
+                  </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>公司简称</InputLabel>
-                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.short_name || "-"}</Typography>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                    公司简称
+                  </InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {selectedCompany.short_name || "-"}
+                  </Typography>
                 </Box>
               </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <Box>
-                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>注册号</InputLabel>
-                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.registration_number || "-"}</Typography>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                    注册号
+                  </InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {selectedCompany.registration_number || "-"}
+                  </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>税号</InputLabel>
-                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.tax_number || "-"}</Typography>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                    税号
+                  </InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {selectedCompany.tax_number || "-"}
+                  </Typography>
                 </Box>
               </Box>
               <Box>
-                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>地址</InputLabel>
-                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.address || "-"}</Typography>
+                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                  地址
+                </InputLabel>
+                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                  {selectedCompany.address || "-"}
+                </Typography>
               </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <Box>
-                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>联系电话</InputLabel>
-                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.contact_phone || "-"}</Typography>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                    联系电话
+                  </InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {selectedCompany.contact_phone || "-"}
+                  </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>邮箱</InputLabel>
-                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.email || "-"}</Typography>
+                  <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                    邮箱
+                  </InputLabel>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {selectedCompany.email || "-"}
+                  </Typography>
                 </Box>
               </Box>
               <Box>
-                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>网站</InputLabel>
-                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>{selectedCompany.website || "-"}</Typography>
+                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                  网站
+                </InputLabel>
+                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                  {selectedCompany.website || "-"}
+                </Typography>
               </Box>
               <Box>
-                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>状态</InputLabel>
+                <InputLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                  状态
+                </InputLabel>
                 <Box sx={{ mt: 0.5 }}>
                   {getStatusBadge(selectedCompany.status)}
                 </Box>

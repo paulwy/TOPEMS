@@ -33,7 +33,9 @@ import { DataTable } from "@/components/DataTable";
 import { ModeToggle } from "@/components/ModeToggle";
 
 // 懒加载 Dialog 相关组件
-const CreateEmployeeForm = React.lazy(() => import("./forms/CreateEmployeeForm"));
+const CreateEmployeeForm = React.lazy(
+  () => import("./forms/CreateEmployeeForm"),
+);
 const EditEmployeeForm = React.lazy(() => import("./forms/EditEmployeeForm"));
 
 interface EmployeeManagementPageProps {
@@ -124,7 +126,11 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
       archived: "归档",
     };
     return (
-      <Chip size="small" variant={(colors[status] || "outlined") as "filled" | "outlined"} label={labels[status] || status} />
+      <Chip
+        size="small"
+        variant={(colors[status] || "outlined") as "filled" | "outlined"}
+        label={labels[status] || status}
+      />
     );
   };
 
@@ -266,15 +272,34 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
                   <User className="w-7 h-7 mr-2" />
                   员工管理
                 </Typography>
@@ -285,7 +310,10 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)}>
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+              >
                 <Plus className="w-5 h-5 mr-1" />
                 新增员工
               </Button>
@@ -299,14 +327,31 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "primary.main",
+                    borderTopColor: "transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
                 <Typography sx={{ mt: 2 }} color="text.secondary">
                   加载中...
                 </Typography>
               </Box>
             ) : error ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle style={{ fontSize: 48, color: "var(--mui-palette-error-main)", marginBottom: 8 }} />
+                <AlertCircle
+                  style={{
+                    fontSize: 48,
+                    color: "var(--mui-palette-error-main)",
+                    marginBottom: 8,
+                  }}
+                />
                 <Typography color="error.main">{error}</Typography>
                 <Button sx={{ mt: 2 }} onClick={loadEmployees}>
                   重试
@@ -325,11 +370,33 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
       </Box>
 
       {showCreateModal && (
-        <React.Suspense fallback={
-          <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300 }}>
-            <Box sx={{ width: 32, height: 32, border: 4, borderColor: "white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-          </Box>
-        }>
+        <React.Suspense
+          fallback={
+            <Box
+              sx={{
+                position: "fixed",
+                inset: 0,
+                bgcolor: "rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1300,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: 4,
+                  borderColor: "white",
+                  borderTopColor: "transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                }}
+              />
+            </Box>
+          }
+        >
           <CreateEmployeeForm
             open={showCreateModal}
             onOpenChange={setShowCreateModal}
@@ -341,11 +408,33 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
       )}
 
       {showEditModal && selectedEmployee && (
-        <React.Suspense fallback={
-          <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300 }}>
-            <Box sx={{ width: 32, height: 32, border: 4, borderColor: "white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-          </Box>
-        }>
+        <React.Suspense
+          fallback={
+            <Box
+              sx={{
+                position: "fixed",
+                inset: 0,
+                bgcolor: "rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1300,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: 4,
+                  borderColor: "white",
+                  borderTopColor: "transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                }}
+              />
+            </Box>
+          }
+        >
           <EditEmployeeForm
             open={showEditModal}
             employee={selectedEmployee}

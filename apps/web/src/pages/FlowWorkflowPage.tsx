@@ -211,7 +211,9 @@ const FlowWorkflowPage: React.FC = () => {
         cell: ({ row }) => (
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <GitBranch className="w-4 h-4 mr-2 text-gray-400" />
-            <Typography sx={{ fontWeight: "medium" }}>{row.original.name}</Typography>
+            <Typography sx={{ fontWeight: "medium" }}>
+              {row.original.name}
+            </Typography>
           </Box>
         ),
       },
@@ -272,9 +274,7 @@ const FlowWorkflowPage: React.FC = () => {
             <Tooltip title="版本历史">
               <IconButton
                 size="small"
-                onClick={() =>
-                  navigate(`/flow/history?id=${row.original.id}`)
-                }
+                onClick={() => navigate(`/flow/history?id=${row.original.id}`)}
               >
                 <History className="w-4 h-4" />
               </IconButton>
@@ -319,16 +319,34 @@ const FlowWorkflowPage: React.FC = () => {
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft sx={{ width: 20, height: 20 }} />
               </IconButton>
-              <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: "primary.light",
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <GitBranch className="w-6 h-6 text-primary.main" />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold" }}>工作流管理</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                  工作流管理
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   设计和管理审批流程
                 </Typography>
@@ -345,32 +363,71 @@ const FlowWorkflowPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2, mb: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Card
-          sx={{ cursor: "pointer", border: statusFilter === "all" ? 2 : 0, borderColor: "primary.main" }}
+          sx={{
+            cursor: "pointer",
+            border: statusFilter === "all" ? 2 : 0,
+            borderColor: "primary.main",
+          }}
           onClick={() => setStatusFilter("all")}
         >
           <CardContent>
-            <Typography variant="h4" sx={{ fontWeight: "bold" }}>{stats.total}</Typography>
-            <Typography variant="body2" color="text.secondary">全部工作流</Typography>
+            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+              {stats.total}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              全部工作流
+            </Typography>
           </CardContent>
         </Card>
         <Card
-          sx={{ cursor: "pointer", border: statusFilter === "active" ? 2 : 0, borderColor: "primary.main" }}
+          sx={{
+            cursor: "pointer",
+            border: statusFilter === "active" ? 2 : 0,
+            borderColor: "primary.main",
+          }}
           onClick={() => setStatusFilter("active")}
         >
           <CardContent>
-            <Typography variant="h4" color="success.main" sx={{ fontWeight: "bold" }}>{stats.active}</Typography>
-            <Typography variant="body2" color="text.secondary">已启用</Typography>
+            <Typography
+              variant="h4"
+              color="success.main"
+              sx={{ fontWeight: "bold" }}
+            >
+              {stats.active}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              已启用
+            </Typography>
           </CardContent>
         </Card>
         <Card
-          sx={{ cursor: "pointer", border: statusFilter === "inactive" ? 2 : 0, borderColor: "primary.main" }}
+          sx={{
+            cursor: "pointer",
+            border: statusFilter === "inactive" ? 2 : 0,
+            borderColor: "primary.main",
+          }}
           onClick={() => setStatusFilter("inactive")}
         >
           <CardContent>
-            <Typography variant="h4" sx={{ fontWeight: "bold" }} color="text.secondary">{stats.inactive}</Typography>
-            <Typography variant="body2" color="text.secondary">已停用</Typography>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: "bold" }}
+              color="text.secondary"
+            >
+              {stats.inactive}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              已停用
+            </Typography>
           </CardContent>
         </Card>
       </Box>
@@ -405,11 +462,23 @@ const FlowWorkflowPage: React.FC = () => {
       <Card>
         <CardContent>
           {loading ? (
-            <Box sx={{ p: 4, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box
+              sx={{ p: 4, display: "flex", flexDirection: "column", gap: 2 }}
+            >
               {[1, 2, 3, 4, 5].map((i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  key={i}
+                  sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                >
                   <Skeleton variant="circular" width={48} height={48} />
-                  <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                    }}
+                  >
                     <Skeleton variant="text" width="75%" />
                     <Skeleton variant="text" width="50%" />
                   </Box>
@@ -427,7 +496,12 @@ const FlowWorkflowPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建工作流</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
@@ -435,7 +509,9 @@ const FlowWorkflowPage: React.FC = () => {
               size="small"
               label="工作流名称 *"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="请输入工作流名称"
               fullWidth
             />
@@ -443,7 +519,9 @@ const FlowWorkflowPage: React.FC = () => {
               size="small"
               label="描述"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="请输入工作流描述"
               multiline
               rows={3}
@@ -453,7 +531,9 @@ const FlowWorkflowPage: React.FC = () => {
               control={
                 <Switch
                   checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, is_active: e.target.checked })
+                  }
                 />
               }
               label="启用工作流"

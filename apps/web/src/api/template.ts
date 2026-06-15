@@ -1,9 +1,23 @@
 import apiClient from "./client";
 import type { ApiResponse } from "./client";
 
-export type TemplateType = "workflow" | "document" | "form" | "report" | "notification";
+export type TemplateType =
+  | "workflow"
+  | "document"
+  | "form"
+  | "report"
+  | "notification";
 
-export type VariableType = "string" | "number" | "date" | "select" | "multiselect" | "lookup" | "user" | "now" | "context";
+export type VariableType =
+  | "string"
+  | "number"
+  | "date"
+  | "select"
+  | "multiselect"
+  | "lookup"
+  | "user"
+  | "now"
+  | "context";
 
 export interface SelectOption {
   value: string;

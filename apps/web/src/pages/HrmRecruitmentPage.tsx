@@ -420,20 +420,27 @@ const HrmRecruitmentPage: React.FC = () => {
                   transition: "all 0.2s",
                 }}
               >
-                <ChevronLeft sx={{ width: 20, height: 20, color: "grey.600" }} />
+                <ChevronLeft
+                  sx={{ width: 20, height: 20, color: "grey.600" }}
+                />
               </Box>
               <Box>
                 <Typography
                   variant="h5"
-                  sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center", gap: 1.5 }}
+                  sx={{
+                    fontWeight: 700,
+                    color: "grey.900",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                  }}
                 >
-                  <UserPlus sx={{ width: 28, height: 28, color: "primary.main" }} />
+                  <UserPlus
+                    sx={{ width: 28, height: 28, color: "primary.main" }}
+                  />
                   招聘管理
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ mt: 0.5, color: "grey.500" }}
-                >
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   管理招聘流程、职位发布和候选人信息
                 </Typography>
               </Box>
@@ -473,10 +480,15 @@ const HrmRecruitmentPage: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: 1,
-              color: activeTab === "positions" ? "primary.main" : "text.secondary",
+              color:
+                activeTab === "positions" ? "primary.main" : "text.secondary",
               borderBottom: activeTab === "positions" ? 2 : 0,
-              borderColor: activeTab === "positions" ? "primary.main" : "transparent",
-              "&:hover": { color: activeTab === "positions" ? "primary.main" : "text.primary" },
+              borderColor:
+                activeTab === "positions" ? "primary.main" : "transparent",
+              "&:hover": {
+                color:
+                  activeTab === "positions" ? "primary.main" : "text.primary",
+              },
               transition: "all 0.2s",
             }}
           >
@@ -496,10 +508,15 @@ const HrmRecruitmentPage: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: 1,
-              color: activeTab === "candidates" ? "primary.main" : "text.secondary",
+              color:
+                activeTab === "candidates" ? "primary.main" : "text.secondary",
               borderBottom: activeTab === "candidates" ? 2 : 0,
-              borderColor: activeTab === "candidates" ? "primary.main" : "transparent",
-              "&:hover": { color: activeTab === "candidates" ? "primary.main" : "text.primary" },
+              borderColor:
+                activeTab === "candidates" ? "primary.main" : "transparent",
+              "&:hover": {
+                color:
+                  activeTab === "candidates" ? "primary.main" : "text.primary",
+              },
               transition: "all 0.2s",
             }}
           >
@@ -519,10 +536,15 @@ const HrmRecruitmentPage: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: 1,
-              color: activeTab === "interviews" ? "primary.main" : "text.secondary",
+              color:
+                activeTab === "interviews" ? "primary.main" : "text.secondary",
               borderBottom: activeTab === "interviews" ? 2 : 0,
-              borderColor: activeTab === "interviews" ? "primary.main" : "transparent",
-              "&:hover": { color: activeTab === "interviews" ? "primary.main" : "text.primary" },
+              borderColor:
+                activeTab === "interviews" ? "primary.main" : "transparent",
+              "&:hover": {
+                color:
+                  activeTab === "interviews" ? "primary.main" : "text.primary",
+              },
               transition: "all 0.2s",
             }}
           >
@@ -776,7 +798,10 @@ const HrmRecruitmentPage: React.FC = () => {
                             >
                               {position.title}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "grey.500" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.500" }}
+                            >
                               {position.location}
                             </Typography>
                           </Box>
@@ -1038,7 +1063,10 @@ const HrmRecruitmentPage: React.FC = () => {
                             >
                               {candidate.name}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "grey.500" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.500" }}
+                            >
                               {candidate.phone}
                             </Typography>
                           </Box>

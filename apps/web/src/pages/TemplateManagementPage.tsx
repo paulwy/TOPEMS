@@ -294,7 +294,9 @@ const TemplateManagementPage: React.FC = () => {
                     <div>
                       分类：
                       {categories.find((c) => c.id === template.category_id)
-                        ?.name || template.category_name || "未分类"}
+                        ?.name ||
+                        template.category_name ||
+                        "未分类"}
                     </div>
                     <div>模块：{template.module}</div>
                     <div>变量数：{template.variables?.length || 0}</div>
@@ -368,7 +370,9 @@ const TemplateManagementPage: React.FC = () => {
                       <p className="text-sm text-gray-500">
                         {template.code} ·{" "}
                         {categories.find((c) => c.id === template.category_id)
-                          ?.name || template.category_name || "未分类"}
+                          ?.name ||
+                          template.category_name ||
+                          "未分类"}
                       </p>
                     </div>
                   </div>

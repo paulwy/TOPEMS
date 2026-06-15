@@ -10,7 +10,12 @@ export interface MuiIconProps extends Omit<LucideProps, "size"> {
 export const MuiIcon = styled(
   React.forwardRef<SVGSVGElement, MuiIconProps>(
     ({ icon: Icon, size = 24, style, ...props }, ref) => (
-      <Icon ref={ref as React.Ref<SVGSVGElement>} size={size} style={style} {...props} />
-    )
-  )
+      <Icon
+        ref={ref as React.Ref<SVGSVGElement>}
+        size={size}
+        style={style}
+        {...props}
+      />
+    ),
+  ),
 )<MuiIconProps>``;

@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { X, ChevronRight, Search, Filter, RefreshCw } from "lucide-react";
-import { Card, CardHeader, CardContent, Button, TextField, Typography, Chip, Paper } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Button,
+  TextField,
+  Typography,
+  Chip,
+  Paper,
+} from "@mui/material";
 
 interface DrillDownData extends Record<string, any> {
   id: string;
@@ -66,12 +75,36 @@ export function DrillDownPanel({
   if (!isOpen) return null;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", justifyContent: "flex-end" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        justifyContent: "flex-end",
+      }}
+    >
       <div
-        style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgba(0,0,0,0.3)",
+          backdropFilter: "blur(4px)",
+        }}
         onClick={onClose}
       />
-      <Paper style={{ position: "relative", width: "100%", maxWidth: 800, height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }} elevation={3}>
+      <Paper
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: 800,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+        elevation={3}
+      >
         <CardHeader
           sx={{ borderBottom: "1px solid rgba(0,0,0,0.1)" }}
           action={
@@ -82,14 +115,38 @@ export function DrillDownPanel({
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <ChevronRight style={{ width: 20, height: 20, color: "#3B82F6" }} />
-            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>{title}</Typography>
-            <Chip variant="outlined" size="small" label={`${data.length} 条记录`} />
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
+              {title}
+            </Typography>
+            <Chip
+              variant="outlined"
+              size="small"
+              label={`${data.length} 条记录`}
+            />
           </div>
         </CardHeader>
 
-        <div style={{ padding: 16, borderBottom: "1px solid rgba(0,0,0,0.1)", display: "flex", alignItems: "center", gap: 12 }}>
+        <div
+          style={{
+            padding: 16,
+            borderBottom: "1px solid rgba(0,0,0,0.1)",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
           <div style={{ position: "relative", flex: 1 }}>
-            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "text.secondary" }} />
+            <Search
+              style={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 16,
+                height: 16,
+                color: "text.secondary",
+              }}
+            />
             <TextField
               placeholder="搜索..."
               value={searchTerm}
@@ -98,11 +155,19 @@ export function DrillDownPanel({
               sx={{ width: "100%", input: { paddingLeft: 40 } }}
             />
           </div>
-          <Button variant="outlined" size="small" sx={{ textTransform: "none" }}>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ textTransform: "none" }}
+          >
             <Filter style={{ width: 16, height: 16, marginRight: 4 }} />
             筛选
           </Button>
-          <Button variant="outlined" size="small" sx={{ textTransform: "none" }}>
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ textTransform: "none" }}
+          >
             <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
             刷新
           </Button>
@@ -112,14 +177,32 @@ export function DrillDownPanel({
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%" }}>
               <thead>
-                <tr style={{ backgroundColor: "#F8FAFC", position: "sticky", top: 0 }}>
+                <tr
+                  style={{
+                    backgroundColor: "#F8FAFC",
+                    position: "sticky",
+                    top: 0,
+                  }}
+                >
                   {columns.map((column) => (
                     <th
                       key={column.key}
                       onClick={() => handleSort(column.key)}
-                      style={{ padding: "12px 16px", textAlign: "left", fontWeight: 600, cursor: "pointer", color: "#64748B" }}
+                      style={{
+                        padding: "12px 16px",
+                        textAlign: "left",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        color: "#64748B",
+                      }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
                         {column.label}
                         {sortKey === column.key && (
                           <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
@@ -134,7 +217,10 @@ export function DrillDownPanel({
                   <tr
                     key={row.id}
                     onClick={() => onRowClick?.(row)}
-                    style={{ borderBottom: "1px solid rgba(0,0,0,0.05)", cursor: onRowClick ? "pointer" : "default" }}
+                    style={{
+                      borderBottom: "1px solid rgba(0,0,0,0.05)",
+                      cursor: onRowClick ? "pointer" : "default",
+                    }}
                     onMouseEnter={(e) => {
                       if (onRowClick) {
                         e.currentTarget.style.backgroundColor = "#F8FAFC";
@@ -145,8 +231,13 @@ export function DrillDownPanel({
                     }}
                   >
                     {columns.map((column) => (
-                      <td key={column.key} style={{ padding: "12px 16px", color: "#334155" }}>
-                        {column.format ? column.format(row[column.key]) : row[column.key]}
+                      <td
+                        key={column.key}
+                        style={{ padding: "12px 16px", color: "#334155" }}
+                      >
+                        {column.format
+                          ? column.format(row[column.key])
+                          : row[column.key]}
                       </td>
                     ))}
                   </tr>

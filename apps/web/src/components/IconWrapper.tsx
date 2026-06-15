@@ -24,6 +24,6 @@ export const IconWrapper = styled(
           {...props}
         />
       );
-    }
-  )
+    },
+  ),
 )<IconWrapperProps>``;

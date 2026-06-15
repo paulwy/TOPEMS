@@ -9,12 +9,7 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import {
-  Box,
-  Tabs,
-  Tab,
-  Typography,
-} from "@mui/material";
+import { Box, Tabs, Tab, Typography } from "@mui/material";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 const CRMDashboardPage = lazy(() => import("./CRMDashboardPage"));
@@ -51,7 +46,9 @@ const CRMPage: React.FC = () => {
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: "bold" }}>客户关系管理</Typography>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            客户关系管理
+          </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             管理客户、联系人、商机和交互记录
           </Typography>
@@ -141,12 +138,23 @@ const CRMPage: React.FC = () => {
 
 // CRM财务Tab组件
 const CrmFinanceTab: React.FC = () => {
-  const [financeTab, setFinanceTab] = useState<"invoices" | "collections" | "aging">("invoices");
+  const [financeTab, setFinanceTab] = useState<
+    "invoices" | "collections" | "aging"
+  >("invoices");
 
   return (
     <Box sx={{ mt: 3 }}>
       {/* 子Tab切换 */}
-      <Box sx={{ display: "flex", gap: 1, p: 1, bgcolor: "grey.100", borderRadius: 1, mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          p: 1,
+          bgcolor: "grey.100",
+          borderRadius: 1,
+          mb: 3,
+        }}
+      >
         <TabButton
           active={financeTab === "invoices"}
           onClick={() => setFinanceTab("invoices")}
@@ -175,23 +183,101 @@ const CrmFinanceTab: React.FC = () => {
               销售发票模块 - 管理客户销售发票，支持发票开具、作废、红冲等操作
             </Typography>
           </Box>
-          <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+          <Box
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              overflow: "hidden",
+            }}
+          >
             <table style={{ width: "100%", fontSize: "0.875rem" }}>
               <thead style={{ backgroundColor: "#f5f5f5" }}>
                 <tr>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>发票号</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>客户</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>金额</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>税额</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>价税合计</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>发票日期</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>到期日</th>
-                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 500 }}>状态</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    发票号
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    客户
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    金额
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    税额
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    价税合计
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    发票日期
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    到期日
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    状态
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td colSpan={8} style={{ padding: "32px 16px", textAlign: "center", color: "text.disabled" }}>
+                  <td
+                    colSpan={8}
+                    style={{
+                      padding: "32px 16px",
+                      textAlign: "center",
+                      color: "text.disabled",
+                    }}
+                  >
                     暂无发票数据
                   </td>
                 </tr>
@@ -209,22 +295,92 @@ const CrmFinanceTab: React.FC = () => {
               收款记录模块 - 记录客户收款信息，支持收款确认、批量确认等操作
             </Typography>
           </Box>
-          <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+          <Box
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              overflow: "hidden",
+            }}
+          >
             <table style={{ width: "100%", fontSize: "0.875rem" }}>
               <thead style={{ backgroundColor: "#f5f5f5" }}>
                 <tr>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>收款单号</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>客户</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>收款金额</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>收款方式</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>收款日期</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>关联发票</th>
-                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 500 }}>状态</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    收款单号
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    客户
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    收款金额
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    收款方式
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    收款日期
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    关联发票
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    状态
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td colSpan={7} style={{ padding: "32px 16px", textAlign: "center", color: "text.disabled" }}>
+                  <td
+                    colSpan={7}
+                    style={{
+                      padding: "32px 16px",
+                      textAlign: "center",
+                      color: "text.disabled",
+                    }}
+                  >
                     暂无收款记录数据
                   </td>
                 </tr>
@@ -242,28 +398,105 @@ const CrmFinanceTab: React.FC = () => {
               应收账龄分析 - 分析客户应收账款账龄，提供逾期预警
             </Typography>
           </Box>
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2, mb: 3 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 2,
+              mb: 3,
+            }}
+          >
             <StatCard label="正常" value="¥0" color="success" />
             <StatCard label="30天内" value="¥0" color="warning" />
             <StatCard label="60天内" value="¥0" color="warning" />
             <StatCard label="90天以上" value="¥0" color="error" />
           </Box>
-          <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1, overflow: "hidden" }}>
+          <Box
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              overflow: "hidden",
+            }}
+          >
             <table style={{ width: "100%", fontSize: "0.875rem" }}>
               <thead style={{ backgroundColor: "#f5f5f5" }}>
                 <tr>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: 500 }}>客户</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>应收总额</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>当前</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>30天内</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>60天内</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: 500 }}>90天以上</th>
-                  <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: 500 }}>风险等级</th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 500,
+                    }}
+                  >
+                    客户
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    应收总额
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    当前
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    30天内
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    60天内
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 500,
+                    }}
+                  >
+                    90天以上
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    风险等级
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td colSpan={7} style={{ padding: "32px 16px", textAlign: "center", color: "text.disabled" }}>
+                  <td
+                    colSpan={7}
+                    style={{
+                      padding: "32px 16px",
+                      textAlign: "center",
+                      color: "text.disabled",
+                    }}
+                  >
                     暂无账龄数据
                   </td>
                 </tr>
@@ -277,11 +510,11 @@ const CrmFinanceTab: React.FC = () => {
 };
 
 // Tab按钮组件
-const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({
-  active,
-  onClick,
-  children,
-}) => (
+const TabButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}> = ({ active, onClick, children }) => (
   <Box
     onClick={onClick}
     sx={{
@@ -307,11 +540,11 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; children: Reac
 );
 
 // 统计卡片组件
-const StatCard: React.FC<{ label: string; value: string; color: "success" | "warning" | "error" }> = ({
-  label,
-  value,
-  color,
-}) => {
+const StatCard: React.FC<{
+  label: string;
+  value: string;
+  color: "success" | "warning" | "error";
+}> = ({ label, value, color }) => {
   const bgColor = {
     success: "success.light",
     warning: "warning.light",
@@ -325,8 +558,13 @@ const StatCard: React.FC<{ label: string; value: string; color: "success" | "war
 
   return (
     <Box sx={{ bgcolor: bgColor, borderRadius: 1, p: 2 }}>
-      <Typography variant="caption" sx={{ color: textColor }}>{label}</Typography>
-      <Typography variant="h6" sx={{ fontWeight: "bold", color: textColor, mt: 0.5 }}>
+      <Typography variant="caption" sx={{ color: textColor }}>
+        {label}
+      </Typography>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: "bold", color: textColor, mt: 0.5 }}
+      >
         {value}
       </Typography>
     </Box>

@@ -185,7 +185,14 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   return (
     <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogContent sx={{ maxWidth: 500 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
           <DialogTitle sx={{ m: 0, p: 0 }}>创建新会话</DialogTitle>
           <Button variant="text" size="small" onClick={handleClose}>
             <X className="w-4 h-4" />
@@ -197,8 +204,18 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           onChange={(_, v) => setActiveTab(v as "chat" | "group")}
           variant="fullWidth"
         >
-          <Tab value="chat" icon={<MessageSquare className="w-4 h-4" />} iconPosition="start" label="聊天室" />
-          <Tab value="group" icon={<Users className="w-4 h-4" />} iconPosition="start" label="项目群组" />
+          <Tab
+            value="chat"
+            icon={<MessageSquare className="w-4 h-4" />}
+            iconPosition="start"
+            label="聊天室"
+          />
+          <Tab
+            value="group"
+            icon={<Users className="w-4 h-4" />}
+            iconPosition="start"
+            label="项目群组"
+          />
         </Tabs>
 
         {activeTab === "chat" && (
@@ -282,7 +299,15 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   {chatRoomMembers.map((member, idx) => (
                     <Box
                       key={idx}
-                      sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.5, bgcolor: "grey.100", borderRadius: "full" }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        px: 1.5,
+                        py: 0.5,
+                        bgcolor: "grey.100",
+                        borderRadius: "full",
+                      }}
                     >
                       <span className="text-sm">{member}</span>
                       <button
@@ -378,7 +403,15 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   {groupMembers.map((member, idx) => (
                     <Box
                       key={idx}
-                      sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.5, bgcolor: "grey.100", borderRadius: "full" }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        px: 1.5,
+                        py: 0.5,
+                        bgcolor: "grey.100",
+                        borderRadius: "full",
+                      }}
                     >
                       <span className="text-sm">{member}</span>
                       <button

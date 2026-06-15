@@ -261,11 +261,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {charts.map((chart) => (
-          <Grid
-            key={chart.id}
-            xs={12}
-            md={charts.length === 1 ? 12 : 6}
-          >
+          <Grid key={chart.id} xs={12} md={charts.length === 1 ? 12 : 6}>
             <Paper sx={{ borderRadius: 2, height: chart.height || 400 }}>
               <Box
                 sx={{

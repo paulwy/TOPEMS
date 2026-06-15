@@ -178,18 +178,18 @@ class ApiClient {
         baseURL,
         timeout,
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         paramsSerializer: {
           serialize: (params) => {
             const searchParams = new URLSearchParams();
             Object.entries(params).forEach(([key, value]) => {
               if (value !== undefined && value !== null) {
-                if (typeof value === 'number') {
+                if (typeof value === "number") {
                   searchParams.set(key, value.toString());
-                } else if (typeof value === 'boolean') {
-                  searchParams.set(key, value ? 'true' : 'false');
+                } else if (typeof value === "boolean") {
+                  searchParams.set(key, value ? "true" : "false");
                 } else {
                   searchParams.set(key, String(value));
                 }
@@ -203,11 +203,15 @@ class ApiClient {
       client.interceptors.request.use(
         (config) => {
           const token = localStorage.getItem("token");
-          const url = config.url || '';
-          const baseURL = config.baseURL || '';
-          
+          const url = config.url || "";
+          const baseURL = config.baseURL || "";
+
           // Debug log for hrm requests
-          if (baseURL.includes("/hrm") || url.includes("/hrm") || url.includes("positions")) {
+          if (
+            baseURL.includes("/hrm") ||
+            url.includes("/hrm") ||
+            url.includes("positions")
+          ) {
             console.debug(`[HRM API Request]`, {
               url: `${baseURL}${url}`,
               method: config.method,
@@ -215,26 +219,25 @@ class ApiClient {
               hasAuthHeader: !!config.headers["Authorization"],
               isPublicPath: isPublicPath(url),
               params: config.params,
-              data: config.data
+              data: config.data,
             });
           }
-          
+
           // Debug log for notification requests
-          if (baseURL.includes("notification") || url.includes("/api/v1/notifications")) {
+          if (
+            baseURL.includes("notification") ||
+            url.includes("/api/v1/notifications")
+          ) {
             console.debug(`[Notification API Request]`, {
               url: `${baseURL}${url}`,
               tokenExists: !!token,
               hasAuthHeader: !!config.headers["Authorization"],
-              isPublicPath: isPublicPath(url)
+              isPublicPath: isPublicPath(url),
             });
           }
-          
+
           // 只对非公开路径添加认证头
-          if (
-            token &&
-            !config.headers["Authorization"] &&
-            !isPublicPath(url)
-          ) {
+          if (token && !config.headers["Authorization"] && !isPublicPath(url)) {
             config.headers["Authorization"] = `Bearer ${token}`;
           }
           return config;
@@ -252,23 +255,31 @@ class ApiClient {
       client.interceptors.response.use(
         (response: AxiosResponse) => {
           // Debug log for hrm responses
-          const url = response.config?.url || '';
-          const baseURL = response.config?.baseURL || '';
-          if (baseURL.includes("/hrm") || url.includes("/hrm") || url.includes("positions")) {
+          const url = response.config?.url || "";
+          const baseURL = response.config?.baseURL || "";
+          if (
+            baseURL.includes("/hrm") ||
+            url.includes("/hrm") ||
+            url.includes("positions")
+          ) {
             console.debug(`[HRM API Response]`, {
               url: `${baseURL}${url}`,
               status: response.status,
               statusText: response.statusText,
-              data: response.data
+              data: response.data,
             });
           }
           return response.data;
         },
         (error) => {
           // Debug log for hrm errors
-          const url = error.config?.url || '';
-          const baseURL = error.config?.baseURL || '';
-          if (baseURL.includes("/hrm") || url.includes("/hrm") || url.includes("positions")) {
+          const url = error.config?.url || "";
+          const baseURL = error.config?.baseURL || "";
+          if (
+            baseURL.includes("/hrm") ||
+            url.includes("/hrm") ||
+            url.includes("positions")
+          ) {
             console.error(`[HRM API Error]`, {
               url: `${baseURL}${url}`,
               method: error.config?.method,
@@ -277,10 +288,10 @@ class ApiClient {
               data: error.response?.data,
               headers: error.response?.headers,
               errorCode: error.code,
-              errorMessage: error.message
+              errorMessage: error.message,
             });
           }
-          
+
           // 处理请求取消或中止的情况
           if (
             error.code === "ERR_CANCELED" ||
@@ -299,12 +310,14 @@ class ApiClient {
             const currentPath = window.location.pathname;
             // Skip token clearing for notification service - it may return 401
             // even with a valid IAM token (separate user database)
-            const isNotificationService = 
-              error.config?.baseURL?.includes("8002") || 
+            const isNotificationService =
+              error.config?.baseURL?.includes("8002") ||
               error.config?.baseURL?.startsWith("notification");
             // Skip unauthorized handling for notification service
             if (isNotificationService) {
-              logger.debug("Notification service returned 401, skipping auth cleanup");
+              logger.debug(
+                "Notification service returned 401, skipping auth cleanup",
+              );
               // Return a successful response instead of rejecting to prevent logout
               return Promise.resolve({
                 code: 0,
@@ -313,7 +326,7 @@ class ApiClient {
                 message: "Unauthorized",
                 timestamp: new Date().toISOString(),
               });
-            }          
+            }
             if (
               currentPath !== "/login" &&
               currentPath !== "/register" &&
@@ -346,7 +359,9 @@ class ApiClient {
               isNotFound ||
               isServiceUnavailable ||
               isServerError ||
-              (error.config?.baseURL?.includes("notification") && error.response?.status === 401)            )
+              (error.config?.baseURL?.includes("notification") &&
+                error.response?.status === 401)
+            )
           ) {
             logger.error("Response error:", error);
           }

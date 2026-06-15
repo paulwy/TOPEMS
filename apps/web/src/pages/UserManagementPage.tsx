@@ -1,4 +1,23 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Checkbox, IconButton, Avatar, Stack, FormControlLabel, Paper } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  IconButton,
+  Avatar,
+  Stack,
+  FormControlLabel,
+  Paper,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Users,
@@ -413,13 +432,25 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   const getRoleBadge = (role: string) => {
     const colors: Record<
       string,
-      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
+      | "default"
+      | "primary"
+      | "secondary"
+      | "error"
+      | "info"
+      | "success"
+      | "warning"
     > = {
       管理员: "error",
       普通用户: "info",
       访客: "default",
     };
-    return <Chip size="small" color={colors[role] || "default"} label={role || "未知"} />;
+    return (
+      <Chip
+        size="small"
+        color={colors[role] || "default"}
+        label={role || "未知"}
+      />
+    );
   };
 
   const columns = useMemo<ColumnDef<User>[]>(
@@ -449,7 +480,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
           const user = row.original;
           return (
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32, fontSize: "0.875rem" }}>
+              <Avatar
+                sx={{
+                  bgcolor: "primary.main",
+                  width: 32,
+                  height: 32,
+                  fontSize: "0.875rem",
+                }}
+              >
                 {user.username.charAt(0).toUpperCase()}
               </Avatar>
               <Box>
@@ -533,10 +571,13 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
           return (
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
               <Tooltip title="编辑" arrow>
-                <IconButton size="small" onClick={() => {
-                  setSelectedUser(user);
-                  setShowEditModal(true);
-                }}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setShowEditModal(true);
+                  }}
+                >
                   <Edit size={16} />
                 </IconButton>
               </Tooltip>
@@ -546,7 +587,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 </IconButton>
               </Tooltip>
               <Tooltip title="删除" arrow>
-                <IconButton size="small" sx={{ color: "error.main" }} onClick={() => handleDeleteUser(user.id)}>
+                <IconButton
+                  size="small"
+                  sx={{ color: "error.main" }}
+                  onClick={() => handleDeleteUser(user.id)}
+                >
                   <Trash2 size={16} />
                 </IconButton>
               </Tooltip>
@@ -561,15 +606,35 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       {/* Header */}
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft />
               </IconButton>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
                   <Users size={28} color="#1976d2" />
                   用户管理
                 </Typography>
@@ -580,7 +645,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus size={20} />}>
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+                startIcon={<Plus size={20} />}
+              >
                 创建用户
               </Button>
             </Box>
@@ -593,7 +662,17 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
             <Box sx={{ flex: 1, position: "relative" }}>
-              <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "#9e9e9e" }} />
+              <Search
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 20,
+                  height: 20,
+                  color: "#9e9e9e",
+                }}
+              />
               <TextField
                 size="small"
                 placeholder="搜索用户名、邮箱..."
@@ -602,35 +681,73 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 sx={{ width: "100%", pl: 5 }}
               />
             </Box>
-            <Button variant="outlined" onClick={loadData} disabled={loading} startIcon={<RefreshCw size={16} sx={loading ? { animation: "spin 1s linear infinite" } : {}} />}>
+            <Button
+              variant="outlined"
+              onClick={loadData}
+              disabled={loading}
+              startIcon={
+                <RefreshCw
+                  size={16}
+                  sx={loading ? { animation: "spin 1s linear infinite" } : {}}
+                />
+              }
+            >
               刷新
             </Button>
           </Box>
 
           {/* Batch Actions Toolbar */}
           {selectedUserIds.size > 0 && (
-            <Paper sx={{ p: 2, mb: 2, bgcolor: "primary.light", borderRadius: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Paper
+              sx={{ p: 2, mb: 2, bgcolor: "primary.light", borderRadius: 2 }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <CheckCircle size={20} color="#1976d2" />
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: "primary.main" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 500, color: "primary.main" }}
+                  >
                     已选择 {selectedUserIds.size} 个用户
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", gap: 1 }}>
-                  <Button size="small" variant="outlined" onClick={() => handleBatchUpdateStatus(true)}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleBatchUpdateStatus(true)}
+                  >
                     批量启用
                   </Button>
-                  <Button size="small" variant="outlined" onClick={() => handleBatchUpdateStatus(false)}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleBatchUpdateStatus(false)}
+                  >
                     批量禁用
                   </Button>
-                  <Button size="small" variant="contained" color="error" onClick={handleBatchDelete}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="error"
+                    onClick={handleBatchDelete}
+                  >
                     批量删除
                   </Button>
-                  <Button size="small" variant="text" onClick={() => {
-                    setSelectedUserIds(new Set());
-                    setSelectAll(false);
-                  }}>
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => {
+                      setSelectedUserIds(new Set());
+                      setSelectAll(false);
+                    }}
+                  >
                     取消选择
                   </Button>
                 </Box>
@@ -644,7 +761,15 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Loader2 sx={{ width: 32, height: 32, color: "#1976d2", animation: "spin 1s linear infinite", mx: "auto" }} />
+                <Loader2
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    color: "#1976d2",
+                    animation: "spin 1s linear infinite",
+                    mx: "auto",
+                  }}
+                />
                 <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
                 </Typography>
@@ -652,7 +777,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
             ) : error ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
                 <AlertCircle size={48} color="#d32f2f" />
-                <Typography sx={{ color: "error.main", mt: 2 }}>{error}</Typography>
+                <Typography sx={{ color: "error.main", mt: 2 }}>
+                  {error}
+                </Typography>
                 <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </Button>
@@ -668,9 +795,21 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2, borderTop: 1, borderColor: "divider" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      px: 3,
+                      py: 2,
+                      borderTop: 1,
+                      borderColor: "divider",
+                    }}
+                  >
                     <Typography variant="body2" color="text.secondary">
-                      显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalUsers)} 共 {totalUsers} 条
+                      显示 {(currentPage - 1) * pageSize + 1} -{" "}
+                      {Math.min(currentPage * pageSize, totalUsers)} 共{" "}
+                      {totalUsers} 条
                     </Typography>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Button
@@ -702,16 +841,25 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       </Box>
 
       {/* Create User Dialog */}
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>创建新用户</DialogTitle>
         <form onSubmit={handleCreateUser}>
           <DialogContent>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}
+            >
               <TextField
                 label="用户名 *"
                 required
                 value={newUser.username}
-                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, username: e.target.value })
+                }
                 placeholder="输入用户名"
                 fullWidth
               />
@@ -720,7 +868,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 type="email"
                 required
                 value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, email: e.target.value })
+                }
                 placeholder="输入邮箱"
                 fullWidth
               />
@@ -729,14 +879,18 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 type="password"
                 required
                 value={newUser.password}
-                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, password: e.target.value })
+                }
                 placeholder="输入密码"
                 fullWidth
               />
               <TextField
                 label="姓名"
                 value={newUser.full_name}
-                onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, full_name: e.target.value })
+                }
                 placeholder="输入姓名"
                 fullWidth
               />
@@ -757,18 +911,27 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
             >
               取消
             </Button>
-            <Button type="submit" variant="contained">创建</Button>
+            <Button type="submit" variant="contained">
+              创建
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       {/* Edit User Dialog */}
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>编辑用户</DialogTitle>
         {selectedUser && (
           <form onSubmit={handleEditUser}>
             <DialogContent>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+              <Box
+                sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}
+              >
                 <TextField
                   label="用户名"
                   value={selectedUser.username}
@@ -825,21 +988,32 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
               >
                 取消
               </Button>
-              <Button type="submit" variant="contained">保存</Button>
+              <Button type="submit" variant="contained">
+                保存
+              </Button>
             </DialogActions>
           </form>
         )}
       </Dialog>
 
       {/* Roles Management Dialog */}
-      <Dialog open={showRolesModal} onClose={() => setShowRolesModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showRolesModal}
+        onClose={() => setShowRolesModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           用户角色管理 - {selectedUser?.full_name || selectedUser?.username}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>已有角色</Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+              已有角色
+            </Typography>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}
+            >
               {userRoles.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   暂无分配角色
@@ -848,11 +1022,22 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 userRoles.map((role) => (
                   <Box
                     key={role.id}
-                    sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "success.light", borderRadius: 2, border: 1, borderColor: "success.main" }}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      p: 2,
+                      bgcolor: "success.light",
+                      borderRadius: 2,
+                      border: 1,
+                      borderColor: "success.main",
+                    }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Shield size={16} color="#2e7d32" />
-                      <Typography sx={{ fontWeight: 500, color: "success.main" }}>
+                      <Typography
+                        sx={{ fontWeight: 500, color: "success.main" }}
+                      >
                         {role.name}
                       </Typography>
                     </Box>
@@ -871,14 +1056,23 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 ))
               )}
             </Box>
-            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>可用角色</Typography>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+              可用角色
+            </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {roles
                 .filter((r) => !userRoles.some((ur) => ur.id === r.id))
                 .map((role) => (
                   <Box
                     key={role.id}
-                    sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 2 }}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      p: 2,
+                      bgcolor: "grey.100",
+                      borderRadius: 2,
+                    }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Shield size={16} color="#9e9e9e" />
@@ -919,7 +1113,15 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
 };
 
 // Tooltip component for actions
-function Tooltip({ title, children, arrow }: { title: string; children: React.ReactNode; arrow?: boolean }) {
+function Tooltip({
+  title,
+  children,
+  arrow,
+}: {
+  title: string;
+  children: React.ReactNode;
+  arrow?: boolean;
+}) {
   return (
     <Box sx={{ position: "relative", display: "inline-flex" }}>
       {children}
@@ -940,7 +1142,21 @@ function Tooltip({ title, children, arrow }: { title: string; children: React.Re
           opacity: 0,
           visibility: "hidden",
           "&:hover": { opacity: 1, visibility: "visible" },
-          ...(arrow ? { "&::before": { content: '""', position: "absolute", top: -4, left: "50%", transform: "translateX(-50%)", borderWidth: "0 4px 4px 4px", borderStyle: "solid", borderColor: "transparent transparent rgba(0,0,0,0.8) transparent" } } : {})
+          ...(arrow
+            ? {
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  top: -4,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  borderWidth: "0 4px 4px 4px",
+                  borderStyle: "solid",
+                  borderColor:
+                    "transparent transparent rgba(0,0,0,0.8) transparent",
+                },
+              }
+            : {}),
         }}
       >
         {title}

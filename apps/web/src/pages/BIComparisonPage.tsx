@@ -217,7 +217,15 @@ const BIComparisonPage = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "grey.50",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <LoadingSpinner size="lg" />
       </Box>
     );
@@ -225,17 +233,23 @@ const BIComparisonPage = () => {
 
   return (
     <Box sx={{ p: 6 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 6 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 6,
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => navigate(-1)}
-          >
+          <Button variant="text" size="small" onClick={() => navigate(-1)}>
             <ArrowLeft sx={{ width: 20, height: 20 }} />
           </Button>
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: "bold", color: "grey.800" }}>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: "bold", color: "grey.800" }}
+            >
               数据对比分析
             </Typography>
             <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
@@ -255,11 +269,19 @@ const BIComparisonPage = () => {
         </Box>
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: "1fr 2fr" }, gap: 6 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: 1, lg: "1fr 2fr" },
+          gap: 6,
+        }}
+      >
         <Box>
           <Card sx={{ mb: 3 }}>
             <CardHeader title="选择对比模块" />
-            <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <CardContent
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
               {modules.map((module) => (
                 <Box
                   key={module.id}
@@ -271,9 +293,15 @@ const BIComparisonPage = () => {
                     borderRadius: 1,
                     cursor: "pointer",
                     transition: "all 0.2s",
-                    bgcolor: selectedModules.includes(module.id) ? "primary.50" : "transparent",
-                    border: selectedModules.includes(module.id) ? "1px solid" : "none",
-                    borderColor: selectedModules.includes(module.id) ? "primary.200" : "transparent",
+                    bgcolor: selectedModules.includes(module.id)
+                      ? "primary.50"
+                      : "transparent",
+                    border: selectedModules.includes(module.id)
+                      ? "1px solid"
+                      : "none",
+                    borderColor: selectedModules.includes(module.id)
+                      ? "primary.200"
+                      : "transparent",
                     "&:hover": { bgcolor: "grey.50" },
                   }}
                   onClick={() => handleModuleToggle(module.id)}
@@ -287,7 +315,10 @@ const BIComparisonPage = () => {
                     }
                   />
                   <Typography variant="h5">{module.icon}</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500, color: "grey.800" }}>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 500, color: "grey.800" }}
+                  >
                     {module.name}
                   </Typography>
                 </Box>
@@ -300,7 +331,9 @@ const BIComparisonPage = () => {
 
           <Card>
             <CardHeader title="选中模块概览" />
-            <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <CardContent
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
               {selectedModules.map((moduleId, index) => {
                 const moduleData =
                   mockComparisonData[
@@ -329,15 +362,23 @@ const BIComparisonPage = () => {
                         }}
                       />
                       <Typography variant="h5">{moduleInfo?.icon}</Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 500, color: "grey.800" }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: 500, color: "grey.800" }}
+                      >
                         {moduleInfo?.name}
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: "right" }}>
-                      <Typography variant="body1" sx={{ fontWeight: "bold", color: "grey.800" }}>
+                      <Typography
+                        variant="body1"
+                        sx={{ fontWeight: "bold", color: "grey.800" }}
+                      >
                         {moduleData?.metrics.total || 0}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: "grey.500" }}>总量</Typography>
+                      <Typography variant="caption" sx={{ color: "grey.500" }}>
+                        总量
+                      </Typography>
                     </Box>
                   </Box>
                 );
@@ -348,24 +389,40 @@ const BIComparisonPage = () => {
 
         <Box>
           <Card>
-            <CardHeader 
-              sx={{ 
-                display: "flex", 
-                alignItems: "center", 
+            <CardHeader
+              sx={{
+                display: "flex",
+                alignItems: "center",
                 justifyContent: "space-between",
                 pb: 0,
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>对比图表</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                对比图表
+              </Typography>
               <Tabs
                 value={chartType}
-                onChange={(_, v) => setChartType(v as "bar" | "line" | "pie" | "radar")}
+                onChange={(_, v) =>
+                  setChartType(v as "bar" | "line" | "pie" | "radar")
+                }
                 sx={{ minWidth: 200 }}
               >
-                <Tab icon={<BarChart3 sx={{ width: 16, height: 16 }} />} value="bar" />
-                <Tab icon={<LineChartIcon sx={{ width: 16, height: 16 }} />} value="line" />
-                <Tab icon={<PieChartIcon sx={{ width: 16, height: 16 }} />} value="pie" />
-                <Tab icon={<Radar sx={{ width: 16, height: 16 }} />} value="radar" />
+                <Tab
+                  icon={<BarChart3 sx={{ width: 16, height: 16 }} />}
+                  value="bar"
+                />
+                <Tab
+                  icon={<LineChartIcon sx={{ width: 16, height: 16 }} />}
+                  value="line"
+                />
+                <Tab
+                  icon={<PieChartIcon sx={{ width: 16, height: 16 }} />}
+                  value="pie"
+                />
+                <Tab
+                  icon={<Radar sx={{ width: 16, height: 16 }} />}
+                  value="radar"
+                />
               </Tabs>
             </CardHeader>
             <CardContent sx={{ mt: 2 }}>
@@ -406,11 +463,16 @@ const BIComparisonPage = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600, color: "grey.600" }}>指标</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: "grey.600" }}>
+                        指标
+                      </TableCell>
                       {selectedModules.map((moduleId, index) => (
                         <TableCell
                           key={moduleId}
-                          sx={{ fontWeight: 600, color: COLORS[index % COLORS.length] }}
+                          sx={{
+                            fontWeight: 600,
+                            color: COLORS[index % COLORS.length],
+                          }}
                         >
                           {modules.find((m) => m.id === moduleId)?.name}
                         </TableCell>
@@ -425,7 +487,9 @@ const BIComparisonPage = () => {
                       { key: "efficiency", label: "效率(%)" },
                     ].map((metric) => (
                       <TableRow key={metric.key}>
-                        <TableCell sx={{ color: "grey.600" }}>{metric.label}</TableCell>
+                        <TableCell sx={{ color: "grey.600" }}>
+                          {metric.label}
+                        </TableCell>
                         {selectedModules.map((moduleId) => {
                           const moduleData =
                             mockComparisonData[

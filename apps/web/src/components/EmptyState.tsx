@@ -54,11 +54,17 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       >
         <Icon style={{ width: 32, height: 32, color: "#9ca3af" }} />
       </Box>
-      <Typography variant="h6" sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}
+      >
         {title}
       </Typography>
       {description && (
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}
+        >
           {description}
         </Typography>
       )}
@@ -105,10 +111,16 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       >
         <AlertTriangle style={{ width: 32, height: 32, color: "#dc2626" }} />
       </Box>
-      <Typography variant="h6" sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}>
+      <Typography
+        variant="h6"
+        sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}
+      >
         {title}
       </Typography>
-      <Typography variant="body2" sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}>
+      <Typography
+        variant="body2"
+        sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}
+      >
         {message}
       </Typography>
       {onRetry && (

@@ -90,7 +90,8 @@ export const FloatingAIHelper: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
-  const { recommendations, quickCommands: contextQuickCommands } = useAIContext();
+  const { recommendations, quickCommands: contextQuickCommands } =
+    useAIContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -263,12 +264,10 @@ export const FloatingAIHelper: React.FC = () => {
         slotProps={{
           paper: {
             sx: {
-              width: isMinimized 
-                ? { xs: 280, sm: 320 } 
+              width: isMinimized
+                ? { xs: 280, sm: 320 }
                 : { xs: "calc(100vw - 32px)", sm: 400, md: 420 },
-              height: isMinimized 
-                ? 60 
-                : { xs: "70vh", sm: "75vh", md: 520 },
+              height: isMinimized ? 60 : { xs: "70vh", sm: "75vh", md: 520 },
               borderRadius: 2,
               overflow: "hidden",
               transition: "all 0.3s ease",
@@ -425,7 +424,13 @@ export const FloatingAIHelper: React.FC = () => {
                         }}
                         onClick={() => navigate(item.action)}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
+                        >
                           <Box
                             sx={{
                               width: 28,
@@ -438,7 +443,9 @@ export const FloatingAIHelper: React.FC = () => {
                               color: "primary.main",
                             }}
                           >
-                            {iconMap[item.icon || "star"] || <Lightbulb style={{ width: 14, height: 14 }} />}
+                            {iconMap[item.icon || "star"] || (
+                              <Lightbulb style={{ width: 14, height: 14 }} />
+                            )}
                           </Box>
                           <Box>
                             <Typography
@@ -447,7 +454,10 @@ export const FloatingAIHelper: React.FC = () => {
                             >
                               {item.label}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               {item.description}
                             </Typography>
                           </Box>

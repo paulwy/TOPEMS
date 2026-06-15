@@ -24,6 +24,6 @@ export const Icon = styled(
           {...props}
         />
       );
-    }
-  )
+    },
+  ),
 )<IconProps>``;

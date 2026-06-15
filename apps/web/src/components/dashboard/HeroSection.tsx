@@ -28,13 +28,15 @@ export const HeroSection: React.FC = () => {
         <div
           className="absolute inset-0 opacity-30"
           style={{
-            background: "radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.15) 0%, transparent 50%)",
+            background:
+              "radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.15) 0%, transparent 50%)",
           }}
         />
         <div
           className="absolute inset-0 opacity-20"
           style={{
-            background: "radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.15) 0%, transparent 50%)",
+            background:
+              "radial-gradient(circle at 20% 80%, rgba(167, 139, 250, 0.15) 0%, transparent 50%)",
           }}
         />
 
@@ -76,9 +78,7 @@ export const HeroSection: React.FC = () => {
             }}
           >
             欢迎回到
-            <span
-              className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
-            >
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               {" TOPEMS "}
             </span>
             平台
@@ -96,16 +96,15 @@ export const HeroSection: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-            <button
-              className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105"
-            >
+            <button className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105">
               <Activity size={20} />
               <span>开始工作</span>
-              <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              <ChevronRight
+                size={18}
+                className="group-hover:translate-x-1 transition-transform"
+              />
             </button>
-            <button
-              className="flex items-center gap-2 px-6 py-3 bg-white/5 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10"
-            >
+            <button className="flex items-center gap-2 px-6 py-3 bg-white/5 text-white font-semibold rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10">
               <span>了解更多</span>
             </button>
           </Box>

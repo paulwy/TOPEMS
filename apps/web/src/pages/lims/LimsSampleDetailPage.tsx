@@ -130,22 +130,31 @@ const LimsSampleDetailPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#fef9c3', color: '#ca8a04', label: "待测试" },
-      待测试: { bg: '#fef9c3', color: '#ca8a04', label: "待测试" },
-      in_progress: { bg: '#dbeafe', color: '#2563eb', label: "测试中" },
-      测试中: { bg: '#dbeafe', color: '#2563eb', label: "测试中" },
-      completed: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
-      已完成: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
-      cancelled: { bg: '#fee2e2', color: '#dc2626', label: "已终止" },
-      已终止: { bg: '#fee2e2', color: '#dc2626', label: "已终止" },
+    const statusMap: Record<
+      string,
+      { bg: string; color: string; label: string }
+    > = {
+      pending: { bg: "#fef9c3", color: "#ca8a04", label: "待测试" },
+      待测试: { bg: "#fef9c3", color: "#ca8a04", label: "待测试" },
+      in_progress: { bg: "#dbeafe", color: "#2563eb", label: "测试中" },
+      测试中: { bg: "#dbeafe", color: "#2563eb", label: "测试中" },
+      completed: { bg: "#dcfce7", color: "#16a34a", label: "已完成" },
+      已完成: { bg: "#dcfce7", color: "#16a34a", label: "已完成" },
+      cancelled: { bg: "#fee2e2", color: "#dc2626", label: "已终止" },
+      已终止: { bg: "#fee2e2", color: "#dc2626", label: "已终止" },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: "#f3f4f6",
+      color: "#4b5563",
       label: status,
     };
-    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
+    return (
+      <Chip
+        label={item.label}
+        size="small"
+        sx={{ backgroundColor: item.bg, color: item.color }}
+      />
+    );
   };
 
   const handleEdit = async () => {
@@ -453,19 +462,19 @@ const LimsSampleDetailPage: React.FC = () => {
                               backgroundColor:
                                 task.status === "completed" ||
                                 task.status === "已完成"
-                                  ? '#dcfce7'
+                                  ? "#dcfce7"
                                   : task.status === "in_progress" ||
                                       task.status === "进行中"
-                                    ? '#dbeafe'
-                                    : '#fef9c3',
+                                    ? "#dbeafe"
+                                    : "#fef9c3",
                               color:
                                 task.status === "completed" ||
                                 task.status === "已完成"
-                                  ? '#16a34a'
+                                  ? "#16a34a"
                                   : task.status === "in_progress" ||
                                       task.status === "进行中"
-                                    ? '#2563eb'
-                                    : '#ca8a04',
+                                    ? "#2563eb"
+                                    : "#ca8a04",
                             }}
                           />
                         </div>
@@ -620,12 +629,27 @@ const LimsSampleDetailPage: React.FC = () => {
         </div>
       </motion.main>
 
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>编辑样品信息</DialogTitle>
         <DialogContent>
           <Box className="space-y-4" sx={{ mt: 1 }}>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>样品名称 *</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                样品名称 *
+              </Box>
               <TextField
                 size="small"
                 fullWidth
@@ -637,7 +661,17 @@ const LimsSampleDetailPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>描述</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                描述
+              </Box>
               <textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -647,17 +681,39 @@ const LimsSampleDetailPage: React.FC = () => {
                   }))
                 }
                 placeholder="请输入样品描述"
-                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "6px",
+                  border: "1px solid #e2e8f0",
+                  resize: "none",
+                  height: "96px",
+                }}
               />
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>状态</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                状态
+              </Box>
               <select
                 value={formData.status}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, status: e.target.value }))
                 }
-                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                }}
               >
                 <option value="待测试">待测试</option>
                 <option value="测试中">测试中</option>
@@ -668,33 +724,104 @@ const LimsSampleDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowEditModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleEdit}>保存</Button>
+          <Button variant="outlined" onClick={() => setShowEditModal(false)}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={handleEdit}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showRecordModal} onClose={() => setShowRecordModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showRecordModal}
+        onClose={() => setShowRecordModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>添加检验记录</DialogTitle>
         <DialogContent>
           <Box className="space-y-4" sx={{ mt: 1 }}>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验步骤</Box>
-              <TextField size="small" fullWidth placeholder="请输入检验步骤名称" />
-            </Box>
-            <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验员</Box>
-              <TextField size="small" fullWidth placeholder="请输入检验员姓名" />
-            </Box>
-            <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验结果</Box>
-              <textarea
-                placeholder="请输入检验结果"
-                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                检验步骤
+              </Box>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="请输入检验步骤名称"
               />
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>结论</Box>
-              <select style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                检验员
+              </Box>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="请输入检验员姓名"
+              />
+            </Box>
+            <Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                检验结果
+              </Box>
+              <textarea
+                placeholder="请输入检验结果"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "6px",
+                  border: "1px solid #e2e8f0",
+                  resize: "none",
+                  height: "96px",
+                }}
+              />
+            </Box>
+            <Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                结论
+              </Box>
+              <select
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
                 <option value="">请选择结论</option>
                 <option value="合格">合格</option>
                 <option value="不合格">不合格</option>
@@ -704,8 +831,12 @@ const LimsSampleDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowRecordModal(false)}>取消</Button>
-          <Button variant="contained" onClick={() => setShowRecordModal(false)}>保存</Button>
+          <Button variant="outlined" onClick={() => setShowRecordModal(false)}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={() => setShowRecordModal(false)}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
     </motion.div>
