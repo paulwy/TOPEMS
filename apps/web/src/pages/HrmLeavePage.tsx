@@ -87,9 +87,14 @@ const LeaveManagementPage: React.FC = () => {
     try {
       const response = await employeeApi.list();
       if (response.code === 200) {
-        setEmployees(
-          response.data?.items.map((e) => ({ id: e.id, name: e.name })) || [],
-        );
+        const items = response.data?.items || response.data || [];
+        if (Array.isArray(items)) {
+          setEmployees(
+            items.map((e: any) => ({ id: e.id, name: e.name })) || [],
+          );
+        } else {
+          setEmployees([]);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch employees:", error);
@@ -257,16 +262,14 @@ const LeaveManagementPage: React.FC = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 sx={{ minWidth: 200 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Box sx={{ display: "flex" }}>
-                          <Search size={18} />
-                        </Box>
-                      </InputAdornment>
-                    ),
-                  },
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box sx={{ display: "flex" }}>
+                        <Search size={18} />
+                      </Box>
+                    </InputAdornment>
+                  ),
                 }}
               />
               <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -538,9 +541,7 @@ const LeaveManagementPage: React.FC = () => {
                     handleInputChange("start_date", e.target.value)
                   }
                   fullWidth
-                  slotProps={{
-                    inputLabel: { shrink: true },
-                  }}
+                  LabelProps={{ shrink: true }}
                 />
                 <TextField
                   type="date"
@@ -550,9 +551,7 @@ const LeaveManagementPage: React.FC = () => {
                     handleInputChange("end_date", e.target.value)
                   }
                   fullWidth
-                  slotProps={{
-                    inputLabel: { shrink: true },
-                  }}
+                  LabelProps={{ shrink: true }}
                 />
               </Box>
               <TextField

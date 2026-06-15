@@ -1,24 +1,64 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  FlaskConical,
-  Plus,
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
+  Stack,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Tooltip,
+  Divider,
+  Grid,
+  Tabs,
+  Tab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
+  Skeleton,
+  Alert,
+  Snackbar,
+  LinearProgress,
+  AppBar,
+  Toolbar,
+} from "@mui/material";
+import {
+  FlaskConical as Science,
+  Plus as Add,
   Search,
-  Clock,
+  Clock as AccessTime,
   ChevronRight,
-  FileText,
+  FileText as Description,
   Edit,
-  Trash2,
-  Loader2,
-  X,
+  Trash2 as Delete,
+  X as Close,
   CheckCircle,
-  Beaker,
+  FlaskConical as Biotech,
   Download,
   Upload,
-  FileCode,
-  GitBranch,
-  CheckCircle2,
-  XCircle,
-  Eye,
+  Code,
+  GitBranch as AccountTree,
+  CircleCheck as CheckCircleOutline,
+  X as Cancel,
+  Eye as Visibility,
+  Hourglass as HourglassEmpty,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type {
@@ -36,9 +76,49 @@ import { rsApi, formulaApi } from "../api/rs";
 import { FieldError } from "../components/ValidationError";
 import { ModuleGate } from "../components/PermissionGate";
 import { MODULES } from "../config/permissions";
-import type { ColumnDef } from "@tanstack/react-table";
 import { MetricCard } from "../components/MetricCard";
 import { StatsChart } from "../components/StatsChart";
+
+const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
+  立项: { bg: "info.light", color: "info.dark" },
+  进行中: { bg: "primary.light", color: "primary.dark" },
+  已完成: { bg: "success.light", color: "success.dark" },
+  已终止: { bg: "error.light", color: "error.dark" },
+  草稿: { bg: "grey.200", color: "grey.700" },
+  待审批: { bg: "warning.light", color: "warning.dark" },
+  已批准: { bg: "success.light", color: "success.dark" },
+  已发布: { bg: "info.light", color: "info.dark" },
+  已废弃: { bg: "grey.200", color: "grey.700" },
+};
+
+const EXPERIMENT_TYPE_COLORS: Record<string, { bg: string; color: string }> = {
+  小试: { bg: "info.light", color: "info.dark" },
+  中试: { bg: "warning.light", color: "warning.dark" },
+  量产: { bg: "success.light", color: "success.dark" },
+};
+
+const getStatusColor = (status: string): { bgcolor: string; color: string } => {
+  const c = STATUS_COLORS[status] || { bg: "grey.200", color: "grey.700" };
+  return { bgcolor: c.bg, color: c.color };
+};
+
+const getExperimentTypeColor = (type: string): { bgcolor: string; color: string } => {
+  const c = EXPERIMENT_TYPE_COLORS[type] || { bg: "grey.200", color: "grey.700" };
+  return { bgcolor: c.bg, color: c.color };
+};
+
+const getFormulaStatusColor = (status: string) => getStatusColor(status);
+
+const StatusChip: React.FC<{ status: string; type?: "experiment" }> = ({ status, type }) => {
+  const colorMap = type === "experiment" ? getExperimentTypeColor(status) : getStatusColor(status);
+  return (
+    <Chip
+      size="small"
+      label={status}
+      sx={{ bgcolor: colorMap.bgcolor, color: colorMap.color, fontWeight: 500 }}
+    />
+  );
+};
 
 const Rspage: React.FC = () => {
   const navigate = useNavigate();
@@ -70,12 +150,10 @@ const Rspage: React.FC = () => {
     rs: false,
   });
 
-  // Check if a specific service is up
   const isServiceUp = (serviceName: string): boolean => {
     return serviceStatuses[serviceName] || false;
   };
 
-  // Check service status
   const checkServiceStatus = async (
     serviceName: string,
     port: number,
@@ -96,7 +174,6 @@ const Rspage: React.FC = () => {
     }
   };
 
-  // Check all services on mount and periodically
   useEffect(() => {
     const checkAllServices = () => {
       checkServiceStatus("rs", 8020, (up) =>
@@ -109,6 +186,7 @@ const Rspage: React.FC = () => {
 
     return () => clearInterval(intervalId);
   }, []);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -392,11 +470,9 @@ const Rspage: React.FC = () => {
     }
   };
 
-  // 数据适配函数：处理后端返回的数据字段与前端期望不匹配的问题
   const adaptProject = (p: any): Project => {
     return {
       ...p,
-      // 确保 start_date 存在，没有时使用 created_at
       start_date: p.start_date || p.created_at,
     };
   };
@@ -404,7 +480,6 @@ const Rspage: React.FC = () => {
   const adaptExperiment = (e: any): Experiment => {
     return {
       ...e,
-      // 确保 started_at 存在
       started_at: e.started_at || e.created_at,
     };
   };
@@ -413,7 +488,6 @@ const Rspage: React.FC = () => {
     try {
       const response = await rsApi.listProjects();
       if (response.success && response.data) {
-        // 检查数据格式，兼容不同的响应结构
         let projectData = response.data as any;
         let rawProjects: any[] = [];
 
@@ -426,7 +500,6 @@ const Rspage: React.FC = () => {
           rawProjects = projectData.projects;
         }
 
-        // 适配项目数据
         const adaptedProjects = rawProjects.map((p) => adaptProject(p));
         setProjects(adaptedProjects);
       } else {
@@ -443,7 +516,6 @@ const Rspage: React.FC = () => {
     try {
       const response = await rsApi.listExperiments();
       if (response.success && response.data) {
-        // 检查数据格式，兼容不同的响应结构
         let expData = response.data as any;
         let rawExperiments: any[] = [];
 
@@ -453,7 +525,6 @@ const Rspage: React.FC = () => {
           rawExperiments = expData.experiments;
         }
 
-        // 适配试验数据
         const adaptedExperiments = rawExperiments.map((e) =>
           adaptExperiment(e),
         );
@@ -702,7 +773,7 @@ const Rspage: React.FC = () => {
         showNotification("success", "试验记录更新成功");
         setShowExperimentModal(false);
         setIsEditingExperiment(false);
-        setExperimentErrors({});
+        setEditingExperiment(null);
         loadExperiments();
       } else {
         showNotification("error", response.message || "更新失败");
@@ -732,31 +803,23 @@ const Rspage: React.FC = () => {
     }
   };
 
-  // 确保 projects 和 experiments 是数组，避免 filter 错误
-  const safeProjects = Array.isArray(projects) ? projects : [];
-  const safeExperiments = Array.isArray(experiments) ? experiments : [];
-  const safeFormulas = Array.isArray(formulas) ? formulas : [];
-
-  // 配方管理相关函数
   const openFormulaModal = (formula?: Formula) => {
     if (formula) {
-      setSelectedFormula(formula);
       setFormulaFormData({
         project_id: formula.project_id,
         name: formula.name,
         code: formula.code,
         version: formula.version,
-        category: formula.category || "",
-        description: formula.description || "",
+        category: formula.category,
+        description: formula.description,
         ingredients: formula.ingredients || [],
-        process_steps: formula.process_steps || "",
+        process_steps: formula.process_steps,
         status: formula.status,
-        effective_date: formula.effective_date || "",
-        expiration_date: formula.expiration_date || "",
+        effective_date: formula.effective_date,
+        expiration_date: formula.expiration_date,
       });
       setIsEditingFormula(true);
     } else {
-      setSelectedFormula(null);
       setFormulaFormData({
         project_id: "",
         name: "",
@@ -777,15 +840,13 @@ const Rspage: React.FC = () => {
 
   const openFormulaDetailModal = async (formula: Formula) => {
     setSelectedFormula(formula);
-    await loadFormulaVersions(formula.id);
     setShowFormulaDetailModal(true);
-  };
-
-  const loadFormulaVersions = async (formulaId: string) => {
     try {
-      const response = await formulaApi.listVersions(formulaId);
+      const response = await formulaApi.listFormulaVersions(formula.id);
       if (response.success && response.data) {
-        setFormulaVersions(Array.isArray(response.data) ? response.data : []);
+        const data = response.data as any;
+        const versions = Array.isArray(data) ? data : data.versions || [];
+        setFormulaVersions(versions);
       } else {
         setFormulaVersions([]);
       }
@@ -795,19 +856,13 @@ const Rspage: React.FC = () => {
     }
   };
 
-  const handleCreateFormula = async () => {
-    if (
-      !formulaFormData.name.trim() ||
-      !formulaFormData.code.trim() ||
-      !formulaFormData.project_id
-    ) {
-      showNotification(
-        "error",
-        "请填写必填信息（配方名称、配方编号、关联项目）",
-      );
-      return;
-    }
+  const openFormulaVersionModal = (formula: Formula) => {
+    setSelectedFormula(formula);
+    setFormulaVersionFormData({ version: "", changes: "" });
+    setShowFormulaVersionModal(true);
+  };
 
+  const handleCreateFormula = async () => {
     try {
       setCreating(true);
       const response = await formulaApi.createFormula(formulaFormData);
@@ -829,11 +884,6 @@ const Rspage: React.FC = () => {
   const handleUpdateFormula = async () => {
     if (!selectedFormula) return;
 
-    if (!formulaFormData.name.trim() || !formulaFormData.code.trim()) {
-      showNotification("error", "请填写必填信息（配方名称、配方编号）");
-      return;
-    }
-
     try {
       setCreating(true);
       const response = await formulaApi.updateFormula(
@@ -843,6 +893,7 @@ const Rspage: React.FC = () => {
       if (response.success) {
         showNotification("success", "配方更新成功");
         setShowFormulaModal(false);
+        setIsEditingFormula(false);
         loadFormulas();
       } else {
         showNotification("error", response.message || "更新失败");
@@ -872,35 +923,23 @@ const Rspage: React.FC = () => {
     }
   };
 
-  const openFormulaVersionModal = (formula: Formula) => {
-    setSelectedFormula(formula);
-    setFormulaVersionFormData({
-      version: "",
-      changes: "",
-    });
-    setShowFormulaVersionModal(true);
-  };
-
   const handleCreateFormulaVersion = async () => {
-    if (
-      !selectedFormula ||
-      !formulaVersionFormData.version.trim() ||
-      !formulaVersionFormData.changes.trim()
-    ) {
+    if (!selectedFormula) return;
+    if (!formulaVersionFormData.version.trim() || !formulaVersionFormData.changes.trim()) {
       showNotification("error", "请填写版本号和变更说明");
       return;
     }
 
     try {
       setCreating(true);
-      const response = await formulaApi.createVersion(
+      const response = await formulaApi.createFormulaVersion(
         selectedFormula.id,
         formulaVersionFormData,
       );
       if (response.success) {
         showNotification("success", "配方版本创建成功");
         setShowFormulaVersionModal(false);
-        loadFormulaVersions(selectedFormula.id);
+        setFormulaVersionFormData({ version: "", changes: "" });
         loadFormulas();
       } else {
         showNotification("error", response.message || "创建失败");
@@ -914,112 +953,59 @@ const Rspage: React.FC = () => {
   };
 
   const handleApproveFormula = async (id: string) => {
+    if (!confirm("确定要批准这个配方吗？")) return;
+
     try {
       const response = await formulaApi.approveFormula(id);
       if (response.success) {
-        showNotification("success", "配方审批通过");
-        loadFormulas();
+        showNotification("success", "配方已批准");
         setShowFormulaDetailModal(false);
+        loadFormulas();
       } else {
-        showNotification("error", response.message || "审批失败");
+        showNotification("error", response.message || "批准失败");
       }
     } catch (err) {
-      showNotification("error", "审批配方失败");
-      console.error("审批配方失败:", err);
+      showNotification("error", "批准配方失败");
+      console.error("批准配方失败:", err);
     }
   };
 
-  const getFormulaStatusColor = (status: string) => {
-    switch (status) {
-      case "草稿":
-        return "bg-gray-100 text-gray-700";
-      case "待审批":
-        return "bg-yellow-100 text-yellow-700";
-      case "已批准":
-        return "bg-green-100 text-green-700";
-      case "已拒绝":
-        return "bg-red-100 text-red-700";
-      case "已发布":
-        return "bg-blue-100 text-blue-700";
-      case "已废弃":
-        return "bg-slate-100 text-slate-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  const getFormulaApprovalStatusIcon = (status: string) => {
-    switch (status) {
-      case "已批准":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-      case "已拒绝":
-        return <XCircle className="w-5 h-5 text-red-600" />;
-      case "待审批":
-        return <Clock className="w-5 h-5 text-yellow-600" />;
-      default:
-        return <Clock className="w-5 h-5 text-gray-400" />;
-    }
-  };
-
-  const filteredProjects = safeProjects.filter(
-    (p) =>
-      (p.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.description || "").toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const filteredExperiments = safeExperiments.filter(
-    (e) =>
-      (e.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.objective || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (e.experimenter || "").toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  // 批量操作相关
-  const toggleProjectSelect = useCallback((id: string) => {
-    setSelectedProjectIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const selectAllProjects = useCallback(() => {
+  const selectAllProjects = () => {
     setSelectedProjectIds(new Set(filteredProjects.map((p) => p.id)));
-  }, [filteredProjects]);
+  };
 
-  const deselectAllProjects = useCallback(() => {
+  const deselectAllProjects = () => {
     setSelectedProjectIds(new Set());
-  }, []);
+  };
+
+  const toggleProjectSelect = (id: string) => {
+    setSelectedProjectIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const handleBatchDelete = async () => {
-    if (!confirm(`确定要删除 ${selectedProjectIds.size} 个项目吗？`)) return;
+    if (selectedProjectIds.size === 0) return;
+    if (!confirm(`确定要删除选中的 ${selectedProjectIds.size} 个项目吗？`)) return;
 
     try {
-      setCreating(true);
-      const response = await rsApi.batchDeleteProjects({
-        ids: Array.from(selectedProjectIds),
-      });
-
-      if (response.success) {
-        const result = response.data!;
-        showNotification(
-          "success",
-          `批量删除完成：成功 ${result.success} 个，失败 ${result.failed} 个`,
-        );
-        deselectAllProjects();
-        loadProjects();
-      } else {
-        showNotification("error", response.message || "批量删除失败");
-      }
+      const deletePromises = Array.from(selectedProjectIds).map((id) =>
+        rsApi.deleteProject(id),
+      );
+      const results = await Promise.allSettled(deletePromises);
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      showNotification("success", `成功删除 ${successCount} 个项目`);
+      setSelectedProjectIds(new Set());
+      loadProjects();
     } catch (err) {
       showNotification("error", "批量删除失败");
       console.error("批量删除失败:", err);
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -1044,54 +1030,42 @@ const Rspage: React.FC = () => {
   const updateBatchCreateItem = (
     index: number,
     field: keyof CreateProjectRequest,
-    value: string,
+    value: any,
   ) => {
     setBatchCreateData((prev) => {
-      const newData = [...prev];
-      newData[index] = { ...newData[index], [field]: value };
-      return newData;
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
     });
   };
 
   const handleBatchCreate = async () => {
-    const validProjects = batchCreateData.filter(
-      (item) =>
-        item.name.trim() !== "" &&
-        item.code.trim() !== "" &&
-        item.leader.trim() !== "",
+    const validItems = batchCreateData.filter(
+      (item) => item.name.trim() && item.code.trim() && item.leader.trim(),
     );
-    if (validProjects.length === 0) {
-      showNotification("error", "请至少填写一个项目的名称、编号和负责人");
+    if (validItems.length === 0) {
+      showNotification("error", "请至少填写一个有效的项目");
       return;
     }
 
     try {
       setCreating(true);
-      const response = await rsApi.batchCreateProjects({
-        projects: validProjects,
-      });
-
-      if (response.success) {
-        const result = response.data!;
-        showNotification(
-          "success",
-          `批量创建完成：成功 ${result.success} 个，失败 ${result.failed} 个`,
-        );
-        setShowBatchCreateModal(false);
-        setBatchCreateData([
-          {
-            name: "",
-            code: "",
-            description: "",
-            project_type: "研发",
-            leader: "",
-            start_date: new Date().toISOString().split("T")[0],
-          },
-        ]);
-        loadProjects();
-      } else {
-        showNotification("error", response.message || "批量创建失败");
-      }
+      const promises = validItems.map((item) => rsApi.createProject(item));
+      const results = await Promise.allSettled(promises);
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      showNotification("success", `成功创建 ${successCount} 个项目`);
+      setShowBatchCreateModal(false);
+      setBatchCreateData([
+        {
+          name: "",
+          code: "",
+          description: "",
+          project_type: "研发",
+          leader: "",
+          start_date: new Date().toISOString().split("T")[0],
+        },
+      ]);
+      loadProjects();
     } catch (err) {
       showNotification("error", "批量创建失败");
       console.error("批量创建失败:", err);
@@ -1100,2743 +1074,1638 @@ const Rspage: React.FC = () => {
     }
   };
 
-  const handleImportFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImportFile(file);
-
-      // 预览 CSV 文件
-      try {
-        const content = await file.text();
-        const lines = content.split("\n").slice(0, 6); // 只预览前5行
-        const preview = lines.map((line) => line.split(","));
-        setImportPreview(preview);
-      } catch {
-        setImportPreview(null);
-      }
-    }
-  };
-
-  const downloadTemplate = () => {
-    const headers = [
-      "name",
-      "code",
-      "leader",
-      "project_type",
-      "description",
-      "status",
-    ];
-    const sampleRow = ["项目1", "PRJ001", "张三", "研发", "项目描述", "立项"];
-    const content = [headers, sampleRow].map((row) => row.join(",")).join("\n");
-
-    const blob = new Blob([content], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "projects_template.csv";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  };
-
-  const handleImport = async () => {
-    if (!importFile) {
-      showNotification("error", "请选择要导入的文件");
-      return;
+  const handleExportCurrentTab = () => {
+    let data: any[] = [];
+    let filename = "";
+    if (activeTab === "projects") {
+      data = filteredProjects;
+      filename = "projects";
+    } else if (activeTab === "experiments") {
+      data = filteredExperiments;
+      filename = "experiments";
+    } else {
+      data = safeFormulas;
+      filename = "formulas";
     }
 
-    try {
-      setCreating(true);
-      const response = await rsApi.importProjects(importFile);
-
-      if (response.success) {
-        const result = response.data!;
-        let message = `导入完成：成功 ${result.success} 个`;
-        if (result.failed > 0) {
-          message += `，失败 ${result.failed} 个`;
-          if (result.errors && result.errors.length > 0) {
-            message += ` - ${result.errors.slice(0, 2).join("; ")}`;
-          }
-        }
-        showNotification("success", message);
-        setShowImportModal(false);
-        setImportFile(null);
-        setImportPreview(null);
-        loadProjects();
-      } else {
-        showNotification("error", response.message || "导入失败");
-      }
-    } catch (err) {
-      showNotification("error", "导入失败");
-      console.error("导入失败:", err);
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const getProjectName = (projectId: string) => {
-    const project = safeProjects.find((p) => p.id === projectId);
-    return project ? project.name : "未知项目";
-  };
-
-  const getStatusColor = (status: string) => {
-    if (!status) return "bg-gray-100 text-gray-800";
-    switch (status) {
-      case "进行中":
-        return "bg-blue-100 text-blue-700";
-      case "已完成":
-        return "bg-green-100 text-green-700";
-      case "已终止":
-        return "bg-red-100 text-red-700";
-      case "待开始":
-        return "bg-gray-100 text-gray-700";
-      case "待测试":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-yellow-100 text-yellow-700";
-    }
-  };
-
-  const getExperimentTypeColor = (type: string) => {
-    switch (type) {
-      case "小试":
-        return "bg-purple-100 text-purple-700";
-      case "中试":
-        return "bg-blue-100 text-blue-700";
-      case "量产":
-        return "bg-green-100 text-green-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  const exportToCSV = (data: any[], filename: string) => {
     if (data.length === 0) {
       showNotification("error", "没有数据可导出");
       return;
     }
 
-    const headers = Object.keys(data[0]);
-    const csv = [
-      headers.join(","),
-      ...data.map((row) =>
-        headers
-          .map((h) => `"${(row[h] || "").toString().replace(/"/g, '""')}"`)
-          .join(","),
-      ),
-    ].join("\n");
-
-    const blob = new Blob(["\ufeff" + csv], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map((item) =>
+      Object.values(item)
+        .map((v) =>
+          typeof v === "string" && v.includes(",") ? `"${v}"` : String(v ?? ""),
+        )
+        .join(","),
+    );
+    const csv = [headers, ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute(
-      "download",
-      `${filename}-${new Date().toISOString().split("T")[0]}.csv`,
-    );
-    document.body.appendChild(link);
+    link.download = `${filename}_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     showNotification("success", "导出成功");
   };
 
-  const handleExportCurrentTab = () => {
-    const data =
-      activeTab === "projects"
-        ? safeProjects
-        : activeTab === "experiments"
-          ? safeExperiments
-          : safeFormulas;
-    exportToCSV(data, `rs-${activeTab}`);
+  const downloadTemplate = () => {
+    const headers = "name,description,status";
+    const example = "示例项目,项目描述,进行中";
+    const csv = [headers, example].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "rs_template.csv";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
-  const projectColumns: ColumnDef<Project>[] = [
-    { accessorKey: "code", header: "项目编号" },
-    { accessorKey: "name", header: "项目名称" },
-    { accessorKey: "leader", header: "负责人" },
-    { accessorKey: "project_type", header: "项目类型" },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
-    },
-    { accessorKey: "description", header: "描述" },
-    {
-      accessorKey: "start_date",
-      header: "开始时间",
-      cell: ({ row }) => (
-        <span>
-          {new Date(row.original.start_date).toLocaleDateString("zh-CN")}
-        </span>
-      ),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openDetailModal(row.original)}
-            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-          >
-            详情
-          </button>
-          <button
-            onClick={() => openEditModal(row.original)}
-            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleDelete(row.original.id)}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
-    },
-  ];
+  const handleImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportFile(file);
 
-  const experimentColumns: ColumnDef<Experiment>[] = [
-    { accessorKey: "code", header: "试验编号" },
-    { accessorKey: "name", header: "试验名称" },
-    { accessorKey: "phase", header: "阶段" },
-    {
-      accessorKey: "experiment_type",
-      header: "类型",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getExperimentTypeColor(row.original.experiment_type)}`}
-        >
-          {row.original.experiment_type}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
-    },
-    { accessorKey: "experimenter", header: "试验员" },
-    {
-      accessorKey: "started_at",
-      header: "开始日期",
-      cell: ({ row }) => (
-        <span>
-          {new Date(row.original.started_at).toLocaleDateString("zh-CN")}
-        </span>
-      ),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openExperimentDetailModal(row.original)}
-            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-          >
-            详情
-          </button>
-          <button
-            onClick={() => openEditExperimentModal(row.original)}
-            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleDeleteExperiment(row.original.id)}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
-    },
-  ];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split("\n").filter((l) => l.trim());
+      const preview = lines.slice(0, 5).map((l) => l.split(","));
+      setImportPreview(preview);
+    };
+    reader.readAsText(file);
+  };
 
-  const _formulaColumns: ColumnDef<Formula>[] = [
-    { accessorKey: "name", header: "配方名称" },
-    { accessorKey: "code", header: "编号" },
-    { accessorKey: "version", header: "版本" },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getFormulaStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
-    },
-    { accessorKey: "category", header: "分类" },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openFormulaDetailModal(row.original)}
-            className="px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-          >
-            详情
-          </button>
-          <button
-            onClick={() => openFormulaModal(row.original)}
-            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleDeleteFormula(row.original.id)}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
-    },
-  ];
+  const handleImport = async () => {
+    if (!importFile) return;
+    showNotification("success", "导入功能开发中");
+    setShowImportModal(false);
+    setImportFile(null);
+    setImportPreview(null);
+  };
 
-  if (loading) {
+  const getProjectName = (projectId: string): string => {
+    const project = safeProjects.find((p) => p.id === projectId);
+    return project?.name || "-";
+  };
+
+  const getFormulaApprovalStatusIcon = (status: string) => {
+    if (status === "已批准" || status === "approved") {
+      return <CheckCircleOutline sx={{ fontSize: 20, color: "success.main" }} />;
+    }
+    if (status === "已拒绝" || status === "rejected") {
+      return <Cancel sx={{ fontSize: 20, color: "error.main" }} />;
+    }
+    return <HourglassEmpty sx={{ fontSize: 20, color: "warning.main" }} />;
+  };
+
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  const safeExperiments = Array.isArray(experiments) ? experiments : [];
+  const safeFormulas = Array.isArray(formulas) ? formulas : [];
+
+  const filteredProjects = safeProjects.filter(
+    (p) =>
+      !searchTerm ||
+      p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.code?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const filteredExperiments = safeExperiments.filter(
+    (e) =>
+      !searchTerm ||
+      e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      e.code?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  if (!isServiceUp("rs") && !loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">加载中...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isServiceUp("rs")) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <FlaskConical className="w-8 h-8 text-orange-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
+      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "grey.50" }}>
+        <Card sx={{ p: 4, textAlign: "center", maxWidth: 400 }}>
+          <Science sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
             科研研发服务未启动
-          </h2>
-          <p className="text-slate-600 mb-6">
-            RS服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
-          </p>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            返回首页
-          </button>
-        </div>
-      </div>
+          </Typography>
+          <Typography color="text.secondary">
+            正在等待服务启动...
+          </Typography>
+        </Card>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-              >
-                <ChevronRight className="w-5 h-5 rotate-180" />
-              </button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                  <FlaskConical className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">科研研发</h1>
-                  <p className="text-xs text-slate-500">
-                    Research & Development
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              {activeTab === "projects" && (
-                <>
-                  <ModuleGate
-                    module={MODULES.RS}
-                    action="write"
-                    showDisabled={true}
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <AppBar position="sticky" color="default" elevation={1} sx={{ bgcolor: "background.paper" }}>
+        <Toolbar sx={{ maxWidth: 1280, mx: "auto", width: "100%", px: { xs: 2, md: 3 } }}>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1 }}>
+            <IconButton onClick={() => navigate("/dashboard")}>
+              <ChevronRight sx={{ transform: "rotate(180deg)" }} />
+            </IconButton>
+            <Avatar sx={{ background: "linear-gradient(135deg, #f97316, #ef4444)", width: 40, height: 40 }}>
+              <Science sx={{ color: "white" }} />
+            </Avatar>
+            <Box>
+              <Typography variant="h6" fontWeight="bold">
+                科研研发
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Research & Development
+              </Typography>
+            </Box>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            {activeTab === "projects" && (
+              <>
+                <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Add />}
+                    onClick={() => setShowModal(true)}
                   >
-                    <button
-                      onClick={() => setShowModal(true)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>新建项目</span>
-                    </button>
-                  </ModuleGate>
-                  <ModuleGate
-                    module={MODULES.RS}
-                    action="write"
-                    showDisabled={true}
+                    新建项目
+                  </Button>
+                </ModuleGate>
+                <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<Add />}
+                    onClick={() => setShowBatchCreateModal(true)}
                   >
-                    <button
-                      onClick={() => setShowBatchCreateModal(true)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>批量创建</span>
-                    </button>
-                  </ModuleGate>
-                  <ModuleGate
-                    module={MODULES.RS}
-                    action="read"
-                    showDisabled={true}
+                    批量创建
+                  </Button>
+                </ModuleGate>
+                <ModuleGate module={MODULES.RS} action="read" showDisabled={true}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Download />}
+                    onClick={handleExportCurrentTab}
+                    disabled={creating}
                   >
-                    <button
-                      onClick={handleExportCurrentTab}
-                      disabled={creating}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>导出</span>
-                    </button>
-                  </ModuleGate>
-                  <ModuleGate
-                    module={MODULES.RS}
-                    action="write"
-                    showDisabled={true}
+                    导出
+                  </Button>
+                </ModuleGate>
+                <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    startIcon={<Upload />}
+                    onClick={() => setShowImportModal(true)}
                   >
-                    <button
-                      onClick={() => setShowImportModal(true)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span>导入</span>
-                    </button>
-                  </ModuleGate>
-                </>
-              )}
-              {(activeTab === "projects") === false && (
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>新建项目</span>
-                </button>
-              )}
-              {activeTab === "experiments" && (
-                <button
-                  onClick={() => openExperimentModal()}
-                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                >
-                  <Beaker className="w-4 h-4" />
-                  <span>新建试验</span>
-                </button>
-              )}
-              {activeTab === "formulas" && (
-                <>
-                  <button
-                    onClick={() => openFormulaModal()}
-                    className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>添加配方</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Notification */}
-      {notification && (
-        <div
-          className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
-            notification.type === "success" ? "bg-green-500" : "bg-red-500"
-          } text-white`}
-        >
-          <div className="flex items-center space-x-2">
-            {notification.type === "success" && (
-              <CheckCircle className="w-5 h-5" />
+                    导入
+                  </Button>
+                </ModuleGate>
+              </>
             )}
-            <span>{notification.message}</span>
-          </div>
-        </div>
-      )}
+            {activeTab === "experiments" && (
+              <Button
+                variant="contained"
+                color="warning"
+                startIcon={<Biotech />}
+                onClick={() => openExperimentModal()}
+              >
+                新建试验
+              </Button>
+            )}
+            {activeTab === "formulas" && (
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<Add />}
+                onClick={() => openFormulaModal()}
+              >
+                添加配方
+              </Button>
+            )}
+          </Stack>
+        </Toolbar>
+      </AppBar>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="搜索项目..."
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={3000}
+        onClose={() => setNotification(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert severity={notification?.type === "success" ? "success" : "error"} onClose={() => setNotification(null)}>
+          {notification?.message}
+        </Alert>
+      </Snackbar>
+
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 3 }, py: 4 }}>
+        <TextField
+          fullWidth
+          placeholder="搜索项目..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <Search sx={{ color: "text.secondary", mr: 1 }} />
+            ),
+          }}
+          sx={{ mb: 3, bgcolor: "background.paper" }}
+        />
+
+        <Card sx={{ mb: 3, boxShadow: 1 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            variant="fullWidth"
+            sx={{ minHeight: 48 }}
+          >
+            <Tab
+              value="projects"
+              label="项目列表"
+              icon={<Science />}
+              iconPosition="start"
+              sx={{ minHeight: 48, fontWeight: 500 }}
             />
-          </div>
-        </div>
+            <Tab
+              value="experiments"
+              label="试验记录"
+              icon={<Biotech />}
+              iconPosition="start"
+              sx={{ minHeight: 48, fontWeight: 500 }}
+            />
+            <Tab
+              value="formulas"
+              label="配方管理"
+              icon={<Code />}
+              iconPosition="start"
+              sx={{ minHeight: 48, fontWeight: 500 }}
+            />
+          </Tabs>
+        </Card>
 
-        {/* Tabs */}
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-1 flex space-x-1">
-          <button
-            onClick={() => setActiveTab("projects")}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === "projects"
-                ? "bg-blue-600 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <FlaskConical className="w-5 h-5" />
-              <span>项目列表</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab("experiments")}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === "experiments"
-                ? "bg-blue-600 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <Beaker className="w-5 h-5" />
-              <span>试验记录</span>
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab("formulas")}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === "formulas"
-                ? "bg-indigo-600 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            <div className="flex items-center justify-center space-x-2">
-              <FileCode className="w-5 h-5" />
-              <span>配方管理</span>
-            </div>
-          </button>
-        </div>
+        <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="项目总数"
+              value={stats.total_projects}
+              icon={<Science />}
+              gradient={["#8B5CF6", "#7C3AED"]}
+              subtitle={`进行中: ${stats.in_progress_projects}`}
+              trend={stats.in_progress_projects > 0 ? "up" : "neutral"}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="试验总数"
+              value={stats.total_experiments}
+              icon={<Biotech />}
+              gradient={["#6366F1", "#4F46E5"]}
+              subtitle={`进行中: ${stats.in_progress_experiments}`}
+              trend={stats.in_progress_experiments > 0 ? "up" : "neutral"}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="配方总数"
+              value={stats.total_formulas}
+              icon={<Code />}
+              gradient={["#F59E0B", "#D97706"]}
+              subtitle={`已批准: ${stats.approved_formulas}`}
+              trend="neutral"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="已完成项目"
+              value={stats.completed_projects}
+              icon={<CheckCircle />}
+              gradient={["#00C897", "#00A878"]}
+              trend="up"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="已完成试验"
+              value={stats.completed_experiments}
+              icon={<CheckCircleOutline />}
+              gradient={["#14B8A6", "#0D9488"]}
+              trend="up"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="草稿配方"
+              value={stats.draft_formulas}
+              icon={<AccessTime />}
+              gradient={["#EC4899", "#DB2777"]}
+              trend="neutral"
+            />
+          </Grid>
+        </Grid>
 
-        {/* 主要统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-          <MetricCard
-            title="项目总数"
-            value={stats.total_projects}
-            icon={<FlaskConical className="w-6 h-6" />}
-            gradient={["#8B5CF6", "#7C3AED"]}
-            subtitle={`进行中: ${stats.in_progress_projects}`}
-            trend={stats.in_progress_projects > 0 ? "up" : "neutral"}
-          />
-          <MetricCard
-            title="试验总数"
-            value={stats.total_experiments}
-            icon={<Beaker className="w-6 h-6" />}
-            gradient={["#6366F1", "#4F46E5"]}
-            subtitle={`进行中: ${stats.in_progress_experiments}`}
-            trend={stats.in_progress_experiments > 0 ? "up" : "neutral"}
-          />
-          <MetricCard
-            title="配方总数"
-            value={stats.total_formulas}
-            icon={<FileCode className="w-6 h-6" />}
-            gradient={["#F59E0B", "#D97706"]}
-            subtitle={`已批准: ${stats.approved_formulas}`}
-            trend="neutral"
-          />
-          <MetricCard
-            title="已完成项目"
-            value={stats.completed_projects}
-            icon={<CheckCircle className="w-6 h-6" />}
-            gradient={["#00C897", "#00A878"]}
-            trend="up"
-          />
-          <MetricCard
-            title="已完成试验"
-            value={stats.completed_experiments}
-            icon={<CheckCircle2 className="w-6 h-6" />}
-            gradient={["#14B8A6", "#0D9488"]}
-            trend="up"
-          />
-          <MetricCard
-            title="草稿配方"
-            value={stats.draft_formulas}
-            icon={<Clock className="w-6 h-6" />}
-            gradient={["#EC4899", "#DB2777"]}
-            trend="neutral"
-          />
-        </div>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} lg={6}>
+            <StatsChart
+              title="项目状态分布"
+              type="pie"
+              data={[
+                { name: "进行中", value: stats.in_progress_projects, color: "#6366F1" },
+                { name: "已完成", value: stats.completed_projects, color: "#00C897" },
+                { name: "待开始", value: stats.pending_projects, color: "#F59E0B" },
+                { name: "已取消", value: stats.cancelled_projects, color: "#6B7280" },
+              ].filter((d) => d.value > 0)}
+              dataKey="value"
+              nameKey="name"
+            />
+          </Grid>
+          <Grid item xs={12} lg={6}>
+            <StatsChart
+              title="试验状态分布"
+              type="pie"
+              data={[
+                { name: "进行中", value: stats.in_progress_experiments, color: "#6366F1" },
+                { name: "已完成", value: stats.completed_experiments, color: "#00C897" },
+                { name: "待开始", value: stats.pending_experiments, color: "#F59E0B" },
+              ].filter((d) => d.value > 0)}
+              dataKey="value"
+              nameKey="name"
+            />
+          </Grid>
+        </Grid>
 
-        {/* 图表区域 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <StatsChart
-            title="项目状态分布"
-            type="pie"
-            data={[
-              {
-                name: "进行中",
-                value: stats.in_progress_projects,
-                color: "#6366F1",
-              },
-              {
-                name: "已完成",
-                value: stats.completed_projects,
-                color: "#00C897",
-              },
-              {
-                name: "待开始",
-                value: stats.pending_projects,
-                color: "#F59E0B",
-              },
-              {
-                name: "已取消",
-                value: stats.cancelled_projects,
-                color: "#6B7280",
-              },
-            ].filter((d) => d.value > 0)}
-            dataKey="value"
-            nameKey="name"
-          />
-          <StatsChart
-            title="试验状态分布"
-            type="pie"
-            data={[
-              {
-                name: "进行中",
-                value: stats.in_progress_experiments,
-                color: "#6366F1",
-              },
-              {
-                name: "已完成",
-                value: stats.completed_experiments,
-                color: "#00C897",
-              },
-              {
-                name: "待开始",
-                value: stats.pending_experiments,
-                color: "#F59E0B",
-              },
-            ].filter((d) => d.value > 0)}
-            dataKey="value"
-            nameKey="name"
-          />
-        </div>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {[
+            {
+              label: activeTab === "projects" ? "项目总数" : activeTab === "experiments" ? "试验总数" : "配方总数",
+              value: activeTab === "projects" ? safeProjects.length : activeTab === "experiments" ? safeExperiments.length : safeFormulas.length,
+              icon: activeTab === "projects" ? <Science /> : activeTab === "experiments" ? <Biotech /> : <Code />,
+              bg: "primary.50",
+              color: activeTab === "formulas" ? "secondary.main" : "primary.main",
+            },
+            {
+              label: "进行中",
+              value:
+                activeTab === "projects"
+                  ? safeProjects.filter((p) => p.status === "进行中").length
+                  : activeTab === "experiments"
+                    ? safeExperiments.filter((e) => e.status === "进行中").length
+                    : safeFormulas.filter((f) => f.status === "草稿").length,
+              icon: <AccessTime />,
+              bg: "warning.50",
+              color: "warning.main",
+            },
+            {
+              label: "已完成",
+              value:
+                activeTab === "projects"
+                  ? safeProjects.filter((p) => p.status === "已完成").length
+                  : activeTab === "experiments"
+                    ? safeExperiments.filter((e) => e.status === "已完成").length
+                    : safeFormulas.filter((f) => f.status === "已批准" || f.status === "已发布").length,
+              icon: <CheckCircle />,
+              bg: "success.50",
+              color: "success.main",
+            },
+          ].map((stat) => (
+            <Grid item xs={12} md={4} key={stat.label}>
+              <Card sx={{ p: 3, boxShadow: 1, borderRadius: 2 }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      {stat.label}
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold" color={stat.color}>
+                      {stat.value}
+                    </Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: stat.bg, color: stat.color, width: 48, height: 48 }}>
+                    {stat.icon}
+                  </Avatar>
+                </Stack>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
 
-        {/* 标签页特定统计 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">
-                  {activeTab === "projects"
-                    ? "项目总数"
-                    : activeTab === "experiments"
-                      ? "试验总数"
-                      : "配方总数"}
-                </p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {activeTab === "projects"
-                    ? safeProjects.length
-                    : activeTab === "experiments"
-                      ? safeExperiments.length
-                      : safeFormulas.length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                {activeTab === "projects" ? (
-                  <FlaskConical className="w-6 h-6 text-blue-600" />
-                ) : activeTab === "experiments" ? (
-                  <Beaker className="w-6 h-6 text-blue-600" />
-                ) : (
-                  <FileCode className="w-6 h-6 text-indigo-600" />
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">进行中</p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {activeTab === "projects"
-                    ? safeProjects.filter((p) => p.status === "进行中").length
-                    : activeTab === "experiments"
-                      ? safeExperiments.filter((e) => e.status === "进行中")
-                          .length
-                      : safeFormulas.filter((f) => f.status === "草稿").length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                <Clock className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">已完成</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {activeTab === "projects"
-                    ? safeProjects.filter((p) => p.status === "已完成").length
-                    : activeTab === "experiments"
-                      ? safeExperiments.filter((e) => e.status === "已完成")
-                          .length
-                      : safeFormulas.filter(
-                          (f) => f.status === "已批准" || f.status === "已发布",
-                        ).length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-          {activeTab === "formulas" && (
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600 mb-1">待审批</p>
-                  <p className="text-3xl font-bold text-yellow-600">
-                    {safeFormulas.filter((f) => f.status === "待审批").length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-                  <FileCode className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* List */}
-        {activeTab === "projects" ? (
-          /* Projects List */
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm">
-              {/* 批量操作栏 */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-                <div className="flex items-center space-x-3">
-                  <label className="flex items-center cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedProjectIds.size === filteredProjects.length &&
-                        filteredProjects.length > 0
-                      }
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          selectAllProjects();
-                        } else {
-                          deselectAllProjects();
-                        }
-                      }}
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-slate-600">
-                      {selectedProjectIds.size > 0
-                        ? `已选择 ${selectedProjectIds.size} 项`
-                        : "全部选择"}
-                    </span>
-                  </label>
-                </div>
-                {selectedProjectIds.size > 0 && (
-                  <ModuleGate
-                    module={MODULES.RS}
-                    action="delete"
-                    showDisabled={true}
+        {loading ? (
+          <Stack spacing={2}>
+            <Skeleton variant="rounded" height={120} />
+            <Skeleton variant="rounded" height={400} />
+          </Stack>
+        ) : activeTab === "projects" ? (
+          <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "grey.50" }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedProjectIds.size === filteredProjects.length && filteredProjects.length > 0}
+                    onChange={(e) => (e.target.checked ? selectAllProjects() : deselectAllProjects())}
+                  />
+                }
+                label={selectedProjectIds.size > 0 ? `已选择 ${selectedProjectIds.size} 项` : "全部选择"}
+              />
+              {selectedProjectIds.size > 0 && (
+                <ModuleGate module={MODULES.RS} action="delete" showDisabled={true}>
+                  <Button
+                    color="error"
+                    size="small"
+                    startIcon={<Delete />}
+                    onClick={handleBatchDelete}
+                    disabled={creating}
                   >
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleBatchDelete()}
-                        disabled={creating}
-                        className="flex items-center space-x-2 px-3 py-1.5 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>批量删除</span>
-                      </button>
-                    </div>
-                  </ModuleGate>
-                )}
-              </div>
-              <div className="p-6 border-b border-slate-200">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  项目列表
-                </h2>
-              </div>
-              <div className="divide-y divide-slate-200">
-                {filteredProjects.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <FlaskConical className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500">暂无项目</p>
-                  </div>
-                ) : (
-                  filteredProjects.map((project) => (
-                    <div
-                      key={project.id}
-                      className="p-6 hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4">
-                          <label className="flex items-center cursor-pointer select-none pt-1">
-                            <input
-                              type="checkbox"
-                              checked={selectedProjectIds.has(project.id)}
-                              onChange={() => toggleProjectSelect(project.id)}
-                              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                            />
-                          </label>
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-lg font-semibold text-slate-900">
-                                {project.name}
-                              </h3>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}
-                              >
-                                {project.status}
-                              </span>
-                            </div>
-                            <p className="text-slate-600 mb-3">
-                              {project.description}
-                            </p>
-                            <div className="flex items-center space-x-4 text-sm text-slate-500">
-                              <span className="flex items-center">
-                                <Clock className="w-4 h-4 mr-1" />
-                                开始时间:{" "}
-                                {new Date(
-                                  project.start_date,
-                                ).toLocaleDateString("zh-CN")}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => openDetailModal(project)}
-                            className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-                            title="查看详情"
-                          >
-                            <span className="flex items-center">查看详情</span>
-                          </button>
-                          <button
-                            onClick={() => openExperimentModal(project)}
-                            className="px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded-lg"
-                            title="添加试验"
-                          >
-                            <span className="flex items-center">
-                              <Beaker className="w-4 h-4 mr-1" />
-                              添加试验
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => openEditModal(project)}
-                            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                            title="编辑"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(project.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                            title="删除"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Experiments List */
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">试验记录</h2>
-            </div>
-            <div className="divide-y divide-slate-200">
-              {filteredExperiments.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Beaker className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-slate-500">暂无试验记录</p>
-                </div>
-              ) : (
-                filteredExperiments.map((experiment) => (
-                  <div
-                    key={experiment.id}
-                    className="p-6 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-slate-900">
-                            {experiment.name}
-                          </h3>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(experiment.status)}`}
-                          >
-                            {experiment.status}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getExperimentTypeColor(experiment.experiment_type)}`}
-                          >
-                            {experiment.experiment_type}
-                          </span>
-                        </div>
-                        <p className="text-slate-600 mb-2">
-                          目标: {experiment.objective}
-                        </p>
-                        {experiment.results && (
-                          <p className="text-sm text-slate-700 mb-3">
-                            结果: {String(experiment.results)}
-                          </p>
-                        )}
-                        <div className="flex items-center space-x-4 text-sm text-slate-500">
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
-                            开始日期:{" "}
-                            {new Date(experiment.started_at).toLocaleDateString(
-                              "zh-CN",
-                            )}
-                          </span>
-                          <span>试验员: {experiment.experimenter}</span>
-                          <span>
-                            项目: {getProjectName(experiment.project_id)}
-                          </span>
-                        </div>
-                        {experiment.conclusions && (
-                          <div className="mt-3 p-3 bg-green-50 rounded-lg">
-                            <p className="text-sm font-medium text-green-800">
-                              结论: {experiment.conclusions}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => openExperimentDetailModal(experiment)}
-                          className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="查看详情"
-                        >
-                          <span className="flex items-center">
-                            <Eye className="w-4 h-4 mr-1" />
-                            查看详情
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => openEditExperimentModal(experiment)}
-                          className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                          title="编辑"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteExperiment(experiment.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                          title="删除"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                    批量删除
+                  </Button>
+                </ModuleGate>
               )}
-            </div>
-          </div>
+            </Box>
+            <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="h6" fontWeight="bold">项目列表</Typography>
+            </Box>
+            {filteredProjects.length === 0 ? (
+              <Box sx={{ p: 6, textAlign: "center" }}>
+                <Science sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <Typography color="text.secondary">暂无项目</Typography>
+              </Box>
+            ) : (
+              <Stack divider={<Divider />}>
+                {filteredProjects.map((project) => (
+                  <Box key={project.id} sx={{ p: 3, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s" }}>
+                    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                      <Stack direction="row" alignItems="flex-start" spacing={2} sx={{ flex: 1 }}>
+                        <Checkbox
+                          checked={selectedProjectIds.has(project.id)}
+                          onChange={() => toggleProjectSelect(project.id)}
+                          sx={{ pt: 0.5 }}
+                        />
+                        <Box sx={{ flex: 1 }}>
+                          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                              {project.name}
+                            </Typography>
+                            <StatusChip status={project.status} />
+                          </Stack>
+                          <Typography color="text.secondary" sx={{ mb: 1.5 }}>
+                            {project.description}
+                          </Typography>
+                          <Stack direction="row" alignItems="center" spacing={3}>
+                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                              <AccessTime sx={{ fontSize: 16 }} />
+                              <Typography variant="body2" color="text.secondary">
+                                开始时间: {new Date(project.start_date).toLocaleDateString("zh-CN")}
+                              </Typography>
+                            </Stack>
+                          </Stack>
+                        </Box>
+                      </Stack>
+                      <Stack direction="row" spacing={1}>
+                        <Button size="small" color="primary" onClick={() => openDetailModal(project)}>
+                          查看详情
+                        </Button>
+                        <Button size="small" color="warning" startIcon={<Biotech />} onClick={() => openExperimentModal(project)}>
+                          添加试验
+                        </Button>
+                        <Tooltip title="编辑">
+                          <IconButton size="small" onClick={() => openEditModal(project)}>
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="删除">
+                          <IconButton size="small" color="error" onClick={() => handleDelete(project.id)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Card>
+        ) : activeTab === "experiments" ? (
+          <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
+            <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="h6" fontWeight="bold">试验记录</Typography>
+            </Box>
+            {filteredExperiments.length === 0 ? (
+              <Box sx={{ p: 6, textAlign: "center" }}>
+                <Biotech sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <Typography color="text.secondary">暂无试验记录</Typography>
+              </Box>
+            ) : (
+              <Stack divider={<Divider />}>
+                {filteredExperiments.map((experiment) => (
+                  <Box key={experiment.id} sx={{ p: 3, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s" }}>
+                    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                      <Box sx={{ flex: 1 }}>
+                        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+                          <Typography variant="h6" fontWeight="bold">
+                            {experiment.name}
+                          </Typography>
+                          <StatusChip status={experiment.status} />
+                          <StatusChip status={experiment.experiment_type} type="experiment" />
+                        </Stack>
+                        <Typography color="text.secondary" sx={{ mb: 1 }}>
+                          目标: {experiment.objective}
+                        </Typography>
+                        {experiment.results && (
+                          <Typography variant="body2" sx={{ mb: 1.5 }}>
+                            结果: {String(experiment.results)}
+                          </Typography>
+                        )}
+                        <Stack direction="row" alignItems="center" spacing={3}>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <AccessTime sx={{ fontSize: 16 }} />
+                            <Typography variant="body2" color="text.secondary">
+                              开始日期: {new Date(experiment.started_at).toLocaleDateString("zh-CN")}
+                            </Typography>
+                          </Stack>
+                          <Typography variant="body2" color="text.secondary">
+                            试验员: {experiment.experimenter}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            项目: {getProjectName(experiment.project_id)}
+                          </Typography>
+                        </Stack>
+                        {experiment.conclusions && (
+                          <Box sx={{ mt: 1.5, p: 1.5, bgcolor: "success.50", borderRadius: 1 }}>
+                            <Typography variant="body2" fontWeight="medium" color="success.dark">
+                              结论: {experiment.conclusions}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                      <Stack direction="row" spacing={1}>
+                        <Button size="small" color="primary" startIcon={<Visibility />} onClick={() => openExperimentDetailModal(experiment)}>
+                          查看详情
+                        </Button>
+                        <Tooltip title="编辑">
+                          <IconButton size="small" onClick={() => openEditExperimentModal(experiment)}>
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="删除">
+                          <IconButton size="small" color="error" onClick={() => handleDeleteExperiment(experiment.id)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Card>
+        ) : (
+          <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
+            <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="h6" fontWeight="bold">配方列表</Typography>
+            </Box>
+            {safeFormulas.length === 0 ? (
+              <Box sx={{ p: 6, textAlign: "center" }}>
+                <Code sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <Typography color="text.secondary">暂无配方</Typography>
+              </Box>
+            ) : (
+              <Stack divider={<Divider />}>
+                {safeFormulas.map((formula) => (
+                  <Box key={formula.id} sx={{ p: 3, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s" }}>
+                    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                      <Stack direction="row" alignItems="flex-start" spacing={2} sx={{ flex: 1 }}>
+                        <Avatar sx={{ bgcolor: "secondary.50", color: "secondary.main", width: 48, height: 48 }}>
+                          <Code />
+                        </Avatar>
+                        <Box sx={{ flex: 1 }}>
+                          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                              {formula.name}
+                            </Typography>
+                            <StatusChip status={formula.status} />
+                            <Chip size="small" label={formula.version} sx={{ bgcolor: "secondary.50", color: "secondary.dark" }} />
+                            {formula.approval_status && (
+                              <Box sx={{ display: "flex", alignItems: "center" }}>
+                                {getFormulaApprovalStatusIcon(formula.approval_status)}
+                              </Box>
+                            )}
+                          </Stack>
+                          <Typography color="text.secondary" sx={{ mb: 1.5 }}>
+                            {formula.description || "暂无描述"}
+                          </Typography>
+                          <Stack direction="row" alignItems="center" spacing={3} sx={{ flexWrap: "wrap", gap: 1 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+                              编号: {formula.code}
+                            </Typography>
+                            {formula.category && (
+                              <Typography variant="body2" color="text.secondary">
+                                分类: {formula.category}
+                              </Typography>
+                            )}
+                            {formula.ingredients && formula.ingredients.length > 0 && (
+                              <Typography variant="body2" color="text.secondary">
+                                配方成分: {formula.ingredients.length} 种
+                              </Typography>
+                            )}
+                          </Stack>
+                          <Stack direction="row" alignItems="center" spacing={3} sx={{ mt: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              项目: {getProjectName(formula.project_id)}
+                            </Typography>
+                            {formula.effective_date && (
+                              <Typography variant="body2" color="text.secondary">
+                                生效日期: {new Date(formula.effective_date).toLocaleDateString("zh-CN")}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </Box>
+                      </Stack>
+                      <Stack direction="row" spacing={1}>
+                        <Button size="small" color="primary" startIcon={<Visibility />} onClick={() => openFormulaDetailModal(formula)}>
+                          详情
+                        </Button>
+                        <Button size="small" color="secondary" startIcon={<AccountTree />} onClick={() => openFormulaVersionModal(formula)}>
+                          版本
+                        </Button>
+                        <Tooltip title="编辑">
+                          <IconButton size="small" onClick={() => openFormulaModal(formula)}>
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="删除">
+                          <IconButton size="small" color="error" onClick={() => handleDeleteFormula(formula.id)}>
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Card>
         )}
+      </Box>
 
-        {/* Formulas List */}
-        {activeTab === "formulas" && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm">
-              <div className="p-6 border-b border-slate-200">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  配方列表
-                </h2>
-              </div>
-              <div className="divide-y divide-slate-200">
-                {safeFormulas.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <FileCode className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500">暂无配方</p>
-                  </div>
-                ) : (
-                  safeFormulas.map((formula) => (
-                    <div
-                      key={formula.id}
-                      className="p-6 hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4">
-                          <div className="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
-                            <FileCode className="w-6 h-6" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="text-lg font-semibold text-slate-900">
-                                {formula.name}
-                              </h3>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${getFormulaStatusColor(formula.status)}`}
-                              >
-                                {formula.status}
-                              </span>
-                              <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium">
-                                {formula.version}
-                              </span>
-                              {formula.approval_status && (
-                                <span className="flex items-center">
-                                  {getFormulaApprovalStatusIcon(
-                                    formula.approval_status,
-                                  )}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-slate-600 mb-3">
-                              {formula.description || "暂无描述"}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                              <span className="font-mono">
-                                编号: {formula.code}
-                              </span>
-                              {formula.category && (
-                                <span>分类: {formula.category}</span>
-                              )}
-                              {formula.ingredients &&
-                                formula.ingredients.length > 0 && (
-                                  <span>
-                                    配方成分: {formula.ingredients.length} 种
-                                  </span>
-                                )}
-                            </div>
-                            <div className="flex items-center space-x-4 text-sm text-slate-500 mt-2">
-                              <span>
-                                项目: {getProjectName(formula.project_id)}
-                              </span>
-                              {formula.effective_date && (
-                                <span>
-                                  生效日期:{" "}
-                                  {new Date(
-                                    formula.effective_date,
-                                  ).toLocaleDateString("zh-CN")}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => openFormulaDetailModal(formula)}
-                            className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-                            title="查看详情"
-                          >
-                            <span className="flex items-center">
-                              <Eye className="w-4 h-4 mr-1" />
-                              详情
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => openFormulaVersionModal(formula)}
-                            className="px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                            title="版本管理"
-                          >
-                            <span className="flex items-center">
-                              <GitBranch className="w-4 h-4 mr-1" />
-                              版本
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => openFormulaModal(formula)}
-                            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-                            title="编辑"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteFormula(formula.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                            title="删除"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Create Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-slate-900">
-                {isEditing ? "编辑项目" : "新建项目"}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setIsEditing(false);
-                }}
-                className="p-2 text-slate-400 hover:text-slate-600"
+      {/* Create/Edit Project Modal */}
+      <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">{isEditing ? "编辑项目" : "新建项目"}</Typography>
+            <IconButton onClick={() => { setShowModal(false); setIsEditing(false); }}>
+              <Close />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              fullWidth
+              label="项目名称 *"
+              value={formData.name}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                handleProjectFieldChange("name", e.target.value);
+              }}
+              onBlur={(e) => handleProjectFieldBlur("name", e.target.value)}
+              placeholder="请输入项目名称"
+              error={!!(projectErrors.name && touched.project_name)}
+            />
+            <FieldError
+              error={projectErrors.name && touched.project_name ? projectErrors.name : undefined}
+            />
+            <TextField
+              fullWidth
+              label="项目编号 *"
+              value={formData.code}
+              onChange={(e) => {
+                setFormData({ ...formData, code: e.target.value });
+                handleProjectFieldChange("code", e.target.value);
+              }}
+              onBlur={(e) => handleProjectFieldBlur("code", e.target.value)}
+              placeholder="请输入项目编号"
+              error={!!(projectErrors.code && touched.project_code)}
+            />
+            <FieldError
+              error={projectErrors.code && touched.project_code ? projectErrors.code : undefined}
+            />
+            <TextField
+              fullWidth
+              label="负责人 *"
+              value={formData.leader}
+              onChange={(e) => {
+                setFormData({ ...formData, leader: e.target.value });
+                handleProjectFieldChange("leader", e.target.value);
+              }}
+              onBlur={(e) => handleProjectFieldBlur("leader", e.target.value)}
+              placeholder="请输入负责人"
+              error={!!(projectErrors.leader && touched.project_leader)}
+            />
+            <FieldError
+              error={projectErrors.leader && touched.project_leader ? projectErrors.leader : undefined}
+            />
+            <FormControl fullWidth>
+              <InputLabel>项目类型</InputLabel>
+              <Select
+                value={formData.project_type}
+                label="项目类型"
+                onChange={(e) => setFormData({ ...formData, project_type: e.target.value })}
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  项目名称 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => {
-                    setFormData({ ...formData, name: e.target.value });
-                    handleProjectFieldChange("name", e.target.value);
-                  }}
-                  onBlur={(e) => handleProjectFieldBlur("name", e.target.value)}
-                  placeholder="请输入项目名称"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    projectErrors.name && touched.project_name
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    projectErrors.name && touched.project_name
-                      ? projectErrors.name
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  项目编号 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.code}
-                  onChange={(e) => {
-                    setFormData({ ...formData, code: e.target.value });
-                    handleProjectFieldChange("code", e.target.value);
-                  }}
-                  onBlur={(e) => handleProjectFieldBlur("code", e.target.value)}
-                  placeholder="请输入项目编号"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    projectErrors.code && touched.project_code
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    projectErrors.code && touched.project_code
-                      ? projectErrors.code
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  负责人 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.leader}
-                  onChange={(e) => {
-                    setFormData({ ...formData, leader: e.target.value });
-                    handleProjectFieldChange("leader", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleProjectFieldBlur("leader", e.target.value)
-                  }
-                  placeholder="请输入负责人"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    projectErrors.leader && touched.project_leader
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    projectErrors.leader && touched.project_leader
-                      ? projectErrors.leader
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  项目类型
-                </label>
-                <select
-                  value={formData.project_type}
-                  onChange={(e) =>
-                    setFormData({ ...formData, project_type: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                <MenuItem value="研发">研发</MenuItem>
+                <MenuItem value="改进">改进</MenuItem>
+                <MenuItem value="测试">测试</MenuItem>
+                <MenuItem value="其他">其他</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              type="date"
+              label="开始日期"
+              value={formData.start_date}
+              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
+              label="项目描述"
+              value={formData.description}
+              onChange={(e) => {
+                setFormData({ ...formData, description: e.target.value });
+                handleProjectFieldChange("description", e.target.value);
+              }}
+              onBlur={(e) => handleProjectFieldBlur("description", e.target.value)}
+              placeholder="请输入项目描述"
+              multiline
+              rows={4}
+              error={!!(projectErrors.description && touched.project_description)}
+            />
+            <FieldError
+              error={projectErrors.description && touched.project_description ? projectErrors.description : undefined}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowModal(false)}>取消</Button>
+          <Button
+            variant="contained"
+            onClick={isEditing ? handleEdit : handleCreate}
+            disabled={creating}
+          >
+            {creating ? (isEditing ? "更新中..." : "创建中...") : isEditing ? "更新" : "创建"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Detail Project Modal */}
+      <Dialog open={showDetailModal && !!selectedProject} onClose={() => setShowDetailModal(false)} maxWidth="md" fullWidth>
+        <DialogContent>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+            <Typography variant="h5" fontWeight="bold">项目详情</Typography>
+            <IconButton onClick={() => setShowDetailModal(false)}>
+              <Close />
+            </IconButton>
+          </Stack>
+
+          {selectedProject && (
+            <Stack spacing={3}>
+              <Box>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                  <Typography variant="h6" fontWeight="bold">{selectedProject.name}</Typography>
+                  <StatusChip status={selectedProject.status} />
+                </Stack>
+                <Typography color="text.secondary">{selectedProject.description}</Typography>
+              </Box>
+
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>项目编号</Typography>
+                  <Typography fontWeight="medium" sx={{ fontFamily: "monospace", fontSize: 14 }}>
+                    {selectedProject.id}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>开始时间</Typography>
+                  <Typography fontWeight="medium">
+                    {new Date(selectedProject.start_date).toLocaleDateString("zh-CN")}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>创建时间</Typography>
+                  <Typography fontWeight="medium">
+                    {new Date(selectedProject.created_at).toLocaleString("zh-CN")}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>更新时间</Typography>
+                  <Typography fontWeight="medium">
+                    {new Date(selectedProject.updated_at).toLocaleString("zh-CN")}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              <Divider />
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => { setShowDetailModal(false); openEditModal(selectedProject); }}
                 >
-                  <option value="研发">研发</option>
-                  <option value="改进">改进</option>
-                  <option value="测试">测试</option>
-                  <option value="其他">其他</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  开始日期
-                </label>
-                <input
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, start_date: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  项目描述
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => {
-                    setFormData({ ...formData, description: e.target.value });
-                    handleProjectFieldChange("description", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleProjectFieldBlur("description", e.target.value)
-                  }
-                  placeholder="请输入项目描述"
-                  rows={4}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    projectErrors.description && touched.project_description
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    projectErrors.description && touched.project_description
-                      ? projectErrors.description
-                      : undefined
-                  }
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={isEditing ? handleEdit : handleCreate}
-                disabled={creating}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {creating ? (
-                  <span className="flex items-center">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    {isEditing ? "更新中..." : "创建中..."}
-                  </span>
-                ) : isEditing ? (
-                  "更新"
-                ) : (
-                  "创建"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Detail Modal */}
-      {showDetailModal && selectedProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-slate-900">
-                  项目详情
-                </h3>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-slate-800">
-                      {selectedProject.name}
-                    </h4>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedProject.status)}`}
-                    >
-                      {selectedProject.status}
-                    </span>
-                  </div>
-                  <p className="text-slate-600">
-                    {selectedProject.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">项目编号</p>
-                    <p className="font-medium text-slate-800 font-mono text-sm">
-                      {selectedProject.id}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">开始时间</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(selectedProject.start_date).toLocaleDateString(
-                        "zh-CN",
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">创建时间</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(selectedProject.created_at).toLocaleString(
-                        "zh-CN",
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">更新时间</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(selectedProject.updated_at).toLocaleString(
-                        "zh-CN",
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      openEditModal(selectedProject);
-                    }}
-                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
-                  >
-                    编辑
-                  </button>
-                  <button
-                    onClick={() => setShowDetailModal(false)}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
-                  >
-                    关闭
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                  编辑
+                </Button>
+                <Button variant="outlined" onClick={() => setShowDetailModal(false)}>
+                  关闭
+                </Button>
+              </Stack>
+            </Stack>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Experiment Create/Edit Modal */}
-      {showExperimentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white">
-              <h3 className="text-lg font-semibold text-slate-900">
-                {isEditingExperiment ? "编辑试验记录" : "新建试验记录"}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowExperimentModal(false);
-                  setIsEditingExperiment(false);
+      <Dialog open={showExperimentModal} onClose={() => setShowExperimentModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">{isEditingExperiment ? "编辑试验记录" : "新建试验记录"}</Typography>
+            <IconButton onClick={() => { setShowExperimentModal(false); setIsEditingExperiment(false); }}>
+              <Close />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <FormControl fullWidth error={!!(experimentErrors.project_id && touched.experiment_project_id)}>
+              <InputLabel>关联项目 *</InputLabel>
+              <Select
+                value={experimentFormData.project_id}
+                label="关联项目 *"
+                onChange={(e) => {
+                  setExperimentFormData({ ...experimentFormData, project_id: e.target.value });
+                  handleExperimentFieldChange("project_id", e.target.value);
                 }}
-                className="p-2 text-slate-400 hover:text-slate-600"
+                onBlur={(e) => handleExperimentFieldBlur("project_id", e.target.value)}
+                disabled={isEditingExperiment}
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  关联项目 *
-                </label>
-                <select
-                  value={experimentFormData.project_id}
-                  onChange={(e) => {
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      project_id: e.target.value,
-                    });
-                    handleExperimentFieldChange("project_id", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleExperimentFieldBlur("project_id", e.target.value)
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.project_id && touched.experiment_project_id
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                  disabled={isEditingExperiment}
-                >
-                  <option value="">请选择项目</option>
-                  {safeProjects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-                <FieldError
-                  error={
-                    experimentErrors.project_id && touched.experiment_project_id
-                      ? experimentErrors.project_id
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  试验名称 *
-                </label>
-                <input
-                  type="text"
-                  value={experimentFormData.name}
-                  onChange={(e) => {
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      name: e.target.value,
-                    });
-                    handleExperimentFieldChange("name", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleExperimentFieldBlur("name", e.target.value)
-                  }
-                  placeholder="请输入试验名称"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.name && touched.experiment_name
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    experimentErrors.name && touched.experiment_name
-                      ? experimentErrors.name
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  试验编号 *
-                </label>
-                <input
-                  type="text"
-                  value={experimentFormData.code}
-                  onChange={(e) => {
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      code: e.target.value,
-                    });
-                    handleExperimentFieldChange("code", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleExperimentFieldBlur("code", e.target.value)
-                  }
-                  placeholder="请输入试验编号"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.code && touched.experiment_code
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    experimentErrors.code && touched.experiment_code
-                      ? experimentErrors.code
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  试验类型
-                </label>
-                <select
-                  value={experimentFormData.experiment_type}
-                  onChange={(e) =>
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      experiment_type: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="小试">小试</option>
-                  <option value="中试">中试</option>
-                  <option value="量产">量产</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  试验阶段
-                </label>
-                <select
-                  value={experimentFormData.phase}
-                  onChange={(e) =>
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      phase: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="小试">小试</option>
-                  <option value="中试">中试</option>
-                  <option value="量产">量产</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  试验员
-                </label>
-                <input
-                  type="text"
-                  value={experimentFormData.experimenter}
-                  onChange={(e) => {
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      experimenter: e.target.value,
-                    });
-                    handleExperimentFieldChange("experimenter", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleExperimentFieldBlur("experimenter", e.target.value)
-                  }
-                  placeholder="请输入试验员姓名"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.experimenter &&
-                    touched.experiment_experimenter
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    experimentErrors.experimenter &&
-                    touched.experiment_experimenter
-                      ? experimentErrors.experimenter
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  试验目标
-                </label>
-                <textarea
-                  value={experimentFormData.objective}
-                  onChange={(e) => {
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      objective: e.target.value,
-                    });
-                    handleExperimentFieldChange("objective", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleExperimentFieldBlur("objective", e.target.value)
-                  }
-                  placeholder="请输入试验目标"
-                  rows={3}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.objective && touched.experiment_objective
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    experimentErrors.objective && touched.experiment_objective
-                      ? experimentErrors.objective
-                      : undefined
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  试验方法
-                </label>
-                <textarea
-                  value={experimentFormData.method}
-                  onChange={(e) => {
-                    setExperimentFormData({
-                      ...experimentFormData,
-                      method: e.target.value,
-                    });
-                    handleExperimentFieldChange("method", e.target.value);
-                  }}
-                  onBlur={(e) =>
-                    handleExperimentFieldBlur("method", e.target.value)
-                  }
-                  placeholder="请输入试验方法"
-                  rows={4}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                    experimentErrors.method && touched.experiment_method
-                      ? "border-red-500"
-                      : "border-slate-200"
-                  }`}
-                />
-                <FieldError
-                  error={
-                    experimentErrors.method && touched.experiment_method
-                      ? experimentErrors.method
-                      : undefined
-                  }
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowExperimentModal(false);
-                  setIsEditingExperiment(false);
-                }}
-                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+                <MenuItem value="">请选择项目</MenuItem>
+                {safeProjects.map((project) => (
+                  <MenuItem key={project.id} value={project.id}>{project.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FieldError
+              error={experimentErrors.project_id && touched.experiment_project_id ? experimentErrors.project_id : undefined}
+            />
+            <TextField
+              fullWidth
+              label="试验名称 *"
+              value={experimentFormData.name}
+              onChange={(e) => {
+                setExperimentFormData({ ...experimentFormData, name: e.target.value });
+                handleExperimentFieldChange("name", e.target.value);
+              }}
+              onBlur={(e) => handleExperimentFieldBlur("name", e.target.value)}
+              placeholder="请输入试验名称"
+              error={!!(experimentErrors.name && touched.experiment_name)}
+            />
+            <FieldError
+              error={experimentErrors.name && touched.experiment_name ? experimentErrors.name : undefined}
+            />
+            <TextField
+              fullWidth
+              label="试验编号 *"
+              value={experimentFormData.code}
+              onChange={(e) => {
+                setExperimentFormData({ ...experimentFormData, code: e.target.value });
+                handleExperimentFieldChange("code", e.target.value);
+              }}
+              onBlur={(e) => handleExperimentFieldBlur("code", e.target.value)}
+              placeholder="请输入试验编号"
+              error={!!(experimentErrors.code && touched.experiment_code)}
+            />
+            <FieldError
+              error={experimentErrors.code && touched.experiment_code ? experimentErrors.code : undefined}
+            />
+            <FormControl fullWidth>
+              <InputLabel>试验类型</InputLabel>
+              <Select
+                value={experimentFormData.experiment_type}
+                label="试验类型"
+                onChange={(e) => setExperimentFormData({ ...experimentFormData, experiment_type: e.target.value })}
               >
-                取消
-              </button>
-              <button
-                onClick={
-                  isEditingExperiment
-                    ? handleUpdateExperiment
-                    : handleCreateExperiment
-                }
-                disabled={creating}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                <MenuItem value="小试">小试</MenuItem>
+                <MenuItem value="中试">中试</MenuItem>
+                <MenuItem value="量产">量产</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>试验阶段</InputLabel>
+              <Select
+                value={experimentFormData.phase}
+                label="试验阶段"
+                onChange={(e) => setExperimentFormData({ ...experimentFormData, phase: e.target.value })}
               >
-                {creating ? (
-                  <span className="flex items-center">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    {isEditingExperiment ? "更新中..." : "创建中..."}
-                  </span>
-                ) : isEditingExperiment ? (
-                  "更新"
-                ) : (
-                  "创建"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <MenuItem value="小试">小试</MenuItem>
+                <MenuItem value="中试">中试</MenuItem>
+                <MenuItem value="量产">量产</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label="试验员"
+              value={experimentFormData.experimenter}
+              onChange={(e) => {
+                setExperimentFormData({ ...experimentFormData, experimenter: e.target.value });
+                handleExperimentFieldChange("experimenter", e.target.value);
+              }}
+              onBlur={(e) => handleExperimentFieldBlur("experimenter", e.target.value)}
+              placeholder="请输入试验员姓名"
+              error={!!(experimentErrors.experimenter && touched.experiment_experimenter)}
+            />
+            <FieldError
+              error={experimentErrors.experimenter && touched.experiment_experimenter ? experimentErrors.experimenter : undefined}
+            />
+            <TextField
+              fullWidth
+              label="试验目标"
+              value={experimentFormData.objective}
+              onChange={(e) => {
+                setExperimentFormData({ ...experimentFormData, objective: e.target.value });
+                handleExperimentFieldChange("objective", e.target.value);
+              }}
+              onBlur={(e) => handleExperimentFieldBlur("objective", e.target.value)}
+              placeholder="请输入试验目标"
+              multiline
+              rows={3}
+              error={!!(experimentErrors.objective && touched.experiment_objective)}
+            />
+            <FieldError
+              error={experimentErrors.objective && touched.experiment_objective ? experimentErrors.objective : undefined}
+            />
+            <TextField
+              fullWidth
+              label="试验方法"
+              value={experimentFormData.method}
+              onChange={(e) => {
+                setExperimentFormData({ ...experimentFormData, method: e.target.value });
+                handleExperimentFieldChange("method", e.target.value);
+              }}
+              onBlur={(e) => handleExperimentFieldBlur("method", e.target.value)}
+              placeholder="请输入试验方法"
+              multiline
+              rows={4}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => { setShowExperimentModal(false); setIsEditingExperiment(false); }}>取消</Button>
+          <Button
+            variant="contained"
+            onClick={isEditingExperiment ? handleUpdateExperiment : handleCreateExperiment}
+            disabled={creating}
+          >
+            {creating ? (isEditingExperiment ? "更新中..." : "创建中...") : isEditingExperiment ? "更新" : "创建"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Experiment Detail Modal */}
-      {showExperimentDetailModal && selectedExperiment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-slate-900">
-                  试验记录详情
-                </h3>
-                <button
-                  onClick={() => setShowExperimentDetailModal(false)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+      <Dialog open={showExperimentDetailModal && !!selectedExperiment} onClose={() => setShowExperimentDetailModal(false)} maxWidth="md" fullWidth>
+        <DialogContent>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+            <Typography variant="h5" fontWeight="bold">试验记录详情</Typography>
+            <IconButton onClick={() => setShowExperimentDetailModal(false)}>
+              <Close />
+            </IconButton>
+          </Stack>
 
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-slate-800">
-                      {selectedExperiment.name}
-                    </h4>
-                    <div className="flex space-x-2">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedExperiment.status)}`}
-                      >
-                        {selectedExperiment.status}
-                      </span>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${getExperimentTypeColor(selectedExperiment.experiment_type)}`}
-                      >
-                        {selectedExperiment.experiment_type}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-slate-600 mb-3">
-                    目标: {selectedExperiment.objective}
-                  </p>
-                </div>
+          {selectedExperiment && (
+            <Stack spacing={3}>
+              <Box>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                  <Typography variant="h6" fontWeight="bold">{selectedExperiment.name}</Typography>
+                  <Stack direction="row" spacing={1}>
+                    <StatusChip status={selectedExperiment.status} />
+                    <StatusChip status={selectedExperiment.experiment_type} type="experiment" />
+                  </Stack>
+                </Stack>
+                <Typography color="text.secondary">目标: {selectedExperiment.objective}</Typography>
+              </Box>
 
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <h5 className="font-semibold text-slate-800 mb-2">
-                    试验方法
-                  </h5>
-                  <p className="text-slate-700">{selectedExperiment.method}</p>
-                </div>
+              <Card variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>试验方法</Typography>
+                <Typography>{selectedExperiment.method}</Typography>
+              </Card>
 
-                {selectedExperiment.results && (
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h5 className="font-semibold text-blue-800 mb-2">
-                      试验结果
-                    </h5>
-                    <p className="text-blue-700">
-                      {String(selectedExperiment.results)}
-                    </p>
-                  </div>
-                )}
-
-                {selectedExperiment.conclusions && (
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <h5 className="font-semibold text-green-800 mb-2">
-                      试验结论
-                    </h5>
-                    <p className="text-green-700">
-                      {selectedExperiment.conclusions}
-                    </p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">试验编号</p>
-                    <p className="font-medium text-slate-800 font-mono text-sm">
-                      {selectedExperiment.code}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">关联项目</p>
-                    <p className="font-medium text-slate-800">
-                      {getProjectName(selectedExperiment.project_id)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">开始日期</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(
-                        selectedExperiment.started_at,
-                      ).toLocaleDateString("zh-CN")}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">试验员</p>
-                    <p className="font-medium text-slate-800">
-                      {selectedExperiment.experimenter}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">创建时间</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(selectedExperiment.created_at).toLocaleString(
-                        "zh-CN",
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">更新时间</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(selectedExperiment.updated_at).toLocaleString(
-                        "zh-CN",
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-                  <button
-                    onClick={() => {
-                      setShowExperimentDetailModal(false);
-                      openEditExperimentModal(selectedExperiment);
-                    }}
-                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
-                  >
-                    编辑
-                  </button>
-                  <button
-                    onClick={() => setShowExperimentDetailModal(false)}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
-                  >
-                    关闭
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Batch Create Modal */}
-      {showBatchCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-slate-900">
-                批量创建项目
-              </h3>
-              <button
-                onClick={() => {
-                  setShowBatchCreateModal(false);
-                  setBatchCreateData([
-                    {
-                      name: "",
-                      code: "",
-                      description: "",
-                      project_type: "研发",
-                      leader: "",
-                      start_date: new Date().toISOString().split("T")[0],
-                    },
-                  ]);
-                }}
-                className="p-2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
-              {batchCreateData.map((item, index) => (
-                <div
-                  key={index}
-                  className="p-4 border border-slate-200 rounded-lg relative"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-slate-700">
-                      项目 {index + 1}
-                    </h4>
-                    {batchCreateData.length > 1 && (
-                      <button
-                        onClick={() => removeBatchCreateItem(index)}
-                        className="p-1 text-red-500 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        项目名称 *
-                      </label>
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) =>
-                          updateBatchCreateItem(index, "name", e.target.value)
-                        }
-                        placeholder="请输入项目名称"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        项目编号 *
-                      </label>
-                      <input
-                        type="text"
-                        value={item.code}
-                        onChange={(e) =>
-                          updateBatchCreateItem(index, "code", e.target.value)
-                        }
-                        placeholder="请输入项目编号"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        负责人 *
-                      </label>
-                      <input
-                        type="text"
-                        value={item.leader}
-                        onChange={(e) =>
-                          updateBatchCreateItem(index, "leader", e.target.value)
-                        }
-                        placeholder="请输入负责人"
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        项目类型
-                      </label>
-                      <select
-                        value={item.project_type}
-                        onChange={(e) =>
-                          updateBatchCreateItem(
-                            index,
-                            "project_type",
-                            e.target.value,
-                          )
-                        }
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="研发">研发</option>
-                        <option value="改进">改进</option>
-                        <option value="测试">测试</option>
-                        <option value="其他">其他</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        开始日期
-                      </label>
-                      <input
-                        type="date"
-                        value={item.start_date}
-                        onChange={(e) =>
-                          updateBatchCreateItem(
-                            index,
-                            "start_date",
-                            e.target.value,
-                          )
-                        }
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        项目描述
-                      </label>
-                      <textarea
-                        value={item.description}
-                        onChange={(e) =>
-                          updateBatchCreateItem(
-                            index,
-                            "description",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="请输入项目描述"
-                        rows={2}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <button
-                onClick={addBatchCreateItem}
-                className="flex items-center space-x-2 w-full justify-center py-3 border border-dashed border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>添加项目</span>
-              </button>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowBatchCreateModal(false);
-                  setBatchCreateData([
-                    {
-                      name: "",
-                      code: "",
-                      description: "",
-                      project_type: "研发",
-                      leader: "",
-                      start_date: new Date().toISOString().split("T")[0],
-                    },
-                  ]);
-                }}
-                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleBatchCreate}
-                disabled={creating}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                {creating ? (
-                  <span className="flex items-center">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    创建中...
-                  </span>
-                ) : (
-                  "批量创建"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Import Modal */}
-      {showImportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-slate-900">导入项目</h3>
-              <button
-                onClick={() => {
-                  setShowImportModal(false);
-                  setImportFile(null);
-                  setImportPreview(null);
-                }}
-                className="p-2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium text-slate-700">
-                    选择 CSV 文件
-                  </label>
-                  <button
-                    onClick={downloadTemplate}
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center space-x-1"
-                  >
-                    <Download className="w-3 h-3" />
-                    <span>下载模板</span>
-                  </button>
-                </div>
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-slate-400 transition-colors cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    id="rs-file-upload"
-                    onChange={handleImportFileChange}
-                    className="hidden"
-                  />
-                  <label htmlFor="rs-file-upload" className="cursor-pointer">
-                    <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-                    <p className="text-slate-700 mb-1">点击或拖拽文件到这里</p>
-                    <p className="text-sm text-slate-500">支持 CSV 格式</p>
-                  </label>
-                </div>
-                {importFile && (
-                  <div className="mt-4 p-3 bg-slate-50 rounded-lg flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="w-5 h-5 text-orange-600" />
-                      <span className="text-sm text-slate-700">
-                        {importFile.name}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        ({(importFile.size / 1024).toFixed(1)} KB)
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setImportFile(null);
-                        setImportPreview(null);
-                      }}
-                      className="text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* 文件预览 */}
-              {importPreview && (
-                <div className="mb-6">
-                  <h4 className="text-sm font-medium text-slate-700 mb-3">
-                    文件预览（前5行）
-                  </h4>
-                  <div className="border border-slate-200 rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
-                      <tbody>
-                        {importPreview.map((row, rowIndex) => (
-                          <tr
-                            key={rowIndex}
-                            className={rowIndex === 0 ? "bg-slate-50" : ""}
-                          >
-                            {row.map((cell, cellIndex) => (
-                              <td
-                                key={cellIndex}
-                                className={`px-3 py-2 border-b border-slate-200 ${rowIndex === importPreview.length - 1 ? "border-b-0" : ""}`}
-                              >
-                                {cell}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+              {selectedExperiment.results && (
+                <Card variant="outlined" sx={{ p: 2, bgcolor: "primary.50" }}>
+                  <Typography variant="subtitle1" fontWeight="bold" color="primary.dark" sx={{ mb: 1 }}>试验结果</Typography>
+                  <Typography color="primary.dark">{String(selectedExperiment.results)}</Typography>
+                </Card>
               )}
 
-              {/* 格式说明 */}
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-orange-900 mb-2">
-                  CSV 格式说明
-                </h4>
-                <div className="text-sm text-orange-800 space-y-1">
-                  <p>
-                    • <code className="bg-orange-100 px-1 rounded">name</code>
-                    ：项目名称（必填）
-                  </p>
-                  <p>
-                    •{" "}
-                    <code className="bg-orange-100 px-1 rounded">
-                      description
-                    </code>
-                    ：项目描述
-                  </p>
-                  <p>
-                    • <code className="bg-orange-100 px-1 rounded">status</code>
-                    ：状态（立项、进行中、已完成、已终止）
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowImportModal(false);
-                  setImportFile(null);
-                  setImportPreview(null);
+              {selectedExperiment.conclusions && (
+                <Card variant="outlined" sx={{ p: 2, bgcolor: "success.50" }}>
+                  <Typography variant="subtitle1" fontWeight="bold" color="success.dark" sx={{ mb: 1 }}>试验结论</Typography>
+                  <Typography color="success.dark">{selectedExperiment.conclusions}</Typography>
+                </Card>
+              )}
+
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>试验编号</Typography>
+                  <Typography fontWeight="medium" sx={{ fontFamily: "monospace" }}>{selectedExperiment.code}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>关联项目</Typography>
+                  <Typography fontWeight="medium">{getProjectName(selectedExperiment.project_id)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>开始日期</Typography>
+                  <Typography fontWeight="medium">
+                    {new Date(selectedExperiment.started_at).toLocaleDateString("zh-CN")}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>试验员</Typography>
+                  <Typography fontWeight="medium">{selectedExperiment.experimenter}</Typography>
+                </Grid>
+              </Grid>
+
+              <Divider />
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => { setShowExperimentDetailModal(false); openEditExperimentModal(selectedExperiment); }}
+                >
+                  编辑
+                </Button>
+                <Button variant="outlined" onClick={() => setShowExperimentDetailModal(false)}>
+                  关闭
+                </Button>
+              </Stack>
+            </Stack>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Batch Create Modal */}
+      <Dialog open={showBatchCreateModal} onClose={() => setShowBatchCreateModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">批量创建项目</Typography>
+            <IconButton onClick={() => {
+              setShowBatchCreateModal(false);
+              setBatchCreateData([{
+                name: "", code: "", description: "", project_type: "研发", leader: "",
+                start_date: new Date().toISOString().split("T")[0],
+              }]);
+            }}>
+              <Close />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {batchCreateData.map((item, index) => (
+              <Card key={index} variant="outlined" sx={{ p: 2 }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                  <Typography fontWeight="medium">项目 {index + 1}</Typography>
+                  {batchCreateData.length > 1 && (
+                    <IconButton size="small" color="error" onClick={() => removeBatchCreateItem(index)}>
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  )}
+                </Stack>
+                <Stack spacing={2}>
+                  <TextField
+                    fullWidth
+                    label="项目名称 *"
+                    value={item.name}
+                    onChange={(e) => updateBatchCreateItem(index, "name", e.target.value)}
+                    placeholder="请输入项目名称"
+                  />
+                  <TextField
+                    fullWidth
+                    label="项目编号 *"
+                    value={item.code}
+                    onChange={(e) => updateBatchCreateItem(index, "code", e.target.value)}
+                    placeholder="请输入项目编号"
+                  />
+                  <TextField
+                    fullWidth
+                    label="负责人 *"
+                    value={item.leader}
+                    onChange={(e) => updateBatchCreateItem(index, "leader", e.target.value)}
+                    placeholder="请输入负责人"
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>项目类型</InputLabel>
+                    <Select
+                      value={item.project_type}
+                      label="项目类型"
+                      onChange={(e) => updateBatchCreateItem(index, "project_type", e.target.value)}
+                    >
+                      <MenuItem value="研发">研发</MenuItem>
+                      <MenuItem value="改进">改进</MenuItem>
+                      <MenuItem value="测试">测试</MenuItem>
+                      <MenuItem value="其他">其他</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    type="date"
+                    label="开始日期"
+                    value={item.start_date}
+                    onChange={(e) => updateBatchCreateItem(index, "start_date", e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="项目描述"
+                    value={item.description}
+                    onChange={(e) => updateBatchCreateItem(index, "description", e.target.value)}
+                    placeholder="请输入项目描述"
+                    multiline
+                    rows={2}
+                  />
+                </Stack>
+              </Card>
+            ))}
+            <Button
+              variant="outlined"
+              startIcon={<Add />}
+              onClick={addBatchCreateItem}
+              fullWidth
+              sx={{ py: 1.5, borderStyle: "dashed" }}
+            >
+              添加项目
+            </Button>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowBatchCreateModal(false)}>取消</Button>
+          <Button variant="contained" color="success" onClick={handleBatchCreate} disabled={creating}>
+            {creating ? "创建中..." : "批量创建"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Import Modal */}
+      <Dialog open={showImportModal} onClose={() => setShowImportModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">导入项目</Typography>
+            <IconButton onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }}>
+              <Close />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <Box>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                <Typography variant="body2" fontWeight="medium">选择 CSV 文件</Typography>
+                <Button size="small" startIcon={<Download />} onClick={downloadTemplate}>
+                  下载模板
+                </Button>
+              </Stack>
+              <Box
+                sx={{
+                  border: 2,
+                  borderStyle: "dashed",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  p: 3,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  "&:hover": { borderColor: "text.primary" },
+                  transition: "border-color 0.2s",
                 }}
-                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
               >
-                取消
-              </button>
-              <button
-                onClick={handleImport}
-                disabled={creating || !importFile}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
-              >
-                {creating ? (
-                  <span className="flex items-center">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    导入中...
-                  </span>
-                ) : (
-                  "导入"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <input
+                  type="file"
+                  accept=".csv"
+                  id="rs-file-upload"
+                  onChange={handleImportFileChange}
+                  style={{ display: "none" }}
+                />
+                <label htmlFor="rs-file-upload" style={{ cursor: "pointer" }}>
+                  <Upload sx={{ fontSize: 40, color: "text.secondary", mb: 1.5 }} />
+                  <Typography sx={{ mb: 0.5 }}>点击或拖拽文件到这里</Typography>
+                  <Typography variant="body2" color="text.secondary">支持 CSV 格式</Typography>
+                </label>
+              </Box>
+              {importFile && (
+                <Card variant="outlined" sx={{ mt: 2, p: 1.5 }}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Description color="warning" />
+                      <Typography variant="body2">{importFile.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ({(importFile.size / 1024).toFixed(1)} KB)
+                      </Typography>
+                    </Stack>
+                    <IconButton size="small" onClick={() => { setImportFile(null); setImportPreview(null); }}>
+                      <Close fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                </Card>
+              )}
+            </Box>
+
+            {importPreview && (
+              <Box>
+                <Typography variant="body2" fontWeight="medium" sx={{ mb: 1.5 }}>文件预览（前5行）</Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableBody>
+                      {importPreview.map((row, rowIndex) => (
+                        <TableRow key={rowIndex} sx={{ bgcolor: rowIndex === 0 ? "grey.50" : "inherit" }}>
+                          {row.map((cell, cellIndex) => (
+                            <TableCell key={cellIndex} sx={{ borderBottom: rowIndex === importPreview.length - 1 ? 0 : 1 }}>
+                              {cell}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+
+            <Alert severity="warning" variant="outlined">
+              <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>CSV 格式说明</Typography>
+              <Stack spacing={0.5}>
+                <Typography variant="body2">• <code>name</code>：项目名称（必填）</Typography>
+                <Typography variant="body2">• <code>description</code>：项目描述</Typography>
+                <Typography variant="body2">• <code>status</code>：状态（立项、进行中、已完成、已终止）</Typography>
+              </Stack>
+            </Alert>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }}>取消</Button>
+          <Button variant="contained" color="warning" onClick={handleImport} disabled={creating || !importFile}>
+            {creating ? "导入中..." : "导入"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Create/Edit Formula Modal */}
-      {showFormulaModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-slate-900">
-                {isEditingFormula ? "编辑配方" : "添加配方"}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowFormulaModal(false);
-                  setIsEditingFormula(false);
-                }}
-                className="p-2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    配方名称 *
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaFormData.name}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        name: e.target.value,
-                      })
-                    }
-                    placeholder="请输入配方名称"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    配方编号 *
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaFormData.code}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        code: e.target.value,
-                      })
-                    }
-                    placeholder="请输入配方编号"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    关联项目 *
-                  </label>
-                  <select
+      <Dialog open={showFormulaModal} onClose={() => setShowFormulaModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">{isEditingFormula ? "编辑配方" : "添加配方"}</Typography>
+            <IconButton onClick={() => { setShowFormulaModal(false); setIsEditingFormula(false); }}>
+              <Close />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="配方名称 *"
+                  value={formulaFormData.name}
+                  onChange={(e) => setFormulaFormData({ ...formulaFormData, name: e.target.value })}
+                  placeholder="请输入配方名称"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="配方编号 *"
+                  value={formulaFormData.code}
+                  onChange={(e) => setFormulaFormData({ ...formulaFormData, code: e.target.value })}
+                  placeholder="请输入配方编号"
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel>关联项目 *</InputLabel>
+                  <Select
                     value={formulaFormData.project_id}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        project_id: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    label="关联项目 *"
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, project_id: e.target.value })}
                     disabled={isEditingFormula}
                   >
-                    <option value="">请选择项目</option>
+                    <MenuItem value="">请选择项目</MenuItem>
                     {safeProjects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
+                      <MenuItem key={project.id} value={project.id}>{project.name}</MenuItem>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    版本号
-                  </label>
-                  <input
-                    type="text"
-                    value={formulaFormData.version}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        version: e.target.value,
-                      })
-                    }
-                    placeholder="如 v1.0"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    分类
-                  </label>
-                  <select
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="版本号"
+                  value={formulaFormData.version}
+                  onChange={(e) => setFormulaFormData({ ...formulaFormData, version: e.target.value })}
+                  placeholder="如 v1.0"
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel>分类</InputLabel>
+                  <Select
                     value={formulaFormData.category}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        category: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    label="分类"
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, category: e.target.value })}
                   >
-                    <option value="">请选择分类</option>
-                    <option value="食品配方">食品配方</option>
-                    <option value="药品配方">药品配方</option>
-                    <option value="化妆品配方">化妆品配方</option>
-                    <option value="化工配方">化工配方</option>
-                    <option value="其他">其他</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    状态
-                  </label>
-                  <select
+                    <MenuItem value="">请选择分类</MenuItem>
+                    <MenuItem value="食品配方">食品配方</MenuItem>
+                    <MenuItem value="药品配方">药品配方</MenuItem>
+                    <MenuItem value="化妆品配方">化妆品配方</MenuItem>
+                    <MenuItem value="化工配方">化工配方</MenuItem>
+                    <MenuItem value="其他">其他</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel>状态</InputLabel>
+                  <Select
                     value={formulaFormData.status}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        status: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    label="状态"
+                    onChange={(e) => setFormulaFormData({ ...formulaFormData, status: e.target.value })}
                   >
-                    <option value="草稿">草稿</option>
-                    <option value="待审批">待审批</option>
-                    <option value="已批准">已批准</option>
-                    <option value="已发布">已发布</option>
-                    <option value="已废弃">已废弃</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    生效日期
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaFormData.effective_date}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        effective_date: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    失效日期
-                  </label>
-                  <input
-                    type="date"
-                    value={formulaFormData.expiration_date}
-                    onChange={(e) =>
-                      setFormulaFormData({
-                        ...formulaFormData,
-                        expiration_date: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  配方描述
-                </label>
-                <textarea
-                  value={formulaFormData.description}
-                  onChange={(e) =>
-                    setFormulaFormData({
-                      ...formulaFormData,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="请输入配方描述"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    <MenuItem value="草稿">草稿</MenuItem>
+                    <MenuItem value="待审批">待审批</MenuItem>
+                    <MenuItem value="已批准">已批准</MenuItem>
+                    <MenuItem value="已发布">已发布</MenuItem>
+                    <MenuItem value="已废弃">已废弃</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="生效日期"
+                  value={formulaFormData.effective_date}
+                  onChange={(e) => setFormulaFormData({ ...formulaFormData, effective_date: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  工艺流程
-                </label>
-                <textarea
-                  value={formulaFormData.process_steps}
-                  onChange={(e) =>
-                    setFormulaFormData({
-                      ...formulaFormData,
-                      process_steps: e.target.value,
-                    })
-                  }
-                  placeholder="请输入工艺流程步骤"
-                  rows={4}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="失效日期"
+                  value={formulaFormData.expiration_date}
+                  onChange={(e) => setFormulaFormData({ ...formulaFormData, expiration_date: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
                 />
-              </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowFormulaModal(false);
-                  setIsEditingFormula(false);
-                }}
-                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={
-                  isEditingFormula ? handleUpdateFormula : handleCreateFormula
-                }
-                disabled={creating}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              >
-                {creating ? (
-                  <span className="flex items-center">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    {isEditingFormula ? "更新中..." : "创建中..."}
-                  </span>
-                ) : isEditingFormula ? (
-                  "更新"
-                ) : (
-                  "创建"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              </Grid>
+            </Grid>
+            <TextField
+              fullWidth
+              label="配方描述"
+              value={formulaFormData.description}
+              onChange={(e) => setFormulaFormData({ ...formulaFormData, description: e.target.value })}
+              placeholder="请输入配方描述"
+              multiline
+              rows={3}
+            />
+            <TextField
+              fullWidth
+              label="工艺流程"
+              value={formulaFormData.process_steps}
+              onChange={(e) => setFormulaFormData({ ...formulaFormData, process_steps: e.target.value })}
+              placeholder="请输入工艺流程步骤"
+              multiline
+              rows={4}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => { setShowFormulaModal(false); setIsEditingFormula(false); }}>取消</Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={isEditingFormula ? handleUpdateFormula : handleCreateFormula}
+            disabled={creating}
+          >
+            {creating ? (isEditingFormula ? "更新中..." : "创建中...") : isEditingFormula ? "更新" : "创建"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Formula Detail Modal */}
-      {showFormulaDetailModal && selectedFormula && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-slate-900">
-                  配方详情
-                </h3>
-                <button
-                  onClick={() => setShowFormulaDetailModal(false)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+      <Dialog open={showFormulaDetailModal && !!selectedFormula} onClose={() => setShowFormulaDetailModal(false)} maxWidth="md" fullWidth>
+        <DialogContent>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+            <Typography variant="h5" fontWeight="bold">配方详情</Typography>
+            <IconButton onClick={() => setShowFormulaDetailModal(false)}>
+              <Close />
+            </IconButton>
+          </Stack>
 
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-slate-800">
-                      {selectedFormula.name}
-                    </h4>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getFormulaStatusColor(selectedFormula.status)}`}
-                    >
-                      {selectedFormula.status}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 mb-3">
-                    <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
-                      {selectedFormula.version}
-                    </span>
-                    {selectedFormula.category && (
-                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
-                        {selectedFormula.category}
-                      </span>
-                    )}
-                    {selectedFormula.approval_status && (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
-                        {getFormulaApprovalStatusIcon(
-                          selectedFormula.approval_status,
-                        )}
-                        {selectedFormula.approval_status}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-slate-600">
-                    {selectedFormula.description || "暂无描述"}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">配方编号</p>
-                    <p className="font-medium text-slate-800 font-mono">
-                      {selectedFormula.code}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">关联项目</p>
-                    <p className="font-medium text-slate-800">
-                      {getProjectName(selectedFormula.project_id)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">生效日期</p>
-                    <p className="font-medium text-slate-800">
-                      {selectedFormula.effective_date
-                        ? new Date(
-                            selectedFormula.effective_date,
-                          ).toLocaleDateString("zh-CN")
-                        : "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">失效日期</p>
-                    <p className="font-medium text-slate-800">
-                      {selectedFormula.expiration_date
-                        ? new Date(
-                            selectedFormula.expiration_date,
-                          ).toLocaleDateString("zh-CN")
-                        : "-"}
-                    </p>
-                  </div>
-                  {selectedFormula.approved_by && (
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">审批人</p>
-                      <p className="font-medium text-slate-800">
-                        {selectedFormula.approved_by}
-                      </p>
-                    </div>
+          {selectedFormula && (
+            <Stack spacing={3}>
+              <Box>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                  <Typography variant="h6" fontWeight="bold">{selectedFormula.name}</Typography>
+                  <StatusChip status={selectedFormula.status} />
+                </Stack>
+                <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexWrap: "wrap", gap: 1 }}>
+                  <Chip size="small" label={selectedFormula.version} sx={{ bgcolor: "secondary.50", color: "secondary.dark" }} />
+                  {selectedFormula.category && (
+                    <Chip size="small" label={selectedFormula.category} sx={{ bgcolor: "grey.100", color: "text.primary" }} />
                   )}
-                  {selectedFormula.approved_at && (
-                    <div>
-                      <p className="text-sm text-slate-500 mb-1">审批时间</p>
-                      <p className="font-medium text-slate-800">
-                        {new Date(selectedFormula.approved_at).toLocaleString(
-                          "zh-CN",
-                        )}
-                      </p>
-                    </div>
+                  {selectedFormula.approval_status && (
+                    <Chip
+                      size="small"
+                      icon={getFormulaApprovalStatusIcon(selectedFormula.approval_status)}
+                      label={selectedFormula.approval_status}
+                      sx={{ bgcolor: "grey.100", color: "text.primary" }}
+                    />
                   )}
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">创建时间</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(selectedFormula.created_at).toLocaleString(
-                        "zh-CN",
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">更新时间</p>
-                    <p className="font-medium text-slate-800">
-                      {new Date(selectedFormula.updated_at).toLocaleString(
-                        "zh-CN",
-                      )}
-                    </p>
-                  </div>
-                </div>
+                </Stack>
+                <Typography color="text.secondary">{selectedFormula.description || "暂无描述"}</Typography>
+              </Box>
 
-                {selectedFormula.ingredients &&
-                  selectedFormula.ingredients.length > 0 && (
-                    <div>
-                      <h5 className="font-semibold text-slate-800 mb-3">
-                        配方成分
-                      </h5>
-                      <div className="space-y-2">
-                        {selectedFormula.ingredients.map((ingredient, idx) => (
-                          <div
-                            key={idx}
-                            className="p-3 bg-white border border-slate-200 rounded-lg"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium text-slate-700">
-                                {ingredient.name}
-                              </span>
-                              <span className="text-sm text-indigo-600">
-                                {ingredient.quantity} {ingredient.unit || ""}
-                              </span>
-                            </div>
-                            {ingredient.purity && (
-                              <p className="text-xs text-slate-500 mt-1">
-                                纯度: {ingredient.purity}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                {selectedFormula.process_steps && (
-                  <div>
-                    <h5 className="font-semibold text-slate-800 mb-3">
-                      工艺流程
-                    </h5>
-                    <div className="p-4 bg-white border border-slate-200 rounded-lg">
-                      <p className="text-slate-700 whitespace-pre-wrap">
-                        {selectedFormula.process_steps}
-                      </p>
-                    </div>
-                  </div>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>配方编号</Typography>
+                  <Typography fontWeight="medium" sx={{ fontFamily: "monospace" }}>{selectedFormula.code}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>关联项目</Typography>
+                  <Typography fontWeight="medium">{getProjectName(selectedFormula.project_id)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>生效日期</Typography>
+                  <Typography fontWeight="medium">
+                    {selectedFormula.effective_date ? new Date(selectedFormula.effective_date).toLocaleDateString("zh-CN") : "-"}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>失效日期</Typography>
+                  <Typography fontWeight="medium">
+                    {selectedFormula.expiration_date ? new Date(selectedFormula.expiration_date).toLocaleDateString("zh-CN") : "-"}
+                  </Typography>
+                </Grid>
+                {selectedFormula.approved_by && (
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>审批人</Typography>
+                    <Typography fontWeight="medium">{selectedFormula.approved_by}</Typography>
+                  </Grid>
                 )}
+                {selectedFormula.approved_at && (
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>审批时间</Typography>
+                    <Typography fontWeight="medium">
+                      {new Date(selectedFormula.approved_at).toLocaleString("zh-CN")}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
 
-                <div>
-                  <h5 className="font-semibold text-slate-800 mb-3">
-                    版本历史
-                  </h5>
-                  {formulaVersions.length === 0 ? (
-                    <p className="text-slate-500 text-center py-4">
-                      暂无版本记录
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {formulaVersions.map((version) => (
-                        <div
-                          key={version.id}
-                          className="p-4 bg-white border border-slate-200 rounded-lg"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-indigo-700">
-                              {version.version}
-                            </span>
-                            <span className="text-sm text-slate-500">
-                              {new Date(version.created_at).toLocaleDateString(
-                                "zh-CN",
-                              )}
-                            </span>
-                          </div>
-                          <p className="text-slate-700 mb-2">
-                            {version.changes || "无变更说明"}
-                          </p>
-                          <div className="flex items-center justify-between text-sm text-slate-500">
-                            <span>创建人: {version.created_by || "-"}</span>
-                            {version.approved_by && (
-                              <span>审批人: {version.approved_by}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {selectedFormula.ingredients && selectedFormula.ingredients.length > 0 && (
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>配方成分</Typography>
+                  <Stack spacing={1}>
+                    {selectedFormula.ingredients.map((ingredient, idx) => (
+                      <Card key={idx} variant="outlined" sx={{ p: 1.5 }}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Typography fontWeight="medium">{ingredient.name}</Typography>
+                          <Typography variant="body2" color="secondary.main">
+                            {ingredient.quantity} {ingredient.unit || ""}
+                          </Typography>
+                        </Stack>
+                        {ingredient.purity && (
+                          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                            纯度: {ingredient.purity}
+                          </Typography>
+                        )}
+                      </Card>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-                  {selectedFormula.status === "待审批" && (
-                    <button
-                      onClick={() => handleApproveFormula(selectedFormula.id)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      审批通过
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setShowFormulaDetailModal(false);
-                      openFormulaVersionModal(selectedFormula);
-                    }}
-                    className="px-4 py-2 text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50"
-                  >
-                    新建版本
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowFormulaDetailModal(false);
-                      openFormulaModal(selectedFormula);
-                    }}
-                    className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50"
-                  >
-                    编辑
-                  </button>
-                  <button
-                    onClick={() => setShowFormulaDetailModal(false)}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
-                  >
-                    关闭
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+              {selectedFormula.process_steps && (
+                <Box>
+                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>工艺流程</Typography>
+                  <Card variant="outlined" sx={{ p: 2 }}>
+                    <Typography sx={{ whiteSpace: "pre-wrap" }}>{selectedFormula.process_steps}</Typography>
+                  </Card>
+                </Box>
+              )}
+
+              <Box>
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>版本历史</Typography>
+                {formulaVersions.length === 0 ? (
+                  <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>暂无版本记录</Typography>
+                ) : (
+                  <Stack spacing={1.5}>
+                    {formulaVersions.map((version) => (
+                      <Card key={version.id} variant="outlined" sx={{ p: 2 }}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                          <Typography fontWeight="medium" color="secondary.dark">{version.version}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {new Date(version.created_at).toLocaleDateString("zh-CN")}
+                          </Typography>
+                        </Stack>
+                        <Typography sx={{ mb: 1 }}>{version.changes || "无变更说明"}</Typography>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between">
+                          <Typography variant="body2" color="text.secondary">创建人: {version.created_by || "-"}</Typography>
+                          {version.approved_by && (
+                            <Typography variant="body2" color="text.secondary">审批人: {version.approved_by}</Typography>
+                          )}
+                        </Stack>
+                      </Card>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+
+              <Divider />
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                {selectedFormula.status === "待审批" && (
+                  <Button variant="contained" color="success" onClick={() => handleApproveFormula(selectedFormula.id)}>
+                    审批通过
+                  </Button>
+                )}
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => { setShowFormulaDetailModal(false); openFormulaVersionModal(selectedFormula); }}
+                >
+                  新建版本
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => { setShowFormulaDetailModal(false); openFormulaModal(selectedFormula); }}
+                >
+                  编辑
+                </Button>
+                <Button variant="outlined" onClick={() => setShowFormulaDetailModal(false)}>
+                  关闭
+                </Button>
+              </Stack>
+            </Stack>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Formula Version Modal */}
-      {showFormulaVersionModal && selectedFormula && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-slate-900">
-                新建配方版本
-              </h3>
-              <button
-                onClick={() => setShowFormulaVersionModal(false)}
-                className="p-2 text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  配方名称
-                </label>
-                <p className="text-indigo-700 font-medium">
-                  {selectedFormula.name}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  当前版本
-                </label>
-                <p className="text-slate-700">{selectedFormula.version}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  新版本号 *
-                </label>
-                <input
-                  type="text"
-                  value={formulaVersionFormData.version}
-                  onChange={(e) =>
-                    setFormulaVersionFormData({
-                      ...formulaVersionFormData,
-                      version: e.target.value,
-                    })
-                  }
-                  placeholder="如 v2.0"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  变更说明 *
-                </label>
-                <textarea
-                  value={formulaVersionFormData.changes}
-                  onChange={(e) =>
-                    setFormulaVersionFormData({
-                      ...formulaVersionFormData,
-                      changes: e.target.value,
-                    })
-                  }
-                  placeholder="请输入本次变更的详细说明"
-                  rows={4}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowFormulaVersionModal(false)}
-                className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleCreateFormulaVersion}
-                disabled={creating}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              >
-                {creating ? (
-                  <span className="flex items-center">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    创建中...
-                  </span>
-                ) : (
-                  "创建版本"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <Dialog open={showFormulaVersionModal} onClose={() => setShowFormulaVersionModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">新建配方版本</Typography>
+            <IconButton onClick={() => setShowFormulaVersionModal(false)}>
+              <Close />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          {selectedFormula && (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Box>
+                <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>配方名称</Typography>
+                <Typography color="secondary.dark" fontWeight="medium">{selectedFormula.name}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>当前版本</Typography>
+                <Typography>{selectedFormula.version}</Typography>
+              </Box>
+              <TextField
+                fullWidth
+                label="新版本号 *"
+                value={formulaVersionFormData.version}
+                onChange={(e) => setFormulaVersionFormData({ ...formulaVersionFormData, version: e.target.value })}
+                placeholder="如 v2.0"
+              />
+              <TextField
+                fullWidth
+                label="变更说明 *"
+                value={formulaVersionFormData.changes}
+                onChange={(e) => setFormulaVersionFormData({ ...formulaVersionFormData, changes: e.target.value })}
+                placeholder="请输入本次变更的详细说明"
+                multiline
+                rows={4}
+              />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowFormulaVersionModal(false)}>取消</Button>
+          <Button variant="contained" color="secondary" onClick={handleCreateFormulaVersion} disabled={creating}>
+            {creating ? "创建中..." : "创建版本"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

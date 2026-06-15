@@ -225,11 +225,11 @@ export function DataTable<TData, TValue>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} sx={{ whiteSpace: "nowrap" }}>
+                    <TableCell key={header.id} sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
+                    </TableCell>
                   ))}
                 </TableRow>
               ))}

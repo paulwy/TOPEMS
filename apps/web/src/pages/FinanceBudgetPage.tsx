@@ -347,7 +347,7 @@ const FinanceBudgetPage: React.FC = () => {
         </Box>
         <Button
           variant="contained"
-          startIcon={<Plus className="w-4 h-4" />}
+          startIcon={<Plus sx={{ width: 16, height: 16 }} />}
           onClick={() => {
             setEditingBudget(null);
             resetForm();
@@ -372,28 +372,28 @@ const FinanceBudgetPage: React.FC = () => {
         <MetricCard
           title="总预算"
           value={formatCurrency(budgetStats.totalBudget)}
-          icon={<DollarSign className="w-5 h-5" />}
+          icon={<DollarSign sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="blue"
         />
         <MetricCard
           title="已使用"
           value={formatCurrency(budgetStats.totalUsed)}
-          icon={<PieChart className="w-5 h-5" />}
+          icon={<PieChart sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="orange"
         />
         <MetricCard
           title="剩余预算"
           value={formatCurrency(budgetStats.totalRemaining)}
-          icon={<CheckCircle2 className="w-5 h-5" />}
+          icon={<CheckCircle2 sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="green"
         />
         <MetricCard
           title="平均使用率"
           value={formatPercent(budgetStats.avgUsageRate)}
-          icon={<Calendar className="w-5 h-5" />}
+          icon={<Calendar sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="purple"
         />
@@ -403,28 +403,28 @@ const FinanceBudgetPage: React.FC = () => {
         <MetricCard
           title="执行中预算"
           value={budgetStats.activeBudgets}
-          icon={<CheckCircle2 className="w-5 h-5" />}
+          icon={<CheckCircle2 sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="green"
         />
         <MetricCard
           title="已完成预算"
           value={budgetStats.completedBudgets}
-          icon={<CheckCircle2 className="w-5 h-5" />}
+          icon={<CheckCircle2 sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="blue"
         />
         <MetricCard
           title="已冻结预算"
           value={budgetStats.frozenBudgets}
-          icon={<XCircle className="w-5 h-5" />}
+          icon={<XCircle sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="gray"
         />
         <MetricCard
           title="已过期预算"
           value={budgetStats.expiredBudgets}
-          icon={<AlertCircle className="w-5 h-5" />}
+          icon={<AlertCircle sx={{ width: 20, height: 20 }} />}
           trend={null}
           color="red"
         />
@@ -460,7 +460,7 @@ const FinanceBudgetPage: React.FC = () => {
                 variant="outlined"
                 size="small"
                 onClick={loadBudgets}
-                startIcon={<RefreshCw className="w-4 h-4" />}
+                startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
               >
                 刷新
               </Button>
@@ -478,7 +478,7 @@ const FinanceBudgetPage: React.FC = () => {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search className="w-4 h-4 text-gray-400" />
+                      <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
                     </InputAdornment>
                   ),
                 },
@@ -544,7 +544,7 @@ const FinanceBudgetPage: React.FC = () => {
                       <TableRow key={budget.id}>
                         <TableCell>
                           <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Building2 className="w-4 h-4 mr-2 text-gray-400" />
+                            <Building2 sx={{ width: 16, height: 16, mr: 2, color: "grey.400" }} />
                             {getTypeLabel(budget.budget_type || "")}
                           </Box>
                         </TableCell>
@@ -575,13 +575,13 @@ const FinanceBudgetPage: React.FC = () => {
                         <TableCell>{getStatusChip(budget.status)}</TableCell>
                         <TableCell align="right">
                           <IconButton size="small" onClick={() => openDetailDialog(budget)}>
-                            <Eye className="w-4 h-4" />
+                            <Eye sx={{ width: 16, height: 16 }} />
                           </IconButton>
                           <IconButton size="small" onClick={() => openEditDialog(budget)}>
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 sx={{ width: 16, height: 16 }} />
                           </IconButton>
                           <IconButton size="small" color="error" onClick={() => handleDelete(budget.id)}>
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 sx={{ width: 16, height: 16 }} />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -589,7 +589,7 @@ const FinanceBudgetPage: React.FC = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                        <AlertCircle className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                        <AlertCircle sx={{ width: 48, height: 48, mx: "auto", color: "grey.300", mb: 1 }} />
                         <Typography color="text.secondary">暂无预算数据</Typography>
                       </TableCell>
                     </TableRow>
@@ -664,7 +664,7 @@ const FinanceBudgetPage: React.FC = () => {
       {/* 详情对话框 */}
       <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
-          <PieChart className="w-5 h-5 mr-2 text-indigo-600" />
+          <PieChart sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
           预算详情
         </DialogTitle>
         <DialogContent>

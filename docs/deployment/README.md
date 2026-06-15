@@ -44,6 +44,26 @@
 | [服务启动问题](./DEPLOYMENT_GUIDE.md#故障排查) | 服务启动故障排查 |
 | [数据库连接问题](./DEPLOYMENT_OFFLINE.md#故障排查) | 数据库连接问题 |
 
+### 自动修复功能
+
+TOPEMS CLI 已内置 PostgreSQL 自动修复功能，当检测到以下问题时会自动修复：
+
+- **PostgreSQL 未启动**：自动尝试启动数据库服务
+- **残留锁文件问题**：自动检测并删除残留的 `postmaster.pid` 文件
+- **数据库连接超时**：自动重试连接
+
+启动服务时会先进行数据库健康检查，如有问题会自动尝试修复：
+
+```bash
+$ topems start --all
+检查数据库连接...
+警告: PostgreSQL 未就绪: localhost:5432 - no response
+尝试修复 PostgreSQL (1/3)...
+已修复: 已删除残留的pid文件: /opt/homebrew/var/postgresql@18/postmaster.pid
+PostgreSQL 启动成功
+✓ PostgreSQL 已恢复: PostgreSQL 运行正常
+```
+
 ---
 
 ## 快速参考

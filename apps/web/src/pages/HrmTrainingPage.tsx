@@ -263,34 +263,79 @@ const HrmTrainingPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "grey.100",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{
+            animation: "spin 1s linear infinite",
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            border: 4,
+            borderColor: "primary.main",
+            borderTopColor: "transparent",
+          }}
+        />
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">培训管理</h1>
-              <p className="text-sm text-gray-500">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1536,
+            mx: "auto",
+            px: { xs: 2, sm: 3, md: 4 },
+            py: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "grey.900" }}
+              >
+                培训管理
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
                 管理培训计划、课程和培训记录
-              </p>
-            </div>
+              </Typography>
+            </Box>
             {activeTab !== "records" && (
               <Button variant="contained" onClick={() => handleOpenModal()}>
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus sx={{ width: 16, height: 16, mr: 1 }} />
                 新增
               </Button>
             )}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <Box
+        sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: 3 }}
+      >
         <Box sx={{ mb: 3 }}>
           <Tabs
             value={activeTab}
@@ -300,7 +345,7 @@ const HrmTrainingPage: React.FC = () => {
               value="plans"
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Calendar className="w-4 h-4" />
+                  <Calendar sx={{ width: 16, height: 16 }} />
                   培训计划
                 </Box>
               }
@@ -309,7 +354,7 @@ const HrmTrainingPage: React.FC = () => {
               value="courses"
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpen sx={{ width: 16, height: 16 }} />
                   培训课程
                 </Box>
               }
@@ -318,7 +363,7 @@ const HrmTrainingPage: React.FC = () => {
               value="records"
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Users className="w-4 h-4" />
+                  <Users sx={{ width: 16, height: 16 }} />
                   培训记录
                 </Box>
               }
@@ -327,11 +372,26 @@ const HrmTrainingPage: React.FC = () => {
         </Box>
 
         {activeTab === "plans" && (
-          <Box sx={{ space: "16px" }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="relative w-64">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Box sx={{ position: "relative", width: 256 }}>
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "grey.400",
+                    width: 16,
+                    height: 16,
+                  }}
                   size={16}
                 />
                 <TextField
@@ -342,52 +402,137 @@ const HrmTrainingPage: React.FC = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
 
             <Card>
               <CardContent sx={{ p: 0 }}>
                 <Box sx={{ maxHeight: 600, overflow: "auto" }}>
-                  <table className="w-full">
-                    <thead className="bg-gray-50 sticky top-0">
+                  <table style={{ width: "100%" }}>
+                    <thead
+                      style={{
+                        backgroundColor: "rgb(249, 250, 251)",
+                        position: "sticky",
+                        top: 0,
+                      }}
+                    >
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           计划名称
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           代码
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           时间安排
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           预算
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           状态
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           操作
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody
+                      style={{
+                        backgroundColor: "white",
+                        borderTop: "1px solid rgb(229, 231, 235)",
+                      }}
+                    >
                       {filteredPlans.length === 0 ? (
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-6 py-8 text-center text-gray-500"
+                            sx={{
+                              px: 6,
+                              py: 8,
+                              textAlign: "center",
+                              color: "grey.500",
+                            }}
                           >
-                            暂无培训计划
+                            <Typography
+                              sx={{
+                                px: 6,
+                                py: 8,
+                                textAlign: "center",
+                                color: "grey.500",
+                              }}
+                            >
+                              暂无培训计划
+                            </Typography>
                           </td>
                         </tr>
                       ) : (
                         filteredPlans.map((plan) => (
                           <React.Fragment key={plan.id}>
-                            <tr className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <button
+                            <tr
+                              style={{
+                                borderBottom: "1px solid rgb(229, 231, 235)",
+                              }}
+                            >
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <Box
+                                  sx={{ display: "flex", alignItems: "center" }}
+                                >
+                                  <Box
+                                    component="button"
                                     onClick={() =>
                                       setExpandedPlan(
                                         expandedPlan === plan.id
@@ -395,32 +540,77 @@ const HrmTrainingPage: React.FC = () => {
                                           : plan.id,
                                       )
                                     }
-                                    className="mr-2 p-1 hover:bg-gray-100 rounded"
+                                    sx={{
+                                      mr: 1,
+                                      p: 0.5,
+                                      borderRadius: 1,
+                                      "&:hover": { bgcolor: "grey.100" },
+                                    }}
                                   >
                                     {expandedPlan === plan.id ? (
-                                      <ChevronUp className="w-4 h-4 text-gray-400" />
+                                      <ChevronUp
+                                        sx={{
+                                          width: 16,
+                                          height: 16,
+                                          color: "grey.400",
+                                        }}
+                                      />
                                     ) : (
-                                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                                      <ChevronDown
+                                        sx={{
+                                          width: 16,
+                                          height: 16,
+                                          color: "grey.400",
+                                        }}
+                                      />
                                     )}
-                                  </button>
-                                  <span className="font-medium text-gray-900">
+                                  </Box>
+                                  <span
+                                    sx={{ fontWeight: 500, color: "grey.900" }}
+                                  >
                                     {plan.name}
                                   </span>
-                                </div>
+                                </Box>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  color: "grey.500",
+                                }}
+                              >
                                 {plan.code || "-"}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  color: "grey.500",
+                                }}
+                              >
                                 {new Date(plan.start_date).toLocaleDateString()}{" "}
                                 ~ {new Date(plan.end_date).toLocaleDateString()}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  color: "grey.500",
+                                }}
+                              >
                                 {plan.budget
                                   ? `¥${plan.budget.toLocaleString()}`
                                   : "-"}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
                                 <Chip
                                   size="small"
                                   label={
@@ -435,14 +625,19 @@ const HrmTrainingPage: React.FC = () => {
                                   }
                                 />
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex space-x-1">
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <Box sx={{ display: "flex", gap: 0.5 }}>
                                   <Tooltip title="编辑">
                                     <IconButton
                                       size="small"
                                       onClick={() => handleOpenModal(plan)}
                                     >
-                                      <Edit2 className="w-4 h-4" />
+                                      <Edit2 sx={{ width: 16, height: 16 }} />
                                     </IconButton>
                                   </Tooltip>
                                   <Tooltip title="删除">
@@ -451,7 +646,7 @@ const HrmTrainingPage: React.FC = () => {
                                       onClick={() => handleDelete(plan.id)}
                                       sx={{ color: "error.main" }}
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      <Trash2 sx={{ width: 16, height: 16 }} />
                                     </IconButton>
                                   </Tooltip>
                                   <Tooltip
@@ -469,39 +664,91 @@ const HrmTrainingPage: React.FC = () => {
                                       }
                                     >
                                       {plan.status === "active" ? (
-                                        <XCircle className="w-4 h-4 text-orange-500" />
+                                        <XCircle
+                                          sx={{
+                                            width: 16,
+                                            height: 16,
+                                            color: "orange.500",
+                                          }}
+                                        />
                                       ) : (
-                                        <CheckCircle className="w-4 h-4 text-green-500" />
+                                        <CheckCircle
+                                          sx={{
+                                            width: 16,
+                                            height: 16,
+                                            color: "green.500",
+                                          }}
+                                        />
                                       )}
                                     </IconButton>
                                   </Tooltip>
-                                </div>
+                                </Box>
                               </td>
                             </tr>
                             {expandedPlan === plan.id && (
                               <tr>
                                 <td
                                   colSpan={6}
-                                  className="px-6 py-4 bg-gray-50"
+                                  style={{
+                                    padding: "16px 24px",
+                                    backgroundColor: "rgb(249, 250, 251)",
+                                  }}
                                 >
-                                  <div className="ml-8 space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <FileText className="w-4 h-4 text-gray-400" />
-                                      <span className="text-sm text-gray-600">
+                                  <Box
+                                    sx={{
+                                      ml: 4,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 1,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                      }}
+                                    >
+                                      <FileText
+                                        sx={{
+                                          width: 16,
+                                          height: 16,
+                                          color: "grey.400",
+                                        }}
+                                      />
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ color: "grey.600" }}
+                                      >
                                         <strong>描述:</strong>{" "}
                                         {plan.description || "-"}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Clock className="w-4 h-4 text-gray-400" />
-                                      <span className="text-sm text-gray-500">
+                                      </Typography>
+                                    </Box>
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                      }}
+                                    >
+                                      <Clock
+                                        sx={{
+                                          width: 16,
+                                          height: 16,
+                                          color: "grey.400",
+                                        }}
+                                      />
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ color: "grey.500" }}
+                                      >
                                         <strong>创建时间:</strong>{" "}
                                         {new Date(
                                           plan.created_at,
                                         ).toLocaleString()}
-                                      </span>
-                                    </div>
-                                  </div>
+                                      </Typography>
+                                    </Box>
+                                  </Box>
                                 </td>
                               </tr>
                             )}
@@ -518,10 +765,25 @@ const HrmTrainingPage: React.FC = () => {
 
         {activeTab === "courses" && (
           <Box>
-            <div className="flex items-center justify-between mb-4">
-              <div className="relative w-64">
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Box sx={{ position: "relative", width: 256 }}>
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "grey.400",
+                    width: 16,
+                    height: 16,
+                  }}
                   size={16}
                 />
                 <TextField
@@ -532,15 +794,25 @@ const HrmTrainingPage: React.FC = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className="grid gap-4">
+            <Box sx={{ display: "grid", gap: 2 }}>
               {filteredCourses.length === 0 ? (
                 <Card>
                   <CardContent sx={{ p: 8, textAlign: "center" }}>
-                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500">暂无培训课程</p>
+                    <BookOpen
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        color: "grey.400",
+                        mx: "auto",
+                        mb: 2,
+                      }}
+                    />
+                    <Typography sx={{ color: "grey.500" }}>
+                      暂无培训课程
+                    </Typography>
                   </CardContent>
                 </Card>
               ) : (
@@ -553,9 +825,22 @@ const HrmTrainingPage: React.FC = () => {
                     }}
                   >
                     <CardContent sx={{ p: 2 }}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                              mb: 1,
+                            }}
+                          >
                             <Avatar
                               sx={{
                                 width: 40,
@@ -566,53 +851,120 @@ const HrmTrainingPage: React.FC = () => {
                             >
                               {course.name.charAt(0).toUpperCase()}
                             </Avatar>
-                            <div>
+                            <Box>
                               <Typography
                                 variant="subtitle1"
                                 sx={{ fontWeight: 600 }}
                               >
                                 {course.name}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 {course.code || "未设置代码"}
                               </Typography>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500">分类:</span>
-                              <span className="ml-1 text-gray-700">
+                            </Box>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(4, 1fr)",
+                              gap: 2,
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ color: "grey.500" }}
+                              >
+                                分类:
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ ml: 1, color: "grey.700" }}
+                              >
                                 {course.category}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">级别:</span>
-                              <span className="ml-1 text-gray-700">
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ color: "grey.500" }}
+                              >
+                                级别:
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ ml: 1, color: "grey.700" }}
+                              >
                                 {course.level}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">时长:</span>
-                              <span className="ml-1 text-gray-700">
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ color: "grey.500" }}
+                              >
+                                时长:
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ ml: 1, color: "grey.700" }}
+                              >
                                 {course.duration_hours
                                   ? `${course.duration_hours}小时`
                                   : "-"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">讲师:</span>
-                              <span className="ml-1 text-gray-700">
+                              </Typography>
+                            </Box>
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ color: "grey.500" }}
+                              >
+                                讲师:
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                sx={{ ml: 1, color: "grey.700" }}
+                              >
                                 {course.instructor_name || "-"}
-                              </span>
-                            </div>
-                          </div>
+                              </Typography>
+                            </Box>
+                          </Box>
                           {course.description && (
-                            <p className="mt-3 text-sm text-gray-600 line-clamp-2">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                mt: 2,
+                                color: "grey.600",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical",
+                              }}
+                            >
                               {course.description}
-                            </p>
+                            </Typography>
                           )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
+                        </Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-end",
+                            gap: 1,
+                          }}
+                        >
                           <Chip
                             size="small"
                             label={
@@ -622,13 +974,13 @@ const HrmTrainingPage: React.FC = () => {
                               course.status === "active" ? "success" : "default"
                             }
                           />
-                          <div className="flex space-x-1">
+                          <Box sx={{ display: "flex", gap: 0.5 }}>
                             <Tooltip title="编辑">
                               <IconButton
                                 size="small"
                                 onClick={() => handleOpenModal(course)}
                               >
-                                <Edit2 className="w-4 h-4" />
+                                <Edit2 sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="删除">
@@ -637,7 +989,7 @@ const HrmTrainingPage: React.FC = () => {
                                 onClick={() => handleDelete(course.id)}
                                 sx={{ color: "error.main" }}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
                             {course.status === "active" && (
@@ -647,27 +999,42 @@ const HrmTrainingPage: React.FC = () => {
                                   onClick={() => handleOpenEnrollModal(course)}
                                   sx={{ color: "success.main" }}
                                 >
-                                  <UserPlus className="w-4 h-4" />
+                                  <UserPlus sx={{ width: 16, height: 16 }} />
                                 </IconButton>
                               </Tooltip>
                             )}
-                          </div>
-                        </div>
-                      </div>
+                          </Box>
+                        </Box>
+                      </Box>
                     </CardContent>
                   </Card>
                 ))
               )}
-            </div>
+            </Box>
           </Box>
         )}
 
         {activeTab === "records" && (
           <Box>
-            <div className="flex items-center justify-between mb-4">
-              <div className="relative w-64">
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Box sx={{ position: "relative", width: 256 }}>
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "grey.400",
+                    width: 16,
+                    height: 16,
+                  }}
                   size={16}
                 />
                 <TextField
@@ -678,53 +1045,144 @@ const HrmTrainingPage: React.FC = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   sx={{ width: "100%", "& .MuiOutlinedInput-root": { pl: 4 } }}
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
 
             <Card>
               <CardContent sx={{ p: 0 }}>
                 <Box sx={{ maxHeight: 600, overflow: "auto" }}>
-                  <table className="w-full">
-                    <thead className="bg-gray-50 sticky top-0">
+                  <table style={{ width: "100%" }}>
+                    <thead
+                      style={{
+                        backgroundColor: "rgb(249, 250, 251)",
+                        position: "sticky",
+                        top: 0,
+                      }}
+                    >
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           员工
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           课程
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           报名日期
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           出勤状态
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           完成状态
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           成绩
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th
+                          style={{
+                            padding: "12px 24px",
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
                           操作
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody
+                      style={{
+                        backgroundColor: "white",
+                        borderTop: "1px solid rgb(229, 231, 235)",
+                      }}
+                    >
                       {filteredRecords.length === 0 ? (
                         <tr>
                           <td
                             colSpan={7}
-                            className="px-6 py-8 text-center text-gray-500"
+                            style={{
+                              padding: "32px 24px",
+                              textAlign: "center",
+                              color: "rgb(107, 114, 128)",
+                            }}
                           >
-                            暂无培训记录
+                            <Typography
+                              sx={{ textAlign: "center", color: "grey.500" }}
+                            >
+                              暂无培训记录
+                            </Typography>
                           </td>
                         </tr>
                       ) : (
                         filteredRecords.map((record) => (
-                          <tr key={record.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
+                          <tr
+                            key={record.id}
+                            style={{
+                              borderBottom: "1px solid rgb(229, 231, 235)",
+                            }}
+                          >
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
                                 <Avatar
                                   sx={{
                                     width: 32,
@@ -738,20 +1196,42 @@ const HrmTrainingPage: React.FC = () => {
                                     .charAt(0)
                                     .toUpperCase()}
                                 </Avatar>
-                                <span className="text-sm font-medium text-gray-900">
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 500, color: "grey.900" }}
+                                >
                                   {getEmployeeName(record.employee_id)}
-                                </span>
-                              </div>
+                                </Typography>
+                              </Box>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                whiteSpace: "nowrap",
+                                fontSize: "0.875rem",
+                                color: "grey.500",
+                              }}
+                            >
                               {record.course_id.substring(0, 8)}...
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                whiteSpace: "nowrap",
+                                fontSize: "0.875rem",
+                                color: "grey.500",
+                              }}
+                            >
                               {new Date(
                                 record.enrollment_date,
                               ).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
                               <Chip
                                 size="small"
                                 label={
@@ -775,7 +1255,12 @@ const HrmTrainingPage: React.FC = () => {
                                 }
                               />
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
                               <Chip
                                 size="small"
                                 label={
@@ -795,26 +1280,52 @@ const HrmTrainingPage: React.FC = () => {
                                 }
                               />
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                whiteSpace: "nowrap",
+                                fontSize: "0.875rem",
+                              }}
+                            >
                               {record.score ? (
-                                <div className="flex items-center gap-1">
-                                  <Award className="w-4 h-4 text-yellow-500" />
-                                  <span className="font-medium">
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                  }}
+                                >
+                                  <Award
+                                    sx={{
+                                      width: 16,
+                                      height: 16,
+                                      color: "yellow.500",
+                                    }}
+                                  />
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ fontWeight: 500 }}
+                                  >
                                     {record.score}分
-                                  </span>
-                                </div>
+                                  </Typography>
+                                </Box>
                               ) : (
                                 "-"
                               )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex space-x-1">
+                            <td
+                              style={{
+                                padding: "16px 24px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              <Box sx={{ display: "flex", gap: 0.5 }}>
                                 <Tooltip title="查看详情">
                                   <IconButton
                                     size="small"
                                     onClick={() => handleViewRecord(record)}
                                   >
-                                    <Eye className="w-4 h-4" />
+                                    <Eye sx={{ width: 16, height: 16 }} />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title="删除">
@@ -823,10 +1334,10 @@ const HrmTrainingPage: React.FC = () => {
                                     onClick={() => handleDelete(record.id)}
                                     sx={{ color: "error.main" }}
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 sx={{ width: 16, height: 16 }} />
                                   </IconButton>
                                 </Tooltip>
-                              </div>
+                              </Box>
                             </td>
                           </tr>
                         ))
@@ -838,19 +1349,26 @@ const HrmTrainingPage: React.FC = () => {
             </Card>
           </Box>
         )}
-      </div>
+      </Box>
 
       {showModal && (
-        <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>
             {editItem ? "编辑" : "新增"}
             {activeTab === "plans" ? "培训计划" : "培训课程"}
           </DialogTitle>
           <DialogContent>
-            <div className="space-y-4 pt-2">
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+            >
               {activeTab === "plans" ? (
                 <>
-                  <div>
+                  <Box>
                     <FormLabel htmlFor="plan-name">计划名称 *</FormLabel>
                     <TextField
                       id="plan-name"
@@ -863,9 +1381,15 @@ const HrmTrainingPage: React.FC = () => {
                       }
                       placeholder="请输入计划名称"
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
                       <FormLabel htmlFor="plan-code">计划代码</FormLabel>
                       <TextField
                         id="plan-code"
@@ -879,8 +1403,8 @@ const HrmTrainingPage: React.FC = () => {
                         placeholder="自动生成"
                         disabled={!editItem}
                       />
-                    </div>
-                    <div>
+                    </Box>
+                    <Box>
                       <FormLabel htmlFor="plan-budget">预算</FormLabel>
                       <TextField
                         id="plan-budget"
@@ -898,10 +1422,16 @@ const HrmTrainingPage: React.FC = () => {
                         }
                         placeholder="请输入预算金额"
                       />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
                       <FormLabel htmlFor="plan-start">开始日期 *</FormLabel>
                       <TextField
                         id="plan-start"
@@ -916,8 +1446,8 @@ const HrmTrainingPage: React.FC = () => {
                           })
                         }
                       />
-                    </div>
-                    <div>
+                    </Box>
+                    <Box>
                       <FormLabel htmlFor="plan-end">结束日期 *</FormLabel>
                       <TextField
                         id="plan-end"
@@ -929,28 +1459,38 @@ const HrmTrainingPage: React.FC = () => {
                           setFormData({ ...formData, end_date: e.target.value })
                         }
                       />
-                    </div>
-                  </div>
-                  <div>
+                    </Box>
+                  </Box>
+                  <Box>
                     <FormLabel htmlFor="plan-description">描述</FormLabel>
-                    <textarea
+                    <Box
+                      component="textarea"
                       id="plan-description"
                       value={(formData as TrainingPlan).description || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         setFormData({
                           ...formData,
                           description: e.target.value,
                         })
                       }
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      sx={{
+                        width: "100%",
+                        border: "1px solid rgb(209, 213, 219)",
+                        borderRadius: 1,
+                        px: 2,
+                        py: 1.5,
+                        fontFamily: "inherit",
+                        fontSize: "0.875rem",
+                        resize: "vertical",
+                      }}
                       rows={3}
                       placeholder="请输入计划描述"
                     />
-                  </div>
+                  </Box>
                 </>
               ) : (
                 <>
-                  <div>
+                  <Box>
                     <FormLabel htmlFor="course-name">课程名称 *</FormLabel>
                     <TextField
                       id="course-name"
@@ -963,15 +1503,24 @@ const HrmTrainingPage: React.FC = () => {
                       }
                       placeholder="请输入课程名称"
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
                       <FormLabel htmlFor="course-category">分类 *</FormLabel>
                       <FormControl size="small" fullWidth>
                         <Select
                           value={(formData as TrainingCourse).category || ""}
                           onChange={(e) =>
-                            setFormData({ ...formData, category: e.target.value })
+                            setFormData({
+                              ...formData,
+                              category: e.target.value,
+                            })
                           }
                           displayEmpty
                         >
@@ -984,8 +1533,8 @@ const HrmTrainingPage: React.FC = () => {
                           <MenuItem value="onboarding">入职培训</MenuItem>
                         </Select>
                       </FormControl>
-                    </div>
-                    <div>
+                    </Box>
+                    <Box>
                       <FormLabel htmlFor="course-level">级别 *</FormLabel>
                       <FormControl size="small" fullWidth>
                         <Select
@@ -1004,11 +1553,19 @@ const HrmTrainingPage: React.FC = () => {
                           <MenuItem value="expert">专家级</MenuItem>
                         </Select>
                       </FormControl>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <FormLabel htmlFor="course-duration">时长(小时)</FormLabel>
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: 2,
+                    }}
+                  >
+                    <Box>
+                      <FormLabel htmlFor="course-duration">
+                        时长(小时)
+                      </FormLabel>
                       <TextField
                         id="course-duration"
                         size="small"
@@ -1027,9 +1584,11 @@ const HrmTrainingPage: React.FC = () => {
                           })
                         }
                       />
-                    </div>
-                    <div>
-                      <FormLabel htmlFor="course-participants">最大人数</FormLabel>
+                    </Box>
+                    <Box>
+                      <FormLabel htmlFor="course-participants">
+                        最大人数
+                      </FormLabel>
                       <TextField
                         id="course-participants"
                         size="small"
@@ -1048,9 +1607,9 @@ const HrmTrainingPage: React.FC = () => {
                           })
                         }
                       />
-                    </div>
-                  </div>
-                  <div>
+                    </Box>
+                  </Box>
+                  <Box>
                     <FormLabel htmlFor="course-instructor">讲师</FormLabel>
                     <TextField
                       id="course-instructor"
@@ -1066,26 +1625,36 @@ const HrmTrainingPage: React.FC = () => {
                       }
                       placeholder="请输入讲师姓名"
                     />
-                  </div>
-                  <div>
+                  </Box>
+                  <Box>
                     <FormLabel htmlFor="course-description">描述</FormLabel>
-                    <textarea
+                    <Box
+                      component="textarea"
                       id="course-description"
                       value={(formData as TrainingCourse).description || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                         setFormData({
                           ...formData,
                           description: e.target.value,
                         })
                       }
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      sx={{
+                        width: "100%",
+                        border: "1px solid rgb(209, 213, 219)",
+                        borderRadius: 1,
+                        px: 2,
+                        py: 1.5,
+                        fontFamily: "inherit",
+                        fontSize: "0.875rem",
+                        resize: "vertical",
+                      }}
                       rows={3}
                       placeholder="请输入课程描述"
                     />
-                  </div>
+                  </Box>
                 </>
               )}
-            </div>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button variant="outlined" onClick={() => setShowModal(false)}>
@@ -1099,12 +1668,19 @@ const HrmTrainingPage: React.FC = () => {
       )}
 
       {showRecordModal && selectedRecord && (
-        <Dialog open={showRecordModal} onClose={() => setShowRecordModal(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showRecordModal}
+          onClose={() => setShowRecordModal(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>培训记录详情</DialogTitle>
           <DialogContent>
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-3">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+                >
                   <Avatar
                     sx={{
                       width: 48,
@@ -1117,32 +1693,71 @@ const HrmTrainingPage: React.FC = () => {
                       .charAt(0)
                       .toUpperCase()}
                   </Avatar>
-                  <div>
+                  <Box>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                       {getEmployeeName(selectedRecord.employee_id)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       员工ID: {selectedRecord.employee_id.substring(0, 8)}...
                     </Typography>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">课程ID:</span>
-                    <span className="text-gray-700">
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ color: "grey.500" }}
+                    >
+                      课程ID:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ color: "grey.700" }}
+                    >
                       {selectedRecord.course_id.substring(0, 8)}...
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">报名日期:</span>
-                    <span className="text-gray-700">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ color: "grey.500" }}
+                    >
+                      报名日期:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ color: "grey.700" }}
+                    >
                       {new Date(
                         selectedRecord.enrollment_date,
                       ).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">出勤状态:</span>
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ color: "grey.500" }}
+                    >
+                      出勤状态:
+                    </Typography>
                     <Chip
                       size="small"
                       label={
@@ -1165,9 +1780,17 @@ const HrmTrainingPage: React.FC = () => {
                           : "filled"
                       }
                     />
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">完成状态:</span>
+                  </Box>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ color: "grey.500" }}
+                    >
+                      完成状态:
+                    </Typography>
                     <Chip
                       size="small"
                       label={
@@ -1186,48 +1809,104 @@ const HrmTrainingPage: React.FC = () => {
                           : "outlined"
                       }
                     />
-                  </div>
+                  </Box>
                   {selectedRecord.score && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500">成绩:</span>
-                      <div className="flex items-center gap-1">
-                        <Award className="w-4 h-4 text-yellow-500" />
-                        <span className="font-medium">
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        sx={{ color: "grey.500" }}
+                      >
+                        成绩:
+                      </Typography>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
+                        <Award
+                          sx={{ width: 16, height: 16, color: "yellow.500" }}
+                        />
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {selectedRecord.score}分
-                        </span>
-                      </div>
-                    </div>
+                        </Typography>
+                      </Box>
+                    </Box>
                   )}
                   {selectedRecord.certificate_no && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">证书编号:</span>
-                      <span className="text-gray-700 font-mono">
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        sx={{ color: "grey.500" }}
+                      >
+                        证书编号:
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        sx={{ color: "grey.700", fontFamily: "monospace" }}
+                      >
                         {selectedRecord.certificate_no}
-                      </span>
-                    </div>
+                      </Typography>
+                    </Box>
                   )}
                   {selectedRecord.completed_at && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">完成时间:</span>
-                      <span className="text-gray-700">
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        sx={{ color: "grey.500" }}
+                      >
+                        完成时间:
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        sx={{ color: "grey.700" }}
+                      >
                         {new Date(selectedRecord.completed_at).toLocaleString()}
-                      </span>
-                    </div>
+                      </Typography>
+                    </Box>
                   )}
                   {selectedRecord.feedback && (
-                    <div className="mt-3">
-                      <span className="text-gray-500 block mb-1">反馈:</span>
-                      <p className="text-gray-700 bg-white rounded p-2">
+                    <Box sx={{ mt: 1 }}>
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        sx={{ color: "grey.500", display: "block", mb: 0.5 }}
+                      >
+                        反馈:
+                      </Typography>
+                      <Box
+                        sx={{
+                          color: "grey.700",
+                          bgcolor: "background.paper",
+                          borderRadius: 1,
+                          p: 1,
+                        }}
+                      >
                         {selectedRecord.feedback}
-                      </p>
-                    </div>
+                      </Box>
+                    </Box>
                   )}
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" onClick={() => setShowRecordModal(false)}>
+            <Button
+              variant="contained"
+              onClick={() => setShowRecordModal(false)}
+            >
               关闭
             </Button>
           </DialogActions>
@@ -1235,14 +1914,21 @@ const HrmTrainingPage: React.FC = () => {
       )}
 
       {showEnrollModal && selectedCourse && (
-        <Dialog open={showEnrollModal} onClose={() => setShowEnrollModal(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showEnrollModal}
+          onClose={() => setShowEnrollModal(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>报名课程: {selectedCourse.name}</DialogTitle>
           <DialogContent>
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">请选择要报名的员工:</p>
-              </div>
-              <div>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+                <Typography variant="body2" sx={{ color: "grey.600" }}>
+                  请选择要报名的员工:
+                </Typography>
+              </Box>
+              <Box>
                 <FormLabel htmlFor="enroll-employee">员工 *</FormLabel>
                 <FormControl size="small" fullWidth>
                   <Select displayEmpty>
@@ -1256,8 +1942,8 @@ const HrmTrainingPage: React.FC = () => {
                     ))}
                   </Select>
                 </FormControl>
-              </div>
-            </div>
+              </Box>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button
@@ -1272,7 +1958,7 @@ const HrmTrainingPage: React.FC = () => {
           </DialogActions>
         </Dialog>
       )}
-    </div>
+    </Box>
   );
 };
 

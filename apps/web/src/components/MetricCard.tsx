@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Box, Typography } from "@mui/material";
 
 interface SparklineProps {
   data: number[];
@@ -33,12 +34,10 @@ const Sparkline: React.FC<SparklineProps> = ({
   });
 
   const pathD = `M ${points.join(" L ")}`;
-
-  // Area fill
   const areaD = `${pathD} L ${width},${height} L 0,${height} Z`;
 
   return (
-    <svg width={width} height={height} className="overflow-visible">
+    <svg width={width} height={height} style={{ overflow: "visible" }}>
       <defs>
         <linearGradient
           id={`gradient-${color.replace("#", "")}`}
@@ -60,7 +59,6 @@ const Sparkline: React.FC<SparklineProps> = ({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* End dot */}
       <circle
         cx={width}
         cy={parseFloat(points[points.length - 1].split(",")[1])}
@@ -84,8 +82,16 @@ interface MetricCardProps {
   trend?: "up" | "down" | "stable" | "neutral" | null;
   sparklineData?: number[];
   animate?: boolean;
-  className?: string;
 }
+
+const colorMap: Record<string, { bg: string; gradient: string }> = {
+  green: { bg: "#10B981", gradient: "linear-gradient(135deg, #10B981, #059669)" },
+  purple: { bg: "#8B5CF6", gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)" },
+  blue: { bg: "#3B82F6", gradient: "linear-gradient(135deg, #3B82F6, #2563EB)" },
+  orange: { bg: "#F59E0B", gradient: "linear-gradient(135deg, #F59E0B, #D97706)" },
+  red: { bg: "#EF4444", gradient: "linear-gradient(135deg, #EF4444, #DC2626)" },
+  cyan: { bg: "#06B6D4", gradient: "linear-gradient(135deg, #06B6D4, #0891B2)" },
+};
 
 export const MetricCard: React.FC<MetricCardProps> = ({
   title,
@@ -95,12 +101,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   suffix,
   change,
   icon,
-  color = "from-blue-500 to-cyan-500",
+  color = "blue",
   gradient,
   trend,
   sparklineData,
   animate = true,
-  className = "",
 }) => {
   const [displayValue, setDisplayValue] = useState(
     animate && typeof value === "number" ? 0 : value,
@@ -108,7 +113,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Animate number counting
   useEffect(() => {
     if (!animate || typeof value !== "number") {
       setDisplayValue(value);
@@ -129,7 +133,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         clearInterval(timer);
       } else {
         const progress = currentStep / steps;
-        // Ease out cubic
         const eased = 1 - Math.pow(1 - progress, 3);
         setDisplayValue(
           Math.round(startValue + (endValue - startValue) * eased),
@@ -142,39 +145,40 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   const getTrendIcon = () => {
     if (!trend || trend === "neutral" || trend === "stable") {
-      return <Minus className="w-4 h-4 text-slate-400" />;
+      return <Minus sx={{ width: 16, height: 16, color: "#94A3B8" }} />;
     }
     return trend === "up" ? (
-      <TrendingUp className="w-4 h-4" />
+      <TrendingUp sx={{ width: 16, height: 16 }} />
     ) : (
-      <TrendingDown className="w-4 h-4" />
+      <TrendingDown sx={{ width: 16, height: 16 }} />
     );
   };
 
   const getTrendColor = () => {
-    if (!trend || trend === "neutral" || trend === "stable")
-      return "text-slate-500";
-    return trend === "up" ? "text-emerald-500" : "text-rose-500";
+    if (!trend || trend === "neutral" || trend === "stable") return "#64748B";
+    return trend === "up" ? "#10B981" : "#EF4444";
   };
 
   const renderIcon = () => {
     if (!icon) {
-      return <Activity className="w-6 h-6 text-white" />;
+      return <Activity sx={{ width: 24, height: 24, color: "white" }} />;
     }
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
-        className: "w-6 h-6 text-white",
+      return React.cloneElement(icon as React.ReactElement<{ sx?: object }>, {
+        sx: { width: 24, height: 24, color: "white" },
       });
     }
     const IconComponent = icon as LucideIcon;
-    return <IconComponent className="w-6 h-6 text-white" />;
+    return <IconComponent sx={{ width: 24, height: 24, color: "white" }} />;
   };
 
-  const iconBgStyle = gradient
-    ? {
-        background: `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`,
-      }
-    : undefined;
+  const getIconGradient = () => {
+    if (gradient) {
+      return `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`;
+    }
+    const colorInfo = colorMap[color];
+    return colorInfo ? colorInfo.gradient : colorMap.blue.gradient;
+  };
 
   const getSparklineColor = () => {
     if (!trend || trend === "neutral" || trend === "stable") return "#64748B";
@@ -182,93 +186,132 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   return (
-    <div
+    <Box
       ref={cardRef}
-      className={`
-        relative bg-white rounded-2xl shadow-sm p-6 
-        border border-slate-200/60 overflow-hidden
-        transition-all duration-300 ease-out
-        hover:shadow-lg hover:border-slate-300/80
-        hover:scale-[1.02]
-        ${className}
-      `}
+      sx={{
+        position: "relative",
+        backgroundColor: "white",
+        borderRadius: 2,
+        padding: 3,
+        border: "1px solid rgba(226, 232, 240, 0.6)",
+        overflow: "hidden",
+        transition: "all 0.3s ease-out",
+        boxShadow: isHovered ? "0 10px 40px rgba(0, 0, 0, 0.1)" : "0 1px 3px rgba(0, 0, 0, 0.05)",
+        transform: isHovered ? "scale(1.02)" : "scale(1)",
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
-        <div
-          className={`w-full h-full bg-gradient-to-br ${color} rounded-full blur-3xl transform translate-x-8 -translate-y-8`}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: 128,
+          height: 128,
+          opacity: 0.05,
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            background: getIconGradient(),
+            borderRadius: "50%",
+            filter: "blur(40px)",
+            transform: "translateX(32px) translateY(-32px)",
+          }}
         />
-      </div>
+      </Box>
 
-      {/* Hover glow effect */}
-      <div
-        className={`
-          absolute inset-0 bg-gradient-to-br from-slate-50 to-transparent
-          transition-opacity duration-300
-          ${isHovered ? "opacity-100" : "opacity-0"}
-        `}
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(to bottom right, rgba(241, 245, 249, 1), transparent)",
+          opacity: isHovered ? 1 : 0,
+          transition: "opacity 0.3s",
+        }}
       />
 
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-slate-500 mb-1 tracking-wide">
+      <Box sx={{ position: "relative", zIndex: 10 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body2" sx={{ color: "#64748B", fontWeight: 500, marginBottom: 0.5, letterSpacing: "0.05em" }}>
               {title}
-            </p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-bold text-slate-900 tracking-tight">
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+              <Typography variant="h3" sx={{ fontWeight: "bold", color: "#1E293B" }}>
                 {typeof displayValue === "number"
                   ? displayValue.toLocaleString()
                   : displayValue}
-              </span>
+              </Typography>
               {unit && (
-                <span className="text-base text-slate-500 font-medium">
+                <Typography variant="body1" sx={{ color: "#64748B", fontWeight: 500 }}>
                   {unit}
-                </span>
+                </Typography>
               )}
               {suffix && (
-                <span className="text-sm text-slate-400">{suffix}</span>
+                <Typography variant="body2" sx={{ color: "#94A3B8" }}>
+                  {suffix}
+                </Typography>
               )}
-            </div>
+            </Box>
             {subtitle && (
-              <p className="text-xs text-slate-400 mt-1.5">{subtitle}</p>
+              <Typography variant="caption" sx={{ color: "#94A3B8", marginTop: 0.5 }}>
+                {subtitle}
+              </Typography>
             )}
-          </div>
+          </Box>
 
-          <div
-            className={`
-              w-12 h-12 rounded-xl flex items-center justify-center
-              shadow-lg transition-transform duration-300
-              ${isHovered ? "scale-110 rotate-3" : ""}
-            `}
-            style={iconBgStyle}
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 1.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+              transition: "transform 0.3s",
+              transform: isHovered ? "scale(1.1) rotate(3deg)" : "scale(1)",
+            }}
           >
-            <div
-              className={`bg-gradient-to-br ${color} w-full h-full rounded-xl flex items-center justify-center`}
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+                borderRadius: 1.5,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: getIconGradient(),
+              }}
             >
               {renderIcon()}
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
-        <div className="flex items-center justify-between">
-          <div className={`flex items-center gap-1.5 ${getTrendColor()}`}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {getTrendIcon()}
-            <span className="text-sm font-semibold">
+            <Typography variant="body2" sx={{ fontWeight: 600, color: getTrendColor() }}>
               {change !== undefined ? `${change > 0 ? "+" : ""}${change}%` : ""}
-            </span>
+            </Typography>
             {trend && trend !== "neutral" && trend !== "stable" && (
-              <span className="text-xs text-slate-400 ml-1">
+              <Typography variant="caption" sx={{ color: "#94A3B8", marginLeft: 0.5 }}>
                 vs last period
-              </span>
+              </Typography>
             )}
-          </div>
+          </Box>
 
           {sparklineData && sparklineData.length > 0 && (
-            <div
-              className={`transition-all duration-500 ${isHovered ? "scale-110" : ""}`}
+            <Box
+              sx={{
+                transition: "transform 0.5s",
+                transform: isHovered ? "scale(1.1)" : "scale(1)",
+              }}
             >
               <Sparkline
                 data={sparklineData}
@@ -276,11 +319,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 width={80}
                 height={32}
               />
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

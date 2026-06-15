@@ -13,6 +13,7 @@ import {
   Table,
   Eye,
 } from "lucide-react";
+import { Box, Typography, Button, TextField, Table as MuiTable, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from "@mui/material";
 import type { ReportData } from "../api/report";
 
 interface ReportViewerProps {
@@ -93,174 +94,214 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+    <Box sx={{
+      position: "fixed",
+      inset: 0,
+      bgcolor: "rgba(0, 0, 0, 0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 50,
+    }}>
+      <Box sx={{
+        bgcolor: "background.paper",
+        borderRadius: 2,
+        width: "100%",
+        maxWidth: 1152,
+        maxHeight: "90vh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <FileText className="w-6 h-6" />
-                <h2 className="text-2xl font-bold">{report.config.title}</h2>
-              </div>
+        <Box sx={{
+          background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+          color: "white",
+          p: 3,
+        }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+                <FileText sx={{ width: 24, height: 24 }} />
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>{report.config.title}</Typography>
+              </Box>
               {report.config.description && (
-                <p className="text-blue-100 text-sm">
+                <Typography sx={{ color: "primary.light", fontSize: 14 }}>
                   {report.config.description}
-                </p>
+                </Typography>
               )}
-            </div>
-            <button
+            </Box>
+            <Button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              sx={{ p: 1, color: "white", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" }, borderRadius: 2, minWidth: "auto" }}
             >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
+              <X sx={{ width: 24, height: 24 }} />
+            </Button>
+          </Box>
+        </Box>
 
         {/* Meta Info */}
-        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center space-x-6 text-sm text-gray-600">
-              <span className="flex items-center">
-                <Hash className="w-4 h-4 mr-1" />
+        <Box sx={{ bgcolor: "grey.100", px: 3, py: 2, borderBottom: 1, borderColor: "grey.200" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, color: "grey.600" }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Hash sx={{ width: 16, height: 16, mr: 0.5 }} />
                 报表ID: {report.id}
-              </span>
-              <span className="flex items-center">
-                <Calendar className="w-4 h-4 mr-1" />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Calendar sx={{ width: 16, height: 16, mr: 0.5 }} />
                 创建时间:{" "}
                 {new Date(report.created_at).toLocaleDateString("zh-CN")}
-              </span>
-              <span className="flex items-center">
-                <Table className="w-4 h-4 mr-1" />共 {report.row_count} 条记录
-              </span>
-              <span className="flex items-center">
-                <User className="w-4 h-4 mr-1" />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Table sx={{ width: 16, height: 16, mr: 0.5 }} />共 {report.row_count} 条记录
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <User sx={{ width: 16, height: 16, mr: 0.5 }} />
                 类型: {report.config.report_type}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Button
                 onClick={handleExportCSV}
-                className="flex items-center px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                size="small"
+                variant="contained"
+                color="success"
+                startIcon={<Download sx={{ width: 16, height: 16 }} />}
+                sx={{ borderRadius: 2, textTransform: "none" }}
               >
-                <Download className="w-4 h-4 mr-1" />
                 导出CSV
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleExportJSON}
-                className="flex items-center px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                size="small"
+                variant="contained"
+                color="secondary"
+                startIcon={<Download sx={{ width: 16, height: 16 }} />}
+                sx={{ borderRadius: 2, textTransform: "none" }}
               >
-                <Download className="w-4 h-4 mr-1" />
                 导出JSON
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handlePrint}
-                className="flex items-center px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                size="small"
+                variant="contained"
+                color="inherit"
+                startIcon={<Printer sx={{ width: 16, height: 16 }} />}
+                sx={{ borderRadius: 2, textTransform: "none" }}
               >
-                <Printer className="w-4 h-4 mr-1" />
                 打印
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Search */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
+        <Box sx={{ px: 3, py: 2, borderBottom: 1, borderColor: "grey.200" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search sx={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 20,
+                height: 20,
+                color: "grey.400"
+              }} />
+              <TextField
+                fullWidth
+                size="small"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
                 placeholder="搜索报表数据..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                sx={{ pl: 5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
               />
-            </div>
-            <button
+            </Box>
+            <Button
               onClick={() => setShowAllColumns(!showAllColumns)}
-              className="flex items-center px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              size="small"
+              variant="outlined"
+              startIcon={<Eye sx={{ width: 16, height: 16 }} />}
+              sx={{ borderRadius: 2, textTransform: "none" }}
             >
-              <Eye className="w-4 h-4 mr-1" />
               {showAllColumns ? "收起列" : "显示全部列"}
-            </button>
-            <span className="text-sm text-gray-500">
+            </Button>
+            <Typography sx={{ fontSize: 14, color: "grey.500" }}>
               {filteredData.length} 条匹配
-            </span>
-          </div>
-        </div>
+            </Typography>
+          </Box>
+        </Box>
 
         {/* Table */}
-        <div className="flex-1 overflow-auto p-6">
+        <Box sx={{ flex: 1, overflow: "auto", p: 3 }}>
           {paginatedData.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">暂无数据</p>
-            </div>
+            <Box sx={{ textAlign: "center", py: 6 }}>
+              <FileText sx={{ width: 64, height: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+              <Typography sx={{ color: "grey.500" }}>暂无数据</Typography>
+            </Box>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                      #
-                    </th>
+            <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+              <MuiTable sx={{ minWidth: "100%" }} size="small">
+                <TableHead sx={{ bgcolor: "grey.100" }}>
+                  <TableRow>
+                    <TableCell sx={{ width: 64, fontWeight: 600, color: "grey.600" }}>#</TableCell>
                     {displayColumns.map((column) => (
-                      <th
+                      <TableCell
                         key={column}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        sx={{ fontWeight: 600, color: "grey.600", whiteSpace: "nowrap" }}
                       >
                         {column}
-                      </th>
+                      </TableCell>
                     ))}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                  </TableRow>
+                </TableHead>
+                <TableBody sx={{ bgcolor: "background.paper" }}>
                   {paginatedData.map((row, idx) => (
-                    <tr
+                    <TableRow
                       key={idx}
-                      className="hover:bg-gray-50 transition-colors"
+                      sx={{ "&:hover": { bgcolor: "grey.50" } }}
                     >
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                      <TableCell sx={{ color: "grey.600" }}>
                         {(currentPage - 1) * itemsPerPage + idx + 1}
-                      </td>
+                      </TableCell>
                       {displayColumns.map((column) => (
-                        <td
+                        <TableCell
                           key={column}
-                          className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap"
+                          sx={{ color: "grey.900", whiteSpace: "nowrap" }}
                         >
                           {formatValue(row[column])}
-                        </td>
+                        </TableCell>
                       ))}
-                    </tr>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </MuiTable>
+            </TableContainer>
           )}
-        </div>
+        </Box>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white border-t border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
+          <Box sx={{ bgcolor: "background.paper", borderTop: 1, borderColor: "grey.200", px: 3, py: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ fontSize: 14, color: "grey.600" }}>
                 显示 {(currentPage - 1) * itemsPerPage + 1} -{" "}
                 {Math.min(currentPage * itemsPerPage, filteredData.length)} 条，
                 共 {filteredData.length} 条
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <IconButton
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  size="small"
+                  sx={{ border: 1, borderColor: "grey.200", "&:hover": { bgcolor: "grey.50" }, "&.Mui-disabled": { opacity: 0.5 } }}
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
+                  <ChevronLeft sx={{ width: 16, height: 16 }} />
+                </IconButton>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
                   if (totalPages <= 5) {
@@ -273,45 +314,42 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                     pageNum = currentPage - 2 + i;
                   }
                   return (
-                    <button
+                    <Button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-1 rounded-lg transition-colors ${
-                        currentPage === pageNum
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-200 hover:bg-gray-50"
-                      }`}
+                      size="small"
+                      variant={currentPage === pageNum ? "contained" : "outlined"}
+                      sx={{ minWidth: "auto", px: 1.5, borderRadius: 1 }}
                     >
                       {pageNum}
-                    </button>
+                    </Button>
                   );
                 })}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                <IconButton
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  size="small"
+                  sx={{ border: 1, borderColor: "grey.200", "&:hover": { bgcolor: "grey.50" }, "&.Mui-disabled": { opacity: 0.5 } }}
                 >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+                  <ChevronRight sx={{ width: 16, height: 16 }} />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
         )}
 
         {/* Date Range Info */}
         {report.config.date_range && (
-          <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
-            <div className="flex items-center text-sm text-gray-600">
-              <Calendar className="w-4 h-4 mr-2" />
+          <Box sx={{ bgcolor: "grey.100", px: 3, py: 1.5, borderTop: 1, borderColor: "grey.200" }}>
+            <Box sx={{ display: "flex", alignItems: "center", fontSize: 14, color: "grey.600" }}>
+              <Calendar sx={{ width: 16, height: 16, mr: 1 }} />
               时间范围: {report.config.date_range.start_date} 至{" "}
               {report.config.date_range.end_date}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

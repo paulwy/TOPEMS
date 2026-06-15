@@ -140,26 +140,26 @@ const HrmReportsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ width: 48, height: 48, borderRadius: "50%", border: 4, borderColor: "divider", borderTopColor: "primary.main", animation: "spin 1s linear infinite" }} />
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
                 HR数据分析报表
-              </h1>
-              <p className="text-sm text-gray-500">
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
                 实时查看人力资源数据统计与分析
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <FormControl size="small" sx={{ width: 120 }}>
                 <InputLabel>时间范围</InputLabel>
                 <Select
@@ -174,124 +174,124 @@ const HrmReportsPage: React.FC = () => {
                 </Select>
               </FormControl>
               <Button>
-                <BarChart3 className="w-4 h-4 mr-2" />
+                <BarChart3 sx={{ width: 16, height: 16, mr: 1 }} />
                 导出报表
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">总员工数</p>
-                  <p className="text-2xl font-bold mt-1">
+      <Box sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 2, md: 3, lg: 6 }, gap: 2, mb: 3 }}>
+          <Card sx={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "white" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "#dbeafe" }}>总员工数</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {formatNumber(employeeSummary?.total_employees || 0)}
-                  </p>
-                </div>
-                <Users className="w-10 h-10 text-blue-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <Users sx={{ width: 40, height: 40, color: "#bfdbfe" }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">在职员工</p>
-                  <p className="text-2xl font-bold mt-1">
+          <Card sx={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "white" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "#dcfce7" }}>在职员工</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {formatNumber(employeeSummary?.active_employees || 0)}
-                  </p>
-                </div>
-                <Briefcase className="w-10 h-10 text-green-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <Briefcase sx={{ width: 40, height: 40, color: "#bbf7d0" }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">活跃合同</p>
-                  <p className="text-2xl font-bold mt-1">
+          <Card sx={{ background: "linear-gradient(135deg, #a855f7, #9333ea)", color: "white" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "#f3e8ff" }}>活跃合同</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {formatNumber(contractSummary?.active_contracts || 0)}
-                  </p>
-                </div>
-                <FileText className="w-10 h-10 text-purple-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <FileText sx={{ width: 40, height: 40, color: "#e9d5ff" }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm">本月新入职</p>
-                  <p className="text-2xl font-bold mt-1">
+          <Card sx={{ background: "linear-gradient(135deg, #f97316, #ea580c)", color: "white" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "#ffedd5" }}>本月新入职</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {formatNumber(employeeSummary?.new_hires_this_month || 0)}
-                  </p>
-                </div>
-                <TrendingUp className="w-10 h-10 text-orange-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <TrendingUp sx={{ width: 40, height: 40, color: "#fed7aa" }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-100 text-sm">培训完成率</p>
-                  <p className="text-2xl font-bold mt-1">
+          <Card sx={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "white" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "#fee2e2" }}>培训完成率</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {trainingSummary?.avg_completion_rate || 0}%
-                  </p>
-                </div>
-                <BookOpen className="w-10 h-10 text-red-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <BookOpen sx={{ width: 40, height: 40, color: "#fecaca" }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-indigo-100 text-sm">考勤率</p>
-                  <p className="text-2xl font-bold mt-1">
+          <Card sx={{ background: "linear-gradient(135deg, #6366f1, #4f46e5)", color: "white" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "#e0e7ff" }}>考勤率</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {attendanceSummary?.attendance_rate || 0}%
-                  </p>
-                </div>
-                <Clock className="w-10 h-10 text-indigo-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <Clock sx={{ width: 40, height: 40, color: "#c7d2fe" }} />
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v as string)}>
             <Tab value="overview" label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <BarChart3 className="w-4 h-4" />
+                <BarChart3 sx={{ width: 16, height: 16 }} />
                 概览
               </Box>
             } />
             <Tab value="employee" label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Users className="w-4 h-4" />
+                <Users sx={{ width: 16, height: 16 }} />
                 员工分析
               </Box>
             } />
             <Tab value="training" label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <BookOpen className="w-4 h-4" />
+                <BookOpen sx={{ width: 16, height: 16 }} />
                 培训分析
               </Box>
             } />
             <Tab value="payroll" label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <DollarSign className="w-4 h-4" />
+                <DollarSign sx={{ width: 16, height: 16 }} />
                 薪资分析
               </Box>
             } />
@@ -300,14 +300,14 @@ const HrmReportsPage: React.FC = () => {
 
           {activeTab === "overview" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2">
-                <CardHeader>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 3 }, gap: 3 }}>
+                <Card sx={{ gridColumn: { lg: "span 2" } }}>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>部门人员分布</Typography>
                   <Typography variant="body2" sx={{ color: "grey.500" }}>各部门员工数量统计</Typography>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {departmentSummary.map((dept) => {
                       const percentage = employeeSummary?.total_employees
                         ? (dept.employee_count /
@@ -315,198 +315,204 @@ const HrmReportsPage: React.FC = () => {
                           100
                         : 0;
                       return (
-                        <div key={dept.department_id} className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium">
+                        <Box key={dept.department_id} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               {dept.department_name}
-                            </span>
-                            <span className="text-gray-500">
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "grey.500" }}>
                               {dept.active_count} / {dept.employee_count}
-                            </span>
-                          </div>
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                              style={{ width: `${percentage}%` }}
-                            ></div>
-                          </div>
-                        </div>
+                            </Typography>
+                          </Box>
+                          <Box sx={{ height: 8, bgcolor: "grey.200", borderRadius: 1, overflow: "hidden" }}>
+                            <Box
+                              sx={{ height: "100%", bgcolor: "blue.500", borderRadius: 1, transition: "all 0.5s", width: `${percentage}%` }}
+                            />
+                          </Box>
+                        </Box>
                       );
                     })}
-                  </div>
+                  </Box>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>合同到期提醒</Typography>
                   <Typography variant="body2" sx={{ color: "grey.500" }}>即将到期的合同统计</Typography>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                    <div>
-                      <p className="text-sm text-gray-600">本月到期</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {contractSummary?.expiring_this_month || 0}
-                      </p>
-                    </div>
-                    <Chip  size="small" color="error" label="紧急" />
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                    <div>
-                      <p className="text-sm text-gray-600">下月到期</p>
-                      <p className="text-2xl font-bold text-yellow-600">
-                        {contractSummary?.expiring_next_month || 0}
-                      </p>
-                    </div>
-                    <Chip  size="small" variant="outlined" label="提醒" />
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <div>
-                      <p className="text-sm text-gray-600">活跃合同</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {contractSummary?.active_contracts || 0}
-                      </p>
-                    </div>
-                    <Chip  size="small" label="正常" />
-                  </div>
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "red.50", borderRadius: 2 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.600" }}>本月到期</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 700, color: "red.600" }}>
+                          {contractSummary?.expiring_this_month || 0}
+                        </Typography>
+                      </Box>
+                      <Chip size="small" color="error" label="紧急" />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "yellow.50", borderRadius: 2 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.600" }}>下月到期</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 700, color: "yellow.700" }}>
+                          {contractSummary?.expiring_next_month || 0}
+                        </Typography>
+                      </Box>
+                      <Chip size="small" variant="outlined" label="提醒" />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "green.50", borderRadius: 2 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.600" }}>活跃合同</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 700, color: "green.600" }}>
+                          {contractSummary?.active_contracts || 0}
+                        </Typography>
+                      </Box>
+                      <Chip size="small" label="正常" />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3 }}>
               <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>考勤统计</Typography>
                   <Typography variant="body2" sx={{ color: "grey.500" }}>近期考勤情况分析</Typography>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "grid", gridTemplateColumns: 4, gap: 2 }}>
+                    <Box sx={{ textAlign: "center", p: 2, bgcolor: "green.50", borderRadius: 2 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "green.600" }}>
                         {attendanceSummary?.on_time_count || 0}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">准时</p>
-                    </div>
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                      <p className="text-2xl font-bold text-yellow-600">
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>准时</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "center", p: 2, bgcolor: "yellow.50", borderRadius: 2 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "yellow.700" }}>
                         {attendanceSummary?.late_count || 0}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">迟到</p>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <p className="text-2xl font-bold text-red-600">
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>迟到</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "center", p: 2, bgcolor: "red.50", borderRadius: 2 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "red.600" }}>
                         {attendanceSummary?.absent_count || 0}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">缺勤</p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600">
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>缺勤</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "center", p: 2, bgcolor: "blue.50", borderRadius: 2 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "blue.600" }}>
                         {attendanceSummary?.leave_count || 0}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">请假</p>
-                    </div>
-                  </div>
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>请假</Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>培训统计</Typography>
                   <Typography variant="body2" sx={{ color: "grey.500" }}>培训计划与课程完成情况</Typography>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600">
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "grid", gridTemplateColumns: 3, gap: 2 }}>
+                    <Box sx={{ textAlign: "center", p: 2, bgcolor: "purple.50", borderRadius: 2 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "purple.600" }}>
                         {trainingSummary?.total_plans || 0}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">培训计划</p>
-                    </div>
-                    <div className="text-center p-4 bg-indigo-50 rounded-lg">
-                      <p className="text-2xl font-bold text-indigo-600">
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>培训计划</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "center", p: 2, bgcolor: "indigo.50", borderRadius: 2 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "indigo.600" }}>
                         {trainingSummary?.total_courses || 0}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">培训课程</p>
-                    </div>
-                    <div className="text-center p-4 bg-pink-50 rounded-lg">
-                      <p className="text-2xl font-bold text-pink-600">
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>培训课程</Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "center", p: 2, bgcolor: "pink.50", borderRadius: 2 }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "pink.600" }}>
                         {trainingSummary?.total_records || 0}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">培训记录</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">整体完成率</span>
-                      <span className="font-bold text-green-600">
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>培训记录</Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ mt: 2, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                      <Typography variant="body2" sx={{ color: "grey.600" }}>整体完成率</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: "green.600" }}>
                         {trainingSummary?.avg_completion_rate || 0}%
-                      </span>
-                    </div>
-                    <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-500"
-                        style={{
+                      </Typography>
+                    </Box>
+                    <Box sx={{ height: 12, bgcolor: "grey.300", borderRadius: 1, overflow: "hidden" }}>
+                      <Box
+                        sx={{
+                          height: "100%",
+                          background: "linear-gradient(to right, #4ade80, #16a34a)",
+                          borderRadius: 1,
+                          transition: "all 0.5s",
                           width: `${trainingSummary?.avg_completion_rate || 0}%`,
                         }}
-                      ></div>
-                    </div>
-                  </div>
+                      />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
           </Box>
           )}
 
           {activeTab === "employee" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3 }}>
                 <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>员工基本信息</Typography>
                   <Typography variant="body2" sx={{ color: "grey.500" }}>员工总数与状态分布</Typography>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-500">总员工数</p>
-                      <p className="text-3xl font-bold text-gray-900">
-                        {formatNumber(employeeSummary?.total_employees || 0)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-500">在职员工</p>
-                      <p className="text-3xl font-bold text-green-600">
-                        {formatNumber(employeeSummary?.active_employees || 0)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-red-50 rounded-lg">
-                      <p className="text-sm text-gray-500">离职员工</p>
-                      <p className="text-3xl font-bold text-red-600">
-                        {formatNumber(employeeSummary?.inactive_employees || 0)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-500">平均司龄(天)</p>
-                      <p className="text-3xl font-bold text-blue-600">
-                        {formatNumber(employeeSummary?.avg_tenure_days || 0)}
-                      </p>
-                    </div>
-                  </div>
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: "grid", gridTemplateColumns: 2, gap: 2 }}>
+                      <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>总员工数</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
+                          {formatNumber(employeeSummary?.total_employees || 0)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ p: 2, bgcolor: "green.50", borderRadius: 2 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>在职员工</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 700, color: "green.600" }}>
+                          {formatNumber(employeeSummary?.active_employees || 0)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ p: 2, bgcolor: "red.50", borderRadius: 2 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>离职员工</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 700, color: "red.600" }}>
+                          {formatNumber(employeeSummary?.inactive_employees || 0)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ p: 2, bgcolor: "blue.50", borderRadius: 2 }}>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>平均司龄(天)</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 700, color: "blue.600" }}>
+                          {formatNumber(employeeSummary?.avg_tenure_days || 0)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>性别分布</Typography>
                   <Typography variant="body2" sx={{ color: "grey.500" }}>男女性员工比例</Typography>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex justify-center">
-                    <div className="w-48 h-48 relative">
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "flex", justifyContent: "center" }}>
+                    <Box sx={{ width: 192, height: 192, position: "relative" }}>
                       <svg
                         viewBox="0 0 100 100"
-                        className="w-full h-full transform -rotate-90"
+                        sx={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}
                       >
                         <circle
                           cx="50"
@@ -541,75 +547,75 @@ const HrmReportsPage: React.FC = () => {
                           }}
                         />
                       </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-gray-900">
+                      <Box sx={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                        <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
                           {formatNumber(
                             (employeeSummary?.male_count || 0) +
                               (employeeSummary?.female_count || 0),
                           )}
-                        </span>
-                        <span className="text-sm text-gray-500">总人数</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-center gap-8 mt-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                      <span className="text-sm text-gray-600">
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>总人数</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "center", gap: 4, mt: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "blue.500" }} />
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>
                         男: {employeeSummary?.male_count || 0}人
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-pink-500"></div>
-                      <span className="text-sm text-gray-600">
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "pink.500" }} />
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>
                         女: {employeeSummary?.female_count || 0}人
-                      </span>
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
 
             <Card>
-              <CardHeader>
+              <CardHeader sx={{ pb: 0 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>月度人员变动</Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>本月入职与离职统计</Typography>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center">
-                        <TrendingUp className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-green-700">本月新入职</p>
-                        <p className="text-4xl font-bold text-green-600">
+              <CardContent sx={{ pt: 2 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 3 }}>
+                  <Box sx={{ p: 3, background: "linear-gradient(135deg, #dcfce7, #bbf7d0)", borderRadius: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: "green.500", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <TrendingUp sx={{ width: 28, height: 28, color: "white" }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "green.700" }}>本月新入职</Typography>
+                        <Typography variant="h3" sx={{ fontWeight: 700, color: "green.600" }}>
                           {formatNumber(
                             employeeSummary?.new_hires_this_month || 0,
                           )}
-                        </p>
-                        <p className="text-sm text-green-500 mt-1">人</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full bg-red-500 flex items-center justify-center">
-                        <TrendingDown className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-red-700">本月离职</p>
-                        <p className="text-4xl font-bold text-red-600">
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "green.600", mt: 0.5 }}>人</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box sx={{ p: 3, background: "linear-gradient(135deg, #fee2e2, #fecaca)", borderRadius: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ width: 56, height: 56, borderRadius: "50%", bgcolor: "red.500", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <TrendingDown sx={{ width: 28, height: 28, color: "white" }} />
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "red.700" }}>本月离职</Typography>
+                        <Typography variant="h3" sx={{ fontWeight: 700, color: "red.600" }}>
                           {formatNumber(
                             employeeSummary?.terminations_this_month || 0,
                           )}
-                        </p>
-                        <p className="text-sm text-red-500 mt-1">人</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "red.600", mt: 0.5 }}>人</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           </Box>
@@ -617,103 +623,112 @@ const HrmReportsPage: React.FC = () => {
 
           {activeTab === "training" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 3 }, gap: 3 }}>
               <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>培训计划</Typography>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <span className="text-gray-700">总计划数</span>
-                      <span className="text-2xl font-bold text-blue-600">
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "blue.50", borderRadius: 2 }}>
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>总计划数</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "blue.600" }}>
                         {trainingSummary?.total_plans || 0}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <span className="text-gray-700">进行中</span>
-                      <span className="text-2xl font-bold text-green-600">
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "green.50", borderRadius: 2 }}>
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>进行中</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "green.600" }}>
                         {trainingSummary?.active_plans || 0}
-                      </span>
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>培训课程</Typography>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                      <span className="text-gray-700">总课程数</span>
-                      <span className="text-2xl font-bold text-purple-600">
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "purple.50", borderRadius: 2 }}>
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>总课程数</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "purple.600" }}>
                         {trainingSummary?.total_courses || 0}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
-                      <span className="text-gray-700">已完成</span>
-                      <span className="text-2xl font-bold text-indigo-600">
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "indigo.50", borderRadius: 2 }}>
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>已完成</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "indigo.600" }}>
                         {trainingSummary?.completed_courses || 0}
-                      </span>
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader sx={{ pb: 0 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>培训记录</Typography>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                      <span className="text-gray-700">总记录数</span>
-                      <span className="text-2xl font-bold text-orange-600">
+                <CardContent sx={{ pt: 2 }}>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "orange.50", borderRadius: 2 }}>
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>总记录数</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "orange.600" }}>
                         {trainingSummary?.total_records || 0}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-pink-50 rounded-lg">
-                      <span className="text-gray-700">已完成</span>
-                      <span className="text-2xl font-bold text-pink-600">
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "pink.50", borderRadius: 2 }}>
+                      <Typography variant="body2" sx={{ color: "grey.700" }}>已完成</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "pink.600" }}>
                         {trainingSummary?.completed_records || 0}
-                      </span>
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
 
             <Card>
-              <CardHeader>
+              <CardHeader sx={{ pb: 0 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>培训完成率趋势</Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>培训完成情况分析</Typography>
               </CardHeader>
-              <CardContent>
-                <div className="h-64 flex items-end justify-between gap-4">
+              <CardContent sx={{ pt: 2 }}>
+                <Box sx={{ height: 256, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 2 }}>
                   {[1, 2, 3, 4, 5, 6].map((month) => {
                     const height = Math.floor(Math.random() * 60) + 40;
                     return (
-                      <div
+                      <Box
                         key={month}
-                        className="flex-1 flex flex-col items-center"
+                        sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}
                       >
-                        <div
-                          className="w-full bg-gradient-to-t from-blue-500 to-blue-300 rounded-t-lg transition-all duration-300 hover:from-blue-600 hover:to-blue-400"
-                          style={{ height: `${height}%` }}
-                        ></div>
-                        <span className="text-xs text-gray-500 mt-2">
+                        <Box
+                          sx={{
+                            width: "100%",
+                            background: "linear-gradient(to top, #3b82f6, #60a5fa)",
+                            borderTopLeftRadius: 8,
+                            borderTopRightRadius: 8,
+                            transition: "all 0.3s",
+                            height: `${height}%`,
+                            "&:hover": {
+                              background: "linear-gradient(to top, #2563eb, #3b82f6)",
+                            },
+                          }}
+                        />
+                        <Typography variant="xs" sx={{ color: "grey.500", mt: 1 }}>
                           {
                             ["1月", "2月", "3月", "4月", "5月", "6月"][
                               month - 1
                             ]
                           }
-                        </span>
-                      </div>
+                        </Typography>
+                      </Box>
                     );
                   })}
-                </div>
+                </Box>
               </CardContent>
             </Card>
           </Box>
@@ -721,52 +736,52 @@ const HrmReportsPage: React.FC = () => {
 
           {activeTab === "payroll" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 4 }, gap: 2 }}>
               <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-gray-500">薪资总额</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>薪资总额</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", mt: 0.5 }}>
                     {formatCurrency(payrollSummary?.total_payroll || 0)}
-                  </p>
+                  </Typography>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-gray-500">平均薪资</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>平均薪资</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", mt: 0.5 }}>
                     {formatCurrency(payrollSummary?.avg_salary || 0)}
-                  </p>
+                  </Typography>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-gray-500">最高薪资</p>
-                  <p className="text-2xl font-bold text-green-600 mt-1">
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>最高薪资</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "green.600", mt: 0.5 }}>
                     {formatCurrency(payrollSummary?.max_salary || 0)}
-                  </p>
+                  </Typography>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-gray-500">最低薪资</p>
-                  <p className="text-2xl font-bold text-blue-600 mt-1">
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>最低薪资</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "blue.600", mt: 0.5 }}>
                     {formatCurrency(payrollSummary?.min_salary || 0)}
-                  </p>
+                  </Typography>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
 
             <Card>
-              <CardHeader>
+              <CardHeader sx={{ pb: 0 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>薪资结构分析</Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>薪资构成比例</Typography>
               </CardHeader>
-              <CardContent>
-                <div className="flex justify-center">
-                  <div className="w-64 h-64 relative">
+              <CardContent sx={{ pt: 2 }}>
+                <Box sx={{ display: "flex", justifyContent: "center" }}>
+                  <Box sx={{ width: 256, height: 256, position: "relative" }}>
                     <svg
                       viewBox="0 0 100 100"
-                      className="w-full h-full transform -rotate-90"
+                      sx={{ width: "100%", height: "100%", transform: "rotate(-90deg)" }}
                     >
                       <circle
                         cx="50"
@@ -809,34 +824,34 @@ const HrmReportsPage: React.FC = () => {
                         style={{ strokeDashoffset: "-213.52" }}
                       />
                     </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xl font-bold text-gray-900">
+                    <Box sx={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
                         {formatCurrency(payrollSummary?.total_payroll || 0)}
-                      </span>
-                      <span className="text-sm text-gray-500">总额</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-center gap-6 mt-6">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">基本工资 60%</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-sm text-gray-600">绩效奖金 25%</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span className="text-sm text-gray-600">福利补贴 15%</span>
-                  </div>
-                </div>
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>总额</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "center", gap: 3, mt: 3 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "blue.500" }} />
+                    <Typography variant="body2" sx={{ color: "grey.700" }}>基本工资 60%</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "green.500" }} />
+                    <Typography variant="body2" sx={{ color: "grey.700" }}>绩效奖金 25%</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: "50%", bgcolor: "yellow.500" }} />
+                    <Typography variant="body2" sx={{ color: "grey.700" }}>福利补贴 15%</Typography>
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           </Box>
           )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

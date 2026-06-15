@@ -41,33 +41,66 @@ import { ChartCard } from "../components/ChartCard";
 import { BIChartColors } from "../components/charts/chartTheme";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 const MetricCardSkeleton = () => (
-  <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-200/60">
-    <div className="flex items-start justify-between mb-4">
-      <div className="flex-1">
-        <Skeleton className="h-4 w-24 mb-2" />
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-4 w-20" />
-      </div>
-      <Skeleton className="w-12 h-12 rounded-xl" />
-    </div>
-    <div className="flex items-center justify-between">
-      <Skeleton className="h-4 w-16" />
-      <Skeleton className="h-8 w-20" />
-    </div>
-  </div>
+  <Box
+    sx={{
+      bgcolor: "background.paper",
+      borderRadius: 3,
+      boxShadow: 1,
+      p: 3,
+      border: "1px solid",
+      borderColor: "divider",
+    }}
+  >
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        mb: 2,
+      }}
+    >
+      <Box sx={{ flex: 1 }}>
+        <Skeleton sx={{ height: 16, width: 96, mb: 1 }} />
+        <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+        <Skeleton sx={{ height: 16, width: 80 }} />
+      </Box>
+      <Skeleton sx={{ width: 48, height: 48, borderRadius: 2 }} />
+    </Box>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <Skeleton sx={{ height: 16, width: 64 }} />
+      <Skeleton sx={{ height: 32, width: 80 }} />
+    </Box>
+  </Box>
 );
 
 const ChartCardSkeleton = ({ height = 300 }: { height?: number }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-    <div className="px-6 py-4 border-b border-slate-100">
-      <Skeleton className="h-5 w-32" />
-    </div>
-    <div className="p-6">
-      <Skeleton className="h-[240px] w-full rounded-lg" style={{ height }} />
-    </div>
-  </div>
+  <Box
+    sx={{
+      bgcolor: "background.paper",
+      borderRadius: 3,
+      boxShadow: 1,
+      border: "1px solid",
+      borderColor: "divider",
+      overflow: "hidden",
+    }}
+  >
+    <Box sx={{ px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+      <Skeleton sx={{ height: 20, width: 128 }} />
+    </Box>
+    <Box sx={{ p: 3 }}>
+      <Skeleton sx={{ height: 240, width: "100%", borderRadius: 1 }} style={{ height }} />
+    </Box>
+  </Box>
 );
 
 const ActivityItem = ({
@@ -80,50 +113,77 @@ const ActivityItem = ({
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "production":
-        return <BarChart3 className="w-4 h-4 text-blue-600" />;
+        return <BarChart3 sx={{ width: 16, height: 16, color: "primary.main" }} />;
       case "quality":
-        return <Activity className="w-4 h-4 text-emerald-600" />;
+        return <Activity sx={{ width: 16, height: 16, color: "success.main" }} />;
       case "maintenance":
-        return <TrendingUp className="w-4 h-4 text-amber-600" />;
+        return <TrendingUp sx={{ width: 16, height: 16, color: "warning.main" }} />;
       default:
-        return <Activity className="w-4 h-4 text-slate-600" />;
+        return <Activity sx={{ width: 16, height: 16, color: "grey.600" }} />;
     }
   };
 
   const getActivityColor = (type: string) => {
     switch (type) {
       case "production":
-        return "bg-blue-50 border-blue-100";
+        return { bgcolor: "blue.50", borderColor: "blue.100" };
       case "quality":
-        return "bg-emerald-50 border-emerald-100";
+        return { bgcolor: "green.50", borderColor: "green.100" };
       case "maintenance":
-        return "bg-amber-50 border-amber-100";
+        return { bgcolor: "orange.50", borderColor: "orange.100" };
       default:
-        return "bg-slate-50 border-slate-100";
+        return { bgcolor: "grey.50", borderColor: "grey.100" };
     }
   };
 
+  const colors = getActivityColor(activity.type);
+
   return (
-    <div
-      className="flex items-center gap-4 p-3 rounded-xl border transition-all duration-300 hover:shadow-sm animate-fade-in"
-      style={{
-        backgroundColor: "white",
-        borderColor: "#E2E8F0",
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        p: 1.5,
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        transition: "all 0.3s",
+        "&:hover": {
+          boxShadow: 1,
+        },
+        animation: "fadeIn 0.5s ease-in-out",
         animationDelay: `${index * 100}ms`,
+        animationFillMode: "both",
+        ...colors,
       }}
     >
-      <div
-        className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${getActivityColor(activity.type)}`}
+      <Box
+        sx={{
+          flexShrink: 0,
+          width: 40,
+          height: 40,
+          borderRadius: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          ...colors,
+        }}
       >
         {getActivityIcon(activity.type)}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-800 truncate">
+      </Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 500, color: "grey.800", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
           {activity.title}
-        </p>
-        <p className="text-xs text-slate-500">{activity.time}</p>
-      </div>
-    </div>
+        </Typography>
+        <Typography variant="caption" sx={{ color: "grey.500" }}>
+          {activity.time}
+        </Typography>
+      </Box>
+    </Box>
   );
 };
 
@@ -188,38 +248,56 @@ const BIDashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50/50">
-        <div className="p-6 space-y-6">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
           {/* Header skeleton */}
-          <div className="flex items-center justify-between">
-            <div>
-              <Skeleton className="h-8 w-32 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-32" />
-              <Skeleton className="h-10 w-24" />
-            </div>
-          </div>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+              <Skeleton sx={{ height: 16, width: 96 }} />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Skeleton sx={{ height: 40, width: 128 }} />
+              <Skeleton sx={{ height: 40, width: 96 }} />
+            </Box>
+          </Box>
 
           {/* Metrics skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: 2, lg: 4 },
+              gap: 2,
+            }}
+          >
             {[1, 2, 3, 4].map((i) => (
               <MetricCardSkeleton key={i} />
             ))}
-          </div>
+          </Box>
 
           {/* Charts skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, lg: 3 },
+              gap: 3,
+            }}
+          >
+            <Box sx={{ lgColumnSpan: 2 }}>
               <ChartCardSkeleton height={280} />
-            </div>
-            <div>
+            </Box>
+            <Box>
               <ChartCardSkeleton height={280} />
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     );
   }
 
@@ -318,35 +396,59 @@ const BIDashboardPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <div className="p-6 space-y-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">数据大屏</h2>
-            <p className="text-sm text-slate-500 mt-1">实时业务数据总览</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Clock className="w-4 h-4" />
-              <span>最后更新: {new Date().toLocaleString("zh-CN")}</span>
-            </div>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+              数据大屏
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+              实时业务数据总览
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 14, color: "grey.500" }}
+            >
+              <Clock sx={{ width: 16, height: 16 }} />
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                最后更新: {new Date().toLocaleString("zh-CN")}
+              </Typography>
+            </Box>
             <Button
               variant="outline"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-2"
+              sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
             >
               <RefreshCw
-                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+                sx={{
+                  width: 16,
+                  height: 16,
+                  animation: isRefreshing ? "spin 1s linear infinite" : "none",
+                }}
               />
               {isRefreshing ? "刷新中..." : "刷新数据"}
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 2, lg: 4 },
+            gap: 2,
+          }}
+        >
           {metrics.map((metric, index) => (
             <MetricCard
               key={index}
@@ -361,11 +463,17 @@ const BIDashboardPage = () => {
               className="animate-fade-in"
             />
           ))}
-        </div>
+        </Box>
 
         {/* Charts Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, lg: 3 },
+            gap: 3,
+          }}
+        >
+          <Box sx={{ gridColumn: { lg: "span 2" } }}>
             <ChartCard
               title="月度新增项目"
               subtitle="研发项目月度趋势"
@@ -407,8 +515,8 @@ const BIDashboardPage = () => {
                 />
               </ResponsiveContainer>
             </ChartCard>
-          </div>
-          <div>
+          </Box>
+          <Box>
             <ChartCard
               title="检验类型分布"
               subtitle="实验室检验构成"
@@ -446,12 +554,18 @@ const BIDashboardPage = () => {
                 </RechartsPieChart>
               </ResponsiveContainer>
             </ChartCard>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Charts Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, lg: 3 },
+            gap: 3,
+          }}
+        >
+          <Box>
             <ChartCard
               title="质量合格率趋势"
               subtitle="月度质量走势"
@@ -502,8 +616,8 @@ const BIDashboardPage = () => {
                 </RechartsLineChart>
               </ResponsiveContainer>
             </ChartCard>
-          </div>
-          <div>
+          </Box>
+          <Box>
             <ChartCard
               title="日产量统计"
               subtitle="生产批次日趋势"
@@ -540,8 +654,8 @@ const BIDashboardPage = () => {
                 />
               </ResponsiveContainer>
             </ChartCard>
-          </div>
-          <div>
+          </Box>
+          <Box>
             <ChartCard
               title="最近活动"
               subtitle="系统动态"
@@ -549,7 +663,16 @@ const BIDashboardPage = () => {
               showExport={false}
               showRefresh={false}
             >
-              <div className="space-y-3 overflow-y-auto max-h-[220px] pr-2">
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1.5,
+                  overflowY: "auto",
+                  maxHeight: 220,
+                  pr: 1,
+                }}
+              >
                 {(summary?.recent_activities || defaultActivities).map(
                   (activity, index) => (
                     <ActivityItem
@@ -559,12 +682,12 @@ const BIDashboardPage = () => {
                     />
                   ),
                 )}
-              </div>
+              </Box>
             </ChartCard>
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

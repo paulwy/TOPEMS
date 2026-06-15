@@ -208,8 +208,7 @@ interface CrudOperations<T> {
 function createCrudApi<T>(endpoint: string): CrudOperations<T> {
   return {
     list: (params?: ListParams) => {
-      const queryString = buildQueryString(params);
-      return apiClient.lims.get(`${endpoint}${queryString}`);
+      return apiClient.lims.get(endpoint, { params });
     },
 
     get: (id: string) => {

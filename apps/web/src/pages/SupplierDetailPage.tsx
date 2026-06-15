@@ -83,23 +83,23 @@ const SupplierDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "slate.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ animation: "spin 1s linear infinite", width: 48, height: 48, borderRadius: "50%", border: 8, borderColor: "primary.main", borderTopColor: "transparent" }} />
+      </Box>
     );
   }
 
   if (!supplier) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-500">供应商不存在</p>
-          <Button onClick={() => navigate("/srm/suppliers")} className="mt-4">
+      <Box sx={{ minHeight: "100vh", bgcolor: "slate.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <AlertCircle sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 1.5 }} />
+          <Typography sx={{ color: "grey.500" }}>供应商不存在</Typography>
+          <Button onClick={() => navigate("/srm/suppliers")} sx={{ mt: 2 }}>
             返回列表
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
@@ -110,7 +110,7 @@ const SupplierDetailPage: React.FC = () => {
         <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Button variant="text" onClick={() => navigate("/srm/suppliers")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft sx={{ width: 16, height: 16, mr: 1 }} />
               返回
             </Button>
             <Box>
@@ -119,7 +119,7 @@ const SupplierDetailPage: React.FC = () => {
             </Box>
             <Box sx={{ ml: 'auto' }}>
               <Button onClick={() => setIsEditing(!isEditing)}>
-                <Edit2 className="w-4 h-4 mr-2" />
+                <Edit2 sx={{ width: 16, height: 16, mr: 1 }} />
                 编辑
               </Button>
             </Box>
@@ -133,7 +133,7 @@ const SupplierDetailPage: React.FC = () => {
           <CardContent sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
               <Box sx={{ width: 64, height: 64, borderRadius: '50%', bgcolor: 'primary.light', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Truck className="w-8 h-8" />
+                <Truck sx={{ width: 32, height: 32 }} />
               </Box>
               <Box sx={{ flex: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
@@ -145,25 +145,25 @@ const SupplierDetailPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: '0.875rem', color: 'text.secondary' }}>
                   {supplier.short_name && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <FileText className="w-4 h-4" />
+                      <FileText sx={{ width: 16, height: 16 }} />
                       {supplier.short_name}
                     </Box>
                   )}
                   {supplier.contact_name && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <FileText className="w-4 h-4" />
+                      <FileText sx={{ width: 16, height: 16 }} />
                       {supplier.contact_name}
                     </Box>
                   )}
                   {supplier.email && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Mail className="w-4 h-4" />
+                      <Mail sx={{ width: 16, height: 16 }} />
                       {supplier.email}
                     </Box>
                   )}
                   {supplier.contact_phone && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Phone className="w-4 h-4" />
+                      <Phone sx={{ width: 16, height: 16 }} />
                       {supplier.contact_phone}
                     </Box>
                   )}
@@ -179,7 +179,7 @@ const SupplierDetailPage: React.FC = () => {
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'primary.light' }}>
-                  <CreditCard className="w-5 h-5" />
+                  <CreditCard sx={{ width: 20, height: 20 }} />
                 </Box>
                 <Box>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>应付账款</Typography>
@@ -195,7 +195,7 @@ const SupplierDetailPage: React.FC = () => {
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'error.light' }}>
-                  <Clock className="w-5 h-5" />
+                  <Clock sx={{ width: 20, height: 20 }} />
                 </Box>
                 <Box>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>逾期应付</Typography>
@@ -211,7 +211,7 @@ const SupplierDetailPage: React.FC = () => {
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'success.light' }}>
-                  <TrendingUp className="w-5 h-5" />
+                  <TrendingUp sx={{ width: 20, height: 20 }} />
                 </Box>
                 <Box>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>累计采购</Typography>
@@ -227,7 +227,7 @@ const SupplierDetailPage: React.FC = () => {
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box sx={{ p: 1, borderRadius: '50%', bgcolor: 'warning.light' }}>
-                  <Wallet className="w-5 h-5" />
+                  <Wallet sx={{ width: 20, height: 20 }} />
                 </Box>
                 <Box>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>累计付款</Typography>
@@ -397,7 +397,7 @@ const SupplierDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 1, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>采购发票列表</Typography>
             <Button variant="outlined" size="small">
-              <Receipt className="w-4 h-4 mr-2" />
+              <Receipt sx={{ width: 16, height: 16, mr: 1 }} />
               新建发票
             </Button>
           </CardHeader>
@@ -430,7 +430,7 @@ const SupplierDetailPage: React.FC = () => {
           <CardHeader sx={{ pb: 1, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>付款记录列表</Typography>
             <Button variant="outlined" size="small">
-              <DollarSign className="w-4 h-4 mr-2" />
+              <DollarSign sx={{ width: 16, height: 16, mr: 1 }} />
               新建付款
             </Button>
           </CardHeader>

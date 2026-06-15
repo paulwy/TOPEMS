@@ -204,7 +204,7 @@ const QmsAuditManagementPage: React.FC = () => {
       accessorKey: "title",
       header: "审核计划",
       cell: ({ row }) => (
-        <span className="font-medium text-slate-900">{row.original.title}</span>
+        <Typography sx={{ fontWeight: 500, color: "slate.900" }}>{row.original.title}</Typography>
       ),
     },
     {
@@ -268,10 +268,10 @@ const QmsAuditManagementPage: React.FC = () => {
       accessorKey: "assignee",
       header: "负责人",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          <span>{row.original.assignee || "-"}</span>
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box component={Users} sx={{ fontSize: 16 }} />
+          <Typography>{row.original.assignee || "-"}</Typography>
+        </Box>
       ),
     },
     {
@@ -319,21 +319,21 @@ const QmsAuditManagementPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">加载中...</p>
-        </div>
-      </div>
+      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%)" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <Box sx={{ width: 48, height: 48, border: 4, borderColor: "primary.light", borderTopColor: "primary.main", borderRadius: "50%", animation: "spin 1s linear infinite", mx: "auto", mb: 2 }} />
+          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: "100vh", background: "linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%)" }}>
+      <Box component="header" sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button
                 variant="text"
                 onClick={() => navigate("/qms")}
@@ -341,69 +341,70 @@ const QmsAuditManagementPage: React.FC = () => {
               >
                 <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">审核管理</h1>
-                <p className="text-xs text-slate-500">Audit Management</p>
-              </div>
-            </div>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: "slate.900", fontSize: "1.25rem" }}>审核管理</Typography>
+                <Typography variant="caption" sx={{ color: "slate.500", fontSize: "0.75rem" }}>Audit Management</Typography>
+              </Box>
+            </Box>
             <Button
               onClick={() => setShowAddModal(true)}
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="contained"
+              sx={{ bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus sx={{ width: 16, height: 16, mr: 1 }} />
               创建审核计划
             </Button>
-          </div>
-        </div>
-      </header>
+          </Box>
+        </Box>
+      </Box>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">审核计划总数</p>
-                  <p className="text-3xl font-bold mt-1">{plans.length}</p>
-                </div>
-                <ClipboardCheck className="w-12 h-12 text-blue-200" />
-              </div>
+      <Box component="main" sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 3 }, gap: 3, mb: 4 }}>
+          <Card sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", color: "white" }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ color: "#93c5fd", fontSize: "0.875rem" }}>审核计划总数</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>{plans.length}</Typography>
+                </Box>
+                <ClipboardCheck sx={{ width: 48, height: 48, color: "#93c5fd" }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-100 text-sm">进行中审核</p>
-                  <p className="text-3xl font-bold mt-1">
+          <Card sx={{ background: "linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)", color: "white" }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ color: "#fde68a", fontSize: "0.875rem" }}>进行中审核</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {plans.filter((p) => p.status === "in_progress").length}
-                  </p>
-                </div>
-                <Clock className="w-12 h-12 text-yellow-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <Clock sx={{ width: 48, height: 48, color: "#fde68a" }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-500 to-emerald-500 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">已完成审核</p>
-                  <p className="text-3xl font-bold mt-1">
+          <Card sx={{ background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)", color: "white" }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ color: "#bbf7d0", fontSize: "0.875rem" }}>已完成审核</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mt: 0.5 }}>
                     {plans.filter((p) => p.status === "completed").length}
-                  </p>
-                </div>
-                <CheckCircle className="w-12 h-12 text-green-200" />
-              </div>
+                  </Typography>
+                </Box>
+                <CheckCircle sx={{ width: 48, height: 48, color: "#bbf7d0" }} />
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         <Card>
-          <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box component={ClipboardCheck} sx={{ fontSize: 20, color: '#2563eb' }} />
+          <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
+            <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box component={ClipboardCheck} sx={{ fontSize: 20, color: "#2563eb" }} />
               审核计划列表
             </Typography>
           </CardHeader>
@@ -415,9 +416,9 @@ const QmsAuditManagementPage: React.FC = () => {
                 enablePagination={false}
               />
             ) : (
-              <div className="text-center py-12 text-slate-500">
-                <ClipboardCheck className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>暂无审核计划</p>
+              <Box sx={{ textAlign: "center", py: 6, color: "slate.500" }}>
+                <ClipboardCheck sx={{ width: 64, height: 64, mx: "auto", mb: 2, opacity: 0.5 }} />
+                <Typography>暂无审核计划</Typography>
                 <Button
                   variant="outlined"
                   size="small"
@@ -427,11 +428,11 @@ const QmsAuditManagementPage: React.FC = () => {
                 >
                   创建第一个计划
                 </Button>
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
-      </main>
+      </Box>
 
       <Dialog open={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="lg" fullWidth>
         <DialogTitle>创建审核计划</DialogTitle>
@@ -664,7 +665,7 @@ const QmsAuditManagementPage: React.FC = () => {
           <Button variant="outlined" onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

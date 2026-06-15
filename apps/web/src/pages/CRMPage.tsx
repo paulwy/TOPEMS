@@ -68,7 +68,7 @@ const CRMPage: React.FC = () => {
             <Tab
               key={tab.value}
               label={tab.label}
-              icon={<tab.icon className="w-4 h-4" />}
+              icon={<tab.icon sx={{ width: 16, height: 16 }} />}
               iconPosition="start"
               id={`crm-tab-${index}`}
             />

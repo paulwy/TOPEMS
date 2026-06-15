@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lock, User, Shield, Fingerprint } from "lucide-react";
 import { isDevelopment } from "../config/runtime";
 import { useAppStore } from "../store";
 
@@ -12,12 +12,12 @@ import Button from "@mui/material/Button";
 import {
   Card as MuiCard,
   CardContent,
+  Box,
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import { ModeToggle } from "@/components/ModeToggle";
 
-// 登录表单验证 schema
 const loginFormSchema = z.object({
   username: z
     .string()
@@ -43,7 +43,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 定义表单
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -53,16 +52,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     },
   });
 
-  // 处理表单提交
   const handleSubmit = async (values: LoginFormValues) => {
     setLoading(true);
 
     try {
       if (isRegister) {
-        // 注册功能由管理员管理
         addNotification({
           title: "提示",
-          message: "注册功能已关闭，请联系管理员获取账号",
+          message: "注册功能已关闭,请联系管理员获取账号",
           type: "info",
         });
         return;
@@ -78,7 +75,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       if (response.success) {
         addNotification({
           title: "登录成功",
-          message: "欢迎回来！",
+          message: "欢迎回来!",
           type: "success",
         });
         navigate("/dashboard");
@@ -102,28 +99,126 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
-      {/* 主题切换按钮 */}
-      <div className="fixed top-4 right-4">
-        <ModeToggle />
-      </div>
+    <Box sx={{ 
+      minHeight: "100vh", 
+      display: "flex", 
+      alignItems: "center", 
+      justifyContent: "center",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      <Box 
+        sx={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+        }}
+      />
+      
+      <Box 
+        sx={{
+          position: "absolute",
+          top: -100,
+          right: -100,
+          width: 300,
+          height: 300,
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: "50%",
+          filter: "blur(60px)",
+        }}
+      />
+      <Box 
+        sx={{
+          position: "absolute",
+          bottom: -100,
+          left: -100,
+          width: 300,
+          height: 300,
+          background: "rgba(255, 255, 255, 0.15)",
+          borderRadius: "50%",
+          filter: "blur(60px)",
+        }}
+      />
 
-      <MuiCard className="w-full max-w-md mx-4 shadow-lg">
-        <div className="text-center p-6">
-          <Typography variant="h5" className="font-bold text-blue-600 dark:text-blue-400">
+      <Box 
+        sx={{
+          position: "absolute",
+          top: 20,
+          left: 20,
+          right: 20,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          zIndex: 10,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box 
+            sx={{
+              width: 40,
+              height: 40,
+              background: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            <Shield sx={{ width: 20, height: 20, color: "white" }} />
+          </Box>
+          <Typography variant="h6" sx={{ color: "white", fontWeight: 600 }}>
             TOPEMS
           </Typography>
-          <Typography variant="body2" color="text.secondary">企业数字化平台</Typography>
-          <h2 className="text-2xl font-semibold pt-4">
-            {isRegister ? "用户注册" : "用户登录"}
-          </h2>
-        </div>
-        <CardContent>
+        </Box>
+        <ModeToggle />
+      </Box>
+
+      <MuiCard 
+        sx={{ 
+          width: "100%", 
+          maxWidth: 400, 
+          mx: 2, 
+          background: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(20px)",
+          borderRadius: 3,
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          overflow: "hidden",
+          animation: "fadeInUp 0.5s ease-out",
+        }}
+      >
+        <Box sx={{ 
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: 4,
+          textAlign: "center",
+        }}>
+          <Box 
+            sx={{
+              width: 72,
+              height: 72,
+              background: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+            }}
+          >
+            <Fingerprint sx={{ width: 36, height: 36, color: "white" }} />
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: "white" }}>
+            {isRegister ? "用户注册" : "欢迎回来"}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.8)", mt: 1 }}>
+            {isRegister ? "创建您的账号" : "请登录您的账号"}
+          </Typography>
+        </Box>
+
+        <CardContent sx={{ padding: 4 }}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            sx={{ display: "flex", flexDirection: "column", gap: 3 }}
           >
-            {/* 用户名 */}
             <TextField
               label="用户名"
               placeholder="请输入用户名"
@@ -133,9 +228,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               helperText={form.formState.errors.username?.message as string}
               size="small"
               fullWidth
+              InputProps={{
+                startAdornment: (
+                  <Box sx={{ display: "flex", alignItems: "center", mr: 2, color: "grey.400" }}>
+                    <User sx={{ width: 18, height: 18 }} />
+                  </Box>
+                ),
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1.5,
+                  "&:hover fieldset": {
+                    borderColor: "primary.main",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "primary.main",
+                    borderWidth: 2,
+                  },
+                },
+              }}
             />
 
-            {/* 邮箱 (仅注册时显示) */}
             {isRegister && (
               <TextField
                 label="邮箱"
@@ -147,88 +260,178 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 helperText={form.formState.errors.email?.message as string}
                 size="small"
                 fullWidth
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                  },
+                }}
               />
             )}
 
-            {/* 密码 */}
-            <div className="space-y-1 relative">
-              <TextField
-                label="密码"
-                type={showPassword ? "text" : "password"}
-                placeholder="请输入密码"
-                value={form.watch("password")}
-                onChange={(e) => form.setValue("password", e.target.value)}
-                error={!!form.formState.errors.password}
-                helperText={form.formState.errors.password?.message as string}
-                size="small"
-                fullWidth
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="flex items-center gap-1">
-                  <span
-                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[A-Z]/) ? "bg-green-500" : "bg-gray-300"}`}
-                  ></span>
-                  大写字母
-                </span>
-                <span className="flex items-center gap-1">
-                  <span
-                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[a-z]/) ? "bg-green-500" : "bg-gray-300"}`}
-                  ></span>
-                  小写字母
-                </span>
-                <span className="flex items-center gap-1">
-                  <span
-                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[0-9]/) ? "bg-green-500" : "bg-gray-300"}`}
-                  ></span>
-                  数字
-                </span>
-                <span className="flex items-center gap-1">
-                  <span
-                    className={`w-2 h-2 rounded-full ${form.watch("password")?.match(/[^a-zA-Z0-9]/) ? "bg-green-500" : "bg-gray-300"}`}
-                  ></span>
-                  特殊字符
-                </span>
-              </div>
-            </div>
+            <TextField
+              label="密码"
+              type={showPassword ? "text" : "password"}
+              placeholder="请输入密码"
+              value={form.watch("password")}
+              onChange={(e) => form.setValue("password", e.target.value)}
+              error={!!form.formState.errors.password}
+              helperText={form.formState.errors.password?.message as string}
+              size="small"
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <Box sx={{ display: "flex", alignItems: "center", mr: 2, color: "grey.400" }}>
+                    <Lock sx={{ width: 18, height: 18 }} />
+                  </Box>
+                ),
+                endAdornment: (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    sx={{ 
+                      color: "grey.400", 
+                      "&:hover": { color: "grey.600" },
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      p: 0,
+                      minWidth: "auto",
+                    }}
+                  >
+                    {showPassword ? (
+                      <EyeOff sx={{ width: 20, height: 20 }} />
+                    ) : (
+                      <Eye sx={{ width: 20, height: 20 }} />
+                    )}
+                  </button>
+                ),
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1.5,
+                  "&:hover fieldset": {
+                    borderColor: "primary.main",
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "primary.main",
+                    borderWidth: 2,
+                  },
+                },
+              }}
+            />
 
-            {/* 提交按钮 */}
-            <Button type="submit" variant="contained" className="w-full" disabled={loading}>
+            {!isRegister && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <Box
+                    sx={{ 
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: "50%", 
+                      bgcolor: form.watch("password")?.match(/[A-Z]/) ? "#22c55e" : "#e5e7eb" 
+                    }}
+                  ></Box>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>大写字母</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <Box
+                    sx={{ 
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: "50%", 
+                      bgcolor: form.watch("password")?.match(/[a-z]/) ? "#22c55e" : "#e5e7eb" 
+                    }}
+                  ></Box>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>小写字母</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <Box
+                    sx={{ 
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: "50%", 
+                      bgcolor: form.watch("password")?.match(/[0-9]/) ? "#22c55e" : "#e5e7eb" 
+                    }}
+                  ></Box>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>数字</Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <Box
+                    sx={{ 
+                      width: 8, 
+                      height: 8, 
+                      borderRadius: "50%", 
+                      bgcolor: form.watch("password")?.match(/[^a-zA-Z0-9]/) ? "#22c55e" : "#e5e7eb" 
+                    }}
+                  ></Box>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>特殊字符</Typography>
+                </Box>
+              </Box>
+            )}
+
+            <Button 
+              type="submit" 
+              variant="contained" 
+              sx={{ 
+                width: "100%",
+                height: 48,
+                borderRadius: 1.5,
+                fontWeight: 600,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #5a6fd6 0%, #6a4090 100%)",
+                },
+                "&:disabled": {
+                  background: "grey.400",
+                },
+              }}
+              disabled={loading}
+            >
               {loading ? "处理中..." : isRegister ? "注册" : "登录"}
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
+          <Box sx={{ mt: 3, textAlign: "center" }}>
             <button
               type="button"
               onClick={() => setIsRegister(!isRegister)}
-              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
+              sx={{ 
+                color: "#667eea", 
+                "&:hover": { color: "#5a6fd6" }, 
+                fontSize: "0.875rem",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 500,
+              }}
             >
               {isRegister ? "已有账号？立即登录" : "没有账号？立即注册"}
             </button>
-          </div>
+          </Box>
 
-          {/* 演示账号 */}
           {isDevelopment() && (
-            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-              <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+            <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid #e5e7eb" }}>
+              <Typography variant="caption" sx={{ color: "#9ca3af", textAlign: "center", display: "block" }}>
                 演示账号: admin / admin123 (管理员) | user / user123 (普通员工)
-              </p>
-            </div>
+              </Typography>
+            </Box>
           )}
         </CardContent>
       </MuiCard>
-    </div>
+
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </Box>
   );
 };
 

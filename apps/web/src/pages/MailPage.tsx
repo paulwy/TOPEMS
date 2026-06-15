@@ -825,43 +825,43 @@ const MailPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft size={20} />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                  <Mail className="w-7 h-7 mr-3 text-blue-600" />
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, display: "flex", alignItems: "center" }}>
+                  <Mail size={28} color="#2563eb" style={{ marginRight: 12 }} />
                   邮件管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   管理邮件发送和邮件模板
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {activeTab === "emails" && (
                 <Button onClick={() => setShowSendModal(true)}>
-                  <Send className="w-5 h-5 mr-2" />
+                  <Send size={20} style={{ marginRight: 8 }} />
                   发送邮件
                 </Button>
               )}
               {activeTab === "templates" && (
                 <Button onClick={() => setShowTemplateModal(true)}>
-                  <Plus className="w-5 h-5 mr-2" />
+                  <Plus size={20} style={{ marginRight: 8 }} />
                   创建模板
                 </Button>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 4 }}>
         <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ width: '100%' }}>
           <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
             <Tab value="emails" icon={<Mail size={16} />} iconPosition="start" sx={{ textTransform: 'none', minHeight: 48 }} label="邮件记录" />
@@ -870,9 +870,11 @@ const MailPage: React.FC = () => {
 
           {activeTab === 'emails' && (
             <Box sx={{ mt: 0 }}>
-            <div className="mb-6 flex items-center space-x-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ flex: 1, position: "relative" }}>
+                <Box sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", zIndex: 1, pointerEvents: "none" }}>
+                  <Search size={20} color="#9ca3af" />
+                </Box>
                 <TextField
                   type="text"
                   placeholder="搜索邮件主题、发件人..."
@@ -884,7 +886,7 @@ const MailPage: React.FC = () => {
                   size="small"
                   sx={{ pl: 5, width: '100%' }}
                 />
-              </div>
+              </Box>
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <InputLabel>状态</InputLabel>
                 <Select
@@ -921,120 +923,135 @@ const MailPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-            </div>
+            </Box>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-blue-100 text-sm">邮件总数</p>
-                      <p className="text-3xl font-bold text-white mt-1">
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+              <Card sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", border: "none" }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography sx={{ color: "#bfdbfe", fontSize: "0.875rem" }}>邮件总数</Typography>
+                      <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "common.white", mt: 0.5 }}>
                         {statsLoading ? "..." : stats?.total || 0}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                      <Mail className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 48, height: 48, bgcolor: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Mail size={24} color="white" />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-              <Card className="bg-gradient-to-br from-green-500 to-green-600 border-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-green-100 text-sm">已发送</p>
-                      <p className="text-3xl font-bold text-white mt-1">
+              <Card sx={{ background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)", border: "none" }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography sx={{ color: "#bbf7d0", fontSize: "0.875rem" }}>已发送</Typography>
+                      <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "common.white", mt: 0.5 }}>
                         {statsLoading ? "..." : stats?.sent_count || 0}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 48, height: 48, bgcolor: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <CheckCircle size={24} color="white" />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-              <Card className="bg-gradient-to-br from-yellow-500 to-yellow-600 border-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-yellow-100 text-sm">待发送</p>
-                      <p className="text-3xl font-bold text-white mt-1">
+              <Card sx={{ background: "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)", border: "none" }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography sx={{ color: "#fef9c3", fontSize: "0.875rem" }}>待发送</Typography>
+                      <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "common.white", mt: 0.5 }}>
                         {statsLoading ? "..." : stats?.pending_count || 0}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 48, height: 48, bgcolor: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Clock size={24} color="white" />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-              <Card className="bg-gradient-to-br from-red-500 to-red-600 border-none">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-red-100 text-sm">发送失败</p>
-                      <p className="text-3xl font-bold text-white mt-1">
+              <Card sx={{ background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)", border: "none" }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography sx={{ color: "#fecaca", fontSize: "0.875rem" }}>发送失败</Typography>
+                      <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "common.white", mt: 0.5 }}>
                         {statsLoading ? "..." : stats?.failed_count || 0}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                      <XCircle className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 48, height: 48, bgcolor: "rgba(255,255,255,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <XCircle size={24} color="white" />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
 
             <Card>
-              <CardContent className="p-0">
+              <CardContent sx={{ p: 0 }}>
                 {selectedEmails.length > 0 && (
-                  <div className="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 flex items-center justify-between">
-                    <span className="text-sm text-blue-700 dark:text-blue-300">
+                  <Box sx={{ px: 3, py: 1.5, bgcolor: "blue.50", borderBottom: 1, borderColor: "blue.200", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Typography variant="body2" sx={{ color: "blue.700" }}>
                       已选择 {selectedEmails.length} 条记录
-                    </span>
-                    <div className="flex items-center space-x-2">
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Button
                         variant="contained"
                         size="small"
                         onClick={handleBatchResendEmails}
-                        className="gap-2"
+                        sx={{ gap: 1 }}
                       >
-                        <RefreshCw className="w-4 h-4" />
+                        <RefreshCw size={16} />
                         批量重发
                       </Button>
                       <Button
                         variant="contained"
                         size="small"
                         onClick={handleBatchDeleteEmails}
-                        className="gap-2"
+                        sx={{ gap: 1 }}
                       >
-                        <Trash className="w-4 h-4" />
+                        <Trash size={16} />
                         批量删除
                       </Button>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
                 {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                    <p className="mt-2 text-gray-500 dark:text-gray-400">
+                  <Box sx={{ p: 4, textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        animation: "spin 1s linear infinite",
+                        borderRadius: "50%",
+                        height: 32,
+                        width: 32,
+                        border: 4,
+                        borderColor: "primary.main",
+                        borderTopColor: "transparent",
+                        "@keyframes spin": {
+                          "0%": { transform: "rotate(0deg)" },
+                          "100%": { transform: "rotate(360deg)" },
+                        },
+                      }}
+                    />
+                    <Typography sx={{ mt: 1, color: "grey.500" }}>
                       加载中...
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 ) : emails.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <Mail className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400">
+                  <Box sx={{ p: 4, textAlign: "center" }}>
+                    <Mail size={48} color="#9ca3af" style={{ margin: "0 auto 12px" }} />
+                    <Typography sx={{ color: "grey.500" }}>
                       暂无邮件记录
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                          <th className="text-left px-3 py-3 text-sm font-medium text-gray-500 dark:text-gray-400 w-12">
+                  <Box sx={{ overflowX: "auto" }}>
+                    <Box component="table" sx={{ width: "100%", borderCollapse: "collapse" }}>
+                      <Box component="thead">
+                        <Box component="tr" sx={{ borderBottom: 1, borderColor: "divider" }}>
+                          <Box component="th" sx={{ textAlign: "left", px: 1.5, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500", width: 48 }}>
                             <input
                               type="checkbox"
                               onChange={(e) => {
@@ -1045,39 +1062,40 @@ const MailPage: React.FC = () => {
                                 }
                               }}
                               checked={selectedEmails.length === emails.length}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              style={{ borderRadius: 4, borderColor: "#d1d5db", color: "#2563eb" }}
                             />
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             主题
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             收件人
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             发件人
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             状态
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             优先级
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             创建时间
-                          </th>
-                          <th className="text-right px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "right", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             操作
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box component="tbody">
                         {emails.map((email) => (
-                          <tr
+                          <Box
+                            component="tr"
                             key={email.id}
-                            className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            sx={{ borderBottom: 1, borderColor: "divider", "&:hover": { bgcolor: "grey.50" } }}
                           >
-                            <td className="px-3 py-4">
+                            <Box component="td" sx={{ px: 1.5, py: 2 }}>
                               <input
                                 type="checkbox"
                                 checked={selectedEmails.includes(email.id)}
@@ -1093,35 +1111,35 @@ const MailPage: React.FC = () => {
                                     );
                                   }
                                 }}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                style={{ borderRadius: 4, borderColor: "#d1d5db", color: "#2563eb" }}
                               />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="font-medium text-gray-900 dark:text-gray-100 truncate max-w-xs">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
+                              <Typography sx={{ fontWeight: 500, color: "text.primary", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 240 }}>
                                 {email.subject}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                              </Typography>
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600" }}>
                               {Array.isArray(email.to_addresses)
                                 ? email.to_addresses.join(", ")
                                 : email.to_addresses}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600" }}>
                               {email.from_address}
-                            </td>
-                            <td className="px-6 py-4">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
                               {getStatusBadge(email.status)}
-                            </td>
-                            <td className="px-6 py-4">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
                               {getPriorityBadge(email.priority)}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600" }}>
                               {new Date(email.created_at).toLocaleString(
                                 "zh-CN",
                               )}
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center justify-end space-x-1">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
+                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
                                 <Button
                                   variant="text"
                                   size="small"
@@ -1134,9 +1152,9 @@ const MailPage: React.FC = () => {
                                   title="复制ID"
                                 >
                                   {copiedId === `email-${email.id}` ? (
-                                    <Check className="w-4 h-4 text-green-600" />
+                                    <Check size={16} color="#16a34a" />
                                   ) : (
-                                    <Copy className="w-4 h-4" />
+                                    <Copy size={16} />
                                   )}
                                 </Button>
                                 <Button
@@ -1145,54 +1163,54 @@ const MailPage: React.FC = () => {
                                   onClick={() => openEmailDetail(email)}
                                   title="查看详情"
                                 >
-                                  <Eye className="w-4 h-4" />
+                                  <Eye size={16} />
                                 </Button>
                                 {email.status === "failed" && (
                                   <Button
                                     variant="text"
                                     size="small"
                                     onClick={() => handleResendEmail(email.id)}
-                                    className="text-green-600 hover:text-green-700"
+                                    sx={{ color: "success.main", "&:hover": { color: "success.dark" } }}
                                     title="重新发送"
                                   >
-                                    <RefreshCw className="w-4 h-4" />
+                                    <RefreshCw size={16} />
                                   </Button>
                                 )}
                                 <Button
                                   variant="text"
                                   size="small"
-                                  className="text-red-600 hover:text-red-700"
+                                  sx={{ color: "error.main", "&:hover": { color: "error.dark" } }}
                                   onClick={() => handleDeleteEmail(email.id)}
                                   title="删除"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 size={16} />
                                 </Button>
-                              </div>
-                            </td>
-                          </tr>
+                              </Box>
+                            </Box>
+                          </Box>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </Box>
+                    </Box>
+                  </Box>
                 )}
               </CardContent>
               {!loading && emails.length > 0 && (
-                <CardContent className="flex items-center justify-between border-t">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: 1, borderColor: "divider" }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
                     共 {totalEmails} 条记录
-                  </span>
-                  <div className="flex items-center space-x-2">
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Button
                       variant="text"
                       size="small"
                       onClick={handlePrevPage}
                       disabled={currentPage === 1}
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft size={16} />
                     </Button>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                    <Typography variant="body2" sx={{ color: "grey.600" }}>
                       {currentPage} / {Math.ceil(totalEmails / pageSize)}
-                    </span>
+                    </Typography>
                     <Button
                       variant="text"
                       size="small"
@@ -1201,9 +1219,9 @@ const MailPage: React.FC = () => {
                         currentPage >= Math.ceil(totalEmails / pageSize)
                       }
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight size={16} />
                     </Button>
-                  </div>
+                  </Box>
                 </CardContent>
               )}
             </Card>
@@ -1211,9 +1229,11 @@ const MailPage: React.FC = () => {
 
           {activeTab === 'templates' && (
             <Box sx={{ mt: 0 }}>
-            <div className="mb-6 flex items-center space-x-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ flex: 1, position: "relative" }}>
+                <Box sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", zIndex: 1, pointerEvents: "none" }}>
+                  <Search size={20} color="#9ca3af" />
+                </Box>
                 <TextField
                   type="text"
                   placeholder="搜索模板名称、编码..."
@@ -1225,7 +1245,7 @@ const MailPage: React.FC = () => {
                   size="small"
                   sx={{ pl: 5, width: '100%' }}
                 />
-              </div>
+              </Box>
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <InputLabel>分类</InputLabel>
                 <Select
@@ -1244,91 +1264,107 @@ const MailPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-            </div>
+            </Box>
 
             <Card>
-              <CardContent className="p-0">
+              <CardContent sx={{ p: 0 }}>
                 {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                    <p className="mt-2 text-gray-500 dark:text-gray-400">
+                  <Box sx={{ p: 4, textAlign: "center" }}>
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        animation: "spin 1s linear infinite",
+                        borderRadius: "50%",
+                        height: 32,
+                        width: 32,
+                        border: 4,
+                        borderColor: "primary.main",
+                        borderTopColor: "transparent",
+                        "@keyframes spin": {
+                          "0%": { transform: "rotate(0deg)" },
+                          "100%": { transform: "rotate(360deg)" },
+                        },
+                      }}
+                    />
+                    <Typography sx={{ mt: 1, color: "grey.500" }}>
                       加载中...
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 ) : templates.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400">
+                  <Box sx={{ p: 4, textAlign: "center" }}>
+                    <FileText size={48} color="#9ca3af" style={{ margin: "0 auto 12px" }} />
+                    <Typography sx={{ color: "grey.500" }}>
                       暂无邮件模板
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <Box sx={{ overflowX: "auto" }}>
+                    <Box component="table" sx={{ width: "100%", borderCollapse: "collapse" }}>
+                      <Box component="thead">
+                        <Box component="tr" sx={{ borderBottom: 1, borderColor: "divider" }}>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             名称
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             编码
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             分类
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             主题模板
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             状态
-                          </th>
-                          <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "left", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             创建时间
-                          </th>
-                          <th className="text-right px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                          </Box>
+                          <Box component="th" sx={{ textAlign: "right", px: 3, py: 1.5, fontSize: "0.875rem", fontWeight: 500, color: "grey.500" }}>
                             操作
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box component="tbody">
                         {templates.map((template) => (
-                          <tr
+                          <Box
+                            component="tr"
                             key={template.id}
-                            className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            sx={{ borderBottom: 1, borderColor: "divider", "&:hover": { bgcolor: "grey.50" } }}
                           >
-                            <td className="px-6 py-4">
-                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
+                              <Typography sx={{ fontWeight: 500, color: "text.primary" }}>
                                 {template.name}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-mono">
+                              </Typography>
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600", fontFamily: "monospace" }}>
                               {template.code}
-                            </td>
-                            <td className="px-6 py-4">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
                               <Chip size="small" variant="outlined" label={getCategoryLabel(template.category)} />
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 truncate max-w-sm">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 384 }}>
                               {template.subject_template}
-                            </td>
-                            <td className="px-6 py-4">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
                               <Chip size="small"
                                 variant={template.status === "active" ? "filled" : "outlined"}
                                 label={template.status === "active" ? "启用" : "禁用"} />
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600" }}>
                               {new Date(template.created_at).toLocaleString(
                                 "zh-CN",
                               )}
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center justify-end space-x-1">
+                            </Box>
+                            <Box component="td" sx={{ px: 3, py: 2 }}>
+                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
                                 <Button
                                   variant="text"
                                   size="small"
                                   onClick={() => handleEyeTemplate(template)}
                                   title="预览模板"
                                 >
-                                  <Eye className="w-4 h-4" />
+                                  <Eye size={16} />
                                 </Button>
                                 <Button
                                   variant="text"
@@ -1336,7 +1372,7 @@ const MailPage: React.FC = () => {
                                   onClick={() => openEditTemplate(template)}
                                   title="编辑"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Edit size={16} />
                                 </Button>
                                 <Button
                                   variant="text"
@@ -1349,55 +1385,55 @@ const MailPage: React.FC = () => {
                                       ? "禁用模板"
                                       : "启用模板"
                                   }
-                                  className={
+                                  sx={
                                     template.status === "active"
-                                      ? "text-yellow-600 hover:text-yellow-700"
-                                      : "text-green-600 hover:text-green-700"
+                                      ? { color: "warning.main", "&:hover": { color: "warning.dark" } }
+                                      : { color: "success.main", "&:hover": { color: "success.dark" } }
                                   }
                                 >
                                   {template.status === "active" ? (
-                                    <Pause className="w-4 h-4" />
+                                    <Pause size={16} />
                                   ) : (
-                                    <Play className="w-4 h-4" />
+                                    <Play size={16} />
                                   )}
                                 </Button>
                                 <Button
                                   variant="text"
                                   size="small"
-                                  className="text-red-600 hover:text-red-700"
+                                  sx={{ color: "error.main", "&:hover": { color: "error.dark" } }}
                                   onClick={() =>
                                     handleDeleteTemplate(template.id)
                                   }
                                   title="删除"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 size={16} />
                                 </Button>
-                              </div>
-                            </td>
-                          </tr>
+                              </Box>
+                            </Box>
+                          </Box>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </Box>
+                    </Box>
+                  </Box>
                 )}
               </CardContent>
               {!loading && templates.length > 0 && (
-                <CardContent className="flex items-center justify-between border-t">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: 1, borderColor: "divider" }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
                     共 {totalTemplates} 条记录
-                  </span>
-                  <div className="flex items-center space-x-2">
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Button
                       variant="text"
                       size="small"
                       onClick={handlePrevPage}
                       disabled={currentPage === 1}
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft size={16} />
                     </Button>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                    <Typography variant="body2" sx={{ color: "grey.600" }}>
                       {currentPage} / {Math.ceil(totalTemplates / pageSize)}
-                    </span>
+                    </Typography>
                     <Button
                       variant="text"
                       size="small"
@@ -1406,15 +1442,15 @@ const MailPage: React.FC = () => {
                         currentPage >= Math.ceil(totalTemplates / pageSize)
                       }
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight size={16} />
                     </Button>
-                  </div>
+                  </Box>
                 </CardContent>
               )}
             </Card>
             </Box>)}
         </Tabs>
-      </div>
+      </Box>
 
       <Dialog open={showSendModal} onClose={() => setShowSendModal(false)}>
         <DialogContent sx={{ maxWidth: 720 }}>
@@ -2062,7 +2098,7 @@ const MailPage: React.FC = () => {
           </DialogActions>
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

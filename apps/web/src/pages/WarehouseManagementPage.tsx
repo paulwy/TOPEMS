@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -203,7 +203,7 @@ const WarehouseManagementPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -214,8 +214,8 @@ const WarehouseManagementPage: React.FC = () => {
           </Typography>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+            <Box sx={{ flex: 1 }}>
               <TextField
                 placeholder="搜索仓库名称或编码..."
                 value={searchTerm}
@@ -228,12 +228,12 @@ const WarehouseManagementPage: React.FC = () => {
                 slotProps={{
                   input: {
                     startAdornment: (
-                      <Search className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <Search sx={{ mr: 1, width: 16, height: 16, color: "text.secondary" }} />
                     ),
                   },
                 }}
               />
-            </div>
+            </Box>
             <FormControl size="small" sx={{ minWidth: 150 }}>
               <InputLabel>状态筛选</InputLabel>
               <Select
@@ -257,16 +257,16 @@ const WarehouseManagementPage: React.FC = () => {
                 setShowDialog(true);
               }}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus sx={{ mr: 1, width: 16, height: 16 }} />
               新增仓库
             </Button>
-          </div>
+          </Box>
 
           {selectedIds.length > 0 && (
-            <div className="mb-4 p-3 bg-grey-100 rounded-lg flex items-center justify-between">
-              <span className="text-sm">
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: "grey.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography variant="body2">
                 已选择 {selectedIds.length} 个仓库
-              </span>
+              </Typography>
               <Button
                 variant="outlined"
                 size="small"
@@ -274,7 +274,7 @@ const WarehouseManagementPage: React.FC = () => {
               >
                 清除选择
               </Button>
-            </div>
+            </Box>
           )}
 
           <Table>
@@ -331,14 +331,14 @@ const WarehouseManagementPage: React.FC = () => {
                         size="small"
                         onClick={() => handleViewDetail(warehouse)}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye sx={{ width: 16, height: 16 }} />
                       </Button>
                       <Button
                         variant="text"
                         size="small"
                         onClick={() => handleEdit(warehouse)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit sx={{ width: 16, height: 16 }} />
                       </Button>
                       <Button
                         variant="text"
@@ -346,7 +346,7 @@ const WarehouseManagementPage: React.FC = () => {
                         color="error"
                         onClick={() => handleDelete(warehouse.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 sx={{ width: 16, height: 16 }} />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -355,12 +355,12 @@ const WarehouseManagementPage: React.FC = () => {
             </TableBody>
           </Table>
 
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">
+          <Box sx={{ mt: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="body2" sx={{ color: "grey.500" }}>
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
-            </div>
-            <div className="flex gap-2">
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Button
                 size="small"
                 disabled={currentPage === 1}
@@ -397,8 +397,8 @@ const WarehouseManagementPage: React.FC = () => {
               >
                 下一页
               </Button>
-            </div>
-          </div>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
@@ -414,7 +414,7 @@ const WarehouseManagementPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-2 gap-4 py-4">
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2, py: 2 }}>
               <TextField
                 label="仓库名称 *"
                 value={formData.name}
@@ -456,7 +456,7 @@ const WarehouseManagementPage: React.FC = () => {
                 }
                 fullWidth
               />
-            </div>
+            </Box>
             <DialogActions>
               <Button variant="outlined" onClick={() => setShowDialog(false)}>
                 取消
@@ -479,47 +479,47 @@ const WarehouseManagementPage: React.FC = () => {
         <DialogTitle>仓库详情</DialogTitle>
         <DialogContent>
           {selectedWarehouse && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     仓库名称
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
                     {selectedWarehouse.name}
                   </Typography>
-                </div>
-                <div>
+                </Box>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     仓库编码
                   </Typography>
                   <Typography>{selectedWarehouse.code || "-"}</Typography>
-                </div>
-                <div className="col-span-2">
+                </Box>
+                <Box sx={{ gridColumn: { xs: 1, md: 2 } }}>
                   <Typography variant="caption" color="text.secondary">
                     地址
                   </Typography>
                   <Typography>{selectedWarehouse.address || "-"}</Typography>
-                </div>
-                <div>
+                </Box>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     负责人
                   </Typography>
                   <Typography>{selectedWarehouse.manager || "-"}</Typography>
-                </div>
-                <div>
+                </Box>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     联系电话
                   </Typography>
                   <Typography>{selectedWarehouse.phone || "-"}</Typography>
-                </div>
-                <div>
+                </Box>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     状态
                   </Typography>
-                  <div>{getStatusBadge(selectedWarehouse.status)}</div>
-                </div>
-                <div>
+                  <Box>{getStatusBadge(selectedWarehouse.status)}</Box>
+                </Box>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     创建时间
                   </Typography>
@@ -528,8 +528,8 @@ const WarehouseManagementPage: React.FC = () => {
                       "zh-CN",
                     )}
                   </Typography>
-                </div>
-                <div>
+                </Box>
+                <Box>
                   <Typography variant="caption" color="text.secondary">
                     更新时间
                   </Typography>
@@ -538,13 +538,13 @@ const WarehouseManagementPage: React.FC = () => {
                       "zh-CN",
                     )}
                   </Typography>
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

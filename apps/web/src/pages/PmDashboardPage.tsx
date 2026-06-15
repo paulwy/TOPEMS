@@ -14,6 +14,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import type { Project, Contract, PmStatistics } from "../api/pm";
 import { pmApi } from "../api/pm";
 import { MetricCard } from "../components/MetricCard";
@@ -87,13 +88,13 @@ const PmDashboardPage: React.FC = () => {
   const getProjectStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return { bgcolor: "#dcfce7", color: "#166534" };
       case "completed":
-        return "bg-blue-100 text-blue-800";
+        return { bgcolor: "#dbeafe", color: "#1e40af" };
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return { bgcolor: "#fef9c3", color: "#a16207" };
       default:
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "#f3f4f6", color: "#374151" };
     }
   };
 
@@ -124,45 +125,61 @@ const PmDashboardPage: React.FC = () => {
       title: "项目管理",
       description: "查看和管理所有项目",
       icon: FolderKanban,
-      color: "bg-blue-500",
+      color: "#3b82f6",
       path: "/pm/projects",
     },
     {
       title: "合同管理",
       description: "管理项目相关合同",
       icon: FileCheck,
-      color: "bg-purple-500",
+      color: "#a855f7",
       path: "/pm/contracts",
     },
     {
       title: "预算管理",
       description: "管理项目预算和支出",
       icon: DollarSign,
-      color: "bg-green-500",
+      color: "#22c55e",
       path: "/pm/projects",
     },
     {
       title: "项目报告",
       description: "查看项目统计报表",
       icon: BarChart3,
-      color: "bg-orange-500",
+      color: "#f97316",
       path: "/pm/projects",
     },
   ];
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">项目管理中心</h1>
-        <p className="text-gray-500 mt-1">统一管理所有项目、合同和相关资源</p>
-      </div>
+    <Box sx={{ p: 3, bgcolor: "grey.100", minHeight: "100vh" }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+          项目管理中心
+        </Typography>
+        <Typography sx={{ color: "grey.500", mt: 0.5 }}>
+          统一管理所有项目、合同和相关资源
+        </Typography>
+      </Box>
 
       {/* 统计卡片区域 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(1, 1fr)",
+            md: "repeat(2, 1fr)",
+            lg: "repeat(3, 1fr)",
+            xl: "repeat(6, 1fr)",
+          },
+          gap: 2,
+          mb: 4,
+        }}
+      >
         <MetricCard
           title="项目总数"
           value={stats.total_projects}
-          icon={<FolderKanban className="w-6 h-6" />}
+          icon={<FolderKanban sx={{ width: 24, height: 24 }} />}
           gradient={["#8B5CF6", "#7C3AED"]}
           subtitle={`进行中: ${stats.active_projects}`}
           trend={stats.active_projects > 0 ? "up" : "neutral"}
@@ -170,14 +187,14 @@ const PmDashboardPage: React.FC = () => {
         <MetricCard
           title="已完成项目"
           value={stats.completed_projects}
-          icon={<CheckCircle2 className="w-6 h-6" />}
+          icon={<CheckCircle2 sx={{ width: 24, height: 24 }} />}
           gradient={["#00C897", "#00A878"]}
           trend="up"
         />
         <MetricCard
           title="合同总数"
           value={stats.total_contracts}
-          icon={<FileCheck className="w-6 h-6" />}
+          icon={<FileCheck sx={{ width: 24, height: 24 }} />}
           gradient={["#6366F1", "#4F46E5"]}
           subtitle={`进行中: ${stats.active_contracts}`}
           trend={stats.active_contracts > 0 ? "up" : "neutral"}
@@ -185,7 +202,7 @@ const PmDashboardPage: React.FC = () => {
         <MetricCard
           title="预算使用"
           value={stats.budget_usage_rate}
-          icon={<DollarSign className="w-6 h-6" />}
+          icon={<DollarSign sx={{ width: 24, height: 24 }} />}
           gradient={["#F59E0B", "#D97706"]}
           subtitle={`已用: ${(stats.spent_budget / 10000).toFixed(1)}万 / ${(stats.total_budget / 10000).toFixed(1)}万`}
           trend="neutral"
@@ -194,7 +211,7 @@ const PmDashboardPage: React.FC = () => {
         <MetricCard
           title="项目进度"
           value={stats.average_progress}
-          icon={<TrendingUp className="w-6 h-6" />}
+          icon={<TrendingUp sx={{ width: 24, height: 24 }} />}
           gradient={["#14B8A6", "#0D9488"]}
           subtitle={`准时: ${stats.on_time_projects} 个`}
           trend="up"
@@ -203,15 +220,22 @@ const PmDashboardPage: React.FC = () => {
         <MetricCard
           title="高风险项目"
           value={stats.high_risk_projects}
-          icon={<AlertTriangle className="w-6 h-6" />}
+          icon={<AlertTriangle sx={{ width: 24, height: 24 }} />}
           gradient={["#EF4444", "#DC2626"]}
           subtitle={`中: ${stats.medium_risk_projects} 低: ${stats.low_risk_projects}`}
           trend={stats.high_risk_projects > 0 ? "down" : "neutral"}
         />
-      </div>
+      </Box>
 
       {/* 数据可视化图表区域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+          gap: 3,
+          mb: 4,
+        }}
+      >
         <StatsChart
           title="项目状态分布"
           type="pie"
@@ -243,194 +267,495 @@ const PmDashboardPage: React.FC = () => {
           dataKey="value"
           nameKey="name"
         />
-      </div>
+      </Box>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">快速操作</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+          gap: 3,
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900" }}
+            >
+              快速操作
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 2,
+            }}
+          >
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (
-                <button
+                <Box
                   key={index}
                   onClick={() => navigate(action.path)}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  sx={{
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "grey.50" },
+                    textAlign: "left",
+                  }}
                 >
-                  <div
-                    className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mb-3`}
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: action.color,
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mb: 1.5,
+                    }}
                   >
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="font-medium text-gray-900 mb-1">
+                    <Icon sx={{ width: 20, height: 20, color: "white" }} />
+                  </Box>
+                  <Typography
+                    sx={{ fontWeight: 500, color: "grey.900", mb: 0.5 }}
+                  >
                     {action.title}
-                  </h3>
-                  <p className="text-sm text-gray-500">{action.description}</p>
-                </button>
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                    {action.description}
+                  </Typography>
+                </Box>
               );
             })}
-          </div>
-          <div className="mt-4">
-            <button
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <Box
               onClick={() => navigate("/pm/projects/create")}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              sx={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                px: 2,
+                py: 1.5,
+                bgcolor: "#2563eb",
+                color: "white",
+                borderRadius: 2,
+                cursor: "pointer",
+                "&:hover": { bgcolor: "#1d4ed8" },
+              }}
             >
-              <Plus className="w-5 h-5" />
+              <Plus sx={{ width: 20, height: 20 }} />
               创建新项目
-            </button>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">最新项目</h2>
-            <button
-              onClick={() => navigate("/pm/projects")}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900" }}
             >
-              查看全部 <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+              最新项目
+            </Typography>
+            <Box
+              onClick={() => navigate("/pm/projects")}
+              sx={{
+                color: "#2563eb",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                cursor: "pointer",
+                "&:hover": { color: "#1d4ed8" },
+              }}
+            >
+              <Typography variant="body2">查看全部</Typography>
+              <ArrowRight sx={{ width: 16, height: 16 }} />
+            </Box>
+          </Box>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 6,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: "2px solid",
+                  borderColor: "#2563eb",
+                  borderTopColor: "transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  "@keyframes spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "100%": { transform: "rotate(360deg)" },
+                  },
+                }}
+              />
+            </Box>
           ) : projects.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">暂无项目</div>
+            <Box sx={{ textAlign: "center", py: 6, color: "grey.500" }}>
+              暂无项目
+            </Box>
           ) : (
-            <div className="space-y-4">
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
               {projects.slice(0, 5).map((project) => (
-                <div
+                <Box
                   key={project.id}
                   onClick={() => navigate(`/pm/projects/${project.id}`)}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "grey.50" },
+                  }}
                 >
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">{project.code}</p>
-                  </div>
-                  <div className="text-right mr-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${getProjectStatusColor(project.status)}`}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "grey.500" }}>
+                      {project.code}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "right", mr: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 0.5,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: "9999px",
+                          fontSize: "0.75rem",
+                          ...getProjectStatusColor(project.status),
+                        }}
                       >
                         {getProjectStatusLabel(project.status)}
-                      </span>
-                    </div>
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${project.status === "completed" ? "bg-green-600" : "bg-blue-600"}`}
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <Calendar className="w-5 h-5 text-gray-400" />
-                </div>
+                      </Box>
+                    </Box>
+                    <Box
+                      sx={{
+                        width: 80,
+                        bgcolor: "grey.200",
+                        borderRadius: "9999px",
+                        height: 8,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: "100%",
+                          borderRadius: "9999px",
+                          width: `${project.progress}%`,
+                          bgcolor:
+                            project.status === "completed"
+                              ? "#16a34a"
+                              : "#2563eb",
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                  <Calendar sx={{ width: 20, height: 20, color: "grey.400" }} />
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+          gap: 3,
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900" }}
+            >
               项目进度概览
-            </h2>
-          </div>
+            </Typography>
+          </Box>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 6,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: "2px solid",
+                  borderColor: "#2563eb",
+                  borderTopColor: "transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  "@keyframes spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "100%": { transform: "rotate(360deg)" },
+                  },
+                }}
+              />
+            </Box>
           ) : (
-            <div className="space-y-4">
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
               {projects.slice(0, 5).map((project) => (
-                <div
+                <Box
                   key={project.id}
-                  className="p-4 border border-gray-200 rounded-lg"
+                  sx={{
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2,
+                  }}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-gray-900 text-sm">
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 1,
+                    }}
+                  >
+                    <Typography
+                      sx={{ fontWeight: 500, color: "grey.900", fontSize: "0.875rem" }}
+                    >
                       {project.name}
-                    </span>
-                    <span className="text-sm text-gray-500">
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "grey.500" }}>
                       {project.progress}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${project.status === "completed" ? "bg-green-600" : "bg-blue-600"}`}
-                      style={{ width: `${project.progress}%` }}
-                    ></div>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      bgcolor: "grey.200",
+                      borderRadius: "9999px",
+                      height: 8,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: "100%",
+                        borderRadius: "9999px",
+                        width: `${project.progress}%`,
+                        bgcolor:
+                          project.status === "completed"
+                            ? "#16a34a"
+                            : "#2563eb",
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "grey.500", mt: 1 }}
+                  >
                     {formatDate(project.start_date)} -{" "}
                     {formatDate(project.end_date)}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
-        </div>
+        </Box>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">最新合同</h2>
-            <button
-              onClick={() => navigate("/pm/contracts")}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900" }}
             >
-              查看全部 <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+              最新合同
+            </Typography>
+            <Box
+              onClick={() => navigate("/pm/contracts")}
+              sx={{
+                color: "#2563eb",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                cursor: "pointer",
+                "&:hover": { color: "#1d4ed8" },
+              }}
+            >
+              <Typography variant="body2">查看全部</Typography>
+              <ArrowRight sx={{ width: 16, height: 16 }} />
+            </Box>
+          </Box>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 6,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  border: "2px solid",
+                  borderColor: "#2563eb",
+                  borderTopColor: "transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  "@keyframes spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "100%": { transform: "rotate(360deg)" },
+                  },
+                }}
+              />
+            </Box>
           ) : contracts.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">暂无合同</div>
+            <Box sx={{ textAlign: "center", py: 6, color: "grey.500" }}>
+              暂无合同
+            </Box>
           ) : (
-            <div className="space-y-4">
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
               {contracts.slice(0, 5).map((contract) => (
-                <div
+                <Box
                   key={contract.id}
                   onClick={() => navigate(`/pm/contracts/${contract.id}`)}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "grey.50" },
+                  }}
                 >
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {contract.contract_name}
-                    </h3>
-                    <p className="text-sm text-gray-500">
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "grey.500" }}>
                       {contract.contract_code}
-                    </p>
-                  </div>
-                  <div className="text-right mr-4">
-                    <p className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "right", mr: 2 }}>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {contract.amount
                         ? new Intl.NumberFormat("zh-CN", {
                             style: "currency",
                             currency: "CNY",
                           }).format(contract.amount)
                         : "-"}
-                    </p>
-                    <p className="text-xs text-gray-500">
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "grey.500", fontSize: "0.75rem" }}
+                    >
                       {formatDate(contract.signing_date)}
-                    </p>
-                  </div>
-                  <FileCheck className="w-5 h-5 text-gray-400" />
-                </div>
+                    </Typography>
+                  </Box>
+                  <FileCheck sx={{ width: 20, height: 20, color: "grey.400" }} />
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

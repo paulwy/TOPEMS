@@ -190,7 +190,7 @@ const SupplierManagementPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>供应商管理</Typography>
@@ -202,7 +202,7 @@ const SupplierManagementPage: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
             <Box sx={{ flex: 1, position: 'relative' }}>
               <Box sx={{ position: 'absolute', left: 1, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
-                <Search className="w-4 h-4" />
+                <Search sx={{ width: 16, height: 16 }} />
               </Box>
               <TextField
                 placeholder="搜索供应商名称或联系人..."
@@ -238,7 +238,7 @@ const SupplierManagementPage: React.FC = () => {
                 setShowDialog(true);
               }}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus sx={{ mr: 1, width: 16, height: 16 }} />
               新增供应商
             </Button>
           </Box>
@@ -313,21 +313,21 @@ const SupplierManagementPage: React.FC = () => {
                           size="small"
                           onClick={() => handleViewDetail(supplier)}
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye sx={{ width: 16, height: 16 }} />
                         </Button>
                         <Button
                           variant="text"
                           size="small"
                           onClick={() => handleEdit(supplier)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit sx={{ width: 16, height: 16 }} />
                         </Button>
                         <Button
                           variant="text"
                           size="small"
                           onClick={() => handleDelete(supplier.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 sx={{ width: 16, height: 16 }} />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -551,7 +551,7 @@ const SupplierManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

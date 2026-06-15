@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import type { Notification, NotificationTypeEnum } from "../api/notification";
 import {
   markAsRead,
@@ -39,7 +40,6 @@ const NotificationDetailPage: React.FC = () => {
 
     setLoading(true);
     try {
-      // Try to find the notification in the list
       const response = await getNotifications(1, 100);
       if (response.success && response.data) {
         const found = response.data.notifications.find((n) => n.id === id);
@@ -109,229 +109,326 @@ const NotificationDetailPage: React.FC = () => {
   };
 
   const getTypeColor = (type: NotificationTypeEnum) => {
-    const colors: Record<NotificationTypeEnum, string> = {
-      system: "bg-blue-100 text-blue-700",
-      workflow: "bg-purple-100 text-purple-700",
-      reminder: "bg-yellow-100 text-yellow-700",
-      alert: "bg-red-100 text-red-700",
-      message: "bg-green-100 text-green-700",
-      info: "bg-cyan-100 text-cyan-700",
-      success: "bg-emerald-100 text-emerald-700",
-      warning: "bg-orange-100 text-orange-700",
-      error: "bg-rose-100 text-rose-700",
+    const colors: Record<NotificationTypeEnum, { bg: string; text: string }> = {
+      system: { bg: "primary.100", text: "primary.700" },
+      workflow: { bg: "purple.100", text: "purple.700" },
+      reminder: { bg: "warning.100", text: "warning.700" },
+      alert: { bg: "error.100", text: "error.700" },
+      message: { bg: "success.100", text: "success.700" },
+      info: { bg: "info.100", text: "info.700" },
+      success: { bg: "success.100", text: "success.700" },
+      warning: { bg: "warning.100", text: "warning.700" },
+      error: { bg: "error.100", text: "error.700" },
     };
-    return colors[type] || "bg-gray-100 text-gray-700";
+    return colors[type] || { bg: "grey.100", text: "grey.700" };
   };
 
   const getPriorityLabel = (priority: number) => {
     if (priority >= 4)
-      return { label: "紧急", color: "text-red-600 bg-red-100" };
+      return { label: "紧急", bg: "error.100", text: "error.700" };
     if (priority >= 3)
-      return { label: "高", color: "text-orange-600 bg-orange-100" };
+      return { label: "高", bg: "warning.100", text: "warning.700" };
     if (priority >= 2)
-      return { label: "中", color: "text-yellow-600 bg-yellow-100" };
-    return { label: "低", color: "text-gray-600 bg-gray-100" };
+      return { label: "中", bg: "warning.100", text: "warning.700" };
+    return { label: "低", bg: "grey.100", text: "grey.700" };
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 mx-auto animate-spin" />
-          <p className="mt-2 text-gray-500">加载中...</p>
-        </div>
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <Loader2 size={48} color="#1976d2" style={{ margin: "0 auto", animation: "spin 1s linear infinite" }} />
+          <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>加载中...</Typography>
+        </Box>
+      </Box>
     );
   }
 
   if (!notification) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
         <NotificationContainer
           notifications={notifications}
           onClose={hideNotification}
         />
 
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center space-x-4">
-              <button
+        <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                component="button"
                 onClick={() => navigate("/notifications")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{ p: 1, borderRadius: 2, "&:hover": { bgcolor: "grey.100" }, transition: "background-color 0.2s" }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">通知详情</h1>
-              </div>
-            </div>
-          </div>
-        </div>
+                <ChevronLeft size={20} color="#666" />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+                  通知详情
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 6, textAlign: "center" }}>
+            <AlertCircle size={64} color="#666" style={{ margin: "0 auto 16px" }} />
+            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
               通知不存在
-            </h2>
-            <p className="text-gray-500 mb-6">该通知可能被已删除或不存在</p>
-            <button
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500", mb: 3 }}>
+              该通知可能被已删除或不存在
+            </Typography>
+            <Box
+              component="button"
               onClick={() => navigate("/notifications")}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              sx={{ px: 2, py: 1, bgcolor: "primary.main", color: "white", borderRadius: 2, "&:hover": { bgcolor: "primary.dark" } }}
             >
               返回通知列表
-            </button>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     );
   }
 
   const priorityInfo = getPriorityLabel(notification.priority);
+  const typeColor = getTypeColor(notification.notification_type);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                component="button"
                 onClick={() => navigate("/notifications")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{ p: 1, borderRadius: 2, "&:hover": { bgcolor: "grey.100" }, transition: "background-color 0.2s" }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <Bell className="w-6 h-6 mr-3 text-blue-600" />
+                <ChevronLeft size={20} color="#666" />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center" }}>
+                  <Bell size={24} style={{ marginRight: 12 }} color="#1976d2" />
                   通知详情
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {!notification.is_read && (
-                <button
+                <Box
+                  component="button"
                   onClick={handleMarkAsRead}
                   disabled={actionLoading}
-                  className="flex items-center px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    px: 2,
+                    py: 1,
+                    color: "primary.700",
+                    bgcolor: "primary.100",
+                    borderRadius: 2,
+                    "&:hover": { bgcolor: "primary.200" },
+                    disabled: { opacity: 0.5, cursor: "not-allowed" },
+                  }}
                 >
-                  <Check className="w-5 h-5 mr-2" />
+                  <Check size={20} style={{ marginRight: 8 }} />
                   标记已读
-                </button>
+                </Box>
               )}
               {notification.data?.link && (
-                <a
+                <Box
+                  component="a"
                   href={notification.data.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center px-4 py-2 text-blue-700 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    px: 2,
+                    py: 1,
+                    color: "primary.700",
+                    bgcolor: "primary.100",
+                    borderRadius: 2,
+                    textDecoration: "none",
+                    "&:hover": { bgcolor: "primary.200" },
+                  }}
                 >
-                  <ExternalLink className="w-5 h-5 mr-2" />
+                  <ExternalLink size={20} style={{ marginRight: 8 }} />
                   查看详情
-                </a>
+                </Box>
               )}
-              <button
+              <Box
+                component="button"
                 onClick={handleDelete}
                 disabled={actionLoading}
-                className="flex items-center px-4 py-2 text-red-700 bg-red-100 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  color: "error.700",
+                  bgcolor: "error.100",
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "error.200" },
+                  disabled: { opacity: 0.5, cursor: "not-allowed" },
+                }}
               >
-                <Trash2 className="w-5 h-5 mr-2" />
+                <Trash2 size={20} style={{ marginRight: 8 }} />
                 删除
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, overflow: "hidden" }}>
           {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <span
-                  className={`px-3 py-1 text-sm rounded-full ${getTypeColor(notification.notification_type)}`}
+          <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  component="span"
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: "0.875rem",
+                    borderRadius: 4,
+                    bgcolor: typeColor.bg,
+                    color: typeColor.text,
+                  }}
                 >
                   {getTypeLabel(notification.notification_type)}
-                </span>
-                <span
-                  className={`px-3 py-1 text-sm rounded-full ${priorityInfo.color}`}
+                </Box>
+                <Box
+                  component="span"
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: "0.875rem",
+                    borderRadius: 4,
+                    bgcolor: priorityInfo.bg,
+                    color: priorityInfo.text,
+                  }}
                 >
                   {priorityInfo.label}
-                </span>
+                </Box>
                 {notification.is_read ? (
-                  <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700">
+                  <Box
+                    component="span"
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      fontSize: "0.875rem",
+                      borderRadius: 4,
+                      bgcolor: "success.100",
+                      color: "success.700",
+                    }}
+                  >
                     已读
-                  </span>
+                  </Box>
                 ) : (
-                  <span className="px-3 py-1 text-sm rounded-full bg-red-100 text-red-700">
+                  <Box
+                    component="span"
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      fontSize: "0.875rem",
+                      borderRadius: 4,
+                      bgcolor: "error.100",
+                      color: "error.700",
+                    }}
+                  >
                     未读
-                  </span>
+                  </Box>
                 )}
-              </div>
-              <span className="text-sm text-gray-500">
+              </Box>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
                 {new Date(notification.created_at).toLocaleString("zh-CN")}
-              </span>
-            </div>
+              </Typography>
+            </Box>
 
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
               {notification.title}
-            </h2>
-          </div>
+            </Typography>
+          </Box>
 
           {/* Content */}
-          <div className="p-6">
-            <div className="prose max-w-none">
-              <p className="text-gray-700 whitespace-pre-wrap">
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ "& p": { color: "grey.700", whiteSpace: "pre-wrap" } }}>
+              <Typography variant="body1" component="p">
                 {notification.content}
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
 
           {/* Meta Info */}
           {(notification.read_at || notification.data) && (
-            <div className="p-6 bg-gray-50 border-t border-gray-200">
+            <Box sx={{ p: 3, bgcolor: "grey.50", borderTop: 1, borderColor: "divider" }}>
               {notification.read_at && (
-                <div className="text-sm text-gray-500 mb-2">
-                  阅读时间：
-                  {new Date(notification.read_at).toLocaleString("zh-CN")}
-                </div>
+                <Box sx={{ fontSize: "0.875rem", color: "grey.500", mb: 1 }}>
+                  阅读时间：{new Date(notification.read_at).toLocaleString("zh-CN")}
+                </Box>
               )}
 
-              {notification.data &&
-                Object.keys(notification.data).length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      附加数据
-                    </h4>
-                    <pre className="text-xs text-gray-600 bg-white p-3 rounded border border-gray-200 overflow-auto">
-                      {JSON.stringify(notification.data, null, 2)}
-                    </pre>
-                  </div>
-                )}
-            </div>
+              {notification.data && Object.keys(notification.data).length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 1 }}>
+                    附加数据
+                  </Typography>
+                  <Box
+                    component="pre"
+                    sx={{
+                      fontSize: "0.75rem",
+                      color: "grey.600",
+                      bgcolor: "background.paper",
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: "grey.200",
+                      overflow: "auto",
+                    }}
+                  >
+                    {JSON.stringify(notification.data, null, 2)}
+                  </Box>
+                </Box>
+              )}
+            </Box>
           )}
-        </div>
+        </Box>
 
         {/* Navigation */}
-        <div className="mt-6 flex justify-between">
-          <button
+        <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-start" }}>
+          <Box
+            component="button"
             onClick={() => navigate("/notifications")}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            sx={{
+              px: 2,
+              py: 1,
+              color: "grey.700",
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "grey.300",
+              borderRadius: 2,
+              "&:hover": { bgcolor: "grey.50" },
+            }}
           >
             返回通知列表
-          </button>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

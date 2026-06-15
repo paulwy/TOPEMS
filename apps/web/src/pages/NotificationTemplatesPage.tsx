@@ -4,7 +4,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Copy,
   Eye,
   ChevronLeft,
   Search,
@@ -14,6 +13,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import type {
   NotificationTemplate,
   CreateTemplateRequest,
@@ -23,11 +23,9 @@ import type {
 } from "../api/notification";
 import {
   getTemplates,
-  getTemplate,
   createTemplate,
   updateTemplate,
   deleteTemplate,
-  renderTemplate,
 } from "../api/notification";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
@@ -49,7 +47,6 @@ const NotificationTemplatesPage: React.FC = () => {
     useState<NotificationTemplate | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [renderModalOpen, setRenderModalOpen] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -156,21 +153,51 @@ const NotificationTemplatesPage: React.FC = () => {
     switch (status) {
       case "active":
         return (
-          <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.5,
+              fontSize: "0.75rem",
+              borderRadius: 4,
+              bgcolor: "success.100",
+              color: "success.700",
+            }}
+          >
             启用
-          </span>
+          </Box>
         );
       case "inactive":
         return (
-          <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.5,
+              fontSize: "0.75rem",
+              borderRadius: 4,
+              bgcolor: "grey.100",
+              color: "grey.700",
+            }}
+          >
             禁用
-          </span>
+          </Box>
         );
       case "deprecated":
         return (
-          <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
+          <Box
+            component="span"
+            sx={{
+              px: 1,
+              py: 0.5,
+              fontSize: "0.75rem",
+              borderRadius: 4,
+              bgcolor: "error.100",
+              color: "error.700",
+            }}
+          >
             废弃
-          </span>
+          </Box>
         );
       default:
         return null;
@@ -193,267 +220,618 @@ const NotificationTemplatesPage: React.FC = () => {
   };
 
   const getTypeColor = (type: NotificationTypeEnum) => {
-    const colors: Record<NotificationTypeEnum, string> = {
-      system: "bg-blue-100 text-blue-700",
-      workflow: "bg-purple-100 text-purple-700",
-      reminder: "bg-yellow-100 text-yellow-700",
-      alert: "bg-red-100 text-red-700",
-      message: "bg-green-100 text-green-700",
-      info: "bg-cyan-100 text-cyan-700",
-      success: "bg-emerald-100 text-emerald-700",
-      warning: "bg-orange-100 text-orange-700",
-      error: "bg-rose-100 text-rose-700",
+    const colors: Record<NotificationTypeEnum, { bg: string; text: string }> = {
+      system: { bg: "primary.100", text: "primary.700" },
+      workflow: { bg: "purple.100", text: "purple.700" },
+      reminder: { bg: "warning.100", text: "warning.700" },
+      alert: { bg: "error.100", text: "error.700" },
+      message: { bg: "success.100", text: "success.700" },
+      info: { bg: "info.100", text: "info.700" },
+      success: { bg: "success.100", text: "success.700" },
+      warning: { bg: "warning.100", text: "warning.700" },
+      error: { bg: "error.100", text: "error.700" },
     };
-    return colors[type] || "bg-gray-100 text-gray-700";
+    return colors[type] || { bg: "grey.100", text: "grey.700" };
   };
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1400,
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                component="button"
                 onClick={() => navigate("/notifications")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "grey.100" },
+                  transition: "background-color 0.2s",
+                }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <FileText className="w-7 h-7 mr-3 text-blue-600" />
+                <ChevronLeft size={20} color="#666" />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "grey.900",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <FileText size={28} style={{ marginRight: 12 }} color="#1976d2" />
                   通知模板管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   管理和配置通知消息模板
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                component="button"
                 onClick={loadTemplates}
-                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  color: "grey.700",
+                  bgcolor: "grey.200",
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "grey.300" },
+                  transition: "background-color 0.2s",
+                }}
               >
-                <RefreshCw className="w-5 h-5 mr-2" />
+                <RefreshCw size={20} style={{ marginRight: 8 }} />
                 刷新
-              </button>
-              <button
+              </Box>
+              <Box
+                component="button"
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  bgcolor: "primary.main",
+                  color: "white",
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "primary.dark" },
+                  transition: "background-color 0.2s",
+                }}
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus size={20} style={{ marginRight: 8 }} />
                 新增模板
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
+      <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 2,
+            mb: 3,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
+                <Search size={20} color="#666" />
+              </Box>
+              <Box
+                component="input"
                 type="text"
                 placeholder="搜索模板名称、描述..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                sx={{
+                  width: "100%",
+                  pl: 5,
+                  pr: 2,
+                  py: 1,
+                  border: 1,
+                  borderColor: "grey.300",
+                  borderRadius: 2,
+                  "&:focus": {
+                    outline: "none",
+                    borderColor: "primary.main",
+                    boxShadow: 2,
+                  },
+                }}
               />
-            </div>
+            </Box>
 
-            <select
+            <Box
+              component="select"
               value={selectedStatus}
               onChange={(e) => {
                 setSelectedStatus(e.target.value as TemplateStatusEnum | "");
                 setPage(1);
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              sx={{
+                px: 2,
+                py: 1,
+                border: 1,
+                borderColor: "grey.300",
+                borderRadius: 2,
+                "&:focus": {
+                  outline: "none",
+                  borderColor: "primary.main",
+                  boxShadow: 2,
+                },
+              }}
             >
               <option value="">全部状态</option>
               <option value="active">启用</option>
               <option value="inactive">禁用</option>
               <option value="deprecated">废弃</option>
-            </select>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            overflow: "hidden",
+          }}
+        >
           {loading ? (
-            <div className="p-8 text-center">
-              <Loader2 className="w-12 h-12 text-blue-600 mx-auto animate-spin" />
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Loader2
+                size={48}
+                color="#1976d2"
+                style={{ margin: "0 auto", animation: "spin 1s linear infinite" }}
+              />
+              <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>
+                加载中...
+              </Typography>
+            </Box>
           ) : filteredTemplates.length === 0 ? (
-            <div className="p-8 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500">暂无模板数据</p>
-            </div>
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <FileText size={48} color="#666" style={{ margin: "0 auto 12px" }} />
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                暂无模板数据
+              </Typography>
+            </Box>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <Box sx={{ overflowX: "auto" }}>
+                <Box
+                  component="table"
+                  sx={{ minWidth: "100%", "& > * + *": { borderTop: 1, borderColor: "grey.200" } }}
+                >
+                  <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                    <Box component="tr">
+                      <Box
+                        component="th"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          textAlign: "left",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "grey.500",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                        }}
+                      >
                         模板名称
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </Box>
+                      <Box
+                        component="th"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          textAlign: "left",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "grey.500",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                        }}
+                      >
                         类型
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </Box>
+                      <Box
+                        component="th"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          textAlign: "left",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "grey.500",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                        }}
+                      >
                         标题模板
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </Box>
+                      <Box
+                        component="th"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          textAlign: "left",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "grey.500",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                        }}
+                      >
                         状态
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </Box>
+                      <Box
+                        component="th"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          textAlign: "left",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "grey.500",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                        }}
+                      >
                         优先级
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </Box>
+                      <Box
+                        component="th"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          textAlign: "left",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "grey.500",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                        }}
+                      >
                         创建时间
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </Box>
+                      <Box
+                        component="th"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          textAlign: "right",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          color: "grey.500",
+                          textTransform: "uppercase",
+                          letterSpacing: 1,
+                        }}
+                      >
                         操作
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredTemplates.map((template) => (
-                      <tr key={template.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                              <Bell className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {template.name}
-                              </div>
-                              {template.description && (
-                                <div className="text-xs text-gray-500 truncate max-w-xs">
-                                  {template.description}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${getTypeColor(template.notification_type)}`}
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box
+                    component="tbody"
+                    sx={{
+                      bgcolor: "background.paper",
+                      "& > * + *": { borderTop: 1, borderColor: "grey.200" },
+                    }}
+                  >
+                    {filteredTemplates.map((template) => {
+                      const typeColor = getTypeColor(template.notification_type);
+                      return (
+                        <Box
+                          component="tr"
+                          key={template.id}
+                          sx={{
+                            "&:hover": { bgcolor: "grey.50" },
+                            transition: "background-color 0.2s",
+                          }}
+                        >
+                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Box
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  bgcolor: "primary.100",
+                                  borderRadius: 2,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  mr: 1.5,
+                                }}
+                              >
+                                <Bell size={20} color="#1976d2" />
+                              </Box>
+                              <Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 500, color: "grey.900" }}
+                                >
+                                  {template.name}
+                                </Typography>
+                                {template.description && (
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontSize: "0.75rem",
+                                      color: "grey.500",
+                                      maxWidth: 200,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {template.description}
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Box>
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                            <Box
+                              component="span"
+                              sx={{
+                                px: 1,
+                                py: 0.5,
+                                fontSize: "0.75rem",
+                                borderRadius: 4,
+                                bgcolor: typeColor.bg,
+                                color: typeColor.text,
+                              }}
+                            >
+                              {getTypeLabel(template.notification_type)}
+                            </Box>
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "grey.900",
+                                maxWidth: 200,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {template.title_template}
+                            </Typography>
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                            {getStatusBadge(template.status)}
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2.5,
+                              whiteSpace: "nowrap",
+                              fontSize: "0.875rem",
+                              color: "grey.500",
+                            }}
                           >
-                            {getTypeLabel(template.notification_type)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 truncate max-w-xs">
-                            {template.title_template}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getStatusBadge(template.status)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {(template.default_priority ?? 0) >= 4
-                            ? "紧急"
-                            : (template.default_priority ?? 0) >= 3
-                              ? "高"
-                              : (template.default_priority ?? 0) >= 2
-                                ? "中"
-                                : "低"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(template.created_at).toLocaleDateString(
-                            "zh-CN",
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button
-                              onClick={() => {
-                                setSelectedTemplate(template);
-                                setShowPreviewModal(true);
+                            {(template.default_priority ?? 0) >= 4
+                              ? "紧急"
+                              : (template.default_priority ?? 0) >= 3
+                                ? "高"
+                                : (template.default_priority ?? 0) >= 2
+                                  ? "中"
+                                  : "低"}
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2.5,
+                              whiteSpace: "nowrap",
+                              fontSize: "0.875rem",
+                              color: "grey.500",
+                            }}
+                          >
+                            {new Date(template.created_at).toLocaleDateString("zh-CN")}
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2.5,
+                              whiteSpace: "nowrap",
+                              textAlign: "right",
+                              fontSize: "0.875rem",
+                              fontWeight: 500,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "flex-end",
+                                gap: 0.5,
                               }}
-                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                              title="预览"
                             >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleToggleArchive(template.id)}
-                              className="p-2 text-orange-600 hover:bg-orange-100 rounded-lg transition-colors"
-                              title={
-                                template.status === "active" ? "禁用" : "启用"
-                              }
-                            >
-                              <Archive className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedTemplate(template);
-                                setShowEditModal(true);
-                              }}
-                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                              title="编辑"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTemplate(template.id)}
-                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                              title="删除"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                              <Box
+                                component="button"
+                                onClick={() => {
+                                  setSelectedTemplate(template);
+                                  setShowPreviewModal(true);
+                                }}
+                                sx={{
+                                  p: 0.5,
+                                  color: "primary.main",
+                                  "&:hover": { bgcolor: "primary.100" },
+                                  borderRadius: 1,
+                                  transition: "all 0.2s",
+                                }}
+                                title="预览"
+                              >
+                                <Eye size={16} />
+                              </Box>
+                              <Box
+                                component="button"
+                                onClick={() => handleToggleArchive(template.id)}
+                                sx={{
+                                  p: 0.5,
+                                  color: "warning.main",
+                                  "&:hover": { bgcolor: "warning.100" },
+                                  borderRadius: 1,
+                                  transition: "all 0.2s",
+                                }}
+                                title={template.status === "active" ? "禁用" : "启用"}
+                              >
+                                <Archive size={16} />
+                              </Box>
+                              <Box
+                                component="button"
+                                onClick={() => {
+                                  setSelectedTemplate(template);
+                                  setShowEditModal(true);
+                                }}
+                                sx={{
+                                  p: 0.5,
+                                  color: "primary.main",
+                                  "&:hover": { bgcolor: "primary.100" },
+                                  borderRadius: 1,
+                                  transition: "all 0.2s",
+                                }}
+                                title="编辑"
+                              >
+                                <Edit size={16} />
+                              </Box>
+                              <Box
+                                component="button"
+                                onClick={() => handleDeleteTemplate(template.id)}
+                                sx={{
+                                  p: 0.5,
+                                  color: "error.main",
+                                  "&:hover": { bgcolor: "error.100" },
+                                  borderRadius: 1,
+                                  transition: "all 0.2s",
+                                }}
+                                title="删除"
+                              >
+                                <Trash2 size={16} />
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              </Box>
 
               {/* Pagination */}
               {total > 20 && (
-                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
+                <Box
+                  sx={{
+                    px: 3,
+                    py: 2,
+                    borderTop: 1,
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: "grey.600" }}>
                     第 {page} 页，共 {totalPages} 页
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
+                      component="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      sx={{
+                        px: 1.5,
+                        py: 0.75,
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                        color: "grey.700",
+                        bgcolor: "background.paper",
+                        border: 1,
+                        borderColor: "grey.300",
+                        borderRadius: 2,
+                        "&:hover": { bgcolor: "grey.50" },
+                        disabled: { opacity: 0.5, cursor: "not-allowed" },
+                      }}
                     >
                       上一页
-                    </button>
-                    <button
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages, p + 1))
-                      }
+                    </Box>
+                    <Box
+                      component="button"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page >= totalPages}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      sx={{
+                        px: 1.5,
+                        py: 0.75,
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                        color: "grey.700",
+                        bgcolor: "background.paper",
+                        border: 1,
+                        borderColor: "grey.300",
+                        borderRadius: 2,
+                        "&:hover": { bgcolor: "grey.50" },
+                        disabled: { opacity: 0.5, cursor: "not-allowed" },
+                      }}
                     >
                       下一页
-                    </button>
-                  </div>
-                </div>
+                    </Box>
+                  </Box>
+                </Box>
               )}
             </>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Create/Edit Modal */}
       {showCreateModal && (
@@ -488,7 +866,7 @@ const NotificationTemplatesPage: React.FC = () => {
           }}
         />
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -520,37 +898,74 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        bgcolor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        p: 2,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 3,
+          boxShadow: 3,
+          width: "100%",
+          maxWidth: 800,
+          maxHeight: "90vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
             {template ? "编辑模板" : "新增模板"}
-          </h3>
-        </div>
+          </Typography>
+        </Box>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+        <Box component="form" onSubmit={handleSubmit} sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
                   模板名称 *
-                </label>
-                <input
+                </Typography>
+                <Box
+                  component="input"
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  sx={{
+                    width: "100%",
+                    px: 1.5,
+                    py: 1,
+                    border: 1,
+                    borderColor: "grey.300",
+                    borderRadius: 2,
+                    "&:focus": {
+                      outline: "none",
+                      borderColor: "primary.main",
+                      boxShadow: 2,
+                    },
+                  }}
                   placeholder="请输入模板名称"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
                   通知类型 *
-                </label>
-                <select
+                </Typography>
+                <Box
+                  component="select"
                   required
                   value={formData.notification_type}
                   onChange={(e) =>
@@ -559,72 +974,125 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                       notification_type: e.target.value as NotificationTypeEnum,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  sx={{
+                    width: "100%",
+                    px: 1.5,
+                    py: 1,
+                    border: 1,
+                    borderColor: "grey.300",
+                    borderRadius: 2,
+                    "&:focus": {
+                      outline: "none",
+                      borderColor: "primary.main",
+                      boxShadow: 2,
+                    },
+                  }}
                 >
                   <option value="system">系统通知</option>
                   <option value="workflow">审批通知</option>
                   <option value="reminder">提醒通知</option>
                   <option value="alert">告警通知</option>
                   <option value="message">消息通知</option>
-                </select>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
                 描述
-              </label>
-              <textarea
+              </Typography>
+              <Box
+                component="textarea"
                 value={formData.description || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{
+                  width: "100%",
+                  px: 1.5,
+                  py: 1,
+                  border: 1,
+                  borderColor: "grey.300",
+                  borderRadius: 2,
+                  "&:focus": {
+                    outline: "none",
+                    borderColor: "primary.main",
+                    boxShadow: 2,
+                  },
+                }}
                 rows={2}
                 placeholder="请输入模板描述"
               />
-            </div>
+            </Box>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
                 标题模板 *
-              </label>
-              <input
+              </Typography>
+              <Box
+                component="input"
                 type="text"
                 required
                 value={formData.title_template}
                 onChange={(e) =>
                   setFormData({ ...formData, title_template: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{
+                  width: "100%",
+                  px: 1.5,
+                  py: 1,
+                  border: 1,
+                  borderColor: "grey.300",
+                  borderRadius: 2,
+                  "&:focus": {
+                    outline: "none",
+                    borderColor: "primary.main",
+                    boxShadow: 2,
+                  },
+                }}
                 placeholder="请输入标题模板，使用 {{variable}} 格式定义变量"
               />
-            </div>
+            </Box>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
                 内容模板 *
-              </label>
-              <textarea
+              </Typography>
+              <Box
+                component="textarea"
                 required
                 value={formData.content_template}
                 onChange={(e) =>
                   setFormData({ ...formData, content_template: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
+                sx={{
+                  width: "100%",
+                  px: 1.5,
+                  py: 1,
+                  border: 1,
+                  borderColor: "grey.300",
+                  borderRadius: 2,
+                  "&:focus": {
+                    outline: "none",
+                    borderColor: "primary.main",
+                    boxShadow: 2,
+                  },
+                  fontFamily: "monospace",
+                }}
                 rows={6}
                 placeholder="请输入内容模板，使用 {{variable}} 格式定义变量"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "grey.500", mt: 0.5 }}>
                 使用 {"{{variable}}"} 格式定义变量
-              </p>
-            </div>
+              </Typography>
+            </Box>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
                 默认优先级
-              </label>
-              <select
+              </Typography>
+              <Box
+                component="select"
                 value={formData.default_priority}
                 onChange={(e) =>
                   setFormData({
@@ -632,34 +1100,62 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                     default_priority: parseInt(e.target.value),
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{
+                  width: "100%",
+                  px: 1.5,
+                  py: 1,
+                  border: 1,
+                  borderColor: "grey.300",
+                  borderRadius: 2,
+                  "&:focus": {
+                    outline: "none",
+                    borderColor: "primary.main",
+                    boxShadow: 2,
+                  },
+                }}
               >
                 <option value={1}>低</option>
                 <option value={2}>中</option>
                 <option value={3}>高</option>
                 <option value={4}>紧急</option>
-              </select>
-            </div>
-          </div>
-        </form>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
-          <button
+        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Box
+            component="button"
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            sx={{
+              px: 2,
+              py: 1,
+              color: "grey.700",
+              bgcolor: "grey.100",
+              borderRadius: 2,
+              "&:hover": { bgcolor: "grey.200" },
+            }}
           >
             取消
-          </button>
-          <button
+          </Box>
+          <Box
+            component="button"
             onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            sx={{
+              px: 2,
+              py: 1,
+              bgcolor: "primary.main",
+              color: "white",
+              borderRadius: 2,
+              "&:hover": { bgcolor: "primary.dark" },
+            }}
           >
             {template ? "保存" : "创建"}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
@@ -674,61 +1170,146 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   onClose,
 }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">模板预览</h3>
-        </div>
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        bgcolor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        p: 2,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 3,
+          boxShadow: 3,
+          width: "100%",
+          maxWidth: 900,
+          maxHeight: "90vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+            模板预览
+          </Typography>
+        </Box>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="mb-6">
-            <h4 className="text-xl font-bold text-gray-900 mb-2">
+        <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900", mb: 1 }}>
               {template.name}
-            </h4>
-            <div className="flex items-center space-x-4 text-sm text-gray-500">
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.875rem", color: "grey.500" }}>
               <span>类型：{getTypeLabel(template.notification_type)}</span>
               <span>状态：{template.status}</span>
               <span>优先级：{template.default_priority}</span>
-            </div>
+            </Box>
             {template.description && (
-              <p className="mt-2 text-gray-600">{template.description}</p>
+              <Typography variant="body2" sx={{ mt: 1, color: "grey.600" }}>
+                {template.description}
+              </Typography>
             )}
-          </div>
+          </Box>
 
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-4">
-            <h5 className="font-semibold text-gray-900 mb-3">标题模板：</h5>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+          <Box
+            sx={{
+              bgcolor: "grey.50",
+              borderRadius: 2,
+              p: 3,
+              border: 1,
+              borderColor: "grey.200",
+              mb: 2,
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+              标题模板：
+            </Typography>
+            <Box
+              component="pre"
+              sx={{
+                whiteSpace: "pre-wrap",
+                fontSize: "0.875rem",
+                color: "grey.700",
+                fontFamily: "monospace",
+              }}
+            >
               {template.title_template}
-            </pre>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <h5 className="font-semibold text-gray-900 mb-3">内容模板：</h5>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+          <Box
+            sx={{
+              bgcolor: "grey.50",
+              borderRadius: 2,
+              p: 3,
+              border: 1,
+              borderColor: "grey.200",
+            }}
+          >
+            <Typography variant="body2" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+              内容模板：
+            </Typography>
+            <Box
+              component="pre"
+              sx={{
+                whiteSpace: "pre-wrap",
+                fontSize: "0.875rem",
+                color: "grey.700",
+                fontFamily: "monospace",
+              }}
+            >
               {template.content_template}
-            </pre>
-          </div>
+            </Box>
+          </Box>
 
           {template.data_schema && (
-            <div className="mt-6">
-              <h5 className="font-semibold text-gray-900 mb-3">数据模式：</h5>
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono bg-gray-50 p-4 rounded-lg">
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+                数据模式：
+              </Typography>
+              <Box
+                component="pre"
+                sx={{
+                  whiteSpace: "pre-wrap",
+                  fontSize: "0.75rem",
+                  color: "grey.700",
+                  fontFamily: "monospace",
+                  bgcolor: "grey.50",
+                  p: 2,
+                  borderRadius: 2,
+                }}
+              >
                 {JSON.stringify(template.data_schema, null, 2)}
-              </pre>
-            </div>
+              </Box>
+            </Box>
           )}
-        </div>
+        </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end">
-          <button
+        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
+          <Box
+            component="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            sx={{
+              px: 2,
+              py: 1,
+              bgcolor: "grey.100",
+              color: "grey.700",
+              borderRadius: 2,
+              "&:hover": { bgcolor: "grey.200" },
+            }}
           >
             关闭
-          </button>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

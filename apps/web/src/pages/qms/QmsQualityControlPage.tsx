@@ -237,25 +237,25 @@ const QmsQualityControlPage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             size="small"
             onClick={() => viewItem(row.original)}
           >
-            <Eye className="w-4 h-4" />
+            <Eye sx={{ width: 16, height: 16 }} />
           </Button>
           <Button
             size="small"
             onClick={() => editItem(row.original)}
           >
-            <Edit className="w-4 h-4" />
+            <Edit sx={{ width: 16, height: 16 }} />
           </Button>
           <Button
             size="small"
             onClick={() => deleteItem(row.original.id)}
-            sx={{ color: 'error.main' }}
+            sx={{ color: "error.main" }}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 sx={{ width: 16, height: 16 }} />
           </Button>
         </Box>
       ),
@@ -278,18 +278,18 @@ const QmsQualityControlPage: React.FC = () => {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             size="small"
             onClick={() => viewItem(row.original)}
           >
-            <Eye className="w-4 h-4" />
+            <Eye sx={{ width: 16, height: 16 }} />
           </Button>
           <Button
             size="small"
             onClick={() => editItem(row.original)}
           >
-            <Edit className="w-4 h-4" />
+            <Edit sx={{ width: 16, height: 16 }} />
           </Button>
         </Box>
       ),
@@ -382,155 +382,173 @@ const QmsQualityControlPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">质量管理</h1>
-                  <p className="text-xs text-slate-500">
+    <Box sx={{ minHeight: "100vh", background: "linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%)" }}>
+      <Box component="header" sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Shield sx={{ width: 24, height: 24, color: "white" }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "slate.900", fontSize: "1.25rem" }}>质量管理</Typography>
+                  <Typography variant="caption" sx={{ color: "slate.500", fontSize: "0.75rem" }}>
                     Quality Management System
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <Box component="main" sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 3, lg: 6 }, gap: 2, mb: 4 }}>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">不合格品总数</p>
-                  <p className="text-2xl font-bold text-slate-900">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, bgcolor: "#fee2e2", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <AlertCircle sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>不合格品总数</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
                     {stats.totalNonconformances}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">待处理</p>
-                  <p className="text-2xl font-bold text-slate-900">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, bgcolor: "#fef9c3", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <AlertCircle sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>待处理</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
                     {stats.openNonconformances}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">已关闭</p>
-                  <p className="text-2xl font-bold text-slate-900">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, bgcolor: "#dcfce7", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>已关闭</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
                     {stats.closedNonconformances}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">审核总数</p>
-                  <p className="text-2xl font-bold text-slate-900">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, bgcolor: "#dbeafe", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <FileText sx={{ width: 20, height: 20, color: "#2563eb" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>审核总数</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
                     {stats.totalAudits}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">进行中审核</p>
-                  <p className="text-2xl font-bold text-slate-900">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, bgcolor: "#f3e8ff", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <FileText sx={{ width: 20, height: 20, color: "#7c3aed" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>进行中审核</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
                     {stats.inProgressAudits}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">已完成审核</p>
-                  <p className="text-2xl font-bold text-slate-900">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, bgcolor: "#dcfce7", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>已完成审核</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
                     {stats.completedAudits}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
-        <div className="bg-white rounded-lg shadow-sm p-1 flex space-x-1 mb-6">
-          <button
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 0.5, mb: 3, display: "flex", gap: 0.5 }}>
+          <Box
             onClick={() => setActiveTab("nonconformance")}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === "nonconformance"
-                ? "bg-indigo-600 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
+            sx={{
+              flex: 1,
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 500,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
+              transition: "all 0.2s",
+              bgcolor: activeTab === "nonconformance" ? "primary.main" : "transparent",
+              color: activeTab === "nonconformance" ? "white" : "slate.600",
+              "&:hover": { bgcolor: activeTab === "nonconformance" ? "primary.main" : "#f1f5f9" }
+            }}
           >
-            <div className="flex items-center justify-center space-x-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>不合格品管理</span>
-            </div>
-          </button>
-          <button
+            <AlertCircle sx={{ width: 20, height: 20 }} />
+            <Typography>不合格品管理</Typography>
+          </Box>
+          <Box
             onClick={() => setActiveTab("audit")}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === "audit"
-                ? "bg-indigo-600 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
+            sx={{
+              flex: 1,
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 500,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
+              transition: "all 0.2s",
+              bgcolor: activeTab === "audit" ? "primary.main" : "transparent",
+              color: activeTab === "audit" ? "white" : "slate.600",
+              "&:hover": { bgcolor: activeTab === "audit" ? "primary.main" : "#f1f5f9" }
+            }}
           >
-            <div className="flex items-center justify-center space-x-2">
-              <FileText className="w-5 h-5" />
-              <span>审核管理</span>
-            </div>
-          </button>
-        </div>
+            <FileText sx={{ width: 20, height: 20 }} />
+            <Typography>审核管理</Typography>
+          </Box>
+        </Box>
 
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4">
-              <Box className="flex-1 min-w-[200px]" sx={{ position: 'relative' }}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Card sx={{ mb: 3 }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+              <Box sx={{ flex: "1 1 200px", position: "relative" }}>
+                <Search sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "grey.400" }} />
                 <TextField
                   size="small"
                   fullWidth
@@ -540,15 +558,15 @@ const QmsQualityControlPage: React.FC = () => {
                   sx={{ pl: 5 }}
                 />
               </Box>
-              <Button variant="contained" onClick={() => setShowModal(true)} startIcon={<Plus className="w-4 h-4" />}>
+              <Button variant="contained" onClick={() => setShowModal(true)} startIcon={<Plus sx={{ width: 16, height: 16 }} />}>
                 {activeTab === "nonconformance" ? "新增不合格品" : "新增审核"}
               </Button>
-            </div>
+            </Box>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-0">
+          <CardContent sx={{ p: 0 }}>
             {activeTab === "nonconformance" ? (
               <DataTable
                 columns={nonconformanceColumns}
@@ -564,17 +582,17 @@ const QmsQualityControlPage: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      </main>
+      </Box>
 
       <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="lg" fullWidth>
         <DialogTitle>
           {isEditing ? "编辑不合格品" : "新增不合格品"}
         </DialogTitle>
         <DialogContent>
-          <Box className="space-y-4" sx={{ mt: 1 }}>
-            <Box className="grid grid-cols-2 gap-4">
-              <Box className="space-y-2">
-                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>编号</Box>
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box component="label" sx={{ display: "block", mb: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>编号</Box>
                 <TextField
                   size="small"
                   fullWidth
@@ -588,11 +606,11 @@ const QmsQualityControlPage: React.FC = () => {
                   error={!!errors.code}
                 />
                 {errors.code && (
-                  <p className="text-sm text-red-500">{errors.code}</p>
+                  <Typography variant="caption" sx={{ color: "error.main", fontSize: "0.875rem" }}>{errors.code}</Typography>
                 )}
               </Box>
-              <Box className="space-y-2">
-                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>严重程度</Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box component="label" sx={{ display: "block", mb: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>严重程度</Box>
                 <FormControl fullWidth size="small">
                   <InputLabel>请选择</InputLabel>
                   <Select
@@ -612,8 +630,8 @@ const QmsQualityControlPage: React.FC = () => {
                 </FormControl>
               </Box>
             </Box>
-            <Box className="space-y-2">
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>问题标题 *</Box>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box component="label" sx={{ display: "block", mb: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>问题标题 *</Box>
               <TextField
                 size="small"
                 fullWidth
@@ -627,11 +645,11 @@ const QmsQualityControlPage: React.FC = () => {
                 error={!!errors.title}
               />
               {errors.title && (
-                <p className="text-sm text-red-500">{errors.title}</p>
+                <Typography variant="caption" sx={{ color: "error.main", fontSize: "0.875rem" }}>{errors.title}</Typography>
               )}
             </Box>
-            <Box className="space-y-2">
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>问题类别</Box>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box component="label" sx={{ display: "block", mb: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>问题类别</Box>
               <TextField
                 size="small"
                 fullWidth
@@ -648,12 +666,16 @@ const QmsQualityControlPage: React.FC = () => {
                 error={!!errors.category}
               />
               {errors.category && (
-                <p className="text-sm text-red-500">{errors.category}</p>
+                <Typography variant="caption" sx={{ color: "error.main", fontSize: "0.875rem" }}>{errors.category}</Typography>
               )}
             </Box>
-            <Box className="space-y-2">
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>问题描述</Box>
-              <textarea
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box component="label" sx={{ display: "block", mb: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>问题描述</Box>
+              <TextField
+                size="small"
+                fullWidth
+                multiline
+                rows={4}
                 value={formData.description}
                 onChange={(e) => {
                   setFormData((prev) => ({
@@ -664,10 +686,10 @@ const QmsQualityControlPage: React.FC = () => {
                     setErrors((prev) => ({ ...prev, description: "" }));
                 }}
                 placeholder="请详细描述问题..."
-                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: `1px solid ${errors.description ? '#fca5a5' : '#e2e8f0'}`, resize: 'none', height: '128px' }}
+                error={!!errors.description}
               />
               {errors.description && (
-                <p className="text-sm text-red-500">{errors.description}</p>
+                <Typography variant="caption" sx={{ color: "error.main", fontSize: "0.875rem" }}>{errors.description}</Typography>
               )}
             </Box>
           </Box>
@@ -684,68 +706,68 @@ const QmsQualityControlPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           {selectedItem && (
-            <Box className="space-y-4" sx={{ mt: 1 }}>
+            <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
               {"severity" in selectedItem ? (
                 <>
-                  <Box className="grid grid-cols-2 gap-4">
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>严重程度</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>严重程度</Typography>
                       <Box sx={{ mt: 0.5 }}>
                         {getSeverityBadge(selectedItem.severity)}
                       </Box>
                     </Box>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>状态</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>状态</Typography>
                       <Box sx={{ mt: 0.5 }}>
                         {getStatusBadge(selectedItem.status, "nc")}
                       </Box>
                     </Box>
                   </Box>
                   <Box>
-                    <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>问题类别</Typography>
+                    <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>问题类别</Typography>
                     <Typography sx={{ mt: 0.5 }}>{selectedItem.category}</Typography>
                   </Box>
                   <Box>
-                    <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>问题描述</Typography>
+                    <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>问题描述</Typography>
                     <Typography sx={{ mt: 0.5 }}>{selectedItem.description}</Typography>
                   </Box>
-                  <Box className="grid grid-cols-2 gap-4">
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>报告人</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>报告人</Typography>
                       <Typography sx={{ mt: 0.5 }}>{selectedItem.reported_by}</Typography>
                     </Box>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>报告日期</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>报告日期</Typography>
                       <Typography sx={{ mt: 0.5 }}>{selectedItem.reported_at}</Typography>
                     </Box>
                   </Box>
                 </>
               ) : (
                 <>
-                  <Box className="grid grid-cols-2 gap-4">
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>审核类型</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>审核类型</Typography>
                       <Typography sx={{ mt: 0.5 }}>{selectedItem.type}</Typography>
                     </Box>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>状态</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>状态</Typography>
                       <Box sx={{ mt: 0.5 }}>
                         {getStatusBadge(selectedItem.status, "audit")}
                       </Box>
                     </Box>
                   </Box>
-                  <Box className="grid grid-cols-2 gap-4">
+                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>审核人</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>审核人</Typography>
                       <Typography sx={{ mt: 0.5 }}>{selectedItem.auditor}</Typography>
                     </Box>
                     <Box>
-                      <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>审核日期</Typography>
+                      <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>审核日期</Typography>
                       <Typography sx={{ mt: 0.5 }}>{selectedItem.audit_date}</Typography>
                     </Box>
                   </Box>
                   <Box>
-                    <Typography component="label" sx={{ display: 'block', fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 }}>发现问题数</Typography>
+                    <Typography component="label" sx={{ display: "block", fontSize: "0.875rem", color: "text.secondary", mb: 0.5 }}>发现问题数</Typography>
                     <Typography sx={{ mt: 0.5 }}>{selectedItem.findings_count} 个</Typography>
                   </Box>
                 </>
@@ -757,7 +779,7 @@ const QmsQualityControlPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

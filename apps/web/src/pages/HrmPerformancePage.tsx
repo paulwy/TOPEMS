@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { Box, Typography } from "@mui/material";
 import {
   TrendingUp,
   Award,
@@ -322,466 +323,743 @@ const HrmPerformancePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "grey.200",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1536,
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                component="button"
                 onClick={() => navigate("/dashboard")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{
+                  p: 1,
+                  borderRadius: 1,
+                  "&:hover": { bgcolor: "grey.100" },
+                  transition: "background-color 0.2s",
+                }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <TrendingUp className="w-7 h-7 mr-3 text-orange-600" />
+                <ChevronLeft style={{ width: 20, height: 20, color: "#9ca3af" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center" }}
+                >
+                  <TrendingUp size={28} color="#ea580c" />
                   绩效管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   管理员工绩效评估、目标设定和绩效考核
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex space-x-4 mb-6 border-b border-gray-200">
-          <button
+      <Box
+        sx={{
+          maxWidth: 1536,
+          mx: "auto",
+          px: { xs: 2, sm: 3, lg: 4 },
+          py: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            mb: 3,
+            borderBottom: 1,
+            borderColor: "grey.200",
+          }}
+        >
+          <Box
+            component="button"
             onClick={() => setActiveTab("reviews")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "reviews"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "reviews" ? "blue.600" : "grey.500",
+              borderBottom: activeTab === "reviews" ? "2px solid" : "none",
+              borderColor: "blue.600",
+              "&:hover": { color: "grey.700" },
+              transition: "color 0.2s",
+            }}
           >
-            <Award className="w-5 h-5" />
+            <Award size={20} />
             <span>绩效评估</span>
-          </button>
-          <button
+          </Box>
+          <Box
+            component="button"
             onClick={() => setActiveTab("goals")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "goals"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "goals" ? "blue.600" : "grey.500",
+              borderBottom: activeTab === "goals" ? "2px solid" : "none",
+              borderColor: "blue.600",
+              "&:hover": { color: "grey.700" },
+              transition: "color 0.2s",
+            }}
           >
-            <Target className="w-5 h-5" />
+            <Target size={20} />
             <span>目标管理</span>
-          </button>
-          <button
+          </Box>
+          <Box
+            component="button"
             onClick={() => setActiveTab("rankings")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "rankings"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "rankings" ? "blue.600" : "grey.500",
+              borderBottom: activeTab === "rankings" ? "2px solid" : "none",
+              borderColor: "blue.600",
+              "&:hover": { color: "grey.700" },
+              transition: "color 0.2s",
+            }}
           >
-            <BarChart3 className="w-5 h-5" />
+            <BarChart3 size={20} />
             <span>绩效排名</span>
-          </button>
-        </div>
+          </Box>
+        </Box>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 1.5,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  display: "flex",
+                }}
+              >
+                <Search size={20} color="#9ca3af" />
+              </Box>
+              <Box
+                component="input"
                 type="text"
                 placeholder="搜索员工/部门..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{
+                  width: "100%",
+                  pl: 5,
+                  pr: 2,
+                  py: 1,
+                  border: 1,
+                  borderColor: "grey.300",
+                  borderRadius: 1,
+                  "&:focus": {
+                    outline: "none",
+                    borderColor: "blue.500",
+                    boxShadow: 2,
+                  },
+                }}
               />
-            </div>
-            <button
+            </Box>
+            <Box
+              component="button"
               onClick={loadData}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                px: 2,
+                py: 1,
+                bgcolor: "blue.600",
+                color: "white",
+                borderRadius: 1,
+                "&:hover": { bgcolor: "blue.700" },
+                transition: "background-color 0.2s",
+              }}
             >
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus size={20} style={{ marginRight: 4 }} />
               刷新数据
-            </button>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 10 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                border: "3px solid",
+                borderColor: "blue.600",
+                borderTopColor: "transparent",
+                animation: "spin 1s linear infinite",
+                "@keyframes spin": {
+                  "0%": { transform: "rotate(0deg)" },
+                  "100%": { transform: "rotate(360deg)" },
+                },
+              }}
+            />
+          </Box>
         ) : (
-          <div>
+          <Box>
             {/* Content */}
             {activeTab === "reviews" && (
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, overflow: "hidden" }}>
+                <Box sx={{ overflowX: "auto" }}>
+                  <Box component="table" sx={{ minWidth: "100%", borderCollapse: "collapse" }}>
+                    <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                      <Box component="tr">
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           员工姓名
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           部门/岗位
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           考核周期
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           自评分
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           上级评分
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           最终得分
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           状态
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                        >
                           操作
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box component="tbody" sx={{ bgcolor: "background.paper" }}>
                       {filteredReviews.map((review) => (
-                        <tr key={review.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                        <Box
+                          component="tr"
+                          key={review.id}
+                          sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                        >
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
                               {review.employee_name}
-                            </div>
-                            <div className="text-sm text-gray-500">
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "grey.500" }}>
                               {review.employee_no}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
+                            </Typography>
+                          </Box>
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Typography variant="body2" sx={{ color: "grey.900" }}>
                               {review.department}
-                            </div>
-                            <div className="text-sm text-gray-500">
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "grey.500" }}>
                               {review.position}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {review.review_period}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {review.self_score !== undefined ? (
-                              <span
-                                className={getScoreColor(review.self_score)}
-                              >
-                                {review.self_score}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {review.manager_score !== undefined ? (
-                              <span
-                                className={getScoreColor(review.manager_score)}
-                              >
-                                {review.manager_score}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                            </Typography>
+                          </Box>
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Typography variant="body2" sx={{ color: "grey.900" }}>
+                              {review.review_period}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Typography variant="body2" sx={{ color: "grey.900" }}>
+                              {review.self_score !== undefined ? (
+                                <Typography
+                                  component="span"
+                                  sx={{
+                                    color:
+                                      review.self_score >= 90
+                                        ? "green.600"
+                                        : review.self_score >= 80
+                                          ? "blue.600"
+                                          : review.self_score >= 70
+                                            ? "yellow.600"
+                                            : "red.600",
+                                  }}
+                                >
+                                  {review.self_score}
+                                </Typography>
+                              ) : (
+                                <Typography component="span" sx={{ color: "grey.400" }}>
+                                  -
+                                </Typography>
+                              )}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Typography variant="body2" sx={{ color: "grey.900" }}>
+                              {review.manager_score !== undefined ? (
+                                <Typography
+                                  component="span"
+                                  sx={{
+                                    color:
+                                      review.manager_score >= 90
+                                        ? "green.600"
+                                        : review.manager_score >= 80
+                                          ? "blue.600"
+                                          : review.manager_score >= 70
+                                            ? "yellow.600"
+                                            : "red.600",
+                                  }}
+                                >
+                                  {review.manager_score}
+                                </Typography>
+                              ) : (
+                                <Typography component="span" sx={{ color: "grey.400" }}>
+                                  -
+                                </Typography>
+                              )}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
                             {review.final_score !== undefined ? (
-                              <span
-                                className={`text-lg font-bold ${getScoreColor(review.final_score)}`}
+                              <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 700 }}
+                                className={getScoreColor(review.final_score)}
                               >
                                 {review.final_score}
-                              </span>
+                              </Typography>
                             ) : (
-                              <span className="text-gray-400">-</span>
+                              <Typography component="span" sx={{ color: "grey.400" }}>
+                                -
+                              </Typography>
                             )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          </Box>
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
                             {getPerformanceStatusBadge(review.status)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex space-x-2">
-                              <button className="text-blue-600 hover:text-blue-800">
+                          </Box>
+                          <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Box sx={{ display: "flex", gap: 1 }}>
+                              <Box
+                                component="button"
+                                sx={{ color: "blue.600", "&:hover": { color: "blue.800" } }}
+                              >
                                 查看
-                              </button>
+                              </Box>
                               {review.status !== "completed" && (
-                                <button className="text-blue-600 hover:text-blue-800">
+                                <Box
+                                  component="button"
+                                  sx={{ color: "blue.600", "&:hover": { color: "blue.800" } }}
+                                >
                                   编辑
-                                </button>
+                                </Box>
                               )}
-                            </div>
-                          </td>
-                        </tr>
+                            </Box>
+                          </Box>
+                        </Box>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             )}
 
             {activeTab === "goals" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+                  gap: 3,
+                }}
+              >
                 {goals.map((goal) => (
-                  <div
+                  <Box
                     key={goal.id}
-                    className="bg-white rounded-lg shadow-sm p-6"
+                    sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
                           {goal.goal_title}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
                           {goal.employee_name}
-                        </p>
-                      </div>
+                        </Typography>
+                      </Box>
                       {getPerformanceStatusBadge(goal.status)}
-                    </div>
+                    </Box>
 
-                    <p className="text-sm text-gray-600 mb-4">
+                    <Typography variant="body2" sx={{ color: "grey.600", mb: 2 }}>
                       {goal.goal_description}
-                    </p>
+                    </Typography>
 
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">目标进度</span>
-                        <span className="font-medium text-blue-600">
+                    <Box sx={{ mb: 2 }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        <Typography variant="body2" sx={{ color: "grey.600" }}>
+                          目标进度
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: "blue.600" }}>
                           {goal.progress}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full transition-all"
-                          style={{ width: `${goal.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                        </Typography>
+                      </Box>
+                      <Box sx={{ width: "100%", bgcolor: "grey.200", borderRadius: 1, height: 8 }}>
+                        <Box
+                          sx={{
+                            width: `${goal.progress}%`,
+                            bgcolor: "blue.600",
+                            height: "100%",
+                            borderRadius: 1,
+                            transition: "width 0.3s",
+                          }}
+                        />
+                      </Box>
+                    </Box>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">权重：</span>
-                        <span className="font-medium">{goal.weight}%</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">截止日期：</span>
-                        <span className="font-medium">{goal.due_date}</span>
-                      </div>
-                    </div>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 1,
+                        fontSize: "0.875rem",
+                      }}
+                    >
+                      <Box>
+                        <Typography component="span" sx={{ color: "grey.500" }}>
+                          权重：
+                        </Typography>
+                        <Typography component="span" sx={{ fontWeight: 500 }}>
+                          {goal.weight}%
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography component="span" sx={{ color: "grey.500" }}>
+                          截止日期：
+                        </Typography>
+                        <Typography component="span" sx={{ fontWeight: 500 }}>
+                          {goal.due_date}
+                        </Typography>
+                      </Box>
+                    </Box>
 
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
+                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "grey.200" }}>
+                      <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+                        <Typography sx={{ color: "grey.600" }}>
                           目标值：{goal.target_value}
-                        </span>
-                      </div>
+                        </Typography>
+                      </Box>
                       {goal.current_value && (
-                        <div className="mt-1 text-sm">
-                          <span className="text-gray-600">
-                            当前值：{goal.current_value}
-                          </span>
-                        </div>
+                        <Typography sx={{ mt: 0.5, fontSize: "0.875rem", color: "grey.600" }}>
+                          当前值：{goal.current_value}
+                        </Typography>
                       )}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             )}
 
             {/* Statistics Dashboard */}
             {activeTab === "rankings" && (
-              <div className="space-y-6">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {/* 统计卡片 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, md: 2, lg: 4 },
+                    gap: 2,
+                  }}
+                >
                   <MetricCard
                     title="绩效评估总数"
                     value={performanceStats.totalReviews}
-                    icon={<Award className="w-5 h-5" />}
+                    icon={<Award size={20} />}
                     trend={null}
                     color="blue"
                   />
                   <MetricCard
                     title="已完成评估"
                     value={performanceStats.completedReviews}
-                    icon={<CheckCircle className="w-5 h-5" />}
+                    icon={<CheckCircle size={20} />}
                     trend={null}
                     color="green"
                   />
                   <MetricCard
                     title="待完成评估"
                     value={performanceStats.pendingReviews}
-                    icon={<Clock className="w-5 h-5" />}
+                    icon={<Clock size={20} />}
                     trend={null}
                     color="yellow"
                   />
                   <MetricCard
                     title="平均绩效得分"
                     value={performanceStats.avgScore}
-                    icon={<TrendingUp className="w-5 h-5" />}
+                    icon={<TrendingUp size={20} />}
                     trend={null}
                     color="purple"
                   />
-                </div>
+                </Box>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, md: 3 },
+                    gap: 2,
+                  }}
+                >
                   <MetricCard
                     title="绩效目标总数"
                     value={performanceStats.totalGoals}
-                    icon={<Target className="w-5 h-5" />}
+                    icon={<Target size={20} />}
                     trend={null}
                     color="blue"
                   />
                   <MetricCard
                     title="进行中目标"
                     value={performanceStats.inProgressGoals}
-                    icon={<Clock className="w-5 h-5" />}
+                    icon={<Clock size={20} />}
                     trend={null}
                     color="orange"
                   />
                   <MetricCard
                     title="平均目标进度"
                     value={`${performanceStats.avgGoalProgress}%`}
-                    icon={<BarChart3 className="w-5 h-5" />}
+                    icon={<BarChart3 size={20} />}
                     trend={null}
                     color="teal"
                   />
-                </div>
+                </Box>
 
                 {/* 图表区域 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, lg: 2 },
+                    gap: 3,
+                  }}
+                >
+                  <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
                       绩效评估状态分布
-                    </h3>
+                    </Typography>
                     <StatsChart
                       type="pie"
                       data={reviewStatusData}
                       height={250}
                     />
-                  </div>
+                  </Box>
 
-                  <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
                       绩效目标状态分布
-                    </h3>
+                    </Typography>
                     <StatsChart type="pie" data={goalStatusData} height={250} />
-                  </div>
-                </div>
+                  </Box>
+                </Box>
 
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
                     部门平均绩效得分
-                  </h3>
+                  </Typography>
                   <StatsChart
                     type="bar"
                     data={departmentScoreData}
                     height={300}
                   />
-                </div>
+                </Box>
 
                 {/* 排名表格 */}
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, overflow: "hidden" }}>
+                  <Box sx={{ overflowX: "auto" }}>
+                    <Box component="table" sx={{ minWidth: "100%", borderCollapse: "collapse" }}>
+                      <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                        <Box component="tr">
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             排名
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             员工姓名
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             部门/岗位
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             KPI得分
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             能力得分
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             态度得分
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             综合得分
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          >
                             考核周期
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box component="tbody" sx={{ bgcolor: "background.paper" }}>
                         {rankings.map((employee, index) => (
-                          <tr key={employee.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div
-                                className={`text-lg font-bold ${
-                                  index === 0
-                                    ? "text-yellow-500"
-                                    : index === 1
-                                      ? "text-gray-400"
-                                      : index === 2
-                                        ? "text-orange-400"
-                                        : "text-gray-600"
-                                }`}
+                          <Box
+                            component="tr"
+                            key={employee.id}
+                            sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                          >
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 700 }}
                               >
-                                #{employee.rank}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {employee.employee_name}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">
+                                <Typography
+                                  component="span"
+                                  sx={{
+                                    fontSize: "1.125rem",
+                                    fontWeight: 700,
+                                    color:
+                                      index === 0
+                                        ? "yellow.500"
+                                        : index === 1
+                                          ? "grey.400"
+                                          : index === 2
+                                            ? "orange.400"
+                                            : "grey.600",
+                                  }}
+                                >
+                                  #{employee.rank}
+                                </Typography>
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                                {employee.employee_name}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography variant="body2" sx={{ color: "grey.900" }}>
                                 {employee.department}
-                              </div>
-                              <div className="text-sm text-gray-500">
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: "grey.500" }}>
                                 {employee.position}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {employee.kpi_score}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {employee.capability_score}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {employee.attitude_score}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span
-                                className={`text-lg font-bold ${getScoreColor(employee.final_score)}`}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography variant="body2" sx={{ color: "grey.900" }}>
+                                {employee.kpi_score}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography variant="body2" sx={{ color: "grey.900" }}>
+                                {employee.capability_score}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography variant="body2" sx={{ color: "grey.900" }}>
+                                {employee.attitude_score}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 700 }}
+                                className={getScoreColor(employee.final_score)}
                               >
                                 {employee.final_score}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {employee.review_period}
-                            </td>
-                          </tr>
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                                {employee.review_period}
+                              </Typography>
+                            </Box>
+                          </Box>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             )}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

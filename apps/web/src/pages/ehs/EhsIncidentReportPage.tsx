@@ -219,7 +219,7 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "title",
       header: "事件标题",
       cell: ({ row }) => (
-        <span className="font-medium text-slate-900">{row.original.title}</span>
+        <Typography sx={{ fontWeight: 500, color: "slate.900" }}>{row.original.title}</Typography>
       ),
     },
     {
@@ -300,22 +300,22 @@ const EhsIncidentReportPage: React.FC = () => {
       accessorKey: "responsible",
       header: "负责人",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4" />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box component={Users} sx={{ fontSize: 16 }} />
           <span>{row.original.responsible || "-"}</span>
-        </div>
+        </Box>
       ),
     },
     {
       accessorKey: "due_date",
       header: "截止日期",
       cell: ({ row }) => (
-        <span className="flex items-center gap-1">
-          <Calendar className="w-4 h-4" />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box component={Calendar} sx={{ fontSize: 16 }} />
           {row.original.due_date
             ? new Date(row.original.due_date).toLocaleDateString("zh-CN")
             : "-"}
-        </span>
+        </Box>
       ),
     },
     {
@@ -336,21 +336,21 @@ const EhsIncidentReportPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">加载中...</p>
-        </div>
-      </div>
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Box sx={{ width: 48, height: 48, border: 4, borderColor: '#fed7aa', borderTopColor: '#ea580c', borderRadius: '50%', animation: 'spin 1s linear infinite', mx: 'auto', mb: 2 }} />
+          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)' }}>
+      <Box component="header" sx={{ bgcolor: 'background.paper', boxShadow: 1, borderBottom: 1, borderColor: 'divider', position: 'sticky', top: 0, zIndex: 10 }}>
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 64 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Button
                 variant="text"
                 onClick={() => navigate("/ehs")}
@@ -358,72 +358,72 @@ const EhsIncidentReportPage: React.FC = () => {
               >
                 <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">事件报告</h1>
-                <p className="text-xs text-slate-500">Incident Reporting</p>
-              </div>
-            </div>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: 'slate.900' }}>事件报告</Typography>
+                <Typography variant="caption" sx={{ color: 'slate.500' }}>Incident Reporting</Typography>
+              </Box>
+            </Box>
             <Button
               onClick={() => setShowAddModal(true)}
-              className="bg-orange-600 hover:bg-orange-700"
+              sx={{ backgroundColor: '#ea580c', color: 'white', '&:hover': { backgroundColor: '#c2410c' } }}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus sx={{ fontSize: 16, mr: 1 }} />
               上报事件
             </Button>
-          </div>
-        </div>
-      </header>
+          </Box>
+        </Box>
+      </Box>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm">事件总数</p>
-                  <p className="text-3xl font-bold mt-1">{stats.total}</p>
-                </div>
-                <AlertCircle className="w-12 h-12 text-orange-200" />
-              </div>
+      <Box component="main" sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 3, mb: 4 }}>
+          <Card sx={{ background: 'linear-gradient(to bottom right, #f97316, #ef4444)', color: 'white' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography sx={{ color: '#fed7aa', fontSize: 14 }}>事件总数</Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.total}</Typography>
+                </Box>
+                <Box component={AlertCircle} sx={{ fontSize: 48, color: '#fed7aa' }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-yellow-100 text-sm">待处理</p>
-                  <p className="text-3xl font-bold mt-1">{stats.pending}</p>
-                </div>
-                <Clock className="w-12 h-12 text-yellow-200" />
-              </div>
+          <Card sx={{ background: 'linear-gradient(to bottom right, #eab308, #f97316)', color: 'white' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography sx={{ color: '#fef9c3', fontSize: 14 }}>待处理</Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.pending}</Typography>
+                </Box>
+                <Box component={Clock} sx={{ fontSize: 48, color: '#fef9c3' }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-500 to-emerald-500 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm">已解决</p>
-                  <p className="text-3xl font-bold mt-1">{stats.resolved}</p>
-                </div>
-                <CheckCircle className="w-12 h-12 text-green-200" />
-              </div>
+          <Card sx={{ background: 'linear-gradient(to bottom right, #22c55e, #10b981)', color: 'white' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography sx={{ color: '#dcfce7', fontSize: 14 }}>已解决</Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.resolved}</Typography>
+                </Box>
+                <Box component={CheckCircle} sx={{ fontSize: 48, color: '#dcfce7' }} />
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-500 to-pink-500 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-100 text-sm">严重事件</p>
-                  <p className="text-3xl font-bold mt-1">{stats.serious}</p>
-                </div>
-                <AlertTriangle className="w-12 h-12 text-red-200" />
-              </div>
+          <Card sx={{ background: 'linear-gradient(to bottom right, #ef4444, #ec4899)', color: 'white' }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography sx={{ color: '#fee2e2', fontSize: 14 }}>严重事件</Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, mt: 0.5 }}>{stats.serious}</Typography>
+                </Box>
+                <Box component={AlertTriangle} sx={{ fontSize: 48, color: '#fee2e2' }} />
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         <Card>
           <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 2 }}>
@@ -443,9 +443,9 @@ const EhsIncidentReportPage: React.FC = () => {
                 enablePagination={false}
               />
             ) : (
-              <div className="text-center py-12 text-slate-500">
-                <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>暂无事件报告</p>
+              <Box sx={{ textAlign: 'center', py: 6, color: 'slate.500' }}>
+                <Box component={FileText} sx={{ fontSize: 64, color: 'slate.400', mx: 'auto', mb: 2 }} />
+                <Typography>暂无事件报告</Typography>
                 <Button
                   variant="outlined"
                   size="small"
@@ -455,11 +455,11 @@ const EhsIncidentReportPage: React.FC = () => {
                 >
                   上报第一个事件
                 </Button>
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
-      </main>
+      </Box>
 
       <Dialog open={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="lg" fullWidth>
         <DialogTitle>上报事件</DialogTitle>
@@ -686,7 +686,7 @@ const EhsIncidentReportPage: React.FC = () => {
           <Button variant="outlined" onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

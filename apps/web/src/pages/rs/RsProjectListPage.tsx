@@ -225,13 +225,13 @@ const RsProjectListPage: React.FC = () => {
             size="small"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{ input: {
+            InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
                   <SearchIcon />
                 </InputAdornment>
               ),
-             } }}
+             }}
             sx={{ width: 300 }}
           />
           <Button

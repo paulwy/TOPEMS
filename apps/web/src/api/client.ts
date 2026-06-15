@@ -177,6 +177,10 @@ class ApiClient {
       const client = axios.create({
         baseURL,
         timeout,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       });
 
       client.interceptors.request.use(
@@ -184,6 +188,19 @@ class ApiClient {
           const token = localStorage.getItem("token");
           const url = config.url || '';
           const baseURL = config.baseURL || '';
+          
+          // Debug log for hrm requests
+          if (baseURL.includes("/hrm") || url.includes("/hrm") || url.includes("positions")) {
+            console.debug(`[HRM API Request]`, {
+              url: `${baseURL}${url}`,
+              method: config.method,
+              tokenExists: !!token,
+              hasAuthHeader: !!config.headers["Authorization"],
+              isPublicPath: isPublicPath(url),
+              params: config.params,
+              data: config.data
+            });
+          }
           
           // Debug log for notification requests
           if (baseURL.includes("notification") || url.includes("/api/v1/notifications")) {
@@ -217,9 +234,36 @@ class ApiClient {
 
       client.interceptors.response.use(
         (response: AxiosResponse) => {
+          // Debug log for hrm responses
+          const url = response.config?.url || '';
+          const baseURL = response.config?.baseURL || '';
+          if (baseURL.includes("/hrm") || url.includes("/hrm") || url.includes("positions")) {
+            console.debug(`[HRM API Response]`, {
+              url: `${baseURL}${url}`,
+              status: response.status,
+              statusText: response.statusText,
+              data: response.data
+            });
+          }
           return response.data;
         },
         (error) => {
+          // Debug log for hrm errors
+          const url = error.config?.url || '';
+          const baseURL = error.config?.baseURL || '';
+          if (baseURL.includes("/hrm") || url.includes("/hrm") || url.includes("positions")) {
+            console.error(`[HRM API Error]`, {
+              url: `${baseURL}${url}`,
+              method: error.config?.method,
+              status: error.response?.status,
+              statusText: error.response?.statusText,
+              data: error.response?.data,
+              headers: error.response?.headers,
+              errorCode: error.code,
+              errorMessage: error.message
+            });
+          }
+          
           // 处理请求取消或中止的情况
           if (
             error.code === "ERR_CANCELED" ||

@@ -6,6 +6,7 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import {
   FileText,
   GitBranch,
@@ -17,7 +18,6 @@ import {
   Building,
   Folder,
   BarChart3,
-  Box,
   MapPin,
   Smartphone,
   MessageSquare,
@@ -248,35 +248,35 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         title: "成功登录系统",
         type: "系统",
         time: "刚刚",
-        icon: <User className="w-4 h-4" />,
+        icon: <User size={16} />,
       },
       {
         id: "2",
         title: '上传文档 "项目报告.pdf"',
         type: "文档",
         time: "5分钟前",
-        icon: <FileText className="w-4 h-4" />,
+        icon: <FileText size={16} />,
       },
       {
         id: "3",
         title: "审批通过采购申请",
         type: "工作流",
         time: "15分钟前",
-        icon: <GitBranch className="w-4 h-4" />,
+        icon: <GitBranch size={16} />,
       },
       {
         id: "4",
         title: '创建新文件夹 "研发资料"',
         type: "文档",
         time: "1小时前",
-        icon: <Folder className="w-4 h-4" />,
+        icon: <Folder size={16} />,
       },
       {
         id: "5",
         title: "完成安全培训课程",
         type: "培训",
         time: "2小时前",
-        icon: <BookOpen className="w-4 h-4" />,
+        icon: <BookOpen size={16} />,
       },
     ];
     setRecentActivities(activities);
@@ -698,9 +698,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-slate-600">加载中...</div>
-      </div>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography sx={{ fontSize: "1.125rem", color: "grey.600" }}>
+          加载中...
+        </Typography>
+      </Box>
     );
   }
 
@@ -715,7 +724,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
+      }}
+    >
       <MobileHeader
         title="TOPEMS"
         onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -728,55 +742,129 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         onNavigate={navigate}
       />
 
-      <div className="desktop-only">
+      <Box className="desktop-only">
         <DashboardHeader onLogout={handleLogout} />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mobile-only mb-6">
-            <div className="grid grid-cols-4 gap-2 mb-4">
+        <Box
+          component="main"
+          sx={{
+            maxWidth: "1280px",
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 4,
+          }}
+        >
+          <Box className="mobile-only" sx={{ mb: 3 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 1,
+                mb: 2,
+              }}
+            >
               {coreModules.slice(0, 4).map((item) => (
-                <div
+                <Box
                   key={item.title}
-                  className="bg-white rounded-lg p-3 cursor-pointer"
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 1.5,
+                    p: 1.5,
+                    cursor: "pointer",
+                  }}
                   onClick={() => navigate(item.path)}
                 >
-                  <div
-                    className={`w-10 h-10 ${item.color} rounded-lg flex items-center justify-center mb-2`}
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: item.color.replace("bg-", ""),
+                      borderRadius: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mb: 1,
+                    }}
                   >
-                    <item.icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h4 className="font-medium text-slate-900 text-sm">
+                    <item.icon size={20} color="#fff" />
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      color: "grey.900",
+                      fontSize: "0.875rem",
+                    }}
+                  >
                     {item.title}
-                  </h4>
-                </div>
+                  </Typography>
+                </Box>
               ))}
-            </div>
+            </Box>
 
-            <h3 className="text-lg font-semibold text-slate-900 mb-3">
+            <Typography
+              sx={{
+                fontSize: "1.125rem",
+                fontWeight: 600,
+                color: "grey.900",
+                mb: 1.5,
+              }}
+            >
               快速操作
-            </h3>
-            <div className="grid grid-cols-4 gap-2 mb-6">
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 1,
+                mb: 3,
+              }}
+            >
               {defaultQuickActions.map((action) => {
                 const Icon = action.icon;
                 return (
-                  <button
+                  <Box
                     key={action.label}
+                    component="button"
                     onClick={() => handleQuickAccess(action.path)}
-                    className="flex flex-col items-center p-2 bg-white rounded-lg"
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      p: 1,
+                      bgcolor: "background.paper",
+                      borderRadius: 1,
+                      border: "none",
+                      cursor: "pointer",
+                    }}
                   >
-                    <Icon className="w-5 h-5 text-slate-600 mb-1" />
-                    <span className="text-xs text-slate-700">
+                    <Icon size={20} color="#475569" />
+                    <Typography
+                      sx={{ fontSize: "0.75rem", color: "grey.700" }}
+                    >
                       {action.label}
-                    </span>
-                  </button>
+                    </Typography>
+                  </Box>
                 );
               })}
-            </div>
+            </Box>
 
-            <h3 className="text-lg font-semibold text-slate-900 mb-3">
+            <Typography
+              sx={{
+                fontSize: "1.125rem",
+                fontWeight: 600,
+                color: "grey.900",
+                mb: 1.5,
+              }}
+            >
               服务状态
-            </h3>
-            <div className="bg-white rounded-xl p-4">
+            </Typography>
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                borderRadius: 3,
+                p: 2,
+              }}
+            >
               {[
                 { name: "身份认证", status: serviceStatuses.iam },
                 { name: "研发管理", status: serviceStatuses.rs },
@@ -789,28 +877,52 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 { name: "通知服务", status: serviceStatuses.notification },
                 { name: "报表服务", status: serviceStatuses.report },
                 { name: "移动服务", status: serviceStatuses.mobile },
-              ].map((service) => (
-                <div
+              ].map((service, index) => (
+                <Box
                   key={service.name}
-                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    py: 1,
+                    borderBottom:
+                      index < 10 ? "1px solid" : "none",
+                    borderColor: "grey.100",
+                  }}
                 >
-                  <span className="text-sm text-slate-700">{service.name}</span>
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full ${service.status ? "bg-green-500" : "bg-red-500"}`}
+                  <Typography
+                    sx={{ fontSize: "0.875rem", color: "grey.700" }}
+                  >
+                    {service.name}
+                  </Typography>
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      bgcolor: service.status ? "green.500" : "red.500",
+                    }}
                   />
-                </div>
+                </Box>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              sx={{
+                fontSize: "1.875rem",
+                fontWeight: 700,
+                color: "grey.900",
+                mb: 1,
+              }}
+            >
               👋 欢迎回来，{user?.full_name || user?.username || "用户"}！
-            </h2>
-            <p className="text-slate-600">
+            </Typography>
+            <Typography sx={{ color: "grey.600" }}>
               {getGreeting()}，今天有 {defaultQuickActions.length} 个待处理事项
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
           <DashboardQuickActions
             quickActions={defaultQuickActions}
@@ -818,37 +930,51 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             onQuickAccess={handleQuickAccess}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+              gap: 3,
+              mb: 4,
+            }}
+          >
             <MetricCard
               title="在线服务"
               value={String(onlineServices)}
-              icon={<Activity className="w-6 h-6" />}
+              icon={<Activity size={24} />}
               color="green"
               change={onlineServices > 5 ? 10 : -5}
             />
             <MetricCard
               title="文件数量"
               value={String(stats.fileCount)}
-              icon={<FileText className="w-6 h-6" />}
+              icon={<FileText size={24} />}
               color="purple"
               change={8}
             />
             <MetricCard
               title="工作流"
               value={String(stats.workflowCount)}
-              icon={<GitBranch className="w-6 h-6" />}
+              icon={<GitBranch size={24} />}
               color="orange"
               change={-3}
             />
             <MetricCard
               title="待处理"
               value={String(stats.notificationCount)}
-              icon={<Clock className="w-6 h-6" />}
+              icon={<Clock size={24} />}
               color="blue"
             />
-          </div>
+          </Box>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+              gap: 3,
+              mb: 4,
+            }}
+          >
             <StatsChart
               type="pie"
               title="业务模块分布"
@@ -882,73 +1008,211 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
               }
               yKey="value"
             />
-          </div>
+          </Box>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">供应商</p>
-                  <p className="text-xl font-bold text-slate-900">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+              gap: 2,
+              mb: 4,
+            }}
+          >
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                borderRadius: 3,
+                boxShadow: 1,
+                p: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "indigo.100",
+                    borderRadius: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Shield size={20} color="#4f46e5" />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "0.875rem", color: "grey.600" }}>
+                    供应商
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "1.25rem",
+                      fontWeight: 700,
+                      color: "grey.900",
+                    }}
+                  >
                     {moduleStats.srm.total}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center text-xs">
-                <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
-                <span className="text-green-600">
+                  </Typography>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  mt: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: "0.75rem",
+                }}
+              >
+                <CheckCircle size={12} color="#22c55e" />
+                <Typography
+                  sx={{
+                    ml: 0.5,
+                    fontSize: "0.75rem",
+                    color: "green.600",
+                  }}
+                >
                   {moduleStats.srm.active} 活跃
-                </span>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">
-                  <ClipboardList className="w-5 h-5 text-cyan-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">实验室</p>
-                  <p className="text-xl font-bold text-slate-900">
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                borderRadius: 3,
+                boxShadow: 1,
+                p: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "cyan.100",
+                    borderRadius: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ClipboardList size={20} color="#0891b2" />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "0.875rem", color: "grey.600" }}>
+                    实验室
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "1.25rem",
+                      fontWeight: 700,
+                      color: "grey.900",
+                    }}
+                  >
                     {moduleStats.lims.total}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center text-xs">
-                <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
-                <span className="text-green-600">
+                  </Typography>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  mt: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: "0.75rem",
+                }}
+              >
+                <CheckCircle size={12} color="#22c55e" />
+                <Typography
+                  sx={{
+                    ml: 0.5,
+                    fontSize: "0.75rem",
+                    color: "green.600",
+                  }}
+                >
                   {moduleStats.lims.active} 活跃
-                </span>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <FlaskConical className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">研发</p>
-                  <p className="text-xl font-bold text-slate-900">
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: "background.paper",
+                borderRadius: 3,
+                boxShadow: 1,
+                p: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor: "orange.100",
+                    borderRadius: 1.5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <FlaskConical size={20} color="#ea580c" />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "0.875rem", color: "grey.600" }}>
+                    研发
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "1.25rem",
+                      fontWeight: 700,
+                      color: "grey.900",
+                    }}
+                  >
                     {moduleStats.rs.total}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-2 flex items-center text-xs">
-                <CheckCircle className="w-3 h-3 text-green-500 mr-1" />
-                <span className="text-green-600">
+                  </Typography>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  mt: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: "0.75rem",
+                }}
+              >
+                <CheckCircle size={12} color="#22c55e" />
+                <Typography
+                  sx={{
+                    ml: 0.5,
+                    fontSize: "0.75rem",
+                    color: "green.600",
+                  }}
+                >
                   {moduleStats.rs.active} 活跃
-                </span>
-              </div>
-            </div>
-          </div>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
 
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              sx={{
+                fontSize: "1.25rem",
+                fontWeight: 600,
+                color: "grey.900",
+                mb: 2,
+              }}
+            >
               🚀 核心功能
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                },
+                gap: 3,
+              }}
+            >
               {coreModules.map((item) => (
                 <ModuleCard
                   key={item.title}
@@ -957,14 +1221,31 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   size="large"
                 />
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-slate-900 mb-4">
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              sx={{
+                fontSize: "1.25rem",
+                fontWeight: 600,
+                color: "grey.900",
+                mb: 2,
+              }}
+            >
               📊 业务模块
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(4, 1fr)",
+                },
+                gap: 3,
+              }}
+            >
               {businessModules.map((item) => (
                 <ModuleCard
                   key={item.title}
@@ -973,15 +1254,32 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                   size="small"
                 />
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {systemServicesModules.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-slate-900 mb-4">
+            <Box sx={{ mb: 4 }}>
+              <Typography
+                sx={{
+                  fontSize: "1.25rem",
+                  fontWeight: 600,
+                  color: "grey.900",
+                  mb: 2,
+                }}
+              >
                 ⚙️ 系统服务
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    md: "repeat(2, 1fr)",
+                    lg: "repeat(4, 1fr)",
+                  },
+                  gap: 3,
+                }}
+              >
                 {systemServicesModules.map((item) => (
                   <ModuleCard
                     key={item.title}
@@ -990,8 +1288,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                     size="medium"
                   />
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
 
           <ServiceStatusMonitor
@@ -1001,15 +1299,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
           <RecentActivities activities={recentActivities} />
 
-          <div className="mt-8 text-center text-sm text-slate-500">
-            <p>TOPEMS v2.0 | 化工新材料企业数字化平台</p>
-            <p className="mt-1">© 2026 TOPEMS Team. All rights reserved.</p>
-          </div>
-        </main>
-      </div>
+          <Box
+            sx={{
+              mt: 4,
+              textAlign: "center",
+              fontSize: "0.875rem",
+              color: "grey.500",
+            }}
+          >
+            <Typography sx={{ color: "grey.500" }}>
+              TOPEMS v2.0 | 化工新材料企业数字化平台
+            </Typography>
+            <Typography sx={{ color: "grey.500", mt: 0.5 }}>
+              © 2026 TOPEMS Team. All rights reserved.
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
 
       <MobileNav currentPage={currentPage} onNavigate={navigate} />
-    </div>
+    </Box>
   );
 };
 

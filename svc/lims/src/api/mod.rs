@@ -14,6 +14,7 @@ pub mod openapi;
 pub mod reagent;
 pub mod rs_integration;
 pub mod sample;
+pub mod statistics;
 
 #[derive(Clone)]
 pub struct ApiState {

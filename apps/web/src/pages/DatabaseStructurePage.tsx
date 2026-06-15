@@ -6,14 +6,48 @@ import {
   Search,
   Table,
   Plus,
-  Edit,
   Trash2,
   AlertTriangle,
   CheckCircle,
   Clock,
-  FileText,
   Eye,
+  FileCode,
 } from "lucide-react";
+import {
+  Box,
+  Container,
+  Paper,
+  Typography,
+  Button,
+  IconButton,
+  TextField,
+  Tabs,
+  Tab,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Snackbar,
+  Alert,
+  MenuItem,
+  InputAdornment,
+  Stack,
+  Tooltip,
+  Table as MuiTable,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  CircularProgress,
+  FormControlLabel,
+  Checkbox as MuiCheckbox,
+  Select,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
 import {
   dbStructureApi,
   type TableInfo,
@@ -64,6 +98,7 @@ const DatabaseStructurePage: React.FC = () => {
     if (selectedTable && activeTab === "structure") {
       loadTableDetail(selectedTable.table_name);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTable?.table_name, activeTab]);
 
   const loadTables = async () => {
@@ -107,7 +142,10 @@ const DatabaseStructurePage: React.FC = () => {
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleNotificationClose = () => {
+    setNotification(null);
   };
 
   const handlePreviewAddColumn = async () => {
@@ -203,475 +241,823 @@ const DatabaseStructurePage: React.FC = () => {
     drop_column: "删除字段",
   };
 
+  const getChangeTypeColor = (type: string) => {
+    switch (type) {
+      case "add_column":
+        return { bgcolor: "#dcfce7", color: "#15803d" };
+      case "drop_column":
+        return { bgcolor: "#fee2e2", color: "#b91c1c" };
+      default:
+        return { bgcolor: "#fef3c7", color: "#b45309" };
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-4">
-            <button
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f8fafc", pb: 6 }}>
+      {/* 顶部 Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 0,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
+        }}
+      >
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <IconButton
               onClick={() => navigate("/dashboard")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              sx={{
+                "&:hover": { bgcolor: "action.hover" },
+              }}
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Database className="w-7 h-7 mr-3 text-blue-600" />
+              <ChevronLeft size={20} />
+            </IconButton>
+            <Box>
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
+              >
+                <Database size={28} color="#2563eb" />
                 数据库结构管理
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 查看和管理数据库表结构，支持添加、修改、删除字段
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Typography>
+            </Box>
+          </Stack>
+        </Container>
+      </Paper>
 
-      {notification && (
-        <div
-          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-            notification.type === "success"
-              ? "bg-green-500 text-white"
-              : "bg-red-500 text-white"
-          }`}
-        >
-          {notification.message}
-        </div>
-      )}
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-6">
-          <div className="w-72 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="搜索表名..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Grid container spacing={3}>
+          {/* 左侧表列表 */}
+          <Grid item xs={12} md={3} lg={2.4}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                position: { md: "sticky" },
+                top: { md: 16 },
+              }}
+            >
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="搜索表名..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ mb: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={16} color="#94a3b8" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
 
               {loading ? (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-                </div>
+                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                  <CircularProgress size={24} />
+                </Box>
               ) : (
-                <div className="space-y-1 max-h-[600px] overflow-y-auto">
-                  {filteredTables.map((table) => (
-                    <div
-                      key={table.table_name}
-                      onClick={() => {
-                        setActiveTab("structure");
-                        setSelectedTable({
-                          table_name: table.table_name,
-                          schema_name: "public",
-                          columns: [],
-                        });
-                      }}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedTable?.table_name === table.table_name
-                          ? "bg-blue-50 border border-blue-200"
-                          : "hover:bg-gray-50 border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Table className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">
-                          {table.table_name}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <Box
+                  sx={{
+                    maxHeight: 600,
+                    overflowY: "auto",
+                    "&::-webkit-scrollbar": {
+                      width: 6,
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      bgcolor: "#cbd5e1",
+                      borderRadius: 3,
+                    },
+                  }}
+                >
+                  <Stack spacing={0.5}>
+                    {filteredTables.map((table) => {
+                      const isSelected =
+                        selectedTable?.table_name === table.table_name;
+                      return (
+                        <Box
+                          key={table.table_name}
+                          onClick={() => {
+                            setActiveTab("structure");
+                            setSelectedTable({
+                              table_name: table.table_name,
+                              schema_name: "public",
+                              columns: [],
+                            });
+                          }}
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 1.5,
+                            cursor: "pointer",
+                            transition: "all 0.15s",
+                            border: "1px solid",
+                            borderColor: isSelected
+                              ? "#2563eb"
+                              : "transparent",
+                            bgcolor: isSelected ? "#eff6ff" : "transparent",
+                            "&:hover": {
+                              bgcolor: isSelected ? "#eff6ff" : "#f1f5f9",
+                            },
+                          }}
+                        >
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                          >
+                            <Table
+                              size={16}
+                              color={isSelected ? "#2563eb" : "#94a3b8"}
+                            />
+                            <Typography
+                              variant="body2"
+                              fontWeight={isSelected ? 600 : 500}
+                              sx={{
+                                color: isSelected
+                                  ? "#1d4ed8"
+                                  : "text.primary",
+                                wordBreak: "break-all",
+                              }}
+                            >
+                              {table.table_name}
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </Box>
               )}
-            </div>
-          </div>
+            </Paper>
+          </Grid>
 
-          <div className="flex-1">
+          {/* 右侧详情区 */}
+          <Grid item xs={12} md={9} lg={9.6}>
             {selectedTable ? (
-              <div className="bg-white rounded-lg shadow-sm">
-                <div className="border-b border-gray-200">
-                  <nav className="flex space-x-4 px-6">
-                    <button
-                      onClick={() => setActiveTab("structure")}
-                      className={`py-3 text-sm font-medium border-b-2 transition-colors ${
-                        activeTab === "structure"
-                          ? "text-blue-600 border-blue-600"
-                          : "text-gray-500 border-transparent hover:text-gray-700"
-                      }`}
-                    >
-                      表结构
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("changes")}
-                      className={`py-3 text-sm font-medium border-b-2 transition-colors ${
-                        activeTab === "changes"
-                          ? "text-blue-600 border-blue-600"
-                          : "text-gray-500 border-transparent hover:text-gray-700"
-                      }`}
-                    >
-                      变更历史
-                    </button>
-                  </nav>
-                </div>
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Tab 导航 */}
+                <Box
+                  sx={{
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                    px: 3,
+                  }}
+                >
+                  <Tabs
+                    value={activeTab}
+                    onChange={(_, v) => setActiveTab(v)}
+                    sx={{ minHeight: 48 }}
+                  >
+                    <Tab
+                      value="structure"
+                      label="表结构"
+                      sx={{ minHeight: 48, fontWeight: 500 }}
+                    />
+                    <Tab
+                      value="changes"
+                      label="变更历史"
+                      sx={{ minHeight: 48, fontWeight: 500 }}
+                    />
+                  </Tabs>
+                </Box>
 
                 {activeTab === "structure" ? (
-                  <div>
-                    <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                      <div>
-                        <h2 className="text-lg font-semibold text-gray-900">
+                  <Box>
+                    {/* 表头信息 */}
+                    <Box
+                      sx={{
+                        p: 2.5,
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: 1.5,
+                      }}
+                    >
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          fontWeight={600}
+                          sx={{
+                            fontFamily:
+                              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                          }}
+                        >
                           {selectedTable.table_name}
-                        </h2>
-                        <p className="text-sm text-gray-500">
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
                           {selectedTable.columns.length} 个字段 |{" "}
                           {selectedTable.row_count?.toLocaleString() || "-"}{" "}
                           行数据
-                        </p>
-                      </div>
-                      <button
+                        </Typography>
+                      </Box>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<Plus size={16} />}
                         onClick={() => setShowAddColumnModal(true)}
-                        className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        sx={{
+                          bgcolor: "#2563eb",
+                          "&:hover": { bgcolor: "#1d4ed8" },
+                          textTransform: "none",
+                          borderRadius: 1.5,
+                        }}
                       >
-                        <Plus className="w-4 h-4 mr-1" />
                         添加字段
-                      </button>
-                    </div>
+                      </Button>
+                    </Box>
 
-                    <div className="p-4">
+                    {/* 字段列表 */}
+                    <Box sx={{ p: 2 }}>
                       {detailLoading ? (
-                        <div className="text-center py-8">
-                          <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-                        </div>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            py: 6,
+                          }}
+                        >
+                          <CircularProgress size={28} />
+                        </Box>
                       ) : (
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-gray-200">
-                              <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                                #
-                              </th>
-                              <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                                字段名
-                              </th>
-                              <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                                类型
-                              </th>
-                              <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                                可空
-                              </th>
-                              <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                                默认值
-                              </th>
-                              <th className="text-right py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                                操作
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedTable.columns.map((col) => (
-                              <tr
-                                key={col.column_name}
-                                className="border-b border-gray-100 hover:bg-gray-50"
-                              >
-                                <td className="py-3 px-3 text-sm text-gray-400">
-                                  {col.ordinal_position}
-                                </td>
-                                <td className="py-3 px-3 text-sm font-mono text-gray-900">
-                                  {col.column_name}
-                                </td>
-                                <td className="py-3 px-3 text-sm text-gray-600">
-                                  {getDataTypeDisplay(col)}
-                                </td>
-                                <td className="py-3 px-3">
-                                  <span
-                                    className={`px-2 py-1 rounded text-xs ${
-                                      col.is_nullable === "YES"
-                                        ? "bg-yellow-100 text-yellow-700"
-                                        : "bg-green-100 text-green-700"
-                                    }`}
-                                  >
-                                    {col.is_nullable === "YES"
-                                      ? "NULL"
-                                      : "NOT NULL"}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-3 text-sm text-gray-600 font-mono">
-                                  {col.column_default || "-"}
-                                </td>
-                                <td className="py-3 px-3 text-right">
-                                  <button
-                                    onClick={() =>
-                                      handleDropColumn(col.column_name)
-                                    }
-                                    className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                                    title="删除字段"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4">
-                    {dbChanges.length === 0 ? (
-                      <div className="text-center py-12">
-                        <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-500">暂无变更历史</p>
-                      </div>
-                    ) : (
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              时间
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              类型
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              表名
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              字段
-                            </th>
-                            <th className="text-left py-2 px-3 text-xs font-medium text-gray-500 uppercase">
-                              SQL
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dbChanges.map((change) => (
-                            <tr
-                              key={change.id}
-                              className="border-b border-gray-100 hover:bg-gray-50"
-                            >
-                              <td className="py-3 px-3 text-sm text-gray-600">
-                                {new Date(change.executed_at).toLocaleString()}
-                              </td>
-                              <td className="py-3 px-3">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs ${
-                                    change.change_type === "add_column"
-                                      ? "bg-green-100 text-green-700"
-                                      : change.change_type === "drop_column"
-                                        ? "bg-red-100 text-red-700"
-                                        : "bg-yellow-100 text-yellow-700"
-                                  }`}
+                        <TableContainer>
+                          <MuiTable size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    textTransform: "uppercase",
+                                  }}
                                 >
-                                  {changeTypeLabels[change.change_type] ||
-                                    change.change_type}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 text-sm font-mono text-gray-900">
-                                {change.table_name}
-                              </td>
-                              <td className="py-3 px-3 text-sm text-gray-600">
-                                {change.column_name || "-"}
-                              </td>
-                              <td className="py-3 px-3 text-sm text-gray-600 font-mono max-w-xs truncate">
-                                {change.sql_statement}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                                  #
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  字段名
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  类型
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  可空
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  默认值
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: "0.75rem",
+                                    color: "text.secondary",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  操作
+                                </TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {selectedTable.columns.map((col) => (
+                                <TableRow
+                                  key={col.column_name}
+                                  sx={{
+                                    "&:hover": { bgcolor: "#f8fafc" },
+                                  }}
+                                >
+                                  <TableCell
+                                    sx={{
+                                      color: "text.secondary",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    {col.ordinal_position}
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      fontFamily:
+                                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                                      fontSize: "0.875rem",
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {col.column_name}
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      fontSize: "0.875rem",
+                                      color: "text.secondary",
+                                    }}
+                                  >
+                                    {getDataTypeDisplay(col)}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Chip
+                                      label={
+                                        col.is_nullable === "YES"
+                                          ? "NULL"
+                                          : "NOT NULL"
+                                      }
+                                      size="small"
+                                      sx={{
+                                        bgcolor:
+                                          col.is_nullable === "YES"
+                                            ? "#fef3c7"
+                                            : "#dcfce7",
+                                        color:
+                                          col.is_nullable === "YES"
+                                            ? "#b45309"
+                                            : "#15803d",
+                                        fontWeight: 500,
+                                        fontSize: "0.75rem",
+                                      }}
+                                    />
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      fontSize: "0.875rem",
+                                      color: "text.secondary",
+                                      fontFamily:
+                                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                                    }}
+                                  >
+                                    {col.column_default || "-"}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Tooltip title="删除字段">
+                                      <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={() =>
+                                          handleDropColumn(col.column_name)
+                                        }
+                                        sx={{
+                                          "&:hover": { bgcolor: "#fee2e2" },
+                                        }}
+                                      >
+                                        <Trash2 size={16} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </MuiTable>
+                        </TableContainer>
+                      )}
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box sx={{ p: 2 }}>
+                    {dbChanges.length === 0 ? (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          py: 8,
+                        }}
+                      >
+                        <Clock size={48} color="#94a3b8" />
+                        <Typography
+                          color="text.secondary"
+                          sx={{ mt: 2 }}
+                        >
+                          暂无变更历史
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <TableContainer>
+                        <MuiTable size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                时间
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                类型
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                表名
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                字段
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                SQL
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {dbChanges.map((change) => {
+                              const style = getChangeTypeColor(
+                                change.change_type,
+                              );
+                              return (
+                                <TableRow
+                                  key={change.id}
+                                  sx={{
+                                    "&:hover": { bgcolor: "#f8fafc" },
+                                  }}
+                                >
+                                  <TableCell
+                                    sx={{
+                                      fontSize: "0.875rem",
+                                      color: "text.secondary",
+                                    }}
+                                  >
+                                    {new Date(change.executed_at).toLocaleString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Chip
+                                      label={
+                                        changeTypeLabels[change.change_type] ||
+                                        change.change_type
+                                      }
+                                      size="small"
+                                      sx={{
+                                        bgcolor: style.bgcolor,
+                                        color: style.color,
+                                        fontWeight: 500,
+                                        fontSize: "0.75rem",
+                                      }}
+                                    />
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      fontFamily:
+                                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                                      fontSize: "0.875rem",
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {change.table_name}
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      fontSize: "0.875rem",
+                                      color: "text.secondary",
+                                    }}
+                                  >
+                                    {change.column_name || "-"}
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      fontSize: "0.875rem",
+                                      color: "text.secondary",
+                                      fontFamily:
+                                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                                      maxWidth: 320,
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {change.sql_statement}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </MuiTable>
+                      </TableContainer>
                     )}
-                  </div>
+                  </Box>
                 )}
-              </div>
+              </Paper>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-                <Database className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  p: 8,
+                  textAlign: "center",
+                }}
+              >
+                <Database size={64} color="#94a3b8" style={{ marginBottom: 16 }} />
+                <Typography variant="h6" fontWeight={500} sx={{ mb: 1 }}>
                   请选择数据表
-                </h3>
-                <p className="text-gray-500">
+                </Typography>
+                <Typography color="text.secondary">
                   从左侧列表选择一个表查看和管理结构
-                </p>
-              </div>
+                </Typography>
+              </Paper>
             )}
-          </div>
-        </div>
-      </div>
+          </Grid>
+        </Grid>
+      </Container>
 
-      {showAddColumnModal && selectedTable && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                添加新字段
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    字段名 *
-                  </label>
-                  <input
-                    type="text"
-                    value={newColumn.column_name}
-                    onChange={(e) =>
-                      setNewColumn({
-                        ...newColumn,
-                        column_name: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="如: new_field"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    数据类型
-                  </label>
-                  <select
-                    value={newColumn.data_type}
-                    onChange={(e) =>
-                      setNewColumn({ ...newColumn, data_type: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="VARCHAR">VARCHAR</option>
-                    <option value="TEXT">TEXT</option>
-                    <option value="INTEGER">INTEGER</option>
-                    <option value="BIGINT">BIGINT</option>
-                    <option value="NUMERIC">NUMERIC</option>
-                    <option value="BOOLEAN">BOOLEAN</option>
-                    <option value="DATE">DATE</option>
-                    <option value="TIMESTAMP">TIMESTAMP</option>
-                    <option value="TIMESTAMPTZ">TIMESTAMPTZ</option>
-                    <option value="UUID">UUID</option>
-                    <option value="JSONB">JSONB</option>
-                  </select>
-                </div>
-                {newColumn.data_type === "VARCHAR" && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      最大长度
-                    </label>
-                    <input
-                      type="number"
-                      value={newColumn.max_length || 255}
-                      onChange={(e) =>
-                        setNewColumn({
-                          ...newColumn,
-                          max_length: parseInt(e.target.value),
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                )}
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="nullable"
-                    checked={newColumn.is_nullable}
-                    onChange={(e) =>
-                      setNewColumn({
-                        ...newColumn,
-                        is_nullable: e.target.checked,
-                      })
-                    }
-                    className="rounded border-gray-300"
-                  />
-                  <label htmlFor="nullable" className="text-sm text-gray-700">
-                    允许为空 (NULL)
-                  </label>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    默认值
-                  </label>
-                  <input
-                    type="text"
-                    value={newColumn.default_value || ""}
-                    onChange={(e) =>
-                      setNewColumn({
-                        ...newColumn,
-                        default_value: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="如: 'active' 或 NOW()"
-                  />
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowAddColumnModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handlePreviewAddColumn}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  预览 SQL
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 添加字段对话框 */}
+      <Dialog
+        open={showAddColumnModal}
+        onClose={() => setShowAddColumnModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>添加新字段</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ pt: 1 }}>
+            <TextField
+              label="字段名"
+              required
+              fullWidth
+              size="small"
+              value={newColumn.column_name}
+              onChange={(e) =>
+                setNewColumn({ ...newColumn, column_name: e.target.value })
+              }
+              placeholder="如: new_field"
+            />
+            <FormControl fullWidth size="small">
+              <InputLabel>数据类型</InputLabel>
+              <Select
+                value={newColumn.data_type}
+                label="数据类型"
+                onChange={(e) =>
+                  setNewColumn({ ...newColumn, data_type: e.target.value })
+                }
+              >
+                <MenuItem value="VARCHAR">VARCHAR</MenuItem>
+                <MenuItem value="TEXT">TEXT</MenuItem>
+                <MenuItem value="INTEGER">INTEGER</MenuItem>
+                <MenuItem value="BIGINT">BIGINT</MenuItem>
+                <MenuItem value="NUMERIC">NUMERIC</MenuItem>
+                <MenuItem value="BOOLEAN">BOOLEAN</MenuItem>
+                <MenuItem value="DATE">DATE</MenuItem>
+                <MenuItem value="TIMESTAMP">TIMESTAMP</MenuItem>
+                <MenuItem value="TIMESTAMPTZ">TIMESTAMPTZ</MenuItem>
+                <MenuItem value="UUID">UUID</MenuItem>
+                <MenuItem value="JSONB">JSONB</MenuItem>
+              </Select>
+            </FormControl>
+            {newColumn.data_type === "VARCHAR" && (
+              <TextField
+                label="最大长度"
+                type="number"
+                fullWidth
+                size="small"
+                value={newColumn.max_length || 255}
+                onChange={(e) =>
+                  setNewColumn({
+                    ...newColumn,
+                    max_length: parseInt(e.target.value),
+                  })
+                }
+              />
+            )}
+            <FormControlLabel
+              control={
+                <MuiCheckbox
+                  checked={newColumn.is_nullable}
+                  onChange={(e) =>
+                    setNewColumn({
+                      ...newColumn,
+                      is_nullable: e.target.checked,
+                    })
+                  }
+                />
+              }
+              label="允许为空 (NULL)"
+            />
+            <TextField
+              label="默认值"
+              fullWidth
+              size="small"
+              value={newColumn.default_value || ""}
+              onChange={(e) =>
+                setNewColumn({ ...newColumn, default_value: e.target.value })
+              }
+              placeholder="如: 'active' 或 NOW()"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setShowAddColumnModal(false)}
+            sx={{
+              textTransform: "none",
+              color: "text.secondary",
+              bgcolor: "#f1f5f9",
+              "&:hover": { bgcolor: "#e2e8f0" },
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handlePreviewAddColumn}
+            sx={{
+              textTransform: "none",
+              bgcolor: "#2563eb",
+              "&:hover": { bgcolor: "#1d4ed8" },
+            }}
+          >
+            预览 SQL
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {showPreviewModal && sqlPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Eye className="w-5 h-5 mr-2" />
-                SQL 预览
-              </h3>
+      {/* SQL 预览对话框 */}
+      <Dialog
+        open={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Eye size={20} />
+            <Typography variant="h6" fontWeight={600}>
+              SQL 预览
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          {sqlPreview?.warning && (
+            <Alert
+              severity="warning"
+              icon={<AlertTriangle size={20} />}
+              sx={{ mb: 2 }}
+            >
+              {sqlPreview.warning}
+            </Alert>
+          )}
 
-              {sqlPreview.warning && (
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-2">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-yellow-800">
-                    {sqlPreview.warning}
-                  </span>
-                </div>
-              )}
+          <Paper
+            elevation={0}
+            sx={{
+              bgcolor: "#0f172a",
+              p: 2,
+              borderRadius: 1.5,
+              mb: 2,
+              overflow: "auto",
+              maxHeight: 320,
+            }}
+          >
+            <Stack direction="row" alignItems="flex-start" spacing={1}>
+              <FileCode size={16} color="#4ade80" style={{ marginTop: 2 }} />
+              <Box
+                component="pre"
+                sx={{
+                  m: 0,
+                  fontSize: "0.875rem",
+                  color: "#4ade80",
+                  fontFamily:
+                    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                  flex: 1,
+                }}
+              >
+                {sqlPreview?.sql}
+              </Box>
+            </Stack>
+          </Paper>
 
-              <div className="bg-gray-900 rounded-lg p-4 mb-4">
-                <pre className="text-sm text-green-400 font-mono whitespace-pre-wrap">
-                  {sqlPreview.sql}
-                </pre>
-              </div>
+          <Alert severity="info" sx={{ mb: 1 }}>
+            此操作将修改表结构并记录到变更历史。确定要执行吗？
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setShowPreviewModal(false)}
+            sx={{
+              textTransform: "none",
+              color: "text.secondary",
+              bgcolor: "#f1f5f9",
+              "&:hover": { bgcolor: "#e2e8f0" },
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleExecuteAddColumn}
+            startIcon={<CheckCircle size={16} />}
+            sx={{
+              textTransform: "none",
+              bgcolor: "#dc2626",
+              "&:hover": { bgcolor: "#b91c1c" },
+            }}
+          >
+            确认执行
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-                <p className="text-sm text-blue-800">
-                  此操作将修改表结构并记录到变更历史。确定要执行吗？
-                </p>
-              </div>
-
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setShowPreviewModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleExecuteAddColumn}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  确认执行
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      {/* 通知 Snackbar */}
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={3000}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleNotificationClose}
+          severity={notification?.type || "info"}
+          variant="filled"
+          sx={{ borderRadius: 1.5 }}
+        >
+          {notification?.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 

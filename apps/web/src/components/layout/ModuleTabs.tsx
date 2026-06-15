@@ -1,0 +1,393 @@
+import React, { useState, useCallback, useRef } from "react";
+import {
+  Box,
+  Tabs,
+  Tab,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
+import {
+  Pin,
+  PinOff,
+  X,
+  GripVertical,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+
+export interface TabItem {
+  label: string;
+  path: string;
+  closable?: boolean;
+  pinned?: boolean;
+}
+
+interface ModuleTabsProps {
+  tabs: TabItem[];
+  onTabsChange?: (tabs: TabItem[]) => void;
+}
+
+export const ModuleTabs: React.FC<ModuleTabsProps> = ({
+  tabs,
+  onTabsChange,
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const [localTabs, setLocalTabs] = useState<TabItem[]>(tabs);
+  const [contextMenu, setContextMenu] = useState<{
+    mouseX: number;
+    mouseY: number;
+    tab: TabItem;
+  } | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 同步外部tabs变化
+  React.useEffect(() => {
+    setLocalTabs(tabs);
+  }, [tabs]);
+
+  // 右键菜单
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent, tab: TabItem) => {
+      event.preventDefault();
+      setContextMenu({
+        mouseX: event.clientX,
+        mouseY: event.clientY,
+        tab,
+      });
+    },
+    [],
+  );
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  // 固定/取消固定
+  const handleTogglePin = useCallback(
+    (tab: TabItem) => {
+      const newTabs = localTabs.map((t) =>
+        t.path === tab.path ? { ...t, pinned: !t.pinned } : t,
+      );
+      setLocalTabs(newTabs);
+      onTabsChange?.(newTabs);
+      handleCloseContextMenu();
+    },
+    [localTabs, onTabsChange, handleCloseContextMenu],
+  );
+
+  // 关闭标签
+  const handleCloseTab = useCallback(
+    (tab: TabItem) => {
+      const newTabs = localTabs.filter((t) => t.path !== tab.path);
+      setLocalTabs(newTabs);
+      onTabsChange?.(newTabs);
+
+      // 如果关闭的是当前页，跳转到其他页
+      if (location.pathname === tab.path && newTabs.length > 0) {
+        navigate(newTabs[0].path);
+      }
+      handleCloseContextMenu();
+    },
+    [
+      localTabs,
+      location.pathname,
+      navigate,
+      onTabsChange,
+      handleCloseContextMenu,
+    ],
+  );
+
+  // 关闭其他标签
+  const handleCloseOthers = useCallback(
+    (tab: TabItem) => {
+      const pinnedTabs = localTabs.filter((t) => t.pinned);
+      const newTabs = [...pinnedTabs, tab];
+      setLocalTabs(newTabs);
+      onTabsChange?.(newTabs);
+
+      if (
+        !localTabs.find((t) => t.path === location.pathname)?.pinned &&
+        location.pathname !== tab.path
+      ) {
+        navigate(tab.path);
+      }
+      handleCloseContextMenu();
+    },
+    [
+      localTabs,
+      location.pathname,
+      navigate,
+      onTabsChange,
+      handleCloseContextMenu,
+    ],
+  );
+
+  // 关闭所有标签（只保留固定的）
+  const handleCloseAll = useCallback(() => {
+    const newTabs = localTabs.filter((t) => t.pinned);
+    setLocalTabs(newTabs);
+    onTabsChange?.(newTabs);
+
+    const firstPinned = newTabs[0];
+    if (firstPinned && location.pathname !== firstPinned.path) {
+      navigate(firstPinned.path);
+    }
+    handleCloseContextMenu();
+  }, [
+    localTabs,
+    location.pathname,
+    navigate,
+    onTabsChange,
+    handleCloseContextMenu,
+  ]);
+
+  // 拖拽开始
+  const handleDragStart = useCallback((index: number) => {
+    setDraggedIndex(index);
+  }, []);
+
+  // 拖拽进入
+  const handleDragOver = useCallback(
+    (event: React.DragEvent, index: number) => {
+      event.preventDefault();
+      if (draggedIndex === null || draggedIndex === index) return;
+
+      const newTabs = [...localTabs];
+      const draggedTab = newTabs[draggedIndex];
+      newTabs.splice(draggedIndex, 1);
+      newTabs.splice(index, 0, draggedTab);
+
+      setLocalTabs(newTabs);
+      setDraggedIndex(index);
+    },
+    [draggedIndex, localTabs],
+  );
+
+  // 拖拽结束
+  const handleDragEnd = useCallback(() => {
+    setDraggedIndex(null);
+    onTabsChange?.(localTabs);
+  }, [localTabs, onTabsChange]);
+
+  // 滚动
+  const handleScroll = useCallback((direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = 200;
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  }, []);
+
+  // 渲染标签
+  const renderTab = (tab: TabItem, index: number) => {
+    const isActive = location.pathname === tab.path;
+    const isDragging = draggedIndex === index;
+
+    return (
+      <Box
+        key={`${tab.path}-${index}`}
+        draggable={!isMobile}
+        onDragStart={() => handleDragStart(index)}
+        onDragOver={(e) => handleDragOver(e, index)}
+        onDragEnd={handleDragEnd}
+        onContextMenu={(e) => handleContextMenu(e, tab)}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          px: 1.5,
+          py: 1,
+          minWidth: 120,
+          maxWidth: 200,
+          borderRadius: 1,
+          cursor: isMobile ? "pointer" : "grab",
+          opacity: isDragging ? 0.5 : 1,
+          backgroundColor: isActive ? "primary.light" : "transparent",
+          color: isActive ? "primary.main" : "text.secondary",
+          borderBottom: isActive ? "2px solid" : "2px solid transparent",
+          borderColor: isActive ? "primary.main" : "transparent",
+          transition: "all 0.2s ease",
+          "&:hover": {
+            backgroundColor: isActive ? "primary.light" : "action.hover",
+          },
+          "&:active": {
+            cursor: isMobile ? "pointer" : "grabbing",
+          },
+        }}
+        onClick={() => navigate(tab.path)}
+      >
+        {!isMobile && (
+          <GripVertical
+            style={{ width: 14, height: 14, opacity: 0.5, flexShrink: 0 }}
+          />
+        )}
+        <Box
+          component="span"
+          sx={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            flex: 1,
+          }}
+        >
+          {tab.label}
+        </Box>
+        {tab.pinned && (
+          <Pin style={{ width: 12, height: 12, flexShrink: 0, opacity: 0.7 }} />
+        )}
+        {tab.closable !== false && !tab.pinned && (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCloseTab(tab);
+            }}
+            sx={{
+              p: 0.25,
+              ml: 0.5,
+              opacity: 0.7,
+              "&:hover": {
+                opacity: 1,
+                backgroundColor: "action.hover",
+              },
+            }}
+          >
+            <X style={{ width: 12, height: 12 }} />
+          </IconButton>
+        )}
+      </Box>
+    );
+  };
+
+  // 分离固定和非固定标签
+  const pinnedTabs = localTabs.filter((t) => t.pinned);
+  const unpinnedTabs = localTabs.filter((t) => !t.pinned);
+  const orderedTabs = [...pinnedTabs, ...unpinnedTabs];
+
+  if (localTabs.length === 0) return null;
+
+  return (
+    <Box
+      sx={{
+        backgroundColor: "background.paper",
+        borderBottom: 1,
+        borderColor: "divider",
+        position: "relative",
+      }}
+    >
+      {/* 滚动按钮 - 移动端 */}
+      {isMobile && (
+        <>
+          <IconButton
+            size="small"
+            onClick={() => handleScroll("left")}
+            sx={{
+              position: "absolute",
+              left: 0,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 2,
+              backgroundColor: "background.paper",
+              boxShadow: 1,
+            }}
+          >
+            <ChevronLeft style={{ width: 16, height: 16 }} />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => handleScroll("right")}
+            sx={{
+              position: "absolute",
+              right: 0,
+              top: "50%",
+              transform: "translateY(-50%)",
+              zIndex: 2,
+              backgroundColor: "background.paper",
+              boxShadow: 1,
+            }}
+          >
+            <ChevronRight style={{ width: 16, height: 16 }} />
+          </IconButton>
+        </>
+      )}
+
+      {/* Tabs容器 */}
+      <Box
+        ref={scrollRef}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          overflowX: "auto",
+          overflowY: "hidden",
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+          px: isMobile ? 4 : 2,
+        }}
+      >
+        {orderedTabs.map((tab, index) => renderTab(tab, index))}
+      </Box>
+
+      {/* 右键菜单 */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem
+          onClick={() => contextMenu && handleTogglePin(contextMenu.tab)}
+        >
+          <ListItemIcon>
+            {contextMenu?.tab.pinned ? (
+              <PinOff style={{ width: 18, height: 18 }} />
+            ) : (
+              <Pin style={{ width: 18, height: 18 }} />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {contextMenu?.tab.pinned ? "取消固定" : "固定标签"}
+          </ListItemText>
+        </MenuItem>
+        {contextMenu?.tab.closable !== false && (
+          <MenuItem
+            onClick={() => contextMenu && handleCloseTab(contextMenu.tab)}
+          >
+            <ListItemIcon>
+              <X style={{ width: 18, height: 18 }} />
+            </ListItemIcon>
+            <ListItemText>关闭标签</ListItemText>
+          </MenuItem>
+        )}
+        <MenuItem
+          onClick={() => contextMenu && handleCloseOthers(contextMenu.tab)}
+        >
+          关闭其他标签
+        </MenuItem>
+        <MenuItem onClick={handleCloseAll}>关闭所有标签</MenuItem>
+      </Menu>
+    </Box>
+  );
+};
+
+export default ModuleTabs;

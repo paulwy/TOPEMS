@@ -27,6 +27,8 @@ import OrganizationFilter, {
 } from "../components/ui/OrganizationFilter";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 const ModuleCard = ({
   id,
@@ -47,10 +49,10 @@ const ModuleCard = ({
 }) => {
   const getTrendIcon = () => {
     if (trend === "up")
-      return <TrendingUp className="w-4 h-4 text-emerald-500" />;
+      return <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />;
     if (trend === "down")
-      return <TrendingDown className="w-4 h-4 text-rose-500" />;
-    return <Minus className="w-4 h-4 text-slate-400" />;
+      return <TrendingDown sx={{ width: 16, height: 16, color: "error.main" }} />;
+    return <Minus sx={{ width: 16, height: 16, color: "grey.400" }} />;
   };
 
   const getTrendValue = () => {
@@ -59,53 +61,126 @@ const ModuleCard = ({
     return "0%";
   };
 
+  const getTrendTextColor = () => {
+    if (trend === "up") return "success.main";
+    if (trend === "down") return "error.main";
+    return "grey.400";
+  };
+
   return (
-    <div
+    <Box
       onClick={() => onSelect(id)}
-      className="group relative bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-slate-300/80 hover:scale-[1.02] overflow-hidden"
+      sx={{
+        position: "relative",
+        bgcolor: "background.paper",
+        borderRadius: 3,
+        boxShadow: 1,
+        border: "1px solid",
+        borderColor: "divider",
+        p: 3,
+        cursor: "pointer",
+        transition: "all 0.3s",
+        overflow: "hidden",
+        "&:hover": {
+          boxShadow: 2,
+          borderColor: "grey.300",
+          transform: "scale(1.02)",
+        },
+      }}
     >
       {/* Background decoration */}
-      <div className={`absolute top-0 right-0 w-24 h-24 opacity-5`}>
-        <div
-          className={`w-full h-full bg-gradient-to-br ${color} rounded-full blur-3xl transform translate-x-8 -translate-y-8`}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: 96,
+          height: 96,
+          opacity: 0.05,
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            background: `linear-gradient(to bottom right, var(--tw-gradient-stops))`,
+            borderRadius: "50%",
+            filter: "blur(48px)",
+            transform: "translate(32px, -32px)",
+          }}
         />
-      </div>
+      </Box>
 
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{icon}</span>
-            <div>
-              <h4 className="font-semibold text-slate-900">{name}</h4>
-              <div className="flex items-center gap-1.5 mt-0.5">
+      <Box sx={{ position: "relative", zIndex: 10 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Typography variant="h4">{icon}</Typography>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "grey.900" }}>
+                {name}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
                 {getTrendIcon()}
-                <span
-                  className={`text-xs font-medium ${trend === "up" ? "text-emerald-500" : trend === "down" ? "text-rose-500" : "text-slate-400"}`}
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 500,
+                    color: getTrendTextColor(),
+                  }}
                 >
                   {getTrendValue()}
-                </span>
-              </div>
-            </div>
-          </div>
-          <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-1 transition-all duration-300" />
-        </div>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <ArrowRight
+            sx={{
+              width: 20,
+              height: 20,
+              color: "grey.300",
+              transition: "all 0.3s",
+              ".group:hover &": {
+                color: "grey.500",
+                transform: "translateX(4px)",
+              },
+            }}
+          />
+        </Box>
 
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 2,
+            pt: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           {Object.entries(stats)
             .slice(0, 3)
             .map(([key, value]) => (
-              <div key={key} className="text-center">
-                <div className="text-lg font-bold text-slate-900">
+              <Box key={key} sx={{ textAlign: "center" }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900" }}>
                   {typeof value === "number"
                     ? value.toLocaleString()
                     : String(value)}
-                </div>
-                <div className="text-xs text-slate-500 mt-0.5">{key}</div>
-              </div>
+                </Typography>
+                <Typography variant="caption" sx={{ color: "grey.500", mt: 0.25 }}>
+                  {key}
+                </Typography>
+              </Box>
             ))}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
@@ -134,26 +209,44 @@ const BIAnalyticsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50/50 p-6">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Skeleton className="h-8 w-32 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Skeleton className="lg:col-span-2 h-80 rounded-2xl" />
-            <Skeleton className="h-80 rounded-2xl" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", p: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+              <Skeleton sx={{ height: 16, width: 96 }} />
+            </Box>
+          </Box>
+          <Skeleton sx={{ height: 64, width: "100%", borderRadius: 2 }} />
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, lg: 3 },
+              gap: 3,
+            }}
+          >
+            <Skeleton sx={{ gridColumn: { lg: "span 2" }, height: 320, borderRadius: 3 }} />
+            <Skeleton sx={{ height: 320, borderRadius: 3 }} />
+          </Box>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+              gap: 2,
+            }}
+          >
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-40 rounded-2xl" />
+              <Skeleton key={i} sx={{ height: 160, borderRadius: 3 }} />
             ))}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
     );
   }
 
@@ -236,152 +329,253 @@ const BIAnalyticsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">概览分析</h2>
-          <p className="text-sm text-slate-500 mt-1">各业务模块数据总览</p>
-        </div>
-      </div>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", p: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+              概览分析
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+              各业务模块数据总览
+            </Typography>
+          </Box>
+        </Box>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 p-4">
-        <OrganizationFilter
-          value={organizationFilter}
-          onChange={setOrganizationFilter}
-          showCompany={true}
-          showDepartment={true}
-          showEmployee={true}
-        />
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ChartCard
-            title="各业务模块数据统计"
-            subtitle="模块数据量对比"
-            height={300}
-            showChartType
-            activeChartType="bar"
-          >
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
-              <BarChart data={finalChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: "#64748B", fontSize: 12 }}
-                />
-                <YAxis tick={{ fill: "#64748B", fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {finalChartData.map((entry, index) => (
-                    <rect
-                      key={`cell-${index}`}
-                      fill={
-                        BIChartColors.series[
-                          index % BIChartColors.series.length
-                        ]
-                      }
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-        <div>
-          <ChartCard
-            title="业务模块占比"
-            subtitle="数据分布概览"
-            height={300}
-            showChartType
-            activeChartType="pie"
-          >
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              minWidth={0}
-              minHeight={0}
-            >
-              <RechartsPieChart>
-                <Pie
-                  data={finalChartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  innerRadius={50}
-                  dataKey="value"
-                >
-                  {finalChartData.map((entry, index) => (
-                    <rect
-                      key={`cell-${index}`}
-                      fill={
-                        BIChartColors.series[
-                          index % BIChartColors.series.length
-                        ]
-                      }
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-      </div>
-
-      {/* Module Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {modules.map((module) => (
-          <ModuleCard
-            key={module.id}
-            id={module.id}
-            name={module.name}
-            icon={module.icon}
-            stats={module.stats}
-            trend={module.trend}
-            onSelect={handleModuleSelect}
-            color={module.color}
+        {/* Filters */}
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            border: "1px solid",
+            borderColor: "divider",
+            p: 2,
+          }}
+        >
+          <OrganizationFilter
+            value={organizationFilter}
+            onChange={setOrganizationFilter}
+            showCompany={true}
+            showDepartment={true}
+            showEmployee={true}
           />
-        ))}
-      </div>
+        </Box>
 
-      {/* System Status */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 p-6">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4">系统状态</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="flex items-center justify-between py-3">
-            <span className="text-slate-600">数据更新时间</span>
-            <span className="text-sm font-medium text-slate-900">
-              {new Date().toLocaleString("zh-CN")}
-            </span>
-          </div>
-          <div className="flex items-center justify-between py-3 border-t border-slate-100">
-            <span className="text-slate-600">系统状态</span>
-            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full">
-              正常运行
-            </span>
-          </div>
-          <div className="flex items-center justify-between py-3 border-t border-slate-100">
-            <span className="text-slate-600">数据源连接</span>
-            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full">
-              已连接
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Charts */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, lg: 3 },
+            gap: 3,
+          }}
+        >
+          <Box sx={{ gridColumn: { lg: "span 2" } }}>
+            <ChartCard
+              title="各业务模块数据统计"
+              subtitle="模块数据量对比"
+              height={300}
+              showChartType
+              activeChartType="bar"
+            >
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                minWidth={0}
+                minHeight={0}
+              >
+                <BarChart data={finalChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: "#64748B", fontSize: 12 }}
+                  />
+                  <YAxis tick={{ fill: "#64748B", fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {finalChartData.map((entry, index) => (
+                      <rect
+                        key={`cell-${index}`}
+                        fill={
+                          BIChartColors.series[
+                            index % BIChartColors.series.length
+                          ]
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </Box>
+          <Box>
+            <ChartCard
+              title="业务模块占比"
+              subtitle="数据分布概览"
+              height={300}
+              showChartType
+              activeChartType="pie"
+            >
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                minWidth={0}
+                minHeight={0}
+              >
+                <RechartsPieChart>
+                  <Pie
+                    data={finalChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                    }
+                    outerRadius={80}
+                    innerRadius={50}
+                    dataKey="value"
+                  >
+                    {finalChartData.map((entry, index) => (
+                      <rect
+                        key={`cell-${index}`}
+                        fill={
+                          BIChartColors.series[
+                            index % BIChartColors.series.length
+                          ]
+                        }
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </Box>
+        </Box>
+
+        {/* Module Cards */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+            gap: 2,
+          }}
+        >
+          {modules.map((module) => (
+            <ModuleCard
+              key={module.id}
+              id={module.id}
+              name={module.name}
+              icon={module.icon}
+              stats={module.stats}
+              trend={module.trend}
+              onSelect={handleModuleSelect}
+              color={module.color}
+            />
+          ))}
+        </Box>
+
+        {/* System Status */}
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            border: "1px solid",
+            borderColor: "divider",
+            p: 3,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.800", mb: 2 }}>
+            系统状态
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: 3 },
+              gap: 3,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                py: 1.5,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
+                数据更新时间
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                {new Date().toLocaleString("zh-CN")}
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                py: 1.5,
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
+                系统状态
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 1.25,
+                  py: 0.5,
+                  bgcolor: "success.50",
+                  color: "success.main",
+                  fontWeight: 600,
+                  borderRadius: 1,
+                }}
+              >
+                正常运行
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                py: 1.5,
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
+                数据源连接
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 1.25,
+                  py: 0.5,
+                  bgcolor: "success.50",
+                  color: "success.main",
+                  fontWeight: 600,
+                  borderRadius: 1,
+                }}
+              >
+                已连接
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

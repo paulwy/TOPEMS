@@ -83,6 +83,8 @@ async fn main() -> Result<()> {
         )
         .with_state(api_state.clone());
 
+    let statistics_router = api::statistics::create_routes().with_state(pool.clone());
+
     let protected_routes = Router::new()
         .merge(api::create_routes(pool.clone(), auth_state.clone(), config.clone()).await?)
         .layer(axum::middleware::from_fn_with_state(
@@ -92,6 +94,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .merge(health_router)
+        .merge(statistics_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-lims"))
         .route("/api-docs/openapi.json", get(serve_openapi_json))

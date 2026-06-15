@@ -254,8 +254,7 @@ interface CrudOperations<T> {
 function createCrudApi<T>(endpoint: string): CrudOperations<T> {
   return {
     list: (params?: ListParams) => {
-      const queryString = buildQueryString(params);
-      return apiClient.flow.get(`${endpoint}${queryString}`);
+      return apiClient.flow.get(endpoint, { params });
     },
 
     get: (id: string) => {
@@ -297,9 +296,9 @@ export const workflowApi = {
     createCrudApi<Workflow>("/api/v1/workflows").delete(id),
 
   getVersions: (workflowId: string, params?: ListParams) => {
-    const queryString = buildQueryString(params);
     return apiClient.flow.get(
-      `/api/v1/workflows/${workflowId}/versions${queryString}`,
+      `/api/v1/workflows/${workflowId}/versions`,
+      { params },
     );
   },
 
@@ -346,8 +345,7 @@ export const workflowApi = {
 
 export const instanceApi = {
   list: (params?: ListParams) => {
-    const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/instances${queryString}`);
+    return apiClient.flow.get(`/api/v1/instances`, { params });
   },
 
   start: (data: CreateWorkflowInstanceRequest) => {
@@ -363,8 +361,7 @@ export const instanceApi = {
   },
 
   listInstances: (params?: ListParams) => {
-    const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/instances${queryString}`);
+    return apiClient.flow.get(`/api/v1/instances`, { params });
   },
 };
 
@@ -372,8 +369,7 @@ export const instanceApi = {
 
 export const approvalApi = {
   list: (params?: ListParams) => {
-    const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/approvals${queryString}`);
+    return apiClient.flow.get(`/api/v1/approvals`, { params });
   },
 
   create: (data: CreateApprovalRequest) => {
@@ -389,13 +385,11 @@ export const approvalApi = {
   },
 
   listApprovals: (params?: ListParams) => {
-    const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/approvals${queryString}`);
+    return apiClient.flow.get(`/api/v1/approvals`, { params });
   },
 
   getRecords: (params?: ListParams) => {
-    const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/records${queryString}`);
+    return apiClient.flow.get(`/api/v1/records`, { params });
   },
 
   getRecordsByApproval: (approvalId: string) => {
@@ -407,8 +401,7 @@ export const approvalApi = {
 
 export const notificationApi = {
   list: (userId: string, params?: ListParams) => {
-    const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/notifications/${userId}${queryString}`);
+    return apiClient.flow.get(`/api/v1/notifications/${userId}`, { params });
   },
 
   getCount: (userId: string) => {
@@ -424,8 +417,7 @@ export const notificationApi = {
   },
 
   listNotifications: (userId: string, params?: ListParams) => {
-    const queryString = buildQueryString(params);
-    return apiClient.flow.get(`/api/v1/notifications/${userId}${queryString}`);
+    return apiClient.flow.get(`/api/v1/notifications/${userId}`, { params });
   },
 };
 

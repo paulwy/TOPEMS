@@ -275,7 +275,7 @@ const FlowApprovalPage: React.FC = () => {
             </FormControl>
           )}
           <IconButton onClick={loadData} title="刷新">
-            <Loader2 size={20} className={loading ? "animate-spin" : ""} />
+            <Loader2 size={20} sx={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
           </IconButton>
         </Stack>
       </Box>
@@ -466,7 +466,7 @@ const FlowApprovalPage: React.FC = () => {
               processing || (approvalAction === "reject" && !comment.trim())
             }
             color={approvalAction === "approve" ? "success" : "error"}
-            startIcon={processing ? <Loader2 size={16} className="animate-spin" /> : undefined}
+            startIcon={processing ? <Loader2 size={16} sx={{ animation: "spin 1s linear infinite" }} /> : undefined}
           >
             {approvalAction === "approve" ? "确认通过" : "确认拒绝"}
           </Button>

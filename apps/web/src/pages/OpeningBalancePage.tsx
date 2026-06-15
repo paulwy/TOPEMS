@@ -220,7 +220,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
+              LabelProps={{ shrink: true }}
             />
             <FormControl size="small" fullWidth>
               <InputLabel>科目类别</InputLabel>
@@ -243,14 +243,12 @@ export default function OpeningBalancePage() {
               placeholder="科目编码或名称..."
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <Box sx={{ mr: 1, display: "flex" }}>
-                      <Search className="w-4 h-4 text-gray-400" />
-                    </Box>
-                  ),
-                },
+              InputProps={{
+                startAdornment: (
+                  <Box sx={{ mr: 1, display: "flex" }}>
+                    <Search className="w-4 h-4 text-gray-400" />
+                  </Box>
+                ),
               }}
             />
             <Button variant="outlined" onClick={() => refetch()}>
@@ -447,7 +445,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={carryForwardFrom}
               onChange={(e) => setCarryForwardFrom(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
+              LabelProps={{ shrink: true }}
             />
             <TextField
               label="到期间"
@@ -455,7 +453,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={carryForwardTo}
               onChange={(e) => setCarryForwardTo(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
+              LabelProps={{ shrink: true }}
             />
             <Box sx={{ bgcolor: "warning.50", border: 1, borderColor: "warning.main", borderRadius: 1, p: 2 }}>
               <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>

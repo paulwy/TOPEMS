@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Box,
+  Box as LucideBox,
   Search,
   Plus,
   Edit,
@@ -41,6 +41,7 @@ import {
   TableCell,
   tableCellClasses,
   styled,
+  Box,
 } from "@mui/material";
 import { ModeToggle } from "@/components/ModeToggle";
 
@@ -323,67 +324,71 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         accessorKey: "asset_number",
         header: "资产编号",
         cell: ({ row }) => (
-          <div className="font-medium text-slate-900 dark:text-slate-100">
+          <Typography sx={{ fontWeight: 500, color: "text.primary" }}>
             {row.original.asset_number}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "name",
         header: "资产名称",
         cell: ({ row }) => (
-          <div className="text-slate-900 dark:text-slate-100">
+          <Typography sx={{ color: "text.primary" }}>
             {row.original.name}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "category",
         header: "类别",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
             {row.original.category || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "brand",
         header: "品牌",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
             {row.original.brand || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "model",
         header: "型号",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
             {row.original.model || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "purchase_amount",
         header: "采购金额",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-900 dark:text-slate-100">
-            <DollarSign className="w-3 h-3 mr-1 text-green-600" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.primary" }}>
+            <span style={{ marginRight: 4 }}>
+              <DollarSign size={12} style={{ color: "green" }} />
+            </span>
             {row.original.purchase_amount
               ? `¥${row.original.purchase_amount.toLocaleString()}`
               : "-"}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "responsible_id",
         header: "负责人",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-900 dark:text-slate-100">
-            <User className="w-3 h-3 mr-1 text-blue-600" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.primary" }}>
+            <span style={{ marginRight: 4 }}>
+              <User size={12} style={{ color: "blue" }} />
+            </span>
             {getEmployeeName(row.original.responsible_id || "")}
-          </div>
+          </Box>
         ),
       },
       {
@@ -397,7 +402,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         cell: ({ row }) => {
           const asset = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
               <Tooltip title="编辑">
                 <Button
                   variant="text"
@@ -407,7 +412,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     setShowEditModal(true);
                   }}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit size={16} />
                 </Button>
               </Tooltip>
 
@@ -418,10 +423,10 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   color="error"
                   onClick={() => handleDeleteAsset(asset.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 size={16} />
                 </Button>
               </Tooltip>
-            </div>
+            </Box>
           );
         },
       },
@@ -430,59 +435,58 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft size={20} />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-                  <Box className="w-7 h-7 mr-3 text-blue-600" />
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
                   资产管理
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                </Typography>
+                <Typography sx={{ mt: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>
                   管理企业资产、设备台账
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
               <Button variant="contained" onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus size={20} sx={{ mr: 1 }} />
                 新增资产
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
         <Card>
           <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                <p className="mt-2 text-slate-500 dark:text-slate-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", borderRadius: "50%", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent" }} />
+                <Typography sx={{ mt: 1, color: "text.secondary" }}>
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadData}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <LucideBox size={48} style={{ color: "red", margin: "0 auto 12px" }} />
+                <Typography sx={{ color: "error.main" }}>{error}</Typography>
+                <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </Button>
-              </div>
+              </Box>
             ) : (
               <>
                 {selectedIds.length > 0 && (
-                  <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
+                  <Box sx={{ bgcolor: "grey.100", borderBottom: 1, borderColor: "divider", px: 3, py: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Checkbox
                           checked={selectedIds.length === assets.length}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
@@ -493,18 +497,18 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                             }
                           }}
                         />
-                        <span className="text-sm text-slate-600">
+                        <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                           已选择 {selectedIds.length} 项
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Button
                         variant="outlined"
                         size="small"
                         onClick={handleBatchUpdateStatus}
                       >
-                        <Settings className="w-4 h-4 mr-1" />
+                        <Settings size={16} sx={{ mr: 0.5 }} />
                         批量更新状态
                       </Button>
                       <Button
@@ -513,11 +517,11 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                         color="error"
                         onClick={handleBatchDelete}
                       >
-                        <Trash2 className="w-4 h-4 mr-1" />
+                        <Trash2 size={16} sx={{ mr: 0.5 }} />
                         批量删除
                       </Button>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
                 <EnhancedDataTable
                   columns={columns}
@@ -551,7 +555,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       <Dialog
         open={showCreateModal}
@@ -561,9 +565,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
       >
         <DialogTitle>新增资产</DialogTitle>
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <form onSubmit={handleCreateAsset}>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+          <Box component="form" onSubmit={handleCreateAsset}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                 <TextField
                   label="资产编号 *"
                   value={newAsset.asset_number || ""}
@@ -582,9 +586,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   fullWidth
                   required
                 />
-              </div>
+              </Box>
 
-              <div className="grid grid-cols-3 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                 <TextField
                   label="类别"
                   value={newAsset.category || ""}
@@ -609,9 +613,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   }
                   fullWidth
                 />
-              </div>
+              </Box>
 
-              <div className="grid grid-cols-3 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                 <TextField
                   label="序列号"
                   value={newAsset.serial_number || ""}
@@ -639,13 +643,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   }
                   fullWidth
                 />
-              </div>
+              </Box>
 
-              <div className="grid grid-cols-3 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                 <TextField
                   label="额定功率 (kW)"
                   type="number"
-                  slotProps={{ htmlInput: { step: "0.01" } }}
+                  InputProps={{ inputProps: { step: "0.01" } }}
                   value={newAsset.rated_power || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -658,7 +662,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <TextField
                   label="额定电压 (V)"
                   type="number"
-                  slotProps={{ htmlInput: { step: "0.01" } }}
+                  InputProps={{ inputProps: { step: "0.01" } }}
                   value={newAsset.rated_voltage || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -671,7 +675,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <TextField
                   label="额定电流 (A)"
                   type="number"
-                  slotProps={{ htmlInput: { step: "0.01" } }}
+                  InputProps={{ inputProps: { step: "0.01" } }}
                   value={newAsset.rated_current || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -681,9 +685,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   }
                   fullWidth
                 />
-              </div>
+              </Box>
 
-              <div className="grid grid-cols-2 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                 <TextField
                   label="采购日期"
                   type="date"
@@ -695,12 +699,12 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     })
                   }
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputLabelProps={{ shrink: true }}
                 />
                 <TextField
                   label="采购金额"
                   type="number"
-                  slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                  InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                   value={newAsset.purchase_amount || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -710,7 +714,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   }
                   fullWidth
                 />
-              </div>
+              </Box>
 
               <TextField
                 label="存放位置"
@@ -721,7 +725,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 fullWidth
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                 <FormControl fullWidth>
                   <InputLabel>负责人</InputLabel>
                   <Select
@@ -754,10 +758,10 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     <MenuItem value="scrapped">报废</MenuItem>
                   </Select>
                 </FormControl>
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className="mt-6 flex justify-end space-x-2">
+            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <Button
                 variant="outlined"
                 onClick={() => setShowCreateModal(false)}
@@ -767,8 +771,8 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               <Button variant="contained" type="submit">
                 创建
               </Button>
-            </div>
-          </form>
+            </Box>
+          </Box>
         </DialogContent>
       </Dialog>
 
@@ -781,9 +785,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         <DialogTitle>编辑资产</DialogTitle>
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           {selectedAsset && (
-            <form onSubmit={handleEditAsset}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+            <Box component="form" onSubmit={handleEditAsset}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                   <TextField
                     label="资产编号 *"
                     value={selectedAsset.asset_number}
@@ -808,9 +812,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     fullWidth
                     required
                   />
-                </div>
+                </Box>
 
-                <div className="grid grid-cols-3 gap-4">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                   <TextField
                     label="类别"
                     value={selectedAsset.category || ""}
@@ -844,9 +848,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     }
                     fullWidth
                   />
-                </div>
+                </Box>
 
-                <div className="grid grid-cols-3 gap-4">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                   <TextField
                     label="序列号"
                     value={selectedAsset.serial_number || ""}
@@ -880,13 +884,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     }
                     fullWidth
                   />
-                </div>
+                </Box>
 
-                <div className="grid grid-cols-3 gap-4">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                   <TextField
                     label="额定功率 (kW)"
                     type="number"
-                    slotProps={{ htmlInput: { step: "0.01" } }}
+                    InputProps={{ inputProps: { step: "0.01" } }}
                     value={selectedAsset.rated_power || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -899,7 +903,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   <TextField
                     label="额定电压 (V)"
                     type="number"
-                    slotProps={{ htmlInput: { step: "0.01" } }}
+                    InputProps={{ inputProps: { step: "0.01" } }}
                     value={selectedAsset.rated_voltage || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -912,7 +916,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   <TextField
                     label="额定电流 (A)"
                     type="number"
-                    slotProps={{ htmlInput: { step: "0.01" } }}
+                    InputProps={{ inputProps: { step: "0.01" } }}
                     value={selectedAsset.rated_current || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -922,9 +926,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     }
                     fullWidth
                   />
-                </div>
+                </Box>
 
-                <div className="grid grid-cols-2 gap-4">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                   <TextField
                     label="采购日期"
                     type="date"
@@ -936,12 +940,12 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                       })
                     }
                     fullWidth
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    InputLabelProps={{ shrink: true }}
                   />
                   <TextField
                     label="采购金额"
                     type="number"
-                    slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     value={selectedAsset.purchase_amount || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -951,7 +955,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     }
                     fullWidth
                   />
-                </div>
+                </Box>
 
                 <TextField
                   label="存放位置"
@@ -965,7 +969,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   fullWidth
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                   <FormControl fullWidth>
                     <InputLabel>负责人</InputLabel>
                     <Select
@@ -1006,10 +1010,10 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                       <MenuItem value="scrapped">报废</MenuItem>
                     </Select>
                   </FormControl>
-                </div>
-              </div>
+                </Box>
+              </Box>
 
-              <div className="mt-6 flex justify-end space-x-2">
+              <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -1022,8 +1026,8 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <Button variant="contained" type="submit">
                   保存
                 </Button>
-              </div>
-            </form>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
@@ -1036,7 +1040,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
       >
         <DialogTitle>批量更新状态</DialogTitle>
         <DialogContent>
-          <div className="space-y-4">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <FormControl fullWidth>
               <InputLabel>选择新状态</InputLabel>
               <Select
@@ -1050,12 +1054,12 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <MenuItem value="scrapped">报废</MenuItem>
               </Select>
             </FormControl>
-            <p className="text-sm text-slate-500">
+            <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
               将批量更新{" "}
-              <span className="font-semibold">{selectedIds.length}</span>{" "}
+              <Box component="span" sx={{ fontWeight: 600 }}>{selectedIds.length}</Box>{" "}
               条资产的状态
-            </p>
-          </div>
+            </Typography>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button
@@ -1076,7 +1080,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

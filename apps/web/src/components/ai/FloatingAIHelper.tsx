@@ -36,6 +36,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AIToolsPanel } from "./AIToolsPanel";
 
 interface QuickCommand {
   id: string;
@@ -64,6 +65,7 @@ export const FloatingAIHelper: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"chat" | "tools" | "help">("chat");
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   // 快捷命令
   const quickCommands: QuickCommand[] = [
@@ -116,21 +118,21 @@ export const FloatingAIHelper: React.FC = () => {
       label: "JSON格式化",
       icon: <FileJson style={{ width: 18, height: 18 }} />,
       description: "格式化、压缩、校验JSON",
-      action: () => {},
+      action: () => setActiveTool("json"),
     },
     {
       id: "date",
       label: "日期计算器",
       icon: <Calendar style={{ width: 18, height: 18 }} />,
       description: "日期间隔、工作日计算",
-      action: () => {},
+      action: () => setActiveTool("date"),
     },
     {
       id: "unit",
       label: "单位换算",
       icon: <Calculator style={{ width: 18, height: 18 }} />,
       description: "化工原料计量换算",
-      action: () => {},
+      action: () => setActiveTool("unit"),
     },
     {
       id: "code",
@@ -144,16 +146,32 @@ export const FloatingAIHelper: React.FC = () => {
       label: "数据脱敏",
       icon: <Shield style={{ width: 18, height: 18 }} />,
       description: "隐私数据处理",
-      action: () => {},
+      action: () => setActiveTool("mask"),
     },
   ];
 
   // 上下文感知推荐（根据当前页面）
   const contextAwareSuggestions = [
-    { label: "员工信息补全", desc: "AI智能补全员工档案", action: () => navigate("/hrm/employees") },
-    { label: "合同生成", desc: "根据信息生成合同文档", action: () => navigate("/hrm/contracts") },
-    { label: "客户评分", desc: "分析客户价值评分", action: () => navigate("/crm/scoring") },
-    { label: "报表解读", desc: "AI解读财务数据", action: () => navigate("/bi/reports") },
+    {
+      label: "员工信息补全",
+      desc: "AI智能补全员工档案",
+      action: () => navigate("/hrm/employees"),
+    },
+    {
+      label: "合同生成",
+      desc: "根据信息生成合同文档",
+      action: () => navigate("/hrm/contracts"),
+    },
+    {
+      label: "客户评分",
+      desc: "分析客户价值评分",
+      action: () => navigate("/crm/scoring"),
+    },
+    {
+      label: "报表解读",
+      desc: "AI解读财务数据",
+      action: () => navigate("/bi/reports"),
+    },
   ];
 
   const handleCommandClick = useCallback((command: QuickCommand) => {
@@ -182,14 +200,20 @@ export const FloatingAIHelper: React.FC = () => {
     setAnchorEl(null);
     setIsOpen(false);
     setIsMinimized(false);
+    setActiveTool(null);
   }, []);
 
   const handleMinimize = useCallback(() => {
     setIsMinimized(true);
+    setActiveTool(null);
   }, []);
 
   const handleMaximize = useCallback(() => {
     setIsMinimized(false);
+  }, []);
+
+  const handleBackToMain = useCallback(() => {
+    setActiveTool(null);
   }, []);
 
   return (
@@ -241,7 +265,9 @@ export const FloatingAIHelper: React.FC = () => {
         }}
       >
         <Fade in={!isMinimized}>
-          <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+          <Box
+            sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+          >
             {/* 头部 */}
             <Box
               sx={{
@@ -260,10 +286,18 @@ export const FloatingAIHelper: React.FC = () => {
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", gap: 0.5 }}>
-                <IconButton size="small" onClick={handleMinimize} sx={{ color: "white" }}>
+                <IconButton
+                  size="small"
+                  onClick={handleMinimize}
+                  sx={{ color: "white" }}
+                >
                   <Minus style={{ width: 16, height: 16 }} />
                 </IconButton>
-                <IconButton size="small" onClick={handleClose} sx={{ color: "white" }}>
+                <IconButton
+                  size="small"
+                  onClick={handleClose}
+                  sx={{ color: "white" }}
+                >
                   <X style={{ width: 16, height: 16 }} />
                 </IconButton>
               </Box>
@@ -282,7 +316,9 @@ export const FloatingAIHelper: React.FC = () => {
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Search style={{ width: 18, height: 18, color: "grey.500" }} />
+                        <Search
+                          style={{ width: 18, height: 18, color: "grey.500" }}
+                        />
                       </InputAdornment>
                     ),
                     endAdornment: (
@@ -299,38 +335,67 @@ export const FloatingAIHelper: React.FC = () => {
 
             {/* Tab切换 */}
             <Box sx={{ px: 2, pt: 1.5, display: "flex", gap: 1 }}>
-              <Chip
-                icon={<MessageSquare style={{ width: 14, height: 14 }} />}
-                label="对话"
-                size="small"
-                variant={activeTab === "chat" ? "filled" : "outlined"}
-                onClick={() => setActiveTab("chat")}
-                color="primary"
-              />
-              <Chip
-                icon={<Zap style={{ width: 14, height: 14 }} />}
-                label="快捷命令"
-                size="small"
-                variant={activeTab === "tools" ? "filled" : "outlined"}
-                onClick={() => setActiveTab("tools")}
-              />
-              <Chip
-                icon={<Lightbulb style={{ width: 14, height: 14 }} />}
-                label="使用帮助"
-                size="small"
-                variant={activeTab === "help" ? "filled" : "outlined"}
-                onClick={() => setActiveTab("help")}
-              />
+              {activeTool ? (
+                <>
+                  <Chip
+                    icon={<ChevronRight style={{ width: 14, height: 14 }} />}
+                    label="返回"
+                    size="small"
+                    variant="outlined"
+                    onClick={handleBackToMain}
+                  />
+                  <Chip
+                    label={
+                      tools.find((t) => t.id === activeTool)?.label || "工具"
+                    }
+                    size="small"
+                    color="primary"
+                  />
+                </>
+              ) : (
+                <>
+                  <Chip
+                    icon={<MessageSquare style={{ width: 14, height: 14 }} />}
+                    label="对话"
+                    size="small"
+                    variant={activeTab === "chat" ? "filled" : "outlined"}
+                    onClick={() => setActiveTab("chat")}
+                    color="primary"
+                  />
+                  <Chip
+                    icon={<Zap style={{ width: 14, height: 14 }} />}
+                    label="快捷命令"
+                    size="small"
+                    variant={activeTab === "tools" ? "filled" : "outlined"}
+                    onClick={() => setActiveTab("tools")}
+                  />
+                  <Chip
+                    icon={<Lightbulb style={{ width: 14, height: 14 }} />}
+                    label="使用帮助"
+                    size="small"
+                    variant={activeTab === "help" ? "filled" : "outlined"}
+                    onClick={() => setActiveTab("help")}
+                  />
+                </>
+              )}
             </Box>
 
             {/* 内容区 */}
             <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-              {activeTab === "chat" && (
+              {activeTool ? (
+                <AIToolsPanel defaultTool={activeTool} onClose={handleClose} />
+              ) : activeTab === "chat" ? (
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, display: "block" }}
+                  >
                     💡 上下文推荐
                   </Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
                     {contextAwareSuggestions.map((item, idx) => (
                       <Box
                         key={idx}
@@ -347,7 +412,10 @@ export const FloatingAIHelper: React.FC = () => {
                         }}
                         onClick={item.action}
                       >
-                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 500, mb: 0.5 }}
+                        >
                           {item.label}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -359,7 +427,11 @@ export const FloatingAIHelper: React.FC = () => {
 
                   <Divider sx={{ my: 2 }} />
 
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, display: "block" }}
+                  >
                     🎯 常用功能
                   </Typography>
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -383,14 +455,23 @@ export const FloatingAIHelper: React.FC = () => {
                     />
                   </Box>
                 </Box>
-              )}
-
-              {activeTab === "tools" && (
+              ) : activeTab === "tools" ? (
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, display: "block" }}
+                  >
                     ⚡ 快捷命令
                   </Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
                     {quickCommands.map((cmd) => (
                       <Box
                         key={cmd.id}
@@ -442,10 +523,20 @@ export const FloatingAIHelper: React.FC = () => {
                     ))}
                   </Box>
 
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, display: "block" }}
+                  >
                     🔧 实用工具
                   </Typography>
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 1,
+                    }}
+                  >
                     {tools.map((tool) => (
                       <Box
                         key={tool.id}
@@ -479,39 +570,198 @@ export const FloatingAIHelper: React.FC = () => {
                         >
                           {tool.icon}
                         </Box>
-                        <Typography variant="caption" sx={{ fontWeight: 500, display: "block" }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 500, display: "block" }}
+                        >
                           {tool.label}
                         </Typography>
                       </Box>
                     ))}
                   </Box>
                 </Box>
-              )}
-
-              {activeTab === "help" && (
+              ) : activeTab === "tools" ? (
                 <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: "block" }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, display: "block" }}
+                  >
+                    ⚡ 快捷命令
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    {quickCommands.map((cmd) => (
+                      <Box
+                        key={cmd.id}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          p: 1.5,
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: "divider",
+                          cursor: "pointer",
+                          "&:hover": {
+                            backgroundColor: "action.hover",
+                            borderColor: "primary.main",
+                          },
+                        }}
+                        onClick={() => handleCommandClick(cmd)}
+                      >
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 1,
+                            backgroundColor: "primary.light",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "primary.main",
+                          }}
+                        >
+                          {cmd.icon}
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {cmd.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {cmd.description}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={cmd.command}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontFamily: "monospace", fontSize: 11 }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, display: "block" }}
+                  >
+                    🔧 实用工具
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 1,
+                    }}
+                  >
+                    {tools.map((tool) => (
+                      <Box
+                        key={tool.id}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: "divider",
+                          cursor: "pointer",
+                          textAlign: "center",
+                          "&:hover": {
+                            backgroundColor: "action.hover",
+                            borderColor: "primary.main",
+                          },
+                        }}
+                        onClick={() => handleToolClick(tool)}
+                      >
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 1,
+                            backgroundColor: "secondary.light",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            mx: "auto",
+                            mb: 1,
+                            color: "secondary.main",
+                          }}
+                        >
+                          {tool.icon}
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 500, display: "block" }}
+                        >
+                          {tool.label}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              ) : activeTab === "help" ? (
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, display: "block" }}
+                  >
                     📖 使用指南
                   </Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Box sx={{ p: 1.5, borderRadius: 1, backgroundColor: "grey.100" }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 1,
+                        backgroundColor: "grey.100",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 600, display: "block", mb: 0.5 }}
+                      >
                         如何使用快捷命令？
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         在输入框中输入 /审批、/考勤 等命令，快速跳转到对应功能。
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 1.5, borderRadius: 1, backgroundColor: "grey.100" }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 1,
+                        backgroundColor: "grey.100",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 600, display: "block", mb: 0.5 }}
+                      >
                         AI能做什么？
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         AI助手可以生成文档、分析文本、补全数据、解答问题。
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 1.5, borderRadius: 1, backgroundColor: "grey.100" }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600, display: "block", mb: 0.5 }}>
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 1,
+                        backgroundColor: "grey.100",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{ fontWeight: 600, display: "block", mb: 0.5 }}
+                      >
                         如何打开AI聊天？
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -520,7 +770,7 @@ export const FloatingAIHelper: React.FC = () => {
                     </Box>
                   </Box>
                 </Box>
-              )}
+              ) : null}
             </Box>
 
             {/* 底部 */}
@@ -556,7 +806,9 @@ export const FloatingAIHelper: React.FC = () => {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Sparkles style={{ width: 18, height: 18, color: "primary.main" }} />
+              <Sparkles
+                style={{ width: 18, height: 18, color: "primary.main" }}
+              />
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 AI 助手
               </Typography>

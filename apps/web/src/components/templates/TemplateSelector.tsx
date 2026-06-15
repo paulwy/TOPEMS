@@ -1,12 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Search, FileText, Workflow, FormInput, BarChart3, Bell, Check, Sparkles } from "lucide-react";
-import type { Template, TemplateType, TemplateCategory, RenderTemplateResponse } from "../../api/template";
+import {
+  Search,
+  FileText,
+  Workflow,
+  FormInput,
+  BarChart3,
+  Bell,
+  Check,
+  Sparkles,
+} from "lucide-react";
+import type {
+  Template,
+  TemplateType,
+  TemplateCategory,
+  RenderTemplateResponse,
+} from "../../api/template";
 import { templateApi } from "../../api/template";
 
 interface TemplateSelectorProps {
@@ -42,9 +62,13 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null,
+  );
   const [categories, setCategories] = useState<TemplateCategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<
+    string | undefined
+  >();
   const [variableValues, setVariableValues] = useState<Record<string, any>>({});
   const [isRendering, setIsRendering] = useState(false);
 
@@ -105,7 +129,10 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     if (showVariables && selectedTemplate.variables.length > 0) {
       setIsRendering(true);
       try {
-        const response = await templateApi.render(selectedTemplate.id, variableValues);
+        const response = await templateApi.render(
+          selectedTemplate.id,
+          variableValues,
+        );
         if (response.success && response.data) {
           onSelect(selectedTemplate, response.data.content);
         } else {
@@ -155,7 +182,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 {categories.map((cat) => (
                   <Button
                     key={cat.id}
-                    variant={selectedCategory === cat.id ? "default" : "outline"}
+                    variant={
+                      selectedCategory === cat.id ? "default" : "outline"
+                    }
                     size="sm"
                     onClick={() => handleCategoryChange(cat.id)}
                   >
@@ -182,12 +211,19 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                             {TYPE_ICONS[template.template_type]}
                           </div>
                           <div>
-                            <CardTitle className="text-base">{template.name}</CardTitle>
-                            <p className="text-xs text-gray-500">{TYPE_LABELS[template.template_type]}</p>
+                            <CardTitle className="text-base">
+                              {template.name}
+                            </CardTitle>
+                            <p className="text-xs text-gray-500">
+                              {TYPE_LABELS[template.template_type]}
+                            </p>
                           </div>
                         </div>
                         {template.ai_enabled && (
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                          <Badge
+                            variant="secondary"
+                            className="bg-amber-100 text-amber-700"
+                          >
                             <Sparkles className="w-3 h-3 mr-1" />
                             AI
                           </Badge>
@@ -200,7 +236,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       </p>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{template.category_name || "未分类"}</Badge>
+                          <Badge variant="outline">
+                            {template.category_name || "未分类"}
+                          </Badge>
                           {template.is_public && (
                             <Badge variant="secondary">公开</Badge>
                           )}
@@ -234,12 +272,17 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       <div>
                         <CardTitle>{selectedTemplate.name}</CardTitle>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <span>{TYPE_LABELS[selectedTemplate.template_type]}</span>
+                          <span>
+                            {TYPE_LABELS[selectedTemplate.template_type]}
+                          </span>
                           {selectedTemplate.is_public && (
                             <Badge variant="secondary">公开</Badge>
                           )}
                           {selectedTemplate.ai_enabled && (
-                            <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                            <Badge
+                              variant="secondary"
+                              className="bg-amber-100 text-amber-700"
+                            >
                               <Sparkles className="w-3 h-3 mr-1" />
                               AI 辅助
                             </Badge>
@@ -256,7 +299,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 mb-4">{selectedTemplate.description}</p>
+                  <p className="text-gray-600 mb-4">
+                    {selectedTemplate.description}
+                  </p>
 
                   <div className="mb-6">
                     <Label className="block mb-2">模板预览</Label>
@@ -267,21 +312,32 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
                   {showVariables && selectedTemplate.variables.length > 0 && (
                     <div>
-                      <Label className="block mb-3 font-semibold">变量配置</Label>
+                      <Label className="block mb-3 font-semibold">
+                        变量配置
+                      </Label>
                       <div className="space-y-3">
                         {selectedTemplate.variables.map((variable) => (
                           <div key={variable.key}>
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium">{variable.label}</span>
+                              <span className="text-sm font-medium">
+                                {variable.label}
+                              </span>
                               {variable.required && (
-                                <span className="text-xs text-red-500">必填</span>
+                                <span className="text-xs text-red-500">
+                                  必填
+                                </span>
                               )}
                             </div>
                             <Input
-                              placeholder={variable.placeholder || `输入${variable.label}`}
+                              placeholder={
+                                variable.placeholder || `输入${variable.label}`
+                              }
                               defaultValue={variable.default_value}
                               onChange={(e) =>
-                                handleVariableChange(variable.key, e.target.value)
+                                handleVariableChange(
+                                  variable.key,
+                                  e.target.value,
+                                )
                               }
                               className="mt-1"
                             />
@@ -299,11 +355,16 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         <DialogFooter>
           {selectedTemplate ? (
             <>
-              <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
+              <Button
+                variant="outline"
+                onClick={() => setSelectedTemplate(null)}
+              >
                 返回列表
               </Button>
               <Button onClick={handleApply} disabled={isRendering}>
-                {isRendering ? "处理中..." : (
+                {isRendering ? (
+                  "处理中..."
+                ) : (
                   <>
                     <Check className="w-4 h-4 mr-2" />
                     应用模板

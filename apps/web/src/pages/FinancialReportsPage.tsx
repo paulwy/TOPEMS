@@ -144,9 +144,7 @@ export default function FinancialReportsPage() {
             onClick={() => currentQuery.refetch()}
             disabled={currentQuery.isFetching}
           >
-            <RefreshCw
-              style={{ width: 16, height: 16, marginRight: 8 }}
-            />
+            <RefreshCw size={16} style={{ marginRight: 8 }} />
             刷新
           </Button>
           <FormControl size="small" sx={{ minWidth: 160 }}>
@@ -183,11 +181,11 @@ export default function FinancialReportsPage() {
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
                 size="small"
-                slotProps={{ inputLabel: { shrink: true } }}
+                LabelProps={{ shrink: true }}
               />
             </Box>
             <Button variant="contained" onClick={handleGenerate} disabled={!companyId}>
-              <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
+              <RefreshCw size={16} style={{ marginRight: 8 }} />
               生成报表
             </Button>
           </Box>
@@ -199,7 +197,7 @@ export default function FinancialReportsPage() {
         <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Box sx={{ width: 40, height: 40, borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: typeConfig.bgColor }}>
-              <typeConfig.icon style={{ width: 20, height: 20, color: `var(--mui-palette-${typeConfig.color.replace('.', '-')})` }} />
+              <typeConfig.icon size={20} />
             </Box>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>{typeConfig.name}</Typography>
@@ -214,7 +212,7 @@ export default function FinancialReportsPage() {
               size="small"
               onClick={() => handleExport("xlsx")}
             >
-              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
+              <Download size={16} style={{ marginRight: 8 }} />
               导出Excel
             </Button>
             <Button
@@ -222,7 +220,7 @@ export default function FinancialReportsPage() {
               size="small"
               onClick={() => handleExport("pdf")}
             >
-              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
+              <Download size={16} style={{ marginRight: 8 }} />
               导出PDF
             </Button>
           </Box>
@@ -231,11 +229,11 @@ export default function FinancialReportsPage() {
         <CardContent>
           {currentQuery.isLoading ? (
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
-              <RefreshCw style={{ width: 32, height: 32 }} />
+              <RefreshCw size={32} />
             </Box>
           ) : !currentReport ? (
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6 }}>
-              <FileText style={{ width: 48, height: 48 }} />
+              <FileText size={48} />
               <Typography color="text.secondary" sx={{ mt: 2 }}>暂无报表数据</Typography>
               <Typography variant="body2" color="text.disabled" sx={{ mt: 0.5 }}>
                 请输入公司ID和期间后点击"生成报表"
@@ -253,7 +251,7 @@ export default function FinancialReportsPage() {
           onClick={() => navigate("/finance/reports/comparison")}>
           <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: 3 }}>
             <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: "blue.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <BarChart3 style={{ width: 24, height: 24 }} />
+              <BarChart3 size={24} />
             </Box>
             <Box>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>报表对比</Typography>
@@ -266,7 +264,7 @@ export default function FinancialReportsPage() {
           onClick={() => navigate("/finance/reports/trend")}>
           <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: 3 }}>
             <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: "green.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <TrendingUp style={{ width: 24, height: 24 }} />
+              <TrendingUp size={24} />
             </Box>
             <Box>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>趋势分析</Typography>
@@ -279,7 +277,7 @@ export default function FinancialReportsPage() {
           onClick={() => navigate("/finance/reports/consolidated")}>
           <CardContent sx={{ display: "flex", alignItems: "center", gap: 2, py: 3 }}>
             <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: "purple.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Building2 style={{ width: 24, height: 24 }} />
+              <Building2 size={24} />
             </Box>
             <Box>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>合并报表</Typography>
@@ -312,317 +310,318 @@ function ReportContent({
 // 资产负债表内容
 function BalanceSheetContent({ data }: { data: any }) {
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 资产 */}
-      <div>
-        <h3 className="font-medium text-lg mb-3 flex items-center gap-2">
-          <ArrowUpRight className="w-5 h-5 text-blue-600" />
+      <Box>
+        <Typography variant="h6" sx={{ fontWeight: 500, fontSize: "1.125rem", mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+          <ArrowUpRight size={20} color="#2563eb" />
           资产
-        </h3>
-        <div className="space-y-2">
-          <div className="flex justify-between py-2 border-b">
-            <span>流动资产</span>
-            <span className="font-medium">
+        </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Typography component="span">流动资产</Typography>
+            <Typography component="span" sx={{ fontWeight: 500 }}>
               {formatCurrency(data?.assets?.current?.total)}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b pl-4 text-sm text-gray-600">
-            <span>货币资金</span>
-            <span>
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+            <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>货币资金</Typography>
+            <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>
               {formatCurrency(
                 data?.assets?.current?.items?.find(
                   (i: any) => i.account_name === "货币资金",
                 )?.amount,
               )}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b pl-4 text-sm text-gray-600">
-            <span>应收账款</span>
-            <span>
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+            <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>应收账款</Typography>
+            <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>
               {formatCurrency(
                 data?.assets?.current?.items?.find(
                   (i: any) => i.account_name === "应收账款",
                 )?.amount,
               )}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b pl-4 text-sm text-gray-600">
-            <span>存货</span>
-            <span>
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+            <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>存货</Typography>
+            <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>
               {formatCurrency(
                 data?.assets?.current?.items?.find(
                   (i: any) => i.account_name === "存货",
                 )?.amount,
               )}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b font-medium">
-            <span>非流动资产</span>
-            <span>{formatCurrency(data?.assets?.non_current?.total)}</span>
-          </div>
-          <div className="flex justify-between py-2 font-bold text-lg bg-gray-50 px-3 rounded">
-            <span>资产合计</span>
-            <span>{formatCurrency(data?.assets?.total)}</span>
-          </div>
-        </div>
-      </div>
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Typography component="span" sx={{ fontWeight: 500 }}>非流动资产</Typography>
+            <Typography component="span" sx={{ fontWeight: 500 }}>{formatCurrency(data?.assets?.non_current?.total)}</Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, fontWeight: 700, fontSize: "1.125rem", bgcolor: "grey.50", px: 2, borderRadius: 1 }}>
+            <Typography component="span" sx={{ fontWeight: 700 }}>资产合计</Typography>
+            <Typography component="span" sx={{ fontWeight: 700 }}>{formatCurrency(data?.assets?.total)}</Typography>
+          </Box>
+        </Box>
+      </Box>
 
       {/* 负债 */}
-      <div>
-        <h3 className="font-medium text-lg mb-3 flex items-center gap-2">
-          <ArrowDownRight className="w-5 h-5 text-red-600" />
+      <Box>
+        <Typography variant="h6" sx={{ fontWeight: 500, fontSize: "1.125rem", mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+          <ArrowDownRight size={20} color="#dc2626" />
           负债
-        </h3>
-        <div className="space-y-2">
-          <div className="flex justify-between py-2 border-b">
-            <span>流动负债</span>
-            <span className="font-medium">
+        </Typography>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Typography component="span">流动负债</Typography>
+            <Typography component="span" sx={{ fontWeight: 500 }}>
               {formatCurrency(data?.liabilities?.current?.total)}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b font-medium">
-            <span>非流动负债</span>
-            <span>{formatCurrency(data?.liabilities?.non_current?.total)}</span>
-          </div>
-          <div className="flex justify-between py-2 font-bold text-lg bg-gray-50 px-3 rounded">
-            <span>负债合计</span>
-            <span>{formatCurrency(data?.liabilities?.total)}</span>
-          </div>
-        </div>
-      </div>
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+            <Typography component="span" sx={{ fontWeight: 500 }}>非流动负债</Typography>
+            <Typography component="span" sx={{ fontWeight: 500 }}>{formatCurrency(data?.liabilities?.non_current?.total)}</Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, fontWeight: 700, fontSize: "1.125rem", bgcolor: "grey.50", px: 2, borderRadius: 1 }}>
+            <Typography component="span" sx={{ fontWeight: 700 }}>负债合计</Typography>
+            <Typography component="span" sx={{ fontWeight: 700 }}>{formatCurrency(data?.liabilities?.total)}</Typography>
+          </Box>
+        </Box>
+      </Box>
 
       {/* 所有者权益 */}
-      <div>
-        <h3 className="font-medium text-lg mb-3 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-green-600" />
+      <Box>
+        <Typography variant="h6" sx={{ fontWeight: 500, fontSize: "1.125rem", mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+          <DollarSign size={20} color="#16a34a" />
           所有者权益
-        </h3>
-        <div className="flex justify-between py-2 font-bold text-lg bg-gray-50 px-3 rounded">
-          <span>所有者权益合计</span>
-          <span>{formatCurrency(data?.equity?.total)}</span>
-        </div>
-      </div>
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, fontWeight: 700, fontSize: "1.125rem", bgcolor: "grey.50", px: 2, borderRadius: 1 }}>
+          <Typography component="span" sx={{ fontWeight: 700 }}>所有者权益合计</Typography>
+          <Typography component="span" sx={{ fontWeight: 700 }}>{formatCurrency(data?.equity?.total)}</Typography>
+        </Box>
+      </Box>
 
       {/* 平衡检查 */}
-      <div
-        className={`p-4 rounded-lg ${data?.balance_check ? "bg-green-100" : "bg-red-100"}`}
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 1,
+          bgcolor: data?.balance_check ? "success.light" : "error.light",
+        }}
       >
-        <div className="flex items-center justify-between">
-          <span className="font-medium">
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography component="span" sx={{ fontWeight: 500 }}>
             {data?.balance_check ? "✓ 资产负债表平衡" : "✗ 资产负债表不平衡"}
-          </span>
-          <span className="font-mono">
+          </Typography>
+          <Typography component="span" sx={{ fontFamily: "monospace" }}>
             资产: {formatCurrency(data?.assets?.total)} = 负债+权益:{" "}
             {formatCurrency(data?.total_liabilities_equity)}
-          </span>
-        </div>
-      </div>
-    </div>
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
 // 利润表内容
 function IncomeStatementContent({ data }: { data: any }) {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="flex justify-between py-2 border-b">
-          <span className="font-medium">营业收入</span>
-          <span className="font-medium">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span" sx={{ fontWeight: 500 }}>营业收入</Typography>
+          <Typography component="span" sx={{ fontWeight: 500 }}>
             {formatCurrency(data?.revenue?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b text-sm text-gray-600 pl-4">
-          <span>主营业务收入</span>
-          <span>{formatCurrency(data?.revenue?.main_revenue?.total)}</span>
-        </div>
-        <div className="flex justify-between py-2 border-b text-sm text-gray-600 pl-4">
-          <span>其他业务收入</span>
-          <span>{formatCurrency(data?.revenue?.other_revenue?.total)}</span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>主营业务收入</Typography>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>{formatCurrency(data?.revenue?.main_revenue?.total)}</Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>其他业务收入</Typography>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>{formatCurrency(data?.revenue?.other_revenue?.total)}</Typography>
+        </Box>
+      </Box>
 
-      <div className="space-y-2">
-        <div className="flex justify-between py-2 border-b">
-          <span className="font-medium">营业成本</span>
-          <span className="font-medium text-red-600">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span" sx={{ fontWeight: 500 }}>营业成本</Typography>
+          <Typography component="span" sx={{ fontWeight: 500, color: "error.main" }}>
             -{formatCurrency(data?.cost_of_sales?.total)}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
-      <div className="flex justify-between py-3 font-bold text-lg bg-blue-50 px-3 rounded">
-        <span>毛利润</span>
-        <span
-          className={
-            data?.gross_profit >= 0 ? "text-green-600" : "text-red-600"
-          }
+      <Box sx={{ display: "flex", justifyContent: "space-between", py: 1.5, fontWeight: 700, fontSize: "1.125rem", bgcolor: "blue.50", px: 2, borderRadius: 1 }}>
+        <Typography component="span" sx={{ fontWeight: 700 }}>毛利润</Typography>
+        <Typography
+          component="span"
+          sx={{ fontWeight: 700, color: data?.gross_profit >= 0 ? "success.main" : "error.main" }}
         >
           {formatCurrency(data?.gross_profit)} ({data?.gross_margin?.toFixed(2)}
           %)
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="space-y-2">
-        <div className="flex justify-between py-2 border-b">
-          <span className="font-medium">期间费用</span>
-          <span className="font-medium text-red-600">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span" sx={{ fontWeight: 500 }}>期间费用</Typography>
+          <Typography component="span" sx={{ fontWeight: 500, color: "error.main" }}>
             -{formatCurrency(data?.operating_expenses?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b text-sm text-gray-600 pl-4">
-          <span>销售费用</span>
-          <span>
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>销售费用</Typography>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>
             {formatCurrency(data?.operating_expenses?.selling_expense?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b text-sm text-gray-600 pl-4">
-          <span>管理费用</span>
-          <span>
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>管理费用</Typography>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>
             {formatCurrency(
               data?.operating_expenses?.administrative_expense?.total,
             )}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b text-sm text-gray-600 pl-4">
-          <span>研发费用</span>
-          <span>
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>研发费用</Typography>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>
             {formatCurrency(data?.operating_expenses?.rd_expense?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b text-sm text-gray-600 pl-4">
-          <span>财务费用</span>
-          <span>
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider", pl: 2 }}>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>财务费用</Typography>
+          <Typography component="span" variant="body2" sx={{ color: "grey.600" }}>
             {formatCurrency(data?.operating_expenses?.financial_expense?.total)}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
-      <div className="flex justify-between py-3 font-bold text-lg bg-green-50 px-3 rounded">
-        <span>净利润</span>
-        <span
-          className={data?.net_profit >= 0 ? "text-green-600" : "text-red-600"}
+      <Box sx={{ display: "flex", justifyContent: "space-between", py: 1.5, fontWeight: 700, fontSize: "1.125rem", bgcolor: "green.50", px: 2, borderRadius: 1 }}>
+        <Typography component="span" sx={{ fontWeight: 700 }}>净利润</Typography>
+        <Typography
+          component="span"
+          sx={{ fontWeight: 700, color: data?.net_profit >= 0 ? "success.main" : "error.main" }}
         >
           {formatCurrency(data?.net_profit)} ({data?.net_margin?.toFixed(2)}%)
-        </span>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Box>
   );
 }
 
 // 现金流量表内容
 function CashFlowContent({ data }: { data: any }) {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h3 className="font-medium text-lg mb-3 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-green-600" />
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 500, fontSize: "1.125rem", mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+          <TrendingUp size={20} color="#16a34a" />
           经营活动现金流量
-        </h3>
-        <div className="flex justify-between py-2 border-b">
-          <span>流入</span>
-          <span className="text-green-600">
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span">流入</Typography>
+          <Typography component="span" sx={{ color: "success.main" }}>
             {formatCurrency(data?.operating?.inflows?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b">
-          <span>流出</span>
-          <span className="text-red-600">
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span">流出</Typography>
+          <Typography component="span" sx={{ color: "error.main" }}>
             -{formatCurrency(data?.operating?.outflows?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 font-bold bg-green-50 px-3 rounded">
-          <span>经营活动净流量</span>
-          <span
-            className={
-              data?.operating?.net_flow >= 0 ? "text-green-600" : "text-red-600"
-            }
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, fontWeight: 700, bgcolor: "green.50", px: 2, borderRadius: 1 }}>
+          <Typography component="span" sx={{ fontWeight: 700 }}>经营活动净流量</Typography>
+          <Typography
+            component="span"
+            sx={{ fontWeight: 700, color: data?.operating?.net_flow >= 0 ? "success.main" : "error.main" }}
           >
             {formatCurrency(data?.operating?.net_flow)}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
-      <div className="space-y-2">
-        <h3 className="font-medium text-lg mb-3 flex items-center gap-2">
-          <TrendingDown className="w-5 h-5 text-blue-600" />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 500, fontSize: "1.125rem", mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+          <TrendingDown size={20} color="#2563eb" />
           投资活动现金流量
-        </h3>
-        <div className="flex justify-between py-2 border-b">
-          <span>流入</span>
-          <span className="text-green-600">
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span">流入</Typography>
+          <Typography component="span" sx={{ color: "success.main" }}>
             {formatCurrency(data?.investing?.inflows?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b">
-          <span>流出</span>
-          <span className="text-red-600">
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span">流出</Typography>
+          <Typography component="span" sx={{ color: "error.main" }}>
             -{formatCurrency(data?.investing?.outflows?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 font-bold bg-blue-50 px-3 rounded">
-          <span>投资活动净流量</span>
-          <span
-            className={
-              data?.investing?.net_flow >= 0 ? "text-green-600" : "text-red-600"
-            }
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, fontWeight: 700, bgcolor: "blue.50", px: 2, borderRadius: 1 }}>
+          <Typography component="span" sx={{ fontWeight: 700 }}>投资活动净流量</Typography>
+          <Typography
+            component="span"
+            sx={{ fontWeight: 700, color: data?.investing?.net_flow >= 0 ? "success.main" : "error.main" }}
           >
             {formatCurrency(data?.investing?.net_flow)}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
-      <div className="space-y-2">
-        <h3 className="font-medium text-lg mb-3 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-purple-600" />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 500, fontSize: "1.125rem", mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
+          <DollarSign size={20} color="#9333ea" />
           筹资活动现金流量
-        </h3>
-        <div className="flex justify-between py-2 border-b">
-          <span>流入</span>
-          <span className="text-green-600">
+        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span">流入</Typography>
+          <Typography component="span" sx={{ color: "success.main" }}>
             {formatCurrency(data?.financing?.inflows?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 border-b">
-          <span>流出</span>
-          <span className="text-red-600">
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: 1, borderColor: "divider" }}>
+          <Typography component="span">流出</Typography>
+          <Typography component="span" sx={{ color: "error.main" }}>
             -{formatCurrency(data?.financing?.outflows?.total)}
-          </span>
-        </div>
-        <div className="flex justify-between py-2 font-bold bg-purple-50 px-3 rounded">
-          <span>筹资活动净流量</span>
-          <span
-            className={
-              data?.financing?.net_flow >= 0 ? "text-green-600" : "text-red-600"
-            }
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, fontWeight: 700, bgcolor: "purple.50", px: 2, borderRadius: 1 }}>
+          <Typography component="span" sx={{ fontWeight: 700 }}>筹资活动净流量</Typography>
+          <Typography
+            component="span"
+            sx={{ fontWeight: 700, color: data?.financing?.net_flow >= 0 ? "success.main" : "error.main" }}
           >
             {formatCurrency(data?.financing?.net_flow)}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
-      <div className="flex justify-between py-3 font-bold text-lg bg-gray-100 px-3 rounded">
-        <span>现金及现金等价物净增加额</span>
-        <span
-          className={
-            data?.cash_equivalent_change >= 0
-              ? "text-green-600"
-              : "text-red-600"
-          }
+      <Box sx={{ display: "flex", justifyContent: "space-between", py: 1.5, fontWeight: 700, fontSize: "1.125rem", bgcolor: "grey.100", px: 2, borderRadius: 1 }}>
+        <Typography component="span" sx={{ fontWeight: 700 }}>现金及现金等价物净增加额</Typography>
+        <Typography
+          component="span"
+          sx={{
+            fontWeight: 700,
+            color: data?.cash_equivalent_change >= 0 ? "success.main" : "error.main",
+          }}
         >
           {formatCurrency(data?.cash_equivalent_change)}
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="flex justify-between py-2 text-gray-600">
-        <span>期初现金</span>
-        <span>{formatCurrency(data?.beginning_cash)}</span>
-      </div>
-      <div className="flex justify-between py-2 text-gray-600">
-        <span>期末现金</span>
-        <span className="font-medium">{formatCurrency(data?.ending_cash)}</span>
-      </div>
-    </div>
+      <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, color: "grey.600" }}>
+        <Typography component="span" sx={{ color: "grey.600" }}>期初现金</Typography>
+        <Typography component="span" sx={{ color: "grey.600" }}>{formatCurrency(data?.beginning_cash)}</Typography>
+      </Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, color: "grey.600" }}>
+        <Typography component="span" sx={{ color: "grey.600" }}>期末现金</Typography>
+        <Typography component="span" sx={{ color: "grey.600", fontWeight: 500 }}>{formatCurrency(data?.ending_cash)}</Typography>
+      </Box>
+    </Box>
   );
 }
 

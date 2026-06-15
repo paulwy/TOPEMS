@@ -26,6 +26,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
+import { Box, Typography } from "@mui/material";
 
 interface Document {
   id: string;
@@ -176,15 +177,15 @@ const DocumentCenterPage: React.FC = () => {
   const getFileIcon = (type: string) => {
     switch (type) {
       case "pdf":
-        return <FileText className="w-8 h-8 text-red-500" />;
+        return <FileText sx={{ width: 32, height: 32, color: "error.main" }} />;
       case "docx":
       case "doc":
-        return <FileText className="w-8 h-8 text-blue-500" />;
+        return <FileText sx={{ width: 32, height: 32, color: "primary.main" }} />;
       case "xlsx":
       case "xls":
-        return <FileText className="w-8 h-8 text-green-500" />;
+        return <FileText sx={{ width: 32, height: 32, color: "success.main" }} />;
       default:
-        return <File className="w-8 h-8 text-gray-500" />;
+        return <File sx={{ width: 32, height: 32, color: "grey.500" }} />;
     }
   };
 
@@ -226,92 +227,88 @@ const DocumentCenterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
                 onClick={() => navigate("/dashboard")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{ p: 1, "&:hover": { bgcolor: "grey.200" }, borderRadius: 1, cursor: "pointer" }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <File className="w-7 h-7 mr-3 text-blue-600" />
+                <ChevronLeft sx={{ width: 20, height: 20, color: "grey.600" }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <File sx={{ width: 28, height: 28, color: "primary.main" }} />
                   文档中心
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   统一管理企业文档，支持分类、标签和全文搜索
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
                 onClick={handleUpload}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                sx={{ display: "flex", alignItems: "center", px: 2, py: 1, bgcolor: "primary.main", color: "white", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "primary.dark" } }}
               >
-                <Upload className="w-5 h-5 mr-2" />
+                <Upload sx={{ width: 20, height: 20, mr: 1 }} />
                 上传文件
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center space-x-2 text-sm">
-          <button
+      <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.875rem" }}>
+          <Box
             onClick={() => setCurrentPath([])}
-            className="text-blue-600 hover:text-blue-700"
+            sx={{ color: "primary.main", cursor: "pointer", "&:hover": { color: "primary.dark" } }}
           >
             全部文档
-          </button>
+          </Box>
           {currentPath.map((path, idx) => (
             <React.Fragment key={idx}>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              <button
+              <ChevronRight sx={{ width: 16, height: 16, color: "grey.400" }} />
+              <Box
                 onClick={() => setCurrentPath(currentPath.slice(0, idx + 1))}
-                className={
-                  idx === currentPath.length - 1
-                    ? "text-gray-900"
-                    : "text-blue-600 hover:text-blue-700"
-                }
+                sx={idx === currentPath.length - 1 ? { color: "grey.900" } : { color: "primary.main", cursor: "pointer", "&:hover": { color: "primary.dark" } }}
               >
                 {path}
-              </button>
+              </Box>
             </React.Fragment>
           ))}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <Box sx={{ maxWidth: 1400, mx: "auto", px: 3 }}>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search sx={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "grey.400" }} />
               <input
                 type="text"
                 placeholder="搜索文件名、标签..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 8, paddingBottom: 8, border: "1px solid", borderColor: "grey.300", borderRadius: 8, outline: "none" }}
               />
-            </div>
+            </Box>
 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              style={{ padding: "8px 16px", border: "1px solid", borderColor: "grey.300", borderRadius: 8, outline: "none" }}
             >
               <option value="">全部分类</option>
               <option value="项目文档">项目文档</option>
@@ -319,200 +316,187 @@ const DocumentCenterPage: React.FC = () => {
               <option value="规章制度">规章制度</option>
             </select>
 
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-              <button
+            <Box sx={{ border: 1, borderColor: "grey.300", borderRadius: 1, overflow: "hidden", display: "flex" }}>
+              <Box
                 onClick={() => setViewMode("grid")}
-                className={`p-2 ${viewMode === "grid" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                sx={{ p: 1, bgcolor: viewMode === "grid" ? "primary.main" : "background.paper", color: viewMode === "grid" ? "white" : "grey.600", cursor: "pointer", "&:hover": { bgcolor: viewMode === "grid" ? "primary.main" : "grey.100" } }}
               >
-                <Grid className="w-5 h-5" />
-              </button>
-              <button
+                <Grid sx={{ width: 20, height: 20 }} />
+              </Box>
+              <Box
                 onClick={() => setViewMode("list")}
-                className={`p-2 ${viewMode === "list" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                sx={{ p: 1, bgcolor: viewMode === "list" ? "primary.main" : "background.paper", color: viewMode === "list" ? "white" : "grey.600", cursor: "pointer", "&:hover": { bgcolor: viewMode === "list" ? "primary.main" : "grey.100" } }}
               >
-                <List className="w-5 h-5" />
-              </button>
-            </div>
+                <List sx={{ width: 20, height: 20 }} />
+              </Box>
+            </Box>
 
-            <button
+            <Box
               onClick={loadData}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              sx={{ px: 2, py: 1, color: "grey.700", bgcolor: "grey.200", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.300" } }}
             >
               刷新
-            </button>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, pb: 4 }}>
         {/* Folders */}
         {currentPath.length === 0 && folders.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">文件夹</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>文件夹</Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 }, gap: 2 }}>
               {folders.map((folder) => (
-                <div
+                <Box
                   key={folder.id}
                   onClick={() => setCurrentPath([...currentPath, folder.name])}
-                  className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md hover:border-blue-300 cursor-pointer transition-all"
+                  sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2, border: 1, borderColor: "grey.200", cursor: "pointer", "&:hover": { boxShadow: 3, borderColor: "primary.light" }, transition: "all 0.2s" }}
                 >
-                  <Folder className="w-10 h-10 text-yellow-500 mb-3" />
-                  <div className="text-sm font-medium text-gray-900 truncate">
+                  <Folder sx={{ width: 40, height: 40, color: "warning.main", mb: 1.5 }} />
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {folder.name}
-                  </div>
-                  <div className="text-xs text-gray-500">
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "grey.500" }}>
                     {folder.document_count} 个文件
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {/* Documents */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, overflow: "hidden" }}>
           {loading ? (
-            <div className="p-8 text-center">
-              <Loader2 className="w-12 h-12 text-blue-600 mx-auto animate-spin" />
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
+            <Box sx={{ p: 8, textAlign: "center" }}>
+              <Loader2 sx={{ width: 48, height: 48, color: "primary.main", mx: "auto", animation: "spin 1s linear infinite" }} />
+              <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>加载中...</Typography>
+            </Box>
           ) : filteredDocuments.length === 0 ? (
-            <div className="p-8 text-center">
-              <File className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500">暂无文档</p>
-            </div>
+            <Box sx={{ p: 8, textAlign: "center" }}>
+              <File sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 1.5 }} />
+              <Typography sx={{ color: "grey.500" }}>暂无文档</Typography>
+            </Box>
           ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-6">
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 }, gap: 2, p: 3 }}>
               {filteredDocuments.map((doc) => (
-                <div
+                <Box
                   key={doc.id}
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow group"
+                  sx={{ bgcolor: "grey.50", borderRadius: 2, p: 2, border: 1, borderColor: "grey.200", "&:hover": { boxShadow: 2 }, transition: "box-shadow 0.2s", "&:hover .hidden-actions": { opacity: 1 } }}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
+                    <Box sx={{ width: 48, height: 48, bgcolor: "background.paper", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 1 }}>
                       {getFileIcon(doc.type)}
-                    </div>
-                    <button
+                    </Box>
+                    <Box
                       onClick={() => handleToggleFavorite(doc.id)}
-                      className={`p-1 rounded transition-colors ${
-                        doc.is_favorite
-                          ? "text-yellow-500"
-                          : "text-gray-400 hover:text-yellow-500"
-                      }`}
+                      sx={{ p: 0.5, borderRadius: 1, cursor: "pointer", color: doc.is_favorite ? "warning.main" : "grey.400", "&:hover": { color: "warning.main" } }}
                     >
                       <Star
-                        className="w-4 h-4"
-                        fill={doc.is_favorite ? "currentColor" : "none"}
+                        sx={{ width: 16, height: 16 }}
+                        style={{ fill: doc.is_favorite ? "currentColor" : "none" }}
                       />
-                    </button>
-                  </div>
+                    </Box>
+                  </Box>
 
-                  <h4
-                    className="font-medium text-gray-900 mb-1 truncate"
-                    title={doc.name}
-                  >
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900", mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={doc.name}>
                     {doc.name}
-                  </h4>
-                  <p className="text-xs text-gray-500 mb-2">
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "grey.500", mb: 1 }}>
                     {formatFileSize(doc.size)}
-                  </p>
+                  </Typography>
 
-                  <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex space-x-1">
-                      <button
+                  <Box className="hidden-actions" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", opacity: 0, transition: "opacity 0.2s" }}>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
+                      <Box
                         onClick={() => handlePreview(doc)}
-                        className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded"
+                        sx={{ p: 0.5, color: "grey.500", "&:hover": { color: "primary.main", bgcolor: "primary.50" }, borderRadius: 1, cursor: "pointer" }}
                         title="预览"
                       >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
+                        <Eye sx={{ width: 16, height: 16 }} />
+                      </Box>
+                      <Box
                         onClick={() => handleDownload(doc)}
-                        className="p-1 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded"
+                        sx={{ p: 0.5, color: "grey.500", "&:hover": { color: "success.main", bgcolor: "success.50" }, borderRadius: 1, cursor: "pointer" }}
                         title="下载"
                       >
-                        <Download className="w-4 h-4" />
-                      </button>
-                      <button
+                        <Download sx={{ width: 16, height: 16 }} />
+                      </Box>
+                      <Box
                         onClick={() => handleDelete(doc.id)}
-                        className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded"
+                        sx={{ p: 0.5, color: "grey.500", "&:hover": { color: "error.main", bgcolor: "error.50" }, borderRadius: 1, cursor: "pointer" }}
                         title="删除"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                        <Trash2 sx={{ width: 16, height: 16 }} />
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               ))}
-            </div>
+            </Box>
           ) : (
-            <div className="divide-y divide-gray-200">
+            <Box sx={{ "& > *": { borderTop: 1, borderColor: "divider" }, "& > *:first-of-type": { borderTop: 0 } }}>
               {filteredDocuments.map((doc) => (
-                <div
+                <Box
                   key={doc.id}
-                  className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                  sx={{ p: 2, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s", display: "flex", alignItems: "center", justifyContent: "space-between" }}
                 >
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
+                    <Box sx={{ width: 40, height: 40, bgcolor: "grey.100", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {getFileIcon(doc.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-gray-900 truncate">
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {doc.name}
-                        </h4>
+                        </Typography>
                         {doc.is_favorite && (
-                          <Star
-                            className="w-4 h-4 text-yellow-500"
-                            fill="currentColor"
-                          />
+                          <Star sx={{ width: 16, height: 16, color: "warning.main" }} style={{ fill: "currentColor" }} />
                         )}
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.875rem", color: "grey.500" }}>
                         <span>{formatFileSize(doc.size)}</span>
                         <span>·</span>
                         <span>{doc.category}</span>
                         <span>·</span>
                         <span>{doc.updated_at}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
                       onClick={() => handleToggleFavorite(doc.id)}
-                      className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-lg"
+                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "warning.main", bgcolor: "warning.50" }, borderRadius: 2, cursor: "pointer" }}
                     >
-                      <Star
-                        className="w-4 h-4"
-                        fill={doc.is_favorite ? "currentColor" : "none"}
-                      />
-                    </button>
-                    <button
+                      <Star sx={{ width: 16, height: 16 }} style={{ fill: doc.is_favorite ? "currentColor" : "none" }} />
+                    </Box>
+                    <Box
                       onClick={() => handlePreview(doc)}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "primary.main", bgcolor: "primary.50" }, borderRadius: 2, cursor: "pointer" }}
                     >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
+                      <Eye sx={{ width: 16, height: 16 }} />
+                    </Box>
+                    <Box
                       onClick={() => handleDownload(doc)}
-                      className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
+                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "success.main", bgcolor: "success.50" }, borderRadius: 2, cursor: "pointer" }}
                     >
-                      <Download className="w-4 h-4" />
-                    </button>
-                    <button
+                      <Download sx={{ width: 16, height: 16 }} />
+                    </Box>
+                    <Box
                       onClick={() => handleDelete(doc.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "error.main", bgcolor: "error.50" }, borderRadius: 2, cursor: "pointer" }}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                      <Trash2 sx={{ width: 16, height: 16 }} />
+                    </Box>
+                  </Box>
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Upload Modal */}
       {showUploadModal && (
@@ -537,7 +521,7 @@ const DocumentCenterPage: React.FC = () => {
           onDownload={() => handleDownload(selectedDocument)}
         />
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -571,80 +555,75 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-900">上传文件</h3>
-          <button
+    <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, p: 2 }}>
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 6, width: "100%", maxWidth: 600 }}>
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>上传文件</Typography>
+          <Box
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            sx={{ p: 1, "&:hover": { bgcolor: "grey.100" }, borderRadius: 1, cursor: "pointer" }}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            <X sx={{ width: 20, height: 20 }} />
+          </Box>
+        </Box>
 
-        <div className="p-6">
-          <div
+        <Box sx={{ p: 3 }}>
+          <Box
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
-              dragActive
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 hover:border-blue-300"
-            }`}
+            sx={{ border: 2, borderStyle: "dashed", borderRadius: 2, p: 6, textAlign: "center", borderColor: dragActive ? "primary.main" : "grey.300", bgcolor: dragActive ? "primary.50" : "transparent", "&:hover": { borderColor: "primary.light" }, transition: "all 0.2s" }}
           >
-            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">
+            <Upload sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
+            <Typography sx={{ color: "grey.600", mb: 1 }}>
               拖拽文件到此处，或{" "}
-              <span className="text-blue-600 cursor-pointer">点击选择</span>
-            </p>
-            <p className="text-sm text-gray-500">
+              <Box component="span" sx={{ color: "primary.main", cursor: "pointer" }}>点击选择</Box>
+            </Typography>
+            <Typography variant="caption" sx={{ color: "grey.500" }}>
               支持 .pdf, .docx, .xlsx, .txt 等格式，单个文件不超过 100MB
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
           {files.length > 0 && (
-            <div className="mt-4 space-y-2">
+            <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
               {files.map((file, idx) => (
-                <div
+                <Box
                   key={idx}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "grey.50", borderRadius: 2 }}
                 >
-                  <div className="flex items-center space-x-3">
-                    <File className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-700">{file.name}</span>
-                  </div>
-                  <button
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <File sx={{ width: 20, height: 20, color: "grey.500" }} />
+                    <Typography variant="body2" sx={{ color: "grey.700" }}>{file.name}</Typography>
+                  </Box>
+                  <Box
                     onClick={() => setFiles(files.filter((_, i) => i !== idx))}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    sx={{ p: 0.5, color: "grey.400", "&:hover": { color: "error.main" }, cursor: "pointer" }}
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                    <X sx={{ width: 16, height: 16 }} />
+                  </Box>
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
-        </div>
+        </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
-          <button
+        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end", gap: 1.5 }}>
+          <Box
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            sx={{ px: 2, py: 1, color: "grey.700", bgcolor: "grey.100", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.200" } }}
           >
             取消
-          </button>
-          <button
+          </Box>
+          <Box
             onClick={onSuccess}
-            disabled={files.length === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            sx={{ px: 2, py: 1, bgcolor: files.length === 0 ? "grey.400" : "primary.main", color: "white", borderRadius: 2, cursor: files.length === 0 ? "not-allowed" : "pointer", "&:hover": { bgcolor: files.length === 0 ? "grey.400" : "primary.dark" } }}
           >
             开始上传
-          </button>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
@@ -669,53 +648,53 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+    <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, p: 2 }}>
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 6, width: "100%", maxWidth: 900, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
               {document.name}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
               {formatFileSize(document.size)} · {document.category} ·{" "}
               {document.created_by}
-            </p>
-          </div>
-          <button
+            </Typography>
+          </Box>
+          <Box
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            sx={{ p: 1, "&:hover": { bgcolor: "grey.100" }, borderRadius: 1, cursor: "pointer" }}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            <X sx={{ width: 20, height: 20 }} />
+          </Box>
+        </Box>
 
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-100">
-          <div className="bg-white rounded-lg p-12 text-center">
-            <File className="w-24 h-24 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">文件预览功能开发中...</p>
-            <p className="text-sm text-gray-400 mt-2">
+        <Box sx={{ flex: 1, overflow: "auto", p: 3, bgcolor: "grey.100" }}>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 6, textAlign: "center" }}>
+            <File sx={{ width: 96, height: 96, color: "grey.400", mx: "auto", mb: 2 }} />
+            <Typography sx={{ color: "grey.500" }}>文件预览功能开发中...</Typography>
+            <Typography variant="caption" sx={{ color: "grey.400", mt: 1 }}>
               支持 PDF、Word、Excel 等格式的在线预览
-            </p>
-          </div>
-        </div>
+            </Typography>
+          </Box>
+        </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
-          <button
+        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end", gap: 1.5 }}>
+          <Box
             onClick={onDownload}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1, bgcolor: "primary.main", color: "white", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "primary.dark" } }}
           >
-            <Download className="w-4 h-4" />
+            <Download sx={{ width: 16, height: 16 }} />
             <span>下载</span>
-          </button>
-          <button
+          </Box>
+          <Box
             onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            sx={{ px: 2, py: 1, bgcolor: "grey.100", color: "grey.700", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.200" } }}
           >
             关闭
-          </button>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

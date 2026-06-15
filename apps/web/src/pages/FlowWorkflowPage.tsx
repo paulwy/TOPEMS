@@ -265,7 +265,7 @@ const FlowWorkflowPage: React.FC = () => {
                   navigate(`/workflow-designer?id=${row.original.id}`)
                 }
               >
-                <Edit className="w-4 h-4" />
+                <Edit sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
 
@@ -322,7 +322,7 @@ const FlowWorkflowPage: React.FC = () => {
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </IconButton>
               <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <GitBranch className="w-6 h-6 text-primary.main" />
@@ -336,7 +336,7 @@ const FlowWorkflowPage: React.FC = () => {
             </Box>
             <Button
               variant="contained"
-              startIcon={<Plus className="w-5 h-5" />}
+              startIcon={<Plus sx={{ width: 20, height: 20 }} />}
               onClick={() => setShowCreateDialog(true)}
             >
               创建工作流
