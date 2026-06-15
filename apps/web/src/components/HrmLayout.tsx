@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Briefcase,
   Calendar,
@@ -298,62 +298,60 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
       {/* Main Content */}
       <Box sx={{ display: "flex", flex: 1 }}>
         {/* Mobile Sidebar */}
-        <AnimatePresence mode="wait">
-          {mobileMenuOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                  zIndex: 40,
-                }}
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              <motion.aside
-                initial={{ x: "-100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "-100%" }}
-                transition={{ type: "tween", duration: 0.2 }}
-                style={{
-                  position: "fixed",
-                  left: 0,
-                  top: 64,
-                  bottom: 0,
-                  width: 256,
-                  backgroundColor: "white",
-                  boxShadow: "4px 0 6px -1px rgb(0 0 0 / 0.1)",
-                  zIndex: 50,
-                  overflowY: "auto",
-                  display: { xs: "block", lg: "none" } as any,
-                }}
-              >
-                <Card sx={{ m: 2 }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: "#334155", mb: 2, px: 1 }}
-                    >
-                      HRM 模块
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 0.5,
-                      }}
-                    >
-                      {hrmMenuItems.map((item) => renderMenuItem(item, true))}
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.aside>
-            </>
-          )}
-        </AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: "fixed",
+                inset: 0,
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                zIndex: 40,
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.2 }}
+              style={{
+                position: "fixed",
+                left: 0,
+                top: 64,
+                bottom: 0,
+                width: 256,
+                backgroundColor: "white",
+                boxShadow: "4px 0 6px -1px rgb(0 0 0 / 0.1)",
+                zIndex: 50,
+                overflowY: "auto",
+                display: { xs: "block", lg: "none" } as any,
+              }}
+            >
+              <Card sx={{ m: 2 }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 600, color: "#334155", mb: 2, px: 1 }}
+                  >
+                    HRM 模块
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 0.5,
+                    }}
+                  >
+                    {hrmMenuItems.map((item) => renderMenuItem(item, true))}
+                  </Box>
+                </CardContent>
+              </Card>
+            </motion.aside>
+          </>
+        )}
 
         {/* Desktop Sidebar */}
         {showSidebar && (
