@@ -20,17 +20,22 @@ import {
   List,
   Activity,
 } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { Input } from "../components/ui/input";
 import { EmptyState } from "../components/EmptyState";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { Box, Skeleton, Typography } from "@mui/material";
+  Button,
+  Card,
+  CardContent,
+  TextField,
+  Box,
+  Skeleton,
+  Typography,
+  Menu,
+  MenuItem,
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+} from "@mui/material";
 
 interface DataSource {
   id: string;
@@ -57,6 +62,8 @@ const DataSourceCard = ({
   onEdit: () => void;
   onDelete: () => void;
 }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "active":
@@ -129,6 +136,14 @@ const DataSourceCard = ({
 
   const statusConfig = getStatusConfig(datasource.status);
   const typeConfig = getTypeConfig(datasource.type);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   return (
     <Box sx={{ bgcolor: "background.paper", borderRadius: 4, boxShadow: 1, border: 1, borderColor: "grey.200", overflow: "hidden", transition: "all 0.3s", "&:hover": { boxShadow: 6, borderColor: "grey.300" } }}>
@@ -221,43 +236,36 @@ const DataSourceCard = ({
         {/* Actions */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Button
-            size="sm"
-            variant="outline"
+            size="small"
+            variant="outlined"
             onClick={onSync}
-            style={{ flex: 1 }}
+            sx={{ flex: 1 }}
           >
-            <RefreshCw size={14} style={{ marginRight: 6 }} />
+            <RefreshCw size={14} sx={{ mr: 1 }} />
             同步
           </Button>
           <Button
-            size="sm"
-            variant="outline"
+            size="small"
+            variant="outlined"
             onClick={onView}
-            style={{ flex: 1 }}
+            sx={{ flex: 1 }}
           >
-            <Eye size={14} style={{ marginRight: 6 }} />
+            <Eye size={14} sx={{ mr: 1 }} />
             查看
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" style={{ padding: 8 }}>
-                <MoreVertical size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" style={{ width: 128 }}>
-              <DropdownMenuItem onClick={onEdit} style={{ cursor: "pointer" }}>
-                <Edit size={16} style={{ marginRight: 8 }} />
-                编辑
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDelete}
-                style={{ cursor: "pointer", color: "#d32f2f" }}
-              >
-                <Trash2 size={16} style={{ marginRight: 8 }} />
-                删除
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <IconButton size="small" onClick={handleMenuOpen}>
+            <MoreVertical size={16} />
+          </IconButton>
+          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+            <MenuItem onClick={() => { onEdit(); handleMenuClose(); }}>
+              <Edit size={16} sx={{ mr: 2 }} />
+              编辑
+            </MenuItem>
+            <MenuItem onClick={() => { onDelete(); handleMenuClose(); }} sx={{ color: "error.main" }}>
+              <Trash2 size={16} sx={{ mr: 2 }} />
+              删除
+            </MenuItem>
+          </Menu>
         </Box>
       </Box>
     </Box>
@@ -311,7 +319,6 @@ const BIDataSourcePage = () => {
   const loadDatasources = async () => {
     setLoading(true);
     try {
-      // 模拟数据源数据
       setDatasources([
         {
           id: "1",
@@ -430,10 +437,10 @@ const BIDataSourcePage = () => {
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Link to="/bi/dashboard">
-            <Button variant="secondary">返回数据大屏</Button>
+            <Button variant="outlined">返回数据大屏</Button>
           </Link>
-          <Button>
-            <Plus size={16} style={{ marginRight: 8 }} />
+          <Button variant="contained">
+            <Plus size={16} sx={{ mr: 2 }} />
             添加数据源
           </Button>
         </Box>
@@ -441,64 +448,64 @@ const BIDataSourcePage = () => {
 
       {/* Filters */}
       <Card>
-        <CardContent style={{ padding: 16 }}>
+        <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box sx={{ flex: 1, position: "relative" }}>
-              <Search size={16} color="#94a3b8" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
-              <Input
-                placeholder="搜索数据源名称..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: 40 }}
-              />
-            </Box>
+            <TextField
+              placeholder="搜索数据源名称..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ flex: 1 }}
+              size="small"
+              InputProps={{
+                startAdornment: <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />,
+              }}
+            />
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Filter size={16} color="#94a3b8" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: "8px 12px", fontSize: "0.875rem", backgroundColor: "white", outline: "none" }}
-              >
-                {statusOptions.map((status) => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
-                  </option>
-                ))}
-              </select>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={filterStatus}
+                  label="状态"
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  {statusOptions.map((status) => (
+                    <MenuItem key={status.value} value={status.value}>
+                      {status.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", bgcolor: "grey.100", borderRadius: 1, p: 0.5 }}>
-              <Box
-                component="button"
+              <Button
                 onClick={() => setViewMode("grid")}
+                size="small"
                 sx={{
                   p: 0.75,
                   borderRadius: 0.5,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
                   bgcolor: viewMode === "grid" ? "background.paper" : "transparent",
                   boxShadow: viewMode === "grid" ? 1 : 0,
                   color: viewMode === "grid" ? "primary.main" : "grey.500",
+                  minWidth: "auto",
                 }}
               >
                 <Grid3X3 size={16} />
-              </Box>
-              <Box
-                component="button"
+              </Button>
+              <Button
                 onClick={() => setViewMode("list")}
+                size="small"
                 sx={{
                   p: 0.75,
                   borderRadius: 0.5,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
                   bgcolor: viewMode === "list" ? "background.paper" : "transparent",
                   boxShadow: viewMode === "list" ? 1 : 0,
                   color: viewMode === "list" ? "primary.main" : "grey.500",
+                  minWidth: "auto",
                 }}
               >
                 <List size={16} />
-              </Box>
+              </Button>
             </Box>
           </Box>
         </CardContent>

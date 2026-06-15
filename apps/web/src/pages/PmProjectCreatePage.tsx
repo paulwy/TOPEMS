@@ -257,8 +257,8 @@ const PmProjectCreatePage: React.FC = () => {
                   <AIHelperButton
                     type="optimize"
                     onClick={() => setShowAITextOptimizer(true)}
-                    size="sm"
-                    variant="secondary"
+                    size="small"
+                    variant="outlined"
                     label="AI 优化"
                   />
                 </div>
@@ -368,22 +368,22 @@ const PmProjectCreatePage: React.FC = () => {
                   <AIHelperButton
                     type="generate"
                     onClick={() => setShowAICodeGenerator(true)}
-                    size="sm"
-                    variant="secondary"
+                    size="small"
+                    variant="outlined"
                     label="生成编号"
                   />
                   <AIHelperButton
                     type="complete"
                     onClick={() => setShowAIDataCompleter(true)}
-                    size="sm"
-                    variant="secondary"
+                    size="small"
+                    variant="outlined"
                     label="智能补全"
                   />
                   <AIHelperButton
                     type="validate"
                     onClick={() => setShowAIFormValidator(true)}
-                    size="sm"
-                    variant="secondary"
+                    size="small"
+                    variant="outlined"
                     label="AI 校验"
                   />
                 </div>

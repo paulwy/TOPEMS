@@ -245,7 +245,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   {...commonProps}
                   {...controllerField}
                   type="date"
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputLabelProps={{ shrink: true }}
                 />
               );
 
@@ -328,11 +328,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
-                    size={{
-                      xs: 12,
-                      sm: 6,
-                      md: Math.floor(12 / columns) * (field.span || 1),
-                    }}
+                    xs={12}
+                    sm={6}
+                    md={Math.floor(12 / columns) * (field.span || 1)}
                   >
                     <Skeleton
                       variant="rectangular"
@@ -347,11 +345,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
-                    size={{
-                      xs: 12,
-                      sm: 6,
-                      md: Math.floor(12 / columns) * (field.span || 1),
-                    }}
+                    xs={12}
+                    sm={6}
+                    md={Math.floor(12 / columns) * (field.span || 1)}
                   >
                     {renderField(field)}
                   </Grid>
