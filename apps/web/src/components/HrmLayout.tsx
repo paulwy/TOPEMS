@@ -298,7 +298,7 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
       {/* Main Content */}
       <Box sx={{ display: "flex", flex: 1 }}>
         {/* Mobile Sidebar */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {mobileMenuOpen && (
             <>
               <motion.div
