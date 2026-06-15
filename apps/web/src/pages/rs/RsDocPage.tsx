@@ -1,0 +1,433 @@
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Paper,
+  IconButton,
+  Button,
+  TextField,
+  InputAdornment,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import {
+  Plus,
+  Search,
+  Upload,
+  FileText,
+  Edit,
+  Trash2,
+  History,
+  Shield,
+  Filter,
+  BookOpen,
+  File,
+  Folder,
+} from "lucide-react";
+
+interface Document {
+  id: string;
+  doc_name: string;
+  doc_type: string;
+  version: string;
+  author: string;
+  update_time: string;
+  status: string;
+}
+
+const RsDocPage: React.FC = () => {
+  const [docs, setDocs] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [docTypeFilter, setDocTypeFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [newDocDialogOpen, setNewDocDialogOpen] = useState(false);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [newDocForm, setNewDocForm] = useState({ doc_name: "", doc_type: "设计文档", description: "" });
+
+  useEffect(() => {
+    const mockDocs: Document[] = [
+      {
+        id: "1",
+        doc_name: "系统架构设计文档",
+        doc_type: "设计文档",
+        version: "v2.1.0",
+        author: "张三",
+        update_time: "2024-06-15 14:30:00",
+        status: "published",
+      },
+      {
+        id: "2",
+        doc_name: "API接口规范",
+        doc_type: "接口文档",
+        version: "v1.5.0",
+        author: "李四",
+        update_time: "2024-06-14 10:20:00",
+        status: "published",
+      },
+      {
+        id: "3",
+        doc_name: "数据库设计文档",
+        doc_type: "设计文档",
+        version: "v3.0.0",
+        author: "王五",
+        update_time: "2024-06-13 16:45:00",
+        status: "draft",
+      },
+      {
+        id: "4",
+        doc_name: "用户使用手册",
+        doc_type: "用户文档",
+        version: "v1.2.0",
+        author: "赵六",
+        update_time: "2024-06-12 09:15:00",
+        status: "published",
+      },
+      {
+        id: "5",
+        doc_name: "测试报告-2024Q2",
+        doc_type: "测试文档",
+        version: "v1.0.0",
+        author: "孙七",
+        update_time: "2024-06-11 11:30:00",
+        status: "published",
+      },
+      {
+        id: "6",
+        doc_name: "部署运维手册",
+        doc_type: "运维文档",
+        version: "v0.9.0",
+        author: "周八",
+        update_time: "2024-06-10 14:00:00",
+        status: "draft",
+      },
+    ];
+    setDocs(mockDocs);
+    setLoading(false);
+  }, []);
+
+  const getDocTypeIcon = (type: string) => {
+    switch (type) {
+      case "设计文档":
+        return <File size={16} color="#3b82f6" />;
+      case "接口文档":
+        return <FileText size={16} color="#3b82f6" />;
+      case "用户文档":
+        return <BookOpen size={16} color="#3b82f6" />;
+      default:
+        return <Folder size={16} color="#3b82f6" />;
+    }
+  };
+
+  const getStatusColor = (status: string): "success" | "warning" | "default" => {
+    switch (status) {
+      case "published":
+        return "success";
+      case "draft":
+        return "warning";
+      default:
+        return "default";
+    }
+  };
+
+  const getStatusLabel = (status: string): string => {
+    switch (status) {
+      case "published":
+        return "已发布";
+      case "draft":
+        return "草稿";
+      default:
+        return status;
+    }
+  };
+
+  const filteredDocs = docs.filter((doc) => {
+    const matchesSearch =
+      doc.doc_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.author.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = !docTypeFilter || doc.doc_type === docTypeFilter;
+    const matchesStatus = !statusFilter || doc.status === statusFilter;
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  const uniqueDocTypes = [...new Set(docs.map((d) => d.doc_type))];
+
+  const handleChangePage = (_: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleCreateDoc = () => {
+    const newDoc: Document = {
+      id: String(Date.now()),
+      doc_name: newDocForm.doc_name,
+      doc_type: newDocForm.doc_type,
+      version: "v0.1.0",
+      author: "当前用户",
+      update_time: new Date().toLocaleString(),
+      status: "draft",
+    };
+    setDocs([newDoc, ...docs]);
+    setNewDocDialogOpen(false);
+    setNewDocForm({ doc_name: "", doc_type: "设计文档", description: "" });
+  };
+
+  const handleViewVersion = (doc: Document) => {
+    setSelectedDoc(doc);
+    setVersionDialogOpen(true);
+  };
+
+  const handleDelete = (docId: string) => {
+    setDocs(docs.filter((d) => d.id !== docId));
+  };
+
+  return (
+    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
+      <Container maxWidth="xl">
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+            文档管理
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" startIcon={<Upload size={18} />}>
+              上传
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Plus size={18} />}
+              sx={{ bgcolor: "#3b82f6" }}
+              onClick={() => setNewDocDialogOpen(true)}
+            >
+              新建文档
+            </Button>
+          </Stack>
+        </Box>
+
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <TextField
+              size="small"
+              placeholder="搜索文档名称、作者..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ width: 250 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={18} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>文档类型</InputLabel>
+              <Select
+                value={docTypeFilter || ""}
+                label="文档类型"
+                onChange={(e) => setDocTypeFilter(e.target.value || null)}
+              >
+                <MenuItem value="">全部</MenuItem>
+                {uniqueDocTypes.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <InputLabel>状态</InputLabel>
+              <Select
+                value={statusFilter || ""}
+                label="状态"
+                onChange={(e) => setStatusFilter(e.target.value || null)}
+              >
+                <MenuItem value="">全部</MenuItem>
+                <MenuItem value="published">已发布</MenuItem>
+                <MenuItem value="draft">草稿</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </Paper>
+
+        <Paper>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "#3b82f6" }}>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>文档名称</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>文档类型</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>版本</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>作者</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>更新时间</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredDocs
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((doc) => (
+                    <TableRow key={doc.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          {getDocTypeIcon(doc.doc_type)}
+                          {doc.doc_name}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{doc.doc_type}</TableCell>
+                      <TableCell>
+                        <Chip label={doc.version} size="small" variant="outlined" />
+                      </TableCell>
+                      <TableCell>{doc.author}</TableCell>
+                      <TableCell>{doc.update_time}</TableCell>
+                      <TableCell>
+                        <Chip label={getStatusLabel(doc.status)} size="small" color={getStatusColor(doc.status)} />
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5}>
+                          <Tooltip title="编辑">
+                            <IconButton size="small">
+                              <Edit size={16} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="版本管理">
+                            <IconButton size="small" onClick={() => handleViewVersion(doc)}>
+                              <History size={16} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="权限设置">
+                            <IconButton size="small">
+                              <Shield size={16} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="删除">
+                            <IconButton size="small" onClick={() => handleDelete(doc.id)}>
+                              <Trash2 size={16} />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50]}
+            component="div"
+            count={filteredDocs.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      </Container>
+
+      <Dialog open={newDocDialogOpen} onClose={() => setNewDocDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新建文档</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            <TextField
+              label="文档名称"
+              fullWidth
+              value={newDocForm.doc_name}
+              onChange={(e) => setNewDocForm({ ...newDocForm, doc_name: e.target.value })}
+            />
+            <FormControl fullWidth>
+              <InputLabel>文档类型</InputLabel>
+              <Select
+                value={newDocForm.doc_type}
+                label="文档类型"
+                onChange={(e) => setNewDocForm({ ...newDocForm, doc_type: e.target.value })}
+              >
+                <MenuItem value="设计文档">设计文档</MenuItem>
+                <MenuItem value="接口文档">接口文档</MenuItem>
+                <MenuItem value="用户文档">用户文档</MenuItem>
+                <MenuItem value="测试文档">测试文档</MenuItem>
+                <MenuItem value="运维文档">运维文档</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="描述"
+              fullWidth
+              multiline
+              rows={3}
+              value={newDocForm.description}
+              onChange={(e) => setNewDocForm({ ...newDocForm, description: e.target.value })}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNewDocDialogOpen(false)}>取消</Button>
+          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateDoc}>
+            创建
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={versionDialogOpen} onClose={() => setVersionDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>版本历史</DialogTitle>
+        <DialogContent>
+          {selectedDoc && (
+            <Box sx={{ py: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {selectedDoc.doc_name}
+              </Typography>
+              <Stack spacing={2} sx={{ mt: 2 }}>
+                {[
+                  { version: "v2.1.0", date: "2024-06-15", author: "张三", note: "更新架构设计" },
+                  { version: "v2.0.0", date: "2024-05-20", author: "张三", note: "重大改版" },
+                  { version: "v1.0.0", date: "2024-04-01", author: "李四", note: "初始版本" },
+                ].map((v, i) => (
+                  <Paper key={i} sx={{ p: 2 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Box>
+                        <Typography variant="body1" fontWeight="bold">
+                          {v.version}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {v.date} - {v.author}
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2">{v.note}</Typography>
+                    </Box>
+                  </Paper>
+                ))}
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVersionDialogOpen(false)}>关闭</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default RsDocPage;
