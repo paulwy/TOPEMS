@@ -466,7 +466,7 @@ const InteractionManagementPage: React.FC = () => {
                 label="计划时间"
                 size="small"
                 type="datetime-local"
-                slotProps={{ inputLabel: { shrink: true } }}
+                LabelProps={{ shrink: true }}
                 value={formData.scheduled_at}
                 onChange={(e) =>
                   setFormData({ ...formData, scheduled_at: e.target.value })

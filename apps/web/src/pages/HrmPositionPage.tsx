@@ -260,21 +260,21 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
         header: "岗位名称",
         cell: ({ row }) => {
           return (
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <div>
-                <div className="font-medium text-gray-900 dark:text-gray-100">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, bgcolor: "indigo.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Briefcase sx={{ width: 20, height: 20, color: "indigo.600" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
                   {row.original.name}
-                </div>
+                </Typography>
                 {row.original.code && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <Typography variant="caption" sx={{ color: "grey.500" }}>
                     {row.original.code}
-                  </div>
+                  </Typography>
                 )}
-              </div>
-            </div>
+              </Box>
+            </Box>
           );
         },
       },
@@ -282,28 +282,28 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
         accessorKey: "department_id",
         header: "所属部门",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-900 dark:text-gray-100">
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
             {departments.find((d) => d.id === row.original.department_id)
               ?.name || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "level",
         header: "岗位级别",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-900 dark:text-gray-100">
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
             {row.original.level || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "salary_range",
         header: "薪资范围",
         cell: ({ row }) => (
-          <span className="text-sm text-gray-900 dark:text-gray-100">
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
             {row.original.min_salary || 0} - {row.original.max_salary || 0}
-          </span>
+          </Typography>
         ),
       },
       {
@@ -323,7 +323,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   size="small"
                   onClick={() => handleView(position)}
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
 
@@ -332,7 +332,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   size="small"
                   onClick={() => handleEdit(position)}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
 
@@ -342,7 +342,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   color="error"
                   onClick={() => handleDelete(position.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
             </Box>
@@ -355,24 +355,35 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
 
   return (
     <HrmLayout title="岗位管理" subtitle="管理企业岗位信息、薪资范围">
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div></div>
-          <div className="flex items-center space-x-2">
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+          <Box></Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ModeToggle />
-            <Button onClick={handleAdd}>
-              <Plus className="w-5 h-5 mr-2" />
+            <Button onClick={handleAdd} startIcon={<Plus sx={{ width: 20, height: 20 }} />}>
               新增岗位
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div className="space-y-6">
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px] relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Card sx={{ mb: 0 }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
+                <Box sx={{ flex: 1, minWidth: 200, position: "relative" }}>
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      display: "flex",
+                      alignItems: "center",
+                      zIndex: 1,
+                    }}
+                  >
+                    <Search sx={{ width: 20, height: 20, color: "grey.400" }} />
+                  </Box>
                   <TextField
                     size="small"
                     type="text"
@@ -382,7 +393,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                     sx={{ pl: 10, width: "100%" }}
                   />
-                </div>
+                </Box>
                 <FormControl size="small" sx={{ minWidth: 160 }}>
                   <InputLabel>部门</InputLabel>
                   <Select
@@ -416,26 +427,26 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                 <Button variant="outlined" onClick={handleReset}>
                   重置
                 </Button>
-              </div>
+              </Box>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-0">
+            <CardContent sx={{ p: 0 }}>
               {loading ? (
-                <div className="p-8 text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-                  <p className="mt-2 text-gray-500 dark:text-gray-400">
+                <Box sx={{ p: 4, textAlign: "center" }}>
+                  <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", width: 32, height: 32 }} />
+                  <Typography sx={{ mt: 2, color: "text.secondary" }}>
                     加载中...
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
               ) : data.items.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 dark:text-gray-400">
+                <Box sx={{ p: 4, textAlign: "center" }}>
+                  <Briefcase sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
+                  <Typography sx={{ color: "text.secondary" }}>
                     暂无岗位数据
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
               ) : (
                 <DataTable
                   columns={columns}
@@ -448,7 +459,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
               )}
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
           <DialogTitle>新增岗位</DialogTitle>
@@ -827,7 +838,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
             </DialogActions>
           </DialogContent>
         </Dialog>
-      </div>
+      </Box>
     </HrmLayout>
   );
 };

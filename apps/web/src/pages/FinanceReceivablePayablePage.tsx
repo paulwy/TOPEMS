@@ -397,7 +397,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
   });
 
   return (
-    <Box className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: "bold" }}>应收应付管理</Typography>
@@ -407,7 +407,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
           variant="contained"
           onClick={() => setShowCreateDialog(true)}
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus sx={{ width: 16, height: 16, mr: 1 }} />
           <span>新增{activeTab === "receivable" ? "应收" : "应付"}</span>
         </Button>
       </Box>
@@ -423,7 +423,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 </Typography>
               </Box>
               <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
-                <ArrowUpRight className="w-6 h-6" />
+                <ArrowUpRight sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
@@ -439,7 +439,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 </Typography>
               </Box>
               <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
-                <ArrowDownRight className="w-6 h-6" />
+                <ArrowDownRight sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
@@ -455,7 +455,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 </Typography>
               </Box>
               <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
-                <CreditCard className="w-6 h-6" />
+                <CreditCard sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
@@ -471,7 +471,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 </Typography>
               </Box>
               <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
-                <CreditCard className="w-6 h-6" />
+                <CreditCard sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
@@ -483,24 +483,24 @@ const FinanceReceivablePayablePage: React.FC = () => {
           <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
             <Tab value="receivable" label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <ArrowUpRight className="w-4 h-4" />
+                <ArrowUpRight sx={{ width: 16, height: 16 }} />
                 <span>应收账款</span>
               </Box>
             } />
             <Tab value="payable" label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <ArrowDownRight className="w-4 h-4" />
+                <ArrowDownRight sx={{ width: 16, height: 16 }} />
                 <span>应付账款</span>
               </Box>
             } />
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 3 }} className={activeTab === "receivable" ? "" : "hidden"}>
+        <Box sx={{ p: 3, display: activeTab === "receivable" ? "block" : "none" }}>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
             <Box sx={{ position: "relative", flex: 1 }}>
               <Box sx={{ position: "absolute", left: 3, top: "50%", transform: "translateY(-50%)" }}>
-                <Search className="w-4 h-4 text-slate-400" />
+                <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
               </Box>
               <TextField
                 size="small"
@@ -524,7 +524,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
               </Select>
             </FormControl>
             <Button variant="outlined" size="small" onClick={loadData}>
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw sx={{ width: 16, height: 16, mr: 1 }} />
               刷新
             </Button>
           </Box>
@@ -533,7 +533,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
             <CardHeader>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Users className="w-5 h-5 mr-2 text-indigo-600" />
+                  <Users sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>应收账款列表</Typography>
                 </Box>
                 {overdueReceivable > 0 && (
@@ -591,13 +591,13 @@ const FinanceReceivablePayablePage: React.FC = () => {
                           <TableCell align="right">
                             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
                               <Button variant="text" size="small" onClick={() => openDetailDialog(item)}>
-                                <Eye className="w-4 h-4" />
+                                <Eye sx={{ width: 16, height: 16 }} />
                               </Button>
                               <Button variant="text" size="small" onClick={() => openEditDialog(item)}>
-                                <Edit2 className="w-4 h-4" />
+                                <Edit2 sx={{ width: 16, height: 16 }} />
                               </Button>
                               <Button variant="text" size="small" color="error" onClick={() => handleDeleteReceivable(item.id)}>
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 sx={{ width: 16, height: 16 }} />
                               </Button>
                             </Box>
                           </TableCell>
@@ -606,7 +606,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
-                          <AlertCircle className="w-12 h-12 mx-auto text-slate-300 mb-2" />
+                          <AlertCircle sx={{ width: 48, height: 48, mx: "auto", color: "grey.300", mb: 1 }} />
                           <Typography color="text.secondary">暂无应收账款数据</Typography>
                         </TableCell>
                       </TableRow>
@@ -618,11 +618,11 @@ const FinanceReceivablePayablePage: React.FC = () => {
           </Card>
         </Box>
 
-        <Box sx={{ p: 3 }} className={activeTab === "payable" ? "" : "hidden"}>
+        <Box sx={{ p: 3, display: activeTab === "payable" ? "block" : "none" }}>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
             <Box sx={{ position: "relative", flex: 1 }}>
               <Box sx={{ position: "absolute", left: 3, top: "50%", transform: "translateY(-50%)" }}>
-                <Search className="w-4 h-4 text-slate-400" />
+                <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
               </Box>
               <TextField
                 size="small"
@@ -646,7 +646,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
               </Select>
             </FormControl>
             <Button variant="outlined" size="small" onClick={loadData}>
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw sx={{ width: 16, height: 16, mr: 1 }} />
               刷新
             </Button>
           </Box>
@@ -655,7 +655,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
             <CardHeader>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <CreditCard className="w-5 h-5 mr-2 text-indigo-600" />
+                  <CreditCard sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>应付账款列表</Typography>
                 </Box>
                 {overduePayable > 0 && (
@@ -713,13 +713,13 @@ const FinanceReceivablePayablePage: React.FC = () => {
                           <TableCell align="right">
                             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
                               <Button variant="text" size="small" onClick={() => openDetailDialog(item)}>
-                                <Eye className="w-4 h-4" />
+                                <Eye sx={{ width: 16, height: 16 }} />
                               </Button>
                               <Button variant="text" size="small" onClick={() => openEditDialog(item)}>
-                                <Edit2 className="w-4 h-4" />
+                                <Edit2 sx={{ width: 16, height: 16 }} />
                               </Button>
                               <Button variant="text" size="small" color="error" onClick={() => handleDeletePayable(item.id)}>
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 sx={{ width: 16, height: 16 }} />
                               </Button>
                             </Box>
                           </TableCell>
@@ -728,7 +728,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
-                          <AlertCircle className="w-12 h-12 mx-auto text-slate-300 mb-2" />
+                          <AlertCircle sx={{ width: 48, height: 48, mx: "auto", color: "grey.300", mb: 1 }} />
                           <Typography color="text.secondary">暂无应付账款数据</Typography>
                         </TableCell>
                       </TableRow>
@@ -840,7 +840,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   setFormData({ ...formData, invoice_date: e.target.value })
                 }
                 size="small"
-                slotProps={{ inputLabel: { shrink: true } }}
+                LabelProps={{ shrink: true }}
               />
               <TextField
                 label="到期日期"
@@ -850,7 +850,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   setFormData({ ...formData, due_date: e.target.value })
                 }
                 size="small"
-                slotProps={{ inputLabel: { shrink: true } }}
+                LabelProps={{ shrink: true }}
               />
             </Box>
             <FormControl fullWidth size="small">
@@ -902,9 +902,9 @@ const FinanceReceivablePayablePage: React.FC = () => {
       <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
           {selectedItem && "customer_name" in selectedItem ? (
-            <ArrowUpRight className="w-5 h-5 mr-2 text-indigo-600" />
+            <ArrowUpRight sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
           ) : (
-            <ArrowDownRight className="w-5 h-5 mr-2 text-indigo-600" />
+            <ArrowDownRight sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
           )}
           {selectedItem && "customer_name" in selectedItem
             ? "应收账款"

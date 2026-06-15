@@ -19,6 +19,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography, Chip } from "@mui/material";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
 import {
@@ -274,66 +275,90 @@ const HrmRecruitmentPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const badges: Record<string, React.ReactNode> = {
       open: (
-        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-          招聘中
-        </span>
+        <Chip
+          label="招聘中"
+          size="small"
+          sx={{ bgcolor: "success.light", color: "success.dark" }}
+        />
       ),
       closed: (
-        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-          已关闭
-        </span>
+        <Chip
+          label="已关闭"
+          size="small"
+          sx={{ bgcolor: "grey.200", color: "grey.700" }}
+        />
       ),
       filled: (
-        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-          已招满
-        </span>
+        <Chip
+          label="已招满"
+          size="small"
+          sx={{ bgcolor: "info.light", color: "info.dark" }}
+        />
       ),
       new: (
-        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-          新增
-        </span>
+        <Chip
+          label="新增"
+          size="small"
+          sx={{ bgcolor: "info.light", color: "info.dark" }}
+        />
       ),
       interview: (
-        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
-          面试中
-        </span>
+        <Chip
+          label="面试中"
+          size="small"
+          sx={{ bgcolor: "warning.light", color: "warning.dark" }}
+        />
       ),
       offer: (
-        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
-          Offer
-        </span>
+        <Chip
+          label="Offer"
+          size="small"
+          sx={{ bgcolor: "secondary.light", color: "secondary.dark" }}
+        />
       ),
       hired: (
-        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-          已入职
-        </span>
+        <Chip
+          label="已入职"
+          size="small"
+          sx={{ bgcolor: "success.light", color: "success.dark" }}
+        />
       ),
       rejected: (
-        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
-          已拒绝
-        </span>
+        <Chip
+          label="已拒绝"
+          size="small"
+          sx={{ bgcolor: "error.light", color: "error.dark" }}
+        />
       ),
       pass: (
-        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-          通过
-        </span>
+        <Chip
+          label="通过"
+          size="small"
+          sx={{ bgcolor: "success.light", color: "success.dark" }}
+        />
       ),
       fail: (
-        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
-          未通过
-        </span>
+        <Chip
+          label="未通过"
+          size="small"
+          sx={{ bgcolor: "error.light", color: "error.dark" }}
+        />
       ),
       pending: (
-        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
-          待定
-        </span>
+        <Chip
+          label="待定"
+          size="small"
+          sx={{ bgcolor: "warning.light", color: "warning.dark" }}
+        />
       ),
     };
     return (
       badges[status] || (
-        <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-          {status}
-        </span>
+        <Chip
+          label={status}
+          size="small"
+          sx={{ bgcolor: "grey.200", color: "grey.700" }}
+        />
       )
     );
   };
@@ -351,341 +376,1050 @@ const HrmRecruitmentPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "grey.200",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box
+                component="button"
                 onClick={() => navigate("/dashboard")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  border: "none",
+                  bgcolor: "transparent",
+                  cursor: "pointer",
+                  "&:hover": { bgcolor: "grey.100" },
+                  transition: "all 0.2s",
+                }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <UserPlus className="w-7 h-7 mr-3 text-purple-600" />
+                <ChevronLeft sx={{ width: 20, height: 20, color: "grey.600" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center", gap: 1.5 }}
+                >
+                  <UserPlus sx={{ width: 28, height: 28, color: "primary.main" }} />
                   招聘管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 0.5, color: "grey.500" }}
+                >
                   管理招聘流程、职位发布和候选人信息
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex space-x-4 mb-6 border-b border-gray-200">
-          <button
+      <Box
+        sx={{
+          maxWidth: 1280,
+          mx: "auto",
+          px: { xs: 2, sm: 3, lg: 4 },
+          py: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            mb: 3,
+            borderBottom: 1,
+            borderColor: "grey.200",
+          }}
+        >
+          <Box
+            component="button"
             onClick={() => setActiveTab("positions")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "positions"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              border: "none",
+              bgcolor: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "positions" ? "primary.main" : "text.secondary",
+              borderBottom: activeTab === "positions" ? 2 : 0,
+              borderColor: activeTab === "positions" ? "primary.main" : "transparent",
+              "&:hover": { color: activeTab === "positions" ? "primary.main" : "text.primary" },
+              transition: "all 0.2s",
+            }}
           >
-            <Briefcase className="w-5 h-5" />
+            <Briefcase sx={{ width: 20, height: 20 }} />
             <span>招聘职位</span>
-          </button>
-          <button
+          </Box>
+          <Box
+            component="button"
             onClick={() => setActiveTab("candidates")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "candidates"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              border: "none",
+              bgcolor: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "candidates" ? "primary.main" : "text.secondary",
+              borderBottom: activeTab === "candidates" ? 2 : 0,
+              borderColor: activeTab === "candidates" ? "primary.main" : "transparent",
+              "&:hover": { color: activeTab === "candidates" ? "primary.main" : "text.primary" },
+              transition: "all 0.2s",
+            }}
           >
-            <Users className="w-5 h-5" />
+            <Users sx={{ width: 20, height: 20 }} />
             <span>候选人</span>
-          </button>
-          <button
+          </Box>
+          <Box
+            component="button"
             onClick={() => setActiveTab("interviews")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "interviews"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              border: "none",
+              bgcolor: "transparent",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "interviews" ? "primary.main" : "text.secondary",
+              borderBottom: activeTab === "interviews" ? 2 : 0,
+              borderColor: activeTab === "interviews" ? "primary.main" : "transparent",
+              "&:hover": { color: activeTab === "interviews" ? "primary.main" : "text.primary" },
+              transition: "all 0.2s",
+            }}
           >
-            <Calendar className="w-5 h-5" />
+            <Calendar sx={{ width: 20, height: 20 }} />
             <span>面试安排</span>
-          </button>
-        </div>
+          </Box>
+        </Box>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 2,
+            mb: 3,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search
+                sx={{
+                  position: "absolute",
+                  left: 1.5,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 20,
+                  height: 20,
+                  color: "grey.400",
+                }}
+              />
+              <Box
+                component="input"
                 type="text"
                 placeholder="搜索职位/候选人..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{
+                  width: "100%",
+                  pl: 4,
+                  pr: 2,
+                  py: 1,
+                  border: 1,
+                  borderColor: "grey.300",
+                  borderRadius: 2,
+                  outline: "none",
+                  "&:focus": {
+                    borderColor: "primary.main",
+                    boxShadow: (theme: any) =>
+                      `0 0 0 2px ${theme.palette.primary.main}20`,
+                  },
+                }}
               />
-            </div>
-            <button
+            </Box>
+            <Box
+              component="button"
               onClick={loadData}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                px: 2,
+                py: 1,
+                bgcolor: "primary.main",
+                color: "white",
+                border: "none",
+                borderRadius: 2,
+                cursor: "pointer",
+                "&:hover": { bgcolor: "primary.dark" },
+                transition: "all 0.2s",
+              }}
             >
-              <Plus className="w-5 h-5 mr-2" />
+              <Plus sx={{ width: 20, height: 20, mr: 1 }} />
               刷新数据
-            </button>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              py: 10,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                border: 3,
+                borderColor: "primary.main",
+                borderTopColor: "transparent",
+                animation: "spin 1s linear infinite",
+                "@keyframes spin": {
+                  "0%": { transform: "rotate(0deg)" },
+                  "100%": { transform: "rotate(360deg)" },
+                },
+              }}
+            />
+          </Box>
         ) : (
           <>
             {/* Content */}
             {activeTab === "positions" && (
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                  boxShadow: 1,
+                  overflow: "hidden",
+                }}
+              >
+                <Box sx={{ overflowX: "auto" }}>
+                  <Box
+                    component="table"
+                    sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                  >
+                    <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                      <Box component="tr">
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           职位名称
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           部门
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           薪资范围
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           招聘人数
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           状态
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           发布时间
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           操作
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
                       {filteredPositions.map((position) => (
-                        <tr key={position.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                        <Box
+                          component="tr"
+                          key={position.id}
+                          sx={{
+                            "&:hover": { bgcolor: "grey.50" },
+                            borderTop: 1,
+                            borderColor: "divider",
+                          }}
+                        >
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500, color: "grey.900" }}
+                            >
                               {position.title}
-                            </div>
-                            <div className="text-sm text-gray-500">
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "grey.500" }}>
                               {position.location}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            </Typography>
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {position.department}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {position.salary_range}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {position.filled_count}/{position.headcount}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
+                          >
                             {getStatusBadge(position.status)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.500",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {position.published_at}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex space-x-2">
-                              <button className="text-blue-600 hover:text-blue-800">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
+                          >
+                            <Box sx={{ display: "flex", gap: 1 }}>
+                              <Box
+                                component="button"
+                                sx={{
+                                  color: "primary.main",
+                                  border: "none",
+                                  bgcolor: "transparent",
+                                  cursor: "pointer",
+                                  p: 0,
+                                  "&:hover": { color: "primary.dark" },
+                                }}
+                              >
                                 查看
-                              </button>
-                              <button className="text-blue-600 hover:text-blue-800">
+                              </Box>
+                              <Box
+                                component="button"
+                                sx={{
+                                  color: "primary.main",
+                                  border: "none",
+                                  bgcolor: "transparent",
+                                  cursor: "pointer",
+                                  p: 0,
+                                  "&:hover": { color: "primary.dark" },
+                                }}
+                              >
                                 编辑
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Box>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             )}
 
             {activeTab === "candidates" && (
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                  boxShadow: 1,
+                  overflow: "hidden",
+                }}
+              >
+                <Box sx={{ overflowX: "auto" }}>
+                  <Box
+                    component="table"
+                    sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                  >
+                    <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                      <Box component="tr">
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           姓名
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           应聘职位
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           学历
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           工作经验
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           期望薪资
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           状态
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           申请时间
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           操作
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
                       {filteredCandidates.map((candidate) => (
-                        <tr key={candidate.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                        <Box
+                          component="tr"
+                          key={candidate.id}
+                          sx={{
+                            "&:hover": { bgcolor: "grey.50" },
+                            borderTop: 1,
+                            borderColor: "divider",
+                          }}
+                        >
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500, color: "grey.900" }}
+                            >
                               {candidate.name}
-                            </div>
-                            <div className="text-sm text-gray-500">
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: "grey.500" }}>
                               {candidate.phone}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            </Typography>
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {candidate.position}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {candidate.education}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {candidate.experience}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {candidate.salary_expectation
                               ? `¥${candidate.salary_expectation.toLocaleString()}`
                               : "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
+                          >
                             {getStatusBadge(candidate.status)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.500",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {candidate.applied_at}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex space-x-2">
-                              <button className="text-blue-600 hover:text-blue-800">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
+                          >
+                            <Box sx={{ display: "flex", gap: 1 }}>
+                              <Box
+                                component="button"
+                                sx={{
+                                  color: "primary.main",
+                                  border: "none",
+                                  bgcolor: "transparent",
+                                  cursor: "pointer",
+                                  p: 0,
+                                  "&:hover": { color: "primary.dark" },
+                                }}
+                              >
                                 查看
-                              </button>
-                              <button className="text-blue-600 hover:text-blue-800">
+                              </Box>
+                              <Box
+                                component="button"
+                                sx={{
+                                  color: "primary.main",
+                                  border: "none",
+                                  bgcolor: "transparent",
+                                  cursor: "pointer",
+                                  p: 0,
+                                  "&:hover": { color: "primary.dark" },
+                                }}
+                              >
                                 面试
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                              </Box>
+                            </Box>
+                          </Box>
+                        </Box>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             )}
 
             {activeTab === "interviews" && (
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                  boxShadow: 1,
+                  overflow: "hidden",
+                }}
+              >
+                <Box sx={{ overflowX: "auto" }}>
+                  <Box
+                    component="table"
+                    sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                  >
+                    <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                      <Box component="tr">
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           候选人
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           应聘职位
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           面试官
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           面试时间
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           面试类型
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           结果
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 3,
+                            py: 2,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           操作
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
                       {interviews.map((interview) => (
-                        <tr key={interview.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <Box
+                          component="tr"
+                          key={interview.id}
+                          sx={{
+                            "&:hover": { bgcolor: "grey.50" },
+                            borderTop: 1,
+                            borderColor: "divider",
+                          }}
+                        >
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              fontWeight: 500,
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {interview.candidate_name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {interview.position}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {interview.interviewer}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {interview.interview_time}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              whiteSpace: "nowrap",
+                              color: "grey.900",
+                              fontSize: "0.875rem",
+                            }}
+                          >
                             {interview.interview_type === "first"
                               ? "初试"
                               : interview.interview_type === "second"
                                 ? "复试"
                                 : "终面"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
+                          >
                             {getStatusBadge(interview.result)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div className="flex space-x-2">
-                              <button className="text-blue-600 hover:text-blue-800">
+                          </Box>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
+                          >
+                            <Box sx={{ display: "flex", gap: 1 }}>
+                              <Box
+                                component="button"
+                                sx={{
+                                  color: "primary.main",
+                                  border: "none",
+                                  bgcolor: "transparent",
+                                  cursor: "pointer",
+                                  p: 0,
+                                  fontSize: "0.875rem",
+                                  "&:hover": { color: "primary.dark" },
+                                }}
+                              >
                                 查看详情
-                              </button>
+                              </Box>
                               {interview.result === "pending" && (
                                 <>
-                                  <button className="text-green-600 hover:text-green-800">
+                                  <Box
+                                    component="button"
+                                    sx={{
+                                      color: "success.main",
+                                      border: "none",
+                                      bgcolor: "transparent",
+                                      cursor: "pointer",
+                                      p: 0,
+                                      fontSize: "0.875rem",
+                                      "&:hover": { color: "success.dark" },
+                                    }}
+                                  >
                                     通过
-                                  </button>
-                                  <button className="text-red-600 hover:text-red-800">
+                                  </Box>
+                                  <Box
+                                    component="button"
+                                    sx={{
+                                      color: "error.main",
+                                      border: "none",
+                                      bgcolor: "transparent",
+                                      cursor: "pointer",
+                                      p: 0,
+                                      fontSize: "0.875rem",
+                                      "&:hover": { color: "error.dark" },
+                                    }}
+                                  >
                                     拒绝
-                                  </button>
+                                  </Box>
                                 </>
                               )}
-                            </div>
-                          </td>
-                        </tr>
+                            </Box>
+                          </Box>
+                        </Box>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             )}
           </>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

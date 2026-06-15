@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Switch } from "../ui/switch";
-import { Plus, Trash2, GripVertical, Sparkles, Eye, EyeOff } from "lucide-react";
-import type { Template, CreateTemplateRequest, UpdateTemplateRequest, TemplateVariable, TemplateType, TemplateCategory } from "../../api/template";
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Sparkles,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import type {
+  Template,
+  CreateTemplateRequest,
+  UpdateTemplateRequest,
+  TemplateVariable,
+  TemplateType,
+  TemplateCategory,
+} from "../../api/template";
 
 interface TemplateEditorProps {
   open: boolean;
@@ -104,11 +130,15 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     }));
   };
 
-  const handleVariableChange = (index: number, field: keyof TemplateVariable, value: any) => {
+  const handleVariableChange = (
+    index: number,
+    field: keyof TemplateVariable,
+    value: any,
+  ) => {
     setFormData((prev) => {
       const variables = prev.variables || [];
       const updatedVariables = variables.map((v, i) =>
-        i === index ? { ...v, [field]: value } : v
+        i === index ? { ...v, [field]: value } : v,
       );
       return { ...prev, variables: updatedVariables };
     });
@@ -130,12 +160,16 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   };
 
   const insertVariable = (variableKey: string) => {
-    const textarea = document.querySelector('textarea[name="content"]') as HTMLTextAreaElement;
+    const textarea = document.querySelector(
+      'textarea[name="content"]',
+    ) as HTMLTextAreaElement;
     const cursorPos = textarea?.selectionStart;
     if (cursorPos !== undefined) {
       const content = formData.content;
       const newContent =
-        content.slice(0, cursorPos) + `{{${variableKey}}}` + content.slice(cursorPos);
+        content.slice(0, cursorPos) +
+        `{{${variableKey}}}` +
+        content.slice(cursorPos);
       setFormData((prev) => ({ ...prev, content: newContent }));
     }
   };
@@ -154,9 +188,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {template ? "编辑模板" : "创建模板"}
-          </DialogTitle>
+          <DialogTitle>{template ? "编辑模板" : "创建模板"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
@@ -166,7 +198,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="输入模板名称"
                 className="mt-1"
               />
@@ -176,7 +210,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Input
                 id="code"
                 value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
                 placeholder="输入模板编码"
                 disabled={!!template}
                 className="mt-1"
@@ -190,7 +226,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Select
                 value={formData.template_type}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, template_type: value as TemplateType })
+                  setFormData({
+                    ...formData,
+                    template_type: value as TemplateType,
+                  })
                 }
               >
                 <SelectTrigger id="type" className="mt-1">
@@ -232,7 +271,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="输入模板描述"
               className="mt-1"
             />
@@ -258,7 +299,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               onClick={() => setIsPreview(!isPreview)}
               className="h-8"
             >
-              {isPreview ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
+              {isPreview ? (
+                <EyeOff className="w-4 h-4 mr-1" />
+              ) : (
+                <Eye className="w-4 h-4 mr-1" />
+              )}
               {isPreview ? "编辑模式" : "预览模式"}
             </Button>
           </div>
@@ -364,7 +409,9 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Textarea
                 id="content"
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, content: e.target.value })
+                }
                 placeholder="输入模板内容，使用 {{变量名}} 引用变量"
                 className="mt-1 min-h-[200px] font-mono text-sm"
               />

@@ -3,13 +3,22 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Sparkles, Wand2, Lightbulb, TrendingUp, Send, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  Wand2,
+  Lightbulb,
+  TrendingUp,
+  Send,
+  Loader2,
+} from "lucide-react";
 
 interface TemplateAIHelperProps {
   content: string;
   variables: { key: string; label: string; type: string }[];
   onContentChange: (content: string) => void;
-  onVariablesChange: (variables: { key: string; label: string; type: string }[]) => void;
+  onVariablesChange: (
+    variables: { key: string; label: string; type: string }[],
+  ) => void;
 }
 
 interface AIResponse {
@@ -56,11 +65,11 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
   const handleGenerate = async () => {
     if (!description.trim()) return;
-    
+
     setIsGenerating(true);
-    
+
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    
+
     onContentChange(mockGenerateResponse.content);
     onVariablesChange(mockGenerateResponse.variables);
     setSuggestions(mockGenerateResponse.suggestions);
@@ -69,18 +78,20 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
   const handleSuggestVariables = async () => {
     if (!content.trim()) return;
-    
+
     setIsAnalyzing(true);
-    
+
     await new Promise((resolve) => setTimeout(resolve, 800));
-    
+
     const detectedVars: { key: string; label: string; type: string }[] = [];
     const varRegex = /\{\{(\w+)\}\}/g;
     let match;
-    
+
     while ((match = varRegex.exec(content)) !== null) {
       const key = match[1];
-      if (!["now", "today", "now_date", "now_time", "now_timestamp"].includes(key)) {
+      if (
+        !["now", "today", "now_date", "now_time", "now_timestamp"].includes(key)
+      ) {
         if (!detectedVars.some((v) => v.key === key)) {
           detectedVars.push({
             key,
@@ -90,7 +101,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
         }
       }
     }
-    
+
     const existingKeys = new Set(variables.map((v) => v.key));
     const newVariables = [...variables];
     detectedVars.forEach((v) => {
@@ -98,24 +109,26 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
         newVariables.push(v);
       }
     });
-    
+
     onVariablesChange(newVariables);
-    setSuggestions([`检测到 ${detectedVars.length} 个变量引用，已添加到变量列表`]);
+    setSuggestions([
+      `检测到 ${detectedVars.length} 个变量引用，已添加到变量列表`,
+    ]);
     setIsAnalyzing(false);
   };
 
   const handleOptimize = async () => {
     if (!content.trim()) return;
-    
+
     setIsGenerating(true);
-    
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
     const optimized = content
       .replace(/\n{3,}/g, "\n\n")
       .replace(/^\s+|\s+$/gm, "")
       .replace(/{{\s*(\w+)\s*}}/g, "{{$1}}");
-    
+
     onContentChange(optimized);
     setSuggestions(["内容已优化，移除多余空行和空格"]);
     setIsGenerating(false);
@@ -123,40 +136,44 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
-    
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
     const usedVars = new Set<string>();
     const varRegex = /\{\{(\w+)\}\}/g;
     let match;
-    
+
     while ((match = varRegex.exec(content)) !== null) {
       usedVars.add(match[1]);
     }
-    
+
     const unusedVars = variables.filter((v) => !usedVars.has(v.key));
     const undefinedVars = Array.from(usedVars).filter(
-      (v) => !variables.some((varDef) => varDef.key === v)
+      (v) => !variables.some((varDef) => varDef.key === v),
     );
-    
+
     const result: AIResponse = {
       content: "",
       variables: [],
       suggestions: [],
     };
-    
+
     if (unusedVars.length > 0) {
-      result.suggestions.push(`以下变量定义了但未使用：${unusedVars.map((v) => v.key).join(", ")}`);
+      result.suggestions.push(
+        `以下变量定义了但未使用：${unusedVars.map((v) => v.key).join(", ")}`,
+      );
     }
-    
+
     if (undefinedVars.length > 0) {
-      result.suggestions.push(`以下变量使用了但未定义：${undefinedVars.join(", ")}`);
+      result.suggestions.push(
+        `以下变量使用了但未定义：${undefinedVars.join(", ")}`,
+      );
     }
-    
+
     if (result.suggestions.length === 0) {
       result.suggestions.push("模板检查通过，变量使用正常");
     }
-    
+
     setAnalysisResult(result);
     setSuggestions(result.suggestions);
     setIsAnalyzing(false);
@@ -201,12 +218,27 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
   const inferType = (key: string): string => {
     const lowerKey = key.toLowerCase();
-    
+
     if (lowerKey.includes("date") || lowerKey.includes("time")) return "date";
-    if (lowerKey.includes("amount") || lowerKey.includes("number") || lowerKey.includes("price")) return "number";
-    if (lowerKey.includes("user") || lowerKey.includes("author") || lowerKey.includes("creator")) return "user";
-    if (lowerKey.includes("status") || lowerKey.includes("type") || lowerKey.includes("category")) return "select";
-    
+    if (
+      lowerKey.includes("amount") ||
+      lowerKey.includes("number") ||
+      lowerKey.includes("price")
+    )
+      return "number";
+    if (
+      lowerKey.includes("user") ||
+      lowerKey.includes("author") ||
+      lowerKey.includes("creator")
+    )
+      return "user";
+    if (
+      lowerKey.includes("status") ||
+      lowerKey.includes("type") ||
+      lowerKey.includes("category")
+    )
+      return "select";
+
     return "string";
   };
 
@@ -221,7 +253,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label className="text-sm font-medium text-amber-700">描述模板用途</Label>
+          <Label className="text-sm font-medium text-amber-700">
+            描述模板用途
+          </Label>
           <Input
             placeholder="例如：生成一份项目周报模板"
             value={description}
@@ -289,7 +323,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
         {suggestions.length > 0 && (
           <div className="space-y-2">
-            <Label className="text-xs font-medium text-amber-700">AI 建议</Label>
+            <Label className="text-xs font-medium text-amber-700">
+              AI 建议
+            </Label>
             <div className="space-y-1">
               {suggestions.map((suggestion, index) => (
                 <div
@@ -305,13 +341,16 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
         {analysisResult && analysisResult.suggestions.length > 0 && (
           <div className="space-y-2">
-            <Label className="text-xs font-medium text-amber-700">分析结果</Label>
+            <Label className="text-xs font-medium text-amber-700">
+              分析结果
+            </Label>
             <div className="space-y-1">
               {analysisResult.suggestions.map((suggestion, index) => (
                 <div
                   key={index}
                   className={`text-sm rounded-lg px-3 py-2 ${
-                    suggestion.includes("未使用") || suggestion.includes("未定义")
+                    suggestion.includes("未使用") ||
+                    suggestion.includes("未定义")
                       ? "bg-red-50 text-red-700"
                       : "bg-green-50 text-green-700"
                   }`}

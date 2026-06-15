@@ -1,7 +1,6 @@
-import { Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
+import { Box, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Box,
   Search,
   Plus,
   Edit,

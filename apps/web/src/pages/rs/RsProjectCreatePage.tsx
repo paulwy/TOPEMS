@@ -232,7 +232,7 @@ const RsProjectCreatePage: React.FC = () => {
               onChange={(e) => handleInputChange("start_date", e.target.value)}
               error={Boolean(errors.start_date)}
               helperText={errors.start_date}
-              slotProps={{ inputLabel: { shrink: true } }}
+              LabelProps={{ shrink: true }}
             />
           </Grid>
 
@@ -243,7 +243,7 @@ const RsProjectCreatePage: React.FC = () => {
               type="date"
               value={formData.end_date}
               onChange={(e) => handleInputChange("end_date", e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
+              LabelProps={{ shrink: true }}
             />
           </Grid>
 
@@ -255,9 +255,9 @@ const RsProjectCreatePage: React.FC = () => {
               value={formData.budget}
               onChange={(e) => handleInputChange("budget", e.target.value)}
               placeholder="请输入预算金额"
-              slotProps={{ input: {
+              InputProps={{
                 endAdornment: <Typography variant="body2">元</Typography>,
-               } }}
+               }}
             />
           </Grid>
 

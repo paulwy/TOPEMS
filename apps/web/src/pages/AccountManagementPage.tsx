@@ -572,14 +572,12 @@ export default function AccountManagementPage() {
                   placeholder="搜索科目编码或名称..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Box sx={{ mr: 1, display: "flex" }}>
-                          <Search className="w-4 h-4 text-gray-400" />
-                        </Box>
-                      ),
-                    },
+                  InputProps={{
+                    startAdornment: (
+                      <Box sx={{ mr: 1, display: "flex" }}>
+                        <Search className="w-4 h-4 text-gray-400" />
+                      </Box>
+                    ),
                   }}
                   sx={{ width: "100%" }}
                 />

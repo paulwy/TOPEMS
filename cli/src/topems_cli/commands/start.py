@@ -59,6 +59,16 @@ def start(service: str, module: str, all: bool, wait: bool, timeout: int):
 
     console.print()
 
+    # 检查并确保PostgreSQL就绪
+    console.print("[cyan]检查数据库连接...[/cyan]")
+    postgres_ready, postgres_message = manager.ensure_postgres_ready()
+    if not postgres_ready:
+        console.print(f"[red]错误: {postgres_message}[/red]")
+        console.print("[red]无法启动服务，请先确保PostgreSQL数据库正常运行[/red]")
+        return
+    console.print(f"[green]✓ {postgres_message}[/green]")
+    console.print()
+
     # 启动服务
     results = {}
     with Progress(

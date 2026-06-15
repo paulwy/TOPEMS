@@ -341,6 +341,7 @@ python -m topems_cli db migrate
 - [服务文档](./docs/services/) - 各个服务详细文档
 - [AI 模块](./docs/AI_MODULE.md) - AI 知识库与向量搜索
 - [向量搜索架构](./docs/vector-architecture.md) - 向量存储设计
+- [PostgreSQL 故障排查](./docs/postgresql-troubleshooting.md) - 数据库自动修复与故障排查
 
 ## 🤖 AI 与向量搜索
 

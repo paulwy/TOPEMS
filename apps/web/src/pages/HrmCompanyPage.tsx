@@ -383,10 +383,10 @@ const HrmCompanyPage: React.FC = () => {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <IconButton onClick={closeDetailView} size="small">
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft sx={{ width: 20, height: 20 }} />
                 </IconButton>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-2xl">
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.5rem" }}>
                     {currentCompany.name}
                   </Typography>
                   {currentCompany.short_name && (
@@ -402,7 +402,7 @@ const HrmCompanyPage: React.FC = () => {
                   variant="outlined"
                   size="small"
                   onClick={() => handleEdit(currentCompany)}
-                  startIcon={<Edit className="w-4 h-4" />}
+                  startIcon={<Edit sx={{ width: 16, height: 16 }} />}
                 >
                   编辑
                 </Button>
@@ -413,8 +413,8 @@ const HrmCompanyPage: React.FC = () => {
                 <Box>
                   <Card sx={{ mb: 2 }}>
                     <CardHeader sx={{ pb: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }} className="text-base">
-                        <Folder className="w-5 h-5 text-amber-500" />
+                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1, fontSize: "1rem" }}>
+                        <Folder sx={{ width: 20, height: 20, color: "warning.main" }} />
                         组织架构
                       </Typography>
                     </CardHeader>
@@ -438,8 +438,8 @@ const HrmCompanyPage: React.FC = () => {
 
                   <Card>
                     <CardHeader sx={{ pb: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }} className="text-base">
-                        <FileText className="w-5 h-5 text-slate-500" />
+                      <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1, fontSize: "1rem" }}>
+                        <FileText sx={{ width: 20, height: 20, color: "grey.500" }} />
                         公司信息
                       </Typography>
                     </CardHeader>
@@ -479,19 +479,19 @@ const HrmCompanyPage: React.FC = () => {
                       <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
                         {currentCompany.contact_phone && (
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
-                            <Phone className="w-4 h-4" />
+                            <Phone sx={{ width: 16, height: 16 }} />
                             <Typography variant="body2">{currentCompany.contact_phone}</Typography>
                           </Box>
                         )}
                         {currentCompany.email && (
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
-                            <Mail className="w-4 h-4" />
+                            <Mail sx={{ width: 16, height: 16 }} />
                             <Typography variant="body2">{currentCompany.email}</Typography>
                           </Box>
                         )}
                         {currentCompany.website && (
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "text.secondary" }}>
-                            <Globe className="w-4 h-4" />
+                            <Globe sx={{ width: 16, height: 16 }} />
                             <Typography variant="body2">{currentCompany.website}</Typography>
                           </Box>
                         )}
@@ -512,7 +512,7 @@ const HrmCompanyPage: React.FC = () => {
                             </Typography>
                           </Box>
                           <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: "50%", boxShadow: 1 }}>
-                            <Folder className="w-6 h-6 text-primary.main" />
+                            <Folder sx={{ width: 24, height: 24, color: "primary.main" }} />
                           </Box>
                         </Box>
                       </CardContent>
@@ -527,7 +527,7 @@ const HrmCompanyPage: React.FC = () => {
                             </Typography>
                           </Box>
                           <Box sx={{ p: 1.5, bgcolor: "white", borderRadius: "50%", boxShadow: 1 }}>
-                            <Users className="w-6 h-6 text-success.main" />
+                            <Users sx={{ width: 24, height: 24, color: "success.main" }} />
                           </Box>
                         </Box>
                       </CardContent>
@@ -537,14 +537,14 @@ const HrmCompanyPage: React.FC = () => {
                   <Card>
                     <CardHeader>
                       <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
-                        <Users className="w-5 h-5 text-blue-500" />
+                        <Users sx={{ width: 20, height: 20, color: "primary.main" }} />
                         部门列表
                       </Typography>
                     </CardHeader>
                     <CardContent>
                       {departments.length === 0 ? (
                         <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-                          <Folder className="w-12 h-12 text-grey-400 mx-auto mb-2" />
+                          <Folder sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
                           <Typography>暂无部门数据</Typography>
                         </Box>
                       ) : (
@@ -585,10 +585,10 @@ const HrmCompanyPage: React.FC = () => {
           <Card>
             <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">公司列表</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.125rem" }}>公司列表</Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>共 {total} 家公司</Typography>
               </Box>
-              <Button onClick={handleAdd} startIcon={<Plus className="w-4 h-4" />}>
+              <Button onClick={handleAdd} startIcon={<Plus sx={{ width: 16, height: 16 }} />}>
                 新增公司
               </Button>
             </CardHeader>
@@ -600,14 +600,12 @@ const HrmCompanyPage: React.FC = () => {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search className="w-4 h-4 text-grey-400" />
-                        </InputAdornment>
-                      ),
-                    }
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
+                      </InputAdornment>
+                    ),
                   }}
                   sx={{ flex: 1, minWidth: 200 }}
                 />
@@ -639,9 +637,9 @@ const HrmCompanyPage: React.FC = () => {
                 </Box>
               ) : companies.length === 0 ? (
                 <Box sx={{ p: 8, textAlign: "center" }}>
-                  <Building className="w-16 h-16 text-grey-400 mx-auto mb-3" />
+                  <Building sx={{ width: 64, height: 64, color: "grey.400", mx: "auto", mb: 3 }} />
                   <Typography sx={{ color: "text.secondary" }}>暂无公司数据</Typography>
-                  <Button onClick={handleAdd} sx={{ mt: 2 }} startIcon={<Plus className="w-5 h-5" />}>
+                  <Button onClick={handleAdd} sx={{ mt: 2 }} startIcon={<Plus sx={{ width: 20, height: 20 }} />}>
                     新增公司
                   </Button>
                 </Box>
@@ -658,7 +656,7 @@ const HrmCompanyPage: React.FC = () => {
                           <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                               <Box sx={{ width: 48, height: 48, borderRadius: 2, background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 2 }}>
-                                <Building className="w-6 h-6 text-white" />
+                                <Building sx={{ width: 24, height: 24, color: "white" }} />
                               </Box>
                               <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem" }}>
@@ -676,13 +674,13 @@ const HrmCompanyPage: React.FC = () => {
                           <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.875rem", color: "text.secondary" }}>
                             {company.contact_phone && (
                               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                                <Phone className="w-3.5 h-3.5" />
+                                <Phone sx={{ width: 14, height: 14 }} />
                                 <Typography variant="body2">{company.contact_phone}</Typography>
                               </Box>
                             )}
                             {company.email && (
                               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                                <Mail className="w-3.5 h-3.5" />
+                                <Mail sx={{ width: 14, height: 14 }} />
                                 <Typography variant="body2" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                   {company.email}
                                 </Typography>
@@ -690,7 +688,7 @@ const HrmCompanyPage: React.FC = () => {
                             )}
                             {company.address && (
                               <Box sx={{ display: "flex", alignItems: "flex-start", gap: 0.5 }}>
-                                <MapPin className="w-3.5 h-3.5 mt-0.5" />
+                                <MapPin sx={{ width: 14, height: 14, mt: 0.5 }} />
                                 <Typography variant="body2" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                   {company.address}
                                 </Typography>
@@ -706,7 +704,7 @@ const HrmCompanyPage: React.FC = () => {
                                   handleView(company);
                                 }}
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="编辑">
@@ -717,7 +715,7 @@ const HrmCompanyPage: React.FC = () => {
                                   handleEdit(company);
                                 }}
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="删除">
@@ -729,7 +727,7 @@ const HrmCompanyPage: React.FC = () => {
                                   handleDelete(company.id);
                                 }}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 sx={{ width: 16, height: 16 }} />
                               </IconButton>
                             </Tooltip>
                           </Box>

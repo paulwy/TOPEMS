@@ -23,6 +23,7 @@ import {
   Card as MuiCard,
   CardContent,
   CardHeader,
+  Box,
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -41,17 +42,17 @@ const ERP_TYPE_CONFIG = {
   kingdee: {
     name: "金蝶K/3",
     logo: "K",
-    color: "bg-blue-500",
+    color: "blue.500",
   },
   yonyou: {
     name: "用友U8",
     logo: "Y",
-    color: "bg-orange-500",
+    color: "orange.500",
   },
   sap: {
     name: "SAP S/4",
     logo: "S",
-    color: "bg-green-500",
+    color: "green.500",
   },
 };
 
@@ -59,22 +60,22 @@ const ERP_TYPE_CONFIG = {
 const STATUS_CONFIG = {
   connected: {
     label: "已连接",
-    color: "bg-green-100 text-green-800",
+    color: "success.light",
     icon: CheckCircle,
   },
   disconnected: {
     label: "未连接",
-    color: "bg-gray-100 text-gray-800",
+    color: "grey.100",
     icon: XCircle,
   },
   error: {
     label: "连接错误",
-    color: "bg-red-100 text-red-800",
+    color: "error.light",
     icon: AlertCircle,
   },
   syncing: {
     label: "同步中",
-    color: "bg-blue-100 text-blue-800",
+    color: "info.light",
     icon: RefreshCw,
   },
 };
@@ -143,51 +144,51 @@ export default function ExternalErpConnectionsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <Box sx={{ maxWidth: 1280, mx: "auto", py: 3, display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">外部ERP连接管理</h1>
-          <p className="text-gray-500 mt-1">
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: "1.5rem" }}>外部ERP连接管理</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             管理金蝶、用友、SAP等外部ERP系统的连接配置
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Button variant="outlined" onClick={() => refetch()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw size={16} style={{ marginRight: 8 }} />
             刷新
           </Button>
           <Button variant="contained" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus size={16} style={{ marginRight: 8 }} />
             新建连接
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* 搜索栏 */}
-      <div className="flex items-center gap-4">
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <TextField
           placeholder="搜索连接名称..."
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
           size="small"
-          className="max-w-xs"
+          sx={{ maxWidth: 320 }}
         />
-      </div>
+      </Box>
 
       {/* 连接列表 */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
+          <RefreshCw size={32} color="#9ca3af" style={{ animation: "spin 1s linear infinite" }} />
+        </Box>
       ) : filteredConnections.length === 0 ? (
         <MuiCard>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Settings className="w-12 h-12 text-gray-400 mb-4" />
-            <p className="text-gray-500">暂无外部ERP连接</p>
+          <CardContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6 }}>
+            <Settings size={48} color="#9ca3af" />
+            <Typography color="text.secondary" sx={{ mt: 2 }}>暂无外部ERP连接</Typography>
             <Button
               variant="outlined"
-              className="mt-4"
+              sx={{ mt: 2 }}
               onClick={() => setShowCreateModal(true)}
             >
               创建第一个连接
@@ -195,14 +196,14 @@ export default function ExternalErpConnectionsPage() {
           </CardContent>
         </MuiCard>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
           {filteredConnections.map((connection: any) => {
             const typeConfig = ERP_TYPE_CONFIG[
               connection.type as keyof typeof ERP_TYPE_CONFIG
             ] || {
               name: connection.type,
               logo: "?",
-              color: "bg-gray-500",
+              color: "grey.500",
             };
             const statusConfig =
               STATUS_CONFIG[connection.status as keyof typeof STATUS_CONFIG] ||
@@ -210,100 +211,119 @@ export default function ExternalErpConnectionsPage() {
             const StatusIcon = statusConfig.icon;
 
             return (
-              <MuiCard key={connection.id} className="relative overflow-hidden">
+              <MuiCard key={connection.id} sx={{ position: "relative", overflow: "hidden" }}>
                 {/* 顶部颜色条 */}
-                <div
-                  className={`absolute top-0 left-0 right-0 h-1 ${typeConfig.color}`}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    bgcolor: typeConfig.color,
+                  }}
                 />
 
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
+                <CardHeader sx={{ pb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                       {/* Logo */}
-                      <div
-                        className={`w-10 h-10 rounded-lg ${typeConfig.color} flex items-center justify-center text-white font-bold text-lg`}
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1,
+                          bgcolor: typeConfig.color,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "common.white",
+                          fontWeight: 700,
+                          fontSize: "1.125rem",
+                        }}
                       >
                         {typeConfig.logo}
-                      </div>
-                      <div>
-                        <Typography variant="h6" className="text-lg">
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontSize: "1.125rem" }}>
                           {connection.name}
                         </Typography>
-                        <p className="text-sm text-gray-500">
+                        <Typography variant="body2" color="text.secondary">
                           {typeConfig.name}
-                        </p>
-                      </div>
-                    </div>
+                        </Typography>
+                      </Box>
+                    </Box>
 
                     {/* 状态徽章 */}
                     <Chip
-                      icon={<StatusIcon className="w-3 h-3 mr-1" />}
+                      icon={<StatusIcon size={12} style={{ marginRight: 4 }} />}
                       label={statusConfig.label}
-                      className={statusConfig.color}
+                      sx={{ bgcolor: statusConfig.color }}
                       size="small"
                     />
-                  </div>
+                  </Box>
                 </CardHeader>
 
-                <CardContent className="space-y-4">
+                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   {/* 连接信息 */}
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">API地址</span>
-                      <span
-                        className="font-mono text-xs truncate max-w-[200px]"
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1, fontSize: "0.875rem" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Typography component="span" variant="body2" color="text.secondary">API地址</Typography>
+                      <Typography
+                        component="span"
+                        sx={{ fontFamily: "monospace", fontSize: "0.75rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }}
                         title={connection.api_url}
                       >
                         {connection.api_url}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">同步方向</span>
-                      <span>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Typography component="span" variant="body2" color="text.secondary">同步方向</Typography>
+                      <Typography component="span" variant="body2">
                         {connection.sync_direction === "bidirectional"
                           ? "双向同步"
                           : connection.sync_direction === "import"
                             ? "导入"
                             : "导出"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">同步模式</span>
-                      <span>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Typography component="span" variant="body2" color="text.secondary">同步模式</Typography>
+                      <Typography component="span" variant="body2">
                         {connection.sync_mode === "realtime"
                           ? "实时"
                           : connection.sync_mode === "scheduled"
                             ? "定时"
                             : "手动"}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">最后同步</span>
-                      <span className="text-xs">
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Typography component="span" variant="body2" color="text.secondary">最后同步</Typography>
+                      <Typography component="span" variant="body2" sx={{ fontSize: "0.75rem" }}>
                         {connection.last_sync_at
                           ? new Date(connection.last_sync_at).toLocaleString()
                           : "从未同步"}
-                      </span>
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                  </Box>
 
                   {/* 操作按钮 */}
-                  <div className="flex items-center gap-2 pt-2 border-t">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, pt: 1, borderTop: 1, borderColor: "divider" }}>
                     <Button
                       size="small"
-                      className="flex-1"
+                      sx={{ flex: 1 }}
                       onClick={() => setEditingConnection(connection)}
                     >
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit size={16} style={{ marginRight: 4 }} />
                       编辑
                     </Button>
                     <Button
                       size="small"
-                      className="flex-1"
+                      sx={{ flex: 1 }}
                       onClick={() => handleTestConnection(connection)}
                       disabled={testConnection.isPending}
                     >
-                      <TestTube className="w-4 h-4 mr-1" />
+                      <TestTube size={16} style={{ marginRight: 4 }} />
                       测试
                     </Button>
                     <Button
@@ -311,7 +331,7 @@ export default function ExternalErpConnectionsPage() {
                       onClick={() => handleToggle(connection)}
                       disabled={toggleConnection.isPending}
                     >
-                      <Power className="w-4 h-4" />
+                      <Power size={16} />
                     </Button>
                     <Button
                       size="small"
@@ -319,29 +339,29 @@ export default function ExternalErpConnectionsPage() {
                       disabled={deleteConnection.isPending}
                       color="error"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 size={16} />
                     </Button>
-                  </div>
+                  </Box>
 
                   {/* 映射管理入口 */}
                   <Button
                     variant="outlined"
                     size="small"
-                    className="w-full"
+                    sx={{ width: "100%" }}
                     onClick={() =>
                       navigate(
                         `/integration/external-erp/${connection.id}/mappings`,
                       )
                     }
                   >
-                    <Settings className="w-4 h-4 mr-2" />
+                    <Settings size={16} style={{ marginRight: 8 }} />
                     映射管理
                   </Button>
                 </CardContent>
               </MuiCard>
             );
           })}
-        </div>
+        </Box>
       )}
 
       {/* 创建/编辑模态框 */}
@@ -376,7 +396,7 @@ export default function ExternalErpConnectionsPage() {
           }}
         />
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -407,42 +427,62 @@ function ConnectionFormModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <MuiCard className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1300 }}>
+      <MuiCard sx={{ width: "100%", maxWidth: 512, maxHeight: "90vh", overflowY: "auto" }}>
         <CardHeader>
           <Typography variant="h6">{connection ? "编辑连接" : "新建连接"}</Typography>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* ERP类型 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">ERP系统</label>
-              <div className="grid grid-cols-3 gap-3">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography component="label" variant="body2" sx={{ fontWeight: 500 }}>ERP系统</Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.5 }}>
                 {Object.entries(ERP_TYPE_CONFIG).map(([key, config]) => (
-                  <button
-                    key={key}
+                  <Box
+                    component="button"
                     type="button"
+                    key={key}
                     onClick={() => setFormData({ ...formData, type: key })}
-                    className={`p-3 rounded-lg border-2 transition-colors ${
-                      formData.type === key
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: 2,
+                      borderColor: formData.type === key ? "primary.main" : "grey.200",
+                      bgcolor: formData.type === key ? "blue.50" : "transparent",
+                      cursor: "pointer",
+                      transition: "border-color 0.2s",
+                      "&:hover": {
+                        borderColor: formData.type === key ? "primary.main" : "grey.300",
+                      },
+                    }}
                   >
-                    <div
-                      className={`w-8 h-8 rounded ${config.color} flex items-center justify-center text-white font-bold mx-auto mb-1`}
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 0.5,
+                        bgcolor: config.color,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "common.white",
+                        fontWeight: 700,
+                        mx: "auto",
+                        mb: 0.5,
+                      }}
                     >
                       {config.logo}
-                    </div>
-                    <p className="text-sm text-center">{config.name}</p>
-                  </button>
+                    </Box>
+                    <Typography component="p" variant="body2" sx={{ textAlign: "center" }}>{config.name}</Typography>
+                  </Box>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
             {/* 连接名称 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">连接名称</label>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography component="label" variant="body2" sx={{ fontWeight: 500 }}>连接名称</Typography>
               <TextField
                 value={formData.name}
                 onChange={(e) =>
@@ -453,11 +493,11 @@ function ConnectionFormModal({
                 fullWidth
                 required
               />
-            </div>
+            </Box>
 
             {/* API地址 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">API地址</label>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography component="label" variant="body2" sx={{ fontWeight: 500 }}>API地址</Typography>
               <TextField
                 value={formData.api_url}
                 onChange={(e) =>
@@ -468,11 +508,11 @@ function ConnectionFormModal({
                 fullWidth
                 required
               />
-            </div>
+            </Box>
 
             {/* App Key */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">App Key</label>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography component="label" variant="body2" sx={{ fontWeight: 500 }}>App Key</Typography>
               <TextField
                 value={formData.app_key}
                 onChange={(e) =>
@@ -482,11 +522,11 @@ function ConnectionFormModal({
                 size="small"
                 fullWidth
               />
-            </div>
+            </Box>
 
             {/* App Secret */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">App Secret</label>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography component="label" variant="body2" sx={{ fontWeight: 500 }}>App Secret</Typography>
               <TextField
                 type="password"
                 value={formData.app_secret}
@@ -497,50 +537,50 @@ function ConnectionFormModal({
                 size="small"
                 fullWidth
               />
-            </div>
+            </Box>
 
             {/* 同步方向 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">同步方向</label>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography component="label" variant="body2" sx={{ fontWeight: 500 }}>同步方向</Typography>
               <select
                 value={formData.sync_direction}
                 onChange={(e) =>
                   setFormData({ ...formData, sync_direction: e.target.value })
                 }
-                className="w-full p-2 border rounded-lg"
+                style={{ width: "100%", padding: 8, border: "1px solid", borderColor: "divider", borderRadius: 8 }}
               >
                 <option value="import">导入（从外部ERP导入数据）</option>
                 <option value="export">导出（推送数据到外部ERP）</option>
                 <option value="bidirectional">双向同步</option>
               </select>
-            </div>
+            </Box>
 
             {/* 同步模式 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">同步模式</label>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography component="label" variant="body2" sx={{ fontWeight: 500 }}>同步模式</Typography>
               <select
                 value={formData.sync_mode}
                 onChange={(e) =>
                   setFormData({ ...formData, sync_mode: e.target.value })
                 }
-                className="w-full p-2 border rounded-lg"
+                style={{ width: "100%", padding: 8, border: "1px solid", borderColor: "divider", borderRadius: 8 }}
               >
                 <option value="manual">手动同步</option>
                 <option value="scheduled">定时同步</option>
                 <option value="realtime">实时同步</option>
               </select>
-            </div>
+            </Box>
 
             {/* 按钮 */}
-            <div className="flex items-center justify-end gap-3 pt-4">
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1.5, pt: 2 }}>
               <Button type="button" variant="outlined" onClick={onClose}>
                 取消
               </Button>
               <Button type="submit" variant="contained">{connection ? "保存" : "创建"}</Button>
-            </div>
+            </Box>
           </form>
         </CardContent>
       </MuiCard>
-    </div>
+    </Box>
   );
 }

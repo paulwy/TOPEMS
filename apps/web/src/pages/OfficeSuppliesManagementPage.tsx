@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Package,
@@ -242,47 +242,51 @@ const OfficeSuppliesManagementPage: React.FC<
         accessorKey: "name",
         header: "物品名称",
         cell: ({ row }) => (
-          <div className="font-medium text-slate-900 dark:text-slate-100">
+          <Typography sx={{ fontWeight: 500, color: "text.primary" }}>
             {row.original.name}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "category",
         header: "类别",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
             {row.original.category || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "quantity",
         header: "数量",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-900 dark:text-slate-100">
+          <Typography sx={{ fontSize: "0.875rem", color: "text.primary" }}>
             {row.original.quantity} {row.original.unit || ""}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "price",
         header: "单价",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-900 dark:text-slate-100">
-            <DollarSign className="w-3 h-3 mr-1 text-green-600" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.primary" }}>
+            <span style={{ marginRight: 4 }}>
+              <DollarSign size={12} style={{ color: "green" }} />
+            </span>
             {row.original.price ? `¥${row.original.price.toFixed(2)}` : "-"}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "location",
         header: "存放位置",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-            <MapPin className="w-3 h-3 mr-1 text-blue-600" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.secondary" }}>
+            <span style={{ marginRight: 4 }}>
+              <MapPin size={12} style={{ color: "blue" }} />
+            </span>
             {row.original.location || "-"}
-          </div>
+          </Box>
         ),
       },
       {
@@ -296,7 +300,7 @@ const OfficeSuppliesManagementPage: React.FC<
         cell: ({ row }) => {
           const supply = row.original;
           return (
-            <div className="flex items-center justify-end space-x-2">
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
               <Tooltip title="编辑">
                 <MuiButton
                   variant="text"
@@ -306,7 +310,7 @@ const OfficeSuppliesManagementPage: React.FC<
                     setShowEditModal(true);
                   }}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit size={16} />
                 </MuiButton>
               </Tooltip>
 
@@ -317,10 +321,10 @@ const OfficeSuppliesManagementPage: React.FC<
                   color="error"
                   onClick={() => handleDeleteSupply(supply.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 size={16} />
                 </MuiButton>
               </Tooltip>
-            </div>
+            </Box>
           );
         },
       },
@@ -329,59 +333,58 @@ const OfficeSuppliesManagementPage: React.FC<
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <MuiButton variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft size={20} />
               </MuiButton>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-                  <Package className="w-7 h-7 mr-3 text-green-600" />
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
                   办公用品管理
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                </Typography>
+                <Typography sx={{ mt: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>
                   管理办公用品的库存、领用、归还等
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
               <MuiButton variant="contained" onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus size={20} sx={{ mr: 1 }} />
                 新增物品
               </MuiButton>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
         <Card>
           <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-green-600 border-t-transparent" />
-                <p className="mt-2 text-slate-500 dark:text-slate-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", borderRadius: "50%", width: 32, height: 32, border: 4, borderColor: "success.main", borderTopColor: "transparent" }} />
+                <Typography sx={{ mt: 1, color: "text.secondary" }}>
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <MuiButton className="mt-4" onClick={loadData}>
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <AlertCircle size={48} style={{ color: "red", margin: "0 auto 12px" }} />
+                <Typography sx={{ color: "error.main" }}>{error}</Typography>
+                <MuiButton sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </MuiButton>
-              </div>
+              </Box>
             ) : (
               <>
                 {selectedIds.length > 0 && (
-                  <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
+                  <Box sx={{ bgcolor: "grey.100", borderBottom: 1, borderColor: "divider", px: 3, py: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Checkbox
                           checked={selectedIds.length === supplies.length}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
@@ -392,23 +395,23 @@ const OfficeSuppliesManagementPage: React.FC<
                             }
                           }}
                         />
-                        <span className="text-sm text-slate-600">
+                        <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                           已选择 {selectedIds.length} 项
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <MuiButton
                         variant="outlined"
                         size="small"
                         color="error"
                         onClick={handleBatchDelete}
                       >
-                        <Trash2 className="w-4 h-4 mr-1" />
+                        <Trash2 size={16} sx={{ mr: 0.5 }} />
                         批量删除
                       </MuiButton>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
                 <EnhancedDataTable
                   columns={columns}
@@ -454,7 +457,7 @@ const OfficeSuppliesManagementPage: React.FC<
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       <Dialog
         open={showCreateModal}
@@ -464,8 +467,8 @@ const OfficeSuppliesManagementPage: React.FC<
       >
         <DialogTitle>新增办公用品</DialogTitle>
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
-          <form onSubmit={handleCreateSupply}>
-            <div className="space-y-4">
+          <Box component="form" onSubmit={handleCreateSupply}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <TextField
                 label="物品名称 *"
                 value={newSupply.name || ""}
@@ -476,7 +479,7 @@ const OfficeSuppliesManagementPage: React.FC<
                 required
               />
 
-              <div className="grid grid-cols-3 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                 <TextField
                   label="类别"
                   value={newSupply.category || ""}
@@ -506,13 +509,13 @@ const OfficeSuppliesManagementPage: React.FC<
                   fullWidth
                   required
                 />
-              </div>
+              </Box>
 
-              <div className="grid grid-cols-2 gap-4">
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                 <TextField
                   label="单价"
                   type="number"
-                  slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                  InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                   value={newSupply.price || ""}
                   onChange={(e) =>
                     setNewSupply({
@@ -530,7 +533,7 @@ const OfficeSuppliesManagementPage: React.FC<
                   }
                   fullWidth
                 />
-              </div>
+              </Box>
 
               <FormControl fullWidth>
                 <InputLabel>状态</InputLabel>
@@ -547,9 +550,9 @@ const OfficeSuppliesManagementPage: React.FC<
                   <MenuItem value="out_of_stock">缺货</MenuItem>
                 </Select>
               </FormControl>
-            </div>
+            </Box>
 
-            <div className="mt-6 flex justify-end space-x-2">
+            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <MuiButton
                 variant="outlined"
                 onClick={() => setShowCreateModal(false)}
@@ -559,8 +562,8 @@ const OfficeSuppliesManagementPage: React.FC<
               <MuiButton variant="contained" type="submit">
                 创建
               </MuiButton>
-            </div>
-          </form>
+            </Box>
+          </Box>
         </DialogContent>
       </Dialog>
 
@@ -573,8 +576,8 @@ const OfficeSuppliesManagementPage: React.FC<
         <DialogTitle>编辑办公用品</DialogTitle>
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           {selectedSupply && (
-            <form onSubmit={handleEditSupply}>
-              <div className="space-y-4">
+            <Box component="form" onSubmit={handleEditSupply}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <TextField
                   label="物品名称 *"
                   value={selectedSupply.name}
@@ -588,7 +591,7 @@ const OfficeSuppliesManagementPage: React.FC<
                   required
                 />
 
-                <div className="grid grid-cols-3 gap-4">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
                   <TextField
                     label="类别"
                     value={selectedSupply.category || ""}
@@ -624,13 +627,13 @@ const OfficeSuppliesManagementPage: React.FC<
                     fullWidth
                     required
                   />
-                </div>
+                </Box>
 
-                <div className="grid grid-cols-2 gap-4">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
                   <TextField
                     label="单价"
                     type="number"
-                    slotProps={{ htmlInput: { min: 0, step: "0.01" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     value={selectedSupply.price || ""}
                     onChange={(e) =>
                       setSelectedSupply({
@@ -651,7 +654,7 @@ const OfficeSuppliesManagementPage: React.FC<
                     }
                     fullWidth
                   />
-                </div>
+                </Box>
 
                 <FormControl fullWidth>
                   <InputLabel>状态</InputLabel>
@@ -671,9 +674,9 @@ const OfficeSuppliesManagementPage: React.FC<
                     <MenuItem value="out_of_stock">缺货</MenuItem>
                   </Select>
                 </FormControl>
-              </div>
+              </Box>
 
-              <div className="mt-6 flex justify-end space-x-2">
+              <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
                 <MuiButton
                   variant="outlined"
                   onClick={() => {
@@ -686,12 +689,12 @@ const OfficeSuppliesManagementPage: React.FC<
                 <MuiButton variant="contained" type="submit">
                   保存
                 </MuiButton>
-              </div>
-            </form>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

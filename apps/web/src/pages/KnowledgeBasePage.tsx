@@ -339,49 +339,68 @@ const KnowledgeBasePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
+      <Box sx={{ maxWidth: 1280, mx: "auto" }}>
         {/* 页面头部 */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  background: "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <BookOpen size={28} color="white" />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
                   知识库管理
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  管理和组织企业的知识文档，为 AI 提供上下文支持
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  管理和组织企业的知识文档,为 AI 提供上下文支持
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Button
                 variant="outlined"
                 onClick={handleReload}
                 disabled={loading}
               >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-                />
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    mr: 1,
+                    animation: loading ? "spin 1s linear infinite" : "none",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                >
+                  <RefreshCw size={16} />
+                </Box>
                 重新加载
               </Button>
               <Button onClick={() => setShowUploadDialog(true)}>
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload size={16} style={{ marginRight: 8 }} />
                 上传文档
               </Button>
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
         {/* 搜索和过滤 */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Card sx={{ mb: 3 }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ flex: 1, position: "relative" }}>
                 <TextField
                   type="text"
                   placeholder="搜索文档标题或文件名..."
@@ -391,18 +410,18 @@ const KnowledgeBasePage: React.FC = () => {
                   fullWidth
                   slotProps={{
                     input: {
-                      startAdornment: <Search className="w-4 h-4 text-gray-400" style={{ marginRight: 8 }} />,
+                      startAdornment: <Search size={16} color="#9ca3af" style={{ marginRight: 8 }} />,
                     },
                   }}
                 />
-              </div>
+              </Box>
               <FormControl size="small" sx={{ minWidth: 180 }}>
                 <InputLabel>分类</InputLabel>
                 <Select
                   value={selectedCategory}
                   label="分类"
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  startAdornment={<Filter className="w-4 h-4" style={{ marginRight: 8 }} />}
+                  startAdornment={<Filter size={16} style={{ marginRight: 8 }} />}
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat.value} value={cat.value}>
@@ -411,118 +430,141 @@ const KnowledgeBasePage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-            </div>
+            </Box>
           </CardContent>
         </Card>
 
         {/* 文档统计 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 2, mb: 3 }}>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <FileText className="w-8 h-8 text-purple-500" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <FileText size={32} color="#a855f7" />
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
                     总文档数
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  </Typography>
+                  <Typography sx={{ fontSize: "1.5rem", fontWeight: 700 }}>
                     {documents.length}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <FolderOpen className="w-8 h-8 text-blue-500" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <FolderOpen size={32} color="#3b82f6" />
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
                     分类数量
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  </Typography>
+                  <Typography sx={{ fontSize: "1.5rem", fontWeight: 700 }}>
                     {new Set(documents.map((d) => d.category || "未分类")).size}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="w-8 h-8 text-green-500" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <CheckCircle size={32} color="#22c55e" />
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
                     已处理
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  </Typography>
+                  <Typography sx={{ fontSize: "1.5rem", fontWeight: 700 }}>
                     {documents.filter((d) => d.status === "processed").length}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         {/* 文档列表 */}
         <Card>
-          <CardHeader title={<Typography variant="h6" className="flex items-center justify-between"><span>文档列表 ({filteredDocuments.length})</span></Typography>} />
+          <CardHeader
+            title={
+              <Typography variant="h6" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span>文档列表 ({filteredDocuments.length})</span>
+              </Typography>
+            }
+          />
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-              </div>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    animation: "spin 1s linear infinite",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                >
+                  <Loader2 size={32} color="#a855f7" />
+                </Box>
+              </Box>
             ) : filteredDocuments.length === 0 ? (
-              <div className="text-center py-12">
-                <FileSearch className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500 dark:text-gray-400 mb-2">
+              <Box sx={{ textAlign: "center", py: 6 }}>
+                <FileSearch size={64} color="#9ca3af" style={{ margin: "0 auto 16px" }} />
+                <Typography sx={{ color: "grey.500", mb: 1 }}>
                   暂无文档
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.400" }}>
                   点击"上传文档"按钮添加知识库文档
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : (
-              <div className="space-y-3">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 {filteredDocuments.map((doc) => (
-                  <div
+                  <Box
                     key={doc.id}
-                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    sx={{
+                      p: 2,
+                      bgcolor: "grey.50",
+                      borderRadius: 2,
+                      transition: "background-color 0.2s",
+                      "&:hover": { bgcolor: "grey.100" },
+                    }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3 flex-1">
-                        <FileText className="w-6 h-6 text-purple-500 mt-1" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1 }}>
+                        <FileText size={24} color="#a855f7" style={{ marginTop: 4 }} />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {doc.title}
-                            </h3>
+                            </Typography>
                             {doc.category && (
                               <Chip label={doc.category} size="small" variant="outlined" />
                             )}
                             {doc.status === "processed" && (
                               <Chip label="已处理" size="small" color="success" />
                             )}
-                          </div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                          </Box>
+                          <Typography variant="body2" sx={{ color: "grey.500", mb: 1 }}>
                             文件名: {doc.filename}
-                          </p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-400 dark:text-gray-500">
-                            <span className="flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" />
+                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "grey.400" }}>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Calendar size={12} style={{ marginRight: 4 }} />
                               {formatDate(doc.created_at)}
-                            </span>
-                            <span className="flex items-center">
-                              <File className="w-3 h-3 mr-1" />
+                            </Box>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <File size={12} style={{ marginRight: 4 }} />
                               {formatFileSize(doc.file_size)}
-                            </span>
+                            </Box>
                             {doc.mime_type && (
                               <Chip label={doc.mime_type} size="small" />
                             )}
-                          </div>
+                          </Box>
                           {doc.tags && doc.tags.length > 0 && (
-                            <div className="flex items-center space-x-1 mt-2">
-                              <Tag className="w-3 h-3 text-gray-400" />
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
+                              <Tag size={12} color="#9ca3af" />
                               {doc.tags.map((tag, idx) => (
                                 <Chip
                                   key={idx}
@@ -531,38 +573,38 @@ const KnowledgeBasePage: React.FC = () => {
                                   variant="outlined"
                                 />
                               ))}
-                            </div>
+                            </Box>
                           )}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Button
                           variant="text"
                           size="small"
                           onClick={() => handleViewDetail(doc)}
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye size={16} />
                         </Button>
                         <Button
                           variant="text"
                           size="small"
                           onClick={() => handleEdit(doc)}
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit size={16} />
                         </Button>
                         <Button
                           variant="text"
                           size="small"
                           onClick={() => handleDelete(doc.id)}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          sx={{ color: "error.main", "&:hover": { bgcolor: "error.light" } }}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 size={16} />
                         </Button>
-                      </div>
-                    </div>
-                  </div>
+                      </Box>
+                    </Box>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
@@ -571,31 +613,36 @@ const KnowledgeBasePage: React.FC = () => {
         <Dialog open={showUploadDialog} onClose={() => setShowUploadDialog(false)}>
           <DialogTitle>上传文档</DialogTitle>
           <DialogContentText sx={{ px: 3, pt: 1 }}>
-            上传文档到知识库，支持 txt、md、json、pdf、doc、docx 格式
+            上传文档到知识库,支持 txt、md、json、pdf、doc、docx 格式
           </DialogContentText>
           <DialogContent>
-            <div className="space-y-4">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {/* 拖拽上传区域 */}
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive
-                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                    : "border-gray-300 dark:border-gray-600"
-                }`}
+              <Box
+                sx={{
+                  border: 2,
+                  borderStyle: "dashed",
+                  borderRadius: 2,
+                  p: 4,
+                  textAlign: "center",
+                  transition: "background-color 0.2s, border-color 0.2s",
+                  borderColor: dragActive ? "primary.main" : "grey.300",
+                  bgcolor: dragActive ? "primary.light" : "transparent",
+                }}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 dark:text-gray-300 mb-2">
-                  拖拽文件到这里，或点击选择文件
-                </p>
+                <Upload size={48} color="#9ca3af" style={{ margin: "0 auto 16px" }} />
+                <Typography sx={{ color: "grey.600", mb: 1 }}>
+                  拖拽文件到这里,或点击选择文件
+                </Typography>
                 <input
                   type="file"
                   multiple
                   onChange={handleFileSelect}
-                  className="hidden"
+                  style={{ display: "none" }}
                   id="file-upload"
                   accept=".txt,.md,.json,.pdf,.doc,.docx"
                 />
@@ -605,27 +652,34 @@ const KnowledgeBasePage: React.FC = () => {
                     document.getElementById("file-upload")?.click()
                   }
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus size={16} style={{ marginRight: 8 }} />
                   选择文件
                 </Button>
-              </div>
+              </Box>
 
               {/* 已选择的文件列表 */}
               {uploadFiles.length > 0 && (
-                <div className="space-y-2">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   <Typography variant="body2">已选择的文件</Typography>
                   {uploadFiles.map((file, idx) => (
-                    <div
+                    <Box
                       key={idx}
-                      className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 rounded"
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        p: 1,
+                        bgcolor: "grey.100",
+                        borderRadius: 1,
+                      }}
                     >
-                      <div className="flex items-center space-x-2">
-                        <FileText className="w-4 h-4 text-purple-500" />
-                        <span className="text-sm">{file.name}</span>
-                        <span className="text-xs text-gray-500">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <FileText size={16} color="#a855f7" />
+                        <Typography variant="body2">{file.name}</Typography>
+                        <Typography variant="caption" sx={{ color: "grey.500" }}>
                           {formatFileSize(file.size)}
-                        </span>
-                      </div>
+                        </Typography>
+                      </Box>
                       <Button
                         variant="text"
                         size="small"
@@ -635,13 +689,13 @@ const KnowledgeBasePage: React.FC = () => {
                           )
                         }
                       >
-                        <X className="w-4 h-4" />
+                        <X size={16} />
                       </Button>
-                    </div>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button
@@ -655,16 +709,23 @@ const KnowledgeBasePage: React.FC = () => {
               disabled={uploading || uploadFiles.length === 0}
             >
               {uploading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  上传中...
-                </>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    mr: 1,
+                    animation: "spin 1s linear infinite",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                >
+                  <Loader2 size={16} />
+                </Box>
               ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  开始上传
-                </>
+                <Upload size={16} style={{ marginRight: 8 }} />
               )}
+              {uploading ? "上传中..." : "开始上传"}
             </Button>
           </DialogActions>
         </Dialog>
@@ -674,76 +735,76 @@ const KnowledgeBasePage: React.FC = () => {
           <DialogTitle>文档详情</DialogTitle>
           <DialogContent>
             {selectedDocument && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">文档标题</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
                       {selectedDocument.title}
                     </Typography>
-                  </div>
-                  <div>
+                  </Box>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">文件名</Typography>
                     <Typography variant="body1">{selectedDocument.filename}</Typography>
-                  </div>
-                  <div>
+                  </Box>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">文件大小</Typography>
                     <Typography variant="body1">
                       {formatFileSize(selectedDocument.file_size)}
                     </Typography>
-                  </div>
-                  <div>
+                  </Box>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">文件类型</Typography>
                     <Typography variant="body1">
                       {selectedDocument.mime_type || "未知"}
                     </Typography>
-                  </div>
-                  <div>
+                  </Box>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">创建时间</Typography>
                     <Typography variant="body1">
                       {formatDate(selectedDocument.created_at)}
                     </Typography>
-                  </div>
-                  <div>
+                  </Box>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">更新时间</Typography>
                     <Typography variant="body1">
                       {formatDate(selectedDocument.updated_at)}
                     </Typography>
-                  </div>
-                </div>
+                  </Box>
+                </Box>
                 {selectedDocument.category && (
-                  <div>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">分类</Typography>
                     <Chip label={selectedDocument.category} size="small" variant="outlined" sx={{ mt: 0.5 }} />
-                  </div>
+                  </Box>
                 )}
                 {selectedDocument.tags && selectedDocument.tags.length > 0 && (
-                  <div>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">标签</Typography>
                     <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
                       {selectedDocument.tags.map((tag, idx) => (
                         <Chip key={idx} label={tag} size="small" variant="outlined" />
                       ))}
                     </Stack>
-                  </div>
+                  </Box>
                 )}
                 {selectedDocument.description && (
-                  <div>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">描述</Typography>
                     <Typography variant="body1" sx={{ mt: 0.5 }}>
                       {selectedDocument.description}
                     </Typography>
-                  </div>
+                  </Box>
                 )}
                 {selectedDocument.file_path && (
-                  <div>
+                  <Box>
                     <Typography variant="body2" color="text.secondary">文件路径</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                       {selectedDocument.file_path}
                     </Typography>
-                  </div>
+                  </Box>
                 )}
-              </div>
+              </Box>
             )}
           </DialogContent>
           <DialogActions>
@@ -759,7 +820,7 @@ const KnowledgeBasePage: React.FC = () => {
                 handleEdit(selectedDocument!);
               }}
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit size={16} style={{ marginRight: 8 }} />
               编辑
             </Button>
           </DialogActions>
@@ -772,8 +833,8 @@ const KnowledgeBasePage: React.FC = () => {
             更新文档的标题、描述、分类和标签信息
           </DialogContentText>
           <DialogContent>
-            <div className="space-y-4">
-              <div>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box>
                 <Typography variant="body2" sx={{ mb: 1 }}>文档标题</Typography>
                 <TextField
                   id="title"
@@ -784,8 +845,8 @@ const KnowledgeBasePage: React.FC = () => {
                   size="small"
                   fullWidth
                 />
-              </div>
-              <div>
+              </Box>
+              <Box>
                 <Typography variant="body2" sx={{ mb: 1 }}>分类</Typography>
                 <FormControl size="small" fullWidth>
                   <Select
@@ -805,9 +866,9 @@ const KnowledgeBasePage: React.FC = () => {
                       ))}
                   </Select>
                 </FormControl>
-              </div>
-              <div>
-                <Typography variant="body2" sx={{ mb: 1 }}>标签（用逗号分隔）</Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>标签(用逗号分隔)</Typography>
                 <TextField
                   id="tags"
                   value={editForm.tags}
@@ -818,8 +879,8 @@ const KnowledgeBasePage: React.FC = () => {
                   size="small"
                   fullWidth
                 />
-              </div>
-              <div>
+              </Box>
+              <Box>
                 <Typography variant="body2" sx={{ mb: 1 }}>描述</Typography>
                 <TextField
                   id="description"
@@ -833,8 +894,8 @@ const KnowledgeBasePage: React.FC = () => {
                   size="small"
                   fullWidth
                 />
-              </div>
-            </div>
+              </Box>
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button
@@ -844,13 +905,13 @@ const KnowledgeBasePage: React.FC = () => {
               取消
             </Button>
             <Button variant="contained" onClick={handleSaveEdit}>
-              <CheckCircle className="w-4 h-4 mr-2" />
+              <CheckCircle size={16} style={{ marginRight: 8 }} />
               保存
             </Button>
           </DialogActions>
         </Dialog>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

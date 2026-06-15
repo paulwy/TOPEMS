@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -108,19 +109,19 @@ const PmProjectDetailPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return { bgcolor: "#dcfce7", color: "#166534" };
       case "completed":
-        return "bg-blue-100 text-blue-800";
+        return { bgcolor: "#dbeafe", color: "#1e40af" };
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return { bgcolor: "#fef9c3", color: "#a16207" };
       case "approved":
-        return "bg-purple-100 text-purple-800";
+        return { bgcolor: "#f3e8ff", color: "#7c3aed" };
       case "cancelled":
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "#f3f4f6", color: "#374151" };
       case "draft":
-        return "bg-gray-100 text-gray-600";
+        return { bgcolor: "#f3f4f6", color: "#4b5563" };
       default:
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "#f3f4f6", color: "#374151" };
     }
   };
 
@@ -146,13 +147,13 @@ const PmProjectDetailPage: React.FC = () => {
   const getRiskColor = (level?: string) => {
     switch (level?.toLowerCase()) {
       case "high":
-        return "bg-red-100 text-red-800";
+        return { bgcolor: "#fee2e2", color: "#991b1b" };
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return { bgcolor: "#fef9c3", color: "#a16207" };
       case "low":
-        return "bg-green-100 text-green-800";
+        return { bgcolor: "#dcfce7", color: "#166534" };
       default:
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "#f3f4f6", color: "#374151" };
     }
   };
 
@@ -195,262 +196,435 @@ const PmProjectDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-slate-50 items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          minHeight: "100vh",
+          bgcolor: "slate.50",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            border: "3px solid",
+            borderColor: "#2563eb",
+            borderTopColor: "transparent",
+            borderRadius: "50%",
+            animation: "spin 1s linear infinite",
+            "@keyframes spin": {
+              "0%": { transform: "rotate(0deg)" },
+              "100%": { transform: "rotate(360deg)" },
+            },
+          }}
+        />
+      </Box>
     );
   }
 
   if (!project) {
     return (
-      <div className="flex min-h-screen bg-slate-50 items-center justify-center">
-        <p className="text-gray-500">项目不存在</p>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          minHeight: "100vh",
+          bgcolor: "slate.50",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography sx={{ color: "grey.500" }}>项目不存在</Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center gap-4">
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "slate.50" }}>
+      <Box sx={{ flex: 1, p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
           <Button
             variant="outline"
             onClick={() => navigate("/pm/projects")}
-            className="gap-2"
+            sx={{ gap: 1 }}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft sx={{ width: 16, height: 16 }} />
             返回列表
           </Button>
-          <div className="flex-1" />
+          <Box sx={{ flex: 1 }} />
           <Button onClick={() => navigate(`/pm/projects/${id}/edit`)}>
-            <Edit className="w-4 h-4 mr-2" />
+            <Edit sx={{ width: 16, height: 16, mr: 1 }} />
             编辑项目
           </Button>
-        </div>
+        </Box>
 
-        <Card className="overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">
+        <Card sx={{ overflow: "hidden" }}>
+          <CardContent sx={{ p: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: { xs: "flex-start", md: "flex-start" },
+                justifyContent: "space-between",
+                gap: 3,
+              }}
+            >
+              <Box sx={{ flex: 1 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}
+                >
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "grey.900" }}
+                  >
                     {project.name}
-                  </h1>
-                  <Badge className={getStatusColor(project.status)}>
+                  </Typography>
+                  <Badge sx={getStatusColor(project.status)}>
                     {getStatusLabel(project.status)}
                   </Badge>
-                </div>
-                <p className="text-gray-500">{project.code}</p>
+                </Box>
+                <Typography sx={{ color: "grey.500" }}>{project.code}</Typography>
                 {project.description && (
-                  <p className="text-gray-600 mt-4">{project.description}</p>
+                  <Typography sx={{ color: "grey.600", mt: 2 }}>
+                    {project.description}
+                  </Typography>
                 )}
-              </div>
-              <div className="flex items-center gap-4">
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                 <Badge
                   variant="outline"
-                  className={getRiskColor(project.risk_level)}
+                  sx={getRiskColor(project.risk_level)}
                 >
                   {getRiskLabel(project.risk_level)}
                 </Badge>
                 {project.priority && (
-                  <Badge variant="outline">优先级: {project.priority}</Badge>
+                  <Badge variant="outline">
+                    优先级: {project.priority}
+                  </Badge>
                 )}
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-blue-100">
-                  <Clock className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">项目进度</p>
-                  <p className="text-2xl font-bold text-gray-900">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+            gap: 2,
+            my: 3,
+          }}
+        >
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "#dbeafe" }}>
+                  <Clock sx={{ width: 20, height: 20, color: "#2563eb" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                    项目进度
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "grey.900" }}
+                  >
                     {project.progress}%
-                  </p>
-                </div>
-              </div>
-              <Progress value={project.progress} className="mt-3 h-2" />
+                  </Typography>
+                </Box>
+              </Box>
+              <Progress value={project.progress} sx={{ mt: 1.5, height: 8 }} />
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-green-100">
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">阶段完成</p>
-                  <p className="text-2xl font-bold text-green-600">
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "#dcfce7" }}>
+                  <CheckCircle2 sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                    阶段完成
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "#16a34a" }}
+                  >
                     {completedPhases}/{phases.length}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-amber-100">
-                  <DollarSign className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">项目预算</p>
-                  <p className="text-2xl font-bold text-amber-600">
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "#fef3c7" }}>
+                  <DollarSign sx={{ width: 20, height: 20, color: "#d97706" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                    项目预算
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "#d97706" }}
+                  >
                     {formatCurrency(project.budget)}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-purple-100">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">里程碑完成</p>
-                  <p className="text-2xl font-bold text-purple-600">
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "#f3e8ff" }}>
+                  <TrendingUp sx={{ width: 20, height: 20, color: "#7c3aed" }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>
+                    里程碑完成
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "#7c3aed" }}
+                  >
                     {completedMilestones}/{milestones.length}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="bg-slate-100 p-1">
+        <Tabs defaultValue="overview" sx={{ mb: 3 }}>
+          <TabsList sx={{ bgcolor: "slate.100", p: 0.5 }}>
             <TabsTrigger
               value="overview"
-              className="data-[state=active]:bg-white"
+              sx={{ "&[data-state=active]": { bgcolor: "white" } }}
             >
               项目概览
             </TabsTrigger>
-            <TabsTrigger value="gantt" className="data-[state=active]:bg-white">
+            <TabsTrigger
+              value="gantt"
+              sx={{ "&[data-state=active]": { bgcolor: "white" } }}
+            >
               甘特图
             </TabsTrigger>
             <TabsTrigger
               value="phases"
-              className="data-[state=active]:bg-white"
+              sx={{ "&[data-state=active]": { bgcolor: "white" } }}
             >
               阶段管理
             </TabsTrigger>
             <TabsTrigger
               value="milestones"
-              className="data-[state=active]:bg-white"
+              sx={{ "&[data-state=active]": { bgcolor: "white" } }}
             >
               里程碑
             </TabsTrigger>
             <TabsTrigger
               value="finance"
-              className="data-[state=active]:bg-white"
+              sx={{ "&[data-state=active]": { bgcolor: "white" } }}
             >
               财务
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6 mt-0">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="overview" sx={{ mt: 0 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+                gap: 3,
+              }}
+            >
               <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">基本信息</CardTitle>
+                <CardHeader sx={{ pb: 2 }}>
+                  <CardTitle sx={{ fontSize: "1.125rem" }}>基本信息</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">项目编号</span>
-                    <span className="font-medium text-gray-900">
+                <CardContent
+                  sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>项目编号</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.code}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">项目类型</span>
-                    <span className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>项目类型</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.project_type}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">项目负责人</span>
-                    <span className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>项目负责人</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.leader || "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">开始日期</span>
-                    <span className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>开始日期</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {formatDate(project.start_date)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">结束日期</span>
-                    <span className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>结束日期</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {formatDate(project.end_date)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">风险等级</span>
-                    <Badge className={getRiskColor(project.risk_level)}>
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>风险等级</Typography>
+                    <Badge sx={getRiskColor(project.risk_level)}>
                       {getRiskLabel(project.risk_level)}
                     </Badge>
-                  </div>
+                  </Box>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">关键指标</CardTitle>
+                <CardHeader sx={{ pb: 2 }}>
+                  <CardTitle sx={{ fontSize: "1.125rem" }}>关键指标</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">整体进度</span>
-                      <span className="text-sm font-medium text-gray-900">
+                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: "grey.600" }}>
+                        整体进度
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 500, color: "grey.900" }}
+                      >
                         {project.progress}%
-                      </span>
-                    </div>
-                    <Progress value={project.progress} className="h-3" />
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Progress value={project.progress} sx={{ height: 12 }} />
+                  </Box>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">阶段进度</span>
-                      <span className="text-sm font-medium text-gray-900">
+                  <Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: "grey.600" }}>
+                        阶段进度
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 500, color: "grey.900" }}
+                      >
                         {phases.length > 0
                           ? Math.round((completedPhases / phases.length) * 100)
                           : 0}
                         %
-                      </span>
-                    </div>
+                      </Typography>
+                    </Box>
                     <Progress
                       value={
                         phases.length > 0
                           ? Math.round((completedPhases / phases.length) * 100)
                           : 0
                       }
-                      className="h-3"
+                      sx={{ height: 12 }}
                     />
-                  </div>
+                  </Box>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">里程碑完成</span>
-                      <span className="text-sm font-medium text-gray-900">
+                  <Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: "grey.600" }}>
+                        里程碑完成
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 500, color: "grey.900" }}
+                      >
                         {milestones.length > 0
                           ? Math.round(
                               (completedMilestones / milestones.length) * 100,
                             )
                           : 0}
                         %
-                      </span>
-                    </div>
+                      </Typography>
+                    </Box>
                     <Progress
                       value={
                         milestones.length > 0
@@ -459,18 +633,18 @@ const PmProjectDetailPage: React.FC = () => {
                             )
                           : 0
                       }
-                      className="h-3"
+                      sx={{ height: 12 }}
                     />
-                  </div>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
           </TabsContent>
 
-          <TabsContent value="gantt" className="mt-0">
+          <TabsContent value="gantt" sx={{ mt: 0 }}>
             <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">项目甘特图</CardTitle>
+              <CardHeader sx={{ pb: 2 }}>
+                <CardTitle sx={{ fontSize: "1.125rem" }}>项目甘特图</CardTitle>
               </CardHeader>
               <CardContent>
                 <GanttChart
@@ -483,24 +657,32 @@ const PmProjectDetailPage: React.FC = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="phases" className="mt-0">
+          <TabsContent value="phases" sx={{ mt: 0 }}>
             <Card>
-              <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">阶段列表</CardTitle>
+              <CardHeader
+                sx={{
+                  pb: 2,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <CardTitle sx={{ fontSize: "1.125rem" }}>阶段列表</CardTitle>
                 <Button variant="outline" size="sm">
                   添加阶段
                 </Button>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ overflowX: "auto" }}>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[200px]">阶段名称</TableHead>
+                        <TableHead sx={{ width: 200 }}>阶段名称</TableHead>
                         <TableHead>状态</TableHead>
-                        <TableHead className="w-[180px]">进度</TableHead>
-                        <TableHead className="w-[150px]">时间</TableHead>
-                        <TableHead className="w-[120px]">操作</TableHead>
+                        <TableHead sx={{ width: 180 }}>进度</TableHead>
+                        <TableHead sx={{ width: 150 }}>时间</TableHead>
+                        <TableHead sx={{ width: 120 }}>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -508,34 +690,47 @@ const PmProjectDetailPage: React.FC = () => {
                         <TableRow>
                           <TableCell
                             colSpan={5}
-                            className="text-center py-12 text-gray-500"
+                            sx={{ textAlign: "center", py: 6, color: "grey.500" }}
                           >
                             暂无阶段数据
                           </TableCell>
                         </TableRow>
                       ) : (
                         phases.map((phase) => (
-                          <TableRow key={phase.id} className="hover:bg-gray-50">
+                          <TableRow
+                            key={phase.id}
+                            sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                          >
                             <TableCell>
-                              <div>
-                                <p className="font-medium text-gray-900">
+                              <Box>
+                                <Typography
+                                  sx={{ fontWeight: 500, color: "grey.900" }}
+                                >
                                   {phase.name}
-                                </p>
+                                </Typography>
                                 {phase.description && (
-                                  <p className="text-sm text-gray-500 line-clamp-1">
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color: "grey.500",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
                                     {phase.description}
-                                  </p>
+                                  </Typography>
                                 )}
-                              </div>
+                              </Box>
                             </TableCell>
                             <TableCell>
                               <Badge
-                                className={
+                                sx={
                                   phase.status === "completed"
-                                    ? "bg-green-100 text-green-800"
+                                    ? { bgcolor: "#dcfce7", color: "#166534" }
                                     : phase.status === "active"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-gray-100 text-gray-800"
+                                      ? { bgcolor: "#dbeafe", color: "#1e40af" }
+                                      : { bgcolor: "#f3f4f6", color: "#374151" }
                                 }
                               >
                                 {phase.status === "completed"
@@ -546,33 +741,49 @@ const PmProjectDetailPage: React.FC = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className="w-24">
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1.5,
+                                }}
+                              >
+                                <Box sx={{ width: 96 }}>
                                   <Progress
                                     value={phase.progress}
-                                    className="h-2"
+                                    sx={{ height: 8 }}
                                   />
-                                </div>
-                                <span className="text-sm text-gray-600">
+                                </Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ color: "grey.600" }}
+                                >
                                   {phase.progress}%
-                                </span>
-                              </div>
+                                </Typography>
+                              </Box>
                             </TableCell>
-                            <TableCell className="text-sm text-gray-600">
-                              <div>
-                                <p>{formatDate(phase.start_date)}</p>
-                                <p className="text-xs text-gray-400">
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", color: "grey.600" }}
+                            >
+                              <Box>
+                                <Typography variant="body2">
+                                  {formatDate(phase.start_date)}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ color: "grey.400", fontSize: "0.75rem" }}
+                                >
                                   至 {formatDate(phase.end_date)}
-                                </p>
-                              </div>
+                                </Typography>
+                              </Box>
                             </TableCell>
                             <TableCell>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="gap-1"
+                                sx={{ gap: 0.5 }}
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit sx={{ width: 16, height: 16 }} />
                                 编辑
                               </Button>
                             </TableCell>
@@ -581,29 +792,37 @@ const PmProjectDetailPage: React.FC = () => {
                       )}
                     </TableBody>
                   </Table>
-                </div>
+                </Box>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="milestones" className="mt-0">
+          <TabsContent value="milestones" sx={{ mt: 0 }}>
             <Card>
-              <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">里程碑列表</CardTitle>
+              <CardHeader
+                sx={{
+                  pb: 2,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <CardTitle sx={{ fontSize: "1.125rem" }}>里程碑列表</CardTitle>
                 <Button variant="outline" size="sm">
                   添加里程碑
                 </Button>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
+              <CardContent sx={{ p: 0 }}>
+                <Box sx={{ overflowX: "auto" }}>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[200px]">里程碑名称</TableHead>
-                        <TableHead className="w-[150px]">目标日期</TableHead>
+                        <TableHead sx={{ width: 200 }}>里程碑名称</TableHead>
+                        <TableHead sx={{ width: 150 }}>目标日期</TableHead>
                         <TableHead>状态</TableHead>
                         <TableHead>所属阶段</TableHead>
-                        <TableHead className="w-[120px]">操作</TableHead>
+                        <TableHead sx={{ width: 120 }}>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -611,7 +830,7 @@ const PmProjectDetailPage: React.FC = () => {
                         <TableRow>
                           <TableCell
                             colSpan={5}
-                            className="text-center py-12 text-gray-500"
+                            sx={{ textAlign: "center", py: 6, color: "grey.500" }}
                           >
                             暂无里程碑数据
                           </TableCell>
@@ -620,31 +839,43 @@ const PmProjectDetailPage: React.FC = () => {
                         milestones.map((milestone) => (
                           <TableRow
                             key={milestone.id}
-                            className="hover:bg-gray-50"
+                            sx={{ "&:hover": { bgcolor: "grey.50" } }}
                           >
                             <TableCell>
-                              <div>
-                                <p className="font-medium text-gray-900">
+                              <Box>
+                                <Typography
+                                  sx={{ fontWeight: 500, color: "grey.900" }}
+                                >
                                   {milestone.name}
-                                </p>
+                                </Typography>
                                 {milestone.description && (
-                                  <p className="text-sm text-gray-500 line-clamp-1">
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color: "grey.500",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
                                     {milestone.description}
-                                  </p>
+                                  </Typography>
                                 )}
-                              </div>
+                              </Box>
                             </TableCell>
-                            <TableCell className="text-sm text-gray-600">
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", color: "grey.600" }}
+                            >
                               {formatDate(milestone.date)}
                             </TableCell>
                             <TableCell>
                               <Badge
-                                className={
+                                sx={
                                   milestone.status === "completed"
-                                    ? "bg-green-100 text-green-800"
+                                    ? { bgcolor: "#dcfce7", color: "#166534" }
                                     : milestone.status === "active"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-gray-100 text-gray-800"
+                                      ? { bgcolor: "#dbeafe", color: "#1e40af" }
+                                      : { bgcolor: "#f3f4f6", color: "#374151" }
                                 }
                               >
                                 {milestone.status === "completed"
@@ -654,7 +885,9 @@ const PmProjectDetailPage: React.FC = () => {
                                     : "未开始"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-gray-600">
+                            <TableCell
+                              sx={{ fontSize: "0.875rem", color: "grey.600" }}
+                            >
                               {milestone.phase_id
                                 ? phases.find(
                                     (p) => p.id === milestone.phase_id,
@@ -665,9 +898,9 @@ const PmProjectDetailPage: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="gap-1"
+                                sx={{ gap: 0.5 }}
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit sx={{ width: 16, height: 16 }} />
                                 编辑
                               </Button>
                             </TableCell>
@@ -676,165 +909,367 @@ const PmProjectDetailPage: React.FC = () => {
                       )}
                     </TableBody>
                   </Table>
-                </div>
+                </Box>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="finance" className="mt-0">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="finance" sx={{ mt: 0 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
+                gap: 3,
+              }}
+            >
               {/* 预算执行概览 */}
               <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">预算执行概览</CardTitle>
+                <CardHeader sx={{ pb: 2 }}>
+                  <CardTitle sx={{ fontSize: "1.125rem" }}>预算执行概览</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">项目预算</span>
-                    <span className="font-medium text-gray-900">
+                <CardContent
+                  sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>项目预算</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {formatCurrency(project.budget)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">实际成本</span>
-                    <span className="font-medium text-amber-600">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>实际成本</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#d97706" }}>
                       {formatCurrency(project.actual_cost)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">已承诺成本</span>
-                    <span className="font-medium text-blue-600">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>已承诺成本</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#2563eb" }}>
                       {formatCurrency(project.committed_cost)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">剩余预算</span>
-                    <span className="font-medium text-green-600">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>剩余预算</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>
                       {formatCurrency(project.remaining_budget)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">成本差异</span>
-                    <span
-                      className={`font-medium ${(project.cost_variance || 0) >= 0 ? "text-green-600" : "text-red-600"}`}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>成本差异</Typography>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        color:
+                          (project.cost_variance || 0) >= 0
+                            ? "#16a34a"
+                            : "#dc2626",
+                      }}
                     >
                       {formatCurrency(project.cost_variance)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">预算执行率</span>
-                    <span className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>预算执行率</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.budget_utilization_rate?.toFixed(1) || "0"}%
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 </CardContent>
               </Card>
 
               {/* 收入与利润 */}
               <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">收入与利润</CardTitle>
+                <CardHeader sx={{ pb: 2 }}>
+                  <CardTitle sx={{ fontSize: "1.125rem" }}>收入与利润</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">已确认收入</span>
-                    <span className="font-medium text-gray-900">
+                <CardContent
+                  sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>已确认收入</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {formatCurrency(project.revenue_recognized)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">应收账款</span>
-                    <span className="font-medium text-amber-600">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>应收账款</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#d97706" }}>
                       {formatCurrency(project.accounts_receivable)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">已开票金额</span>
-                    <span className="font-medium text-blue-600">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>已开票金额</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#2563eb" }}>
                       {formatCurrency(
                         (project.revenue_recognized || 0) -
                           (project.accounts_receivable || 0),
                       )}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">毛利润</span>
-                    <span className="font-medium text-green-600">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>毛利润</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>
                       {formatCurrency(project.gross_profit)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">毛利率</span>
-                    <span className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>毛利率</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.gross_margin?.toFixed(1) || "0"}%
-                    </span>
-                  </div>
+                    </Typography>
+                  </Box>
                 </CardContent>
               </Card>
 
               {/* 成本构成分析 */}
-              <Card className="lg:col-span-2">
-                <CardHeader className="pb-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">成本构成分析</CardTitle>
+              <Card sx={{ lg: { gridColumn: "span 2" } }}>
+                <CardHeader
+                  sx={{
+                    pb: 2,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <CardTitle sx={{ fontSize: "1.125rem" }}>成本构成分析</CardTitle>
                   <Button variant="outline" size="sm">
                     查看详情
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-1">人工成本</p>
-                      <p className="text-lg font-semibold text-blue-600">-</p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-1">材料成本</p>
-                      <p className="text-lg font-semibold text-green-600">-</p>
-                    </div>
-                    <div className="p-4 bg-amber-50 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-1">费用支出</p>
-                      <p className="text-lg font-semibold text-amber-600">-</p>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-1">分包成本</p>
-                      <p className="text-lg font-semibold text-purple-600">-</p>
-                    </div>
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-500 mb-1">其他成本</p>
-                      <p className="text-lg font-semibold text-gray-600">-</p>
-                    </div>
-                  </div>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(5, 1fr)" },
+                      gap: 2,
+                    }}
+                  >
+                    <Box sx={{ p: 2, bgcolor: "#eff6ff", borderRadius: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "grey.500", mb: 0.5 }}
+                      >
+                        人工成本
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 600, color: "#2563eb" }}
+                      >
+                        -
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 2, bgcolor: "#f0fdf4", borderRadius: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "grey.500", mb: 0.5 }}
+                      >
+                        材料成本
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 600, color: "#16a34a" }}
+                      >
+                        -
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 2, bgcolor: "#fffbeb", borderRadius: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "grey.500", mb: 0.5 }}
+                      >
+                        费用支出
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 600, color: "#d97706" }}
+                      >
+                        -
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 2, bgcolor: "#faf5ff", borderRadius: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "grey.500", mb: 0.5 }}
+                      >
+                        分包成本
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 600, color: "#7c3aed" }}
+                      >
+                        -
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 2, bgcolor: "#f9fafb", borderRadius: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "grey.500", mb: 0.5 }}
+                      >
+                        其他成本
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 600, color: "#4b5563" }}
+                      >
+                        -
+                      </Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
               {/* 成本中心信息 */}
               <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">成本中心信息</CardTitle>
+                <CardHeader sx={{ pb: 2 }}>
+                  <CardTitle sx={{ fontSize: "1.125rem" }}>成本中心信息</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">成本中心ID</span>
-                    <span className="font-medium text-gray-900">
+                <CardContent
+                  sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>成本中心ID</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.cost_center_id || "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                    <span className="text-gray-500">成本中心名称</span>
-                    <span className="font-medium text-gray-900">
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                      borderBottom: "1px solid",
+                      borderColor: "grey.100",
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>成本中心名称</Typography>
+                    <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                       {project.cost_center_name || "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-500">执行状态</span>
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "grey.500" }}>执行状态</Typography>
                     <Badge
-                      className={
+                      sx={
                         project.budget_utilization_rate &&
                         project.budget_utilization_rate > 100
-                          ? "bg-red-100 text-red-800"
+                          ? { bgcolor: "#fee2e2", color: "#991b1b" }
                           : project.budget_utilization_rate &&
                               project.budget_utilization_rate > 80
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-green-100 text-green-800"
+                            ? { bgcolor: "#fef9c3", color: "#a16207" }
+                            : { bgcolor: "#dcfce7", color: "#166534" }
                       }
                     >
                       {project.budget_utilization_rate &&
@@ -845,39 +1280,39 @@ const PmProjectDetailPage: React.FC = () => {
                           ? "预警"
                           : "正常"}
                     </Badge>
-                  </div>
+                  </Box>
                 </CardContent>
               </Card>
 
               {/* 快速操作 */}
               <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg">快速操作</CardTitle>
+                <CardHeader sx={{ pb: 2 }}>
+                  <CardTitle sx={{ fontSize: "1.125rem" }}>快速操作</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
-                    <DollarSign className="w-4 h-4 mr-2" />
+                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Button variant="outline" sx={{ justifyContent: "flex-start" }}>
+                    <DollarSign sx={{ width: 16, height: 16, mr: 1 }} />
                     查看成本明细
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <FileText className="w-4 h-4 mr-2" />
+                  <Button variant="outline" sx={{ justifyContent: "flex-start" }}>
+                    <FileText sx={{ width: 16, height: 16, mr: 1 }} />
                     查看项目发票
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <TrendingUp className="w-4 h-4 mr-2" />
+                  <Button variant="outline" sx={{ justifyContent: "flex-start" }}>
+                    <TrendingUp sx={{ width: 16, height: 16, mr: 1 }} />
                     预算执行分析
                   </Button>
-                  <Button className="w-full">
-                    <FileText className="w-4 h-4 mr-2" />
+                  <Button>
+                    <FileText sx={{ width: 16, height: 16, mr: 1 }} />
                     生成项目凭证
                   </Button>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

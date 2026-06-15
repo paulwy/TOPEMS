@@ -23,7 +23,6 @@ import {
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Skeleton } from "../components/ui/skeleton";
 import { EmptyState } from "../components/EmptyState";
 import {
   DropdownMenu,
@@ -31,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { Box, Skeleton, Typography } from "@mui/material";
 
 interface DataSource {
   id: string;
@@ -61,31 +61,31 @@ const DataSourceCard = ({
     switch (status) {
       case "active":
         return {
-          color: "bg-emerald-50 text-emerald-600 border-emerald-100",
-          icon: <Wifi className="w-3.5 h-3.5" />,
+          color: "success.light",
+          icon: <Wifi size={14} />,
           label: "活跃",
-          dotColor: "bg-emerald-500",
+          dotColor: "success.main",
         };
       case "inactive":
         return {
-          color: "bg-slate-50 text-slate-600 border-slate-100",
-          icon: <WifiOff className="w-3.5 h-3.5" />,
+          color: "grey.100",
+          icon: <WifiOff size={14} />,
           label: "未激活",
-          dotColor: "bg-slate-400",
+          dotColor: "grey.400",
         };
       case "error":
         return {
-          color: "bg-rose-50 text-rose-600 border-rose-100",
-          icon: <XCircle className="w-3.5 h-3.5" />,
+          color: "error.light",
+          icon: <XCircle size={14} />,
           label: "异常",
-          dotColor: "bg-rose-500",
+          dotColor: "error.main",
         };
       default:
         return {
-          color: "bg-slate-50 text-slate-600 border-slate-100",
-          icon: <Activity className="w-3.5 h-3.5" />,
+          color: "grey.100",
+          icon: <Activity size={14} />,
           label: status,
-          dotColor: "bg-slate-400",
+          dotColor: "grey.400",
         };
     }
   };
@@ -95,35 +95,35 @@ const DataSourceCard = ({
       case "postgresql":
         return {
           icon: "🐘",
-          color: "bg-blue-50 text-blue-600",
+          color: "info.light",
           label: "PostgreSQL",
         };
       case "mysql":
         return {
           icon: "🐬",
-          color: "bg-cyan-50 text-cyan-600",
+          color: "info.light",
           label: "MySQL",
         };
       case "mongodb":
         return {
           icon: "🍃",
-          color: "bg-emerald-50 text-emerald-600",
+          color: "success.light",
           label: "MongoDB",
         };
       case "redis":
         return {
           icon: "🔴",
-          color: "bg-rose-50 text-rose-600",
+          color: "error.light",
           label: "Redis",
         };
       case "elasticsearch":
         return {
           icon: "🔍",
-          color: "bg-amber-50 text-amber-600",
+          color: "warning.light",
           label: "Elasticsearch",
         };
       default:
-        return { icon: "💾", color: "bg-slate-50 text-slate-600", label: type };
+        return { icon: "💾", color: "grey.100", label: type };
     }
   };
 
@@ -131,152 +131,170 @@ const DataSourceCard = ({
   const typeConfig = getTypeConfig(datasource.type);
 
   return (
-    <div className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:border-slate-300/80 transition-all duration-300">
+    <Box sx={{ bgcolor: "background.paper", borderRadius: 4, boxShadow: 1, border: 1, borderColor: "grey.200", overflow: "hidden", transition: "all 0.3s", "&:hover": { boxShadow: 6, borderColor: "grey.300" } }}>
       {/* Header */}
-      <div className="relative px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl border ${typeConfig.color}`}>
-              <span className="text-xl">{typeConfig.icon}</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
+      <Box sx={{ position: "relative", px: 2.5, py: 2, bgcolor: "grey.50", borderBottom: 1, borderColor: "grey.100" }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ p: 1.25, borderRadius: 1.25, border: 1, borderColor: "divider", bgcolor: typeConfig.color }}>
+              <Typography component="span" sx={{ fontSize: "1.25rem", lineHeight: 1 }}>{typeConfig.icon}</Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "grey.900" }}>
                 {datasource.name}
-              </h3>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span
-                  className={`w-2 h-2 rounded-full ${statusConfig.dotColor} animate-pulse`}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    bgcolor: statusConfig.dotColor,
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
                 />
-                <span className="text-xs text-slate-500">
+                <Typography component="span" sx={{ fontSize: "0.75rem", color: "grey.500" }}>
                   {typeConfig.label}
-                </span>
-              </div>
-            </div>
-          </div>
-          <span
-            className={`px-2.5 py-1 text-xs font-medium rounded-full border flex items-center gap-1 ${statusConfig.color}`}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              px: 1.25,
+              py: 0.5,
+              fontSize: "0.75rem",
+              fontWeight: 500,
+              borderRadius: 4,
+              border: 1,
+              borderColor: "divider",
+              bgcolor: statusConfig.color,
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+            }}
           >
             {statusConfig.icon}
             {statusConfig.label}
-          </span>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Content */}
-      <div className="p-5">
+      <Box sx={{ p: 2.5 }}>
         {/* Connection Info */}
-        <div className="space-y-3 mb-4">
-          <div className="flex items-center gap-3 text-sm">
-            <Server className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-500">主机:</span>
-            <span className="font-medium text-slate-700">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+            <Server size={16} color="#94a3b8" />
+            <Typography component="span" sx={{ color: "grey.500" }}>主机:</Typography>
+            <Typography component="span" sx={{ fontWeight: 500, color: "grey.700" }}>
               {datasource.host}
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <HardDrive className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-500">数据库:</span>
-            <span className="font-medium text-slate-700">
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+            <HardDrive size={16} color="#94a3b8" />
+            <Typography component="span" sx={{ color: "grey.500" }}>数据库:</Typography>
+            <Typography component="span" sx={{ fontWeight: 500, color: "grey.700" }}>
               {datasource.database}
-            </span>
-          </div>
+            </Typography>
+          </Box>
           {datasource.tables_count && (
-            <div className="flex items-center gap-3 text-sm">
-              <Database className="w-4 h-4 text-slate-400" />
-              <span className="text-slate-500">表数量:</span>
-              <span className="font-medium text-slate-700">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+              <Database size={16} color="#94a3b8" />
+              <Typography component="span" sx={{ color: "grey.500" }}>表数量:</Typography>
+              <Typography component="span" sx={{ fontWeight: 500, color: "grey.700" }}>
                 {datasource.tables_count}
-              </span>
-            </div>
+              </Typography>
+            </Box>
           )}
           {datasource.last_sync && (
-            <div className="flex items-center gap-3 text-sm">
-              <Clock className="w-4 h-4 text-slate-400" />
-              <span className="text-slate-500">最后同步:</span>
-              <span className="font-medium text-slate-700 text-xs">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "0.875rem" }}>
+              <Clock size={16} color="#94a3b8" />
+              <Typography component="span" sx={{ color: "grey.500" }}>最后同步:</Typography>
+              <Typography component="span" sx={{ fontWeight: 500, color: "grey.700", fontSize: "0.75rem" }}>
                 {new Date(datasource.last_sync).toLocaleString("zh-CN")}
-              </span>
-            </div>
+              </Typography>
+            </Box>
           )}
-        </div>
+        </Box>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Button
             size="sm"
             variant="outline"
             onClick={onSync}
-            className="flex-1"
+            style={{ flex: 1 }}
           >
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            <RefreshCw size={14} style={{ marginRight: 6 }} />
             同步
           </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={onView}
-            className="flex-1"
+            style={{ flex: 1 }}
           >
-            <Eye className="w-3.5 h-3.5 mr-1.5" />
+            <Eye size={14} style={{ marginRight: 6 }} />
             查看
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="p-2">
-                <MoreVertical className="w-4 h-4" />
+              <Button size="sm" variant="ghost" style={{ padding: 8 }}>
+                <MoreVertical size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
-                <Edit className="w-4 h-4 mr-2" />
+            <DropdownMenuContent align="end" style={{ width: 128 }}>
+              <DropdownMenuItem onClick={onEdit} style={{ cursor: "pointer" }}>
+                <Edit size={16} style={{ marginRight: 8 }} />
                 编辑
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onDelete}
-                className="cursor-pointer text-red-600"
+                style={{ cursor: "pointer", color: "#d32f2f" }}
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 size={16} style={{ marginRight: 8 }} />
                 删除
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
 const DataSourceCardSkeleton = () => (
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-    <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Skeleton className="w-10 h-10 rounded-xl" />
-          <div>
-            <Skeleton className="h-5 w-24 mb-1" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-        </div>
-        <Skeleton className="h-6 w-16 rounded-full" />
-      </div>
-    </div>
-    <div className="p-5">
-      <div className="space-y-3 mb-4">
+  <Box sx={{ bgcolor: "background.paper", borderRadius: 4, boxShadow: 1, border: 1, borderColor: "grey.200", overflow: "hidden" }}>
+    <Box sx={{ px: 2.5, py: 2, bgcolor: "grey.50", borderBottom: 1, borderColor: "grey.100" }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Skeleton variant="rounded" width={40} height={40} />
+          <Box>
+            <Skeleton variant="text" width={96} height={20} sx={{ mb: 0.5 }} />
+            <Skeleton variant="text" width={64} height={12} />
+          </Box>
+        </Box>
+        <Skeleton variant="rounded" width={64} height={24} />
+      </Box>
+    </Box>
+    <Box sx={{ p: 2.5 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2 }}>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center gap-3">
-            <Skeleton className="w-4 h-4" />
-            <Skeleton className="h-4 w-12" />
-            <Skeleton className="h-4 w-20" />
-          </div>
+          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Skeleton variant="circular" width={16} height={16} />
+            <Skeleton variant="text" width={48} height={16} />
+            <Skeleton variant="text" width={80} height={16} />
+          </Box>
         ))}
-      </div>
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-9 w-20" />
-        <Skeleton className="h-9 w-20" />
-        <Skeleton className="h-9 w-9" />
-      </div>
-    </div>
-  </div>
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Skeleton variant="rounded" width={80} height={36} />
+        <Skeleton variant="rounded" width={80} height={36} />
+        <Skeleton variant="rounded" width={36} height={36} />
+      </Box>
+    </Box>
+  </Box>
 );
 
 const BIDataSourcePage = () => {
@@ -376,70 +394,70 @@ const BIDataSourcePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
         {/* Header skeleton */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-4 w-24" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-28" />
-          </div>
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box>
+            <Skeleton variant="text" width={128} height={32} sx={{ mb: 1 }} />
+            <Skeleton variant="text" width={96} height={16} />
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Skeleton variant="rounded" width={96} height={40} />
+            <Skeleton variant="rounded" width={112} height={40} />
+          </Box>
+        </Box>
 
         {/* Filter skeleton */}
-        <Skeleton className="h-14 w-full rounded-xl" />
+        <Skeleton variant="rounded" width="100%" height={56} />
 
         {/* Cards skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
           {[1, 2, 3, 4].map((i) => (
             <DataSourceCardSkeleton key={i} />
           ))}
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">数据源管理</h2>
-          <p className="text-sm text-slate-500 mt-1">配置和管理BI数据源连接</p>
-        </div>
-        <div className="flex items-center gap-3">
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, fontSize: "1.5rem", color: "grey.900" }}>数据源管理</Typography>
+          <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>配置和管理BI数据源连接</Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Link to="/bi/dashboard">
             <Button variant="secondary">返回数据大屏</Button>
           </Link>
           <Button>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus size={16} style={{ marginRight: 8 }} />
             添加数据源
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <CardContent style={{ padding: 16 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search size={16} color="#94a3b8" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
               <Input
                 placeholder="搜索数据源名称..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                style={{ paddingLeft: 40 }}
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-slate-400" />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Filter size={16} color="#94a3b8" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ border: "1px solid #e2e8f0", borderRadius: 8, padding: "8px 12px", fontSize: "0.875rem", backgroundColor: "white", outline: "none" }}
               >
                 {statusOptions.map((status) => (
                   <option key={status.value} value={status.value}>
@@ -447,22 +465,42 @@ const BIDataSourcePage = () => {
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
-              <button
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", bgcolor: "grey.100", borderRadius: 1, p: 0.5 }}>
+              <Box
+                component="button"
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-white shadow-sm text-blue-600" : "text-slate-500"}`}
+                sx={{
+                  p: 0.75,
+                  borderRadius: 0.5,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  bgcolor: viewMode === "grid" ? "background.paper" : "transparent",
+                  boxShadow: viewMode === "grid" ? 1 : 0,
+                  color: viewMode === "grid" ? "primary.main" : "grey.500",
+                }}
               >
-                <Grid3X3 className="w-4 h-4" />
-              </button>
-              <button
+                <Grid3X3 size={16} />
+              </Box>
+              <Box
+                component="button"
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-white shadow-sm text-blue-600" : "text-slate-500"}`}
+                sx={{
+                  p: 0.75,
+                  borderRadius: 0.5,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  bgcolor: viewMode === "list" ? "background.paper" : "transparent",
+                  boxShadow: viewMode === "list" ? 1 : 0,
+                  color: viewMode === "list" ? "primary.main" : "grey.500",
+                }}
               >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+                <List size={16} />
+              </Box>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
@@ -478,11 +516,11 @@ const BIDataSourcePage = () => {
           }}
         />
       ) : (
-        <div
-          className={
+        <Box
+          sx={
             viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "space-y-4"
+              ? { display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }
+              : { display: "flex", flexDirection: "column", gap: 2 }
           }
         >
           {filteredDatasources.map((ds) => (
@@ -495,9 +533,9 @@ const BIDataSourcePage = () => {
               onDelete={() => console.log("Delete:", ds.id)}
             />
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 

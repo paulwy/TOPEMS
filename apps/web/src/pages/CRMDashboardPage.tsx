@@ -3,6 +3,7 @@ import {
   Card as MuiCard,
   CardContent,
   CardHeader,
+  Box,
 } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
@@ -240,86 +241,86 @@ const CRMDashboardPage: React.FC = () => {
   const COLORS = ["#3b82f6", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444"];
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <MuiCard>
         <CardHeader>
           <Typography variant="h6">CRM 仪表板</Typography>
           <Typography variant="body2" color="text.secondary">客户关系管理数据概览</Typography>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">客户总数</p>
-                  <p className="text-3xl font-bold mt-1">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 2, md: 4 }, gap: 2, mb: 4 }}>
+            <Box sx={{ background: "linear-gradient(to bottom right, #3b82f6, #2563eb)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ color: "#dbeafe", fontSize: "0.875rem" }}>客户总数</Typography>
+                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>
                     {stats.totalCustomers}
-                  </p>
-                  <p className="text-blue-200 text-sm mt-1">
+                  </Typography>
+                  <Typography sx={{ color: "#bfdbfe", fontSize: "0.875rem", mt: 0.5 }}>
                     活跃: {stats.activeCustomers} (
                     {Math.round(
                       (stats.activeCustomers / stats.totalCustomers) * 100,
                     )}
                     %)
-                  </p>
-                </div>
-                <Users className="w-10 h-10 text-blue-200" />
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <Users sx={{ width: 40, height: 40, color: "#bfdbfe" }} />
+              </Box>
+            </Box>
 
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">联系人</p>
-                  <p className="text-3xl font-bold mt-1">
+            <Box sx={{ background: "linear-gradient(to bottom right, #8b5cf6, #7c3aed)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ color: "#e9d5ff", fontSize: "0.875rem" }}>联系人</Typography>
+                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>
                     {stats.totalContacts}
-                  </p>
-                  <p className="text-purple-200 text-sm mt-1">预计估算</p>
-                </div>
-                <Target className="w-10 h-10 text-purple-200" />
-              </div>
-            </div>
+                  </Typography>
+                  <Typography sx={{ color: "#c4b5fd", fontSize: "0.875rem", mt: 0.5 }}>预计估算</Typography>
+                </Box>
+                <Target sx={{ width: 40, height: 40, color: "#c4b5fd" }} />
+              </Box>
+            </Box>
 
-            <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-100 text-sm">商机总额</p>
-                  <p className="text-3xl font-bold mt-1">
+            <Box sx={{ background: "linear-gradient(to bottom right, #f59e0b, #d97706)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ color: "#fef3c7", fontSize: "0.875rem" }}>商机总额</Typography>
+                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>
                     ¥{stats.totalOpportunityValue.toLocaleString()}
-                  </p>
-                  <p className="text-amber-200 text-sm mt-1">
+                  </Typography>
+                  <Typography sx={{ color: "#fcd34d", fontSize: "0.875rem", mt: 0.5 }}>
                     共 {stats.totalOpportunities} 个商机
-                  </p>
-                </div>
-                <DollarSign className="w-10 h-10 text-amber-200" />
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <DollarSign sx={{ width: 40, height: 40, color: "#fcd34d" }} />
+              </Box>
+            </Box>
 
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-emerald-100 text-sm">成交率</p>
-                  <p className="text-3xl font-bold mt-1">{stats.winRate}%</p>
-                  <p className="text-emerald-200 text-sm mt-1">
+            <Box sx={{ background: "linear-gradient(to bottom right, #10b981, #059669)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ color: "#d1fae5", fontSize: "0.875rem" }}>成交率</Typography>
+                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>{stats.winRate}%</Typography>
+                  <Typography sx={{ color: "#a7f3d0", fontSize: "0.875rem", mt: 0.5 }}>
                     已成交 ¥{stats.closedWonValue.toLocaleString()}
-                  </p>
-                </div>
-                <TrendingUp className="w-10 h-10 text-emerald-200" />
-              </div>
-            </div>
-          </div>
+                  </Typography>
+                </Box>
+                <TrendingUp sx={{ width: 40, height: 40, color: "#a7f3d0" }} />
+              </Box>
+            </Box>
+          </Box>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 3 }, gap: 3 }}>
+            <Box sx={{ gridColumn: { lg: "span 2" } }}>
               <MuiCard>
                 <CardHeader>
-                  <Typography variant="h6" className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
+                  <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <BarChart3 sx={{ width: 20, height: 20 }} />
                     销售趋势
                   </Typography>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
+                  <Box sx={{ height: 320 }}>
                     <ResponsiveContainer
                       width="100%"
                       height="100%"
@@ -349,20 +350,20 @@ const CRMDashboardPage: React.FC = () => {
                         />
                       </ComposedChart>
                     </ResponsiveContainer>
-                  </div>
+                  </Box>
                 </CardContent>
               </MuiCard>
-            </div>
+            </Box>
 
             <MuiCard>
               <CardHeader>
-                <Typography variant="h6" className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5" />
+                <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <PieChart sx={{ width: 20, height: 20 }} />
                   行业分布
                 </Typography>
               </CardHeader>
               <CardContent>
-                <div className="h-64">
+                <Box sx={{ height: 256 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <RePieChart>
                       <Pie
@@ -392,108 +393,112 @@ const CRMDashboardPage: React.FC = () => {
                       />
                     </RePieChart>
                   </ResponsiveContainer>
-                </div>
-                <div className="mt-4 space-y-2">
+                </Box>
+                <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
                   {industryDistribution.map((item, index) => (
-                    <div
+                    <Box
                       key={item.name}
-                      className="flex items-center justify-between text-sm"
+                      sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.875rem" }}
                     >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{
-                            backgroundColor: COLORS[index % COLORS.length],
-                          }}
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: COLORS[index % COLORS.length] }}
                         />
                         <span>{item.name}</span>
-                      </div>
-                      <span className="font-medium">
+                      </Box>
+                      <Typography sx={{ fontWeight: 500 }}>
                         {item.value} ({item.percentage}%)
-                      </span>
-                    </div>
+                      </Typography>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               </CardContent>
             </MuiCard>
-          </div>
+          </Box>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3 }}>
             <MuiCard>
               <CardHeader>
-                <Typography variant="h6" className="flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
+                <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Activity sx={{ width: 20, height: 20 }} />
                   销售漏斗
                 </Typography>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   {funnelData.map((item, index) => (
-                    <div key={item.stage} className="relative">
-                      <div
-                        className="h-12 rounded-lg flex items-center justify-between px-4 text-white transition-all duration-300"
-                        style={{
+                    <Box key={item.stage} sx={{ position: "relative" }}>
+                      <Box
+                        sx={{
+                          height: 48,
+                          borderRadius: 1.5,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          px: 2,
+                          color: "white",
+                          transition: "all 300ms",
                           backgroundColor: item.color,
                           width: `${100 - index * 12}%`,
                         }}
                       >
-                        <span className="font-medium">{item.stage}</span>
-                        <div className="flex items-center gap-4">
-                          <span>{item.count} 个</span>
-                          <span className="font-bold">
+                        <Typography sx={{ fontWeight: 500 }}>{item.stage}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <Typography>{item.count} 个</Typography>
+                          <Typography sx={{ fontWeight: 700 }}>
                             ¥{item.value.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               </CardContent>
             </MuiCard>
 
             <MuiCard>
               <CardHeader>
-                <Typography variant="h6" className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
+                <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Calendar sx={{ width: 20, height: 20 }} />
                   最近活动
                 </Typography>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   {recentActivities.length > 0 ? (
                     recentActivities.map((activity, index) => (
-                      <div
+                      <Box
                         key={index}
-                        className="flex items-center gap-3 p-3 bg-muted rounded-lg"
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, backgroundColor: "grey.100", borderRadius: 1 }}
                       >
                         <Chip label={activity.type} color="secondary" size="small" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {activity.title}
-                          </p>
+                          </Typography>
                           {activity.customer && (
-                            <p className="text-sm text-muted-foreground">
+                            <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                               {activity.customer}
-                            </p>
+                            </Typography>
                           )}
-                        </div>
-                        <span className="text-sm text-muted-foreground">
+                        </Box>
+                        <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
                           {activity.time}
-                        </span>
-                      </div>
+                        </Typography>
+                      </Box>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
+                    <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                       暂无活动记录
-                    </div>
+                    </Box>
                   )}
-                </div>
+                </Box>
               </CardContent>
             </MuiCard>
-          </div>
+          </Box>
         </CardContent>
       </MuiCard>
-    </div>
+    </Box>
   );
 };
 

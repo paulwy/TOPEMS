@@ -15,6 +15,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography, Button, TextField, Select, MenuItem, Chip } from "@mui/material";
 import type { ReportData, ReportTypeInfo } from "../api/report";
 import { reportApi } from "../api/report";
 import ReportBuilder from "./ReportBuilder";
@@ -233,27 +234,27 @@ const ReportPage: React.FC = () => {
   };
 
   const getModuleColor = (module: string) => {
-    const colors: Record<string, string> = {
-      RS: "bg-orange-100 text-orange-700",
-      LIMS: "bg-blue-100 text-blue-700",
-      QMS: "bg-green-100 text-green-700",
-      EHS: "bg-red-100 text-red-700",
-      SRM: "bg-purple-100 text-purple-700",
-      PDM: "bg-indigo-100 text-indigo-700",
+    const colors: Record<string, "warning" | "info" | "success" | "error" | "secondary"> = {
+      RS: "warning",
+      LIMS: "info",
+      QMS: "success",
+      EHS: "error",
+      SRM: "secondary",
+      PDM: "primary",
     };
-    return colors[module] || "bg-gray-100 text-gray-700";
+    return colors[module] || "default";
   };
 
   const getFormatIcon = (format: string) => {
     switch (format) {
       case "excel":
-        return <FileSpreadsheet className="w-4 h-4" />;
+        return <FileSpreadsheet sx={{ width: 16, height: 16 }} />;
       case "pdf":
-        return <File className="w-4 h-4" />;
+        return <File sx={{ width: 16, height: 16 }} />;
       case "csv":
-        return <FileText className="w-4 h-4" />;
+        return <FileText sx={{ width: 16, height: 16 }} />;
       default:
-        return <FileText className="w-4 h-4" />;
+        return <FileText sx={{ width: 16, height: 16 }} />;
     }
   };
 
@@ -276,157 +277,215 @@ const ReportPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600">加载中...</p>
-        </div>
-      </div>
+      <Box sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+      }}>
+        <Box sx={{ textAlign: "center" }}>
+          <Loader2 sx={{ width: 48, height: 48, color: "primary.main", animation: "spin 1s linear infinite", mx: "auto", mb: 2 }} />
+          <Typography sx={{ color: "grey.700" }}>加载中...</Typography>
+        </Box>
+      </Box>
     );
   }
 
   if (!isServiceUp("report")) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <FileText className="w-8 h-8 text-blue-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
+      <Box sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+      }}>
+        <Box sx={{ textAlign: "center", maxWidth: 448, mx: "auto", p: 4, bgcolor: "background.paper", borderRadius: 3, boxShadow: 2 }}>
+          <Box sx={{
+            width: 64,
+            height: 64,
+            bgcolor: "primary.light",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mx: "auto",
+            mb: 3,
+          }}>
+            <FileText sx={{ width: 32, height: 32, color: "primary.main" }} />
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: "grey.900" }}>
             报表服务未启动
-          </h2>
-          <p className="text-slate-600 mb-6">
+          </Typography>
+          <Typography sx={{ mb: 3, color: "grey.700" }}>
             Report服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
-          </p>
-          <button
+          </Typography>
+          <Button
             onClick={() => navigate("/dashboard")}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            variant="contained"
+            sx={{ px: 3, py: 1, borderRadius: 2 }}
           >
             返回首页
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <Box sx={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)" }}>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box sx={{
+        bgcolor: "background.paper",
+        boxShadow: 1,
+        borderBottom: 1,
+        borderColor: "grey.200",
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+      }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Button
                 onClick={() => navigate("/dashboard")}
-                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
+                sx={{ p: 1, color: "grey.600", "&:hover": { bgcolor: "grey.100" }, borderRadius: 2 }}
               >
-                <X className="w-5 h-5" />
-              </button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">报表中心</h1>
-                  <p className="text-xs text-slate-500">Report Center</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
+                <X sx={{ width: 20, height: 20 }} />
+              </Button>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                }}>
+                  <FileText sx={{ width: 24, height: 24, color: "white" }} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900" }}>报表中心</Typography>
+                  <Typography variant="caption" sx={{ color: "grey.500" }}>Report Center</Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Button
                 onClick={() => setShowBuilder(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                variant="contained"
+                startIcon={<Plus sx={{ width: 16, height: 16 }} />}
+                sx={{ borderRadius: 2, textTransform: "none" }}
               >
-                <Plus className="w-4 h-4" />
-                <span>生成报表</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+                生成报表
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Notification */}
       {notification && (
-        <div
-          className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
-            notification.type === "success" ? "bg-green-500" : "bg-red-500"
-          } text-white`}
+        <Box
+          sx={{
+            position: "fixed",
+            top: 80,
+            right: 16,
+            zIndex: 50,
+            p: 2,
+            borderRadius: 2,
+            boxShadow: 2,
+            bgcolor: notification.type === "success" ? "success.main" : "error.main",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
         >
-          <div className="flex items-center space-x-2">
-            {notification.type === "success" && (
-              <CheckCircle className="w-5 h-5" />
-            )}
-            <span>{notification.message}</span>
-          </div>
-        </div>
+          {notification.type === "success" && <CheckCircle sx={{ width: 20, height: 20 }} />}
+          <span>{notification.message}</span>
+        </Box>
       )}
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 4 }}>
         {/* Search and Filter */}
-        <div className="mb-6 flex space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
+        <Box sx={{ mb: 3, display: "flex", gap: 3 }}>
+          <Box sx={{ flex: 1, position: "relative" }}>
+            <Search sx={{
+              position: "absolute",
+              left: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 20,
+              height: 20,
+              color: "grey.400"
+            }} />
+            <TextField
+              fullWidth
+              size="small"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="搜索报表..."
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              sx={{ pl: 5, "& .MuiOutlinedInput-root": { bgcolor: "background.paper", borderRadius: 2 } }}
             />
-          </div>
-          <select
+          </Box>
+          <Select
             value={filterModule}
             onChange={(e) => setFilterModule(e.target.value)}
-            className="px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+            size="small"
+            sx={{ minWidth: 120, bgcolor: "background.paper", borderRadius: 2 }}
           >
-            <option value="all">全部模块</option>
+            <MenuItem value="all">全部模块</MenuItem>
             {uniqueModules.map((module) => (
-              <option key={module} value={module}>
+              <MenuItem key={module} value={module}>
                 {module}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-        </div>
+          </Select>
+        </Box>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">报表总数</p>
-                <p className="text-3xl font-bold text-slate-900">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 4 }, gap: 3, mb: 4 }}>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>报表总数</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
                   {reports.length}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">RS 模块</p>
-                <p className="text-3xl font-bold text-orange-600">
+                </Typography>
+              </Box>
+              <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <FileText sx={{ width: 24, height: 24, color: "primary.main" }} />
+              </Box>
+            </Box>
+          </Box>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>RS 模块</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: "warning.main" }}>
                   {
                     reports.filter(
                       (r) =>
                         getModuleFromReportType(r.config.report_type) === "RS",
                     ).length
                   }
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">LIMS 模块</p>
-                <p className="text-3xl font-bold text-blue-600">
+                </Typography>
+              </Box>
+              <Box sx={{ width: 48, height: 48, bgcolor: "warning.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <FileText sx={{ width: 24, height: 24, color: "warning.main" }} />
+              </Box>
+            </Box>
+          </Box>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>LIMS 模块</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: "info.main" }}>
                   {
                     reports.filter(
                       (r) =>
@@ -434,132 +493,132 @@ const ReportPage: React.FC = () => {
                         "LIMS",
                     ).length
                   }
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">QMS 模块</p>
-                <p className="text-3xl font-bold text-green-600">
+                </Typography>
+              </Box>
+              <Box sx={{ width: 48, height: 48, bgcolor: "info.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <FileText sx={{ width: 24, height: 24, color: "info.main" }} />
+              </Box>
+            </Box>
+          </Box>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>QMS 模块</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: "success.main" }}>
                   {
                     reports.filter(
                       (r) =>
                         getModuleFromReportType(r.config.report_type) === "QMS",
                     ).length
                   }
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-        </div>
+                </Typography>
+              </Box>
+              <Box sx={{ width: 48, height: 48, bgcolor: "success.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <FileText sx={{ width: 24, height: 24, color: "success.main" }} />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Report List */}
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900">报表列表</h2>
-          </div>
-          <div className="divide-y divide-slate-200">
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 1 }}>
+          <Box sx={{ p: 3, borderBottom: 1, borderColor: "grey.200" }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>报表列表</Typography>
+          </Box>
+          <Box sx={{ "& > div:not(:last-child)": { borderBottom: 1, borderColor: "grey.200" } }}>
             {filteredReports.length === 0 ? (
-              <div className="p-12 text-center">
-                <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">暂无报表</p>
-                <button
+              <Box sx={{ p: 6, textAlign: "center" }}>
+                <FileText sx={{ width: 64, height: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <Typography sx={{ color: "grey.600" }}>暂无报表</Typography>
+                <Button
                   onClick={() => setShowBuilder(true)}
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  variant="contained"
+                  sx={{ mt: 2, borderRadius: 2 }}
                 >
                   生成第一个报表
-                </button>
-              </div>
+                </Button>
+              </Box>
             ) : (
               filteredReports.map((report) => (
-                <div
+                <Box
                   key={report.id}
-                  className="p-6 hover:bg-slate-50 transition-colors"
+                  sx={{ p: 3, "&:hover": { bgcolor: "grey.50" } }}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
                           {report.config.title}
-                        </h3>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getModuleColor(getModuleFromReportType(report.config.report_type))}`}
-                        >
-                          {getModuleFromReportType(report.config.report_type)}
-                        </span>
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                          {report.row_count} 条数据
-                        </span>
-                      </div>
+                        </Typography>
+                        <Chip
+                          label={getModuleFromReportType(report.config.report_type)}
+                          color={getModuleColor(getModuleFromReportType(report.config.report_type))}
+                          size="small"
+                          sx={{ borderRadius: "50%" }}
+                        />
+                        <Chip
+                          label={`${report.row_count} 条数据`}
+                          size="small"
+                          sx={{ bgcolor: "grey.100", color: "grey.700", borderRadius: "50%" }}
+                        />
+                      </Box>
                       {report.config.description && (
-                        <p className="text-slate-600 mb-3">
+                        <Typography sx={{ color: "grey.600", mb: 2 }}>
                           {report.config.description}
-                        </p>
+                        </Typography>
                       )}
-                      <div className="flex items-center space-x-4 text-sm text-slate-500">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 3, fontSize: 14, color: "grey.600" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Calendar sx={{ width: 16, height: 16 }} />
                           创建时间:{" "}
                           {new Date(report.created_at).toLocaleDateString(
                             "zh-CN",
                           )}
-                        </span>
-                        <span className="flex items-center">
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                           {getFormatIcon(report.config.format)}
-                          <span className="ml-1">
+                          <span style={{ marginLeft: 4 }}>
                             {report.config.format.toUpperCase()}
                           </span>
-                        </span>
-                        <span className="flex items-center">
-                          <Columns className="w-4 h-4 mr-1" />
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Columns sx={{ width: 16, height: 16 }} />
                           {report.config.columns.length} 列
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Button
                         onClick={() => handleView(report)}
-                        className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-                        title="查看"
+                        size="small"
+                        startIcon={<Eye sx={{ width: 16, height: 16 }} />}
+                        sx={{ color: "info.main", "&:hover": { bgcolor: "info.light" }, borderRadius: 2 }}
                       >
-                        <span className="flex items-center">
-                          <Eye className="w-4 h-4 mr-1" />
-                          查看
-                        </span>
-                      </button>
-                      <button
+                        查看
+                      </Button>
+                      <Button
                         onClick={() => handleExport(report)}
-                        className="px-3 py-2 text-sm text-green-600 hover:bg-green-50 rounded-lg"
-                        title="导出"
+                        size="small"
+                        startIcon={<Download sx={{ width: 16, height: 16 }} />}
+                        sx={{ color: "success.main", "&:hover": { bgcolor: "success.light" }, borderRadius: 2 }}
                       >
-                        <span className="flex items-center">
-                          <Download className="w-4 h-4 mr-1" />
-                          导出
-                        </span>
-                      </button>
-                      <button
+                        导出
+                      </Button>
+                      <Button
                         onClick={() => handleDelete(report.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        title="删除"
+                        size="small"
+                        sx={{ color: "error.main", "&:hover": { bgcolor: "error.light" }, borderRadius: 2, p: 1, minWidth: "auto" }}
                       >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                        <Trash2 sx={{ width: 20, height: 20 }} />
+                      </Button>
+                    </Box>
+                  </Box>
+                </Box>
               ))
             )}
-          </div>
-        </div>
-      </main>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Report Builder Modal */}
       {showBuilder && (
@@ -595,7 +654,7 @@ const ReportPage: React.FC = () => {
           }}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

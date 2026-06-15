@@ -178,11 +178,7 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               }
               size="small"
               fullWidth
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
+              LabelProps={{ shrink: true }}
             />
             <TextField
               id="hire_date"
@@ -197,11 +193,7 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               }
               size="small"
               fullWidth
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
+              LabelProps={{ shrink: true }}
             />
           </Box>
 
@@ -248,9 +240,7 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               placeholder="请输入登录密码"
               size="small"
               fullWidth
-              slotProps={{
-                htmlInput: { minLength: 6 },
-              }}
+              InputProps={{ inputProps: { minLength: 6 } }}
             />
           </Box>
           <Typography variant="caption" color="textSecondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>

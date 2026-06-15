@@ -249,21 +249,21 @@ const CRMCustomerScoringPage: React.FC = () => {
     };
     const config = gradeConfig[grade];
     return (
-      <Chip size="small" className={`${config.color} text-white font-bold text-lg px-3`} label={config.label} />
+      <Chip size="small" sx={{ bgcolor: config.color, color: "white", fontWeight: "bold", fontSize: "1.125rem", px: 1.5 }} label={config.label} />
     );
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-500";
-    if (score >= 60) return "text-blue-500";
-    if (score >= 40) return "text-amber-500";
-    return "text-red-500";
+    if (score >= 80) return "success.main";
+    if (score >= 60) return "primary.main";
+    if (score >= 40) return "warning.main";
+    return "error.main";
   };
 
   const getScoreTrend = (score: number) => {
-    if (score >= 80) return <TrendingUp className="w-4 h-4 text-green-500" />;
-    if (score >= 60) return <Minus className="w-4 h-4 text-blue-500" />;
-    return <TrendingDown className="w-4 h-4 text-red-500" />;
+    if (score >= 80) return <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />;
+    if (score >= 60) return <Minus sx={{ width: 16, height: 16, color: "primary.main" }} />;
+    return <TrendingDown sx={{ width: 16, height: 16, color: "error.main" }} />;
   };
 
   const gradeDistribution = {
@@ -276,11 +276,11 @@ const CRMCustomerScoringPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
-            <Award className="w-5 h-5" />
+          <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+            <Award sx={{ width: 20, height: 20 }} />
             客户价值评分
           </Typography>
           <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -288,77 +288,77 @@ const CRMCustomerScoringPage: React.FC = () => {
           </Typography>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-green-50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-600 text-sm font-medium">A级客户</p>
-                  <p className="text-2xl font-bold text-green-700 mt-1">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 4 }}>
+            <Box sx={{ bgcolor: "success.light", borderRadius: 2, p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "success.dark", fontWeight: 500, fontSize: "0.875rem" }}>A级客户</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "success.main", mt: 0.5 }}>
                     {gradeDistribution.A}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <Star className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, bgcolor: "success.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Star sx={{ width: 24, height: 24, color: "white" }} />
+                </Box>
+              </Box>
+            </Box>
 
-            <div className="bg-blue-50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-600 text-sm font-medium">B级客户</p>
-                  <p className="text-2xl font-bold text-blue-700 mt-1">
+            <Box sx={{ bgcolor: "primary.light", borderRadius: 2, p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "primary.dark", fontWeight: 500, fontSize: "0.875rem" }}>B级客户</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main", mt: 0.5 }}>
                     {gradeDistribution.B}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Star className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, bgcolor: "primary.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Star sx={{ width: 24, height: 24, color: "white" }} />
+                </Box>
+              </Box>
+            </Box>
 
-            <div className="bg-amber-50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-600 text-sm font-medium">C级客户</p>
-                  <p className="text-2xl font-bold text-amber-700 mt-1">
+            <Box sx={{ bgcolor: "warning.light", borderRadius: 2, p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "warning.dark", fontWeight: 500, fontSize: "0.875rem" }}>C级客户</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "warning.main", mt: 0.5 }}>
                     {gradeDistribution.C}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-                  <Star className="w-6 h-6 text-amber-600" />
-                </div>
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, bgcolor: "warning.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Star sx={{ width: 24, height: 24, color: "white" }} />
+                </Box>
+              </Box>
+            </Box>
 
-            <div className="bg-red-50 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-red-600 text-sm font-medium">D级客户</p>
-                  <p className="text-2xl font-bold text-red-700 mt-1">
+            <Box sx={{ bgcolor: "error.light", borderRadius: 2, p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, fontSize: "0.875rem" }}>D级客户</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "error.main", mt: 0.5 }}>
                     {gradeDistribution.D}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <Star className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </div>
-          </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ width: 48, height: 48, bgcolor: "error.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Star sx={{ width: 24, height: 24, color: "white" }} />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
 
-          <div className="bg-muted rounded-xl p-6 mb-8">
-            <h4 className="font-medium mb-4">评分权重设置</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    收入贡献
-                  </span>
-                  <span className="text-sm font-medium">
+          <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 3, mb: 4 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>评分权重设置</Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2, lg: 3 }, gap: 2 }}>
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <DollarSign sx={{ width: 16, height: 16 }} />
+                    <Typography variant="body2">收入贡献</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     {weights.revenue}%
-                  </span>
-                </div>
+                  </Typography>
+                </Box>
                 <Slider
                   value={weights.revenue}
                   onChange={(_, value) =>
@@ -367,17 +367,17 @@ const CRMCustomerScoringPage: React.FC = () => {
                   max={50}
                   step={5}
                 />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    互动频率
-                  </span>
-                  <span className="text-sm font-medium">
+              </Box>
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Users sx={{ width: 16, height: 16 }} />
+                    <Typography variant="body2">互动频率</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     {weights.frequency}%
-                  </span>
-                </div>
+                  </Typography>
+                </Box>
                 <Slider
                   value={weights.frequency}
                   onChange={(_, value) =>
@@ -386,17 +386,17 @@ const CRMCustomerScoringPage: React.FC = () => {
                   max={50}
                   step={5}
                 />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm flex items-center gap-2">
-                    <Target className="w-4 h-4" />
-                    最近互动
-                  </span>
-                  <span className="text-sm font-medium">
+              </Box>
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Target sx={{ width: 16, height: 16 }} />
+                    <Typography variant="body2">最近互动</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     {weights.recency}%
-                  </span>
-                </div>
+                  </Typography>
+                </Box>
                 <Slider
                   value={weights.recency}
                   onChange={(_, value) =>
@@ -405,15 +405,15 @@ const CRMCustomerScoringPage: React.FC = () => {
                   max={30}
                   step={5}
                 />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    增长潜力
-                  </span>
-                  <span className="text-sm font-medium">{weights.growth}%</span>
-                </div>
+              </Box>
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <TrendingUp sx={{ width: 16, height: 16 }} />
+                    <Typography variant="body2">增长潜力</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>{weights.growth}%</Typography>
+                </Box>
                 <Slider
                   value={weights.growth}
                   onChange={(_, value) =>
@@ -422,17 +422,17 @@ const CRMCustomerScoringPage: React.FC = () => {
                   max={30}
                   step={5}
                 />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm flex items-center gap-2">
-                    <Award className="w-4 h-4" />
-                    参与度
-                  </span>
-                  <span className="text-sm font-medium">
+              </Box>
+              <Box>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Award sx={{ width: 16, height: 16 }} />
+                    <Typography variant="body2">参与度</Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     {weights.engagement}%
-                  </span>
-                </div>
+                  </Typography>
+                </Box>
                 <Slider
                   value={weights.engagement}
                   onChange={(_, value) =>
@@ -441,70 +441,70 @@ const CRMCustomerScoringPage: React.FC = () => {
                   max={20}
                   step={5}
                 />
-              </div>
-              <div className="flex items-end">
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "flex-end" }}>
                 <Button variant="outlined" onClick={loadCustomerScores}>
                   应用权重并刷新
                 </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
+              </Box>
+            </Box>
+          </Box>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {customers.length > 0 ? (
               customers.map((customer) => (
-                <div
+                <Box
                   key={customer.customerId}
-                  className="bg-background rounded-lg border p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  sx={{ bgcolor: "background.paper", borderRadius: 2, border: 1, borderColor: "divider", p: 2, "&:hover": { boxShadow: 3 }, cursor: "pointer" }}
                   onClick={() => {
                     setSelectedCustomer(customer);
                     setShowDetailDialog(true);
                   }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                        <span className="text-lg font-bold">
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box sx={{ width: 48, height: 48, bgcolor: "grey.100", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                           {customer.customerName.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-medium">{customer.customerName}</p>
-                        <p className="text-sm text-muted-foreground">
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{customer.customerName}</Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
                           点击查看详细评分
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-center">
-                        <p
-                          className={`text-2xl font-bold ${getScoreColor(customer.score)}`}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Box sx={{ textAlign: "center" }}>
+                        <Typography
+                          variant="h5"
+                          sx={{ fontWeight: "bold", color: getScoreColor(customer.score) }}
                         >
                           {customer.score}
-                        </p>
-                        <p className="text-xs text-muted-foreground">评分</p>
-                      </div>
-                      <div className="flex items-center gap-2">
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>评分</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         {getGradeBadge(customer.grade)}
                         {getScoreTrend(customer.score)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               ))
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Award className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                <p>暂无客户评分数据</p>
-              </div>
+              <Box sx={{ textAlign: "center", py: 6, color: "text.secondary" }}>
+                <Award sx={{ width: 64, height: 64, mx: "auto", mb: 2, opacity: 0.3 }} />
+                <Typography>暂无客户评分数据</Typography>
+              </Box>
             )}
-          </div>
+          </Box>
         </CardContent>
       </Card>
 
       <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)}>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Award style={{ width: 20, height: 20 }} />
+          <Award sx={{ width: 20, height: 20 }} />
           {selectedCustomer?.customerName} - 评分详情
         </DialogTitle>
         <DialogContent sx={{ maxWidth: 550 }}>
@@ -514,7 +514,7 @@ const CRMCustomerScoringPage: React.FC = () => {
                 <Box sx={{ textAlign: "center" }}>
                   <Typography
                     variant="h3"
-                    sx={{ fontWeight: "bold", color: `${getScoreColor(selectedCustomer.score)}.main` }}
+                    sx={{ fontWeight: "bold", color: getScoreColor(selectedCustomer.score) }}
                   >
                     {selectedCustomer.score}
                   </Typography>
@@ -560,7 +560,7 @@ const CRMCustomerScoringPage: React.FC = () => {
           <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

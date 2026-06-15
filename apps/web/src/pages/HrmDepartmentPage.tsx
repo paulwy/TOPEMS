@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Button,
   Card,
@@ -16,10 +17,14 @@ import {
   MenuItem,
   Tooltip,
   Box,
+  Paper,
+  Avatar,
+  IconButton,
   Divider,
   InputAdornment,
+  useTheme,
+  useMediaQuery,
 } from "@mui/material";
-import React, { useState, useEffect, useMemo } from "react";
 import {
   Building2,
   Search,
@@ -31,7 +36,6 @@ import {
   RefreshCw,
   ChevronRight,
   ChevronDown,
-  Folder,
   Phone,
   Mail,
   User,
@@ -45,21 +49,20 @@ import {
   type Employee,
   type Company,
   type PaginatedResult,
-  type ListParams,
 } from "../api/hrm";
 import { useAppStore } from "../store";
-import { HrmLayout } from "../components/HrmLayout";
 import {
   AIHelperButton,
   AICodeGenerator,
   AITextOptimizer,
   AIFormValidator,
 } from "../components/ai";
-import type { ValidateRequest, ValidationIssue, Suggestion } from "../types/ai";
-import type { TreeNode } from "../components/TreeView";
-import TreeView from "../components/TreeView";
+import type { ValidationIssue, Suggestion } from "../types/ai";
+import { EmptyState } from "../components/mui";
 
 const HrmDepartmentPage: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
@@ -76,23 +79,14 @@ const HrmDepartmentPage: React.FC = () => {
   const [showAICodeGenerator, setShowAICodeGenerator] = useState(false);
   const [showAITextOptimizer, setShowAITextOptimizer] = useState(false);
   const [showAIFormValidator, setShowAIFormValidator] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] =
-    useState<Department | null>(null);
-  const [aiGeneratorMode, setAiGeneratorMode] = useState<"create" | "edit">(
-    "create",
-  );
-  const [aiTextOptimizerMode, setAiTextOptimizerMode] = useState<
-    "create" | "edit"
-  >("create");
-  const [aiFormValidatorMode, setAiFormValidatorMode] = useState<
-    "create" | "edit"
-  >("create");
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  const [aiGeneratorMode, setAiGeneratorMode] = useState<"create" | "edit">("create");
 
   const [formData, setFormData] = useState<Partial<Department>>({});
   const [selectedDeptId, setSelectedDeptId] = useState<string | undefined>();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const fetchDepartments = async (params?: ListParams) => {
+  const fetchDepartments = useCallback(async (params?: any) => {
     setLoading(true);
     try {
       const response = await departmentApi.list(params);
@@ -119,9 +113,9 @@ const HrmDepartmentPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification]);
 
-  const expandAllChildren = (dept: Department, allDepts: Department[]) => {
+  const expandAllChildren = useCallback((dept: Department, allDepts: Department[]) => {
     setExpandedIds((prev) => {
       const newExpanded = new Set(prev);
       newExpanded.add(dept.id);
@@ -129,9 +123,9 @@ const HrmDepartmentPage: React.FC = () => {
       children.forEach((child) => expandAllChildren(child, allDepts));
       return newExpanded;
     });
-  };
+  }, []);
 
-  const fetchDepartmentEmployees = async (deptId: string) => {
+  const fetchDepartmentEmployees = useCallback(async (deptId: string) => {
     try {
       const response = await employeeApi.list({
         department_id: deptId,
@@ -147,9 +141,9 @@ const HrmDepartmentPage: React.FC = () => {
       console.error("Failed to fetch employees:", error);
       setEmployees([]);
     }
-  };
+  }, []);
 
-  const toggleExpand = (id: string) => {
+  const toggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
       const newExpanded = new Set(prev);
       if (newExpanded.has(id)) {
@@ -159,17 +153,17 @@ const HrmDepartmentPage: React.FC = () => {
       }
       return newExpanded;
     });
-  };
+  }, []);
 
-  const buildTree = useMemo((): TreeNode[] => {
-    const deptMap = new Map<string, TreeNode>();
-    const rootNodes: TreeNode[] = [];
+  const buildTree = useMemo((): any[] => {
+    const deptMap = new Map<string, any>();
+    const rootNodes: any[] = [];
 
     departments.forEach((dept) => {
       deptMap.set(dept.id, {
         id: dept.id,
         name: dept.name,
-        type: "department" as const,
+        type: "department",
         children: [],
         data: dept,
       });
@@ -192,11 +186,11 @@ const HrmDepartmentPage: React.FC = () => {
 
     const search = searchText.toLowerCase();
 
-    const filterNode = (node: TreeNode): TreeNode | null => {
+    const filterNode = (node: any): any | null => {
       const matches = node.name.toLowerCase().includes(search);
       const filteredChildren = (node.children || [])
         .map(filterNode)
-        .filter((n): n is TreeNode => n !== null);
+        .filter((n: any): n is any => n !== null);
 
       if (matches || filteredChildren.length > 0) {
         return { ...node, children: filteredChildren };
@@ -204,10 +198,10 @@ const HrmDepartmentPage: React.FC = () => {
       return null;
     };
 
-    return buildTree.map(filterNode).filter((n): n is TreeNode => n !== null);
+    return buildTree.map(filterNode).filter((n: any): n is any => n !== null);
   }, [buildTree, searchText]);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       const response = await companyApi.list({ page_size: 100 });
       if (response.code === 200 && response.data) {
@@ -217,12 +211,12 @@ const HrmDepartmentPage: React.FC = () => {
     } catch (error: any) {
       console.error("Failed to fetch companies:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDepartments({ page_size: 1000 });
     fetchCompanies();
-  }, []);
+  }, [fetchDepartments, fetchCompanies]);
 
   useEffect(() => {
     if (selectedDeptId) {
@@ -230,967 +224,840 @@ const HrmDepartmentPage: React.FC = () => {
     } else {
       setEmployees([]);
     }
-  }, [selectedDeptId]);
+  }, [selectedDeptId, fetchDepartmentEmployees]);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     fetchDepartments({
       search: searchText || undefined,
       status: statusFilter === "all" ? undefined : statusFilter,
     });
-  };
+  }, [searchText, statusFilter, fetchDepartments]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setSearchText("");
-    setStatusFilter("");
+    setStatusFilter("all");
     setSelectedDeptId(undefined);
     fetchDepartments();
-  };
+  }, [fetchDepartments]);
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     setSelectedDepartment(null);
     setFormData({});
     setShowCreateModal(true);
-  };
+  }, []);
 
-  const handleEdit = (record: Department) => {
+  const handleEdit = useCallback((record: Department) => {
     setSelectedDepartment(record);
     setFormData(record);
     setShowEditModal(true);
-  };
+  }, []);
 
-  const handleView = (record: Department) => {
+  const handleView = useCallback((record: Department) => {
     setSelectedDepartment(record);
     setShowViewModal(true);
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("确定要删除这个部门吗？")) return;
-    try {
-      const response = await departmentApi.delete(id);
-      if (response.code === 200) {
-        addNotification({
-          title: "成功",
-          message: "部门删除成功",
-          type: "success",
-        });
-        fetchDepartments();
-        if (selectedDeptId === id) {
-          setSelectedDeptId(undefined);
-          setEmployees([]);
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!confirm("确定要删除这个部门吗？")) return;
+      try {
+        const response = await departmentApi.delete(id);
+        if (response.code === 200) {
+          addNotification({
+            title: "成功",
+            message: "部门删除成功",
+            type: "success",
+          });
+          fetchDepartments();
+          if (selectedDeptId === id) {
+            setSelectedDeptId(undefined);
+            setEmployees([]);
+          }
+        } else {
+          addNotification({
+            title: "失败",
+            message: "删除部门失败",
+            type: "error",
+          });
         }
-      } else {
+      } catch (error: any) {
         addNotification({
           title: "失败",
-          message: "删除部门失败",
+          message: error.message || "删除部门失败",
           type: "error",
         });
       }
-    } catch (error: any) {
-      addNotification({
-        title: "失败",
-        message: error.message || "删除部门失败",
-        type: "error",
-      });
-    }
-  };
+    },
+    [addNotification, fetchDepartments, selectedDeptId],
+  );
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await departmentApi.create(formData);
-      addNotification({
-        title: "成功",
-        message: "部门创建成功",
-        type: "success",
-      });
-      setShowCreateModal(false);
-      setFormData({});
-      fetchDepartments();
-    } catch (error: any) {
-      addNotification({
-        title: "失败",
-        message: error.message || "创建部门失败",
-        type: "error",
-      });
-    }
-  };
+  const handleCreate = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      try {
+        await departmentApi.create(formData);
+        addNotification({
+          title: "成功",
+          message: "部门创建成功",
+          type: "success",
+        });
+        setShowCreateModal(false);
+        setFormData({});
+        fetchDepartments();
+      } catch (error: any) {
+        addNotification({
+          title: "失败",
+          message: error.message || "创建部门失败",
+          type: "error",
+        });
+      }
+    },
+    [formData, addNotification, fetchDepartments],
+  );
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDepartment) return;
-    try {
-      await departmentApi.update(selectedDepartment.id, formData);
-      addNotification({
-        title: "成功",
-        message: "部门更新成功",
-        type: "success",
-      });
-      setShowEditModal(false);
-      setSelectedDepartment(null);
-      fetchDepartments();
-    } catch (error: any) {
-      addNotification({
-        title: "失败",
-        message: error.message || "更新部门失败",
-        type: "error",
-      });
-    }
-  };
+  const handleUpdate = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!selectedDepartment) return;
+      try {
+        await departmentApi.update(selectedDepartment.id, formData);
+        addNotification({
+          title: "成功",
+          message: "部门更新成功",
+          type: "success",
+        });
+        setShowEditModal(false);
+        setSelectedDepartment(null);
+        fetchDepartments();
+      } catch (error: any) {
+        addNotification({
+          title: "失败",
+          message: error.message || "更新部门失败",
+          type: "error",
+        });
+      }
+    },
+    [selectedDepartment, formData, addNotification, fetchDepartments],
+  );
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = useCallback((field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const handleSelectNode = (node: TreeNode) => {
+  const handleSelectNode = useCallback((node: any) => {
     if (node.type === "department") {
       setSelectedDeptId(node.id);
     }
-  };
+  }, []);
 
-  const handleOpenAICodeGenerator = (mode: "create" | "edit") => {
+  const handleOpenAICodeGenerator = useCallback((mode: "create" | "edit") => {
     setAiGeneratorMode(mode);
     setShowAICodeGenerator(true);
-  };
+  }, []);
 
-  const handleSelectAICode = (code: string) => {
+  const handleSelectAICode = useCallback((code: string) => {
     setFormData((prev) => ({ ...prev, code }));
-  };
+  }, []);
 
-  const handleOpenAITextOptimizer = (mode: "create" | "edit") => {
-    setAiTextOptimizerMode(mode);
+  const handleOpenAITextOptimizer = useCallback((mode: "create" | "edit") => {
     setShowAITextOptimizer(true);
-  };
+  }, []);
 
-  const handleOptimizedText = (text: string) => {
+  const handleOptimizedText = useCallback((text: string) => {
     setFormData((prev) => ({ ...prev, description: text }));
-  };
+  }, []);
 
-  const handleOpenAIFormValidator = (mode: "create" | "edit") => {
-    setAiFormValidatorMode(mode);
+  const handleOpenAIFormValidator = useCallback((mode: "create" | "edit") => {
     setShowAIFormValidator(true);
-  };
+  }, []);
 
-  const handleApplySuggestions = (suggestions: Suggestion[]) => {
+  const handleApplySuggestions = useCallback((suggestions: Suggestion[]) => {
     const updates: Record<string, any> = {};
     suggestions.forEach((s) => {
       updates[s.field] = s.value;
     });
     setFormData((prev) => ({ ...prev, ...updates }));
     setShowAIFormValidator(false);
-  };
+  }, []);
 
-  const handleFixIssue = (issue: ValidationIssue) => {
-    if (issue.fix) {
-      // 简单实现 - 可以通过 issue.field 和 issue.fix 来更新表单
-    }
-  };
+  const handleFixIssue = useCallback((issue: ValidationIssue) => {
+    // 简单实现
+  }, []);
 
-  const getStatusBadge = (status: string) => {
-    const colors: Record<string, "filled" | "outlined"> = {
-      active: "filled",
-      inactive: "outlined",
+  const getStatusBadge = useCallback((status: string) => {
+    const colors: Record<string, "success" | "default"> = {
+      active: "success",
+      inactive: "default",
     };
     const labels: Record<string, string> = {
       active: "启用",
       inactive: "禁用",
     };
     return (
-      <Chip size="small"
-        variant={colors[status] || "outlined"}
-        className="px-2 py-0.5 text-xs"
-        label={labels[status] || status} />
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+        variant="outlined"
+      />
     );
-  };
+  }, []);
+
+  const getDeptEmployeeCount = useCallback((deptId: string): number => {
+    return employees.filter((e) => e.department_id === deptId).length;
+  }, [employees]);
 
   const selectedDept = departments.find((d) => d.id === selectedDeptId);
 
-  const renderTreeItem = (node: TreeNode, level: number = 0) => {
+  const availableParentDepts = useMemo(() => {
+    return departments.filter(
+      (d) => d.id !== (formData.id as string | undefined),
+    );
+  }, [departments, formData.id]);
+
+  // 渲染树节点
+  const renderTreeItem = useCallback((node: any, level: number = 0) => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedIds.has(node.id);
+    const isSelected = selectedDeptId === node.id;
 
     return (
-      <div key={node.id}>
-        <div
-          className={`flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 ${
-            selectedDeptId === node.id
-              ? "bg-blue-50 text-blue-700"
-              : "text-slate-700 hover:bg-slate-100"
-          }`}
-          style={{ paddingLeft: `${level * 16 + 12}px` }}
+      <Box key={node.id}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            px: 2,
+            py: 1.5,
+            borderRadius: 1,
+            cursor: "pointer",
+            pl: `${level * 16 + 12}px`,
+            bgcolor: isSelected ? "primary.light" : "transparent",
+            color: isSelected ? "primary.main" : "text.primary",
+            "&:hover": {
+              bgcolor: isSelected ? "primary.light" : "action.hover",
+            },
+          }}
           onClick={() => handleSelectNode(node)}
         >
           {hasChildren && (
-            <button
-              className="p-0.5 hover:bg-slate-200 rounded transition-colors"
+            <IconButton
+              size="small"
+              sx={{ p: 0.25 }}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleExpand(node.id);
               }}
             >
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown sx={{ width: 16, height: 16 }} />
               ) : (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight sx={{ width: 16, height: 16 }} />
               )}
-            </button>
+            </IconButton>
           )}
-          {!hasChildren && <span className="w-5" />}
+          {!hasChildren && <Box sx={{ width: 24 }} />}
 
-          <div
-            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              selectedDeptId === node.id ? "bg-blue-100" : "bg-slate-100"
-            }`}
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: isSelected ? "primary.light" : "grey.100",
+            }}
           >
             <Building2
-              className={`w-4 h-4 ${selectedDeptId === node.id ? "text-blue-600" : "text-emerald-600"}`}
+              sx={{
+                width: 16,
+                height: 16,
+                color: isSelected ? "primary.main" : "success.main",
+              }}
             />
-          </div>
+          </Box>
 
-          <span className="font-medium text-sm flex-1">{node.name}</span>
+          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>
+            {node.name}
+          </Typography>
 
-          <div className="flex items-center gap-2">
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {getStatusBadge((node.data as Department)?.status || "active")}
-            <span className="text-xs text-slate-400 ml-2">
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
               {getDeptEmployeeCount(node.id)}人
-            </span>
-          </div>
-        </div>
+            </Typography>
+          </Box>
+        </Box>
 
         {hasChildren && isExpanded && (
-          <div className="ml-2">
-            {node.children!.map((child) => renderTreeItem(child, level + 1))}
-          </div>
+          <Box sx={{ ml: 1 }}>
+            {node.children.map((child: any) => renderTreeItem(child, level + 1))}
+          </Box>
         )}
-      </div>
+      </Box>
     );
-  };
-
-  const getDeptEmployeeCount = (deptId: string): number => {
-    return employees.filter((e) => e.department_id === deptId).length;
-  };
-
-  const availableParentDepts = useMemo(() => {
-    return departments.filter(
-      (d) =>
-        d.id !== (formData.id as string | undefined) &&
-        d.parent_id !== (formData.id as string | undefined),
-    );
-  }, [departments, formData.id]);
+  }, [expandedIds, selectedDeptId, handleSelectNode, toggleExpand, getStatusBadge, getDeptEmployeeCount]);
 
   return (
-    <HrmLayout title="部门管理" subtitle="管理企业组织架构" showSidebar={false}>
-      <Card className="overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="text"
-                onClick={() => {
-                  fetchDepartments();
-                  setSelectedDeptId(undefined);
-                  setEmployees([]);
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* 页面标题 */}
+      <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+            部门管理
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {totalDepartments} 个部门
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<Plus style={{ width: 18, height: 18 }} />}
+          onClick={handleAdd}
+          sx={{ bgcolor: "success.main" }}
+        >
+          新增部门
+        </Button>
+      </Box>
+
+      <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { md: "1fr 2fr" } }}>
+          {/* 左侧部门树 */}
+          <Box sx={{ borderRight: 1, borderColor: "divider", bgcolor: "grey.50" }}>
+            <Box sx={{ p: 2 }}>
+              {/* 搜索 */}
+              <TextField
+                type="text"
+                placeholder="搜索部门..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                size="small"
+                fullWidth
+                sx={{ mb: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ width: 18, height: 18, color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
                 }}
-                className="p-2 hover:bg-emerald-100"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-              <div className="w-px h-6 bg-emerald-200" />
-            </div>
-            <div>
-              <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg font-semibold">部门管理</Typography>
-              <Typography variant="body2" sx={{ color: "grey.500" }} className="text-emerald-600">
-                {totalDepartments} 个部门
-              </Typography>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleAdd}
-              className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-            >
-              <Plus className="w-4 h-4" />
-              新增部门
-            </Button>
-          </div>
-        </CardHeader>
+              />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
-          <div className="lg:col-span-1 border-r border-slate-200 bg-slate-50">
-            <div className="p-4">
-              <div className="relative mb-4">
-                <TextField
-                  type="text"
-                  placeholder="搜索部门..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  size="small"
-                  fullWidth
-                  slotProps={{
-                    input: { startAdornment: <InputAdornment position="start"><Search className="w-4 h-4 text-slate-400" /></InputAdornment> }
-                  }}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 mb-4">
+              {/* 筛选 */}
+              <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                 <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>全部状态</InputLabel>
                   <Select
                     value={statusFilter}
-                    label="全部状态"
                     onChange={(e) => setStatusFilter(e.target.value)}
+                    displayEmpty
                   >
                     <MenuItem value="all">全部状态</MenuItem>
                     <MenuItem value="active">启用</MenuItem>
                     <MenuItem value="inactive">禁用</MenuItem>
                   </Select>
                 </FormControl>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleSearch}
-                  className="h-9"
-                >
+                <Button variant="outlined" size="small" onClick={handleSearch}>
                   搜索
                 </Button>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleReset}
-                  className="h-9"
-                >
+                <Button variant="outlined" size="small" onClick={handleReset}>
                   重置
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
 
-            <div className="h-[calc(100vh-240px)] overflow-y-auto px-2 pb-4">
+            {/* 树形列表 */}
+            <Box
+              sx={{
+                height: `calc(100vh - ${isMobile ? 320 : 280}px)`,
+                overflow: "auto",
+                px: 1,
+                pb: 2,
+              }}
+            >
               {loading ? (
-                <div className="p-8 text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-600 border-t-transparent"></div>
-                  <p className="mt-2 text-gray-500 text-sm">加载中...</p>
-                </div>
+                <Box sx={{ p: 4, textAlign: "center" }}>
+                  <Typography color="text.secondary">加载中...</Typography>
+                </Box>
               ) : filteredTree.length === 0 ? (
-                <div className="p-8 text-center text-slate-500">
-                  <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm">暂无部门数据</p>
-                  <Button onClick={handleAdd} size="small" className="mt-3 gap-2">
-                    <Plus className="w-4 h-4" />
-                    新增部门
-                  </Button>
-                </div>
+                <EmptyState
+                  emoji="🏢"
+                  title="暂无部门数据"
+                  actionLabel="新增部门"
+                  onAction={handleAdd}
+                />
               ) : (
-                <div className="space-y-1">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                   {filteredTree.map((node) => renderTreeItem(node))}
-                </div>
+                </Box>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="lg:col-span-2">
+          {/* 右侧详情 */}
+          <Box>
             {selectedDept ? (
-              <div className="h-[calc(100vh-140px)] overflow-y-auto p-6 space-y-6">
-                <Card className="bg-white border-slate-100 shadow-sm">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-                          <Building2 className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-xl">
+              <Box sx={{ p: 3, overflow: "auto", maxHeight: `calc(100vh - 180px)` }}>
+                {/* 部门信息卡片 */}
+                <Card sx={{ mb: 3 }}>
+                  <CardHeader
+                    sx={{
+                      pb: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                    title={
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Avatar
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            bgcolor: "success.main",
+                          }}
+                        >
+                          <Building2 sx={{ width: 24, height: 24 }} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
                             {selectedDept.name}
                           </Typography>
                           {selectedDept.code && (
-                            <Typography variant="body2" sx={{ color: "grey.500" }}>
+                            <Typography variant="body2" color="text.secondary">
                               编码: {selectedDept.code}
                             </Typography>
                           )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
+                        </Box>
+                      </Box>
+                    }
+                    action={
+                      <Box sx={{ display: "flex", gap: 1 }}>
                         {getStatusBadge(selectedDept.status)}
-                        <Tooltip title="查看详情">
-                          <Button
-                            variant="text"
-                            size="small"
-                            onClick={() => handleView(selectedDept)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
+                        <Tooltip title="查看">
+                          <IconButton size="small" onClick={() => handleView(selectedDept)}>
+                            <Eye style={{ width: 18, height: 18 }} />
+                          </IconButton>
                         </Tooltip>
                         <Tooltip title="编辑">
-                          <Button
-                            variant="text"
-                            size="small"
-                            onClick={() => handleEdit(selectedDept)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                          <IconButton size="small" onClick={() => handleEdit(selectedDept)}>
+                            <Edit style={{ width: 18, height: 18 }} />
+                          </IconButton>
                         </Tooltip>
                         <Tooltip title="删除">
-                          <Button
-                            variant="text"
+                          <IconButton
                             size="small"
                             color="error"
                             onClick={() => handleDelete(selectedDept.id)}
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            <Trash2 style={{ width: 18, height: 18 }} />
+                          </IconButton>
                         </Tooltip>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-slate-500">部门人数</p>
-                            <p className="text-xl font-bold text-slate-900 mt-1">
+                      </Box>
+                    }
+                  />
+                  <CardContent>
+                    {/* 统计卡片 */}
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: { xs: 2, md: 4 },
+                        gap: 2,
+                        mb: 3,
+                      }}
+                    >
+                      <Box sx={{ bgcolor: "grey.50", borderRadius: 2, p: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              部门人数
+                            </Typography>
+                            <Typography variant="h5" sx={{ fontWeight: 700 }}>
                               {employees.length}
-                            </p>
-                          </div>
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <Users className="w-5 h-5 text-blue-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-slate-500">所属公司</p>
-                            <p className="text-sm font-bold text-slate-900 mt-1">
+                            </Typography>
+                          </Box>
+                          <Avatar sx={{ bgcolor: "primary.light", color: "primary.main" }}>
+                            <Users sx={{ width: 20, height: 20 }} />
+                          </Avatar>
+                        </Box>
+                      </Box>
+                      <Box sx={{ bgcolor: "grey.50", borderRadius: 2, p: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              所属公司
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               {selectedDept.company_id
-                                ? companies.find(
-                                    (c) => c.id === selectedDept.company_id,
-                                  )?.name || "-"
+                                ? companies.find((c) => c.id === selectedDept.company_id)?.name || "-"
                                 : "无"}
-                            </p>
-                          </div>
-                          <div className="p-2 bg-amber-100 rounded-lg">
-                            <Building className="w-5 h-5 text-amber-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-slate-500">上级部门</p>
-                            <p className="text-sm font-bold text-slate-900 mt-1">
+                            </Typography>
+                          </Box>
+                          <Avatar sx={{ bgcolor: "warning.light", color: "warning.main" }}>
+                            <Building sx={{ width: 20, height: 20 }} />
+                          </Avatar>
+                        </Box>
+                      </Box>
+                      <Box sx={{ bgcolor: "grey.50", borderRadius: 2, p: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              上级部门
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               {selectedDept.parent_id
-                                ? departments.find(
-                                    (d) => d.id === selectedDept.parent_id,
-                                  )?.name || "-"
+                                ? departments.find((d) => d.id === selectedDept.parent_id)?.name || "-"
                                 : "无"}
-                            </p>
-                          </div>
-                          <div className="p-2 bg-slate-200 rounded-lg">
-                            <Folder className="w-5 h-5 text-slate-600" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-slate-500">创建时间</p>
-                            <p className="text-sm font-medium text-slate-900 mt-1">
-                              {new Date(
-                                selectedDept.created_at,
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-slate-500">状态</p>
-                            <div className="text-sm font-medium mt-1">
-                              {getStatusBadge(selectedDept.status)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                            </Typography>
+                          </Box>
+                          <Avatar sx={{ bgcolor: "grey.200", color: "grey.700" }}>
+                            <Building2 sx={{ width: 20, height: 20 }} />
+                          </Avatar>
+                        </Box>
+                      </Box>
+                      <Box sx={{ bgcolor: "grey.50", borderRadius: 2, p: 2 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              创建时间
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {selectedDept.created_at
+                                ? new Date(selectedDept.created_at).toLocaleDateString()
+                                : "-"}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
 
+                    {/* 描述 */}
                     {selectedDept.description && (
-                      <div className="mb-6">
-                        <Typography variant="body2" color="text.secondary">
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                           部门描述
                         </Typography>
-                        <p className="font-medium mt-1 text-slate-700">
-                          {selectedDept.description}
-                        </p>
-                      </div>
+                        <Typography variant="body2">{selectedDept.description}</Typography>
+                      </Box>
                     )}
 
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2 text-base">
-                          <Users className="w-5 h-5 text-blue-500" />
+                    <Divider sx={{ my: 2 }} />
+
+                    {/* 部门成员 */}
+                    <Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                        <Users sx={{ width: 20, height: 20, color: "primary.main" }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                           部门成员
-                          <Chip size="small" variant="outlined" className="ml-auto text-xs" label={`${employees.length} 人`} />
                         </Typography>
-                      </CardHeader>
-                      <CardContent>
-                        {employees.length === 0 ? (
-                          <div className="p-8 text-center text-slate-500">
-                            <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                            <p>该部门暂无员工</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {employees.map((emp) => (
-                              <div
-                                key={emp.id}
-                                className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors group"
-                              >
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                                  <User className="w-6 h-6 text-white" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-slate-900">
-                                      {emp.name}
-                                    </p>
-                                    <Chip size="small"
-                                      variant={emp.status === "active" ? "filled" : "outlined"}
-                                      className="text-xs"
-                                      label={emp.status === "active" ? "在职" : "离职"} />
-                                  </div>
-                                  <p className="text-sm text-slate-500 mt-0.5">
-                                    {emp.employee_no} ·{" "}
-                                    {emp.position || "无职位"}
-                                  </p>
-                                </div>
-                                <div className="hidden sm:flex flex-col items-end text-sm text-slate-500">
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${employees.length} 人`}
+                          sx={{ ml: "auto" }}
+                        />
+                      </Box>
+
+                      {employees.length === 0 ? (
+                        <EmptyState emoji="👤" title="该部门暂无员工" compact />
+                      ) : (
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                          {employees.map((emp) => (
+                            <Box
+                              key={emp.id}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 2,
+                                p: 2,
+                                bgcolor: "grey.50",
+                                borderRadius: 2,
+                                "&:hover": { bgcolor: "grey.100" },
+                              }}
+                            >
+                              <Avatar sx={{ bgcolor: "primary.main" }}>
+                                <User sx={{ width: 20, height: 20 }} />
+                              </Avatar>
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                    {emp.name}
+                                  </Typography>
+                                  <Chip
+                                    size="small"
+                                    color={emp.status === "active" ? "success" : "default"}
+                                    label={emp.status === "active" ? "在职" : "离职"}
+                                    sx={{ height: 20, fontSize: "0.7rem" }}
+                                  />
+                                </Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  {emp.employee_no} · {emp.position || "无职位"}
+                                </Typography>
+                              </Box>
+                              {!isMobile && (
+                                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
                                   {emp.email && (
-                                    <div className="flex items-center gap-1">
-                                      <Mail className="w-3.5 h-3.5" />
-                                      <span>{emp.email}</span>
-                                    </div>
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                      <Mail sx={{ width: 14, height: 14, color: "text.secondary" }} />
+                                      <Typography variant="caption">{emp.email}</Typography>
+                                    </Box>
                                   )}
                                   {emp.phone && (
-                                    <div className="flex items-center gap-1 mt-1">
-                                      <Phone className="w-3.5 h-3.5" />
-                                      <span>{emp.phone}</span>
-                                    </div>
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                      <Phone sx={{ width: 14, height: 14, color: "text.secondary" }} />
+                                      <Typography variant="caption">{emp.phone}</Typography>
+                                    </Box>
                                   )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                                </Box>
+                              )}
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
                   </CardContent>
                 </Card>
-              </div>
+              </Box>
             ) : (
-              <div className="h-[calc(100vh-140px)] flex items-center justify-center bg-slate-50">
-                <Card className="border-2 border-dashed border-slate-200 bg-white">
-                  <CardContent className="p-12 text-center">
-                    <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-500 mb-2">
-                      选择部门查看详情
-                    </h3>
-                    <p className="text-sm text-slate-400">
-                      从左侧部门树中选择一个部门，查看部门详情和成员信息
-                    </p>
-                    <Button onClick={handleAdd} className="mt-4 gap-2">
-                      <Plus className="w-4 h-4" />
-                      新增部门
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>新增部门</DialogTitle>
-        <DialogContent>
-          <form onSubmit={handleCreate} className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <InputLabel htmlFor="create-name" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                部门名称 <span style={{ color: '#ef4444' }}>*</span>
-              </InputLabel>
-              <TextField
-                id="create-name"
-                type="text"
-                required
-                value={(formData as Department)?.name || ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("name", e.target.value)}
-                placeholder="请输入部门名称"
-                size="small"
-                fullWidth
-              />
-            </div>
-            <div className="space-y-2">
-              <InputLabel htmlFor="create-code" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                部门编码
-              </InputLabel>
-              <div className="flex gap-2">
-                <TextField
-                  id="create-code"
-                  type="text"
-                  value={(formData as Department)?.code || ""}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("code", e.target.value)}
-                  placeholder="请输入部门编码"
-                  size="small"
-                  fullWidth
-                />
-                <AIHelperButton
-                  type="generate"
-                  onClick={() => handleOpenAICodeGenerator("create")}
-                  size="sm"
-                  label="AI生成"
-                  variant="default"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <InputLabel htmlFor="create-company" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                所属公司
-              </InputLabel>
-              <FormControl fullWidth size="small">
-                <Select
-                  value={(formData as Department)?.company_id || ""}
-                  onChange={(e) => handleInputChange("company_id", e.target.value === "none" ? "" : e.target.value)}
-                  displayEmpty
-                >
-                  <MenuItem value="none">无</MenuItem>
-                  {companies.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <div className="space-y-2">
-              <InputLabel htmlFor="create-parent" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                上级部门
-              </InputLabel>
-              <FormControl fullWidth size="small">
-                <Select
-                  value={(formData as Department)?.parent_id || ""}
-                  onChange={(e) => handleInputChange("parent_id", e.target.value === "none" ? "" : e.target.value)}
-                  displayEmpty
-                >
-                  <MenuItem value="none">无</MenuItem>
-                  {availableParentDepts.map((d) => (
-                    <MenuItem key={d.id} value={d.id}>
-                      {d.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <InputLabel htmlFor="create-description" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  部门描述
-                </InputLabel>
-                <AIHelperButton
-                  type="optimize"
-                  onClick={() => handleOpenAITextOptimizer("create")}
-                  size="sm"
-                  variant="default"
-                  label="AI 优化"
-                />
-              </div>
-              <TextField
-                id="create-description"
-                value={(formData as Department)?.description || ""}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("description", e.target.value)}
-                rows={3}
-                placeholder="请输入部门描述"
-                multiline
-                fullWidth
-              />
-            </div>
-            <div className="space-y-2">
-              <InputLabel htmlFor="create-status" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                状态
-              </InputLabel>
-              <FormControl fullWidth size="small">
-                <Select
-                  value={(formData as Department)?.status || "active"}
-                  onChange={(e) => handleInputChange("status", e.target.value)}
-                >
-                  <MenuItem value="active">启用</MenuItem>
-                  <MenuItem value="inactive">禁用</MenuItem>
-                </Select>
-              </FormControl>
-            </div>
-            <DialogActions sx={{ mt: 3, px: 0 }}>
-              <Button
-                type="button"
-                variant="contained"
-                onClick={() => setShowCreateModal(false)}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: 400,
+                  p: 4,
+                }}
               >
-                取消
-              </Button>
-              <div className="flex items-center gap-2">
-                <AIHelperButton
-                  type="validate"
-                  onClick={() => handleOpenAIFormValidator("create")}
-                  size="sm"
-                  variant="default"
-                  label="AI 校验"
+                <EmptyState
+                  emoji="👈"
+                  title="选择部门查看详情"
+                  description="从左侧部门树中选择一个部门，查看部门详情和成员信息"
                 />
-                <Button type="submit">创建</Button>
-              </div>
-            </DialogActions>
-          </form>
-        </DialogContent>
-      </Dialog>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </Paper>
 
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>编辑部门</DialogTitle>
-        <DialogContent>
-          {selectedDepartment && (
-            <form onSubmit={handleUpdate} className="space-y-4 mt-2">
-              <div className="space-y-2">
-                <InputLabel htmlFor="edit-name" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  部门名称 <span style={{ color: '#ef4444' }}>*</span>
-                </InputLabel>
-                <TextField
-                  id="edit-name"
-                  type="text"
-                  required
-                  value={(formData as Department)?.name || ""}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("name", e.target.value)}
-                  size="small"
-                  fullWidth
-                />
-              </div>
-              <div className="space-y-2">
-                <InputLabel htmlFor="edit-code" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  部门编码
-                </InputLabel>
-                <div className="flex gap-2">
-                  <TextField
-                    id="edit-code"
-                    type="text"
-                    value={(formData as Department)?.code || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("code", e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                  <AIHelperButton
-                    type="generate"
-                    onClick={() => handleOpenAICodeGenerator("edit")}
-                    size="sm"
-                    label="AI生成"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <InputLabel htmlFor="edit-company" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  所属公司
-                </InputLabel>
-                <FormControl fullWidth size="small">
-                  <Select
-                    value={(formData as Department)?.company_id || ""}
-                    onChange={(e) => handleInputChange("company_id", e.target.value === "none" ? "" : e.target.value)}
-                    displayEmpty
-                  >
-                    <MenuItem value="none">无</MenuItem>
-                    {companies.map((c) => (
-                      <MenuItem key={c.id} value={c.id}>
-                        {c.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="space-y-2">
-                <InputLabel htmlFor="edit-parent" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  上级部门
-                </InputLabel>
-                <FormControl fullWidth size="small">
-                  <Select
-                    value={(formData as Department)?.parent_id || ""}
-                    onChange={(e) => handleInputChange("parent_id", e.target.value === "none" ? "" : e.target.value)}
-                    displayEmpty
-                  >
-                    <MenuItem value="none">无</MenuItem>
-                    {availableParentDepts.map((d) => (
-                      <MenuItem key={d.id} value={d.id}>
-                        {d.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <InputLabel htmlFor="edit-description" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                    部门描述
-                  </InputLabel>
-                  <AIHelperButton
-                    type="optimize"
-                    onClick={() => handleOpenAITextOptimizer("edit")}
-                    size="sm"
-                    variant="default"
-                    label="AI 优化"
-                  />
-                </div>
-                <TextField
-                  id="edit-description"
-                  value={(formData as Department)?.description || ""}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("description", e.target.value)}
-                  rows={3}
-                  multiline
-                  fullWidth
-                />
-              </div>
-              <div className="space-y-2">
-                <InputLabel htmlFor="edit-status" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  状态
-                </InputLabel>
-                <FormControl fullWidth size="small">
-                  <Select
-                    value={(formData as Department)?.status || "active"}
-                    onChange={(e) => handleInputChange("status", e.target.value)}
-                  >
-                    <MenuItem value="active">启用</MenuItem>
-                    <MenuItem value="inactive">禁用</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              <DialogActions sx={{ mt: 3, px: 0 }}>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedDepartment(null);
-                  }}
-                >
-                  取消
-                </Button>
-                <div className="flex items-center gap-2">
-                  <AIHelperButton
-                    type="validate"
-                    onClick={() => handleOpenAIFormValidator("edit")}
-                    size="sm"
-                    variant="default"
-                    label="AI 校验"
-                  />
-                  <Button type="submit">保存</Button>
-                </div>
-              </DialogActions>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* 新增/编辑模态框 */}
+      <DepartmentFormDialog
+        open={showCreateModal || showEditModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setShowEditModal(false);
+        }}
+        mode={showCreateModal ? "create" : "edit"}
+        department={selectedDepartment}
+        formData={formData}
+        onChange={handleInputChange}
+        onSubmit={showCreateModal ? handleCreate : handleUpdate}
+        companies={companies}
+        departments={availableParentDepts}
+        onOpenAICodeGenerator={handleOpenAICodeGenerator}
+        onOpenAITextOptimizer={handleOpenAITextOptimizer}
+        onOpenAIFormValidator={handleOpenAIFormValidator}
+      />
 
+      {/* 查看详情模态框 */}
       <Dialog open={showViewModal} onClose={() => setShowViewModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle>部门详情</DialogTitle>
         <DialogContent>
           {selectedDepartment && (
-            <div className="space-y-4 mt-2">
-              <div className="space-y-2">
-                <Typography variant="body2" color="text.secondary">部门名称</Typography>
-                <div className="font-medium text-slate-900">
-                  {selectedDepartment.name}
-                </div>
-              </div>
+            <Box sx={{ display: "grid", gap: 2, pt: 1 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">部门名称</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>{selectedDepartment.name}</Typography>
+              </Box>
               {selectedDepartment.code && (
-                <div className="space-y-2">
-                  <Typography variant="body2" color="text.secondary">部门编码</Typography>
-                  <div className="font-medium text-slate-900">
-                    {selectedDepartment.code}
-                  </div>
-                </div>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">部门编码</Typography>
+                  <Typography variant="body1">{selectedDepartment.code}</Typography>
+                </Box>
               )}
               {selectedDepartment.parent_id && (
-                <div className="space-y-2">
-                  <Typography variant="body2" color="text.secondary">上级部门</Typography>
-                  <div className="font-medium text-slate-900">
-                    {departments.find(
-                      (d) => d.id === selectedDepartment.parent_id,
-                    )?.name || "-"}
-                  </div>
-                </div>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">上级部门</Typography>
+                  <Typography variant="body1">
+                    {departments.find((d) => d.id === selectedDepartment.parent_id)?.name || "-"}
+                  </Typography>
+                </Box>
               )}
               {selectedDepartment.description && (
-                <div className="space-y-2">
-                  <Typography variant="body2" color="text.secondary">部门描述</Typography>
-                  <div className="font-medium text-slate-900">
-                    {selectedDepartment.description}
-                  </div>
-                </div>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">部门描述</Typography>
+                  <Typography variant="body1">{selectedDepartment.description}</Typography>
+                </Box>
               )}
-              <div className="space-y-2">
-                <Typography variant="body2" color="text.secondary">状态</Typography>
-                <div>{getStatusBadge(selectedDepartment.status)}</div>
-              </div>
-              <div className="space-y-2">
-                <Typography variant="body2" color="text.secondary">创建时间</Typography>
-                <div className="font-medium text-slate-900">
-                  {new Date(selectedDepartment.created_at).toLocaleString()}
-                </div>
-              </div>
-            </div>
+              <Box>
+                <Typography variant="caption" color="text.secondary">状态</Typography>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedDepartment.status)}</Box>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">创建时间</Typography>
+                <Typography variant="body1">
+                  {selectedDepartment.created_at
+                    ? new Date(selectedDepartment.created_at).toLocaleString()
+                    : "-"}
+                </Typography>
+              </Box>
+            </Box>
           )}
-          <DialogActions sx={{ mt: 3 }}>
-            <Button
-              type="button"
-              variant="contained"
-              onClick={() => setShowViewModal(false)}
-            >
-              关闭
-            </Button>
-          </DialogActions>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowViewModal(false)}>关闭</Button>
+        </DialogActions>
       </Dialog>
 
+      {/* AI 组件 */}
       <AICodeGenerator
         isOpen={showAICodeGenerator}
         onClose={() => setShowAICodeGenerator(false)}
-        context={{
-          entityType: "department",
-          name: (formData as Department)?.name,
-        }}
+        context={{ entityType: "department", name: (formData as Department)?.name }}
         onSelect={handleSelectAICode}
-        existingCodes={
-          departments.map((d) => d.code).filter(Boolean) as string[]
-        }
+        existingCodes={departments.map((d) => d.code).filter(Boolean) as string[]}
       />
-
       <AITextOptimizer
         isOpen={showAITextOptimizer}
         onClose={() => setShowAITextOptimizer(false)}
-        context={{
-          textType: "duty",
-          name: (formData as Department)?.name,
-        }}
+        context={{ textType: "duty", name: (formData as Department)?.name }}
         originalText={(formData as Department)?.description || ""}
         onOptimized={handleOptimizedText}
       />
-
       <AIFormValidator
         isOpen={showAIFormValidator}
         onClose={() => setShowAIFormValidator(false)}
         validateRequest={{
           data: formData,
-          context: {
-            module: "hrm",
-            entityType: "department",
-          },
+          context: { module: "hrm", entityType: "department" },
         }}
         onApplySuggestions={handleApplySuggestions}
         onFixIssue={handleFixIssue}
       />
-    </HrmLayout>
+    </Box>
   );
 };
+
+// ============ 部门表单模态框 ============
+
+interface DepartmentFormDialogProps {
+  open: boolean;
+  onClose: () => void;
+  mode: "create" | "edit";
+  department: Department | null;
+  formData: Partial<Department>;
+  onChange: (field: string, value: any) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  companies: Company[];
+  departments: Department[];
+  onOpenAICodeGenerator: (mode: "create" | "edit") => void;
+  onOpenAITextOptimizer: () => void;
+  onOpenAIFormValidator: () => void;
+}
+
+const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
+  open,
+  onClose,
+  mode,
+  department,
+  formData,
+  onChange,
+  onSubmit,
+  companies,
+  departments,
+  onOpenAICodeGenerator,
+  onOpenAITextOptimizer,
+  onOpenAIFormValidator,
+}) => (
+  <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <DialogTitle>{mode === "create" ? "新增部门" : "编辑部门"}</DialogTitle>
+    <DialogContent>
+      <Box component="form" onSubmit={onSubmit} sx={{ display: "grid", gap: 2, pt: 1 }}>
+        <TextField
+          label="部门名称 *"
+          value={(formData as Department)?.name || ""}
+          onChange={(e) => onChange("name", e.target.value)}
+          required
+          size="small"
+        />
+
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+            <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500 }}>部门编码</InputLabel>
+            <AIHelperButton type="generate" onClick={() => onOpenAICodeGenerator(mode)} size="sm" label="AI生成" />
+          </Box>
+          <TextField
+            value={(formData as Department)?.code || ""}
+            onChange={(e) => onChange("code", e.target.value)}
+            size="small"
+            fullWidth
+          />
+        </Box>
+
+        <FormControl size="small" fullWidth>
+          <InputLabel>所属公司</InputLabel>
+          <Select
+            value={(formData as Department)?.company_id || ""}
+            label="所属公司"
+            onChange={(e) => onChange("company_id", e.target.value === "none" ? "" : e.target.value)}
+          >
+            <MenuItem value="none">无</MenuItem>
+            {companies.map((c) => (
+              <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" fullWidth>
+          <InputLabel>上级部门</InputLabel>
+          <Select
+            value={(formData as Department)?.parent_id || ""}
+            label="上级部门"
+            onChange={(e) => onChange("parent_id", e.target.value === "none" ? "" : e.target.value)}
+          >
+            <MenuItem value="none">无</MenuItem>
+            {departments.map((d) => (
+              <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+            <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500 }}>部门描述</InputLabel>
+            <AIHelperButton type="optimize" onClick={onOpenAITextOptimizer} size="sm" label="AI优化" />
+          </Box>
+          <TextField
+            value={(formData as Department)?.description || ""}
+            onChange={(e) => onChange("description", e.target.value)}
+            multiline
+            rows={3}
+            fullWidth
+          />
+        </Box>
+
+        <FormControl size="small" fullWidth>
+          <InputLabel>状态</InputLabel>
+          <Select
+            value={(formData as Department)?.status || "active"}
+            label="状态"
+            onChange={(e) => onChange("status", e.target.value)}
+          >
+            <MenuItem value="active">启用</MenuItem>
+            <MenuItem value="inactive">禁用</MenuItem>
+          </Select>
+        </FormControl>
+
+        <DialogActions sx={{ p: 0, pt: 2, justifyContent: "space-between" }}>
+          <AIHelperButton type="validate" onClick={onOpenAIFormValidator} size="sm" label="AI校验" />
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button onClick={onClose} variant="outlined">取消</Button>
+            <Button type="submit" variant="contained">{mode === "create" ? "创建" : "保存"}</Button>
+          </Box>
+        </DialogActions>
+      </Box>
+    </DialogContent>
+  </Dialog>
+);
 
 export default HrmDepartmentPage;

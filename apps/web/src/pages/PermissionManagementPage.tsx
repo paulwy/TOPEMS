@@ -185,11 +185,11 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
           <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
               <Box>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                  <Key className="w-7 h-7 text-purple-600" />
+                  <Key sx={{ width: 28, height: 28, color: "purple.600" }} />
                   <Typography variant="h5" sx={{ fontWeight: "bold" }}>权限管理</Typography>
                 </Stack>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -199,7 +199,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
             </Stack>
             <Stack direction="row" spacing={1}>
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus className="w-5 h-5" />}>
+              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus sx={{ width: 20, height: 20 }} />}>
                 创建权限
               </Button>
             </Stack>
@@ -212,7 +212,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
           <CardContent sx={{ p: 2 }}>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Box sx={{ flex: 1, position: "relative" }}>
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-5 h-5 text-grey.400" />
+                <Search sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "grey.400" }} />
                 <TextField
                   size="small"
                   placeholder="搜索权限名称、资源、操作或描述..."
@@ -221,7 +221,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
                   sx={{ pl: 4, width: "100%" }}
                 />
               </Box>
-              <Button variant="outlined" onClick={loadPermissions} startIcon={<RefreshCw className="w-4 h-4" />}>
+              <Button variant="outlined" onClick={loadPermissions} startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}>
                 刷新
               </Button>
             </Stack>
@@ -237,13 +237,13 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
               </Box>
             ) : error ? (
               <Box sx={{ p: 8, textAlign: "center" }}>
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                <AlertCircle sx={{ width: 48, height: 48, color: "error.main", mx: "auto", mb: 1.5 }} />
                 <Typography color="error">{error}</Typography>
                 <Button sx={{ mt: 2 }} onClick={loadPermissions}>重试</Button>
               </Box>
             ) : filteredPermissions.length === 0 ? (
               <Box sx={{ p: 8, textAlign: "center" }}>
-                <Key className="w-12 h-12 text-grey-400 mx-auto mb-3" />
+                <Key sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 1.5 }} />
                 <Typography color="text.secondary">暂无权限</Typography>
               </Box>
             ) : (
@@ -261,7 +261,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
                     <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
                       <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
                         <Box sx={{ width: 48, height: 48, bgcolor: "purple.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <Shield className="w-6 h-6 text-purple-600" />
+                          <Shield sx={{ width: 24, height: 24, color: "purple.600" }} />
                         </Box>
                         <Box>
                           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
@@ -284,7 +284,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
                           sx={{ color: "error.main", "&:hover": { color: "error.dark" } }}
                           onClick={() => handleDeletePermission(perm.id)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 sx={{ width: 16, height: 16 }} />
                         </IconButton>
                       </Tooltip>
                     </Stack>
@@ -298,7 +298,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
         <Card sx={{ mt: 3, bgcolor: "blue.50", border: 1, borderColor: "blue.200" }}>
           <CardContent sx={{ p: 2 }}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <AlertCircle className="w-4 h-4 text-blue-700" />
+              <AlertCircle sx={{ width: 16, height: 16, color: "blue.700" }} />
               <Typography variant="subtitle2" color="blue.900">关于权限管理</Typography>
             </Stack>
             <Typography variant="body2" color="blue.700" sx={{ mt: 1 }}>

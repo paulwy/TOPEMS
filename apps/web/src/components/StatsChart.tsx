@@ -98,9 +98,6 @@ export const StatsChart: React.FC<StatsChartProps> = ({
               paddingAngle={2}
               dataKey={dataKey || yKey}
               nameKey={nameKey || xKey}
-              label={({ name, percent }) =>
-                `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-              }
             >
               {data.map((entry, index) => (
                 <Cell

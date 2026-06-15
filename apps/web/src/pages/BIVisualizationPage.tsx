@@ -24,6 +24,8 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { EmptyState } from "../components/EmptyState";
 import { Skeleton } from "../components/ui/skeleton";
 import { BIChartColors } from "../components/charts/chartTheme";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 
 interface Visualization {
   id: string;
@@ -52,30 +54,30 @@ const VisualizationCard = ({
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "line":
-        return <LineChart className="w-5 h-5" />;
+        return <LineChart sx={{ width: 20, height: 20 }} />;
       case "bar":
-        return <BarChart3 className="w-5 h-5" />;
+        return <BarChart3 sx={{ width: 20, height: 20 }} />;
       case "pie":
-        return <PieChart className="w-5 h-5" />;
+        return <PieChart sx={{ width: 20, height: 20 }} />;
       case "gauge":
-        return <TrendingUp className="w-5 h-5" />;
+        return <TrendingUp sx={{ width: 20, height: 20 }} />;
       default:
-        return <BarChart3 className="w-5 h-5" />;
+        return <BarChart3 sx={{ width: 20, height: 20 }} />;
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "line":
-        return "bg-blue-50 text-blue-600 border-blue-100";
+        return { bgcolor: "blue.50", color: "primary.main", borderColor: "blue.200" };
       case "bar":
-        return "bg-emerald-50 text-emerald-600 border-emerald-100";
+        return { bgcolor: "green.50", color: "success.main", borderColor: "green.200" };
       case "pie":
-        return "bg-amber-50 text-amber-600 border-amber-100";
+        return { bgcolor: "orange.50", color: "warning.main", borderColor: "orange.200" };
       case "gauge":
-        return "bg-violet-50 text-violet-600 border-violet-100";
+        return { bgcolor: "violet.50", color: "violet.main", borderColor: "violet.200" };
       default:
-        return "bg-slate-50 text-slate-600 border-slate-100";
+        return { bgcolor: "grey.50", color: "grey.600", borderColor: "grey.200" };
     }
   };
 
@@ -88,77 +90,265 @@ const VisualizationCard = ({
     radar: "雷达图",
   };
 
+  const colors = getTypeColor(viz.type);
+
   return (
-    <div className="group bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-lg hover:border-slate-300/80 transition-all duration-300">
+    <Box
+      sx={{
+        bgcolor: "background.paper",
+        borderRadius: 3,
+        boxShadow: 1,
+        border: "1px solid",
+        borderColor: "divider",
+        overflow: "hidden",
+        transition: "all 0.3s",
+        "&:hover": {
+          boxShadow: 2,
+          borderColor: "grey.300",
+        },
+      }}
+    >
       {/* Preview Area */}
-      <div className="relative h-40 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-4 left-4 w-16 h-16 rounded-lg bg-blue-500" />
-          <div className="absolute bottom-4 right-4 w-20 h-20 rounded-full bg-emerald-500" />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-12 rounded-lg bg-amber-500 rotate-12" />
-        </div>
-        <div className={`p-3 rounded-xl border ${getTypeColor(viz.type)}`}>
-          <div className="w-10 h-10 flex items-center justify-center">
+      <Box
+        sx={{
+          position: "relative",
+          height: 160,
+          background: "linear-gradient(to bottom right, #f8fafc, #f1f5f9)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+            width: 64,
+            height: 64,
+            borderRadius: 2,
+            bgcolor: "blue.500",
+            opacity: 0.1,
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            width: 80,
+            height: 80,
+            borderRadius: "50%",
+            bgcolor: "green.500",
+            opacity: 0.1,
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%) rotate(12deg)",
+            width: 96,
+            height: 48,
+            borderRadius: 2,
+            bgcolor: "orange.500",
+            opacity: 0.1,
+          }}
+        />
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: colors.borderColor,
+            bgcolor: colors.bgcolor,
+            color: colors.color,
+          }}
+        >
+          <Box sx={{ width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {getTypeIcon(viz.type)}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
-          <button
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            bgcolor: "rgba(30, 41, 59, 0.6)",
+            opacity: 0,
+            transition: "opacity 0.3s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            "&:hover": {
+              opacity: 1,
+            },
+          }}
+        >
+          <Box
+            component="button"
             onClick={onPreview}
-            className="p-2 bg-white rounded-lg text-slate-700 hover:text-blue-600 transition-colors"
+            sx={{
+              p: 1,
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              color: "grey.700",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              "&:hover": {
+                color: "primary.main",
+              },
+            }}
             title="预览"
           >
-            <Eye className="w-5 h-5" />
-          </button>
-          <button
+            <Eye sx={{ width: 20, height: 20 }} />
+          </Box>
+          <Box
+            component="button"
             onClick={onCopy}
-            className="p-2 bg-white rounded-lg text-slate-700 hover:text-blue-600 transition-colors"
+            sx={{
+              p: 1,
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              color: "grey.700",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              "&:hover": {
+                color: "primary.main",
+              },
+            }}
             title="复制"
           >
-            <Copy className="w-5 h-5" />
-          </button>
-          <button
+            <Copy sx={{ width: 20, height: 20 }} />
+          </Box>
+          <Box
+            component="button"
             onClick={onEdit}
-            className="p-2 bg-white rounded-lg text-slate-700 hover:text-blue-600 transition-colors"
+            sx={{
+              p: 1,
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              color: "grey.700",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              "&:hover": {
+                color: "primary.main",
+              },
+            }}
             title="编辑"
           >
-            <Edit className="w-5 h-5" />
-          </button>
-          <button
+            <Edit sx={{ width: 20, height: 20 }} />
+          </Box>
+          <Box
+            component="button"
             onClick={onDelete}
-            className="p-2 bg-white rounded-lg text-slate-700 hover:text-red-600 transition-colors"
+            sx={{
+              p: 1,
+              bgcolor: "background.paper",
+              borderRadius: 1,
+              color: "grey.700",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              "&:hover": {
+                color: "error.main",
+              },
+            }}
             title="删除"
           >
-            <Trash2 className="w-5 h-5" />
-          </button>
-        </div>
+            <Trash2 sx={{ width: 20, height: 20 }} />
+          </Box>
+        </Box>
 
         {/* Type badge */}
-        <div className="absolute top-3 right-3">
-          <span
-            className={`px-2 py-1 text-xs font-medium rounded-full border ${getTypeColor(viz.type)}`}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              px: 1,
+              py: 0.5,
+              fontSize: 12,
+              fontWeight: 500,
+              borderRadius: 1,
+              border: "1px solid",
+              borderColor: colors.borderColor,
+              bgcolor: colors.bgcolor,
+              color: colors.color,
+            }}
           >
             {typeLabels[viz.type] || viz.type}
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
       {/* Content */}
-      <div className="p-5">
-        <h3 className="font-semibold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
+      <Box sx={{ p: 3 }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            color: "grey.900",
+            mb: 0.5,
+            transition: "color 0.3s",
+            "&:hover": {
+              color: "primary.main",
+            },
+          }}
+        >
           {viz.name}
-        </h3>
-        <p className="text-sm text-slate-500 mb-3 line-clamp-2">
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "grey.500",
+            mb: 2,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {viz.description || "暂无描述"}
-        </p>
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <span>数据源: {viz.data_source || "未配置"}</span>
-          <span>{new Date(viz.updated_at).toLocaleDateString("zh-CN")}</span>
-        </div>
-      </div>
-    </div>
+        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: 12,
+            color: "grey.400",
+          }}
+        >
+          <Typography variant="caption" sx={{ color: "grey.400" }}>
+            数据源: {viz.data_source || "未配置"}
+          </Typography>
+          <Typography variant="caption" sx={{ color: "grey.400" }}>
+            {new Date(viz.updated_at).toLocaleDateString("zh-CN")}
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
@@ -251,127 +441,215 @@ const BIVisualizationPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50/50 p-6">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Skeleton className="h-8 w-32 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-24" />
-              <Skeleton className="h-10 w-28" />
-            </div>
-          </div>
-          <Skeleton className="h-14 w-full rounded-xl" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", p: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+              <Skeleton sx={{ height: 16, width: 96 }} />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Skeleton sx={{ height: 40, width: 96 }} />
+              <Skeleton sx={{ height: 40, width: 112 }} />
+            </Box>
+          </Box>
+          <Skeleton sx={{ height: 56, width: "100%", borderRadius: 2 }} />
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+              gap: 2,
+            }}
+          >
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-72 rounded-2xl" />
+              <Skeleton key={i} sx={{ height: 288, borderRadius: 3 }} />
             ))}
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">可视化图表</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            创建和管理数据可视化图表
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link to="/bi/dashboard">
-            <Button variant="secondary">返回数据大屏</Button>
-          </Link>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            创建图表
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="搜索图表名称..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-slate-400" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">全部类型</option>
-                <option value="line">折线图</option>
-                <option value="bar">柱状图</option>
-                <option value="pie">饼图</option>
-                <option value="gauge">仪表盘</option>
-              </select>
-            </div>
-            <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-all ${viewMode === "grid" ? "bg-white shadow-sm text-blue-600" : "text-slate-500"}`}
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-md transition-all ${viewMode === "list" ? "bg-white shadow-sm text-blue-600" : "text-slate-500"}`}
-              >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Content */}
-      {filteredVisualizations.length === 0 ? (
-        <EmptyState
-          icon="folder"
-          title="暂无可视化图表"
-          description="还没有创建任何图表，点击下方按钮创建第一个图表"
-          action={{
-            label: "创建图表",
-            onClick: () => console.log("Create"),
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", p: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
-        />
-      ) : (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "space-y-4"
-          }
         >
-          {filteredVisualizations.map((viz) => (
-            <VisualizationCard
-              key={viz.id}
-              viz={viz}
-              onPreview={() => handlePreview(viz)}
-              onCopy={() => handleCopy(viz)}
-              onEdit={() => handleEdit(viz)}
-              onDelete={() => handleDelete(viz)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+              可视化图表
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+              创建和管理数据可视化图表
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Link to="/bi/dashboard">
+              <Button variant="secondary">返回数据大屏</Button>
+            </Link>
+            <Button>
+              <Plus sx={{ width: 16, height: 16, mr: 0.5 }} />
+              创建图表
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Filters */}
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ flex: 1, position: "relative" }}>
+                <Search
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 16,
+                    height: 16,
+                    color: "grey.400",
+                  }}
+                />
+                <Input
+                  placeholder="搜索图表名称..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  sx={{ pl: 5 }}
+                />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Filter sx={{ width: 16, height: 16, color: "grey.400" }} />
+                <Box
+                  component="select"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                    borderRadius: 1,
+                    px: 1.5,
+                    py: 1,
+                    fontSize: 14,
+                    bgcolor: "background.paper",
+                    outline: "none",
+                    "&:focus": {
+                      borderColor: "primary.main",
+                      boxShadow: 1,
+                    },
+                  }}
+                >
+                  <option value="all">全部类型</option>
+                  <option value="line">折线图</option>
+                  <option value="bar">柱状图</option>
+                  <option value="pie">饼图</option>
+                  <option value="gauge">仪表盘</option>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  bgcolor: "grey.100",
+                  borderRadius: 1,
+                  p: 0.25,
+                }}
+              >
+                <Box
+                  component="button"
+                  onClick={() => setViewMode("grid")}
+                  sx={{
+                    p: 1,
+                    borderRadius: 0.5,
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    bgcolor: viewMode === "grid" ? "background.paper" : "transparent",
+                    boxShadow: viewMode === "grid" ? 1 : 0,
+                    color: viewMode === "grid" ? "primary.main" : "grey.500",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Grid3X3 sx={{ width: 16, height: 16 }} />
+                </Box>
+                <Box
+                  component="button"
+                  onClick={() => setViewMode("list")}
+                  sx={{
+                    p: 1,
+                    borderRadius: 0.5,
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    bgcolor: viewMode === "list" ? "background.paper" : "transparent",
+                    boxShadow: viewMode === "list" ? 1 : 0,
+                    color: viewMode === "list" ? "primary.main" : "grey.500",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <List sx={{ width: 16, height: 16 }} />
+                </Box>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Content */}
+        {filteredVisualizations.length === 0 ? (
+          <EmptyState
+            icon="folder"
+            title="暂无可视化图表"
+            description="还没有创建任何图表，点击下方按钮创建第一个图表"
+            action={{
+              label: "创建图表",
+              onClick: () => console.log("Create"),
+            }}
+          />
+        ) : (
+          <Box
+            sx={
+              viewMode === "grid"
+                ? {
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+                    gap: 2,
+                  }
+                : {
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }
+            }
+          >
+            {filteredVisualizations.map((viz) => (
+              <VisualizationCard
+                key={viz.id}
+                viz={viz}
+                onPreview={() => handlePreview(viz)}
+                onCopy={() => handleCopy(viz)}
+                onEdit={() => handleEdit(viz)}
+                onDelete={() => handleDelete(viz)}
+              />
+            ))}
+          </Box>
+        )}
+      </Box>
+    </Box>
   );
 };
 

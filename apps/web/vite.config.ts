@@ -34,6 +34,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    dedupe: ['react', 'react-dom', 'scheduler'],
   },
   build: {
     rollupOptions: {
@@ -206,7 +207,7 @@ export default defineConfig({
       '/doc/health': createServiceProxyConfig('doc', 'http://localhost:8024'),
       '/flow/api': createServiceProxyConfig('flow', 'http://localhost:8004'),
       '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8004'),
-      '/im/ws': { target: 'http://127.0.0.1:8052', changeOrigin: true, ws: true, secure: false, rewrite: (path) => path.replace(/^\/im/, '') },
+      '/im/ws': { target: 'http://127.0.0.1:8052', changeOrigin: true, ws: true, secure: false, rewrite: (path) => path.replace(/^\/im\/ws/, '/api/v1/ws/connect') },
       '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8005'),
       '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8005'),
       '/portal/api': createServiceProxyConfig('portal', 'http://localhost:8003'),

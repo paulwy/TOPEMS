@@ -28,9 +28,17 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { topNavItems, getModuleFromPath, getModuleTabs, type NavItem, type TabItem } from "../../config/navigation";
+import {
+  topNavItems,
+  getModuleFromPath,
+  getModuleTabs,
+  type NavItem,
+  type TabItem,
+} from "../../config/navigation";
 import { ModeToggle } from "../ModeToggle";
 import { FloatingAIHelper } from "../ai/FloatingAIHelper";
+import { ModuleTabs } from "./ModuleTabs";
+import { MobileNav } from "./MobileNav";
 
 // 模块图标映射
 const moduleIcons: Record<string, React.ReactNode> = {
@@ -58,14 +66,17 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const currentModule = getModuleFromPath(location.pathname);
   const moduleTabs = currentModule ? getModuleTabs(currentModule) : [];
 
-  const handleNavHover = useCallback((event: React.MouseEvent<HTMLElement>, item: NavItem) => {
-    if (item.children) {
-      setAnchorEl(event.currentTarget);
-      setOpenMenu(item);
-    } else if (item.path) {
-      navigate(item.path);
-    }
-  }, [navigate]);
+  const handleNavHover = useCallback(
+    (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
+      if (item.children) {
+        setAnchorEl(event.currentTarget);
+        setOpenMenu(item);
+      } else if (item.path) {
+        navigate(item.path);
+      }
+    },
+    [navigate],
+  );
 
   const handleNavLeave = useCallback(() => {
     // 延迟关闭，允许进入下拉菜单
@@ -80,12 +91,15 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     setOpenMenu(null);
   }, []);
 
-  const handleMenuItemClick = useCallback((item: NavItem) => {
-    if (item.path) {
-      navigate(item.path);
-    }
-    handleCloseMenu();
-  }, [navigate, handleCloseMenu]);
+  const handleMenuItemClick = useCallback(
+    (item: NavItem) => {
+      if (item.path) {
+        navigate(item.path);
+      }
+      handleCloseMenu();
+    },
+    [navigate, handleCloseMenu],
+  );
 
   const isMenuOpen = Boolean(anchorEl) && Boolean(openMenu?.children);
 
@@ -153,7 +167,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                       opacity: 0.8,
                     }}
                   >
-                    <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "primary.main", fontWeight: 600 }}
+                    >
                       {child.label.charAt(0)}
                     </Typography>
                   </Box>
@@ -212,7 +229,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 opacity: 0.8,
               }}
             >
-              <Typography variant="caption" sx={{ color: "primary.main", fontWeight: 600 }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "primary.main", fontWeight: 600 }}
+              >
                 {child.label.charAt(0)}
               </Typography>
             </Box>
@@ -229,7 +249,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
 
   // 渲染顶部导航项
   const renderNavItem = (item: NavItem, index: number) => {
-    const isActive = item.path === location.pathname || location.pathname.startsWith(item.path + "/");
+    const isActive =
+      item.path === location.pathname ||
+      location.pathname.startsWith(item.path + "/");
 
     return (
       <Box
@@ -241,7 +263,11 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         }}
       >
         <Button
-          endIcon={item.children ? <ChevronDown style={{ width: 14, height: 14 }} /> : null}
+          endIcon={
+            item.children ? (
+              <ChevronDown style={{ width: 14, height: 14 }} />
+            ) : null
+          }
           sx={{
             color: isActive ? "primary.main" : "text.primary",
             fontWeight: isActive ? 600 : 400,
@@ -267,44 +293,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     if (moduleTabs.length === 0) return null;
 
     return (
-      <Box
-        sx={{
-          backgroundColor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
-          px: 2,
+      <ModuleTabs
+        tabs={moduleTabs}
+        onTabsChange={(newTabs) => {
+          // 可以在这里保存用户自定义的标签配置到localStorage
+          console.log("Tabs changed:", newTabs);
         }}
-      >
-        <Tabs
-          value={location.pathname}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            minHeight: 44,
-            "& .MuiTabs-indicator": {
-              height: 2,
-            },
-          }}
-        >
-          {moduleTabs.map((tab) => (
-            <Tab
-              key={tab.path}
-              value={tab.path}
-              label={tab.label}
-              onClick={() => navigate(tab.path)}
-              sx={{
-                minHeight: 44,
-                textTransform: "none",
-                fontWeight: location.pathname === tab.path ? 600 : 400,
-                color: location.pathname === tab.path ? "primary.main" : "text.secondary",
-                "&.Mui-selected": {
-                  color: "primary.main",
-                },
-              }}
-            />
-          ))}
-        </Tabs>
-      </Box>
+      />
     );
   };
 
@@ -355,7 +350,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 justifyContent: "center",
               }}
             >
-              <Typography sx={{ color: "white", fontWeight: 700, fontSize: 16 }}>
+              <Typography
+                sx={{ color: "white", fontWeight: 700, fontSize: 16 }}
+              >
                 T
               </Typography>
             </Box>
@@ -374,10 +371,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             </Typography>
           </Box>
 
-          {/* 导航菜单 */}
+          {/* 导航菜单 - 桌面端 */}
           <Box
             sx={{
-              display: "flex",
+              display: { xs: "none", lg: "flex" },
               alignItems: "center",
               gap: 0.5,
               flex: 1,
@@ -388,7 +385,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           </Box>
 
           {/* 右侧工具 */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 0.5, sm: 1 },
+            }}
+          >
             <Tooltip title="通知">
               <IconButton size="small">
                 <Badge badgeContent={3} color="error">
@@ -411,6 +414,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 </Avatar>
               </IconButton>
             </Tooltip>
+            {/* 移动端汉堡菜单 */}
+            <MobileNav
+              navItems={topNavItems}
+              open={mobileMenuOpen}
+              onClose={() => setMobileMenuOpen(false)}
+              onOpen={() => setMobileMenuOpen(true)}
+            />
           </Box>
         </Box>
 
@@ -471,7 +481,11 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           alignItems: "center",
         }}
       >
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 12 }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ fontSize: 12 }}
+        >
           © 2024 TOPEMS 化工新材料数字化平台
         </Typography>
         <Box sx={{ display: "flex", gap: 3 }}>

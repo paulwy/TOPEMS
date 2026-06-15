@@ -16,6 +16,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import type { Notification, NotificationTypeEnum } from "../api/notification";
 import {
   getNotifications,
@@ -193,107 +194,102 @@ const NotificationCenter: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Bell className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">通知中心</h1>
-                  <p className="text-sm text-gray-500 mt-1">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 4 }}>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 48, height: 48, bgcolor: "primary.100", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Bell size={24} color="#1976d2" />
+                </Box>
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>通知中心</Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
                     共 {total} 条通知，{unreadCount} 条未读
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  component="button"
                   onClick={() => navigate("/notifications/stats")}
-                  className="p-2 rounded-lg transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  sx={{ p: 1, borderRadius: 2, bgcolor: "grey.200", color: "grey.600", "&:hover": { bgcolor: "grey.300" }, transition: "background-color 0.2s" }}
                   title="统计"
                 >
-                  <BarChart3 className="w-5 h-5" />
-                </button>
-                <button
+                  <BarChart3 size={20} />
+                </Box>
+                <Box
+                  component="button"
                   onClick={() => navigate("/notifications/templates")}
-                  className="p-2 rounded-lg transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  sx={{ p: 1, borderRadius: 2, bgcolor: "grey.200", color: "grey.600", "&:hover": { bgcolor: "grey.300" }, transition: "background-color 0.2s" }}
                   title="模板管理"
                 >
-                  <FileText className="w-5 h-5" />
-                </button>
-                <button
+                  <FileText size={20} />
+                </Box>
+                <Box
+                  component="button"
                   onClick={() => navigate("/notifications/archive")}
-                  className="p-2 rounded-lg transition-colors bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  sx={{ p: 1, borderRadius: 2, bgcolor: "grey.200", color: "grey.600", "&:hover": { bgcolor: "grey.300" }, transition: "background-color 0.2s" }}
                   title="归档管理"
                 >
-                  <Archive className="w-5 h-5" />
-                </button>
-                <button
+                  <Archive size={20} />
+                </Box>
+                <Box
+                  component="button"
                   onClick={() => toggleSetting("enableSound")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    settings.enableSound
-                      ? "bg-blue-50 text-blue-600"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
+                  sx={{ p: 1, borderRadius: 2, bgcolor: settings.enableSound ? "primary.50" : "grey.200", color: settings.enableSound ? "primary.main" : "grey.600", "&:hover": { bgcolor: settings.enableSound ? "primary.100" : "grey.300" }, transition: "background-color 0.2s" }}
                   title={settings.enableSound ? "关闭声音" : "开启声音"}
                 >
                   {settings.enableSound ? (
-                    <Volume2 className="w-5 h-5" />
+                    <Volume2 size={20} />
                   ) : (
-                    <VolumeX className="w-5 h-5" />
+                    <VolumeX size={20} />
                   )}
-                </button>
-                <button
+                </Box>
+                <Box
+                  component="button"
                   onClick={() => toggleSetting("enableDesktop")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    settings.enableDesktop
-                      ? "bg-blue-50 text-blue-600"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
-                  title={
-                    settings.enableDesktop ? "关闭桌面通知" : "开启桌面通知"
-                  }
+                  sx={{ p: 1, borderRadius: 2, bgcolor: settings.enableDesktop ? "primary.50" : "grey.200", color: settings.enableDesktop ? "primary.main" : "grey.600", "&:hover": { bgcolor: settings.enableDesktop ? "primary.100" : "grey.300" }, transition: "background-color 0.2s" }}
+                  title={settings.enableDesktop ? "关闭桌面通知" : "开启桌面通知"}
                 >
-                  <Monitor className="w-5 h-5" />
-                </button>
-                <button
+                  <Monitor size={20} />
+                </Box>
+                <Box
+                  component="button"
                   onClick={() => setShowSettings(!showSettings)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    showSettings
-                      ? "bg-blue-50 text-blue-600"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
+                  sx={{ p: 1, borderRadius: 2, bgcolor: showSettings ? "primary.50" : "grey.200", color: showSettings ? "primary.main" : "grey.600", "&:hover": { bgcolor: showSettings ? "primary.100" : "grey.300" }, transition: "background-color 0.2s" }}
                   title="通知设置"
                 >
-                  <Settings className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
+                  <Settings size={20} />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
 
           {showSettings && (
-            <div className="border-b border-gray-200">
+            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <NotificationSettings />
-            </div>
+            </Box>
           )}
 
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "grey.100" }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
+              <Box sx={{ flex: 1, position: "relative" }}>
+                <Box sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
+                  <Search size={16} color="#666" />
+                </Box>
+                <Box
+                  component="input"
                   type="text"
                   placeholder="搜索通知..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  sx={{ width: "100%", pl: 5, pr: 2, py: 1, border: 1, borderColor: "grey.300", borderRadius: 2, "&:focus": { outline: "none", borderColor: "primary.main", boxShadow: 2 } }}
                 />
-              </div>
+              </Box>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 {(
                   [
                     "all",
@@ -304,93 +300,96 @@ const NotificationCenter: React.FC = () => {
                     "message",
                   ] as NotificationFilterType[]
                 ).map((filter) => (
-                  <button
+                  <Box
                     key={filter}
+                    component="button"
                     onClick={() => {
                       setActiveFilter(filter);
                       setPage(1);
                     }}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeFilter === filter
-                        ? "bg-blue-600 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                    }`}
+                    sx={{ px: 1.5, py: 1, borderRadius: 2, fontSize: "0.875rem", fontWeight: 500, transition: "all 0.2s", bgcolor: activeFilter === filter ? "primary.main" : "background.paper", color: activeFilter === filter ? "white" : "grey.700", border: activeFilter === filter ? "none" : 1, borderColor: "grey.300", "&:hover": { bgcolor: activeFilter === filter ? "primary.dark" : "grey.100" } }}
                   >
                     {getFilterLabel(filter)}
-                  </button>
+                  </Box>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
             {selectedNotifications.size > 0 && (
-              <div className="mt-4 flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                <span className="text-sm text-gray-600">
+              <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1.5, p: 1.5, bgcolor: "primary.50", borderRadius: 2 }}>
+                <Typography variant="body2" sx={{ color: "grey.600" }}>
                   已选择 {selectedNotifications.size} 项
-                </span>
-                <button
+                </Typography>
+                <Box
+                  component="button"
                   onClick={handleBulkMarkAsRead}
-                  className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1"
+                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "primary.main", "&:hover": { bgcolor: "primary.100" }, borderRadius: 2, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 0.5 }}
                 >
-                  <Check className="w-4 h-4" />
+                  <Check size={16} />
                   批量标记已读
-                </button>
-                <button
+                </Box>
+                <Box
+                  component="button"
                   onClick={handleBulkDelete}
-                  className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1"
+                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "error.main", "&:hover": { bgcolor: "error.50" }, borderRadius: 2, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 0.5 }}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 size={16} />
                   批量删除
-                </button>
-                <button
+                </Box>
+                <Box
+                  component="button"
                   onClick={() => setSelectedNotifications(new Set())}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.600", "&:hover": { bgcolor: "grey.100" }, borderRadius: 2, transition: "all 0.2s" }}
                 >
                   取消选择
-                </button>
-              </div>
+                </Box>
+              </Box>
             )}
-          </div>
+          </Box>
 
           {unreadCount > 0 && (
-            <div className="p-4 bg-blue-50 border-b border-blue-100">
-              <button
+            <Box sx={{ p: 2, bgcolor: "primary.50", borderBottom: 1, borderColor: "primary.100" }}>
+              <Box
+                component="button"
                 onClick={handleMarkAllAsRead}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.875rem", fontWeight: 500, color: "primary.main", "&:hover": { color: "primary.dark" } }}
               >
-                <Check className="w-4 h-4" />
+                <Check size={16} />
                 全部标记已读
-              </button>
-            </div>
+              </Box>
+            </Box>
           )}
 
-          <div className="divide-y divide-gray-100">
+          <Box sx={{ "& > * + *": { borderTop: 1, borderColor: "grey.200" } }}>
             {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-              </div>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 10 }}>
+                <Box sx={{ width: 48, height: 48, borderRadius: "50%", border: 3, borderColor: "primary.light", borderTopColor: "primary.main", animation: "spin 1s linear infinite" }} />
+              </Box>
             ) : filteredNotifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <Bell className="w-20 h-20 text-gray-300 mb-4" />
-                <p className="text-lg text-gray-500 mb-2">
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 10 }}>
+                <Bell size={80} color="#666" style={{ marginBottom: 8 }} />
+                <Typography variant="body1" sx={{ color: "grey.500", mb: 1 }}>
                   {searchQuery
                     ? "未找到匹配的通知"
                     : activeFilter === "all"
                       ? "暂无通知"
                       : `暂无${getFilterLabel(activeFilter)}`}
-                </p>
+                </Typography>
                 {searchQuery && (
-                  <button
+                  <Box
+                    component="button"
                     onClick={() => setSearchQuery("")}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    sx={{ fontSize: "0.875rem", color: "primary.main", "&:hover": { color: "primary.dark" } }}
                   >
                     清除搜索
-                  </button>
+                  </Box>
                 )}
-              </div>
+              </Box>
             ) : (
               <>
-                <div className="px-4 py-3 bg-gray-50 flex items-center gap-2">
-                  <input
+                <Box sx={{ px: 2, py: 1.5, bgcolor: "grey.100", display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box
+                    component="input"
                     type="checkbox"
                     checked={
                       selectedNotifications.size ===
@@ -398,61 +397,64 @@ const NotificationCenter: React.FC = () => {
                       filteredNotifications.length > 0
                     }
                     onChange={toggleSelectAll}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    sx={{ width: 16, height: 16, color: "primary.main", borderColor: "grey.300", borderRadius: 0.5 }}
                   />
-                  <span className="text-xs text-gray-600">全选</span>
-                </div>
+                  <Typography variant="body2" sx={{ color: "grey.600", fontSize: "0.75rem" }}>全选</Typography>
+                </Box>
                 {filteredNotifications.map((notification) => (
-                  <div key={notification.id} className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
-                      <input
+                  <Box key={notification.id} sx={{ position: "relative" }}>
+                    <Box sx={{ position: "absolute", left: 4, top: "50%", transform: "translateY(-50%)", zIndex: 10 }}>
+                      <Box
+                        component="input"
                         type="checkbox"
                         checked={selectedNotifications.has(notification.id)}
                         onChange={() => toggleSelect(notification.id)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        sx={{ width: 16, height: 16, color: "primary.main", borderColor: "grey.300", borderRadius: 0.5 }}
                       />
-                    </div>
-                    <div className="pl-12">
+                    </Box>
+                    <Box sx={{ pl: 6 }}>
                       <NotificationItem
                         notification={notification}
                         onUpdate={handleMarkAsRead}
                         onDelete={handleDelete}
                       />
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 ))}
               </>
             )}
-          </div>
+          </Box>
 
           {!loading && total > 20 && (
-            <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+            <Box sx={{ p: 2, borderTop: 1, borderColor: "divider", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography variant="body2" sx={{ color: "grey.600" }}>
                 第 {page} 页，共 {totalPages} 页
-              </div>
-              <div className="flex items-center gap-2">
-                <button
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  component="button"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.700", bgcolor: "background.paper", border: 1, borderColor: "grey.300", borderRadius: 2, "&:hover": { bgcolor: "grey.50" }, disabled: { opacity: 0.5, cursor: "not-allowed" }, display: "flex", alignItems: "center", gap: 0.5 }}
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft size={16} />
                   上一页
-                </button>
-                <button
+                </Box>
+                <Box
+                  component="button"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                  sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.700", bgcolor: "background.paper", border: 1, borderColor: "grey.300", borderRadius: 2, "&:hover": { bgcolor: "grey.50" }, disabled: { opacity: 0.5, cursor: "not-allowed" }, display: "flex", alignItems: "center", gap: 0.5 }}
                 >
                   下一页
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                  <ChevronRight size={16} />
+                </Box>
+              </Box>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

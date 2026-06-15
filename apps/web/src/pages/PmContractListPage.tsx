@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import type { Contract } from "../api/pm";
 import { pmApi } from "../api/pm";
 
@@ -76,22 +77,22 @@ const PmContractListPage: React.FC = () => {
     }).format(amount);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusSx = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return { bgcolor: "success.light", color: "success.dark" };
       case "completed":
-        return "bg-blue-100 text-blue-800";
+        return { bgcolor: "info.light", color: "info.dark" };
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return { bgcolor: "warning.light", color: "warning.dark" };
       case "approved":
-        return "bg-purple-100 text-purple-800";
+        return { bgcolor: "#e9d5ff", color: "#6b21a8" };
       case "cancelled":
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "grey.200", color: "grey.800" };
       case "draft":
-        return "bg-gray-100 text-gray-600";
+        return { bgcolor: "grey.200", color: "grey.600" };
       default:
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "grey.200", color: "grey.800" };
     }
   };
 
@@ -126,33 +127,77 @@ const PmContractListPage: React.FC = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">合同管理</h1>
-        <p className="text-gray-500 mt-1">
+    <Box sx={{ p: 3, bgcolor: "grey.50", minHeight: "100vh" }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
+          合同管理
+        </Typography>
+        <Typography sx={{ color: "grey.500", mt: 1 }}>
           管理项目相关的合同，跟踪合同执行状态
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          boxShadow: 1,
+          p: 3,
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            alignItems: { md: "center" },
+            justifyContent: { md: "space-between" },
+            gap: 2,
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{ position: "relative" }}>
+              <Search
+                size={20}
+                color="#9ca3af"
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              />
               <input
                 type="text"
                 placeholder="搜索合同名称或编号..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{
+                  width: "100%",
+                  paddingLeft: 40,
+                  paddingRight: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                  border: "1px solid #d1d5db",
+                  borderRadius: 8,
+                  outline: "none",
+                }}
               />
-            </div>
-          </div>
-          <div className="flex gap-3">
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1.5 }}>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{
+                paddingLeft: 16,
+                paddingRight: 16,
+                paddingTop: 8,
+                paddingBottom: 8,
+                border: "1px solid #d1d5db",
+                borderRadius: 8,
+                outline: "none",
+              }}
             >
               {CONTRACT_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -163,7 +208,15 @@ const PmContractListPage: React.FC = () => {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{
+                paddingLeft: 16,
+                paddingRight: 16,
+                paddingTop: 8,
+                paddingBottom: 8,
+                border: "1px solid #d1d5db",
+                borderRadius: 8,
+                outline: "none",
+              }}
             >
               {STATUS_OPTIONS.map((status) => (
                 <option key={status.value} value={status.value}>
@@ -173,174 +226,418 @@ const PmContractListPage: React.FC = () => {
             </select>
             <button
               onClick={() => navigate("/pm/contracts/create")}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                paddingLeft: 16,
+                paddingRight: 16,
+                paddingTop: 8,
+                paddingBottom: 8,
+                backgroundColor: "#2563eb",
+                color: "white",
+                borderRadius: 8,
+                border: "none",
+                cursor: "pointer",
+              }}
             >
-              <Plus className="w-5 h-5" />
+              <Plus size={20} />
               创建合同
             </button>
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">合同总数</p>
-              <p className="text-2xl font-bold text-gray-900">
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            md: "repeat(4, 1fr)",
+          },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                合同总数
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "grey.900" }}
+              >
                 {contracts.length}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <FileText className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">执行中</p>
-              <p className="text-2xl font-bold text-green-600">
+              </Typography>
+            </Box>
+            <Box sx={{ p: 1.5, bgcolor: "#dbeafe", borderRadius: "50%" }}>
+              <FileText size={24} color="#2563eb" />
+            </Box>
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                执行中
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "success.dark" }}
+              >
                 {contracts.filter((c) => c.status === "active").length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">待审批</p>
-              <p className="text-2xl font-bold text-yellow-600">
+              </Typography>
+            </Box>
+            <Box sx={{ p: 1.5, bgcolor: "success.light", borderRadius: "50%" }}>
+              <CheckCircle size={24} color="#16a34a" />
+            </Box>
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                待审批
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "warning.dark" }}
+              >
                 {contracts.filter((c) => c.status === "pending").length}
-              </p>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-full">
-              <AlertCircle className="w-6 h-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">合同总金额</p>
-              <p className="text-2xl font-bold text-purple-600">
+              </Typography>
+            </Box>
+            <Box sx={{ p: 1.5, bgcolor: "warning.light", borderRadius: "50%" }}>
+              <AlertCircle size={24} color="#ca8a04" />
+            </Box>
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                合同总金额
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "#7e22ce" }}
+              >
                 {formatCurrency(
                   contracts.reduce((sum, c) => sum + (c.amount || 0), 0),
                 )}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <DollarSign className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+              </Typography>
+            </Box>
+            <Box sx={{ p: 1.5, bgcolor: "#e9d5ff", borderRadius: "50%" }}>
+              <DollarSign size={24} color="#7e22ce" />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+      <Box
+        sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1 }}
+      >
+        <Box sx={{ overflowX: "auto" }}>
+          <Box component="table" sx={{ width: "100%" }}>
+            <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+              <Box component="tr">
+                <Box
+                  component="th"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    textAlign: "left",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    color: "grey.500",
+                    textTransform: "uppercase",
+                  }}
+                >
                   合同名称
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                </Box>
+                <Box
+                  component="th"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    textAlign: "left",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    color: "grey.500",
+                    textTransform: "uppercase",
+                  }}
+                >
                   类型
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                </Box>
+                <Box
+                  component="th"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    textAlign: "left",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    color: "grey.500",
+                    textTransform: "uppercase",
+                  }}
+                >
                   乙方
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                </Box>
+                <Box
+                  component="th"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    textAlign: "left",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    color: "grey.500",
+                    textTransform: "uppercase",
+                  }}
+                >
                   金额
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                </Box>
+                <Box
+                  component="th"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    textAlign: "left",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    color: "grey.500",
+                    textTransform: "uppercase",
+                  }}
+                >
                   状态
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                </Box>
+                <Box
+                  component="th"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    textAlign: "left",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    color: "grey.500",
+                    textTransform: "uppercase",
+                  }}
+                >
                   时间
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                </Box>
+                <Box
+                  component="th"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    textAlign: "left",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    color: "grey.500",
+                    textTransform: "uppercase",
+                  }}
+                >
                   操作
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+                </Box>
+              </Box>
+            </Box>
+            <Box component="tbody">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  </td>
-                </tr>
-              ) : filteredContracts.length === 0 ? (
-                <tr>
-                  <td
+                <Box component="tr">
+                  <Box
+                    component="td"
                     colSpan={7}
-                    className="px-6 py-12 text-center text-gray-500"
+                    sx={{ px: 3, py: 6, textAlign: "center" }}
+                  >
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: "50%",
+                        border: "2px solid #2563eb",
+                        borderTopColor: "transparent",
+                        animation: "spin 1s linear infinite",
+                        mx: "auto",
+                        "@keyframes spin": {
+                          to: { transform: "rotate(360deg)" },
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+              ) : filteredContracts.length === 0 ? (
+                <Box component="tr">
+                  <Box
+                    component="td"
+                    colSpan={7}
+                    sx={{ px: 3, py: 6, textAlign: "center", color: "grey.500" }}
                   >
                     暂无合同数据
-                  </td>
-                </tr>
+                  </Box>
+                </Box>
               ) : (
                 filteredContracts.map((contract) => (
-                  <tr key={contract.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900">
+                  <Box
+                    component="tr"
+                    key={contract.id}
+                    sx={{
+                      "&:hover": { bgcolor: "grey.50" },
+                    }}
+                  >
+                    <Box component="td" sx={{ px: 3, py: 2 }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                           {contract.contract_name}
-                        </p>
-                        <p className="text-xs text-gray-500">
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "grey.500" }}
+                        >
                           {contract.contract_code}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box component="td" sx={{ px: 3, py: 2 }}>
+                      <Typography variant="body2" sx={{ color: "grey.600" }}>
                         {getTypeLabel(contract.contract_type)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                      </Typography>
+                    </Box>
+                    <Box
+                      component="td"
+                      sx={{ px: 3, py: 2, fontSize: "0.875rem", color: "grey.600" }}
+                    >
                       {contract.party_b_name || "-"}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    </Box>
+                    <Box
+                      component="td"
+                      sx={{
+                        px: 3,
+                        py: 2,
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                        color: "grey.900",
+                      }}
+                    >
                       {formatCurrency(contract.amount)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(contract.status || "")}`}
+                    </Box>
+                    <Box component="td" sx={{ px: 3, py: 2 }}>
+                      <Box
+                        component="span"
+                        sx={{
+                          px: 1,
+                          py: 0.5,
+                          fontSize: "0.75rem",
+                          borderRadius: "9999px",
+                          display: "inline-block",
+                          ...getStatusSx(contract.status || ""),
+                        }}
                       >
                         {getStatusLabel(contract.status || "")}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      <div>
-                        <p className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4 text-gray-400" />
+                      </Box>
+                    </Box>
+                    <Box
+                      component="td"
+                      sx={{
+                        px: 3,
+                        py: 2,
+                        fontSize: "0.875rem",
+                        color: "grey.600",
+                      }}
+                    >
+                      <Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Calendar size={16} color="#9ca3af" />
                           {formatDate(contract.signing_date)}
-                        </p>
-                        <p className="text-xs text-gray-400">
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "grey.400" }}
+                        >
                           至 {formatDate(contract.end_date)}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box component="td" sx={{ px: 3, py: 2 }}>
                       <button
                         onClick={() => navigate(`/pm/contracts/${contract.id}`)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        style={{
+                          color: "#2563eb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "0.875rem",
+                        }}
                       >
                         查看详情
                       </button>
-                    </td>
-                  </tr>
+                    </Box>
+                  </Box>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

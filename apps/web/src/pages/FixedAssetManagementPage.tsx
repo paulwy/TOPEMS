@@ -38,39 +38,39 @@ import {
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
 /** 资产状态配置 */
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  normal: { label: "正常", color: "bg-green-100 text-green-800" },
-  disposed: { label: "已处置", color: "bg-gray-100 text-gray-800" },
-  impaired: { label: "减值", color: "bg-orange-100 text-orange-800" },
-  scrapped: { label: "报废", color: "bg-red-100 text-red-800" },
+const STATUS_CONFIG: Record<string, { label: string; sx: object }> = {
+  normal: { label: "正常", sx: { bgcolor: "success.main", color: "white" } },
+  disposed: { label: "已处置", sx: { bgcolor: "grey.500", color: "white" } },
+  impaired: { label: "减值", sx: { bgcolor: "warning.main", color: "white" } },
+  scrapped: { label: "报废", sx: { bgcolor: "error.main", color: "white" } },
 };
 
 /** 折旧方法配置 */
 const DEPRECIATION_METHOD_CONFIG: Record<
   string,
-  { label: string; color: string }
+  { label: string; sx: object }
 > = {
-  straight_line: { label: "直线法", color: "bg-blue-100 text-blue-800" },
+  straight_line: { label: "直线法", sx: { bgcolor: "primary.main", color: "white" } },
   declining_balance: {
     label: "双倍余额递减",
-    color: "bg-purple-100 text-purple-800",
+    sx: { bgcolor: "secondary.main", color: "white" },
   },
-  sum_of_years: { label: "年数总和法", color: "bg-teal-100 text-teal-800" },
+  sum_of_years: { label: "年数总和法", sx: { bgcolor: "info.main", color: "white" } },
   units_of_production: {
     label: "工作量法",
-    color: "bg-orange-100 text-orange-800",
+    sx: { bgcolor: "warning.main", color: "white" },
   },
 };
 
 /** 资产类别配置 */
-const ASSET_CATEGORY_CONFIG: Record<string, { label: string; color: string }> =
+const ASSET_CATEGORY_CONFIG: Record<string, { label: string; sx: object }> =
   {
-    building: { label: "房屋建筑物", color: "bg-indigo-100 text-indigo-800" },
-    vehicle: { label: "运输设备", color: "bg-cyan-100 text-cyan-800" },
-    equipment: { label: "生产设备", color: "bg-emerald-100 text-emerald-800" },
-    office: { label: "办公设备", color: "bg-amber-100 text-amber-800" },
-    electronic: { label: "电子设备", color: "bg-rose-100 text-rose-800" },
-    other: { label: "其他", color: "bg-slate-100 text-slate-800" },
+    building: { label: "房屋建筑物", sx: { bgcolor: "indigo.100", color: "indigo.800" } },
+    vehicle: { label: "运输设备", sx: { bgcolor: "cyan.100", color: "cyan.800" } },
+    equipment: { label: "生产设备", sx: { bgcolor: "emerald.100", color: "emerald.800" } },
+    office: { label: "办公设备", sx: { bgcolor: "amber.100", color: "amber.800" } },
+    electronic: { label: "电子设备", sx: { bgcolor: "rose.100", color: "rose.800" } },
+    other: { label: "其他", sx: { bgcolor: "grey.100", color: "grey.800" } },
   };
 
 interface FixedAsset {
@@ -249,10 +249,10 @@ export default function FixedAssetManagementPage() {
       header: "资产编号",
       accessorKey: "asset_code",
       cell: ({ row }: { row: FixedAsset }) => (
-        <div className="flex items-center gap-2">
-          <Building className="w-4 h-4 text-gray-400" />
-          <span className="font-mono text-sm">{row.asset_code}</span>
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Building size={16} style={{ color: "grey" }} />
+          <Typography sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}>{row.asset_code}</Typography>
+        </Box>
       ),
     },
     {
@@ -267,9 +267,9 @@ export default function FixedAssetManagementPage() {
       cell: ({ row }: { row: FixedAsset }) => {
         const config = ASSET_CATEGORY_CONFIG[row.category] || {
           label: row.category,
-          color: "bg-gray-100 text-gray-800",
+          sx: { bgcolor: "grey.100", color: "grey.800" },
         };
-        return <Chip label={config.label} size="small" className={config.color} />;
+        return <Chip label={config.label} size="small" sx={config.sx} />;
       },
     },
     {
@@ -277,13 +277,13 @@ export default function FixedAssetManagementPage() {
       header: "原值",
       accessorKey: "original_value",
       cell: ({ row }: { row: FixedAsset }) => (
-        <span className="font-mono text-right">
+        <Typography sx={{ fontFamily: "monospace", textAlign: "right" }}>
           ¥
           {row.original_value.toLocaleString("zh-CN", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -291,13 +291,13 @@ export default function FixedAssetManagementPage() {
       header: "累计折旧",
       accessorKey: "accumulated_depreciation",
       cell: ({ row }: { row: FixedAsset }) => (
-        <span className="font-mono text-right text-orange-600">
+        <Typography sx={{ fontFamily: "monospace", textAlign: "right", color: "warning.main" }}>
           ¥
           {row.accumulated_depreciation.toLocaleString("zh-CN", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -305,13 +305,13 @@ export default function FixedAssetManagementPage() {
       header: "净值",
       accessorKey: "net_value",
       cell: ({ row }: { row: FixedAsset }) => (
-        <span className="font-mono text-right font-medium">
+        <Typography sx={{ fontFamily: "monospace", textAlign: "right", fontWeight: 500 }}>
           ¥
           {row.net_value.toLocaleString("zh-CN", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           })}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -321,9 +321,9 @@ export default function FixedAssetManagementPage() {
       cell: ({ row }: { row: FixedAsset }) => {
         const config = DEPRECIATION_METHOD_CONFIG[row.depreciation_method] || {
           label: row.depreciation_method,
-          color: "bg-gray-100 text-gray-800",
+          sx: { bgcolor: "grey.100", color: "grey.800" },
         };
-        return <Chip label={config.label} size="small" className={config.color} />;
+        return <Chip label={config.label} size="small" sx={config.sx} />;
       },
     },
     {
@@ -333,16 +333,16 @@ export default function FixedAssetManagementPage() {
       cell: ({ row }: { row: FixedAsset }) => {
         const config = STATUS_CONFIG[row.status] || {
           label: row.status,
-          color: "bg-gray-100 text-gray-800",
+          sx: { bgcolor: "grey.100", color: "grey.800" },
         };
-        return <Chip label={config.label} size="small" className={config.color} />;
+        return <Chip label={config.label} size="small" sx={config.sx} />;
       },
     },
     {
       id: "actions",
       header: "操作",
       cell: ({ row }: { row: FixedAsset }) => (
-        <div className="flex items-center gap-1">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Button
             variant="text"
             size="small"
@@ -351,7 +351,7 @@ export default function FixedAssetManagementPage() {
               setIsEditing(true);
             }}
           >
-            <Edit className="w-4 h-4" />
+            <Edit size={16} />
           </Button>
           <Button
             variant="text"
@@ -359,9 +359,9 @@ export default function FixedAssetManagementPage() {
             onClick={() => setDeletingId(row.id)}
             color="error"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 size={16} />
           </Button>
-        </div>
+        </Box>
       ),
     },
   ];
@@ -399,21 +399,23 @@ export default function FixedAssetManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", p: 3 }}>
+      <Box sx={{ maxWidth: 1280, mx: "auto", display: "flex", flexDirection: "column", gap: 3 }}>
         {/* 头部 */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <Building className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">固定资产管理</h1>
-              <p className="text-sm text-gray-500">
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "indigo.600", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Building size={24} style={{ color: "white" }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+                固定资产管理
+              </Typography>
+              <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>
                 管理企业固定资产及折旧信息
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
           <Button
             size="small"
             onClick={() => {
@@ -421,93 +423,89 @@ export default function FixedAssetManagementPage() {
               setIsCreating(true);
             }}
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus size={16} style={{ marginRight: 8 }} />
             新增资产
           </Button>
-        </div>
+        </Box>
 
         {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 4 }, gap: 2 }}>
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Building className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: "blue.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Building size={20} style={{ color: "blue[600]" }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "1.5rem", fontWeight: 700, color: "blue.600" }}>
                     {fixedAssets.length}
-                  </div>
-                  <p className="text-sm text-gray-500">资产总数</p>
-                </div>
-              </div>
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>资产总数</Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: "green.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <DollarSign size={20} style={{ color: "green[600]" }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "1.5rem", fontWeight: 700, color: "green.600" }}>
                     ¥{(totalOriginalValue / 10000).toFixed(0)}万
-                  </div>
-                  <p className="text-sm text-gray-500">资产原值</p>
-                </div>
-              </div>
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>资产原值</Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <TrendingDown className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-orange-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: "orange.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <TrendingDown size={20} style={{ color: "orange[600]" }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "1.5rem", fontWeight: 700, color: "orange.600" }}>
                     ¥{(totalAccumulatedDepreciation / 10000).toFixed(0)}万
-                  </div>
-                  <p className="text-sm text-gray-500">累计折旧</p>
-                </div>
-              </div>
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>累计折旧</Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <Calculator className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-indigo-600">
+            <CardContent sx={{ pt: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: "indigo.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Calculator size={20} style={{ color: "indigo[600]" }} />
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "1.5rem", fontWeight: 700, color: "indigo.600" }}>
                     ¥{(totalNetValue / 10000).toFixed(0)}万
-                  </div>
-                  <p className="text-sm text-gray-500">资产净值</p>
-                </div>
-              </div>
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.875rem", color: "grey.500" }}>资产净值</Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         {/* 筛选和搜索 */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
+          <CardContent sx={{ pt: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+              <Box sx={{ flex: 1, minWidth: 200 }}>
                 <TextField
                   placeholder="搜索资产名称、编号或部门..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   size="small"
                   fullWidth
-                  slotProps={{
-                    input: {
-                      startAdornment: <Search className="w-4 h-4 text-gray-400" style={{ marginRight: 8 }} />,
-                    },
-                  }}
+                  InputProps={{ startAdornment: <Search size={16} style={{ color: "grey", marginRight: 8 }} /> }}
                 />
-              </div>
+              </Box>
               <FormControl size="small" sx={{ minWidth: 140 }}>
                 <InputLabel>资产类别</InputLabel>
                 <Select
@@ -538,7 +536,7 @@ export default function FixedAssetManagementPage() {
                   <MenuItem value="scrapped">报废</MenuItem>
                 </Select>
               </FormControl>
-            </div>
+            </Box>
           </CardContent>
         </Card>
 
@@ -553,7 +551,7 @@ export default function FixedAssetManagementPage() {
             />
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 创建/编辑侧边栏 */}
       <Drawer
@@ -601,7 +599,7 @@ export default function FixedAssetManagementPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 }
 
@@ -638,7 +636,7 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 3 }}>
       <Stack spacing={3}>
         <Stack direction="row" spacing={2}>
           <TextField
@@ -734,7 +732,7 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
             required
             fullWidth
             size="small"
-            slotProps={{ inputLabel: { shrink: true } }}
+            LabelProps={{ shrink: true }}
           />
           <TextField
             label="使用寿命（年）"
@@ -748,7 +746,7 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
             }
             fullWidth
             size="small"
-            slotProps={{ htmlInput: { min: 1 } }}
+            InputProps={{ inputProps: { min: 1 } }}
           />
         </Stack>
 
@@ -800,7 +798,7 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
             required
             fullWidth
             size="small"
-            slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+            InputProps={{ inputProps: { min: 0, step: 0.01 } }}
           />
           <TextField
             label="残值"
@@ -815,7 +813,7 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
             placeholder="0.00"
             fullWidth
             size="small"
-            slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+            InputProps={{ inputProps: { min: 0, step: 0.01 } }}
           />
         </Stack>
 
@@ -839,6 +837,6 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
         </Button>
         <Button type="submit" variant="contained">保存</Button>
       </Stack>
-    </form>
+    </Box>
   );
 }

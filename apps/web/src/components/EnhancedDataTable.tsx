@@ -140,7 +140,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
     state: {
       sorting,
       columnFilters,
-      pagination: enablePagination ? pagination : undefined,
+      pagination,
       columnVisibility,
     },
     onSortingChange: setSorting,

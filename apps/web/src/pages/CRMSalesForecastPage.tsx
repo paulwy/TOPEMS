@@ -214,18 +214,18 @@ const CRMSalesForecastPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
+          <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+            <TrendingUp sx={{ width: 20, height: 20 }} />
             销售预测
           </Typography>
           <Typography variant="body2" sx={{ color: "grey.500" }}>基于历史数据预测未来销售趋势</Typography>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 4 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>预测周期:</span>
               <FormControl size="small" sx={{ width: 128 }}>
                 <InputLabel>周期</InputLabel>
@@ -240,70 +240,68 @@ const CRMSalesForecastPage: React.FC = () => {
                 </Select>
               </FormControl>
               <Button onClick={loadForecastData}>
-                <RefreshIcon className="w-4 h-4 mr-2" />
+                <RefreshIcon sx={{ width: 16, height: 16, mr: 1 }} />
                 刷新预测
               </Button>
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">过去6个月收入</p>
-                  <p className="text-2xl font-bold mt-1">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 4 }}>
+            <Box sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)", fontSize: "0.875rem" }}>过去6个月收入</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                     ¥{summary.totalRevenue.toLocaleString()}
-                  </p>
-                </div>
-                <Target className="w-8 h-8 text-blue-200" />
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <Target sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.5)" }} />
+              </Box>
+            </Box>
 
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">月均收入</p>
-                  <p className="text-2xl font-bold mt-1">
+            <Box sx={{ background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)", fontSize: "0.875rem" }}>月均收入</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                     ¥{summary.averageMonthly.toLocaleString()}
-                  </p>
-                </div>
-                <Calculator className="w-8 h-8 text-purple-200" />
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <Calculator sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.5)" }} />
+              </Box>
+            </Box>
 
-            <div
-              className={`rounded-xl p-4 text-white ${summary.growthRate >= 0 ? "bg-gradient-to-br from-emerald-500 to-emerald-600" : "bg-gradient-to-br from-red-500 to-red-600"}`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white/80 text-sm">增长率</p>
-                  <p className="text-2xl font-bold mt-1">
+            <Box sx={{ background: summary.growthRate >= 0 ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)", fontSize: "0.875rem" }}>增长率</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                     {summary.growthRate >= 0 ? "+" : ""}
                     {summary.growthRate}%
-                  </p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-white/80" />
-              </div>
-            </div>
+                  </Typography>
+                </Box>
+                <TrendingUp sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.8)" }} />
+              </Box>
+            </Box>
 
-            <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-100 text-sm">预测总收入</p>
-                  <p className="text-2xl font-bold mt-1">
+            <Box sx={{ background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", borderRadius: 2, p: 2, color: "white" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)", fontSize: "0.875rem" }}>预测总收入</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                     ¥{summary.forecastTotal.toLocaleString()}
-                  </p>
-                </div>
-                <Calendar className="w-8 h-8 text-amber-200" />
-              </div>
-            </div>
-          </div>
+                  </Typography>
+                </Box>
+                <Calendar sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.5)" }} />
+              </Box>
+            </Box>
+          </Box>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3 }}>
             <Card>
               <CardHeader>
-                <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
+                <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+                  <BarChart3 sx={{ width: 20, height: 20 }} />
                   历史销售趋势
                 </Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -311,7 +309,7 @@ const CRMSalesForecastPage: React.FC = () => {
                 </Typography>
               </CardHeader>
               <CardContent>
-                <div className="h-72">
+                <Box sx={{ height: 288 }}>
                   <ResponsiveContainer
                     width="100%"
                     height="100%"
@@ -333,14 +331,14 @@ const CRMSalesForecastPage: React.FC = () => {
                       <Bar dataKey="target" fill="#8b5cf6" name="目标收入" />
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                </Box>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
+                <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+                  <TrendingUp sx={{ width: 20, height: 20 }} />
                   销售预测
                 </Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -348,7 +346,7 @@ const CRMSalesForecastPage: React.FC = () => {
                 </Typography>
               </CardHeader>
               <CardContent>
-                <div className="h-72">
+                <Box sx={{ height: 288 }}>
                   <ResponsiveContainer
                     width="100%"
                     height="100%"
@@ -389,72 +387,72 @@ const CRMSalesForecastPage: React.FC = () => {
                       />
                     </AreaChart>
                   </ResponsiveContainer>
-                </div>
+                </Box>
               </CardContent>
             </Card>
-          </div>
+          </Box>
 
           <Card>
             <CardHeader>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>预测详情</Typography>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <Box sx={{ overflowX: "auto" }}>
+                <table style={{ width: "100%" }}>
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">月份</th>
-                      <th className="text-right py-3 px-4 font-medium">
+                    <tr style={{ borderBottom: "1px solid" }}>
+                      <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 500 }}>月份</th>
+                      <th style={{ textAlign: "right", padding: "12px 16px", fontWeight: 500 }}>
                         预测值
                       </th>
-                      <th className="text-right py-3 px-4 font-medium">
+                      <th style={{ textAlign: "right", padding: "12px 16px", fontWeight: 500 }}>
                         置信区间
                       </th>
-                      <th className="text-center py-3 px-4 font-medium">
+                      <th style={{ textAlign: "center", padding: "12px 16px", fontWeight: 500 }}>
                         概率
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {forecastData.map((item, index) => (
-                      <tr key={index} className="border-b last:border-b-0">
-                        <td className="py-3 px-4">{item.month}</td>
-                        <td className="text-right py-3 px-4 font-medium">
+                      <tr key={index} style={{ borderBottom: index === forecastData.length - 1 ? "none" : "1px solid" }}>
+                        <td style={{ padding: "12px 16px" }}>{item.month}</td>
+                        <td style={{ textAlign: "right", padding: "12px 16px", fontWeight: 500 }}>
                           ¥{item.forecast.toLocaleString()}
                         </td>
-                        <td className="text-right py-3 px-4">
+                        <td style={{ textAlign: "right", padding: "12px 16px" }}>
                           ¥{item.lower.toLocaleString()} - ¥
                           {item.upper.toLocaleString()}
                         </td>
-                        <td className="text-center py-3 px-4">
-                          <Chip  size="small" variant="outlined" label="95%" />
+                        <td style={{ textAlign: "center", padding: "12px 16px" }}>
+                          <Chip size="small" variant="outlined" label="95%" />
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </Box>
 
-              <div className="mt-6 p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">预测说明</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• 预测基于线性回归算法，使用过去12个月的数据进行训练</li>
-                  <li>• 置信区间表示有95%的概率实际值会落在该范围内</li>
-                  <li>• 预测结果仅供参考，实际销售可能受多种因素影响</li>
-                  <li>• 建议定期更新数据以提高预测准确性</li>
-                </ul>
-              </div>
+              <Box sx={{ mt: 3, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 1 }}>预测说明</Typography>
+                <Box component="ul" sx={{ fontSize: "0.875rem", color: "text.secondary", display: "flex", flexDirection: "column", gap: 0.5, pl: 2, mb: 0 }}>
+                  <li>预测基于线性回归算法，使用过去12个月的数据进行训练</li>
+                  <li>置信区间表示有95%的概率实际值会落在该范围内</li>
+                  <li>预测结果仅供参考，实际销售可能受多种因素影响</li>
+                  <li>建议定期更新数据以提高预测准确性</li>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 };
 
-const RefreshIcon = ({ className }: { className?: string }) => (
+const RefreshIcon = ({ sx }: { sx?: object }) => (
   <svg
-    className={className}
+    sx={sx}
     xmlns="http://www.w3.org/2000/svg"
     width="24"
     height="24"

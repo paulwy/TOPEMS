@@ -524,11 +524,7 @@ export default function ContractManagementPage() {
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                    slotProps={{
-                      input: {
-                        startAdornment: <Search size={16} style={{ marginRight: 8, color: "#9ca3af" }} />,
-                      },
-                    }}
+                    InputProps={{ startAdornment: <Search size={16} style={{ marginRight: 8, color: "#9ca3af" }} /> }}
                     sx={{ width: 280 }}
                   />
                   <FormControl size="small" sx={{ width: 160 }}>
@@ -877,7 +873,7 @@ export default function ContractManagementPage() {
                       start_date: e.target.value,
                     }))
                   }
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  LabelProps={{ shrink: true }}
                 />
                 <TextField
                   label="结束日期"
@@ -892,7 +888,7 @@ export default function ContractManagementPage() {
                     }))
                   }
                   placeholder="无固定期限"
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  LabelProps={{ shrink: true }}
                 />
               </Stack>
 
@@ -1246,7 +1242,7 @@ export default function ContractManagementPage() {
                     new_start_date: e.target.value,
                   }))
                 }
-                slotProps={{ inputLabel: { shrink: true } }}
+                LabelProps={{ shrink: true }}
               />
               <TextField
                 label="新合同结束日期"
@@ -1261,7 +1257,7 @@ export default function ContractManagementPage() {
                   }))
                 }
                 placeholder="无固定期限"
-                slotProps={{ inputLabel: { shrink: true } }}
+                LabelProps={{ shrink: true }}
               />
             </Stack>
 

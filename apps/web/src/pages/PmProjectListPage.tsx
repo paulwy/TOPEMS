@@ -12,6 +12,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import type { Project } from "../api/pm";
 import { pmApi } from "../api/pm";
 import { Button } from "../components/ui/button";
@@ -139,19 +140,19 @@ const PmProjectListPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return { bgcolor: "#dcfce7", color: "#166534" };
       case "completed":
-        return "bg-blue-100 text-blue-800";
+        return { bgcolor: "#dbeafe", color: "#1e40af" };
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return { bgcolor: "#fef9c3", color: "#a16207" };
       case "approved":
-        return "bg-purple-100 text-purple-800";
+        return { bgcolor: "#f3e8ff", color: "#7c3aed" };
       case "cancelled":
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "#f3f4f6", color: "#374151" };
       case "draft":
-        return "bg-gray-100 text-gray-600";
+        return { bgcolor: "#f3f4f6", color: "#4b5563" };
       default:
-        return "bg-gray-100 text-gray-800";
+        return { bgcolor: "#f3f4f6", color: "#374151" };
     }
   };
 
@@ -192,37 +193,70 @@ const PmProjectListPage: React.FC = () => {
   ).length;
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">项目管理</h1>
-            <p className="text-gray-500 mt-1">
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "slate.50" }}>
+      <Box sx={{ flex: 1, p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, color: "grey.900" }}
+            >
+              项目管理
+            </Typography>
+            <Typography sx={{ color: "grey.500", mt: 0.5 }}>
               管理所有类型的项目，跟踪进度和状态
-            </p>
-          </div>
+            </Typography>
+          </Box>
           <Button onClick={() => navigate("/pm/projects/create")}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus sx={{ width: 16, height: 16, mr: 1 }} />
             创建项目
           </Button>
-        </div>
+        </Box>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <CardContent sx={{ p: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: { xs: "stretch", md: "center" },
+                justifyContent: "space-between",
+                gap: 2,
+              }}
+            >
+              <Box sx={{ flex: 1, position: "relative" }}>
+                <Search
+                  sx={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 20,
+                    height: 20,
+                    color: "grey.400",
+                  }}
+                />
                 <Input
                   type="text"
                   placeholder="搜索项目名称或编号..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  sx={{ pl: 5 }}
                 />
-              </div>
-              <div className="flex gap-3">
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="w-36">
+              </Box>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Select
+                  value={selectedType}
+                  onValueChange={setSelectedType}
+                >
+                  <SelectTrigger sx={{ width: 144 }}>
                     <SelectValue placeholder="选择类型" />
                   </SelectTrigger>
                   <SelectContent>
@@ -237,7 +271,7 @@ const PmProjectListPage: React.FC = () => {
                   value={selectedStatus}
                   onValueChange={setSelectedStatus}
                 >
-                  <SelectTrigger className="w-36">
+                  <SelectTrigger sx={{ width: 144 }}>
                     <SelectValue placeholder="选择状态" />
                   </SelectTrigger>
                   <SelectContent>
@@ -248,152 +282,280 @@ const PmProjectListPage: React.FC = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-100">
-                <FolderKanban className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">总项目数</p>
-                <p className="text-2xl font-bold text-gray-900">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+            gap: 2,
+            my: 3,
+          }}
+        >
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent
+              sx={{
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "#dbeafe",
+                }}
+              >
+                <FolderKanban sx={{ width: 24, height: 24, color: "#2563eb" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  总项目数
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "grey.900" }}
+                >
                   {projects.length}
-                </p>
-              </div>
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-full bg-green-100">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">进行中</p>
-                <p className="text-2xl font-bold text-green-600">
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent
+              sx={{
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "#dcfce7",
+                }}
+              >
+                <TrendingUp sx={{ width: 24, height: 24, color: "#16a34a" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  进行中
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "#16a34a" }}
+                >
                   {activeCount}
-                </p>
-              </div>
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-full bg-yellow-100">
-                <Calendar className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">待审批</p>
-                <p className="text-2xl font-bold text-yellow-600">
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent
+              sx={{
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "#fef9c3",
+                }}
+              >
+                <Calendar sx={{ width: 24, height: 24, color: "#ca8a04" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  待审批
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "#ca8a04" }}
+                >
                   {pendingCount}
-                </p>
-              </div>
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-full bg-blue-100">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">已完成</p>
-                <p className="text-2xl font-bold text-blue-600">
+          <Card sx={{ "&:hover": { boxShadow: 6 } }}>
+            <CardContent
+              sx={{
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "#dbeafe",
+                }}
+              >
+                <Users sx={{ width: 24, height: 24, color: "#2563eb" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  已完成
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "#2563eb" }}
+                >
                   {completedCount}
-                </p>
-              </div>
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         <Card>
-          <CardHeader className="px-6">
-            <CardTitle className="text-lg">项目列表</CardTitle>
-            <span className="text-sm text-gray-500">
-              共 {totalCount} 个项目
-            </span>
+          <CardHeader sx={{ px: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <CardTitle sx={{ fontSize: "1.125rem" }}>项目列表</CardTitle>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                共 {totalCount} 个项目
+              </Typography>
+            </Box>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
+          <CardContent sx={{ p: 0 }}>
+            <Box sx={{ overflowX: "auto" }}>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[200px]">项目名称</TableHead>
+                    <TableHead sx={{ width: 200 }}>项目名称</TableHead>
                     <TableHead>类型</TableHead>
                     <TableHead>状态</TableHead>
-                    <TableHead className="w-[180px]">进度</TableHead>
+                    <TableHead sx={{ width: 180 }}>进度</TableHead>
                     <TableHead>预算</TableHead>
-                    <TableHead className="w-[150px]">时间</TableHead>
-                    <TableHead className="w-[120px]">操作</TableHead>
+                    <TableHead sx={{ width: 150 }}>时间</TableHead>
+                    <TableHead sx={{ width: 120 }}>操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <TableCell colSpan={7} sx={{ textAlign: "center", py: 6 }}>
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            border: "2px solid",
+                            borderColor: "#2563eb",
+                            borderTopColor: "transparent",
+                            borderRadius: "50%",
+                            mx: "auto",
+                            animation: "spin 1s linear infinite",
+                            "@keyframes spin": {
+                              "0%": { transform: "rotate(0deg)" },
+                              "100%": { transform: "rotate(360deg)" },
+                            },
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   ) : filteredProjects.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={7}
-                        className="text-center py-12 text-gray-500"
+                        sx={{ textAlign: "center", py: 6, color: "grey.500" }}
                       >
                         暂无项目数据
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredProjects.map((project) => (
-                      <TableRow key={project.id} className="hover:bg-gray-50">
+                      <TableRow
+                        key={project.id}
+                        sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                      >
                         <TableCell>
-                          <div>
-                            <p className="font-medium text-gray-900">
+                          <Box>
+                            <Typography
+                              sx={{ fontWeight: 500, color: "grey.900" }}
+                            >
                               {project.name}
-                            </p>
-                            <p className="text-sm text-gray-500">
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.500" }}
+                            >
                               {project.code}
-                            </p>
-                          </div>
+                            </Typography>
+                          </Box>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-600">
+                          <Typography variant="body2" sx={{ color: "grey.600" }}>
                             {getTypeLabel(project.project_type)}
-                          </span>
+                          </Typography>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getStatusColor(project.status)}>
+                          <Badge sx={getStatusColor(project.status)}>
                             {getStatusLabel(project.status)}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="w-24">
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
+                            <Box sx={{ width: 96 }}>
                               <Progress
                                 value={project.progress}
-                                className="h-2"
+                                sx={{ height: 8 }}
                               />
-                            </div>
-                            <span className="text-sm text-gray-600">
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.600" }}
+                            >
                               {project.progress}%
-                            </span>
-                          </div>
+                            </Typography>
+                          </Box>
                         </TableCell>
-                        <TableCell className="text-sm text-gray-600">
+                        <TableCell
+                          sx={{ fontSize: "0.875rem", color: "grey.600" }}
+                        >
                           {formatCurrency(project.budget)}
                         </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          <div>
-                            <p>{formatDate(project.start_date)}</p>
-                            <p className="text-xs text-gray-400">
+                        <TableCell
+                          sx={{ fontSize: "0.875rem", color: "grey.600" }}
+                        >
+                          <Box>
+                            <Typography variant="body2">
+                              {formatDate(project.start_date)}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.400", fontSize: "0.75rem" }}
+                            >
                               至 {formatDate(project.end_date)}
-                            </p>
-                          </div>
+                            </Typography>
+                          </Box>
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -401,9 +563,9 @@ const PmProjectListPage: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                sx={{ width: 32, height: 32 }}
                               >
-                                <MoreVertical className="w-4 h-4" />
+                                <MoreVertical sx={{ width: 16, height: 16 }} />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -412,7 +574,7 @@ const PmProjectListPage: React.FC = () => {
                                   navigate(`/pm/projects/${project.id}`)
                                 }
                               >
-                                <Eye className="w-4 h-4 mr-2" />
+                                <Eye sx={{ width: 16, height: 16, mr: 1 }} />
                                 查看详情
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -420,15 +582,15 @@ const PmProjectListPage: React.FC = () => {
                                   navigate(`/pm/projects/${project.id}/edit`)
                                 }
                               >
-                                <Edit className="w-4 h-4 mr-2" />
+                                <Edit sx={{ width: 16, height: 16, mr: 1 }} />
                                 编辑
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDelete(project.id)}
-                                className="text-red-600"
+                                sx={{ color: "#dc2626" }}
                               >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 sx={{ width: 16, height: 16, mr: 1 }} />
                                 删除
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -439,20 +601,20 @@ const PmProjectListPage: React.FC = () => {
                   )}
                 </TableBody>
               </Table>
-            </div>
+            </Box>
             {!loading && totalPages > 1 && (
-              <div className="p-4 border-t border-gray-200">
+              <Box sx={{ p: 2, borderTop: "1px solid", borderColor: "grey.200" }}>
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />
-              </div>
+              </Box>
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

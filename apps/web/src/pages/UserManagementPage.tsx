@@ -602,7 +602,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 sx={{ width: "100%", pl: 5 }}
               />
             </Box>
-            <Button variant="outlined" onClick={loadData} disabled={loading} startIcon={<RefreshCw size={16} className={loading ? "animate-spin" : ""} />}>
+            <Button variant="outlined" onClick={loadData} disabled={loading} startIcon={<RefreshCw size={16} sx={loading ? { animation: "spin 1s linear infinite" } : {}} />}>
               刷新
             </Button>
           </Box>
@@ -644,7 +644,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Loader2 size={32} className="animate-spin" style={{ color: "#1976d2", margin: "0 auto" }} />
+                <Loader2 sx={{ width: 32, height: 32, color: "#1976d2", animation: "spin 1s linear infinite", mx: "auto" }} />
                 <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
                 </Typography>

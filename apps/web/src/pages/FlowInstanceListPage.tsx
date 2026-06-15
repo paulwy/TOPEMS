@@ -380,7 +380,7 @@ const FlowInstanceListPage: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Button variant="outlined" onClick={loadData} startIcon={loading ? <Loader2 size={20} className="animate-spin" /> : <RefreshIcon />}>
+            <Button variant="outlined" onClick={loadData} startIcon={loading ? <Loader2 size={20} sx={{ animation: loading ? "spin 1s linear infinite" : "none" }} /> : <RefreshIcon />}>
               刷新
             </Button>
           </Stack>
@@ -474,7 +474,7 @@ function RefreshIcon({ className }: { className?: string }) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={className}
+      sx={{ width: 20, height: 20 }}
     >
       <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
       <path d="M3 3v5h5" />

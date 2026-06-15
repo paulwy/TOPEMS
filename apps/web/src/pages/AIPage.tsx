@@ -87,15 +87,15 @@ const ASSISTANT_ROLES: AssistantRoleConfig[] = [
   {
     id: "general",
     name: "通用助手",
-    description: "全能型 AI 助手，可处理各种问题",
-    icon: <Sparkles className="w-4 h-4" />,
+    description: "全能型 AI 助手,可处理各种问题",
+    icon: <Sparkles size={16} />,
     systemPrompt: "你是 TOPEMS 智能助手。请根据以下知识库内容回答用户的问题。",
   },
   {
     id: "data",
     name: "数据分析助手",
     description: "专注于数据处理、分析和可视化",
-    icon: <BarChart3 className="w-4 h-4" />,
+    icon: <BarChart3 size={16} />,
     systemPrompt:
       "你是 TOPEMS 数据分析助手。专注于帮助用户分析数据、生成统计报告、解释数据趋势和提供数据可视化建议。",
   },
@@ -103,7 +103,7 @@ const ASSISTANT_ROLES: AssistantRoleConfig[] = [
     id: "document",
     name: "文档助手",
     description: "帮助理解文档、提取信息和总结内容",
-    icon: <FileSearch className="w-4 h-4" />,
+    icon: <FileSearch size={16} />,
     systemPrompt:
       "你是 TOPEMS 文档助手。专注于帮助用户理解文档内容、提取关键信息、总结文档要点和回答与文档相关的问题。",
   },
@@ -111,9 +111,9 @@ const ASSISTANT_ROLES: AssistantRoleConfig[] = [
     id: "code",
     name: "编程助手",
     description: "提供代码审查、调试和最佳实践建议",
-    icon: <FileText className="w-4 h-4" />,
+    icon: <FileText size={16} />,
     systemPrompt:
-      "你是 TOPEMS 编程助手。专注于帮助用户编写、审查和调试代码，提供编程最佳实践建议，并解释技术概念。",
+      "你是 TOPEMS 编程助手。专注于帮助用户编写、审查和调试代码,提供编程最佳实践建议,并解释技术概念。",
   },
 ];
 
@@ -224,7 +224,7 @@ const AIPage: React.FC = () => {
     const welcomeMessage: Message = {
       id: "welcome",
       role: "assistant",
-      content: `你好！我是 TOPEMS ${ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}，基于本地知识库为您提供服务。请告诉我有什么可以帮助您的？`,
+      content: `你好!我是 TOPEMS ${ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name},基于本地知识库为您提供服务。请告诉我有什么可以帮助您的?`,
       timestamp: new Date(),
     };
 
@@ -303,7 +303,7 @@ const AIPage: React.FC = () => {
   };
 
   const handleDeleteConversation = (conversationId: string) => {
-    if (confirm("确定要删除这个对话吗？")) {
+    if (confirm("确定要删除这个对话吗?")) {
       const updatedConversations = conversations.filter(
         (c) => c.id !== conversationId,
       );
@@ -371,23 +371,34 @@ const AIPage: React.FC = () => {
 
             if (!inline && match) {
               return (
-                <div className="relative group">
-                  <button
+                <Box sx={{ position: "relative" }}>
+                  <Button
                     onClick={() => handleCopyCode(codeContent)}
-                    className="absolute right-2 top-2 p-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                    sx={{
+                      position: "absolute",
+                      right: 1,
+                      top: 1,
+                      p: 0.5,
+                      borderRadius: 1,
+                      bgcolor: "grey.700",
+                      color: "grey.300",
+                      "&:hover": { bgcolor: "grey.600" },
+                      opacity: 0,
+                      transition: "opacity 0.2s",
+                      ".group:hover &": { opacity: 1 },
+                    }}
                     title="复制代码"
                   >
                     {copiedCode === codeContent ? (
-                      <Check className="w-4 h-4 text-green-400" />
+                      <Check size={16} color="#4ade80" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy size={16} />
                     )}
-                  </button>
+                  </Button>
                   <SyntaxHighlighter
                     style={isDark ? vscDarkPlus : vs}
                     language={match[1]}
                     PreTag="div"
-                    className="rounded-md text-sm my-2"
                     customStyle={{
                       margin: 0,
                       borderRadius: "0.5rem",
@@ -397,16 +408,19 @@ const AIPage: React.FC = () => {
                   >
                     {codeContent}
                   </SyntaxHighlighter>
-                </div>
+                </Box>
               );
             } else {
               return (
                 <code
-                  className={`${className} px-1.5 py-0.5 rounded text-sm ${
-                    isDark
-                      ? "bg-gray-700 text-pink-300"
-                      : "bg-gray-100 text-pink-600"
-                  }`}
+                  className={className}
+                  style={{
+                    padding: "0.125rem 0.375rem",
+                    borderRadius: "0.25rem",
+                    fontSize: "0.875rem",
+                    backgroundColor: isDark ? "#374151" : "#f3f4f6",
+                    color: isDark ? "#f9a8d4" : "#db2777",
+                  }}
                   {...props}
                 >
                   {children}
@@ -416,76 +430,107 @@ const AIPage: React.FC = () => {
           },
           // 其他 Markdown 元素的样式
           h1: ({ ...props }) => (
-            <h1
-              className="text-2xl font-bold mb-4 mt-6 text-gray-900 dark:text-gray-100"
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ fontWeight: 700, mb: 2, mt: 3 }}
               {...props}
             />
           ),
           h2: ({ ...props }) => (
-            <h2
-              className="text-xl font-semibold mb-3 mt-5 text-gray-900 dark:text-gray-100"
+            <Typography
+              variant="h5"
+              component="h2"
+              sx={{ fontWeight: 600, mb: 1.5, mt: 2.5 }}
               {...props}
             />
           ),
           h3: ({ ...props }) => (
-            <h3
-              className="text-lg font-semibold mb-2 mt-4 text-gray-900 dark:text-gray-100"
+            <Typography
+              variant="h6"
+              component="h3"
+              sx={{ fontWeight: 600, mb: 1, mt: 2 }}
               {...props}
             />
           ),
           p: ({ ...props }) => (
-            <p
-              className="mb-3 leading-relaxed text-gray-700 dark:text-gray-300"
+            <Typography
+              component="p"
+              sx={{ mb: 1.5, lineHeight: 1.625 }}
               {...props}
             />
           ),
           ul: ({ ...props }) => (
-            <ul
-              className="list-disc pl-6 mb-3 space-y-1 text-gray-700 dark:text-gray-300"
+            <Box
+              component="ul"
+              sx={{ pl: 3, mb: 1.5, listStyleType: "disc" }}
               {...props}
             />
           ),
           ol: ({ ...props }) => (
-            <ol
-              className="list-decimal pl-6 mb-3 space-y-1 text-gray-700 dark:text-gray-300"
+            <Box
+              component="ol"
+              sx={{ pl: 3, mb: 1.5, listStyleType: "decimal" }}
               {...props}
             />
           ),
-          li: ({ ...props }) => <li className="mb-1" {...props} />,
+          li: ({ ...props }) => (
+            <Box component="li" sx={{ mb: 0.5 }} {...props} />
+          ),
           blockquote: ({ ...props }) => (
-            <blockquote
-              className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 py-1 my-3 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+            <Box
+              component="blockquote"
+              sx={{
+                borderLeft: 4,
+                borderColor: "divider",
+                pl: 2,
+                py: 0.5,
+                my: 1.5,
+                bgcolor: "grey.50",
+              }}
               {...props}
             />
           ),
           a: ({ ...props }) => (
             <a
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              style={{ color: "#2563eb", textDecoration: "none" }}
               target="_blank"
               rel="noopener noreferrer"
               {...props}
             />
           ),
           table: ({ ...props }) => (
-            <div className="overflow-x-auto my-3">
+            <Box sx={{ overflowX: "auto", my: 1.5 }}>
               <table
-                className="min-w-full border-collapse border border-gray-300 dark:border-gray-600"
+                style={{
+                  minWidth: "100%",
+                  borderCollapse: "collapse",
+                  border: "1px solid #d1d5db",
+                }}
                 {...props}
               />
-            </div>
+            </Box>
           ),
           thead: ({ ...props }) => (
-            <thead className="bg-gray-100 dark:bg-gray-800" {...props} />
+            <thead style={{ bgcolor: "#f3f4f6" }} {...props} />
           ),
           th: ({ ...props }) => (
             <th
-              className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left text-gray-900 dark:text-gray-100 font-semibold"
+              style={{
+                border: "1px solid #d1d5db",
+                padding: "0.5rem 1rem",
+                textAlign: "left",
+                fontWeight: 600,
+              }}
               {...props}
             />
           ),
           td: ({ ...props }) => (
             <td
-              className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-300"
+              style={{
+                border: "1px solid #d1d5db",
+                padding: "0.5rem 1rem",
+              }}
               {...props}
             />
           ),
@@ -523,8 +568,8 @@ const AIPage: React.FC = () => {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: response.success
-          ? (response.data?.answer ?? "抱歉，处理您的请求时出现了问题。")
-          : "抱歉，处理您的请求时出现了问题。",
+          ? (response.data?.answer ?? "抱歉,处理您的请求时出现了问题。")
+          : "抱歉,处理您的请求时出现了问题。",
         timestamp: new Date(),
       };
 
@@ -535,7 +580,7 @@ const AIPage: React.FC = () => {
       if (currentConversationId) {
         const updatedConversations = conversations.map((conv) => {
           if (conv.id === currentConversationId) {
-            // 自动生成标题（使用第一条用户消息或前30个字符）
+            // 自动生成标题(使用第一条用户消息或前30个字符)
             const firstUserMessage = finalMessages.find(
               (m) => m.role === "user",
             );
@@ -569,7 +614,7 @@ const AIPage: React.FC = () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "抱歉，连接 AI 服务时出现了问题，请稍后重试。",
+        content: "抱歉,连接 AI 服务时出现了问题,请稍后重试。",
         timestamp: new Date(),
       };
 
@@ -613,79 +658,86 @@ const AIPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+    <Box sx={{ display: "flex", height: "100vh", bgcolor: "grey.50" }}>
+      <Box
+        sx={{
+          width: 288,
+          bgcolor: "background.paper",
+          borderRight: 1,
+          borderColor: "divider",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
               AI 智能助手
-            </h2>
-            <div className="flex items-center space-x-2">
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft size={20} />
               </Button>
               <ModeToggle />
-            </div>
-          </div>
+            </Box>
+          </Box>
           <Tabs
             value={activeTab}
             onChange={(_, v) =>
               setActiveTab(v as "chat" | "documents" | "analysis" | "manage")
             }
-            sx={{ width: "100%", mb: 2 }}
+            sx={{ width: "100%", mb: 2, display: "flex" }}
           >
-            <Box sx={{ display: "flex", gridTemplateColumns: "repeat(4, 1fr)", width: "100%" }}>
-              <Tab
-                value="chat"
-                icon={<MessageSquare className="w-4 h-4" />}
-                iconPosition="start"
-                label="AI 聊天"
-                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
-              />
-              <Tab
-                value="documents"
-                icon={<Wand2 className="w-4 h-4" />}
-                iconPosition="start"
-                label="文档生成"
-                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
-              />
-              <Tab
-                value="analysis"
-                icon={<BarChart2 className="w-4 h-4" />}
-                iconPosition="start"
-                label="文本分析"
-                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
-              />
-              <Tab
-                value="manage"
-                icon={<FileStack className="w-4 h-4" />}
-                iconPosition="start"
-                label="文档管理"
-                sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
-              />
-            </Box>
+            <Tab
+              value="chat"
+              icon={<MessageSquare size={16} />}
+              iconPosition="start"
+              label="AI 聊天"
+              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+            />
+            <Tab
+              value="documents"
+              icon={<Wand2 size={16} />}
+              iconPosition="start"
+              label="文档生成"
+              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+            />
+            <Tab
+              value="analysis"
+              icon={<BarChart2 size={16} />}
+              iconPosition="start"
+              label="文本分析"
+              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+            />
+            <Tab
+              value="manage"
+              icon={<FileStack size={16} />}
+              iconPosition="start"
+              label="文档管理"
+              sx={{ flex: 1, minHeight: 48, fontSize: "0.75rem" }}
+            />
           </Tabs>
           {activeTab === "chat" && (
-            <Button onClick={handleNewConversation} className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
+            <Button onClick={handleNewConversation} sx={{ width: "100%" }}>
+              <Plus size={16} style={{ marginRight: 8 }} />
               新对话
             </Button>
           )}
-        </div>
+        </Box>
 
         {activeTab === "chat" && (
-          <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+          <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
             <Button
               variant="text"
               onClick={(e) => setMenuAnchor(e.currentTarget)}
               sx={{ width: "100%", justifyContent: "flex-start" }}
             >
-              <div className="flex items-center space-x-2">
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.icon}
-                <span className="text-sm">
+                <Typography variant="body2">
                   {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
-                </span>
-              </div>
+                </Typography>
+              </Box>
             </Button>
             <Menu
               anchorEl={menuAnchor}
@@ -700,173 +752,274 @@ const AIPage: React.FC = () => {
                     setMenuAnchor(null);
                   }}
                 >
-                  <div className="flex items-center space-x-2">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     {role.icon}
-                    <div>
-                      <p className="text-sm font-medium">{role.name}</p>
-                      <p className="text-xs text-gray-500">
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {role.name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "grey.500" }}>
                         {role.description}
-                      </p>
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                  </Box>
                 </MenuItem>
               ))}
             </Menu>
-          </div>
+          </Box>
         )}
 
         {activeTab === "chat" && (
-          <div className="flex-1 overflow-y-auto p-4">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: "grey.500", mb: 1.5 }}
+            >
               最近对话
-            </h3>
-            <div className="space-y-2">
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {conversations.map((conv) => (
-                <div key={conv.id} className="group">
-                  <div
+                <Box
+                  key={conv.id}
+                  sx={{
+                    "& .conv-delete-btn": { opacity: 0 },
+                    "&:hover .conv-delete-btn": { opacity: 1 },
+                  }}
+                >
+                  <Box
                     onClick={() => handleSelectConversation(conv.id)}
-                    className={`p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                      currentConversationId === conv.id
-                        ? "bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800"
-                        : ""
-                    }`}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 2,
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                      "&:hover": { bgcolor: "grey.100" },
+                      ...(currentConversationId === conv.id
+                        ? {
+                            bgcolor: "purple.50",
+                            border: 1,
+                            borderColor: "purple.200",
+                          }
+                        : {}),
+                    }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3 flex-1 min-w-0">
-                        <div className="flex items-center">
+                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
                           {conv.assistantRole &&
                             ASSISTANT_ROLES.find(
                               (r) => r.id === conv.assistantRole,
                             )?.icon}
                           {!conv.assistantRole && (
                             <MessageSquare
-                              className={`w-5 h-5 ${currentConversationId === conv.id ? "text-purple-500" : "text-gray-400"}`}
+                              size={20}
+                              color={
+                                currentConversationId === conv.id
+                                  ? "#a855f7"
+                                  : "#9ca3af"
+                              }
                             />
                           )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={`text-sm font-medium line-clamp-1 ${currentConversationId === conv.id ? "text-purple-700 dark:text-purple-300" : "text-gray-900 dark:text-gray-100"}`}
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 500,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              color:
+                                currentConversationId === conv.id
+                                  ? "purple.700"
+                                  : "text.primary",
+                            }}
                           >
                             {conv.title}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "grey.500",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 1,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
                             {conv.lastMessage}
-                          </p>
-                        </div>
-                      </div>
+                          </Typography>
+                        </Box>
+                      </Box>
                       <Button
                         variant="text"
                         size="small"
+                        className="conv-delete-btn"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConversation(conv.id);
                         }}
-                        className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        sx={{
+                          color: "error.main",
+                          "&:hover": {
+                            bgcolor: "error.light",
+                          },
+                        }}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 size={16} />
                       </Button>
-                    </div>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "grey.400",
+                        mt: 0.5,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Clock size={12} style={{ marginRight: 4 }} />
                       {formatTime(conv.updatedAt)}
-                    </p>
-                  </div>
-                </div>
+                    </Typography>
+                  </Box>
+                </Box>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {activeTab === "documents" && (
-          <div className="flex-1 overflow-y-auto p-4">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: "grey.500", mb: 1.5 }}
+            >
               快速开始
-            </h3>
-            <div className="space-y-3">
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               <Card
-                className="cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                sx={{
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                  "&:hover": { bgcolor: "purple.50" },
+                }}
                 onClick={() => setShowDocumentGenerator(true)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Wand2 className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box sx={{ p: 1, bgcolor: "purple.100", borderRadius: 2 }}>
+                      <Wand2 size={20} color="#9333ea" />
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         新建文档
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        选择模板，AI 自动生成
-                      </p>
-                    </div>
-                  </div>
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "grey.500" }}>
+                        选择模板,AI 自动生成
+                      </Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="space-y-2">
+        <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {activeTab === "chat" && (
               <Button
                 variant="text"
                 onClick={handleToggleDocuments}
-                className="w-full justify-start"
+                sx={{ width: "100%", justifyContent: "flex-start" }}
               >
-                <BookOpen className="w-4 h-4 mr-3" />
+                <BookOpen size={16} style={{ marginRight: 12 }} />
                 文档库 ({documents.length})
               </Button>
             )}
             <Button
               variant="text"
               onClick={handleSettings}
-              className="w-full justify-start"
+              sx={{ width: "100%", justifyContent: "flex-start" }}
             >
-              <Settings className="w-4 h-4 mr-3" />
+              <Settings size={16} style={{ marginRight: 12 }} />
               设置
             </Button>
-          </div>
+          </Box>
           {showDocuments && activeTab === "chat" && (
-            <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg max-h-40 overflow-y-auto">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                知识库文档列表：
-              </p>
+            <Box
+              sx={{
+                mt: 1,
+                p: 1.5,
+                bgcolor: "grey.100",
+                borderRadius: 2,
+                maxHeight: 160,
+                overflowY: "auto",
+              }}
+            >
+              <Typography variant="caption" sx={{ color: "grey.500", mb: 1, display: "block" }}>
+                知识库文档列表:
+              </Typography>
               {documents.map((doc) => (
-                <div
+                <Box
                   key={doc.id}
-                  className="text-sm text-gray-700 dark:text-gray-300 truncate py-1 hover:text-purple-600 dark:hover:text-purple-400 cursor-pointer"
+                  sx={{
+                    fontSize: "0.875rem",
+                    color: "grey.700",
+                    py: 0.5,
+                    cursor: "pointer",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    "&:hover": { color: "purple.600" },
+                  }}
                 >
                   • {doc.title}
-                </div>
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="flex-1 flex flex-col">
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {activeTab === "chat" && (
           <>
-            <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <Brain className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+            <Box
+              component="header"
+              sx={{
+                bgcolor: "background.paper",
+                borderBottom: 1,
+                borderColor: "divider",
+                p: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      background: "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Brain size={24} color="white" />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontWeight: 600 }}>
                       TOPEMS{" "}
                       {ASSISTANT_ROLES.find((r) => r.id === currentRole)?.name}
-                    </h3>
-                    <p className="text-sm text-green-600 dark:text-green-400">
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "success.main" }}>
                       在线
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <TextField
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -880,89 +1033,188 @@ const AIPage: React.FC = () => {
                     size="small"
                     onClick={handleSearch}
                   >
-                    <Search className="w-4 h-4" />
+                    <Search size={16} />
                   </Button>
-                </div>
-              </div>
-            </header>
+                </Box>
+              </Box>
+            </Box>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <Box
+              sx={{
+                flex: 1,
+                overflowY: "auto",
+                p: 3,
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+              }}
+            >
               {messages.map((message) => (
-                <div
+                <Box
                   key={message.id}
-                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                  sx={{
+                    display: "flex",
+                    justifyContent:
+                      message.role === "user" ? "flex-end" : "flex-start",
+                  }}
                 >
-                  <div className="max-w-3xl w-full">
-                    <div
-                      className={`flex items-start space-x-3 ${message.role === "user" ? "flex-row-reverse space-x-reverse" : ""}`}
+                  <Box sx={{ maxWidth: 768, width: "100%" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 1.5,
+                        flexDirection:
+                          message.role === "user" ? "row-reverse" : "row",
+                      }}
                     >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          message.role === "user"
-                            ? "bg-blue-500 text-white"
-                            : "bg-gradient-to-br from-purple-500 to-blue-500 text-white"
-                        }`}
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          color: "common.white",
+                          ...(message.role === "user"
+                            ? { bgcolor: "primary.main" }
+                            : {
+                                background:
+                                  "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                              }),
+                        }}
                       >
                         {message.role === "user" ? (
-                          <span className="text-sm">U</span>
+                          <Typography variant="body2" sx={{ color: "common.white" }}>U</Typography>
                         ) : (
-                          <Bot className="w-5 h-5" />
+                          <Bot size={20} />
                         )}
-                      </div>
-                      <div
-                        className={`rounded-lg p-4 max-w-2xl ${
-                          message.role === "user"
-                            ? "bg-blue-600 text-white"
-                            : "bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700"
-                        }`}
+                      </Box>
+                      <Box
+                        sx={{
+                          borderRadius: 2,
+                          p: 2,
+                          maxWidth: 672,
+                          ...(message.role === "user"
+                            ? { bgcolor: "primary.main", color: "common.white" }
+                            : {
+                                bgcolor: "background.paper",
+                                boxShadow: 1,
+                              }),
+                        }}
                       >
                         {message.role === "user" ? (
-                          <p className="text-white whitespace-pre-wrap">
+                          <Typography
+                            sx={{
+                              color: "common.white",
+                              whiteSpace: "pre-wrap",
+                            }}
+                          >
                             {message.content}
-                          </p>
+                          </Typography>
                         ) : (
                           <MarkdownRenderer
                             content={message.content}
                             isDark={false}
                           />
                         )}
-                        <p
-                          className={`text-xs mt-2 ${message.role === "user" ? "text-blue-100" : "text-gray-400 dark:text-gray-500"}`}
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            mt: 1,
+                            display: "block",
+                            color:
+                              message.role === "user"
+                                ? "rgba(255,255,255,0.8)"
+                                : "grey.500",
+                          }}
                         >
                           {formatTime(message.timestamp)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
               ))}
 
               {isTyping && (
-                <div className="flex justify-start">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <Bot className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 rounded-lg px-4 py-3 shadow-sm flex items-center space-x-2">
-                      <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
-                      <span className="text-gray-600 dark:text-gray-300 text-sm">
+                <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        background: "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Bot size={20} color="white" />
+                    </Box>
+                    <Box
+                      sx={{
+                        bgcolor: "background.paper",
+                        borderRadius: 2,
+                        px: 2,
+                        py: 1.5,
+                        boxShadow: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          animation: "spin 1s linear infinite",
+                          "@keyframes spin": {
+                            "0%": { transform: "rotate(0deg)" },
+                            "100%": { transform: "rotate(360deg)" },
+                          },
+                        }}
+                      >
+                        <Loader2 size={16} color="#a855f7" />
+                      </Box>
+                      <Typography variant="body2" sx={{ color: "grey.600" }}>
                         正在思考...
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
               )}
               <div ref={messagesEndRef} />
-            </div>
+            </Box>
 
-            <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center space-x-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: "background.paper",
+                borderTop: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Box sx={{ maxWidth: 896, mx: "auto" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 2,
+                    bgcolor: "grey.100",
+                    borderRadius: 3,
+                    border: 1,
+                    borderColor: "divider",
+                  }}
+                >
                   <Button variant="text" size="small">
-                    <Plus className="w-5 h-5" />
+                    <Plus size={20} />
                   </Button>
                   <Button variant="text" size="small">
-                    <FileText className="w-5 h-5" />
+                    <FileText size={20} />
                   </Button>
                   <TextField
                     value={inputText}
@@ -979,68 +1231,88 @@ const AIPage: React.FC = () => {
                     disabled={!inputText.trim() || isTyping}
                   >
                     {loading ? (
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      <Box
+                        sx={{
+                          display: "inline-flex",
+                          mr: 1,
+                          animation: "spin 1s linear infinite",
+                          "@keyframes spin": {
+                            "0%": { transform: "rotate(0deg)" },
+                            "100%": { transform: "rotate(360deg)" },
+                          },
+                        }}
+                      >
+                        <Loader2 size={20} />
+                      </Box>
                     ) : (
-                      <Send className="w-5 h-5 mr-2" />
+                      <Send size={20} style={{ marginRight: 8 }} />
                     )}
                     发送
                   </Button>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                  AI 基于知识库回答，建议仅作参考
-                </p>
-              </div>
-            </div>
+                </Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "grey.500",
+                    textAlign: "center",
+                    mt: 1,
+                    display: "block",
+                  }}
+                >
+                  AI 基于知识库回答,建议仅作参考
+                </Typography>
+              </Box>
+            </Box>
           </>
         )}
 
         {activeTab === "documents" && (
-          <div className="flex-1 p-6">
-            <Card className="h-full">
+          <Box sx={{ flex: 1, p: 3 }}>
+            <Card sx={{ height: "100%" }}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Wand2 className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-xl">AI 文档生成</Typography>
-                      <p className="text-sm text-gray-500">
-                        选择模板，填写信息，AI 帮你生成专业文档
-                      </p>
-                    </div>
-                  </div>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box sx={{ p: 1, bgcolor: "purple.100", borderRadius: 2 }}>
+                      <Wand2 size={24} color="#9333ea" />
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>AI 文档生成</Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        选择模板,填写信息,AI 帮你生成专业文档
+                      </Typography>
+                    </Box>
+                  </Box>
                   <Button onClick={() => setShowDocumentGenerator(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus size={16} style={{ marginRight: 8 }} />
                     开始创建
                   </Button>
-                </div>
+                </Box>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
-                  <Wand2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>点击"开始创建"选择模板并生成文档</p>
-                </div>
+                <Box sx={{ textAlign: "center", py: 6, color: "grey.500" }}>
+                  <Wand2 size={64} color="#9ca3af" style={{ margin: "0 auto 16px", opacity: 0.5 }} />
+                  <Typography>点击"开始创建"选择模板并生成文档</Typography>
+                </Box>
               </CardContent>
             </Card>
-          </div>
+          </Box>
         )}
 
         {activeTab === "analysis" && (
-          <div className="flex-1 p-6">
-            <Card className="h-full">
+          <Box sx={{ flex: 1, p: 3 }}>
+            <Card sx={{ height: "100%" }}>
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <BarChart2 className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-xl">AI 文本分析</Typography>
-                    <p className="text-sm text-gray-500">
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box sx={{ p: 1, bgcolor: "blue.100", borderRadius: 2 }}>
+                    <BarChart2 size={24} color="#2563eb" />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>AI 文本分析</Typography>
+                    <Typography variant="body2" sx={{ color: "grey.500" }}>
                       对文本进行情感分析、分类、实体提取和关键词提取
-                    </p>
-                  </div>
-                </div>
+                    </Typography>
+                  </Box>
+                </Box>
               </CardHeader>
               <CardContent>
                 <AIAnalyzer
@@ -1056,15 +1328,15 @@ const AIPage: React.FC = () => {
                 />
               </CardContent>
             </Card>
-          </div>
+          </Box>
         )}
 
         {activeTab === "manage" && (
-          <div className="flex-1 p-6 overflow-auto">
+          <Box sx={{ flex: 1, p: 3, overflow: "auto" }}>
             <DocumentManager />
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
 
       <AISettingsModal
         isOpen={showSettings}
@@ -1086,7 +1358,7 @@ const AIPage: React.FC = () => {
           });
         }}
       />
-    </div>
+    </Box>
   );
 };
 

@@ -580,28 +580,28 @@ const DocumentsPage: React.FC = () => {
   const selectedFolder = folders.find((f) => f.id === selectedFolderId);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+      <Box component="header" sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }}>
+        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
                 文件管理
-              </h1>
+              </Typography>
               {selectedFolder && (
-                <span className="text-gray-500 dark:text-gray-400">
+                <Typography sx={{ color: "grey.500" }}>
                   / {selectedFolder.name}
-                </span>
+                </Typography>
               )}
-            </div>
-            <div className="flex items-center space-x-3">
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <ModeToggle />
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Box sx={{ position: "relative", flex: "1 1 auto", maxWidth: 320 }}>
+                <Search sx={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "grey.400" }} />
                 <TextField
                   type="text"
                   placeholder="搜索文件..."
@@ -610,7 +610,7 @@ const DocumentsPage: React.FC = () => {
                   size="small"
                   sx={{ pl: 10, width: "100%" }}
                 />
-              </div>
+              </Box>
               <Tooltip title="筛选">
                 <span>
                   <Button
@@ -618,43 +618,35 @@ const DocumentsPage: React.FC = () => {
                     size="small"
                     onClick={() => setShowFilters(!showFilters)}
                   >
-                    <Filter className="w-4 h-4" />
+                    <Filter sx={{ width: 16, height: 16 }} />
                   </Button>
                 </span>
               </Tooltip>
-              <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <Box sx={{ display: "flex", alignItems: "center", bgcolor: "grey.200", borderRadius: 2, p: 0.5 }}>
                 <Button
                   variant="text"
                   size="small"
                   onClick={() => setViewMode("grid")}
-                  className={
-                    viewMode === "grid"
-                      ? "bg-white dark:bg-gray-600 shadow"
-                      : ""
-                  }
+                  sx={{ bgcolor: viewMode === "grid" ? "background.paper" : "transparent", boxShadow: viewMode === "grid" ? 1 : 0 }}
                 >
-                  <Grid3X3 className="w-4 h-4" />
+                  <Grid3X3 sx={{ width: 16, height: 16 }} />
                 </Button>
                 <Button
                   variant="text"
                   size="small"
                   onClick={() => setViewMode("list")}
-                  className={
-                    viewMode === "list"
-                      ? "bg-white dark:bg-gray-600 shadow"
-                      : ""
-                  }
+                  sx={{ bgcolor: viewMode === "list" ? "background.paper" : "transparent", boxShadow: viewMode === "list" ? 1 : 0 }}
                 >
-                  <List className="w-4 h-4" />
+                  <List sx={{ width: 16, height: 16 }} />
                 </Button>
-              </div>
+              </Box>
               <Tooltip title="新建文件夹">
                 <span>
                   <Button
                     variant="text"
                     onClick={() => setShowCreateFolderModal(true)}
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus sx={{ width: 20, height: 20 }} />
                   </Button>
                 </span>
               </Tooltip>
@@ -662,7 +654,7 @@ const DocumentsPage: React.FC = () => {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
               >
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload sx={{ width: 16, height: 16, mr: 1 }} />
                 <span>{uploading ? "上传中..." : "上传"}</span>
               </Button>
               <input
@@ -672,18 +664,18 @@ const DocumentsPage: React.FC = () => {
                 onChange={handleFileUpload}
                 accept="*/*"
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {/* Filters Bar */}
           {showFilters && (
-            <div className="flex items-center space-x-4 py-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-2">
-                <Type className="w-4 h-4 text-gray-400" />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, py: 1.5, borderTop: 1, borderColor: "divider" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Type sx={{ width: 16, height: 16, color: "grey.400" }} />
                 <select
                   value={fileTypeFilter}
                   onChange={(e) => setFileTypeFilter(e.target.value)}
-                  className="bg-gray-100 dark:bg-gray-700 border-none rounded-lg px-3 py-1.5 text-sm"
+                  style={{ backgroundColor: "transparent", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: "0.875rem" }}
                 >
                   <option value="all">全部类型</option>
                   <option value="pdf">PDF</option>
@@ -694,123 +686,114 @@ const DocumentsPage: React.FC = () => {
                   <option value="jpg">图片</option>
                   <option value="zip">压缩包</option>
                 </select>
-              </div>
-              <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-gray-400" />
+              </Box>
+              <Box sx={{ width: 1, height: 16, bgcolor: "grey.300" }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Clock sx={{ width: 16, height: 16, color: "grey.400" }} />
                 <Button
                   variant="text"
                   size="small"
                   onClick={() => toggleSort("date")}
-                  className={
-                    sortBy === "date" ? "text-blue-600 dark:text-blue-400" : ""
-                  }
+                  sx={{ color: sortBy === "date" ? "primary.main" : "grey.700" }}
                 >
                   时间{" "}
                   {sortBy === "date" &&
                     (sortOrder === "asc" ? (
-                      <SortAsc className="w-3 h-3 ml-1" />
+                      <SortAsc sx={{ width: 12, height: 12, ml: 0.5 }} />
                     ) : (
-                      <SortDesc className="w-3 h-3 ml-1" />
+                      <SortDesc sx={{ width: 12, height: 12, ml: 0.5 }} />
                     ))}
                 </Button>
                 <Button
                   variant="text"
                   size="small"
                   onClick={() => toggleSort("name")}
-                  className={
-                    sortBy === "name" ? "text-blue-600 dark:text-blue-400" : ""
-                  }
+                  sx={{ color: sortBy === "name" ? "primary.main" : "grey.700" }}
                 >
                   名称{" "}
                   {sortBy === "name" &&
                     (sortOrder === "asc" ? (
-                      <SortAsc className="w-3 h-3 ml-1" />
+                      <SortAsc sx={{ width: 12, height: 12, ml: 0.5 }} />
                     ) : (
-                      <SortDesc className="w-3 h-3 ml-1" />
+                      <SortDesc sx={{ width: 12, height: 12, ml: 0.5 }} />
                     ))}
                 </Button>
                 <Button
                   variant="text"
                   size="small"
                   onClick={() => toggleSort("size")}
-                  className={
-                    sortBy === "size" ? "text-blue-600 dark:text-blue-400" : ""
-                  }
+                  sx={{ color: sortBy === "size" ? "primary.main" : "grey.700" }}
                 >
                   大小{" "}
                   {sortBy === "size" &&
                     (sortOrder === "asc" ? (
-                      <SortAsc className="w-3 h-3 ml-1" />
+                      <SortAsc sx={{ width: 12, height: 12, ml: 0.5 }} />
                     ) : (
-                      <SortDesc className="w-3 h-3 ml-1" />
+                      <SortDesc sx={{ width: 12, height: 12, ml: 0.5 }} />
                     ))}
                 </Button>
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
-        </div>
-      </header>
+        </Box>
+      </Box>
 
       {/* Upload Progress */}
       {uploading && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Card className="bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 2 }}>
+          <Card sx={{ bgcolor: "primary.50", border: 1, borderColor: "primary.200" }}>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, color: "primary.900" }}>
                   文件上传中...
-                </span>
-                <span className="text-sm text-blue-700 dark:text-blue-300">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "primary.700" }}>
                   {uploadProgress}%
-                </span>
-              </div>
-              <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
-                <div
-                  className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
+                </Typography>
+              </Box>
+              <Box sx={{ width: "100%", bgcolor: "primary.200", borderRadius: 1, height: 8 }}>
+                <Box sx={{ bgcolor: "primary.main", height: 8, borderRadius: 1, transition: "width 0.3s", width: `${uploadProgress}%` }} />
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
       )}
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
+      <Box component="main" sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 4 }}>
+        <Box sx={{ display: "flex", gap: 4 }}>
           {/* Sidebar */}
-          <div className="w-64 flex-shrink-0">
-            <Card className="sticky top-24">
-              <CardContent className="p-4">
-                <div className="space-y-1">
+          <Box sx={{ width: 256, flexShrink: 0 }}>
+            <Card sx={{ position: "sticky", top: 96 }}>
+              <CardContent sx={{ p: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                   <Button
                     variant="text"
                     onClick={() => handleFolderSelect(null)}
-                    className="w-full justify-start"
+                    sx={{ justifyContent: "flex-start", width: "100%" }}
                   >
                     {selectedFolderId === null ? (
-                      <FolderOpen className="w-5 h-5 mr-3" />
+                      <FolderOpen sx={{ width: 20, height: 20, mr: 1.5 }} />
                     ) : (
-                      <Folder className="w-5 h-5 mr-3" />
+                      <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
                     )}
-                    <span className="font-medium">全部文件</span>
+                    <span style={{ fontWeight: 500 }}>全部文件</span>
                   </Button>
 
                   {folders.map((folder) => (
-                    <div key={folder.id} className="group">
-                      <div className="flex items-center">
+                    <Box key={folder.id} sx={{ "&:hover > .delete-btn": { opacity: 1 } }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
                         <Button
                           variant="text"
                           onClick={() => handleFolderSelect(folder.id)}
-                          className="flex-1 justify-start"
+                          sx={{ flex: 1, justifyContent: "flex-start" }}
                         >
                           {selectedFolderId === folder.id ? (
-                            <FolderOpen className="w-5 h-5 mr-3" />
+                            <FolderOpen sx={{ width: 20, height: 20, mr: 1.5 }} />
                           ) : (
-                            <Folder className="w-5 h-5 mr-3" />
+                            <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
                           )}
-                          <span className="font-medium truncate">
+                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {folder.name}
                           </span>
                         </Button>
@@ -819,28 +802,29 @@ const DocumentsPage: React.FC = () => {
                             <Button
                               variant="text"
                               size="small"
-                              className="text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                              className="delete-btn"
+                              sx={{ opacity: 0, color: "grey.400", "&:hover": { color: "error.main", bgcolor: "error.50" } }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteFolder(folder.id, folder.name);
                               }}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 sx={{ width: 16, height: 16 }} />
                             </Button>
                           </span>
                         </Tooltip>
-                      </div>
-                    </div>
+                      </Box>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               </CardContent>
             </Card>
-          </div>
+          </Box>
 
           {/* Content Area */}
-          <div className="flex-1">
+          <Box sx={{ flex: 1 }}>
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 4 }, gap: 3, mb: 3 }}>
               <StatCard
                 icon={Folder}
                 title="文件夹"
@@ -865,84 +849,149 @@ const DocumentsPage: React.FC = () => {
                 value={String(files.length)}
                 color="green"
               />
-            </div>
+            </Box>
 
             {/* Batch Actions Bar */}
             {selectedFiles.length > 0 && (
-              <Card className="mb-6 border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
-                <CardContent className="p-3 flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              <Card sx={{ mb: 3, border: 1, borderColor: "primary.200", bgcolor: "primary.50" }}>
+                <CardContent sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: "primary.900" }}>
                       已选择 {selectedFiles.length} 个文件
-                    </span>
+                    </Typography>
                     <Button variant="text" size="small" onClick={clearSelection}>
                       取消选择
                     </Button>
-                  </div>
-                  <div className="flex items-center space-x-2">
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Button
                       variant="contained"
                       size="small"
                       color="error"
                       onClick={handleBatchDelete}
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
+                      <Trash2 sx={{ width: 16, height: 16, mr: 1 }} />
                       批量删除
                     </Button>
-                  </div>
+                  </Box>
                 </CardContent>
               </Card>
             )}
 
             {/* Drag and Drop Zone */}
-            <div
+            <Box
               ref={dropZoneRef}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`mb-6 border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-                isDragging
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
-                  : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-              }`}
+              sx={{ mb: 3, border: 2, borderStyle: "dashed", borderRadius: 3, p: 4, textAlign: "center", borderColor: isDragging ? "primary.main" : "grey.300", bgcolor: isDragging ? "primary.50" : "transparent", "&:hover": { borderColor: "grey.400" }, transition: "all 0.2s" }}
             >
-              <Upload
-                className={`w-12 h-12 mx-auto mb-4 ${isDragging ? "text-blue-500" : "text-gray-400"}`}
-              />
-              <p
-                className={`text-lg font-medium mb-2 ${isDragging ? "text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-300"}`}
-              >
+              <Upload sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: isDragging ? "primary.main" : "grey.400" }} />
+              <Typography variant="h6" sx={{ mb: 1, color: isDragging ? "primary.main" : "grey.700" }}>
                 {isDragging ? "释放以上传文件" : "拖拽文件到这里上传"}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
                 支持 PDF、Word、Excel、图片等格式
-              </p>
-            </div>
+              </Typography>
+            </Box>
 
             {/* Files Grid/List */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
               <Tabs value={viewMode} onChange={(_, val) => setViewMode(val as "grid" | "list")}>
                 <Tab value="grid" label="网格视图" />
                 <Tab value="list" label="列表视图" />
               </Tabs>
             </Box>
             {viewMode === "grid" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredItems.map((item) =>
-                    item.type === "folder" ? (
-                      <Card
-                        key={item.id}
-                        className="hover:shadow-lg transition-all cursor-pointer"
-                        onClick={() => handleFolderSelect(item.id)}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="w-14 h-14 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                              <Folder className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Tooltip title="删除文件夹">
-                                <span>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2, lg: 3, xl: 4 }, gap: 3 }}>
+                {filteredItems.map((item) =>
+                  item.type === "folder" ? (
+                    <Card
+                      key={item.id}
+                      onClick={() => handleFolderSelect(item.id)}
+                      sx={{ "&:hover": { boxShadow: 6 }, transition: "box-shadow 0.2s", cursor: "pointer" }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                          <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: "primary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Folder sx={{ width: 28, height: 28, color: "primary.main" }} />
+                          </Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0 }}>
+                            <Tooltip title="删除文件夹">
+                              <Button
+                                variant="text"
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFolder(item.id, item.name);
+                                }}
+                              >
+                                <Trash2 sx={{ width: 16, height: 16 }} />
+                              </Button>
+                            </Tooltip>
+                          </Box>
+                        </Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {item.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          <span>{item.updatedAt}</span>
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <FileCard
+                      key={item.id}
+                      file={item}
+                      onStarToggle={(id) => toggleStar(id)}
+                      onDownload={handleDownload}
+                      onPreview={handlePreview}
+                      isSelected={selectedFiles.includes(item.id)}
+                      onSelect={toggleFileSelect}
+                    />
+                  ),
+                )}
+              </Box>
+            )}
+            {viewMode === "list" && (
+              <Card sx={{ overflow: "hidden" }}>
+                <CardContent sx={{ p: 0 }}>
+                  <Box sx={{ overflowX: "auto" }}>
+                    <Box component="table" sx={{ width: "100%" }}>
+                      <Box component="thead" sx={{ bgcolor: "grey.100" }}>
+                        <tr>
+                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>名称</th>
+                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>大小</th>
+                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>更新时间</th>
+                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>操作</th>
+                        </tr>
+                      </Box>
+                      <Box component="tbody" sx={{ "& > tr": { borderTop: 1, borderColor: "divider" } }}>
+                        {filteredItems.map((item) =>
+                          item.type === "folder" ? (
+                            <tr
+                              key={item.id}
+                              onClick={() => handleFolderSelect(item.id)}
+                              sx={{ "&:hover": { bgcolor: "grey.50" }, cursor: "pointer" }}
+                            >
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>
+                                <Box sx={{ display: "flex", alignItems: "center" }}>
+                                  <Folder sx={{ width: 20, height: 20, color: "primary.main", mr: 1.5 }} />
+                                  <Box>
+                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                                      {item.name}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </td>
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                                -
+                              </td>
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                                {item.updatedAt}
+                              </td>
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", fontWeight: 500 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                   <Button
                                     variant="text"
                                     size="small"
@@ -951,170 +1000,82 @@ const DocumentsPage: React.FC = () => {
                                       handleDeleteFolder(item.id, item.name);
                                     }}
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 sx={{ width: 16, height: 16 }} />
                                   </Button>
-                                </span>
-                              </Tooltip>
-                            </div>
-                          </div>
-                          <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-1">
-                            {item.name}
-                          </h4>
-                          <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                            <span>{item.updatedAt}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <FileCard
-                        key={item.id}
-                        file={item}
-                        onStarToggle={(id) => toggleStar(id)}
-                        onDownload={handleDownload}
-                        onPreview={handlePreview}
-                        isSelected={selectedFiles.includes(item.id)}
-                        onSelect={toggleFileSelect}
-                      />
-                    ),
-                  )}
-                </div>
-              )}
-              {viewMode === "list" && (
-                <Card className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              名称
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              大小
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              更新时间
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              操作
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {filteredItems.map((item) =>
-                            item.type === "folder" ? (
-                              <tr
-                                key={item.id}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                                onClick={() => handleFolderSelect(item.id)}
-                              >
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    <Folder className="w-5 h-5 text-blue-500 mr-3" />
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {item.name}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  -
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {item.updatedAt}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <div className="flex items-center space-x-2">
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteFolder(item.id, item.name);
-                                      }}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ) : (
-                              <tr
-                                key={item.id}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                              >
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center">
-                                    <FileText className="w-5 h-5 text-purple-500 mr-3" />
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {item.name}
-                                      </div>
-                                      <div className="flex space-x-2 mt-1">
-                                        {item.tags.map((tag) => (
-                                          <Chip key={tag} label={tag} size="small" variant="outlined" />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {item.size || "-"}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                  {item.updatedAt}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <div className="flex items-center space-x-2">
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={() => handlePreview(item)}
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={() => handleDownload(item)}
-                                    >
-                                      <Download className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={() => toggleStar(item.id)}
-                                    >
-                                      <Star
-                                        className="w-4 h-4"
-                                        fill={
-                                          item.starred ? "currentColor" : "none"
-                                        }
-                                      />
-                                    </Button>
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      color="error"
-                                      onClick={() => handleDelete(item.id)}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ),
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
-      </main>
+                                </Box>
+                              </td>
+                            </tr>
+                          ) : (
+                            <tr key={item.id} sx={{ "&:hover": { bgcolor: "grey.50" } }}>
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>
+                                <Box sx={{ display: "flex", alignItems: "center" }}>
+                                  <FileText sx={{ width: 20, height: 20, color: "secondary.main", mr: 1.5 }} />
+                                  <Box>
+                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                                      {item.name}
+                                    </Typography>
+                                    <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
+                                      {item.tags.map((tag) => (
+                                        <Chip key={tag} label={tag} size="small" variant="outlined" />
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                </Box>
+                              </td>
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                                {item.size || "-"}
+                              </td>
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                                {item.updatedAt}
+                              </td>
+                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", fontWeight: 500 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                  <Button
+                                    variant="text"
+                                    size="small"
+                                    onClick={() => handlePreview(item)}
+                                  >
+                                    <Eye sx={{ width: 16, height: 16 }} />
+                                  </Button>
+                                  <Button
+                                    variant="text"
+                                    size="small"
+                                    onClick={() => handleDownload(item)}
+                                  >
+                                    <Download sx={{ width: 16, height: 16 }} />
+                                  </Button>
+                                  <Button
+                                    variant="text"
+                                    size="small"
+                                    onClick={() => toggleStar(item.id)}
+                                  >
+                                    <Star
+                                      sx={{ width: 16, height: 16 }}
+                                      style={{ fill: item.starred ? "currentColor" : "none" }}
+                                    />
+                                  </Button>
+                                  <Button
+                                    variant="text"
+                                    size="small"
+                                    color="error"
+                                    onClick={() => handleDelete(item.id)}
+                                  >
+                                    <Trash2 sx={{ width: 16, height: 16 }} />
+                                  </Button>
+                                </Box>
+                              </td>
+                            </tr>
+                          ),
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
+          </Box>
+        </Box>
+      </Box>
 
       <CreateFolderModal
         isOpen={showCreateFolderModal}
@@ -1130,7 +1091,7 @@ const DocumentsPage: React.FC = () => {
         fileName={previewingFile?.name || ""}
         contentType={previewingFile?.contentType || ""}
       />
-    </div>
+    </Box>
   );
 };
 
@@ -1148,30 +1109,30 @@ const StatCard: React.FC<StatCardProps> = ({
   color,
 }) => {
   const colors: Record<string, string> = {
-    blue: "bg-blue-500",
-    purple: "bg-purple-500",
-    yellow: "bg-yellow-500",
-    green: "bg-green-500",
+    blue: "#3b82f6",
+    purple: "#8b5cf6",
+    yellow: "#eab308",
+    green: "#22c55e",
   };
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box>
+            <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
               {title}
-            </p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
               {value}
-            </p>
-          </div>
-          <div
-            className={`w-12 h-12 ${colors[color as keyof typeof colors]} rounded-lg flex items-center justify-center text-white`}
+            </Typography>
+          </Box>
+          <Box
+            sx={{ width: 48, height: 48, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", color: "white", bgcolor: colors[color as keyof typeof colors] }}
           >
-            <Icon className="w-6 h-6" />
-          </div>
-        </div>
+            <Icon sx={{ width: 24, height: 24 }} />
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
@@ -1196,31 +1157,27 @@ const FileCard: React.FC<FileCardProps> = ({
 }) => {
   return (
     <Card
-      className={`hover:shadow-lg transition-all cursor-pointer group relative ${isSelected ? "ring-2 ring-blue-500" : ""}`}
+      sx={{ "&:hover": { boxShadow: 6 }, transition: "box-shadow 0.2s", cursor: "pointer", position: "relative", "&:hover .hidden-actions": { opacity: 1 }, ...(isSelected && { ring: 2, ringColor: "primary.main" }) }}
     >
       {onSelect && (
-        <div className="absolute top-3 left-3 z-10">
-          <button
+        <Box sx={{ position: "absolute", top: 1, left: 1, zIndex: 1 }}>
+          <Box
             onClick={(e) => {
               e.stopPropagation();
               onSelect(file.id);
             }}
-            className="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-            style={{
-              borderColor: isSelected ? "#3b82f6" : "#d1d5db",
-              backgroundColor: isSelected ? "#3b82f6" : "white",
-            }}
+            sx={{ width: 20, height: 20, borderRadius: "4px", border: 2, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", borderColor: isSelected ? "primary.main" : "grey.300", bgcolor: isSelected ? "primary.main" : "white", cursor: "pointer" }}
           >
-            {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
-          </button>
-        </div>
+            {isSelected && <CheckCircle sx={{ width: 12, height: 12, color: "white" }} />}
+          </Box>
+        </Box>
       )}
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="w-14 h-14 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <FileText className="w-7 h-7 text-purple-600 dark:text-purple-400" />
-          </div>
-          <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+          <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: "secondary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <FileText sx={{ width: 28, height: 28, color: "secondary.main" }} />
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0 }} className="hidden-actions">
             <Tooltip title="星标">
               <span>
                 <Button
@@ -1232,7 +1189,8 @@ const FileCard: React.FC<FileCardProps> = ({
                   }}
                 >
                   <Star
-                    className={`w-4 h-4 ${file.starred ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`}
+                    sx={{ width: 16, height: 16, color: file.starred ? "warning.main" : "grey.400" }}
+                    style={{ fill: file.starred ? "currentColor" : "none" }}
                   />
                 </Button>
               </span>
@@ -1240,27 +1198,27 @@ const FileCard: React.FC<FileCardProps> = ({
             <Tooltip title="更多操作">
               <span>
                 <Button variant="text" size="small">
-                  <MoreVertical className="w-4 h-4 text-gray-400" />
+                  <MoreVertical sx={{ width: 16, height: 16, color: "grey.400" }} />
                 </Button>
               </span>
             </Tooltip>
-          </div>
-        </div>
-        <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-1">
+          </Box>
+        </Box>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {file.name}
-        </h4>
-        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "grey.500", mb: 1.5 }}>
           {file.size && <span>{file.size}</span>}
-          {file.size && <span className="mx-2">•</span>}
+          {file.size && <span style={{ margin: "0 8px" }}>•</span>}
           <span>{file.updatedAt}</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
+        </Box>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
           {file.tags.map((tag) => (
             <Chip key={tag} label={tag} size="small" variant="outlined" />
           ))}
-        </div>
+        </Box>
       </CardContent>
-      <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 rounded-b-xl flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+      <Box sx={{ px: 3, py: 1.5, bgcolor: "grey.50", borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: 0 }} className="hidden-actions">
         <Button
           variant="text"
           size="small"
@@ -1269,7 +1227,7 @@ const FileCard: React.FC<FileCardProps> = ({
             onPreview(file);
           }}
         >
-          <Eye className="w-4 h-4 mr-2" />
+          <Eye sx={{ width: 16, height: 16, mr: 1 }} />
           预览
         </Button>
         <Button
@@ -1280,14 +1238,14 @@ const FileCard: React.FC<FileCardProps> = ({
             onDownload(file);
           }}
         >
-          <Download className="w-4 h-4 mr-2" />
+          <Download sx={{ width: 16, height: 16, mr: 1 }} />
           下载
         </Button>
         <Button variant="text" size="small">
-          <Share2 className="w-4 h-4 mr-2" />
+          <Share2 sx={{ width: 16, height: 16, mr: 1 }} />
           分享
         </Button>
-      </div>
+      </Box>
     </Card>
   );
 };

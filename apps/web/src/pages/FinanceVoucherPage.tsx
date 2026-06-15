@@ -422,54 +422,54 @@ const FinanceVoucherPage: React.FC = () => {
         accessorKey: "voucher_number",
         header: "凭证编号",
         cell: ({ row }) => (
-          <div className="font-medium text-blue-600">
+          <Typography sx={{ fontWeight: 500, color: "primary.main" }}>
             {row.original.voucher_number}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "voucher_date",
         header: "凭证日期",
         cell: ({ row }) => (
-          <div className="text-sm text-slate-900 dark:text-slate-100">
+          <Typography variant="body2" sx={{ color: "text.primary" }}>
             {row.original.voucher_date?.split("T")[0] || "-"}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "period",
         header: "期间",
         cell: ({ row }) => (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {row.original.period}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "total_debit",
         header: "借方金额",
         cell: ({ row }) => (
-          <div className="font-bold text-red-600">
+          <Typography sx={{ fontWeight: "bold", color: "red.600" }}>
             {formatCurrency(row.original.total_debit)}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "total_credit",
         header: "贷方金额",
         cell: ({ row }) => (
-          <div className="font-bold text-green-600">
+          <Typography sx={{ fontWeight: "bold", color: "green.600" }}>
             {formatCurrency(row.original.total_credit)}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "maker_name",
         header: "制单人",
         cell: ({ row }) => (
-          <div className="text-sm text-slate-900 dark:text-slate-100">
+          <Typography variant="body2" sx={{ color: "text.primary" }}>
             {row.original.maker_name || "-"}
-          </div>
+          </Typography>
         ),
       },
       {
@@ -481,7 +481,7 @@ const FinanceVoucherPage: React.FC = () => {
         id: "actions",
         header: "操作",
         cell: ({ row }) => (
-          <div className="flex items-center space-x-2">
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             <Button
               variant="text"
               size="small"
@@ -491,7 +491,7 @@ const FinanceVoucherPage: React.FC = () => {
                 setShowDetailModal(true);
               }}
             >
-              <Eye className="w-4 h-4" />
+              <Eye sx={{ width: 16, height: 16 }} />
             </Button>
             <Button
               variant="text"
@@ -509,17 +509,17 @@ const FinanceVoucherPage: React.FC = () => {
                 setShowCreateModal(true);
               }}
             >
-              <Edit className="w-4 h-4" />
+              <Edit sx={{ width: 16, height: 16 }} />
             </Button>
             <Button
               variant="text"
               size="small"
-              className="text-red-600"
+              sx={{ color: "red.600" }}
               onClick={() => handleDelete(row.original.id)}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 sx={{ width: 16, height: 16 }} />
             </Button>
-          </div>
+          </Box>
         ),
       },
     ],
@@ -541,30 +541,30 @@ const FinanceVoucherPage: React.FC = () => {
   }, [vouchers, searchQuery, periodFilter, statusFilter]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: "100vh", bgcolor: "slate.50", dark: { bgcolor: "slate.900" } }}>
+      <Box sx={{ bgcolor: "background.paper", dark: { bgcolor: "slate.800" }, boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-                  <FileText className="w-7 h-7 mr-3 text-indigo-600" />
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: "bold", color: "text.primary", display: "flex", alignItems: "center" }}>
+                  <FileText sx={{ width: 28, height: 28, mr: 1.5, color: "indigo.600" }} />
                   财务凭证管理
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
                   管理财务凭证、会计科目，支持用友凭证导入
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Button
                 onClick={() => setShowImportModal(true)}
-                className="bg-green-600 hover:bg-green-700"
+                sx={{ backgroundColor: "green.600", "&:hover": { backgroundColor: "green.700" } }}
               >
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload sx={{ width: 16, height: 16, mr: 1 }} />
                 导入用友凭证
               </Button>
               <Button
@@ -573,120 +573,120 @@ const FinanceVoucherPage: React.FC = () => {
                   setShowCreateModal(true);
                 }}
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus sx={{ width: 16, height: 16, mr: 1 }} />
                 新增凭证
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 2, py: 3 }}>
         <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} sx={{ mb: 2 }}>
-          <Tab value="vouchers" label="财务凭证" icon={<FileText className="w-4 h-4" />} iconPosition="start" />
-          <Tab value="subjects" label="会计科目" icon={<Search className="w-4 h-4" />} iconPosition="start" />
+          <Tab value="vouchers" label="财务凭证" icon={<FileText sx={{ width: 16, height: 16 }} />} iconPosition="start" />
+          <Tab value="subjects" label="会计科目" icon={<Search sx={{ width: 16, height: 16 }} />} iconPosition="start" />
         </Tabs>
 
-        <div className={activeTab === "vouchers" ? "" : "hidden"}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-80">凭证总数</p>
-                      <p className="text-3xl font-bold mt-2">
+        <Box sx={{ display: activeTab === "vouchers" ? "block" : "none" }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 2 }}>
+              <Card sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", color: "white" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>凭证总数</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", mt: 1 }}>
                         {vouchers.length}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-white/20 rounded-full">
-                      <FileText className="w-6 h-6" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+                      <FileText sx={{ width: 24, height: 24 }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-500 to-emerald-500 text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-80">已审核</p>
-                      <p className="text-3xl font-bold mt-2">
+              <Card sx={{ background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)", color: "white" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>已审核</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", mt: 1 }}>
                         {
                           vouchers.filter(
                             (v) =>
                               v.status === "approved" || v.status === "posted",
                           ).length
                         }
-                      </p>
-                    </div>
-                    <div className="p-3 bg-white/20 rounded-full">
-                      <FileCheck className="w-6 h-6" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+                      <FileCheck sx={{ width: 24, height: 24 }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-80">待审核</p>
-                      <p className="text-3xl font-bold mt-2">
+              <Card sx={{ background: "linear-gradient(135deg, #f97316 0%, #ef4444 100%)", color: "white" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>待审核</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", mt: 1 }}>
                         {vouchers.filter((v) => v.status === "pending").length}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-white/20 rounded-full">
-                      <Clock className="w-6 h-6" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+                      <Clock sx={{ width: 24, height: 24 }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-500 to-violet-500 text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm opacity-80">总金额</p>
-                      <p className="text-3xl font-bold mt-2">
+              <Card sx={{ background: "linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%)", color: "white" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>总金额</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", mt: 1 }}>
                         {formatCurrency(
                           vouchers.reduce((sum, v) => sum + v.total_debit, 0),
                         )}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-white/20 rounded-full">
-                      <DollarSign className="w-6 h-6" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+                      <DollarSign sx={{ width: 24, height: 24 }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
 
             {selectedIds.length > 0 && (
-              <div className="flex items-center justify-between bg-blue-50 px-4 py-3 rounded-lg mb-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-blue-700">
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "blue.50", px: 2, py: 1.5, borderRadius: 1, mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Typography variant="body2" sx={{ color: "blue.700" }}>
                     已选择{" "}
-                    <Chip size="small" sx={{ marginLeft: 2 }} label={selectedIds.length.toString()} />
+                    <Chip size="small" sx={{ ml: 2 }} label={selectedIds.length.toString()} />
                     条记录
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Button
                     variant="outlined"
                     size="small"
                     onClick={handleBatchAudit}
-                    className="text-green-600 hover:text-green-700 hover:border-green-500"
+                    sx={{ color: "green.600", borderColor: "green.600", "&:hover": { color: "green.700", borderColor: "green.700" } }}
                   >
-                    <Check className="w-4 h-4 mr-1" />
+                    <Check sx={{ width: 16, height: 16, mr: 0.5 }} />
                     批量审核
                   </Button>
                   <Button
                     variant="outlined"
                     size="small"
                     onClick={handleBatchDelete}
-                    className="text-red-600 hover:text-red-700 hover:border-red-500"
+                    sx={{ color: "red.600", borderColor: "red.600", "&:hover": { color: "red.700", borderColor: "red.700" } }}
                   >
-                    <Trash2 className="w-4 h-4 mr-1" />
+                    <Trash2 sx={{ width: 16, height: 16, mr: 0.5 }} />
                     批量删除
                   </Button>
                   <Button
@@ -696,25 +696,25 @@ const FinanceVoucherPage: React.FC = () => {
                   >
                     取消选择
                   </Button>
-                </div>
-              </div>
+                </Box>
+              </Box>
             )}
 
             <Card>
               <CardHeader>
-                <Typography variant="h6" sx={{ fontWeight: 600 }} className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-indigo-600" />
+                <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center" }}>
+                  <FileText sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
                   财务凭证列表
                 </Typography>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent sx={{ p: 0 }}>
                 {loading ? (
-                  <div className="p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                    <p className="mt-2 text-slate-500 dark:text-slate-400">
+                  <Box sx={{ p: 6, textAlign: "center" }}>
+                    <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                    <Typography sx={{ mt: 2, color: "text.secondary" }}>
                       加载中...
-                    </p>
-                  </div>
+                    </Typography>
+                  </Box>
                 ) : (
                   <EnhancedDataTable
                     columns={voucherColumns}
@@ -734,130 +734,130 @@ const FinanceVoucherPage: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div className={activeTab === "subjects" ? "" : "hidden"}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">科目总数</p>
-                      <p className="text-3xl font-bold text-indigo-600 mt-2">
+        <Box sx={{ display: activeTab === "subjects" ? "block" : "none" }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "repeat(4, 1fr)" }, gap: 2 }}>
+              <Card sx={{ background: "linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%)" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>科目总数</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", color: "indigo.600", mt: 1 }}>
                         {subjects.length}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      <Building2 className="w-6 h-6 text-blue-600" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "blue.100" }}>
+                      <Building2 sx={{ width: 24, height: 24, color: "blue.600" }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-50 to-emerald-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">已启用</p>
-                      <p className="text-3xl font-bold text-green-600 mt-2">
+              <Card sx={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>已启用</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", color: "green.600", mt: 1 }}>
                         {subjects.filter((s) => s.status === "active").length}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-green-100 rounded-full">
-                      <FileCheck className="w-6 h-6 text-green-600" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "green.100" }}>
+                      <FileCheck sx={{ width: 24, height: 24, color: "green.600" }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-orange-50 to-amber-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">一级科目</p>
-                      <p className="text-3xl font-bold text-orange-600 mt-2">
+              <Card sx={{ background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>一级科目</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", color: "orange.600", mt: 1 }}>
                         {subjects.filter((s) => s.level === 1).length}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-orange-100 rounded-full">
-                      <DollarSign className="w-6 h-6 text-orange-600" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "orange.100" }}>
+                      <DollarSign sx={{ width: 24, height: 24, color: "orange.600" }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-purple-50 to-violet-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">现金流量科目</p>
-                      <p className="text-3xl font-bold text-purple-600 mt-2">
+              <Card sx={{ background: "linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: "text.secondary" }}>现金流量科目</Typography>
+                      <Typography variant="h3" sx={{ fontWeight: "bold", color: "purple.600", mt: 1 }}>
                         {subjects.filter((s) => s.is_cash_flow).length}
-                      </p>
-                    </div>
-                    <div className="p-3 bg-purple-100 rounded-full">
-                      <Clock className="w-6 h-6 text-purple-600" />
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "purple.100" }}>
+                      <Clock sx={{ width: 24, height: 24, color: "purple.600" }} />
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
-            </div>
+            </Box>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "repeat(3, 1fr)" }, gap: 2 }}>
               {subjects.map((subject) => (
                 <Card
                   key={subject.id}
-                  className="hover:shadow-md transition-shadow border border-slate-200"
+                  sx={{ "&:hover": { boxShadow: 3 }, transition: "box-shadow 0.3s", border: 1, borderColor: "divider" }}
                 >
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-indigo-600 text-lg">
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography variant="body1" sx={{ fontWeight: "bold", color: "indigo.600" }}>
                           {subject.code}
-                        </span>
+                        </Typography>
                         {subject.is_cash_flow && (
                           <Chip size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} label="现金流量" />
                         )}
-                      </div>
+                      </Box>
                       <Chip
                         size="small"
                         variant={subject.status === "active" ? "filled" : "outlined"}
                         sx={{ backgroundColor: "green.100", color: "green.700" }}
                         label={subject.status === "active" ? "启用" : "禁用"}
                       />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900">
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600, color: "text.primary" }}>
                       {subject.name}
-                    </h3>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-slate-500">
-                      <span>层级: {subject.level}</span>
-                      <span className="w-1 h-1 bg-slate-300 rounded-full" />
-                      <span>{subject.category || "未分类"}</span>
-                    </div>
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1, color: "text.secondary" }}>
+                      <Typography variant="body2">层级: {subject.level}</Typography>
+                      <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: "grey.300" }} />
+                      <Typography variant="body2">{subject.category || "未分类"}</Typography>
+                    </Box>
                     {subject.parent_code && (
-                      <div className="mt-3 pt-3 border-t border-slate-100">
-                        <p className="text-xs text-slate-400">
-                          <span className="font-medium">上级科目:</span>{" "}
+                      <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "grey.100" }}>
+                        <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                          <Typography variant="caption" component="span" sx={{ fontWeight: 500 }}>上级科目:</Typography>{" "}
                           {subject.parent_code}
-                        </p>
-                      </div>
+                        </Typography>
+                      </Box>
                     )}
                     {subject.description && (
-                      <p className="text-sm text-slate-500 mt-2 line-clamp-2">
+                      <Typography variant="body2" sx={{ color: "text.secondary", mt: 1, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {subject.description}
-                      </p>
+                      </Typography>
                     )}
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </Box>
 
       <Dialog open={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm(); }} maxWidth="lg">
         <DialogTitle>{newVoucher.voucher_number ? "编辑凭证" : "新增财务凭证"}</DialogTitle>
         <DialogContent>
-          <div className="space-y-4 mt-4">
-            <div className="grid grid-cols-3 gap-4">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
               <TextField
                 label="凭证编号 *"
                 value={newVoucher.voucher_number}
@@ -894,8 +894,8 @@ const FinanceVoucherPage: React.FC = () => {
                 placeholder="如: 2024-06"
                 fullWidth
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
               <TextField
                 label="附件数量"
                 type="number"
@@ -920,7 +920,7 @@ const FinanceVoucherPage: React.FC = () => {
                 placeholder="制单人姓名"
                 fullWidth
               />
-            </div>
+            </Box>
             <TextField
               label="摘要"
               multiline
@@ -936,49 +936,47 @@ const FinanceVoucherPage: React.FC = () => {
               fullWidth
             />
 
-            <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-3">
+            <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>凭证明细</Typography>
                 <Button size="small" onClick={addVoucherItem}>
-                  <Plus className="w-4 h-4" />
+                  <Plus sx={{ width: 16, height: 16 }} />
                   添加分录
                 </Button>
-              </div>
-              <div className="max-h-64 overflow-y-auto space-y-2">
+              </Box>
+              <Box sx={{ maxHeight: 256, overflowY: "auto", display: "flex", flexDirection: "column", gap: 1 }}>
                 {newVoucher.items.map((item, index) => (
-                  <div
+                  <Box
                     key={index}
-                    className="flex items-center space-x-2 p-3 bg-slate-50 rounded-md"
+                    sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, bgcolor: "grey.50", borderRadius: 1 }}
                   >
-                    <span className="w-6 text-center text-sm font-medium text-slate-500">
+                    <Typography sx={{ width: 24, textAlign: "center", color: "text.secondary", fontSize: "0.875rem" }}>
                       {item.line_number}
-                    </span>
-                    <div className="flex-1">
-                      <FormControl fullWidth>
-                        <InputLabel>选择科目</InputLabel>
-                        <Select
-                          value={item.subject_code}
-                          label="选择科目"
-                          onChange={(e) =>
-                            updateVoucherItem(index, "subject_code", e.target.value)
-                          }
-                        >
-                          {subjects.map((s) => (
-                            <MenuItem key={s.id} value={s.code}>
-                              {s.code} - {s.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </div>
+                    </Typography>
+                    <FormControl fullWidth>
+                      <InputLabel>选择科目</InputLabel>
+                      <Select
+                        value={item.subject_code}
+                        label="选择科目"
+                        onChange={(e) =>
+                          updateVoucherItem(index, "subject_code", e.target.value)
+                        }
+                      >
+                        {subjects.map((s) => (
+                          <MenuItem key={s.id} value={s.code}>
+                            {s.code} - {s.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                     <TextField
-                      className="w-32"
+                      sx={{ width: 100 }}
                       value={item.subject_name}
-                      slotProps={{ input: { readOnly: true } }}
+                      InputProps={{ readOnly: true }}
                       placeholder="科目名称"
                     />
                     <TextField
-                      className="w-32"
+                      sx={{ width: 100 }}
                       type="number"
                       value={item.debit_amount || ""}
                       onChange={(e) =>
@@ -991,7 +989,7 @@ const FinanceVoucherPage: React.FC = () => {
                       placeholder="借方"
                     />
                     <TextField
-                      className="w-32"
+                      sx={{ width: 100 }}
                       type="number"
                       value={item.credit_amount || ""}
                       onChange={(e) =>
@@ -1009,43 +1007,43 @@ const FinanceVoucherPage: React.FC = () => {
                       sx={{ color: "red" }}
                       onClick={() => removeVoucherItem(index)}
                     >
-                      <X className="w-4 h-4" />
+                      <X sx={{ width: 16, height: 16 }} />
                     </Button>
-                  </div>
+                  </Box>
                 ))}
-              </div>
-              <div className="flex justify-end mt-3 space-x-4">
-                <div className="text-right">
-                  <p className="text-sm text-slate-500">借方合计</p>
-                  <p className="font-bold text-red-600">
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 4, mt: 2 }}>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>借方合计</Typography>
+                  <Typography sx={{ fontWeight: "bold", color: "red.600" }}>
                     {formatCurrency(
                       newVoucher.items.reduce(
                         (sum, item) => sum + item.debit_amount,
                         0,
                       ),
                     )}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-slate-500">贷方合计</p>
-                  <p className="font-bold text-green-600">
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>贷方合计</Typography>
+                  <Typography sx={{ fontWeight: "bold", color: "green.600" }}>
                     {formatCurrency(
                       newVoucher.items.reduce(
                         (sum, item) => sum + item.credit_amount,
                         0,
                       ),
                     )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
           <DialogActions>
             <Button variant="outlined" onClick={() => { setShowCreateModal(false); resetForm(); }}>
               取消
             </Button>
             <Button onClick={handleCreate}>
-              <Check className="w-4 h-4 mr-2" />
+              <Check sx={{ width: 16, height: 16, mr: 1 }} />
               保存凭证
             </Button>
           </DialogActions>
@@ -1055,14 +1053,14 @@ const FinanceVoucherPage: React.FC = () => {
       <Dialog open={showImportModal} onClose={() => setShowImportModal(false)} maxWidth="lg">
         <DialogTitle>导入用友财务凭证</DialogTitle>
         <DialogContent>
-          <div className="space-y-4 mt-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-blue-600 mb-2" />
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <Box sx={{ p: 2, bgcolor: "blue.50", borderRadius: 1 }}>
+              <AlertCircle sx={{ width: 20, height: 20, color: "blue.600", mb: 1 }} />
               <Typography variant="body2" sx={{ color: "blue.800" }}>
                 请将用友U8系统导出的凭证数据粘贴到下方文本框中。支持JSON格式数据导入。
               </Typography>
-            </div>
-            <div className="space-y-2">
+            </Box>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>用友凭证数据 (JSON格式)</Typography>
               <TextField
                 id="importData"
@@ -1072,8 +1070,8 @@ const FinanceVoucherPage: React.FC = () => {
                 fullWidth
                 sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}
               />
-            </div>
-            <div className="flex items-center space-x-2">
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Button
                 variant="outlined"
                 onClick={() => {
@@ -1113,11 +1111,11 @@ const FinanceVoucherPage: React.FC = () => {
                   ).value = sampleData;
                 }}
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download sx={{ width: 16, height: 16, mr: 1 }} />
                 加载示例数据
               </Button>
-            </div>
-          </div>
+            </Box>
+          </Box>
           <DialogActions>
             <Button variant="outlined" onClick={() => setShowImportModal(false)}>
               取消
@@ -1139,7 +1137,7 @@ const FinanceVoucherPage: React.FC = () => {
                 handleImport(content);
               }}
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload sx={{ width: 16, height: 16, mr: 1 }} />
               开始导入
             </Button>
           </DialogActions>
@@ -1150,104 +1148,104 @@ const FinanceVoucherPage: React.FC = () => {
         <DialogTitle>凭证详情</DialogTitle>
         <DialogContent>
           {currentVoucher && (
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <Typography variant="body2" sx={{ color: "gray.500" }}>凭证编号</Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>凭证编号</Typography>
                   <Typography variant="h6" sx={{ color: "indigo.600", fontWeight: "bold" }}>
                     {currentVoucher.voucher_number}
                   </Typography>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <Typography variant="body2" sx={{ color: "gray.500" }}>凭证日期</Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>凭证日期</Typography>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                     {currentVoucher.voucher_date?.split("T")[0]}
                   </Typography>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <Typography variant="body2" sx={{ color: "gray.500" }}>期间</Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>期间</Typography>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>{currentVoucher.period}</Typography>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <Typography variant="body2" sx={{ color: "gray.500" }}>状态</Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>状态</Typography>
                   {getStatusBadge(currentVoucher.status)}
-                </div>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <Typography variant="body2" sx={{ color: "gray.500" }}>摘要</Typography>
+                </Box>
+              </Box>
+              <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>摘要</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 500 }}>{currentVoucher.summary || "-"}</Typography>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <Typography variant="body2" sx={{ color: "gray.500" }}>制单人</Typography>
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>制单人</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     {currentVoucher.maker_name || "-"}
                   </Typography>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <Typography variant="body2" sx={{ color: "gray.500" }}>审核人</Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>审核人</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     {currentVoucher.checker_name || "-"}
                   </Typography>
-                </div>
-              </div>
-              <div className="border-t pt-4">
+                </Box>
+              </Box>
+              <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>凭证明细</Typography>
-                <div className="space-y-2">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {voucherItems.map((item) => (
-                    <div
+                    <Box
                       key={item.id}
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-md"
+                      sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 1.5, bgcolor: "grey.50", borderRadius: 1 }}
                     >
-                      <div className="flex items-center space-x-4">
-                        <span className="w-6 text-center text-sm text-slate-500">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Typography sx={{ width: 24, textAlign: "center", color: "text.secondary", fontSize: "0.875rem" }}>
                           {item.line_number}
-                        </span>
-                        <span className="font-medium">{item.subject_code}</span>
-                        <span>{item.subject_name}</span>
-                        <span className="text-sm text-slate-500">
+                        </Typography>
+                        <Typography sx={{ fontWeight: 500 }}>{item.subject_code}</Typography>
+                        <Typography>{item.subject_name}</Typography>
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
                           {item.summary}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-6">
-                        <span className="text-red-600 font-bold">
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <Typography sx={{ color: "red.600", fontWeight: "bold" }}>
                           {item.debit_amount > 0
                             ? formatCurrency(item.debit_amount)
                             : ""}
-                        </span>
-                        <span className="text-green-600 font-bold">
+                        </Typography>
+                        <Typography sx={{ color: "green.600", fontWeight: "bold" }}>
                           {item.credit_amount > 0
                             ? formatCurrency(item.credit_amount)
                             : ""}
-                        </span>
-                      </div>
-                    </div>
+                        </Typography>
+                      </Box>
+                    </Box>
                   ))}
-                </div>
-                <div className="flex justify-end mt-4 space-x-8 border-t pt-4">
-                  <div className="text-right">
-                    <Typography variant="body2" sx={{ color: "gray.500" }}>借方合计</Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 8, mt: 3, borderTop: 1, borderColor: "divider", pt: 2 }}>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography variant="body2" sx={{ color: "grey.500" }}>借方合计</Typography>
                     <Typography variant="h6" sx={{ color: "red.600", fontWeight: "bold" }}>
                       {formatCurrency(currentVoucher.total_debit)}
                     </Typography>
-                  </div>
-                  <div className="text-right">
-                    <Typography variant="body2" sx={{ color: "gray.500" }}>贷方合计</Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography variant="body2" sx={{ color: "grey.500" }}>贷方合计</Typography>
                     <Typography variant="h6" sx={{ color: "green.600", fontWeight: "bold" }}>
                       {formatCurrency(currentVoucher.total_credit)}
                     </Typography>
-                  </div>
-                </div>
-              </div>
-            </div>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
           )}
           <DialogActions>
             <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
           </DialogActions>
         </DialogContent>
       </Dialog>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

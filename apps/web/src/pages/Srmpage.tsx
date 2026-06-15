@@ -2,19 +2,16 @@ import React, { useEffect, useState } from "react";
 import {
   Users,
   Plus,
-  Search,
+  Search as SearchIcon,
   ChevronRight,
   Star,
   ClipboardList,
   FileText,
-  TrendingUp,
   X,
   Edit,
   Trash2,
   Check,
   BarChart3,
-  AlertTriangle,
-  CheckCircle,
   Building2,
   Award,
   DollarSign,
@@ -23,6 +20,27 @@ import {
   Eye,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Paper,
+  Stack,
+  Chip,
+  Button,
+  IconButton,
+  TextField,
+  MenuItem,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
+  Snackbar,
+  Alert,
+  Grid,
+  InputAdornment,
+} from "@mui/material";
 import type {
   Supplier,
   SupplierEvaluation,
@@ -34,7 +52,7 @@ import type {
   CreatePurchaseOrderRequest,
   CreateSupplierContractRequest,
 } from "../api/srm";
-import { srmApi, SrmStatistics } from "../api/srm";
+import { srmApi } from "../api/srm";
 import { DataTable } from "../components/DataTable";
 import { MetricCard } from "../components/MetricCard";
 import { StatsChart } from "../components/StatsChart";
@@ -73,6 +91,7 @@ const Srmpage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const mapStatusToChinese = (status: string) => {
@@ -146,8 +165,8 @@ const Srmpage: React.FC = () => {
       } else if (activeTab === "suppliers") {
         const response = await srmApi.listSuppliers();
         if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = Array.isArray(data)
+          const data: any = response.data;
+          const rawItems: any[] = Array.isArray(data)
             ? data
             : data.suppliers || [];
           setSuppliers(rawItems.map((item) => adaptSupplier(item)));
@@ -157,8 +176,8 @@ const Srmpage: React.FC = () => {
       } else if (activeTab === "evaluations") {
         const response = await srmApi.listEvaluations();
         if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = Array.isArray(data)
+          const data: any = response.data;
+          const rawItems: any[] = Array.isArray(data)
             ? data
             : data.evaluations || [];
           setEvaluations(rawItems.map((item) => adaptEvaluation(item)));
@@ -168,8 +187,8 @@ const Srmpage: React.FC = () => {
       } else if (activeTab === "orders") {
         const response = await srmApi.listPurchaseOrders();
         if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = Array.isArray(data)
+          const data: any = response.data;
+          const rawItems: any[] = Array.isArray(data)
             ? data
             : data.purchase_orders || [];
           setOrders(rawItems.map((item) => adaptOrder(item)));
@@ -179,8 +198,8 @@ const Srmpage: React.FC = () => {
       } else if (activeTab === "contracts") {
         const response = await srmApi.listContracts();
         if (response.success && response.data) {
-          let data: any = response.data;
-          let rawItems: any[] = Array.isArray(data)
+          const data: any = response.data;
+          const rawItems: any[] = Array.isArray(data)
             ? data
             : data.contracts || [];
           setContracts(rawItems.map((item) => adaptContract(item)));
@@ -197,7 +216,6 @@ const Srmpage: React.FC = () => {
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
   };
 
   const resetModal = () => {
@@ -420,8 +438,8 @@ const Srmpage: React.FC = () => {
     setShowModal(true);
   };
 
-  const getStatusColor = (status: string) => {
-    if (!status) return "bg-gray-100 text-gray-800";
+  const getStatusStyle = (status: string) => {
+    if (!status) return { bgcolor: "#f1f5f9", color: "#475569" };
     const s = status.toLowerCase();
     if (
       s.includes("active") ||
@@ -429,15 +447,17 @@ const Srmpage: React.FC = () => {
       s.includes("delivered") ||
       s.includes("启用") ||
       s.includes("完成")
-    )
-      return "bg-green-100 text-green-800";
+    ) {
+      return { bgcolor: "#dcfce7", color: "#15803d" };
+    }
     if (
       s.includes("pending") ||
       s.includes("待处理") ||
       s.includes("processing") ||
       s.includes("处理中")
-    )
-      return "bg-yellow-100 text-yellow-800";
+    ) {
+      return { bgcolor: "#fef3c7", color: "#b45309" };
+    }
     if (
       s.includes("inactive") ||
       s.includes("cancelled") ||
@@ -445,16 +465,56 @@ const Srmpage: React.FC = () => {
       s.includes("取消") ||
       s.includes("expired") ||
       s.includes("过期")
-    )
-      return "bg-red-100 text-red-800";
-    return "bg-gray-100 text-gray-800";
+    ) {
+      return { bgcolor: "#fee2e2", color: "#b91c1c" };
+    }
+    return { bgcolor: "#f1f5f9", color: "#475569" };
   };
 
-  const getScoreColor = (score: number | undefined) => {
-    if (!score) return "bg-gray-100 text-gray-800";
-    if (score >= 80) return "bg-green-100 text-green-800";
-    if (score >= 60) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
+  const getScoreStyle = (score: number | undefined) => {
+    if (!score) return { bgcolor: "#f1f5f9", color: "#475569" };
+    if (score >= 80) return { bgcolor: "#dcfce7", color: "#15803d" };
+    if (score >= 60) return { bgcolor: "#fef3c7", color: "#b45309" };
+    return { bgcolor: "#fee2e2", color: "#b91c1c" };
+  };
+
+  const getRiskStyle = (level: string) => {
+    if (level === "low") return { bgcolor: "#dcfce7", color: "#15803d", label: "低" };
+    if (level === "medium") return { bgcolor: "#fef3c7", color: "#b45309", label: "中" };
+    return { bgcolor: "#fee2e2", color: "#b91c1c", label: "高" };
+  };
+
+  const StatusChip: React.FC<{ status: string }> = ({ status }) => {
+    const style = getStatusStyle(status);
+    return (
+      <Chip
+        label={status}
+        size="small"
+        sx={{ bgcolor: style.bgcolor, color: style.color, fontWeight: 500 }}
+      />
+    );
+  };
+
+  const ScoreChip: React.FC<{ score: number | undefined }> = ({ score }) => {
+    const style = getScoreStyle(score);
+    return (
+      <Chip
+        label={score?.toFixed(1) || "-"}
+        size="small"
+        sx={{ bgcolor: style.bgcolor, color: style.color, fontWeight: 500 }}
+      />
+    );
+  };
+
+  const RiskChip: React.FC<{ level: string }> = ({ level }) => {
+    const style = getRiskStyle(level);
+    return (
+      <Chip
+        label={style.label}
+        size="small"
+        sx={{ bgcolor: style.bgcolor, color: style.color, fontWeight: 500 }}
+      />
+    );
   };
 
   const filteredSuppliers = suppliers.filter((s) => {
@@ -501,59 +561,40 @@ const Srmpage: React.FC = () => {
     {
       accessorKey: "risk_level",
       header: "风险等级",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            row.original.risk_level === "low"
-              ? "bg-green-100 text-green-800"
-              : row.original.risk_level === "medium"
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-red-100 text-red-800"
-          }`}
-        >
-          {row.original.risk_level === "low"
-            ? "低"
-            : row.original.risk_level === "medium"
-              ? "中"
-              : "高"}
-        </span>
-      ),
+      cell: ({ row }) => <RiskChip level={row.original.risk_level} />,
     },
     {
       accessorKey: "status",
       header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }) => <StatusChip status={row.original.status} />,
     },
     {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            color="primary"
             onClick={() => navigate(`/srm/suppliers/${row.original.id}`)}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
           >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
+            <Eye size={16} />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="secondary"
             onClick={() => openEditModal(row.original)}
-            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
           >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
+            <Edit size={16} />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
             onClick={() => handleDelete(row.original.id, row.original.name)}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
           >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+            <Trash2 size={16} />
+          </IconButton>
+        </Stack>
       ),
     },
   ];
@@ -564,76 +605,70 @@ const Srmpage: React.FC = () => {
       accessorKey: "supplier_id",
       header: "供应商ID",
       cell: ({ row }) => (
-        <span className="text-xs">
+        <Typography variant="caption">
           {row.original.supplier_id?.slice(0, 8)}...
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "overall_score",
       header: "综合评分",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(row.original.overall_score)}`}
-        >
-          {row.original.overall_score?.toFixed(1) || "-"}
-        </span>
-      ),
+      cell: ({ row }) => <ScoreChip score={row.original.overall_score} />,
     },
     {
       accessorKey: "quality_score",
       header: "质量",
       cell: ({ row }) => (
-        <span>{row.original.quality_score?.toFixed(1) || "-"}</span>
+        <Typography variant="body2">
+          {row.original.quality_score?.toFixed(1) || "-"}
+        </Typography>
       ),
     },
     {
       accessorKey: "delivery_score",
       header: "交付",
       cell: ({ row }) => (
-        <span>{row.original.delivery_score?.toFixed(1) || "-"}</span>
+        <Typography variant="body2">
+          {row.original.delivery_score?.toFixed(1) || "-"}
+        </Typography>
       ),
     },
     {
       accessorKey: "evaluation_date",
       header: "评估日期",
       cell: ({ row }) => (
-        <span>
+        <Typography variant="body2">
           {new Date(row.original.evaluation_date).toLocaleDateString()}
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "status",
       header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }) => <StatusChip status={row.original.status} />,
     },
     {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            color="secondary"
             onClick={() => openEditModal(row.original)}
-            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
           >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
+            <Edit size={16} />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
             onClick={() =>
               handleDelete(row.original.id, row.original.evaluation_no)
             }
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
           >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+            <Trash2 size={16} />
+          </IconButton>
+        </Stack>
       ),
     },
   ];
@@ -644,60 +679,56 @@ const Srmpage: React.FC = () => {
       accessorKey: "supplier_id",
       header: "供应商ID",
       cell: ({ row }) => (
-        <span className="text-xs">
+        <Typography variant="caption">
           {row.original.supplier_id?.slice(0, 8)}...
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "total_amount",
       header: "总金额",
       cell: ({ row }) => (
-        <span className="font-medium">
+        <Typography variant="body2" fontWeight={500}>
           ¥{row.original.total_amount?.toFixed(2) || "0.00"}
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "expected_date",
       header: "预计交付",
       cell: ({ row }) => (
-        <span>
+        <Typography variant="body2">
           {row.original.expected_date
             ? new Date(row.original.expected_date).toLocaleDateString()
             : "-"}
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "status",
       header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }) => <StatusChip status={row.original.status} />,
     },
     {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            color="secondary"
             onClick={() => openEditModal(row.original)}
-            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
           >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
+            <Edit size={16} />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
             onClick={() => handleDelete(row.original.id, row.original.po_no)}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
           >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+            <Trash2 size={16} />
+          </IconButton>
+        </Stack>
       ),
     },
   ];
@@ -710,73 +741,69 @@ const Srmpage: React.FC = () => {
       accessorKey: "total_amount",
       header: "金额",
       cell: ({ row }) => (
-        <span className="font-medium">
+        <Typography variant="body2" fontWeight={500}>
           ¥{row.original.total_amount?.toFixed(2) || "0.00"}
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "start_date",
       header: "开始日期",
       cell: ({ row }) => (
-        <span>
+        <Typography variant="body2">
           {row.original.start_date
             ? new Date(row.original.start_date).toLocaleDateString()
             : "-"}
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "end_date",
       header: "结束日期",
       cell: ({ row }) => (
-        <span>
+        <Typography variant="body2">
           {row.original.end_date
             ? new Date(row.original.end_date).toLocaleDateString()
             : "-"}
-        </span>
+        </Typography>
       ),
     },
     {
       accessorKey: "status",
       header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }) => <StatusChip status={row.original.status} />,
     },
     {
       id: "actions",
       header: "操作",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            color="secondary"
             onClick={() => openEditModal(row.original)}
-            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
           >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
+            <Edit size={16} />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
             onClick={() => handleDelete(row.original.id, row.original.title)}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
           >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+            <Trash2 size={16} />
+          </IconButton>
+        </Stack>
       ),
     },
   ];
 
-  const tabs = [
-    { id: "dashboard", label: "统计面板", icon: BarChart3 },
-    { id: "suppliers", label: "供应商", icon: Users },
-    { id: "evaluations", label: "供应商评估", icon: Star },
-    { id: "orders", label: "采购订单", icon: ClipboardList },
-    { id: "contracts", label: "供应商合同", icon: FileText },
-    { id: "finance", label: "财务", icon: Wallet },
+  const tabs: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
+    { id: "dashboard", label: "统计面板", icon: <BarChart3 size={18} /> },
+    { id: "suppliers", label: "供应商", icon: <Users size={18} /> },
+    { id: "evaluations", label: "供应商评估", icon: <Star size={18} /> },
+    { id: "orders", label: "采购订单", icon: <ClipboardList size={18} /> },
+    { id: "contracts", label: "供应商合同", icon: <FileText size={18} /> },
+    { id: "finance", label: "财务", icon: <Wallet size={18} /> },
   ];
 
   const getModalTitle = () => {
@@ -789,232 +816,313 @@ const Srmpage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg"
-              >
-                <ChevronRight className="w-5 h-5 rotate-180" />
-              </button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f8fafc 0%, #faf5ff 100%)",
+      }}
+    >
+      <Paper
+        elevation={0}
+        square
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ height: 64 }}
+          >
+            <Stack direction="row" spacing={2} alignItems="center">
+              <IconButton onClick={() => navigate("/dashboard")} size="small">
+                <ChevronRight style={{ transform: "rotate(180deg)" }} />
+              </IconButton>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    background: "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
+                    borderRadius: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Users color="white" size={24} />
+                </Box>
+                <Box>
+                  <Typography variant="h6" fontWeight={700}>
                     供应商关系管理
-                  </h1>
-                  <p className="text-xs text-slate-500">
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
                     Supplier Relationship Management
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
+                  </Typography>
+                </Box>
+              </Stack>
+            </Stack>
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<Plus size={16} />}
                 onClick={openCreateModal}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
-                <span>新建</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+                新建
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+      </Paper>
 
-      {notification && (
-        <div
-          className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
-            notification.type === "success" ? "bg-green-500" : "bg-red-500"
-          } text-white`}
+      <Snackbar
+        open={Boolean(notification)}
+        autoHideDuration={3000}
+        onClose={() => setNotification(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          severity={notification?.type === "success" ? "success" : "error"}
+          onClose={() => setNotification(null)}
+          icon={
+            notification?.type === "success" ? <Check size={20} /> : undefined
+          }
         >
-          {notification.type === "success" && <Check className="w-5 h-5" />}
-          {notification.type === "error" && (
-            <AlertTriangle className="w-5 h-5" />
-          )}
-          <span>{notification.message}</span>
-        </div>
-      )}
+          {notification?.message}
+        </Alert>
+      </Snackbar>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 bg-white rounded-lg shadow-sm p-1 flex space-x-1 overflow-x-auto">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 3,
+            borderRadius: 1.5,
+            border: 1,
+            borderColor: "divider",
+            overflow: "hidden",
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ minHeight: 48, px: 1 }}
+          >
+            {tabs.map((tab) => (
+              <Tab
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "bg-purple-600 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <Icon className="w-5 h-5" />
-                  <span>{tab.label}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                value={tab.id}
+                label={tab.label}
+                icon={tab.icon as React.ReactElement}
+                iconPosition="start"
+                sx={{ minHeight: 48, fontWeight: 500 }}
+              />
+            ))}
+          </Tabs>
+        </Paper>
 
         {activeTab === "dashboard" && statistics && (
-          <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-              <MetricCard
-                title="供应商总数"
-                value={statistics.basic.total_suppliers}
-                icon={<Users />}
-                gradient={["#6366F1", "#8B5CF6"]}
-                subtitle={`${statistics.basic.active_suppliers} 个启用中`}
-              />
-              <MetricCard
-                title="平均评分"
-                value={statistics.basic.avg_score.toFixed(1)}
-                icon={<Award />}
-                gradient={["#F59E0B", "#D97706"]}
-                subtitle={`${statistics.basic.total_evaluations} 次评估`}
-              />
-              <MetricCard
-                title="采购订单"
-                value={statistics.basic.total_orders}
-                icon={<ClipboardList />}
-                gradient={["#10B981", "#059669"]}
-                subtitle={`${statistics.basic.pending_orders} 个待处理`}
-              />
-              <MetricCard
-                title="订单总额"
-                value={`¥${statistics.basic.total_order_amount.toLocaleString()}`}
-                icon={<DollarSign />}
-                gradient={["#14B8A6", "#0D9488"]}
-                subtitle={`${statistics.basic.completed_orders} 个已完成`}
-              />
-              <MetricCard
-                title="合同总数"
-                value={statistics.basic.total_contracts}
-                icon={<ScrollText />}
-                gradient={["#EC4899", "#DB2777"]}
-                subtitle={`${statistics.basic.active_contracts} 个有效`}
-              />
-              <MetricCard
-                title="供应商分类"
-                value={statistics.supplier_by_category.length}
-                icon={<Building2 />}
-                gradient={["#8B5CF6", "#7C3AED"]}
-                subtitle="类别数量"
-              />
-            </div>
+          <Box>
+            <Grid container spacing={2} sx={{ mb: 4 }}>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <MetricCard
+                  title="供应商总数"
+                  value={statistics.basic.total_suppliers}
+                  icon={<Users size={24} />}
+                  gradient={["#6366F1", "#8B5CF6"]}
+                  subtitle={`${statistics.basic.active_suppliers} 个启用中`}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <MetricCard
+                  title="平均评分"
+                  value={statistics.basic.avg_score.toFixed(1)}
+                  icon={<Award size={24} />}
+                  gradient={["#F59E0B", "#D97706"]}
+                  subtitle={`${statistics.basic.total_evaluations} 次评估`}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <MetricCard
+                  title="采购订单"
+                  value={statistics.basic.total_orders}
+                  icon={<ClipboardList size={24} />}
+                  gradient={["#10B981", "#059669"]}
+                  subtitle={`${statistics.basic.pending_orders} 个待处理`}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <MetricCard
+                  title="订单总额"
+                  value={`¥${statistics.basic.total_order_amount.toLocaleString()}`}
+                  icon={<DollarSign size={24} />}
+                  gradient={["#14B8A6", "#0D9488"]}
+                  subtitle={`${statistics.basic.completed_orders} 个已完成`}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <MetricCard
+                  title="合同总数"
+                  value={statistics.basic.total_contracts}
+                  icon={<ScrollText size={24} />}
+                  gradient={["#EC4899", "#DB2777"]}
+                  subtitle={`${statistics.basic.active_contracts} 个有效`}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <MetricCard
+                  title="供应商分类"
+                  value={statistics.supplier_by_category.length}
+                  icon={<Building2 size={24} />}
+                  gradient={["#8B5CF6", "#7C3AED"]}
+                  subtitle="类别数量"
+                />
+              </Grid>
+            </Grid>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <StatsChart
-                title="供应商状态分布"
-                type="pie"
-                data={statistics.supplier_by_status.map((s) => ({
-                  name: mapStatusToChinese(s.status),
-                  value: s.count,
-                  color: s.status === "active" ? "#10B981" : "#6B7280",
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-              <StatsChart
-                title="订单状态分布"
-                type="pie"
-                data={statistics.order_by_status.map((s) => ({
-                  name: mapStatusToChinese(s.status),
-                  value: s.count,
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <StatsChart
-                title="评估分数分布"
-                type="bar"
-                data={statistics.evaluation_score_distribution.map((s) => ({
-                  name: s.range,
-                  value: s.count,
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-              <StatsChart
-                title="月度订单趋势"
-                type="line"
-                data={statistics.monthly_order_trend.map((t) => ({
-                  name: t.month,
-                  value: t.order_count,
-                  amount: t.total_amount,
-                }))}
-                yKey="value"
-                xKey="name"
-              />
-            </div>
-
-            {statistics.contract_by_status.length > 0 && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={12} lg={6}>
                 <StatsChart
-                  title="合同状态分布"
+                  title="供应商状态分布"
                   type="pie"
-                  data={statistics.contract_by_status.map((s) => ({
+                  data={statistics.supplier_by_status.map((s) => ({
+                    name: mapStatusToChinese(s.status),
+                    value: s.count,
+                    color: s.status === "active" ? "#10B981" : "#6B7280",
+                  }))}
+                  yKey="value"
+                  xKey="name"
+                />
+              </Grid>
+              <Grid item xs={12} lg={6}>
+                <StatsChart
+                  title="订单状态分布"
+                  type="pie"
+                  data={statistics.order_by_status.map((s) => ({
                     name: mapStatusToChinese(s.status),
                     value: s.count,
                   }))}
                   yKey="value"
                   xKey="name"
                 />
-              </div>
+              </Grid>
+            </Grid>
+
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={12} lg={6}>
+                <StatsChart
+                  title="评估分数分布"
+                  type="bar"
+                  data={statistics.evaluation_score_distribution.map((s) => ({
+                    name: s.range,
+                    value: s.count,
+                  }))}
+                  yKey="value"
+                  xKey="name"
+                />
+              </Grid>
+              <Grid item xs={12} lg={6}>
+                <StatsChart
+                  title="月度订单趋势"
+                  type="line"
+                  data={statistics.monthly_order_trend.map((t) => ({
+                    name: t.month,
+                    value: t.order_count,
+                    amount: t.total_amount,
+                  }))}
+                  yKey="value"
+                  xKey="name"
+                />
+              </Grid>
+            </Grid>
+
+            {statistics.contract_by_status.length > 0 && (
+              <Grid container spacing={3}>
+                <Grid item xs={12} lg={6}>
+                  <StatsChart
+                    title="合同状态分布"
+                    type="pie"
+                    data={statistics.contract_by_status.map((s) => ({
+                      name: mapStatusToChinese(s.status),
+                      value: s.count,
+                    }))}
+                    yKey="value"
+                    xKey="name"
+                  />
+                </Grid>
+              </Grid>
             )}
-          </div>
+          </Box>
         )}
 
         {activeTab !== "dashboard" && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-            <div className="p-4 border-b border-slate-200">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <h2 className="text-lg font-semibold text-slate-900">
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 1.5,
+              border: 1,
+              borderColor: "divider",
+              overflow: "hidden",
+            }}
+          >
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                flexWrap="wrap"
+                spacing={2}
+              >
+                <Typography variant="h6" fontWeight={600}>
                   {activeTab === "suppliers" && "供应商列表"}
                   {activeTab === "evaluations" && "供应商评估记录"}
                   {activeTab === "orders" && "采购订单列表"}
                   {activeTab === "contracts" && "供应商合同列表"}
                   {activeTab === "finance" && "应付账款管理"}
-                </h2>
-                <div className="flex items-center space-x-3">
-                  <select
+                </Typography>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <TextField
+                    size="small"
+                    select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                    sx={{ minWidth: 140 }}
                   >
-                    <option value="all">全部状态</option>
-                    <option value="启用">启用</option>
-                    <option value="禁用">禁用</option>
-                    <option value="待处理">待处理</option>
-                    <option value="已完成">已完成</option>
-                    <option value="处理中">处理中</option>
-                  </select>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="搜索..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-64 pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+                    <MenuItem value="all">全部状态</MenuItem>
+                    <MenuItem value="启用">启用</MenuItem>
+                    <MenuItem value="禁用">禁用</MenuItem>
+                    <MenuItem value="待处理">待处理</MenuItem>
+                    <MenuItem value="已完成">已完成</MenuItem>
+                    <MenuItem value="处理中">处理中</MenuItem>
+                  </TextField>
+                  <TextField
+                    size="small"
+                    placeholder="搜索..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    sx={{ width: 256 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon size={18} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Stack>
+              </Stack>
+            </Box>
 
-            <div className="p-4">
+            <Box sx={{ p: 2 }}>
               {activeTab === "suppliers" && (
                 <DataTable
                   columns={supplierColumns}
@@ -1056,622 +1164,549 @@ const Srmpage: React.FC = () => {
                 />
               )}
               {activeTab === "finance" && <SrmFinanceTab />}
-            </div>
-          </div>
+            </Box>
+          </Paper>
         )}
-      </main>
+      </Box>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {getModalTitle()}
-              </h3>
-              <button
-                onClick={resetModal}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              {activeTab === "suppliers" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        编号 *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.supplier_no || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            supplier_no: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        名称 *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        联系人
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.contact_person || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            contact_person: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        电话
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.contact_phone || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            contact_phone: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        邮箱
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        类别 *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.category || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, category: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        风险等级
-                      </label>
-                      <select
-                        value={formData.risk_level || "medium"}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            risk_level: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="low">低风险</option>
-                        <option value="medium">中风险</option>
-                        <option value="high">高风险</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        状态
-                      </label>
-                      <select
-                        value={formData.status || "启用"}
-                        onChange={(e) =>
-                          setFormData({ ...formData, status: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="启用">启用</option>
-                        <option value="禁用">禁用</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      地址
-                    </label>
-                    <textarea
-                      value={formData.address || ""}
+      <Dialog
+        open={showModal}
+        onClose={resetModal}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
+      >
+        <DialogTitle>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6" fontWeight={600}>
+              {getModalTitle()}
+            </Typography>
+            <IconButton onClick={resetModal} size="small">
+              <X size={20} />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={3} sx={{ pt: 1 }}>
+            {activeTab === "suppliers" && (
+              <Stack spacing={3}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="编号 *"
+                      value={formData.supplier_no || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, address: e.target.value })
+                        setFormData({
+                          ...formData,
+                          supplier_no: e.target.value,
+                        })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      rows={2}
                     />
-                  </div>
-                </>
-              )}
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="名称 *"
+                      value={formData.name || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="联系人"
+                      value={formData.contact_person || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contact_person: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="电话"
+                      value={formData.contact_phone || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contact_phone: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="邮箱"
+                      type="email"
+                      value={formData.email || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="类别 *"
+                      value={formData.category || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, category: e.target.value })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="风险等级"
+                      value={formData.risk_level || "medium"}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          risk_level: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="low">低风险</MenuItem>
+                      <MenuItem value="medium">中风险</MenuItem>
+                      <MenuItem value="high">高风险</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="状态"
+                      value={formData.status || "启用"}
+                      onChange={(e) =>
+                        setFormData({ ...formData, status: e.target.value })
+                      }
+                    >
+                      <MenuItem value="启用">启用</MenuItem>
+                      <MenuItem value="禁用">禁用</MenuItem>
+                    </TextField>
+                  </Grid>
+                </Grid>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="地址"
+                  value={formData.address || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                />
+              </Stack>
+            )}
 
-              {activeTab === "evaluations" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        评估编号 *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.evaluation_no || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            evaluation_no: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        供应商 *
-                      </label>
-                      <select
-                        value={formData.supplier_id || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            supplier_id: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="">请选择供应商</option>
-                        {suppliers.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        质量评分
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.quality_score || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            quality_score: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        交付评分
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.delivery_score || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            delivery_score: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        服务评分
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.service_score || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            service_score: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        价格评分
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.price_score || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            price_score: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        综合评分
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.overall_score || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            overall_score: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        状态
-                      </label>
-                      <select
-                        value={formData.status || "已完成"}
-                        onChange={(e) =>
-                          setFormData({ ...formData, status: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="草稿">草稿</option>
-                        <option value="已完成">已完成</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      备注
-                    </label>
-                    <textarea
-                      value={formData.comments || ""}
+            {activeTab === "evaluations" && (
+              <Stack spacing={3}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="评估编号 *"
+                      value={formData.evaluation_no || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, comments: e.target.value })
+                        setFormData({
+                          ...formData,
+                          evaluation_no: e.target.value,
+                        })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      rows={3}
                     />
-                  </div>
-                </>
-              )}
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="供应商 *"
+                      value={formData.supplier_id || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          supplier_id: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="">请选择供应商</MenuItem>
+                      {suppliers.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="质量评分"
+                      value={formData.quality_score || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          quality_score: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="交付评分"
+                      value={formData.delivery_score || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          delivery_score: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="服务评分"
+                      value={formData.service_score || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          service_score: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="价格评分"
+                      value={formData.price_score || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          price_score: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="综合评分"
+                      value={formData.overall_score || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          overall_score: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="状态"
+                      value={formData.status || "已完成"}
+                      onChange={(e) =>
+                        setFormData({ ...formData, status: e.target.value })
+                      }
+                    >
+                      <MenuItem value="草稿">草稿</MenuItem>
+                      <MenuItem value="已完成">已完成</MenuItem>
+                    </TextField>
+                  </Grid>
+                </Grid>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="备注"
+                  value={formData.comments || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, comments: e.target.value })
+                  }
+                />
+              </Stack>
+            )}
 
-              {activeTab === "orders" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        订单号 *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.po_no || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, po_no: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        供应商 *
-                      </label>
-                      <select
-                        value={formData.supplier_id || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            supplier_id: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="">请选择供应商</option>
-                        {suppliers.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        总金额
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.total_amount || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            total_amount: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        预计交付日期
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.expected_date?.split("T")[0] || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            expected_date: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        状态
-                      </label>
-                      <select
-                        value={formData.status || "待处理"}
-                        onChange={(e) =>
-                          setFormData({ ...formData, status: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="待处理">待处理</option>
-                        <option value="处理中">处理中</option>
-                        <option value="已完成">已完成</option>
-                        <option value="已交付">已交付</option>
-                        <option value="已取消">已取消</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      备注
-                    </label>
-                    <textarea
-                      value={formData.remarks || ""}
+            {activeTab === "orders" && (
+              <Stack spacing={3}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="订单号 *"
+                      value={formData.po_no || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, remarks: e.target.value })
+                        setFormData({ ...formData, po_no: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      rows={3}
                     />
-                  </div>
-                </>
-              )}
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="供应商 *"
+                      value={formData.supplier_id || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          supplier_id: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="">请选择供应商</MenuItem>
+                      {suppliers.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="总金额"
+                      value={formData.total_amount || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          total_amount: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="预计交付日期"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.expected_date?.split("T")[0] || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          expected_date: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="状态"
+                      value={formData.status || "待处理"}
+                      onChange={(e) =>
+                        setFormData({ ...formData, status: e.target.value })
+                      }
+                    >
+                      <MenuItem value="待处理">待处理</MenuItem>
+                      <MenuItem value="处理中">处理中</MenuItem>
+                      <MenuItem value="已完成">已完成</MenuItem>
+                      <MenuItem value="已交付">已交付</MenuItem>
+                      <MenuItem value="已取消">已取消</MenuItem>
+                    </TextField>
+                  </Grid>
+                </Grid>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="备注"
+                  value={formData.remarks || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, remarks: e.target.value })
+                  }
+                />
+              </Stack>
+            )}
 
-              {activeTab === "contracts" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        合同号 *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.contract_no || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            contract_no: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        供应商 *
-                      </label>
-                      <select
-                        value={formData.supplier_id || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            supplier_id: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="">请选择供应商</option>
-                        {suppliers.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        合同标题 *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.title || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, title: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        合同类型
-                      </label>
-                      <select
-                        value={formData.contract_type || "purchase"}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            contract_type: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="purchase">采购合同</option>
-                        <option value="service">服务合同</option>
-                        <option value="framework">框架协议</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        合同金额
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.total_amount || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            total_amount: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        签订日期
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.sign_date?.split("T")[0] || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            sign_date: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        生效日期
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.start_date?.split("T")[0] || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            start_date: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        到期日期
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.end_date?.split("T")[0] || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, end_date: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        状态
-                      </label>
-                      <select
-                        value={formData.status || "启用"}
-                        onChange={(e) =>
-                          setFormData({ ...formData, status: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      >
-                        <option value="启用">启用</option>
-                        <option value="草稿">草稿</option>
-                        <option value="已过期">已过期</option>
-                        <option value="已取消">已取消</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      备注
-                    </label>
-                    <textarea
-                      value={formData.remarks || ""}
+            {activeTab === "contracts" && (
+              <Stack spacing={3}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      label="合同号 *"
+                      value={formData.contract_no || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, remarks: e.target.value })
+                        setFormData({
+                          ...formData,
+                          contract_no: e.target.value,
+                        })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                      rows={3}
                     />
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end">
-              <button
-                onClick={resetModal}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                取消
-              </button>
-              <button
-                onClick={modalType === "create" ? handleCreate : handleEdit}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
-              >
-                <Check className="w-4 h-4" />
-                {modalType === "create" ? "创建" : "保存"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="供应商 *"
+                      value={formData.supplier_id || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          supplier_id: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="">请选择供应商</MenuItem>
+                      {suppliers.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="合同标题 *"
+                      value={formData.title || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="合同类型"
+                      value={formData.contract_type || "purchase"}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contract_type: e.target.value,
+                        })
+                      }
+                    >
+                      <MenuItem value="purchase">采购合同</MenuItem>
+                      <MenuItem value="service">服务合同</MenuItem>
+                      <MenuItem value="framework">框架协议</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      type="number"
+                      label="合同金额"
+                      value={formData.total_amount || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          total_amount: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="签订日期"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.sign_date?.split("T")[0] || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          sign_date: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="生效日期"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.start_date?.split("T")[0] || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          start_date: e.target.value,
+                        })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={4}>
+                    <TextField
+                      fullWidth
+                      type="date"
+                      label="到期日期"
+                      InputLabelProps={{ shrink: true }}
+                      value={formData.end_date?.split("T")[0] || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, end_date: e.target.value })
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="状态"
+                      value={formData.status || "启用"}
+                      onChange={(e) =>
+                        setFormData({ ...formData, status: e.target.value })
+                      }
+                    >
+                      <MenuItem value="启用">启用</MenuItem>
+                      <MenuItem value="草稿">草稿</MenuItem>
+                      <MenuItem value="已过期">已过期</MenuItem>
+                      <MenuItem value="已取消">已取消</MenuItem>
+                    </TextField>
+                  </Grid>
+                </Grid>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="备注"
+                  value={formData.remarks || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, remarks: e.target.value })
+                  }
+                />
+              </Stack>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={resetModal} variant="outlined">
+            取消
+          </Button>
+          <Button
+            onClick={modalType === "create" ? handleCreate : handleEdit}
+            variant="contained"
+            color="secondary"
+            startIcon={<Check size={16} />}
+          >
+            {modalType === "create" ? "创建" : "保存"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
@@ -1681,213 +1716,156 @@ const SrmFinanceTab: React.FC = () => {
     "invoices" | "payments" | "aging"
   >("invoices");
 
+  const financeTabs: Array<{
+    id: "invoices" | "payments" | "aging";
+    label: string;
+  }> = [
+    { id: "invoices", label: "采购发票" },
+    { id: "payments", label: "付款申请" },
+    { id: "aging", label: "账龄分析" },
+  ];
+
   return (
-    <div className="space-y-6">
+    <Stack spacing={3}>
       {/* 子Tab切换 */}
-      <div className="flex space-x-1 bg-slate-50 rounded-lg p-1">
-        <button
-          onClick={() => setFinanceTab("invoices")}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-            financeTab === "invoices"
-              ? "bg-white text-purple-600 shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
+      <Paper
+        elevation={0}
+        sx={{ borderRadius: 1, p: 0.5, bgcolor: "grey.50" }}
+      >
+        <Tabs
+          value={financeTab}
+          onChange={(_, v) => setFinanceTab(v)}
+          variant="fullWidth"
+          sx={{ minHeight: 40 }}
         >
-          采购发票
-        </button>
-        <button
-          onClick={() => setFinanceTab("payments")}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-            financeTab === "payments"
-              ? "bg-white text-purple-600 shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          付款申请
-        </button>
-        <button
-          onClick={() => setFinanceTab("aging")}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
-            financeTab === "aging"
-              ? "bg-white text-purple-600 shadow-sm"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          账龄分析
-        </button>
-      </div>
+          {financeTabs.map((tab) => (
+            <Tab
+              key={tab.id}
+              value={tab.id}
+              label={tab.label}
+              sx={{ minHeight: 40, fontWeight: 500 }}
+            />
+          ))}
+        </Tabs>
+      </Paper>
 
       {/* 发票列表 */}
       {financeTab === "invoices" && (
-        <div className="space-y-4">
-          <div className="bg-purple-50 rounded-lg p-4">
-            <p className="text-purple-600 text-sm">
-              采购发票模块 - 显示供应商采购发票列表，支持发票确认、验证等操作
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    发票号
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    供应商
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    金额
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    税额
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    价税合计
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    发票日期
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    到期日
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-slate-600">
-                    状态
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-8 text-center text-slate-400"
-                  >
-                    暂无发票数据
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Stack spacing={2}>
+          <Alert severity="info" sx={{ borderRadius: 1.5 }}>
+            采购发票模块 - 显示供应商采购发票列表，支持发票确认、验证等操作
+          </Alert>
+          <Paper
+            variant="outlined"
+            sx={{ borderRadius: 1.5, overflow: "hidden" }}
+          >
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Typography color="text.secondary">暂无发票数据</Typography>
+            </Box>
+          </Paper>
+        </Stack>
       )}
 
       {/* 付款申请列表 */}
       {financeTab === "payments" && (
-        <div className="space-y-4">
-          <div className="bg-purple-50 rounded-lg p-4">
-            <p className="text-purple-600 text-sm">
-              付款申请模块 - 管理供应商付款申请，支持提交、审批、支付确认等操作
-            </p>
-          </div>
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    申请单号
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    供应商
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    申请金额
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    付款方式
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    付款用途
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    申请日期
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-slate-600">
-                    状态
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-slate-400"
-                  >
-                    暂无付款申请数据
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Stack spacing={2}>
+          <Alert severity="info" sx={{ borderRadius: 1.5 }}>
+            付款申请模块 - 管理供应商付款申请，支持提交、审批、支付确认等操作
+          </Alert>
+          <Paper
+            variant="outlined"
+            sx={{ borderRadius: 1.5, overflow: "hidden" }}
+          >
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Typography color="text.secondary">暂无付款申请数据</Typography>
+            </Box>
+          </Paper>
+        </Stack>
       )}
 
       {/* 账龄分析 */}
       {financeTab === "aging" && (
-        <div className="space-y-4">
-          <div className="bg-purple-50 rounded-lg p-4">
-            <p className="text-purple-600 text-sm">
-              应付账龄分析 - 分析供应商应付账款账龄，提供风险预警
-            </p>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-green-50 rounded-lg p-4">
-              <p className="text-green-600 text-xs">正常</p>
-              <p className="text-2xl font-bold text-green-700 mt-1">¥0</p>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-4">
-              <p className="text-yellow-600 text-xs">30天内</p>
-              <p className="text-2xl font-bold text-yellow-700 mt-1">¥0</p>
-            </div>
-            <div className="bg-orange-50 rounded-lg p-4">
-              <p className="text-orange-600 text-xs">60天内</p>
-              <p className="text-2xl font-bold text-orange-700 mt-1">¥0</p>
-            </div>
-            <div className="bg-red-50 rounded-lg p-4">
-              <p className="text-red-600 text-xs">90天以上</p>
-              <p className="text-2xl font-bold text-red-700 mt-1">¥0</p>
-            </div>
-          </div>
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
-                    供应商
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    应付总额
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    当前
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    30天内
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    60天内
-                  </th>
-                  <th className="px-4 py-3 text-right font-medium text-slate-600">
-                    90天以上
-                  </th>
-                  <th className="px-4 py-3 text-center font-medium text-slate-600">
-                    风险等级
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-slate-400"
-                  >
-                    暂无账龄数据
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Stack spacing={2}>
+          <Alert severity="info" sx={{ borderRadius: 1.5 }}>
+            应付账龄分析 - 分析供应商应付账款账龄，提供风险预警
+          </Alert>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Paper
+                sx={{
+                  p: 2,
+                  borderRadius: 1.5,
+                  bgcolor: "#dcfce7",
+                }}
+              >
+                <Typography variant="caption" color="#15803d">
+                  正常
+                </Typography>
+                <Typography variant="h5" fontWeight={700} color="#15803d" mt={1}>
+                  ¥0
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Paper
+                sx={{
+                  p: 2,
+                  borderRadius: 1.5,
+                  bgcolor: "#fef3c7",
+                }}
+              >
+                <Typography variant="caption" color="#b45309">
+                  30天内
+                </Typography>
+                <Typography variant="h5" fontWeight={700} color="#b45309" mt={1}>
+                  ¥0
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Paper
+                sx={{
+                  p: 2,
+                  borderRadius: 1.5,
+                  bgcolor: "#ffedd5",
+                }}
+              >
+                <Typography variant="caption" color="#c2410c">
+                  60天内
+                </Typography>
+                <Typography variant="h5" fontWeight={700} color="#c2410c" mt={1}>
+                  ¥0
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Paper
+                sx={{
+                  p: 2,
+                  borderRadius: 1.5,
+                  bgcolor: "#fee2e2",
+                }}
+              >
+                <Typography variant="caption" color="#b91c1c">
+                  90天以上
+                </Typography>
+                <Typography variant="h5" fontWeight={700} color="#b91c1c" mt={1}>
+                  ¥0
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+          <Paper
+            variant="outlined"
+            sx={{ borderRadius: 1.5, overflow: "hidden" }}
+          >
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Typography color="text.secondary">暂无账龄数据</Typography>
+            </Box>
+          </Paper>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 };
 

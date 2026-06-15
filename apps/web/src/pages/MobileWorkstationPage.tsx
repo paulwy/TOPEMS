@@ -12,15 +12,22 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Play,
-  Pause,
-  Circle,
 } from "lucide-react";
+import {
+  Box,
+  Paper,
+  Stack,
+  Chip,
+  Button,
+  Typography,
+  Grid,
+  CircularProgress,
+} from "@mui/material";
+
+type TabKey = "home" | "patrol" | "task" | "scan" | "media";
 
 const MobileWorkstationPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    "home" | "patrol" | "task" | "scan" | "media"
-  >("home");
+  const [activeTab, setActiveTab] = useState<TabKey>("home");
   const [stats, setStats] = useState({
     today_patrols: 0,
     today_scans: 0,
@@ -36,6 +43,7 @@ const MobileWorkstationPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -149,16 +157,16 @@ const MobileWorkstationPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-100 text-green-700";
+        return { bgcolor: "#dcfce7", color: "#15803d" };
       case "in_progress":
-        return "bg-blue-100 text-blue-700";
+        return { bgcolor: "#dbeafe", color: "#1d4ed8" };
       case "pending":
-        return "bg-yellow-100 text-yellow-700";
+        return { bgcolor: "#fef3c7", color: "#b45309" };
       default:
-        return "bg-gray-100 text-gray-700";
+        return { bgcolor: "#f1f5f9", color: "#475569" };
     }
   };
 
@@ -175,397 +183,675 @@ const MobileWorkstationPage: React.FC = () => {
     }
   };
 
+  const StatusChip: React.FC<{ status: string }> = ({ status }) => {
+    const style = getStatusStyle(status);
+    return (
+      <Chip
+        label={getStatusText(status)}
+        size="small"
+        sx={{ bgcolor: style.bgcolor, color: style.color, fontWeight: 500 }}
+      />
+    );
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">加载中...</p>
-        </div>
-      </div>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "grey.50",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Stack alignItems="center" spacing={2}>
+          <CircularProgress />
+          <Typography color="text.secondary">加载中...</Typography>
+        </Stack>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       <MobileHeader title="移动工作台" />
 
-      <main className="pb-20">
+      <Box sx={{ pb: 10 }}>
         {activeTab === "home" && (
-          <div className="p-4">
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 text-white mb-6">
-              <h2 className="text-2xl font-bold mb-2">今日工作概览</h2>
-              <p className="text-blue-100 mb-4">实时统计</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/20 rounded-xl p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">巡检</span>
-                  </div>
-                  <p className="text-2xl font-bold">{stats.today_patrols}</p>
-                </div>
-                <div className="bg-white/20 rounded-xl p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <QrCode className="w-4 h-4" />
-                    <span className="text-sm">扫码</span>
-                  </div>
-                  <p className="text-2xl font-bold">{stats.today_scans}</p>
-                </div>
-                <div className="bg-white/20 rounded-xl p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">待处理</span>
-                  </div>
-                  <p className="text-2xl font-bold">{stats.pending_tasks}</p>
-                </div>
-                <div className="bg-white/20 rounded-xl p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="text-sm">已完成</span>
-                  </div>
-                  <p className="text-2xl font-bold">{stats.completed_tasks}</p>
-                </div>
-              </div>
-            </div>
+          <Box sx={{ p: 2 }}>
+            <Paper
+              sx={{
+                background: "linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)",
+                color: "white",
+                p: 3,
+                borderRadius: 2,
+                mb: 3,
+              }}
+            >
+              <Typography variant="h5" fontWeight={700} mb={1}>
+                今日工作概览
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: "rgba(219, 234, 254, 1)", mb: 2 }}
+              >
+                实时统计
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Box
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      borderRadius: 1.5,
+                      p: 1.5,
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                      <MapPin size={16} />
+                      <Typography variant="body2">巡检</Typography>
+                    </Stack>
+                    <Typography variant="h5" fontWeight={700}>
+                      {stats.today_patrols}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      borderRadius: 1.5,
+                      p: 1.5,
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                      <QrCode size={16} />
+                      <Typography variant="body2">扫码</Typography>
+                    </Stack>
+                    <Typography variant="h5" fontWeight={700}>
+                      {stats.today_scans}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      borderRadius: 1.5,
+                      p: 1.5,
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                      <Clock size={16} />
+                      <Typography variant="body2">待处理</Typography>
+                    </Stack>
+                    <Typography variant="h5" fontWeight={700}>
+                      {stats.pending_tasks}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Box
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      borderRadius: 1.5,
+                      p: 1.5,
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                      <CheckCircle size={16} />
+                      <Typography variant="body2">已完成</Typography>
+                    </Stack>
+                    <Typography variant="h5" fontWeight={700}>
+                      {stats.completed_tasks}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
 
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" fontWeight={600} mb={1.5}>
                 快捷操作
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={handleCreatePatrol}
-                  className="bg-blue-50 hover:bg-blue-100 rounded-xl p-4 flex flex-col items-center gap-2 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    巡检打卡
-                  </span>
-                </button>
-                <button
-                  onClick={handleScan}
-                  className="bg-purple-50 hover:bg-purple-100 rounded-xl p-4 flex flex-col items-center gap-2 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
-                    <QrCode className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    扫码入库
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("media")}
-                  className="bg-green-50 hover:bg-green-100 rounded-xl p-4 flex flex-col items-center gap-2 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                    <Image className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    拍照记录
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("task")}
-                  className="bg-orange-50 hover:bg-orange-100 rounded-xl p-4 flex flex-col items-center gap-2 transition-colors"
-                >
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    处理任务
-                  </span>
-                </button>
-              </div>
-            </div>
+              </Typography>
+              <Grid container spacing={1.5}>
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    onClick={handleCreatePatrol}
+                    sx={{
+                      bgcolor: "#eff6ff",
+                      "&:hover": { bgcolor: "#dbeafe" },
+                      borderRadius: 1.5,
+                      p: 2,
+                      flexDirection: "column",
+                      gap: 1,
+                      textTransform: "none",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: "#3b82f6",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <MapPin color="white" size={24} />
+                    </Box>
+                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                      巡检打卡
+                    </Typography>
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    onClick={handleScan}
+                    sx={{
+                      bgcolor: "#faf5ff",
+                      "&:hover": { bgcolor: "#f3e8ff" },
+                      borderRadius: 1.5,
+                      p: 2,
+                      flexDirection: "column",
+                      gap: 1,
+                      textTransform: "none",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: "#a855f7",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <QrCode color="white" size={24} />
+                    </Box>
+                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                      扫码入库
+                    </Typography>
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    onClick={() => setActiveTab("media")}
+                    sx={{
+                      bgcolor: "#f0fdf4",
+                      "&:hover": { bgcolor: "#dcfce7" },
+                      borderRadius: 1.5,
+                      p: 2,
+                      flexDirection: "column",
+                      gap: 1,
+                      textTransform: "none",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: "#22c55e",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Image color="white" size={24} />
+                    </Box>
+                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                      拍照记录
+                    </Typography>
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    fullWidth
+                    onClick={() => setActiveTab("task")}
+                    sx={{
+                      bgcolor: "#fff7ed",
+                      "&:hover": { bgcolor: "#ffedd5" },
+                      borderRadius: 1.5,
+                      p: 2,
+                      flexDirection: "column",
+                      gap: 1,
+                      textTransform: "none",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: "#f97316",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <CheckCircle color="white" size={24} />
+                    </Box>
+                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                      处理任务
+                    </Typography>
+                  </Button>
+                </Grid>
+              </Grid>
+            </Box>
 
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            <Box>
+              <Typography variant="h6" fontWeight={600} mb={1.5}>
                 最近巡检
-              </h3>
+              </Typography>
               {patrols.length === 0 ? (
-                <div className="bg-white rounded-xl p-6 text-center">
-                  <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500">暂无巡检记录</p>
-                </div>
+                <Paper sx={{ p: 3, borderRadius: 2, textAlign: "center" }}>
+                  <MapPin
+                    size={48}
+                    color="#cbd5e1"
+                    style={{ margin: "0 auto 8px" }}
+                  />
+                  <Typography color="text.secondary">暂无巡检记录</Typography>
+                </Paper>
               ) : (
-                <div className="space-y-3">
+                <Stack spacing={1.5}>
                   {patrols.slice(0, 3).map((patrol) => (
-                    <div key={patrol.id} className="bg-white rounded-xl p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-medium text-gray-900">
+                    <Paper
+                      key={patrol.id}
+                      sx={{ p: 2, borderRadius: 1.5 }}
+                    >
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                        mb={1}
+                      >
+                        <Typography fontWeight={500}>
                           {patrol.title}
-                        </h4>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(patrol.status)}`}
-                        >
-                          {getStatusText(patrol.status)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <MapPin className="w-4 h-4" />
-                        <span>{patrol.address || "未知位置"}</span>
-                      </div>
+                        </Typography>
+                        <StatusChip status={patrol.status} />
+                      </Stack>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <MapPin size={16} color="#94a3b8" />
+                        <Typography variant="body2" color="text.secondary">
+                          {patrol.address || "未知位置"}
+                        </Typography>
+                      </Stack>
                       {patrol.checked_at && (
-                        <p className="text-xs text-gray-400 mt-1">
+                        <Typography variant="caption" color="text.disabled" mt={0.5}>
                           {new Date(patrol.checked_at).toLocaleString("zh-CN")}
-                        </p>
+                        </Typography>
                       )}
-                    </div>
+                    </Paper>
                   ))}
-                </div>
+                </Stack>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {activeTab === "patrol" && (
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">巡检记录</h2>
-              <button
+          <Box sx={{ p: 2 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={2}
+            >
+              <Typography variant="h5" fontWeight={700}>
+                巡检记录
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Plus size={16} />}
                 onClick={handleCreatePatrol}
-                className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-4 py-2 flex items-center gap-2"
               >
-                <Plus className="w-4 h-4" />
                 打卡
-              </button>
-            </div>
+              </Button>
+            </Stack>
 
             {patrols.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center">
-                <MapPin className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 mb-4">暂无巡检记录</p>
-                <button
-                  onClick={handleCreatePatrol}
-                  className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-6 py-2"
-                >
+              <Paper sx={{ p: 4, borderRadius: 2, textAlign: "center" }}>
+                <MapPin
+                  size={64}
+                  color="#cbd5e1"
+                  style={{ margin: "0 auto 12px" }}
+                />
+                <Typography color="text.secondary" mb={2}>
+                  暂无巡检记录
+                </Typography>
+                <Button variant="contained" color="primary" onClick={handleCreatePatrol}>
                   立即巡检
-                </button>
-              </div>
+                </Button>
+              </Paper>
             ) : (
-              <div className="space-y-3">
+              <Stack spacing={1.5}>
                 {patrols.map((patrol) => (
-                  <div key={patrol.id} className="bg-white rounded-xl p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-medium text-gray-900">
-                          {patrol.title}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-1">
+                  <Paper key={patrol.id} sx={{ p: 2, borderRadius: 1.5 }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                      mb={1}
+                    >
+                      <Box>
+                        <Typography fontWeight={500}>{patrol.title}</Typography>
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
                           {patrol.description}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(patrol.status)}`}
-                      >
-                        {getStatusText(patrol.status)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{patrol.address || "未知"}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>
+                        </Typography>
+                      </Box>
+                      <StatusChip status={patrol.status} />
+                    </Stack>
+                    <Stack
+                      direction="row"
+                      spacing={2}
+                      alignItems="center"
+                      sx={{ mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}
+                    >
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <MapPin size={16} color="#94a3b8" />
+                        <Typography variant="body2" color="text.secondary">
+                          {patrol.address || "未知"}
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Clock size={16} color="#94a3b8" />
+                        <Typography variant="body2" color="text.secondary">
                           {patrol.checked_at
-                            ? new Date(patrol.checked_at).toLocaleDateString(
-                                "zh-CN",
-                              )
+                            ? new Date(patrol.checked_at).toLocaleDateString("zh-CN")
                             : "-"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </Paper>
                 ))}
-              </div>
+              </Stack>
             )}
-          </div>
+          </Box>
         )}
 
         {activeTab === "task" && (
-          <div className="p-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">任务中心</h2>
+          <Box sx={{ p: 2 }}>
+            <Typography variant="h5" fontWeight={700} mb={2}>
+              任务中心
+            </Typography>
 
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ mb: 2, overflowX: "auto", pb: 1 }}
+            >
               {["全部", "待处理", "进行中", "已完成"].map((filter) => (
-                <button
+                <Chip
                   key={filter}
-                  className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-blue-50 text-blue-600"
-                >
-                  {filter}
-                </button>
+                  label={filter}
+                  sx={{
+                    bgcolor: "#eff6ff",
+                    color: "#2563eb",
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                  }}
+                />
               ))}
-            </div>
+            </Stack>
 
             {tasks.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center">
-                <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">暂无任务</p>
-              </div>
+              <Paper sx={{ p: 4, borderRadius: 2, textAlign: "center" }}>
+                <CheckCircle
+                  size={64}
+                  color="#cbd5e1"
+                  style={{ margin: "0 auto 12px" }}
+                />
+                <Typography color="text.secondary">暂无任务</Typography>
+              </Paper>
             ) : (
-              <div className="space-y-3">
+              <Stack spacing={1.5}>
                 {tasks.map((task) => (
-                  <div key={task.id} className="bg-white rounded-xl p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {task.title}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-1">
+                  <Paper key={task.id} sx={{ p: 2, borderRadius: 1.5 }}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                      mb={1}
+                    >
+                      <Box flex={1}>
+                        <Typography fontWeight={500}>{task.title}</Typography>
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
                           {task.description}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ml-3 ${getStatusColor(task.status)}`}
-                      >
-                        {getStatusText(task.status)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
-                        <AlertCircle className="w-4 h-4" />
-                        <span>优先级: {task.priority || "中"}</span>
-                      </div>
-                      <button className="text-blue-600 text-sm font-medium hover:text-blue-700">
+                        </Typography>
+                      </Box>
+                      <Box ml={1.5}>
+                        <StatusChip status={task.status} />
+                      </Box>
+                    </Stack>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}
+                    >
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <AlertCircle size={16} color="#94a3b8" />
+                        <Typography variant="body2" color="text.secondary">
+                          优先级: {task.priority || "中"}
+                        </Typography>
+                      </Stack>
+                      <Button size="small" color="primary">
                         查看详情
-                      </button>
-                    </div>
-                  </div>
+                      </Button>
+                    </Stack>
+                  </Paper>
                 ))}
-              </div>
+              </Stack>
             )}
-          </div>
+          </Box>
         )}
 
         {activeTab === "scan" && (
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">扫码记录</h2>
-              <button
+          <Box sx={{ p: 2 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={2}
+            >
+              <Typography variant="h5" fontWeight={700}>
+                扫码记录
+              </Typography>
+              <Button
+                variant="contained"
+                sx={{
+                  bgcolor: "#a855f7",
+                  "&:hover": { bgcolor: "#9333ea" },
+                }}
+                startIcon={<QrCode size={16} />}
                 onClick={handleScan}
-                className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg px-4 py-2 flex items-center gap-2"
               >
-                <QrCode className="w-4 h-4" />
                 扫码
-              </button>
-            </div>
+              </Button>
+            </Stack>
 
             {scans.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center">
-                <QrCode className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 mb-4">暂无扫码记录</p>
-                <button
+              <Paper sx={{ p: 4, borderRadius: 2, textAlign: "center" }}>
+                <QrCode
+                  size={64}
+                  color="#cbd5e1"
+                  style={{ margin: "0 auto 12px" }}
+                />
+                <Typography color="text.secondary" mb={2}>
+                  暂无扫码记录
+                </Typography>
+                <Button
+                  variant="contained"
+                  sx={{
+                    bgcolor: "#a855f7",
+                    "&:hover": { bgcolor: "#9333ea" },
+                  }}
                   onClick={handleScan}
-                  className="bg-purple-500 hover:bg-purple-600 text-white rounded-lg px-6 py-2"
                 >
                   立即扫码
-                </button>
-              </div>
+                </Button>
+              </Paper>
             ) : (
-              <div className="space-y-3">
+              <Stack spacing={1.5}>
                 {scans.map((scan) => (
-                  <div key={scan.id} className="bg-white rounded-xl p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <QrCode className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">
-                          {scan.barcode}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-1">
+                  <Paper key={scan.id} sx={{ p: 2, borderRadius: 1.5 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: "#f3e8ff",
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <QrCode size={20} color="#a855f7" />
+                      </Box>
+                      <Box flex={1}>
+                        <Typography fontWeight={500}>{scan.barcode}</Typography>
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
                           类型: {scan.item_type}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled" mt={0.5}>
                           {scan.scanned_at
                             ? new Date(scan.scanned_at).toLocaleString("zh-CN")
                             : "-"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Paper>
                 ))}
-              </div>
+              </Stack>
             )}
-          </div>
+          </Box>
         )}
 
         {activeTab === "media" && (
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">媒体记录</h2>
-              <div className="flex gap-2">
-                <button className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2 flex items-center gap-2">
-                  <Image className="w-4 h-4" />
-                  拍照
-                </button>
-                <button className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-4 py-2 flex items-center gap-2">
-                  <Video className="w-4 h-4" />
-                  录像
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-              {["全部", "照片", "视频", "音频"].map((filter) => (
-                <button
-                  key={filter}
-                  className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-green-50 text-green-600"
+          <Box sx={{ p: 2 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={2}
+            >
+              <Typography variant="h5" fontWeight={700}>
+                媒体记录
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    bgcolor: "#22c55e",
+                    "&:hover": { bgcolor: "#16a34a" },
+                  }}
+                  startIcon={<Image size={16} />}
                 >
-                  {filter}
-                </button>
+                  拍照
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<Video size={16} />}
+                >
+                  录像
+                </Button>
+              </Stack>
+            </Stack>
+
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ mb: 2, overflowX: "auto", pb: 1 }}
+            >
+              {["全部", "照片", "视频", "音频"].map((filter) => (
+                <Chip
+                  key={filter}
+                  label={filter}
+                  sx={{
+                    bgcolor: "#f0fdf4",
+                    color: "#16a34a",
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                  }}
+                />
               ))}
-            </div>
+            </Stack>
 
             {media.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center">
-                <Image className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 mb-4">暂无媒体记录</p>
-              </div>
+              <Paper sx={{ p: 4, borderRadius: 2, textAlign: "center" }}>
+                <Image
+                  size={64}
+                  color="#cbd5e1"
+                  style={{ margin: "0 auto 12px" }}
+                />
+                <Typography color="text.secondary" mb={2}>
+                  暂无媒体记录
+                </Typography>
+              </Paper>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <Grid container spacing={1.5}>
                 {media.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-xl overflow-hidden"
-                  >
-                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                      {item.media_type === "photo" && (
-                        <Image className="w-12 h-12 text-gray-400" />
-                      )}
-                      {item.media_type === "video" && (
-                        <Video className="w-12 h-12 text-gray-400" />
-                      )}
-                      {item.media_type === "audio" && (
-                        <Mic className="w-12 h-12 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-xs text-gray-500 truncate">
-                        {item.description || "无描述"}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleDateString(
-                              "zh-CN",
-                            )
-                          : "-"}
-                      </p>
-                    </div>
-                  </div>
+                  <Grid item xs={6} key={item.id}>
+                    <Paper sx={{ borderRadius: 1.5, overflow: "hidden" }}>
+                      <Box
+                        sx={{
+                          aspectRatio: "1/1",
+                          bgcolor: "grey.100",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {item.media_type === "photo" && (
+                          <Image size={48} color="#9ca3af" />
+                        )}
+                        {item.media_type === "video" && (
+                          <Video size={48} color="#9ca3af" />
+                        )}
+                        {item.media_type === "audio" && (
+                          <Mic size={48} color="#9ca3af" />
+                        )}
+                      </Box>
+                      <Box sx={{ p: 1.5 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            display: "block",
+                          }}
+                        >
+                          {item.description || "无描述"}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled" mt={0.5}>
+                          {item.created_at
+                            ? new Date(item.created_at).toLocaleDateString("zh-CN")
+                            : "-"}
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  </Grid>
                 ))}
-              </div>
+              </Grid>
             )}
-          </div>
+          </Box>
         )}
-      </main>
+      </Box>
 
       <MobileNav currentPage="mobile-workstation" onNavigate={() => {}} />
-    </div>
+    </Box>
   );
 };
 

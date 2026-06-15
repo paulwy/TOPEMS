@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import MobileHeader from "../components/MobileHeader";
 import MobileNav from "../components/MobileNav";
+import { Box, Typography } from "@mui/material";
 
 interface SystemManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -86,114 +87,117 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <Box sx={{ minHeight: "100vh", background: "linear-gradient(to bottom right, #f1f5f9, #f8fafc)" }}>
       <MobileHeader
         title="系统管理"
         onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
       />
 
       {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 mobile-only"
+        <Box
+          sx={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, bgcolor: "rgba(0,0,0,0.5)", zIndex: 40 }}
           onClick={() => setMobileMenuOpen(false)}
         >
-          <div
-            className="absolute top-14 left-0 right-0 bg-white max-h-[70vh] overflow-y-auto"
+          <Box
+            sx={{ position: "absolute", top: 56, left: 0, right: 0, bgcolor: "background.paper", maxHeight: "70vh", overflow: "auto" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold">菜单</h2>
-                <button
+            <Box sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>菜单</Typography>
+                <Box
+                  component="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 hover:bg-slate-100 rounded-lg"
+                  sx={{ p: 1, borderRadius: 1, "&:hover": { bgcolor: "grey.100" }, border: "none", bgcolor: "transparent", cursor: "pointer" }}
                 >
                   <X size={20} />
-                </button>
-              </div>
-              <div className="space-y-2">
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {systemFeatures.map((feature) => {
                   const Icon = feature.icon;
                   return (
-                    <button
+                    <Box
+                      component="button"
                       key={feature.id}
                       onClick={() => {
                         navigate(feature.path);
                         setMobileMenuOpen(false);
                       }}
-                      className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-100 transition-colors"
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: 1, "&:hover": { bgcolor: "grey.100" }, border: "none", bgcolor: "transparent", cursor: "pointer", width: "100%", textAlign: "left" }}
                     >
-                      <Icon size={20} />
-                      <span>{feature.title}</span>
-                    </button>
+                      <Icon sx={{ width: 20, height: 20 }} />
+                      <Typography>{feature.title}</Typography>
+                    </Box>
                   );
                 })}
-              </div>
-            </div>
-          </div>
-        </div>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
       )}
 
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10 desktop-only">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <button
+      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }} className="desktop-only">
+        <Box sx={{ maxWidth: 1200, mx: "auto", px: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", height: 64 }}>
+            <Box
+              component="button"
               onClick={() => navigate("/dashboard")}
-              className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors mr-3"
+              sx={{ p: 1, borderRadius: 1, "&:hover": { bgcolor: "grey.100" }, border: "none", bgcolor: "transparent", cursor: "pointer", mr: 1 }}
             >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl flex items-center justify-center shadow-lg">
-                <Settings className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">系统管理</h1>
-                <p className="text-xs text-slate-500">
+              <ChevronLeft sx={{ width: 20, height: 20 }} />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, background: "linear-gradient(to bottom right, #475569, #475569)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 2 }}>
+                <Settings sx={{ width: 24, height: 24, color: "white" }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900" }}>系统管理</Typography>
+                <Typography variant="caption" sx={{ color: "grey.500" }}>
                   用户、角色、权限和系统配置
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 desktop-only">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }} className="desktop-only">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
           {systemFeatures.map((feature) => {
             const Icon = feature.icon;
             return (
-              <div
+              <Box
                 key={feature.id}
                 onClick={() => navigate(feature.path)}
-                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group"
+                sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, "&:hover": { boxShadow: 3 }, cursor: "pointer", transition: "all 0.2s" }}
               >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div
-                      className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}
+                <Box sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                    <Box
+                      sx={{ width: 48, height: 48, bgcolor: feature.color.replace("bg-", ""), borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 2, "&:hover": { transform: "scale(1.1)" }, transition: "transform 0.2s" }}
                     >
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <h4 className="text-lg font-semibold text-slate-900 mb-1">
+                      <Icon sx={{ width: 24, height: 24, color: "white" }} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 0.5 }}>
                     {feature.title}
-                  </h4>
-                  <p className="text-sm text-slate-600 mb-4">
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "grey.600", mb: 2 }}>
                     {feature.description}
-                  </p>
-                  <div className="flex items-center text-blue-600 text-sm font-medium group-hover:text-blue-700">
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", color: "primary.main", fontSize: "0.875rem", fontWeight: 500 }}>
                     进入管理 →
-                  </div>
-                </div>
-              </div>
+                  </Box>
+                </Box>
+              </Box>
             );
           })}
-        </div>
-      </main>
+        </Box>
+      </Box>
 
       <MobileNav currentPage="system" onNavigate={navigate} />
-    </div>
+    </Box>
   );
 };
 

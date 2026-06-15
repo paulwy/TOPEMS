@@ -24,6 +24,7 @@ import {
 } from "../api/notification";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
+import { Box, Typography } from "@mui/material";
 
 const NotificationArchivePage: React.FC = () => {
   const navigate = useNavigate();
@@ -122,233 +123,207 @@ const NotificationArchivePage: React.FC = () => {
   };
 
   const getTypeColor = (type: NotificationTypeEnum) => {
-    const colors: Record<NotificationTypeEnum, string> = {
-      system: "bg-blue-100 text-blue-700",
-      workflow: "bg-purple-100 text-purple-700",
-      reminder: "bg-yellow-100 text-yellow-700",
-      alert: "bg-red-100 text-red-700",
-      message: "bg-green-100 text-green-700",
-      info: "bg-cyan-100 text-cyan-700",
-      success: "bg-emerald-100 text-emerald-700",
-      warning: "bg-orange-100 text-orange-700",
-      error: "bg-rose-100 text-rose-700",
+    const colors: Record<NotificationTypeEnum, { bgcolor: string; color: string }> = {
+      system: { bgcolor: "#dbeafe", color: "#1d4ed8" },
+      workflow: { bgcolor: "#ede9fe", color: "#7c3aed" },
+      reminder: { bgcolor: "#fef9c3", color: "#a16207" },
+      alert: { bgcolor: "#fee2e2", color: "#dc2626" },
+      message: { bgcolor: "#dcfce7", color: "#16a34a" },
+      info: { bgcolor: "#cffafe", color: "#0891b2" },
+      success: { bgcolor: "#d1fae5", color: "#059669" },
+      warning: { bgcolor: "#ffedd5", color: "#ea580c" },
+      error: { bgcolor: "#ffe4e6", color: "#e11d48" },
     };
-    return colors[type] || "bg-gray-100 text-gray-700";
+    return colors[type] || { bgcolor: "#f3f4f6", color: "#374151" };
   };
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box
                 onClick={() => navigate("/notifications")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{ p: 1, "&:hover": { bgcolor: "grey.100" }, borderRadius: 1, cursor: "pointer" }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <Archive className="w-7 h-7 mr-3 text-orange-600" />
+                <ChevronLeft sx={{ width: 20, height: 20, color: "grey.600" }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Archive sx={{ width: 28, height: 28, color: "warning.main" }} />
                   通知归档管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
                   查看和管理已归档的通知
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
                 onClick={loadData}
-                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                sx={{ display: "flex", alignItems: "center", px: 2, py: 1, color: "grey.700", bgcolor: "grey.200", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.300" } }}
               >
-                <RefreshCw className="w-5 h-5 mr-2" />
+                <RefreshCw sx={{ width: 20, height: 20, mr: 1 }} />
                 刷新
-              </button>
-              <button
+              </Box>
+              <Box
                 onClick={handleRunAutoArchive}
-                className="flex items-center px-4 py-2 text-orange-700 bg-orange-100 rounded-lg hover:bg-orange-200 transition-colors"
+                sx={{ display: "flex", alignItems: "center", px: 2, py: 1, color: "warning.700", bgcolor: "warning.100", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "warning.200" } }}
               >
-                <RotateCcw className="w-5 h-5 mr-2" />
+                <RotateCcw sx={{ width: 20, height: 20, mr: 1 }} />
                 执行自动归档
-              </button>
-              <button
+              </Box>
+              <Box
                 onClick={() => setShowConfigModal(true)}
-                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                sx={{ display: "flex", alignItems: "center", px: 2, py: 1, color: "grey.700", bgcolor: "grey.200", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.300" } }}
               >
-                <Settings className="w-5 h-5 mr-2" />
+                <Settings sx={{ width: 20, height: 20, mr: 1 }} />
                 归档设置
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Archive Config Summary */}
       {archiveConfig && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Settings className="w-5 h-5 text-orange-600 mr-2" />
-                <span className="text-sm font-medium text-orange-900">
+        <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 2 }}>
+          <Box sx={{ bgcolor: "warning.50", borderRadius: 2, p: 2, border: 1, borderColor: "warning.200" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Settings sx={{ width: 20, height: 20, color: "warning.main", mr: 1 }} />
+                <Typography variant="body2" sx={{ fontWeight: 500, color: "warning.900" }}>
                   归档配置
-                </span>
-              </div>
-              <div className="flex items-center space-x-6 text-sm text-orange-800">
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 3, fontSize: "0.875rem", color: "warning.800" }}>
                 <span>自动归档天数：{archiveConfig.auto_archive_days} 天</span>
                 <span>保留天数：{archiveConfig.retention_days} 天</span>
-                <span
-                  className={
-                    archiveConfig.enabled ? "text-green-600" : "text-red-600"
-                  }
-                >
+                <Typography component="span" sx={{ color: archiveConfig.enabled ? "success.main" : "error.main" }}>
                   {archiveConfig.enabled ? "已启用" : "已禁用"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
       )}
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 3 }}>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search sx={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "grey.400" }} />
               <input
                 type="text"
                 placeholder="搜索归档通知标题、内容..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 8, paddingBottom: 8, border: "1px solid", borderColor: "grey.300", borderRadius: 8, outline: "none" }}
               />
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, overflow: "hidden" }}>
           {loading ? (
-            <div className="p-8 text-center">
-              <Loader2 className="w-12 h-12 text-blue-600 mx-auto animate-spin" />
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
+            <Box sx={{ p: 8, textAlign: "center" }}>
+              <Loader2 sx={{ width: 48, height: 48, color: "primary.main", mx: "auto", animation: "spin 1s linear infinite" }} />
+              <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>加载中...</Typography>
+            </Box>
           ) : filteredNotifications.length === 0 ? (
-            <div className="p-8 text-center">
-              <Archive className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500">暂无归档通知</p>
-            </div>
+            <Box sx={{ p: 8, textAlign: "center" }}>
+              <Archive sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 1.5 }} />
+              <Typography sx={{ color: "grey.500" }}>暂无归档通知</Typography>
+            </Box>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <Box sx={{ overflowX: "auto" }}>
+                <Box component="table" sx={{ minWidth: 720 }}>
+                  <Box component="thead" sx={{ bgcolor: "grey.50" }}>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        通知标题
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        类型
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        原创建时间
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        归档时间
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        操作
-                      </th>
+                      <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>通知标题</th>
+                      <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>类型</th>
+                      <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>原创建时间</th>
+                      <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>归档时间</th>
+                      <th style={{ padding: "12px 24px", textAlign: "right", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>操作</th>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  </Box>
+                  <Box component="tbody" sx={{ "& > tr": { borderTop: 1, borderColor: "divider" }, "& > tr:hover": { bgcolor: "grey.50" } }}>
                     {filteredNotifications.map((notification) => (
-                      <tr key={notification.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
+                      <tr key={notification.id}>
+                        <td style={{ padding: "16px 24px" }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
                             {notification.title}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate max-w-md">
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "grey.500", maxWidth: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>
                             {notification.content}
-                          </div>
+                          </Typography>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 text-xs rounded-full ${getTypeColor(notification.notification_type)}`}
-                          >
+                        <td style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>
+                          <Box component="span" sx={{ px: 1, py: 0.5, fontSize: "0.75rem", borderRadius: "9999px", ...getTypeColor(notification.notification_type) }}>
                             {getTypeLabel(notification.notification_type)}
-                          </span>
+                          </Box>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(notification.created_at).toLocaleString(
-                            "zh-CN",
-                          )}
+                        <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                          {new Date(notification.created_at).toLocaleString("zh-CN")}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(notification.archived_at).toLocaleString(
-                            "zh-CN",
-                          )}
+                        <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                          {new Date(notification.archived_at).toLocaleString("zh-CN")}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button
-                              onClick={() =>
-                                setSelectedNotification(notification)
-                              }
-                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                        <td style={{ padding: "16px 24px", whiteSpace: "nowrap", textAlign: "right", fontSize: "0.875rem", fontWeight: 500 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+                            <Box
+                              onClick={() => setSelectedNotification(notification)}
+                              sx={{ p: 1, color: "primary.main", "&:hover": { bgcolor: "primary.100" }, borderRadius: 1, cursor: "pointer" }}
                               title="查看详情"
                             >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </div>
+                              <Eye sx={{ width: 16, height: 16 }} />
+                            </Box>
+                          </Box>
                         </td>
                       </tr>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </Box>
+                </Box>
+              </Box>
 
               {/* Pagination */}
               {total > 20 && (
-                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
+                <Box sx={{ px: 3, py: 2, borderTop: 1, borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography variant="body2" sx={{ color: "grey.600" }}>
                     第 {page} 页，共 {totalPages} 页
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.700", bgcolor: "background.paper", border: 1, borderColor: "grey.300", borderRadius: 2, cursor: page === 1 ? "not-allowed" : "pointer", opacity: page === 1 ? 0.5 : 1 }}
                     >
                       上一页
-                    </button>
-                    <button
-                      onClick={() =>
-                        setPage((p) => Math.min(totalPages, p + 1))
-                      }
-                      disabled={page >= totalPages}
-                      className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    </Box>
+                    <Box
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      sx={{ px: 1.5, py: 0.75, fontSize: "0.875rem", fontWeight: 500, color: "grey.700", bgcolor: "background.paper", border: 1, borderColor: "grey.300", borderRadius: 2, cursor: page >= totalPages ? "not-allowed" : "pointer", opacity: page >= totalPages ? 0.5 : 1 }}
                     >
                       下一页
-                    </button>
-                  </div>
-                </div>
+                    </Box>
+                  </Box>
+                </Box>
               )}
             </>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Config Modal */}
       {showConfigModal && archiveConfig && (
@@ -366,7 +341,7 @@ const NotificationArchivePage: React.FC = () => {
           onClose={() => setSelectedNotification(null)}
         />
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -390,38 +365,29 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">归档设置</h3>
-        </div>
+    <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, p: 2 }}>
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 6, width: "100%", maxWidth: 480, overflow: "hidden" }}>
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>归档设置</Typography>
+        </Box>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
+        <Box component="form" onSubmit={handleSubmit} sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700" }}>
               启用自动归档
-            </label>
-            <button
-              type="button"
-              onClick={() =>
-                setFormData({ ...formData, enabled: !formData.enabled })
-              }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                formData.enabled ? "bg-blue-600" : "bg-gray-200"
-              }`}
+            </Typography>
+            <Box
+              onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
+              sx={{ position: "relative", display: "inline-flex", width: 44, height: 24, borderRadius: "12px", alignItems: "center", bgcolor: formData.enabled ? "primary.main" : "grey.300", cursor: "pointer", transition: "background-color 0.2s" }}
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.enabled ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
+              <Box sx={{ position: "absolute", width: 16, height: 16, borderRadius: "50%", bgcolor: "white", transition: "transform 0.2s", transform: formData.enabled ? "translateX(20px)" : "translateX(4px)" }} />
+            </Box>
+          </Box>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
               自动归档天数
-            </label>
+            </Typography>
             <input
               type="number"
               min="1"
@@ -432,17 +398,17 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({
                   auto_archive_days: parseInt(e.target.value) || 30,
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              style={{ width: "100%", padding: "8px 12px", border: "1px solid", borderColor: "grey.300", borderRadius: 8, outline: "none" }}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <Typography variant="caption" sx={{ color: "grey.500", mt: 0.5, display: "block" }}>
               超过此天数未读的通知将自动归档
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
               保留天数
-            </label>
+            </Typography>
             <input
               type="number"
               min="1"
@@ -453,31 +419,30 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({
                   retention_days: parseInt(e.target.value) || 90,
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              style={{ width: "100%", padding: "8px 12px", border: "1px solid", borderColor: "grey.300", borderRadius: 8, outline: "none" }}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <Typography variant="caption" sx={{ color: "grey.500", mt: 0.5, display: "block" }}>
               超过此天数的归档通知将被永久删除
-            </p>
-          </div>
-        </form>
+            </Typography>
+          </Box>
+        </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
-          <button
-            type="button"
+        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end", gap: 1.5 }}>
+          <Box
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+            sx={{ px: 2, py: 1, color: "grey.700", bgcolor: "grey.100", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.200" } }}
           >
             取消
-          </button>
-          <button
+          </Box>
+          <Box
             onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            sx={{ px: 2, py: 1, bgcolor: "primary.main", color: "white", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "primary.dark" } }}
           >
             保存
-          </button>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
@@ -506,41 +471,41 @@ const ArchivedNotificationDetailModal: React.FC<
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">归档通知详情</h3>
-        </div>
+    <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, p: 2 }}>
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 6, width: "100%", maxWidth: 600, overflow: "hidden" }}>
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>归档通知详情</Typography>
+        </Box>
 
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">
+        <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box>
+            <Typography variant="caption" sx={{ fontWeight: 500, color: "grey.500", textTransform: "uppercase", mb: 0.5, display: "block" }}>
               标题
-            </label>
-            <p className="text-gray-900">{notification.title}</p>
-          </div>
+            </Typography>
+            <Typography sx={{ color: "grey.900" }}>{notification.title}</Typography>
+          </Box>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 uppercase mb-1">
+          <Box>
+            <Typography variant="caption" sx={{ fontWeight: 500, color: "grey.500", textTransform: "uppercase", mb: 0.5, display: "block" }}>
               内容
-            </label>
-            <p className="text-gray-700">{notification.content}</p>
-          </div>
+            </Typography>
+            <Typography sx={{ color: "grey.700" }}>{notification.content}</Typography>
+          </Box>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 500, color: "grey.500", textTransform: "uppercase", mb: 0.5, display: "block" }}>
                 类型
-              </label>
-              <p className="text-gray-700">
+              </Typography>
+              <Typography sx={{ color: "grey.700" }}>
                 {getTypeLabel(notification.notification_type)}
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 500, color: "grey.500", textTransform: "uppercase", mb: 0.5, display: "block" }}>
                 优先级
-              </label>
-              <p className="text-gray-700">
+              </Typography>
+              <Typography sx={{ color: "grey.700" }}>
                 {notification.priority >= 4
                   ? "紧急"
                   : notification.priority >= 3
@@ -548,51 +513,51 @@ const ArchivedNotificationDetailModal: React.FC<
                     : notification.priority >= 2
                       ? "中"
                       : "低"}
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 500, color: "grey.500", textTransform: "uppercase", mb: 0.5, display: "block" }}>
                 原创建时间
-              </label>
-              <p className="text-gray-700">
+              </Typography>
+              <Typography sx={{ color: "grey.700" }}>
                 {new Date(notification.created_at).toLocaleString("zh-CN")}
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 500, color: "grey.500", textTransform: "uppercase", mb: 0.5, display: "block" }}>
                 归档时间
-              </label>
-              <p className="text-gray-700">
+              </Typography>
+              <Typography sx={{ color: "grey.700" }}>
                 {new Date(notification.archived_at).toLocaleString("zh-CN")}
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
 
           {notification.read_at && (
-            <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 500, color: "grey.500", textTransform: "uppercase", mb: 0.5, display: "block" }}>
                 阅读时间
-              </label>
-              <p className="text-gray-700">
+              </Typography>
+              <Typography sx={{ color: "grey.700" }}>
                 {new Date(notification.read_at).toLocaleString("zh-CN")}
-              </p>
-            </div>
+              </Typography>
+            </Box>
           )}
-        </div>
+        </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end">
-          <button
+        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
+          <Box
             onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            sx={{ px: 2, py: 1, bgcolor: "grey.100", color: "grey.700", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.200" } }}
           >
             关闭
-          </button>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

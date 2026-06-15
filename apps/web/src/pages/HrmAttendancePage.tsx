@@ -453,11 +453,7 @@ const HrmAttendancePage: React.FC = () => {
                 size="small"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                slotProps={{
-                  input: {
-                    sx: { borderRadius: 2 },
-                  },
-                }}
+                InputProps={{ sx: { borderRadius: 2 } }}
               />
               <Button
                 variant="outlined"
@@ -515,16 +511,14 @@ const HrmAttendancePage: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{ flex: 1 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Box sx={{ display: "flex", color: "text.secondary" }}>
-                          <Search size={20} />
-                        </Box>
-                      </InputAdornment>
-                    ),
-                  },
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box sx={{ display: "flex", color: "text.secondary" }}>
+                        <Search size={20} />
+                      </Box>
+                    </InputAdornment>
+                  ),
                 }}
               />
               <Button

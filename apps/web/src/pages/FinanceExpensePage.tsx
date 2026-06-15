@@ -468,65 +468,65 @@ const FinanceExpensePage: React.FC = () => {
         accessorKey: "expense_number",
         header: "报销编号",
         cell: ({ row }) => (
-          <div className="font-medium text-blue-600">
+          <Box sx={{ fontWeight: 500, color: "primary.main" }}>
             {row.original.expense_number}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "applicant_name",
         header: "申请人",
         cell: ({ row }) => (
-          <div className="flex items-center text-slate-900 dark:text-slate-100">
-            <User className="w-4 h-4 mr-2 text-blue-500" />
+          <Box sx={{ display: "flex", alignItems: "center", color: "text.primary" }}>
+            <User sx={{ width: 16, height: 16, mr: 1, color: "primary.main" }} />
             {getEmployeeName(row.original.applicant_name || "")}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "department_id",
         header: "部门",
         cell: ({ row }) => (
-          <div className="text-slate-900 dark:text-slate-100">
+          <Box sx={{ color: "text.primary" }}>
             {getDepartmentName(row.original.department_id || "")}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "expense_type",
         header: "费用类型",
         cell: ({ row }) => (
-          <div className="text-slate-900 dark:text-slate-100">
+          <Box sx={{ color: "text.primary" }}>
             {getExpenseTypeName(row.original.expense_type || "")}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "amount",
         header: "金额",
         cell: ({ row }) => (
-          <div className="font-bold text-green-600">
+          <Box sx={{ fontWeight: 700, color: "success.main" }}>
             ¥{row.original.amount.toLocaleString()}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "expense_date",
         header: "日期",
         cell: ({ row }) => (
-          <div className="flex items-center text-slate-600 dark:text-slate-400 text-sm">
-            <Calendar className="w-3 h-3 mr-1" />
+          <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary", fontSize: "0.875rem" }}>
+            <Calendar sx={{ width: 12, height: 12, mr: 0.5 }} />
             {row.original.expense_date?.split("T")[0] || "-"}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "receipt_count",
         header: "票据数",
         cell: ({ row }) => (
-          <div className="text-slate-900 dark:text-slate-100">
+          <Box sx={{ color: "text.primary" }}>
             {row.original.receipt_count || 0} 张
-          </div>
+          </Box>
         ),
       },
       {
@@ -548,7 +548,7 @@ const FinanceExpensePage: React.FC = () => {
                     color="success"
                     onClick={() => handleApprove(expense)}
                   >
-                    <Check className="w-4 h-4" />
+                    <Check sx={{ width: 16, height: 16 }} />
                   </IconButton>
                 </Tooltip>
               )}
@@ -557,7 +557,7 @@ const FinanceExpensePage: React.FC = () => {
                   size="small"
                   onClick={() => setEditingExpense(expense)}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
               <Tooltip title="删除">
@@ -566,7 +566,7 @@ const FinanceExpensePage: React.FC = () => {
                   color="error"
                   onClick={() => handleDelete(expense.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
             </Stack>
@@ -671,17 +671,17 @@ const FinanceExpensePage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Box sx={{ bgcolor: "background.paper", boxShadow: "sm", borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
           <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
             <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
               <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </IconButton>
               <Box>
-                <Typography variant="h5" className="flex items-center font-bold">
-                  <FileText className="w-7 h-7 mr-3 text-indigo-600" />
+                <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
+                  <FileText sx={{ width: 28, height: 28, mr: 1.5, color: "indigo.600" }} />
                   费用报销
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -693,89 +693,89 @@ const FinanceExpensePage: React.FC = () => {
               <ModeToggle />
               <Button
                 variant="contained"
-                startIcon={<Plus className="w-5 h-5" />}
+                startIcon={<Plus sx={{ width: 20, height: 20 }} />}
                 onClick={() => setShowCreateModal(true)}
               >
                 新建报销
               </Button>
             </Stack>
           </Stack>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2, lg: 4 }, gap: 2, mb: 3 }}>
           <MetricCard
             title="待审批"
             value={expenseStats.pendingCount}
-            icon={<Clock className="w-5 h-5" />}
+            icon={<Clock sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="orange"
           />
           <MetricCard
             title="已审批"
             value={expenseStats.approvedCount}
-            icon={<Check className="w-5 h-5" />}
+            icon={<Check sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="blue"
           />
           <MetricCard
             title="已报销"
             value={expenseStats.reimbursedCount}
-            icon={<DollarSign className="w-5 h-5" />}
+            icon={<DollarSign sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="green"
           />
           <MetricCard
             title="总金额"
             value={`¥${expenseStats.totalAmount.toLocaleString()}`}
-            icon={<Send className="w-5 h-5" />}
+            icon={<Send sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="purple"
           />
-        </div>
+        </Box>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 3 }, gap: 2, mb: 3 }}>
           <MetricCard
             title="已拒绝"
             value={expenseStats.rejectedCount}
-            icon={<AlertCircle className="w-5 h-5" />}
+            icon={<AlertCircle sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="red"
           />
           <MetricCard
             title="费用总数"
             value={expenseStats.totalExpenses}
-            icon={<FileText className="w-5 h-5" />}
+            icon={<FileText sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="blue"
           />
           <MetricCard
             title="平均金额"
             value={`¥${Math.round(expenseStats.avgAmount).toLocaleString()}`}
-            icon={<DollarSign className="w-5 h-5" />}
+            icon={<DollarSign sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="teal"
           />
-        </div>
+        </Box>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <Typography variant="h6" className="mb-4 font-semibold">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3, mb: 3 }}>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 1.5, boxShadow: 1, p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               费用状态分布
             </Typography>
             <StatsChart type="pie" data={expenseStatusData} height={250} />
-          </div>
+          </Box>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <Typography variant="h6" className="mb-4 font-semibold">
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 1.5, boxShadow: 1, p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               费用类型分布
             </Typography>
             <StatsChart type="bar" data={expenseTypeData} height={250} />
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <Stack sx={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }} spacing={2} className="mb-4">
+        <Stack sx={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", mb: 2 }} spacing={2}>
           <OrganizationFilter
             value={organizationFilter}
             onChange={setOrganizationFilter}
@@ -786,7 +786,7 @@ const FinanceExpensePage: React.FC = () => {
           <Button
             variant="outlined"
             size="small"
-            startIcon={<RefreshCw className="w-4 h-4" />}
+            startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
             onClick={loadData}
           >
             刷新
@@ -794,7 +794,7 @@ const FinanceExpensePage: React.FC = () => {
         </Stack>
 
         {selectedIds.length > 0 && (
-          <Card className="mb-4" sx={{ bgcolor: "action.selected" }}>
+          <Card sx={{ mb: 2, bgcolor: "action.selected" }}>
             <CardContent>
               <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <Typography variant="body2" color="primary">
@@ -805,7 +805,7 @@ const FinanceExpensePage: React.FC = () => {
                     variant="outlined"
                     size="small"
                     color="success"
-                    startIcon={<Check className="w-4 h-4" />}
+                    startIcon={<Check sx={{ width: 16, height: 16 }} />}
                     onClick={handleBatchApprove}
                   >
                     批量审批
@@ -814,7 +814,7 @@ const FinanceExpensePage: React.FC = () => {
                     variant="outlined"
                     size="small"
                     color="warning"
-                    startIcon={<AlertCircle className="w-4 h-4" />}
+                    startIcon={<AlertCircle sx={{ width: 16, height: 16 }} />}
                     onClick={handleBatchReject}
                   >
                     批量拒绝
@@ -823,7 +823,7 @@ const FinanceExpensePage: React.FC = () => {
                     variant="outlined"
                     size="small"
                     color="error"
-                    startIcon={<Trash2 className="w-4 h-4" />}
+                    startIcon={<Trash2 sx={{ width: 16, height: 16 }} />}
                     onClick={handleBatchDelete}
                   >
                     批量删除
@@ -844,12 +844,12 @@ const FinanceExpensePage: React.FC = () => {
         <Card>
           <CardContent>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                <Typography variant="body2" color="text.secondary" className="mt-2">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", borderRadius: "50%", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent" }} />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   加载中...
                 </Typography>
-              </div>
+              </Box>
             ) : (
               <EnhancedDataTable
                 columns={columns}
@@ -869,13 +869,13 @@ const FinanceExpensePage: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* Create Dialog */}
       <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle>新建费用报销</DialogTitle>
         <DialogContent>
-          <Stack spacing={3} className="pt-4">
+          <Stack spacing={3} sx={{ pt: 2 }}>
             <Stack direction="row" spacing={2}>
               <TextField
                 label="报销编号 *"
@@ -956,7 +956,7 @@ const FinanceExpensePage: React.FC = () => {
                     amount: parseFloat(e.target.value) || 0,
                   })
                 }
-                slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+                InputProps={{ inputProps: { min: 0, step: 0.01 } }}
                 placeholder="请输入金额"
               />
               <TextField
@@ -970,7 +970,7 @@ const FinanceExpensePage: React.FC = () => {
                     expense_date: e.target.value,
                   })
                 }
-                slotProps={{ inputLabel: { shrink: true } }}
+                LabelProps={{ shrink: true }}
               />
             </Stack>
 
@@ -985,7 +985,7 @@ const FinanceExpensePage: React.FC = () => {
                   receipt_count: parseInt(e.target.value) || 0,
                 })
               }
-              slotProps={{ htmlInput: { min: 0 } }}
+              InputProps={{ inputProps: { min: 0 } }}
               placeholder="请输入票据数量"
             />
 
@@ -1013,13 +1013,13 @@ const FinanceExpensePage: React.FC = () => {
         <DialogTitle>编辑费用报销</DialogTitle>
         <DialogContent>
           {editingExpense && (
-            <Stack spacing={3} className="pt-4">
+            <Stack spacing={3} sx={{ pt: 2 }}>
               <Stack direction="row" spacing={2}>
                 <TextField
                   label="报销编号"
                   fullWidth
                   value={editingExpense.expense_number}
-                  slotProps={{ input: { readOnly: true } }}
+                  InputProps={{ readOnly: true }}
                 />
                 <TextField
                   label="申请人"
@@ -1091,7 +1091,7 @@ const FinanceExpensePage: React.FC = () => {
                       amount: parseFloat(e.target.value) || 0,
                     })
                   }
-                  slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
+                  InputProps={{ inputProps: { min: 0, step: 0.01 } }}
                 />
                 <TextField
                   label="日期"
@@ -1104,7 +1104,7 @@ const FinanceExpensePage: React.FC = () => {
                       expense_date: e.target.value || undefined,
                     })
                   }
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  LabelProps={{ shrink: true }}
                 />
               </Stack>
 
@@ -1120,7 +1120,7 @@ const FinanceExpensePage: React.FC = () => {
                       receipt_count: parseInt(e.target.value) || 0,
                     })
                   }
-                  slotProps={{ htmlInput: { min: 0 } }}
+                  InputProps={{ inputProps: { min: 0 } }}
                 />
                 <FormControl fullWidth>
                   <InputLabel>状态</InputLabel>
@@ -1161,7 +1161,7 @@ const FinanceExpensePage: React.FC = () => {
           <Button variant="contained" onClick={handleUpdate}>保存</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

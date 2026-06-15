@@ -1,23 +1,43 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Avatar,
+  Typography,
+  IconButton,
+  Stack,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Tabs,
+  Tab,
+  Paper,
+  Divider,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
 import {
   Users,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
+  Building2,
   Mail,
   Phone,
   Briefcase,
-  Building2,
-  LayoutGrid,
+  Eye,
+  Edit,
+  Trash2,
   List,
-  UserCheck,
-  UserX,
-  TrendingUp,
+  LayoutGrid,
   ChevronDown,
   ChevronUp,
+  Plus,
 } from "lucide-react";
 import {
   employeeApi,
@@ -27,14 +47,18 @@ import {
   type Department,
   type Company,
   type PaginatedResult,
-  type ListParams,
 } from "../api/hrm";
 import { useAppStore } from "../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "../components/DataTable";
-import { HrmLayout } from "../components/HrmLayout";
-import type { TreeNode } from "../components/TreeView";
-import TreeView from "../components/TreeView";
+import {
+  ListPageTemplate,
+  DashboardTemplate,
+  StatCard,
+  StatCardGroup,
+  EmptyState,
+  type ColumnDef,
+  type RowAction,
+} from "../components/mui";
+import { FilterBar, type FilterConfig } from "../components/mui/FilterBar";
 import {
   AIHelperButton,
   AICodeGenerator,
@@ -42,36 +66,19 @@ import {
   AIFormValidator,
 } from "../components/ai";
 import type { CompletionItem } from "../types/ai";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-
-import {
-  Button,
-  TextField,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  Box,
-  Typography,
-  Stack,
-  IconButton,
-} from "@mui/material";
-import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "tree";
 
 const HrmEmployeePage: React.FC = () => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const addNotification = useAppStore((state) => state.addNotification);
 
+  // 视图模式
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  // 数据状态
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<Employee>>({
     items: [],
@@ -79,12 +86,15 @@ const HrmEmployeePage: React.FC = () => {
     page: 1,
     page_size: 10,
   });
+
+  // 筛选状态
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [companies, setCompanies] = useState<Company[]>([]);
 
+  // 模态框状态
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -92,6 +102,7 @@ const HrmEmployeePage: React.FC = () => {
     null,
   );
 
+  // AI 功能状态
   const [showAICodeGenerator, setShowAICodeGenerator] = useState(false);
   const [showAIDataCompleter, setShowAIDataCompleter] = useState(false);
   const [showAIFormValidator, setShowAIFormValidator] = useState(false);
@@ -99,14 +110,20 @@ const HrmEmployeePage: React.FC = () => {
     "create",
   );
 
+  // 表单数据
   const [formData, setFormData] = useState<Partial<Employee>>({});
 
-  const [treeData, setTreeData] = useState<TreeNode[]>([]);
+  // 树形视图状态
+  const [treeData, setTreeData] = useState<any[]>([]);
   const [selectedDeptId, setSelectedDeptId] = useState<string | undefined>();
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
 
+  // 统计概览展开状态
+  const [expandedStats, setExpandedStats] = useState(true);
+
+  // 获取员工列表
   const fetchEmployees = useCallback(
-    async (params?: ListParams) => {
+    async (params?: any) => {
       setLoading(true);
       try {
         const response = await employeeApi.list(params);
@@ -135,6 +152,7 @@ const HrmEmployeePage: React.FC = () => {
     [addNotification, viewMode],
   );
 
+  // 获取部门列表
   const fetchDepartments = useCallback(async () => {
     try {
       const response = await departmentApi.list({ page_size: 100 });
@@ -142,15 +160,13 @@ const HrmEmployeePage: React.FC = () => {
         const responseData = response.data as any;
         const depts = responseData.items || [];
         setDepartments(depts);
-
-        const tree = buildTree(depts, []);
-        setTreeData(tree);
       }
     } catch (error: any) {
       console.error("Failed to fetch departments:", error);
     }
   }, []);
 
+  // 获取公司列表
   const fetchCompanies = useCallback(async () => {
     try {
       const response = await companyApi.list({ page_size: 100 });
@@ -163,16 +179,24 @@ const HrmEmployeePage: React.FC = () => {
     }
   }, []);
 
+  // 初始加载
+  React.useEffect(() => {
+    fetchEmployees();
+    fetchDepartments();
+    fetchCompanies();
+  }, [fetchEmployees, fetchDepartments, fetchCompanies]);
+
+  // 构建树形数据
   const buildTree = useCallback(
-    (depts: Department[], emps: Employee[]): TreeNode[] => {
-      const deptMap = new Map<string, TreeNode>();
-      const rootNodes: TreeNode[] = [];
+    (depts: Department[], emps: Employee[]): any[] => {
+      const deptMap = new Map<string, any>();
+      const rootNodes: any[] = [];
 
       depts.forEach((dept) => {
         deptMap.set(dept.id, {
           id: dept.id,
           name: dept.name,
-          type: "department" as const,
+          type: "department",
           children: [],
           data: dept,
         });
@@ -188,10 +212,10 @@ const HrmEmployeePage: React.FC = () => {
       });
 
       emps.forEach((emp) => {
-        const empNode: TreeNode = {
+        const empNode: any = {
           id: emp.id,
           name: emp.name,
-          type: "employee" as const,
+          type: "employee",
           data: emp,
         };
         if (emp.department_id && deptMap.has(emp.department_id)) {
@@ -205,12 +229,6 @@ const HrmEmployeePage: React.FC = () => {
   );
 
   React.useEffect(() => {
-    fetchEmployees();
-    fetchDepartments();
-    fetchCompanies();
-  }, [fetchEmployees, fetchDepartments, fetchCompanies]);
-
-  React.useEffect(() => {
     if (
       viewMode === "tree" &&
       departments.length > 0 &&
@@ -221,6 +239,7 @@ const HrmEmployeePage: React.FC = () => {
     }
   }, [viewMode, departments, filteredEmployees, buildTree]);
 
+  // 搜索处理
   const handleSearch = useCallback(() => {
     const params: any = { search: searchText };
     if (departmentFilter && departmentFilter !== "all")
@@ -255,6 +274,7 @@ const HrmEmployeePage: React.FC = () => {
     buildTree,
   ]);
 
+  // 重置筛选
   const handleReset = useCallback(() => {
     setSearchText("");
     setDepartmentFilter("all");
@@ -266,61 +286,27 @@ const HrmEmployeePage: React.FC = () => {
     }
   }, [viewMode, fetchEmployees]);
 
+  // 新增
   const handleAdd = useCallback(() => {
     setSelectedEmployee(null);
     setFormData({});
     setShowCreateModal(true);
   }, []);
 
+  // 编辑
   const handleEdit = useCallback((record: Employee) => {
     setSelectedEmployee(record);
     setFormData(record);
     setShowEditModal(true);
   }, []);
 
-  const handleOpenAICodeGenerator = useCallback((mode: "create" | "edit") => {
-    setAiGeneratorMode(mode);
-    setShowAICodeGenerator(true);
-  }, []);
-
-  const handleSelectAICode = useCallback((code: string) => {
-    setFormData((prev) => ({ ...prev, employee_no: code }));
-  }, []);
-
-  const handleOpenAIDataCompleter = useCallback((mode: "create" | "edit") => {
-    setShowAIDataCompleter(true);
-  }, []);
-
-  const handleApplyCompletion = useCallback(
-    (completions: Record<string, CompletionItem>) => {
-      const updates: Record<string, any> = {};
-      Object.entries(completions).forEach(([field, item]) => {
-        updates[field] = item.value;
-      });
-      setFormData((prev) => ({ ...prev, ...updates }));
-      setShowAIDataCompleter(false);
-    },
-    [],
-  );
-
-  const handleOpenAIFormValidator = useCallback((mode: "create" | "edit") => {
-    setShowAIFormValidator(true);
-  }, []);
-
-  const handleApplyValidationSuggestions = useCallback((suggestions: any[]) => {
-    const updates: Record<string, any> = {};
-    suggestions.forEach((s) => {
-      updates[s.field] = s.value;
-    });
-    setFormData((prev) => ({ ...prev, ...updates }));
-    setShowAIFormValidator(false);
-  }, []);
-
+  // 查看
   const handleView = useCallback((record: Employee) => {
     setSelectedEmployee(record);
     setShowViewModal(true);
   }, []);
 
+  // 删除
   const handleDelete = useCallback(
     async (id: string) => {
       if (!confirm("确定要删除这个员工吗？")) return;
@@ -365,6 +351,7 @@ const HrmEmployeePage: React.FC = () => {
     ],
   );
 
+  // 创建
   const handleCreate = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -393,6 +380,7 @@ const HrmEmployeePage: React.FC = () => {
     [addNotification, formData, viewMode, fetchEmployees],
   );
 
+  // 更新
   const handleUpdate = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -422,28 +410,54 @@ const HrmEmployeePage: React.FC = () => {
     [addNotification, selectedEmployee, formData, viewMode, fetchEmployees],
   );
 
-  const handleInputChange = useCallback(
-    (field: string, value: string | number | boolean) => {
-      setFormData((prev) => ({ ...prev, [field]: value }));
+  // 输入变化
+  const handleInputChange = useCallback((field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  // AI 功能
+  const handleOpenAICodeGenerator = useCallback((mode: "create" | "edit") => {
+    setAiGeneratorMode(mode);
+    setShowAICodeGenerator(true);
+  }, []);
+
+  const handleSelectAICode = useCallback((code: string) => {
+    setFormData((prev) => ({ ...prev, employee_no: code }));
+  }, []);
+
+  const handleOpenAIDataCompleter = useCallback(() => {
+    setShowAIDataCompleter(true);
+  }, []);
+
+  const handleApplyCompletion = useCallback(
+    (completions: Record<string, CompletionItem>) => {
+      const updates: Record<string, any> = {};
+      Object.entries(completions).forEach(([field, item]) => {
+        updates[field] = item.value;
+      });
+      setFormData((prev) => ({ ...prev, ...updates }));
+      setShowAIDataCompleter(false);
     },
     [],
   );
 
-  const handleSelectNode = useCallback(
-    (node: TreeNode) => {
-      if (node.type === "department") {
-        setSelectedDeptId(node.id);
-      } else if (node.type === "employee") {
-        const emp = node.data as Employee;
-        handleView(emp);
-      }
-    },
-    [handleView],
-  );
+  const handleOpenAIFormValidator = useCallback(() => {
+    setShowAIFormValidator(true);
+  }, []);
 
+  const handleApplyValidationSuggestions = useCallback((suggestions: any[]) => {
+    const updates: Record<string, any> = {};
+    suggestions.forEach((s) => {
+      updates[s.field] = s.value;
+    });
+    setFormData((prev) => ({ ...prev, ...updates }));
+    setShowAIFormValidator(false);
+  }, []);
+
+  // 状态徽章
   const getStatusBadge = useCallback((status: string) => {
-    const colors: Record<string, "default" | "primary" | "secondary" | "error"> = {
-      active: "primary",
+    const colors: Record<string, "success" | "default"> = {
+      active: "success",
       inactive: "default",
     };
     const labels: Record<string, string> = {
@@ -455,1161 +469,812 @@ const HrmEmployeePage: React.FC = () => {
         size="small"
         color={colors[status] || "default"}
         label={labels[status] || status}
+        sx={{ fontWeight: 500 }}
       />
     );
   }, []);
 
-  const columns = useMemo<ColumnDef<Employee>[]>(
-    () => [
-      {
-        accessorKey: "name",
-        header: "员工信息",
-        cell: ({ row }) => {
-          return (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <div className="font-medium text-gray-900 dark:text-gray-100">
-                  {row.original.name}
-                </div>
-                {row.original.employee_no && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {row.original.employee_no}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "department_id",
-        header: "所属部门",
-        cell: ({ row }) => {
-          const dept = departments.find(
-            (d) => d.id === row.original.department_id,
-          );
-          return (
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-gray-400" />
-              <span>{dept?.name || "-"}</span>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "position",
-        header: "职位",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-gray-400" />
-            <span>{row.original.position || "-"}</span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "email",
-        header: "邮箱",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-gray-400" />
-            <span className="text-sm">{row.original.email || "-"}</span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "phone",
-        header: "电话",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Phone className="w-4 h-4 text-gray-400" />
-            <span>{row.original.phone || "-"}</span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-      {
-        accessorKey: "id",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            <IconButton
-              size="small"
-              onClick={() => handleView(row.original)}
-              aria-label="查看员工详情"
-            >
-              <Eye className="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleEdit(row.original)}
-              aria-label="编辑员工"
-            >
-              <Edit className="w-4 h-4" />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleDelete(row.original.id)}
-              aria-label="删除员工"
-              color="error"
-            >
-              <Trash2 className="w-4 h-4" />
-            </IconButton>
-          </Stack>
-        ),
-      },
-    ],
-    [departments, getStatusBadge, handleView, handleEdit, handleDelete],
-  );
-
-  const selectedDeptEmployees = useMemo(() => {
-    if (!selectedDeptId) return filteredEmployees;
-    return filteredEmployees.filter((e) => e.department_id === selectedDeptId);
-  }, [selectedDeptId, filteredEmployees]);
-
-  const selectedDept = departments.find((d) => d.id === selectedDeptId);
-
+  // 统计卡片数据
   const employeeStats = useMemo(() => {
     const allEmployees = data.items;
-    const totalEmployees = allEmployees.length;
-    const activeEmployees = allEmployees.filter(
-      (e) => e.status === "active",
-    ).length;
-    const inactiveEmployees = allEmployees.filter(
-      (e) => e.status === "inactive",
-    ).length;
-    const maleEmployees = allEmployees.filter(
-      (e) => e.gender === "male",
-    ).length;
-    const femaleEmployees = allEmployees.filter(
-      (e) => e.gender === "female",
-    ).length;
-
     return {
-      totalEmployees,
-      activeEmployees,
-      inactiveEmployees,
-      maleEmployees,
-      femaleEmployees,
+      total: allEmployees.length,
+      active: allEmployees.filter((e) => e.status === "active").length,
+      inactive: allEmployees.filter((e) => e.status === "inactive").length,
       activeRate:
-        totalEmployees > 0
-          ? Math.round((activeEmployees / totalEmployees) * 100)
+        allEmployees.length > 0
+          ? Math.round(
+              (allEmployees.filter((e) => e.status === "active").length /
+                allEmployees.length) *
+                100,
+            )
           : 0,
     };
   }, [data.items]);
 
-  const departmentDistributionData = useMemo(() => {
-    return departments.map((d, index) => ({
-      name: d.name,
-      value: data.items.filter((e) => e.department_id === d.id).length,
-      color: [
-        "#3b82f6",
-        "#22c55e",
-        "#f59e0b",
-        "#ef4444",
-        "#8b5cf6",
-        "#06b6d4",
-        "#94a3b8",
-        "#ec4899",
-      ][index % 8],
-    }));
-  }, [departments, data.items]);
-
-  const employeeStatusData = useMemo(
+  // 表格列定义
+  const columns = useMemo<ColumnDef<Employee>[]>(
     () => [
-      { name: "在职", value: employeeStats.activeEmployees, color: "#22c55e" },
       {
-        name: "离职",
-        value: employeeStats.inactiveEmployees,
-        color: "#ef4444",
+        id: "name",
+        label: "员工信息",
+        minWidth: 200,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "primary.light",
+                color: "primary.main",
+                fontSize: "0.875rem",
+              }}
+            >
+              {row.name?.charAt(0) || "?"}
+            </Avatar>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.name}
+              </Typography>
+              {row.employee_no && (
+                <Typography variant="caption" color="text.secondary">
+                  {row.employee_no}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: "department_id",
+        label: "所属部门",
+        minWidth: 150,
+        render: (row) => {
+          const dept = departments.find((d) => d.id === row.department_id);
+          return (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Building2
+                sx={{ width: 16, height: 16, color: "text.secondary" }}
+              />
+              <Typography variant="body2">{dept?.name || "-"}</Typography>
+            </Box>
+          );
+        },
+      },
+      {
+        id: "position",
+        label: "职位",
+        minWidth: 120,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Briefcase
+              sx={{ width: 16, height: 16, color: "text.secondary" }}
+            />
+            <Typography variant="body2">{row.position || "-"}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "email",
+        label: "邮箱",
+        minWidth: 180,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Mail sx={{ width: 16, height: 16, color: "text.secondary" }} />
+            <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
+              {row.email || "-"}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "phone",
+        label: "电话",
+        minWidth: 130,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Phone sx={{ width: 16, height: 16, color: "text.secondary" }} />
+            <Typography variant="body2">{row.phone || "-"}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        width: 100,
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [departments, getStatusBadge],
+  );
+
+  // 行操作
+  const rowActions = useMemo<RowAction<Employee>[]>(
+    () => [
+      {
+        label: "查看详情",
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: handleView,
+      },
+      {
+        label: "编辑",
+        icon: <Edit style={{ width: 16, height: 16 }} />,
+        onClick: handleEdit,
+        color: "primary",
+      },
+      {
+        label: "删除",
+        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleDelete(row.id),
+        color: "error",
+        divider: true,
+      },
+    ],
+    [handleView, handleEdit, handleDelete],
+  );
+
+  // 筛选配置
+  const filterConfigs = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "search",
+        label: "搜索",
+        type: "text",
+        placeholder: "搜索姓名、工号、邮箱...",
+        width: 250,
+      },
+      {
+        id: "department",
+        label: "部门",
+        type: "select",
+        options: departments.map((d) => ({ label: d.name, value: d.id })),
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { label: "全部状态", value: "all" },
+          { label: "在职", value: "active" },
+          { label: "离职", value: "inactive" },
+        ],
+      },
+    ],
+    [departments],
+  );
+
+  // 统计卡片
+  const statCards = useMemo(
+    () => [
+      {
+        id: "total",
+        title: "员工总数",
+        value: employeeStats.total,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "primary" as const,
+      },
+      {
+        id: "active",
+        title: "在职员工",
+        value: employeeStats.active,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "success" as const,
+      },
+      {
+        id: "inactive",
+        title: "离职员工",
+        value: employeeStats.inactive,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "error" as const,
+      },
+      {
+        id: "rate",
+        title: "在职率",
+        value: `${employeeStats.activeRate}%`,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "secondary" as const,
       },
     ],
     [employeeStats],
   );
 
-  const [expandedStats, setExpandedStats] = useState(false);
-
   return (
-    <HrmLayout title="员工管理" subtitle="管理企业员工信息">
-      <div className="space-y-6">
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <button
-              onClick={() => setExpandedStats(!expandedStats)}
-              className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
-              aria-expanded={expandedStats}
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* 页面标题 */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+          员工管理
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          管理企业员工信息
+        </Typography>
+      </Box>
+
+      {/* 统计概览 */}
+      <Paper sx={{ mb: 3, borderRadius: 2, overflow: "hidden" }}>
+        <Box
+          sx={{
+            p: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "pointer",
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+          onClick={() => setExpandedStats(!expandedStats)}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            员工概览
+          </Typography>
+          {expandedStats ? (
+            <ChevronUp sx={{ color: "text.secondary" }} />
+          ) : (
+            <ChevronDown sx={{ color: "text.secondary" }} />
+          )}
+        </Box>
+
+        {expandedStats && (
+          <Box sx={{ p: 2, pt: 0 }}>
+            <StatCardGroup stats={statCards} columns={4} />
+          </Box>
+        )}
+      </Paper>
+
+      {/* 筛选栏 */}
+      <FilterBar
+        filters={filterConfigs}
+        onFilterChange={(filters) => {
+          if (filters.search !== undefined)
+            setSearchText(filters.search as string);
+          if (filters.department !== undefined)
+            setDepartmentFilter(filters.department as string);
+          if (filters.status !== undefined)
+            setStatusFilter(filters.status as string);
+        }}
+        onReset={handleReset}
+        onSearch={handleSearch}
+      />
+
+      {/* 操作栏 */}
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              bgcolor: "grey.100",
+              borderRadius: 1,
+              p: 0.5,
+            }}
+          >
+            <Button
+              size="small"
+              variant={viewMode === "list" ? "contained" : "text"}
+              onClick={() => setViewMode("list")}
+              startIcon={<List style={{ width: 16, height: 16 }} />}
             >
-              <h2 className="text-lg font-semibold text-slate-900">员工概览</h2>
-              {expandedStats ? (
-                <ChevronUp className="w-5 h-5 text-slate-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-slate-400" />
-              )}
-            </button>
-            <div
-              className={cn(
-                "overflow-hidden transition-all duration-300",
-                expandedStats ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
-              )}
+              列表
+            </Button>
+            <Button
+              size="small"
+              variant={viewMode === "tree" ? "contained" : "text"}
+              onClick={() => setViewMode("tree")}
+              startIcon={<LayoutGrid style={{ width: 16, height: 16 }} />}
             >
-              <div className="px-4 pb-4">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ staggerChildren: 0.1 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    <MetricCard
-                      title="员工总数"
-                      value={employeeStats.totalEmployees}
-                      icon={<Users className="w-5 h-5" />}
-                      trend={null}
-                      color="blue"
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                  >
-                    <MetricCard
-                      title="在职员工"
-                      value={employeeStats.activeEmployees}
-                      icon={<UserCheck className="w-5 h-5" />}
-                      trend={null}
-                      color="green"
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.4, delay: 0.2 }}
-                  >
-                    <MetricCard
-                      title="离职员工"
-                      value={employeeStats.inactiveEmployees}
-                      icon={<UserX className="w-5 h-5" />}
-                      trend={null}
-                      color="red"
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.4, delay: 0.3 }}
-                  >
-                    <MetricCard
-                      title="在职率"
-                      value={`${employeeStats.activeRate}%`}
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      trend={null}
-                      color="purple"
-                    />
-                  </motion.div>
-                </motion.div>
+              树形
+            </Button>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<Plus style={{ width: 18, height: 18 }} />}
+            onClick={handleAdd}
+          >
+            新增员工
+          </Button>
+        </Box>
+      </Paper>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ duration: 0.4, delay: 0.5 }}
-                    className="bg-white rounded-lg shadow-sm p-6"
-                  >
-                    <StatsChart
-                      type="pie"
-                      title=""
-                      data={departmentDistributionData}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    whileHover={{ scale: 1.01 }}
-                    transition={{ duration: 0.4, delay: 0.6 }}
-                    className="bg-white rounded-lg shadow-sm p-6"
-                  >
-                    <StatsChart type="pie" title="" data={employeeStatusData} />
-                  </motion.div>
-                </motion.div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="flex bg-slate-100 rounded-lg p-1">
-                  <Button
-                    variant={viewMode === "list" ? "contained" : "text"}
-                    size="small"
-                    onClick={() => setViewMode("list")}
-                    sx={{ borderRadius: 1 }}
-                    aria-label="列表视图"
-                  >
-                    <List className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "tree" ? "contained" : "text"}
-                    size="small"
-                    onClick={() => setViewMode("tree")}
-                    sx={{ borderRadius: 1 }}
-                    aria-label="树形视图"
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button onClick={handleAdd} aria-label="新增员工">
-                  <Plus className="w-5 h-5 mr-2" />
-                  新增员工
-                </Button>
-              </div>
-            </div>
-
-            {viewMode === "list" ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ staggerChildren: 0.1 }}
-                className="space-y-6"
-              >
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="mb-6 rounded-lg border bg-card text-card-foreground shadow-sm"
-                >
-                  <CardContent className="p-4">
-                    <motion.div
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                      className="flex flex-wrap gap-4"
-                    >
-                      <div className="flex-1 min-w-[200px] relative">
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.3, delay: 0.2 }}
-                        >
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        </motion.div>
-                        <motion.div
-                          initial={{ opacity: 0, scaleX: 0 }}
-                          animate={{ opacity: 1, scaleX: 1 }}
-                          transition={{ duration: 0.3, delay: 0.2 }}
-                          style={{ transformOrigin: "left" }}
-                        >
-                          <TextField
-                            size="small"
-                            placeholder="搜索员工姓名、工号、邮箱..."
-                            value={searchText}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
-                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                              e.key === "Enter" && handleSearch()
-                            }
-                            sx={{ pl: 10, width: "100%" }}
-                            aria-label="搜索员工"
-                          />
-                        </motion.div>
-                      </div>
-                      <FormControl size="small" sx={{ minWidth: 160 }}>
-                        <InputLabel>部门</InputLabel>
-                        <Select
-                          value={departmentFilter}
-                          label="部门"
-                          onChange={(e) => setDepartmentFilter(e.target.value)}
-                        >
-                          <MenuItem value="all">全部部门</MenuItem>
-                          {departments.map((d) => (
-                            <MenuItem key={d.id} value={d.id}>
-                              {d.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>状态</InputLabel>
-                        <Select
-                          value={statusFilter}
-                          label="状态"
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                          <MenuItem value="all">全部状态</MenuItem>
-                          <MenuItem value="active">在职</MenuItem>
-                          <MenuItem value="inactive">离职</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2"
-                        onClick={handleSearch}
-                      >
-                        搜索
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-                        onClick={handleReset}
-                      >
-                        重置
-                      </motion.button>
-                    </motion.div>
-                  </CardContent>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                  className="rounded-lg border bg-card text-card-foreground shadow-sm"
-                >
-                  <CardContent className="p-0">
-                    {loading ? (
-                      <div className="p-8 text-center">
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                          className="inline-block rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"
-                        ></motion.div>
-                        <p className="mt-2 text-gray-500 dark:text-gray-400">
-                          加载中...
-                        </p>
-                      </div>
-                    ) : data.items.length === 0 ? (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="p-8 text-center"
-                      >
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                          <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        </motion.div>
-                        <p className="text-gray-500 dark:text-gray-400">
-                          暂无员工数据
-                        </p>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <DataTable
-                          columns={columns}
-                          data={data.items}
-                          enablePagination={true}
-                          pageCount={Math.ceil(data.total / data.page_size)}
-                          onPageChange={(page) => fetchEmployees({ page })}
-                          currentPage={data.page - 1}
-                        />
-                      </motion.div>
-                    )}
-                  </CardContent>
-                </motion.div>
-              </motion.div>
+      {/* 列表/树形视图 */}
+      {viewMode === "list" ? (
+        <Paper sx={{ borderRadius: 2 }}>
+          <ListPageTemplate
+            columns={columns}
+            data={data.items}
+            loading={loading}
+            pagination={{
+              page: data.page - 1,
+              pageSize: data.page_size,
+              total: data.total,
+              onPageChange: (page) => fetchEmployees({ page: page + 1 }),
+              onPageSizeChange: (pageSize) =>
+                fetchEmployees({ page_size: pageSize }),
+            }}
+            rowActions={rowActions}
+            onRowClick={handleView}
+            emptyMessage="暂无员工数据"
+          />
+        </Paper>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { md: "1fr 2fr" },
+            gap: 3,
+          }}
+        >
+          {/* 部门树 */}
+          <Paper sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+              部门列表
+            </Typography>
+            {loading ? (
+              <Typography color="text.secondary">加载中...</Typography>
+            ) : treeData.length === 0 ? (
+              <EmptyState emoji="🏢" title="暂无部门数据" compact />
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <Building2 className="w-5 h-5 text-emerald-600" />
-                          部门树
-                        </h3>
-                        <div className="text-sm text-slate-500">
-                          {departments.length} 个部门
-                        </div>
-                      </div>
-                      <div className="mb-4">
-                        <TextField
-                          size="small"
-                          type="text"
-                          placeholder="搜索部门"
-                          value={searchText}
-                          onChange={(e) => setSearchText(e.target.value)}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && handleSearch()
-                          }
-                          sx={{ width: "100%" }}
-                        />
-                      </div>
-                      <div className="flex gap-2 mb-4">
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <InputLabel>状态</InputLabel>
-                          <Select
-                            value={statusFilter}
-                            label="状态"
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                          >
-                            <MenuItem value="all">全部状态</MenuItem>
-                            <MenuItem value="active">在职</MenuItem>
-                            <MenuItem value="inactive">离职</MenuItem>
-                          </Select>
-                        </FormControl>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={handleSearch}
-                        >
-                          搜索
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={handleReset}
-                        >
-                          重置
-                        </Button>
-                      </div>
-                      {loading ? (
-                        <div className="p-8 text-center">
-                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-600 border-t-transparent"></div>
-                          <p className="mt-2 text-gray-500">加载中...</p>
-                        </div>
-                      ) : treeData.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500">
-                          <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                          <p>暂无部门数据</p>
-                        </div>
-                      ) : (
-                        <TreeView
-                          data={treeData}
-                          onSelect={handleSelectNode}
-                          selectedId={selectedDeptId}
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="lg:col-span-2">
-                  {selectedDept ? (
-                    <div className="space-y-6">
-                      <Card>
-                        <CardContent className="p-4">
-                              <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <h2 className="text-xl font-bold text-slate-900">
-                                {selectedDept.name}
-                              </h2>
-                              {selectedDept.code && (
-                                <p className="text-sm text-slate-500">
-                                  编码: {selectedDept.code}
-                                </p>
-                              )}
-                            </div>
-                            <Chip size="small" label={`${selectedDeptEmployees.length} 人`} />
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardContent className="p-4">
-                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Users className="w-5 h-5 text-blue-500" />
-                            部门成员
-                          </h3>
-                          {selectedDeptEmployees.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500">
-                              <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                              <p>该部门暂无员工</p>
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              {selectedDeptEmployees.map((emp) => (
-                                <div
-                                  key={emp.id}
-                                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
-                                >
-                                  <div>
-                                    <p className="font-medium text-slate-900">
-                                      {emp.name}
-                                    </p>
-                                    <p className="text-sm text-slate-500">
-                                      {emp.employee_no} ·{" "}
-                                      {emp.position || "无职位"}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-slate-600">
-                                      {getStatusBadge(emp.status)}
-                                    </span>
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={() => handleView(emp)}
-                                      aria-label="查看详情"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      onClick={() => handleEdit(emp)}
-                                      aria-label="编辑"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="text"
-                                      size="small"
-                                      color="error"
-                                      onClick={() => handleDelete(emp.id)}
-                                      aria-label="删除"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ) : (
-                    <Card className="h-full">
-                      <CardContent className="p-12 text-center">
-                        <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-slate-500 mb-2">
-                          选择部门查看员工
-                        </h3>
-                        <p className="text-sm text-slate-400">
-                          从左侧部门树中选择一个部门，查看部门成员信息
-                        </p>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </div>
+              <TreeViewComponent
+                data={treeData}
+                selectedId={selectedDeptId}
+                onSelect={(node: any) => {
+                  if (node.type === "department") {
+                    setSelectedDeptId(node.id);
+                  } else {
+                    handleView(node.data);
+                  }
+                }}
+              />
             )}
-          </CardContent>
-        </Card>
+          </Paper>
 
-        <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
-          <DialogTitle>新增员工</DialogTitle>
-          <DialogContent className="max-w-lg">
-            <form onSubmit={handleCreate}>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Typography variant="body2" sx={{ mb: 1 }}>所属公司 *</Typography>
-                  <FormControl size="small" fullWidth>
-                    <InputLabel>请选择公司</InputLabel>
-                    <Select
-                      value={(formData as Employee)?.company_id || ""}
-                      label="请选择公司"
-                      onChange={(e) =>
-                        handleInputChange("company_id", e.target.value)
-                      }
-                    >
-                      {companies.map((c) => (
-                        <MenuItem key={c.id} value={c.id}>
-                          {c.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>员工姓名 *</Typography>
-                    <TextField
-                      id="create-name"
-                      size="small"
-                      type="text"
-                      required
-                      fullWidth
-                      value={(formData as Employee)?.name || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("name", e.target.value)
-                      }
-                      placeholder="请输入员工姓名"
-                      aria-required={true}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>工号</Typography>
-                    <TextField
-                      id="create-number"
-                      size="small"
-                      type="text"
-                      required
-                      fullWidth
-                      value={(formData as Employee)?.employee_no || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("employee_no", e.target.value)
-                      }
-                      placeholder="请输入工号"
-                      aria-required={true}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>邮箱</Typography>
-                    <TextField
-                      id="create-email"
-                      size="small"
-                      type="email"
-                      fullWidth
-                      value={(formData as Employee)?.email || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("email", e.target.value)
-                      }
-                      placeholder="请输入邮箱"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>电话</Typography>
-                    <TextField
-                      id="create-phone"
-                      size="small"
-                      type="text"
-                      fullWidth
-                      value={(formData as Employee)?.phone || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("phone", e.target.value)
-                      }
-                      placeholder="请输入电话"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Typography variant="body2" sx={{ mb: 1 }}>所属部门</Typography>
-                  <FormControl size="small" fullWidth>
-                    <InputLabel>请选择部门</InputLabel>
-                    <Select
-                      value={(formData as Employee)?.department_id || "none"}
-                      label="请选择部门"
-                      onChange={(e) =>
-                        handleInputChange(
-                          "department_id",
-                          e.target.value === "none" ? "" : e.target.value,
-                        )
-                      }
-                    >
-                      <MenuItem value="none">无</MenuItem>
-                      {departments.map((d) => (
-                        <MenuItem key={d.id} value={d.id}>
-                          {d.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
-                <div className="space-y-2">
-                  <Typography variant="body2" sx={{ mb: 1 }}>职位</Typography>
-                  <TextField
-                    id="create-position"
-                    size="small"
-                    type="text"
-                    fullWidth
-                    value={(formData as Employee)?.position || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("position", e.target.value)
-                    }
-                    placeholder="请输入职位"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Typography variant="body2" sx={{ mb: 1 }}>入职日期</Typography>
-                  <TextField
-                    id="create-hire-date"
-                    size="small"
-                    type="date"
-                    fullWidth
-                    value={(formData as Employee)?.hire_date || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange("hire_date", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Typography variant="body2" sx={{ mb: 1 }}>状态</Typography>
-                  <FormControl size="small" fullWidth>
-                    <InputLabel>请选择</InputLabel>
-                    <Select
-                      value={(formData as Employee)?.status || "active"}
-                      label="请选择"
-                      onChange={(e) =>
-                        handleInputChange("status", e.target.value)
-                      }
-                    >
-                      <MenuItem value="active">在职</MenuItem>
-                      <MenuItem value="inactive">离职</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
-              </div>
-              <DialogActions sx={{ mt: 3, justifyContent: "space-between" }}>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setShowCreateModal(false)}
-                >
-                  取消
-                </Button>
-                <div className="flex items-center gap-2">
-                  <AIHelperButton
-                    type="generate"
-                    onClick={() => handleOpenAICodeGenerator("create")}
-                    size="sm"
-                    variant="default"
-                    label="生成工号"
-                  />
-                  <AIHelperButton
-                    type="complete"
-                    onClick={() => handleOpenAIDataCompleter("create")}
-                    size="sm"
-                    variant="default"
-                    label="智能补全"
-                  />
-                  <AIHelperButton
-                    type="validate"
-                    onClick={() => handleOpenAIFormValidator("create")}
-                    size="sm"
-                    variant="default"
-                    label="AI 校验"
-                  />
-                  <Button type="submit" variant="contained">创建</Button>
-                </div>
-              </DialogActions>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showEditModal} onClose={() => setShowEditModal(false)}>
-          <DialogTitle>编辑员工</DialogTitle>
-          <DialogContent className="max-w-lg">
-            {selectedEmployee && (
-              <form onSubmit={handleUpdate}>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>所属公司</Typography>
-                    <FormControl size="small" fullWidth>
-                      <InputLabel>请选择公司</InputLabel>
-                      <Select
-                        value={(formData as Employee)?.company_id || ""}
-                        label="请选择公司"
-                        onChange={(e) =>
-                          handleInputChange("company_id", e.target.value)
-                        }
-                      >
-                        {companies.map((c) => (
-                          <MenuItem key={c.id} value={c.id}>
-                            {c.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Typography variant="body2" sx={{ mb: 1 }}>员工姓名 *</Typography>
-                      <TextField
-                        id="edit-name"
-                        size="small"
-                        type="text"
-                        required
-                        fullWidth
-                        value={(formData as Employee)?.name || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange("name", e.target.value)
-                        }
-                        aria-required={true}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Typography variant="body2" sx={{ mb: 1 }}>工号</Typography>
-                      <TextField
-                        id="edit-number"
-                        size="small"
-                        type="text"
-                        fullWidth
-                        value={(formData as Employee)?.employee_no || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange("employee_no", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Typography variant="body2" sx={{ mb: 1 }}>邮箱</Typography>
-                      <TextField
-                        id="edit-email"
-                        size="small"
-                        type="email"
-                        fullWidth
-                        value={(formData as Employee)?.email || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange("email", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Typography variant="body2" sx={{ mb: 1 }}>电话</Typography>
-                      <TextField
-                        id="edit-phone"
-                        size="small"
-                        type="text"
-                        fullWidth
-                        value={(formData as Employee)?.phone || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange("phone", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>所属部门</Typography>
-                    <FormControl size="small" fullWidth>
-                      <InputLabel>请选择</InputLabel>
-                      <Select
-                        value={(formData as Employee)?.department_id || "none"}
-                        label="请选择"
-                        onChange={(e) =>
-                          handleInputChange(
-                            "department_id",
-                            e.target.value === "none" ? "" : e.target.value,
-                          )
-                        }
-                      >
-                        <MenuItem value="none">无</MenuItem>
-                        {departments.map((d) => (
-                          <MenuItem key={d.id} value={d.id}>
-                            {d.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>职位</Typography>
-                    <TextField
-                      id="edit-position"
-                      size="small"
-                      type="text"
-                      fullWidth
-                      value={(formData as Employee)?.position || ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("position", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Typography variant="body2" sx={{ mb: 1 }}>状态</Typography>
-                    <FormControl size="small" fullWidth>
-                      <InputLabel>请选择</InputLabel>
-                      <Select
-                        value={(formData as Employee)?.status || "active"}
-                        label="请选择"
-                        onChange={(e) =>
-                          handleInputChange("status", e.target.value)
-                        }
-                      >
-                        <MenuItem value="active">在职</MenuItem>
-                        <MenuItem value="inactive">离职</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </div>
-                </div>
-                <DialogActions sx={{ mt: 3, justifyContent: "space-between" }}>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={() => {
-                      setShowEditModal(false);
-                      setSelectedEmployee(null);
-                    }}
-                  >
-                    取消
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <AIHelperButton
-                      type="generate"
-                      onClick={() => handleOpenAICodeGenerator("edit")}
-                      size="sm"
-                      variant="default"
-                      label="生成工号"
-                    />
-                    <AIHelperButton
-                      type="complete"
-                      onClick={() => handleOpenAIDataCompleter("edit")}
-                      size="sm"
-                      variant="default"
-                      label="智能补全"
-                    />
-                    <AIHelperButton
-                      type="validate"
-                      onClick={() => handleOpenAIFormValidator("edit")}
-                      size="sm"
-                      variant="default"
-                      label="AI 校验"
-                    />
-                    <Button type="submit" variant="contained">保存</Button>
-                  </div>
-                </DialogActions>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showViewModal} onClose={() => setShowViewModal(false)}>
-          <DialogTitle>员工详情</DialogTitle>
-          <DialogContent className="max-w-lg">
-            {selectedEmployee && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>员工姓名</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>{selectedEmployee.name}</Typography>
-                  </div>
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>工号</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedEmployee.employee_no || "-"}
-                    </Typography>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>邮箱</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedEmployee.email || "-"}
-                    </Typography>
-                  </div>
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>电话</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedEmployee.phone || "-"}
-                    </Typography>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>所属部门</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {departments.find(
-                        (d) => d.id === selectedEmployee.department_id,
-                      )?.name || "-"}
-                    </Typography>
-                  </div>
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>职位</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedEmployee.position || "-"}
-                    </Typography>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>入职日期</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {selectedEmployee.hire_date || "-"}
-                    </Typography>
-                  </div>
-                  <div className="space-y-1">
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>状态</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-                      {getStatusBadge(selectedEmployee.status)}
-                    </Typography>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>创建时间</Typography>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    {selectedEmployee.created_at}
+          {/* 部门员工 */}
+          <Paper sx={{ p: 2, borderRadius: 2 }}>
+            {selectedDeptId ? (
+              <>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    {departments.find((d) => d.id === selectedDeptId)?.name}
                   </Typography>
-                </div>
-              </div>
+                  <Typography variant="body2" color="text.secondary">
+                    {
+                      filteredEmployees.filter(
+                        (e) => e.department_id === selectedDeptId,
+                      ).length
+                    }{" "}
+                    名员工
+                  </Typography>
+                </Box>
+                <ListPageTemplate
+                  columns={columns}
+                  data={filteredEmployees.filter(
+                    (e) => e.department_id === selectedDeptId,
+                  )}
+                  rowActions={rowActions}
+                  onRowClick={handleView}
+                  emptyMessage="该部门暂无员工"
+                />
+              </>
+            ) : (
+              <EmptyState
+                emoji="👈"
+                title="选择部门查看员工"
+                description="从左侧部门树中选择一个部门，查看部门成员信息"
+                compact
+              />
             )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowViewModal(false)} variant="contained">关闭</Button>
-          </DialogActions>
-        </Dialog>
+          </Paper>
+        </Box>
+      )}
 
-        <AICodeGenerator
-          isOpen={showAICodeGenerator}
-          onClose={() => setShowAICodeGenerator(false)}
-          context={{
-            entityType: "employee",
-            name: (formData as Employee)?.name,
-          }}
-          onSelect={handleSelectAICode}
-          existingCodes={
-            data.items.map((e) => e.employee_no).filter(Boolean) as string[]
-          }
-        />
+      {/* 新增/编辑模态框 */}
+      <EmployeeFormDialog
+        open={showCreateModal || showEditModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setShowEditModal(false);
+        }}
+        mode={showCreateModal ? "create" : "edit"}
+        employee={selectedEmployee}
+        formData={formData}
+        onChange={handleInputChange}
+        onSubmit={showCreateModal ? handleCreate : handleUpdate}
+        companies={companies}
+        departments={departments}
+        onOpenAICodeGenerator={handleOpenAICodeGenerator}
+        onOpenAIDataCompleter={handleOpenAIDataCompleter}
+        onOpenAIFormValidator={handleOpenAIFormValidator}
+      />
 
-        <AIDataCompleter
-          isOpen={showAIDataCompleter}
-          onClose={() => setShowAIDataCompleter(false)}
-          completeRequest={{
-            partialData: formData,
-            context: {
-              module: "hrm",
-              entityType: "employee",
-            },
-          }}
-          onApplyCompletion={handleApplyCompletion}
-        />
+      {/* 查看详情模态框 */}
+      <Dialog
+        open={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>员工详情</DialogTitle>
+        <DialogContent>
+          {selectedEmployee && (
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: 2, gap: 2, pt: 1 }}
+            >
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  员工姓名
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {selectedEmployee.name}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  工号
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {selectedEmployee.employee_no || "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  邮箱
+                </Typography>
+                <Typography variant="body2">
+                  {selectedEmployee.email || "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  电话
+                </Typography>
+                <Typography variant="body2">
+                  {selectedEmployee.phone || "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  部门
+                </Typography>
+                <Typography variant="body2">
+                  {departments.find(
+                    (d) => d.id === selectedEmployee.department_id,
+                  )?.name || "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  职位
+                </Typography>
+                <Typography variant="body2">
+                  {selectedEmployee.position || "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  入职日期
+                </Typography>
+                <Typography variant="body2">
+                  {selectedEmployee.hire_date || "-"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  状态
+                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  {getStatusBadge(selectedEmployee.status)}
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowViewModal(false)}>关闭</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setShowViewModal(false);
+              handleEdit(selectedEmployee!);
+            }}
+          >
+            编辑
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        <AIFormValidator
-          isOpen={showAIFormValidator}
-          onClose={() => setShowAIFormValidator(false)}
-          validateRequest={{
-            data: formData,
-            context: {
-              module: "hrm",
-              entityType: "employee",
-            },
-          }}
-          onApplySuggestions={handleApplyValidationSuggestions}
-          onFixIssue={() => {}}
-        />
-      </div>
-    </HrmLayout>
+      {/* AI 组件 */}
+      <AICodeGenerator
+        isOpen={showAICodeGenerator}
+        onClose={() => setShowAICodeGenerator(false)}
+        context={{ entityType: "employee", name: (formData as Employee)?.name }}
+        onSelect={handleSelectAICode}
+        existingCodes={
+          data.items.map((e) => e.employee_no).filter(Boolean) as string[]
+        }
+      />
+      <AIDataCompleter
+        isOpen={showAIDataCompleter}
+        onClose={() => setShowAIDataCompleter(false)}
+        completeRequest={{
+          partialData: formData,
+          context: { module: "hrm", entityType: "employee" },
+        }}
+        onApplyCompletion={handleApplyCompletion}
+      />
+      <AIFormValidator
+        isOpen={showAIFormValidator}
+        onClose={() => setShowAIFormValidator(false)}
+        validateRequest={{
+          data: formData,
+          context: { module: "hrm", entityType: "employee" },
+        }}
+        onApplySuggestions={handleApplyValidationSuggestions}
+        onFixIssue={() => {}}
+      />
+    </Box>
   );
+};
+
+// ============ 员工表单模态框 ============
+
+interface EmployeeFormDialogProps {
+  open: boolean;
+  onClose: () => void;
+  mode: "create" | "edit";
+  employee: Employee | null;
+  formData: Partial<Employee>;
+  onChange: (field: string, value: any) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  companies: Company[];
+  departments: Department[];
+  onOpenAICodeGenerator: (mode: "create" | "edit") => void;
+  onOpenAIDataCompleter: () => void;
+  onOpenAIFormValidator: () => void;
+}
+
+const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
+  open,
+  onClose,
+  mode,
+  employee,
+  formData,
+  onChange,
+  onSubmit,
+  companies,
+  departments,
+  onOpenAICodeGenerator,
+  onOpenAIDataCompleter,
+  onOpenAIFormValidator,
+}) => (
+  <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <DialogTitle>{mode === "create" ? "新增员工" : "编辑员工"}</DialogTitle>
+    <DialogContent>
+      <Box
+        component="form"
+        onSubmit={onSubmit}
+        sx={{ display: "grid", gap: 2, pt: 1 }}
+      >
+        <FormControl size="small" fullWidth>
+          <InputLabel>所属公司 *</InputLabel>
+          <Select
+            value={(formData as Employee)?.company_id || ""}
+            label="所属公司 *"
+            onChange={(e) => onChange("company_id", e.target.value)}
+            required
+          >
+            {companies.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Box sx={{ display: "grid", gridTemplateColumns: 2, gap: 2 }}>
+          <TextField
+            label="员工姓名 *"
+            size="small"
+            value={(formData as Employee)?.name || ""}
+            onChange={(e) => onChange("name", e.target.value)}
+            required
+          />
+          <Box sx={{ position: "relative" }}>
+            <TextField
+              label="工号"
+              size="small"
+              value={(formData as Employee)?.employee_no || ""}
+              onChange={(e) => onChange("employee_no", e.target.value)}
+              fullWidth
+            />
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "grid", gridTemplateColumns: 2, gap: 2 }}>
+          <TextField
+            label="邮箱"
+            type="email"
+            size="small"
+            value={(formData as Employee)?.email || ""}
+            onChange={(e) => onChange("email", e.target.value)}
+          />
+          <TextField
+            label="电话"
+            size="small"
+            value={(formData as Employee)?.phone || ""}
+            onChange={(e) => onChange("phone", e.target.value)}
+          />
+        </Box>
+
+        <FormControl size="small" fullWidth>
+          <InputLabel>所属部门</InputLabel>
+          <Select
+            value={(formData as Employee)?.department_id || ""}
+            label="所属部门"
+            onChange={(e) => onChange("department_id", e.target.value)}
+          >
+            <MenuItem value="">无</MenuItem>
+            {departments.map((d) => (
+              <MenuItem key={d.id} value={d.id}>
+                {d.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          label="职位"
+          size="small"
+          value={(formData as Employee)?.position || ""}
+          onChange={(e) => onChange("position", e.target.value)}
+        />
+
+        <TextField
+          label="入职日期"
+          type="date"
+          size="small"
+          value={(formData as Employee)?.hire_date || ""}
+          onChange={(e) => onChange("hire_date", e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
+
+        <FormControl size="small" fullWidth>
+          <InputLabel>状态</InputLabel>
+          <Select
+            value={(formData as Employee)?.status || "active"}
+            label="状态"
+            onChange={(e) => onChange("status", e.target.value)}
+          >
+            <MenuItem value="active">在职</MenuItem>
+            <MenuItem value="inactive">离职</MenuItem>
+          </Select>
+        </FormControl>
+
+        <DialogActions sx={{ p: 0, pt: 2, justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <AIHelperButton
+              type="generate"
+              onClick={() => onOpenAICodeGenerator(mode)}
+              size="sm"
+              label="生成工号"
+            />
+            <AIHelperButton
+              type="complete"
+              onClick={onOpenAIDataCompleter}
+              size="sm"
+              label="智能补全"
+            />
+            <AIHelperButton
+              type="validate"
+              onClick={onOpenAIFormValidator}
+              size="sm"
+              label="AI校验"
+            />
+          </Box>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button onClick={onClose} variant="outlined">
+              取消
+            </Button>
+            <Button type="submit" variant="contained">
+              {mode === "create" ? "创建" : "保存"}
+            </Button>
+          </Box>
+        </DialogActions>
+      </Box>
+    </DialogContent>
+  </Dialog>
+);
+
+// ============ 简单树形组件 ============
+
+interface TreeViewComponentProps {
+  data: any[];
+  selectedId?: string;
+  onSelect: (node: any) => void;
+}
+
+const TreeViewComponent: React.FC<TreeViewComponentProps> = ({
+  data,
+  selectedId,
+  onSelect,
+}) => {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const renderNode = (node: any, level: number = 0) => {
+    const hasChildren = node.children && node.children.length > 0;
+    const isExpanded = expanded.has(node.id);
+    const isSelected = selectedId === node.id;
+
+    return (
+      <Box key={node.id}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            py: 0.75,
+            pl: level * 2 + 1,
+            cursor: "pointer",
+            borderRadius: 1,
+            bgcolor: isSelected ? "primary.light" : "transparent",
+            "&:hover": {
+              bgcolor: isSelected ? "primary.light" : "action.hover",
+            },
+          }}
+          onClick={() => {
+            if (node.type === "department" && hasChildren) {
+              toggleExpand(node.id);
+            }
+            onSelect(node);
+          }}
+        >
+          {hasChildren && (
+            <IconButton size="small" sx={{ p: 0.25 }}>
+              {isExpanded ? (
+                <ChevronDown sx={{ width: 16, height: 16 }} />
+              ) : (
+                <ChevronRight sx={{ width: 16, height: 16 }} />
+              )}
+            </IconButton>
+          )}
+          {!hasChildren && <Box sx={{ width: 24 }} />}
+          {node.type === "department" ? (
+            <Building2 sx={{ width: 16, height: 16, color: "success.main" }} />
+          ) : (
+            <Users sx={{ width: 16, height: 16, color: "primary.main" }} />
+          )}
+          <Typography variant="body2" sx={{ flex: 1 }}>
+            {node.name}
+          </Typography>
+          {node.type === "department" && node.children && (
+            <Chip
+              label={node.children.length}
+              size="small"
+              sx={{ height: 20, fontSize: "0.75rem" }}
+            />
+          )}
+        </Box>
+        {hasChildren && isExpanded && (
+          <Box>
+            {node.children.map((child: any) => renderNode(child, level + 1))}
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
+  return <Box>{data.map((node) => renderNode(node))}</Box>;
 };
 
 export default HrmEmployeePage;

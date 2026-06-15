@@ -16,6 +16,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Box, Button, InputBase, Select, MenuItem, Typography } from "@mui/material";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
 import { MetricCard } from "../components/MetricCard";
@@ -251,474 +252,461 @@ const HrmPayrollPage: React.FC = () => {
 
   if (loading && payrollRuns.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Loader2 sx={{ width: 32, height: 32, animation: "spin 1s linear infinite", color: "primary.main" }} />
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
+      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "grey.200", boxShadow: 1 }}>
+        <Box sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Button
                 onClick={() => navigate("/dashboard")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                sx={{ p: 1, borderRadius: 1, "&:hover": { bgcolor: "grey.100" } }}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <DollarSign className="w-7 h-7 mr-3 text-emerald-600" />
+                <ChevronLeft sx={{ width: 20, height: 20, color: "grey.600" }} />
+              </Button>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center" }}>
+                  <DollarSign sx={{ width: 28, height: 28, mr: 1.5, color: "success.main" }} />
                   薪酬管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   管理员工薪资、奖金、社保和个税计算
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <select
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{ px: 2, py: 1, border: 1, borderColor: "grey.300", borderRadius: 2, "& .MuiSelect-select": { py: 1 } }}
               >
-                <option value="2026-05">2026年5月</option>
-                <option value="2026-04">2026年4月</option>
-                <option value="2026-03">2026年3月</option>
-              </select>
-              <button
+                <MenuItem value="2026-05">2026年5月</MenuItem>
+                <MenuItem value="2026-04">2026年4月</MenuItem>
+                <MenuItem value="2026-03">2026年3月</MenuItem>
+              </Select>
+              <Button
                 onClick={handleCreatePayroll}
                 disabled={loading}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                variant="contained"
+                startIcon={<Plus sx={{ width: 20, height: 20 }} />}
+                sx={{ px: 2, py: 1, borderRadius: 2, "&:hover": { bgcolor: "primary.dark" } }}
               >
-                <Plus className="w-5 h-5 mr-2" />
                 创建发放批次
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Summary Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <Box sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2, lg: 4 }, gap: 2, mb: 3 }}>
           <MetricCard
             title="发放人数"
             value={`${payrollStats.totalEmployees}人`}
-            icon={<Users className="w-5 h-5" />}
+            icon={<Users sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="blue"
           />
           <MetricCard
             title="基本工资合计"
             value={formatCurrency(payrollStats.totalBaseSalary)}
-            icon={<DollarSign className="w-5 h-5" />}
+            icon={<DollarSign sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="green"
           />
           <MetricCard
             title="奖金合计"
             value={formatCurrency(payrollStats.totalBonus)}
-            icon={<TrendingUp className="w-5 h-5" />}
+            icon={<TrendingUp sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="purple"
           />
           <MetricCard
             title="实发工资合计"
             value={formatCurrency(payrollStats.totalNetSalary)}
-            icon={<CreditCard className="w-5 h-5" />}
+            icon={<CreditCard sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="blue"
           />
-        </div>
+        </Box>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 3 }, gap: 2, mb: 3 }}>
           <MetricCard
             title="平均工资"
             value={formatCurrency(payrollStats.avgSalary)}
-            icon={<Receipt className="w-5 h-5" />}
+            icon={<Receipt sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="teal"
           />
           <MetricCard
             title="待计算批次"
             value={payrollStats.pendingRuns}
-            icon={<Clock className="w-5 h-5" />}
+            icon={<Clock sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="yellow"
           />
           <MetricCard
             title="已发放批次"
             value={payrollStats.paidRuns}
-            icon={<CheckCircle className="w-5 h-5" />}
+            icon={<CheckCircle sx={{ width: 20, height: 20 }} />}
             trend={null}
             color="green"
           />
-        </div>
+        </Box>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3, mb: 3 }}>
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, color: "grey.900" }}>
               薪资构成比例
-            </h3>
+            </Typography>
             <StatsChart type="pie" data={salaryCompositionData} height={250} />
-          </div>
+          </Box>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, color: "grey.900" }}>
               工资发放状态
-            </h3>
+            </Typography>
             <StatsChart type="pie" data={payrollStatusData} height={250} />
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Tabs */}
-        <div className="flex space-x-4 mb-6 border-b border-gray-200">
-          <button
+        <Box sx={{ display: "flex", gap: 2, mb: 3, borderBottom: 1, borderColor: "grey.200" }}>
+          <Button
             onClick={() => setActiveTab("payroll")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "payroll"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "payroll" ? "primary.main" : "grey.500",
+              borderBottom: 2,
+              borderColor: activeTab === "payroll" ? "primary.main" : "transparent",
+              "&:hover": { color: "grey.700" },
+            }}
           >
-            <FileText className="w-5 h-5" />
+            <FileText sx={{ width: 20, height: 20 }} />
             <span>工资发放批次</span>
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setActiveTab("adjustments")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "adjustments"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "adjustments" ? "primary.main" : "grey.500",
+              borderBottom: 2,
+              borderColor: activeTab === "adjustments" ? "primary.main" : "transparent",
+              "&:hover": { color: "grey.700" },
+            }}
           >
-            <TrendingUp className="w-5 h-5" />
+            <TrendingUp sx={{ width: 20, height: 20 }} />
             <span>调薪记录</span>
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setActiveTab("calculator")}
-            className={`pb-4 px-2 font-medium transition-colors flex items-center space-x-2 ${
-              activeTab === "calculator"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            sx={{
+              pb: 2,
+              px: 1,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: activeTab === "calculator" ? "primary.main" : "grey.500",
+              borderBottom: 2,
+              borderColor: activeTab === "calculator" ? "primary.main" : "transparent",
+              "&:hover": { color: "grey.700" },
+            }}
           >
-            <Calculator className="w-5 h-5" />
+            <Calculator sx={{ width: 20, height: 20 }} />
             <span>个税计算器</span>
-          </button>
-        </div>
+          </Button>
+        </Box>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search sx={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "grey.400" }} />
+              <InputBase
                 type="text"
                 placeholder="搜索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                sx={{ width: "100%", pl: 5, pr: 2, py: 1, border: 1, borderColor: "grey.300", borderRadius: 2, "& .MuiInputBase-input": { py: 1 } }}
               />
-            </div>
-            <button className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-              <Download className="w-5 h-5 mr-2" />
+            </Box>
+            <Button
+              sx={{ display: "flex", alignItems: "center", px: 2, py: 1, bgcolor: "grey.200", color: "grey.700", borderRadius: 2, "&:hover": { bgcolor: "grey.300" } }}
+            >
+              <Download sx={{ width: 20, height: 20, mr: 1 }} />
               导出
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Box>
+        </Box>
 
         {/* Content */}
         {activeTab === "payroll" && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      发放周期
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      员工人数
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      总金额
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      状态
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      发放时间
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      操作
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, overflow: "hidden" }}>
+            <Box sx={{ overflowX: "auto" }}>
+              <Box sx={{ minWidth: 1200 }}>
+                <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", "& th": { bgcolor: "grey.50", px: 3, py: 1.5, textAlign: "left", "& .MuiTypography-root": { fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase" } } }}>
+                  <Box component="thead">
+                    <Box component="tr">
+                      <Box component="th">发放周期</Box>
+                      <Box component="th">员工人数</Box>
+                      <Box component="th">总金额</Box>
+                      <Box component="th">状态</Box>
+                      <Box component="th">发放时间</Box>
+                      <Box component="th">操作</Box>
+                    </Box>
+                  </Box>
+                  <Box component="tbody" sx={{ bgcolor: "background.paper", "& tr": { borderTop: 1, borderColor: "grey.200" }, "& tr:hover": { bgcolor: "grey.50" } }}>
                   {payrollRuns.map((run) => (
-                    <tr key={run.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                    <Box component="tr" key={run.id}>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
                           {run.pay_period}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        </Typography>
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.900" }}>
                         {run.employee_count}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-lg font-bold text-blue-600">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>
                           {formatCurrency(Number(run.total_amount))}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                        </Typography>
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
                         {getPayrollStatusBadge(run.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.500" }}>
                         {run.paid_at || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="flex space-x-2">
-                          <button
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <Button
                             onClick={() => loadPayrollItems(run.id)}
-                            className="text-blue-600 hover:text-blue-800"
+                            sx={{ color: "primary.main", "&:hover": { color: "primary.dark" } }}
                           >
                             查看明细
-                          </button>
+                          </Button>
                           {run.status === "draft" && (
-                            <button
+                            <Button
                               onClick={() => handleCalculate(run.id)}
                               disabled={calculating}
-                              className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                              sx={{ color: "success.main", "&:hover": { color: "success.dark" }, "&.Mui-disabled": { color: "grey.400" } }}
                             >
                               {calculating ? "计算中..." : "计算薪资"}
-                            </button>
+                            </Button>
                           )}
                           {run.status === "calculated" && (
-                            <button
+                            <Button
                               onClick={() => handlePay(run.id)}
                               disabled={paying}
-                              className="text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
+                              sx={{ color: "success.main", "&:hover": { color: "success.dark" }, "&.Mui-disabled": { color: "grey.400" } }}
                             >
                               {paying ? "发放中..." : "执行发放"}
-                            </button>
+                            </Button>
                           )}
-                        </div>
-                      </td>
-                    </tr>
+                        </Box>
+                      </Box>
+                    </Box>
                   ))}
                   {payrollRuns.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-6 py-12 text-center text-gray-500"
-                      >
+                    <Box component="tr">
+                      <Box component="td" colSpan={6} sx={{ px: 3, py: 8, textAlign: "center", color: "grey.500" }}>
                         暂无工资发放批次数据
-                      </td>
-                    </tr>
+                      </Box>
+                    </Box>
                   )}
-                </tbody>
-              </table>
-            </div>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
 
             {/* 工资条明细 */}
             {payrollItems.length > 0 && (
-              <div className="border-t border-gray-200 mt-6">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                  <h3 className="font-semibold text-gray-900">工资条明细</h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          员工
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          应发工资
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          扣款
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          个税
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          实发工资
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          状态
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+              <Box sx={{ borderTop: 1, borderColor: "grey.200", mt: 3 }}>
+                <Box sx={{ px: 3, py: 2, borderBottom: 1, borderColor: "grey.200", bgcolor: "grey.50" }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "grey.900" }}>工资条明细</Typography>
+                </Box>
+                <Box sx={{ overflowX: "auto" }}>
+                  <Box sx={{ minWidth: 1200 }}>
+                    <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", "& th": { bgcolor: "grey.50", px: 3, py: 1.5, textAlign: "left", "& .MuiTypography-root": { fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase" } } }}>
+                      <Box component="thead">
+                        <Box component="tr">
+                          <Box component="th">员工</Box>
+                          <Box component="th">应发工资</Box>
+                          <Box component="th">扣款</Box>
+                          <Box component="th">个税</Box>
+                          <Box component="th">实发工资</Box>
+                          <Box component="th">状态</Box>
+                        </Box>
+                      </Box>
+                      <Box component="tbody" sx={{ bgcolor: "background.paper", "& tr": { borderTop: 1, borderColor: "grey.200" }, "& tr:hover": { bgcolor: "grey.50" } }}>
                       {payrollItems.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                        <Box component="tr" key={item.id}>
+                          <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
                               {getEmployeeName(item.employee_id)}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            </Typography>
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.900" }}>
                             {formatCurrency(Number(item.gross_amount))}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.900" }}>
                             {formatCurrency(Number(item.deductions))}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "error.main" }}>
                             {formatCurrency(Number(item.taxes))}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-lg font-bold text-blue-600">
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>
                               {formatCurrency(Number(item.net_amount))}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                            </Typography>
+                          </Box>
+                          <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
                             {getPayrollStatusBadge(item.status)}
-                          </td>
-                        </tr>
+                          </Box>
+                        </Box>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             )}
-          </div>
+          </Box>
         )}
 
         {activeTab === "adjustments" && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      员工姓名
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      调薪类型
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      原工资
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      新工资
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      调整金额
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      原因
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      生效日期
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      状态
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, overflow: "hidden" }}>
+            <Box sx={{ overflowX: "auto" }}>
+              <Box sx={{ minWidth: 1200 }}>
+                <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", "& th": { bgcolor: "grey.50", px: 3, py: 1.5, textAlign: "left", "& .MuiTypography-root": { fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase" } } }}>
+                  <Box component="thead">
+                    <Box component="tr">
+                      <Box component="th">员工姓名</Box>
+                      <Box component="th">调薪类型</Box>
+                      <Box component="th">原工资</Box>
+                      <Box component="th">新工资</Box>
+                      <Box component="th">调整金额</Box>
+                      <Box component="th">原因</Box>
+                      <Box component="th">生效日期</Box>
+                      <Box component="th">状态</Box>
+                    </Box>
+                  </Box>
+                  <Box component="tbody" sx={{ bgcolor: "background.paper", "& tr": { borderTop: 1, borderColor: "grey.200" }, "& tr:hover": { bgcolor: "grey.50" } }}>
                   {adjustments.map((adj) => (
-                    <tr key={adj.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                    <Box component="tr" key={adj.id}>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
                           {adj.employee_name}
-                        </div>
-                        <div className="text-sm text-gray-500">
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
                           {adj.department}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        </Typography>
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.900" }}>
                         {getAdjustmentTypeName(adj.adjustment_type)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.500" }}>
                         {formatCurrency(adj.old_salary)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.900" }}>
                         {formatCurrency(adj.new_salary)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-emerald-600">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", fontWeight: 500, color: "success.main" }}>
                         +{formatCurrency(adj.adjustment_amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.500", maxWidth: 256, overflow: "hidden", textOverflow: "ellipsis" }}>
                         {adj.reason}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap", color: "grey.900" }}>
                         {adj.effective_date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      </Box>
+                      <Box component="td" sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
                         <StatusBadge
                           status={adj.status}
                           category="employee"
                           showIcon
                         />
-                      </td>
-                    </tr>
+                      </Box>
+                    </Box>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
         )}
 
         {activeTab === "calculator" && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 3, color: "grey.900" }}>
               个税计算器
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            </Typography>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 3 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: "grey.700" }}>
                   税前月收入 (元)
-                </label>
-                <input
+                </Typography>
+                <InputBase
                   type="number"
                   placeholder="请输入税前收入"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  sx={{ width: "100%", px: 2, py: 1, border: 1, borderColor: "grey.300", borderRadius: 2 }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: "grey.700" }}>
                   社保公积金 (元)
-                </label>
-                <input
+                </Typography>
+                <InputBase
                   type="number"
                   placeholder="请输入社保公积金"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  sx={{ width: "100%", px: 2, py: 1, border: 1, borderColor: "grey.300", borderRadius: 2 }}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: "grey.700" }}>
                   专项附加扣除 (元)
-                </label>
-                <input
+                </Typography>
+                <InputBase
                   type="number"
                   placeholder="请输入专项附加扣除"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  sx={{ width: "100%", px: 2, py: 1, border: 1, borderColor: "grey.300", borderRadius: 2 }}
                 />
-              </div>
-              <div className="flex items-end">
-                <button className="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "flex-end" }}>
+                <Button variant="contained" sx={{ width: "100%", px: 3, py: 1, borderRadius: 2, "&:hover": { bgcolor: "primary.dark" } }}>
                   计算
-                </button>
-              </div>
-            </div>
-          </div>
+                </Button>
+              </Box>
+            </Box>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

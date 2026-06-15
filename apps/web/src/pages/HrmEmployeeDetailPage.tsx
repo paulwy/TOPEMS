@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab, TextField, InputLabel, FormControl, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Avatar } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab, TextField, InputLabel, FormControl, Select, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions, Avatar, Container } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -103,95 +103,95 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ animation: "spin 1s linear infinite", borderRadius: "50%", width: 48, height: 48, border: 4, borderColor: "primary.main", borderBottomColor: "transparent" }} />
+      </Box>
     );
   }
 
   if (!employee) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-500">员工不存在</p>
-          <Button onClick={() => navigate("/hrm/employees")} className="mt-4">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <AlertCircle sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
+          <Typography variant="body1" sx={{ color: "grey.500" }}>员工不存在</Typography>
+          <Button onClick={() => navigate("/hrm/employees")} sx={{ mt: 2 }}>
             返回列表
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, lg: 4 }, py: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button variant="text" onClick={() => navigate("/hrm/employees")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft sx={{ width: 16, height: 16, mr: 1 }} />
               返回
             </Button>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">员工详情</h1>
-              <p className="text-sm text-gray-500">查看和编辑员工档案信息</p>
-            </div>
-            <div className="ml-auto">
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>员工详情</Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>查看和编辑员工档案信息</Typography>
+            </Box>
+            <Box sx={{ ml: "auto" }}>
               {isEditing ? (
-                <div className="flex gap-2">
+                <Box sx={{ display: "flex", gap: 1 }}>
                   <Button variant="outlined" onClick={handleCancelEdit}>
-                    <X className="w-4 h-4 mr-2" />
+                    <X sx={{ width: 16, height: 16, mr: 1 }} />
                     取消
                   </Button>
                   <Button onClick={handleSave}>
-                    <Save className="w-4 h-4 mr-2" />
+                    <Save sx={{ width: 16, height: 16, mr: 1 }} />
                     保存
                   </Button>
-                </div>
+                </Box>
               ) : (
                 <Button onClick={() => setIsEditing(true)}>
-                  <Edit2 className="w-4 h-4 mr-2" />
+                  <Edit2 sx={{ width: 16, height: 16, mr: 1 }} />
                   编辑
                 </Button>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Container>
+      </Box>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid gap-6">
+      <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-start gap-6">
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
                 <Avatar sx={{ width: 80, height: 80, bgcolor: "blue.100", color: "blue.700", fontSize: "2rem" }}>
                   {employee.name.charAt(0).toUpperCase()}
                 </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-2xl font-bold text-gray-900">
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
                       {employee.name}
-                    </h2>
+                    </Typography>
                     <Chip size="small"
                       variant={employee.status === "active" ? "filled" : "outlined"}
                       label={employee.status === "active" ? "在职" : "离职"} />
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <FileText className="w-4 h-4" />
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, color: "grey.500", fontSize: "0.875rem" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <FileText sx={{ width: 16, height: 16 }} />
                       {employee.employee_no}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Briefcase className="w-4 h-4" />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Briefcase sx={{ width: 16, height: 16 }} />
                       {employee.position || "-"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Building2 className="w-4 h-4" />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Building2 sx={{ width: 16, height: 16 }} />
                       {getDepartmentName(employee.department_id)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
@@ -199,19 +199,19 @@ const HrmEmployeeDetailPage: React.FC = () => {
             <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v as string)}>
               <Tab value="basic" label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <User className="w-4 h-4" />
+                  <User sx={{ width: 16, height: 16 }} />
                   基本信息
                 </Box>
               } />
               <Tab value="contact" label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Phone className="w-4 h-4" />
+                  <Phone sx={{ width: 16, height: 16 }} />
                   联系方式
                 </Box>
               } />
               <Tab value="emergency" label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Heart className="w-4 h-4" />
+                  <Heart sx={{ width: 16, height: 16 }} />
                   紧急联系人
                 </Box>
               } />
@@ -222,148 +222,150 @@ const HrmEmployeeDetailPage: React.FC = () => {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <Card>
                 <CardHeader>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">基本信息</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>基本信息</Typography>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">姓名</InputLabel>
-                      {isEditing ? (
-                        <TextField
-                          size="small"
-                          fullWidth
-                          value={editData.name || ""}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setEditData({ ...editData, name: e.target.value })
-                          }
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <p className="mt-1 font-medium">{employee.name}</p>
-                      )}
-                    </div>
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">性别</InputLabel>
-                      {isEditing ? (
-                        <FormControl size="small" fullWidth sx={{ mt: 1 }}>
-                          <Select
-                            value={editData.gender || ""}
-                            onChange={(e) =>
-                              setEditData({ ...editData, gender: e.target.value })
+                <CardContent>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 3 }, gap: 2 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>姓名</Typography>
+                        {isEditing ? (
+                          <TextField
+                            size="small"
+                            fullWidth
+                            value={editData.name || ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setEditData({ ...editData, name: e.target.value })
                             }
-                          >
-                            <MenuItem value="none">未设置</MenuItem>
-                            <MenuItem value="male">男</MenuItem>
-                            <MenuItem value="female">女</MenuItem>
-                          </Select>
-                        </FormControl>
-                      ) : (
-                        <p className="mt-1 font-medium">
-                          {employee.gender === "male"
-                            ? "男"
-                            : employee.gender === "female"
-                              ? "女"
-                              : "-"}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">出生日期</InputLabel>
-                      {isEditing ? (
-                        <TextField
-                          size="small"
-                          fullWidth
-                          type="date"
-                          value={editData.birth_date || ""}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setEditData({
-                              ...editData,
-                              birth_date: e.target.value,
-                            })
-                          }
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <p className="mt-1 font-medium">
-                          {employee.birth_date
-                            ? new Date(employee.birth_date).toLocaleDateString()
-                            : "-"}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">入职日期</InputLabel>
-                      {isEditing ? (
-                        <TextField
-                          size="small"
-                          fullWidth
-                          type="date"
-                          value={editData.hire_date || ""}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setEditData({
-                              ...editData,
-                              hire_date: e.target.value,
-                            })
-                          }
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <p className="mt-1 font-medium">
-                          {employee.hire_date
-                            ? new Date(employee.hire_date).toLocaleDateString()
-                            : "-"}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">部门</InputLabel>
-                      {isEditing ? (
-                        <FormControl size="small" fullWidth sx={{ mt: 1 }}>
-                          <Select
-                            value={editData.department_id || ""}
-                            onChange={(e) =>
+                            sx={{ mt: 0.5 }}
+                          />
+                        ) : (
+                          <Typography sx={{ mt: 0.5, fontWeight: 500 }}>{employee.name}</Typography>
+                        )}
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>性别</Typography>
+                        {isEditing ? (
+                          <FormControl size="small" fullWidth sx={{ mt: 0.5 }}>
+                            <Select
+                              value={editData.gender || ""}
+                              onChange={(e) =>
+                                setEditData({ ...editData, gender: e.target.value })
+                              }
+                            >
+                              <MenuItem value="none">未设置</MenuItem>
+                              <MenuItem value="male">男</MenuItem>
+                              <MenuItem value="female">女</MenuItem>
+                            </Select>
+                          </FormControl>
+                        ) : (
+                          <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
+                            {employee.gender === "male"
+                              ? "男"
+                              : employee.gender === "female"
+                                ? "女"
+                                : "-"}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>出生日期</Typography>
+                        {isEditing ? (
+                          <TextField
+                            size="small"
+                            fullWidth
+                            type="date"
+                            value={editData.birth_date || ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                               setEditData({
                                 ...editData,
-                                department_id: e.target.value || undefined,
+                                birth_date: e.target.value,
                               })
                             }
-                          >
-                            <MenuItem value="none">未设置</MenuItem>
-                            {departments.map((dept) => (
-                              <MenuItem key={dept.id} value={dept.id}>
-                                {dept.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      ) : (
-                        <p className="mt-1 font-medium">
-                          {getDepartmentName(employee.department_id)}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">职位</InputLabel>
-                      {isEditing ? (
-                        <TextField
-                          size="small"
-                          fullWidth
-                          value={editData.position || ""}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setEditData({
-                              ...editData,
-                              position: e.target.value,
-                            })
-                          }
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <p className="mt-1 font-medium">
-                          {employee.position || "-"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                            sx={{ mt: 0.5 }}
+                          />
+                        ) : (
+                          <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
+                            {employee.birth_date
+                              ? new Date(employee.birth_date).toLocaleDateString()
+                              : "-"}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>入职日期</Typography>
+                        {isEditing ? (
+                          <TextField
+                            size="small"
+                            fullWidth
+                            type="date"
+                            value={editData.hire_date || ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setEditData({
+                                ...editData,
+                                hire_date: e.target.value,
+                              })
+                            }
+                            sx={{ mt: 0.5 }}
+                          />
+                        ) : (
+                          <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
+                            {employee.hire_date
+                              ? new Date(employee.hire_date).toLocaleDateString()
+                              : "-"}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>部门</Typography>
+                        {isEditing ? (
+                          <FormControl size="small" fullWidth sx={{ mt: 0.5 }}>
+                            <Select
+                              value={editData.department_id || ""}
+                              onChange={(e) =>
+                                setEditData({
+                                  ...editData,
+                                  department_id: e.target.value || undefined,
+                                })
+                              }
+                            >
+                              <MenuItem value="none">未设置</MenuItem>
+                              {departments.map((dept) => (
+                                <MenuItem key={dept.id} value={dept.id}>
+                                  {dept.name}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        ) : (
+                          <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
+                            {getDepartmentName(employee.department_id)}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>职位</Typography>
+                        {isEditing ? (
+                          <TextField
+                            size="small"
+                            fullWidth
+                            value={editData.position || ""}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              setEditData({
+                                ...editData,
+                                position: e.target.value,
+                              })
+                            }
+                            sx={{ mt: 0.5 }}
+                          />
+                        ) : (
+                          <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
+                            {employee.position || "-"}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
             </Box>
@@ -373,12 +375,12 @@ const HrmEmployeeDetailPage: React.FC = () => {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <Card>
                 <CardHeader>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">联系方式</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>联系方式</Typography>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">工作邮箱</InputLabel>
+                <CardContent>
+                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>工作邮箱</Typography>
                       {isEditing ? (
                         <TextField
                           size="small"
@@ -389,19 +391,19 @@ const HrmEmployeeDetailPage: React.FC = () => {
                             setEditData({ ...editData, email: e.target.value })
                           }
                           placeholder="请输入邮箱"
-                          sx={{ mt: 1 }}
+                          sx={{ mt: 0.5 }}
                         />
                       ) : (
-                        <div className="mt-1 flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium">
+                        <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 1 }}>
+                          <Mail sx={{ width: 16, height: 16, color: "grey.400" }} />
+                          <Typography sx={{ fontWeight: 500 }}>
                             {employee.email || "-"}
-                          </span>
-                        </div>
+                          </Typography>
+                        </Box>
                       )}
-                    </div>
-                    <div>
-                      <InputLabel className="text-sm text-gray-500">联系电话</InputLabel>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>联系电话</Typography>
                       {isEditing ? (
                         <TextField
                           size="small"
@@ -411,19 +413,19 @@ const HrmEmployeeDetailPage: React.FC = () => {
                             setEditData({ ...editData, phone: e.target.value })
                           }
                           placeholder="请输入电话"
-                          sx={{ mt: 1 }}
+                          sx={{ mt: 0.5 }}
                         />
                       ) : (
-                        <div className="mt-1 flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium">
+                        <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 1 }}>
+                          <Phone sx={{ width: 16, height: 16, color: "grey.400" }} />
+                          <Typography sx={{ fontWeight: 500 }}>
                             {employee.phone || "-"}
-                          </span>
-                        </div>
+                          </Typography>
+                        </Box>
                       )}
-                    </div>
-                    <div className="col-span-2">
-                      <InputLabel className="text-sm text-gray-500">联系地址</InputLabel>
+                    </Box>
+                    <Box sx={{ gridColumn: { xs: 1, md: 2 } }}>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>联系地址</Typography>
                       {isEditing ? (
                         <TextField
                           size="small"
@@ -438,18 +440,18 @@ const HrmEmployeeDetailPage: React.FC = () => {
                             })
                           }
                           placeholder="请输入地址"
-                          sx={{ mt: 1 }}
+                          sx={{ mt: 0.5 }}
                         />
                       ) : (
-                        <div className="mt-1 flex items-start gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                          <span className="font-medium">
+                        <Box sx={{ mt: 0.5, display: "flex", alignItems: "flex-start", gap: 1 }}>
+                          <MapPin sx={{ width: 16, height: 16, color: "grey.400", mt: 0.5 }} />
+                          <Typography sx={{ fontWeight: 500 }}>
                             {employee.address || "-"}
-                          </span>
-                        </div>
+                          </Typography>
+                        </Box>
                       )}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
             </Box>
@@ -458,37 +460,37 @@ const HrmEmployeeDetailPage: React.FC = () => {
           {activeTab === "emergency" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">紧急联系人</Typography>
+                <CardHeader sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>紧急联系人</Typography>
                   {isEditing && (
                     <Button
                       size="small"
                       onClick={() => setShowEmergencyModal(true)}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus sx={{ width: 16, height: 16, mr: 1 }} />
                       添加
                     </Button>
                   )}
                 </CardHeader>
                 <CardContent>
                   {employee.emergency_contact_name ? (
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                          <Heart className="w-5 h-5 text-red-600" />
-                        </div>
-                        <div>
-                          <p className="font-semibold">
+                    <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "error.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Heart sx={{ width: 20, height: 20, color: "error.main" }} />
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontWeight: 600 }}>
                             {employee.emergency_contact_name}
-                          </p>
-                          <p className="text-sm text-gray-500">紧急联系人</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 ml-13">
-                        <div>
-                          <InputLabel className="text-sm text-gray-500">
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: "grey.500" }}>紧急联系人</Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2, ml: 4 }}>
+                        <Box>
+                          <Typography variant="body2" sx={{ color: "grey.500" }}>
                             联系电话
-                          </InputLabel>
+                          </Typography>
                           {isEditing ? (
                             <TextField
                               size="small"
@@ -500,21 +502,21 @@ const HrmEmployeeDetailPage: React.FC = () => {
                                   emergency_contact_phone: e.target.value,
                                 })
                               }
-                              sx={{ mt: 1 }}
+                              sx={{ mt: 0.5 }}
                             />
                           ) : (
-                            <div className="mt-1 flex items-center gap-2">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              <span className="font-medium">
+                            <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 1 }}>
+                              <Phone sx={{ width: 16, height: 16, color: "grey.400" }} />
+                              <Typography sx={{ fontWeight: 500 }}>
                                 {employee.emergency_contact_phone || "-"}
-                              </span>
-                            </div>
+                              </Typography>
+                            </Box>
                           )}
-                        </div>
-                        <div>
-                          <InputLabel className="text-sm text-gray-500">
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" sx={{ color: "grey.500" }}>
                             联系人姓名
-                          </InputLabel>
+                          </Typography>
                           {isEditing ? (
                             <TextField
                               size="small"
@@ -526,30 +528,30 @@ const HrmEmployeeDetailPage: React.FC = () => {
                                   emergency_contact_name: e.target.value,
                                 })
                               }
-                              sx={{ mt: 1 }}
+                              sx={{ mt: 0.5 }}
                             />
                           ) : (
-                            <p className="mt-1 font-medium">
+                            <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
                               {employee.emergency_contact_name}
-                            </p>
+                            </Typography>
                           )}
-                        </div>
-                      </div>
-                    </div>
+                        </Box>
+                      </Box>
+                    </Box>
                   ) : (
-                    <div className="text-center py-8">
-                      <Heart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">暂无紧急联系人信息</p>
+                    <Box sx={{ textAlign: "center", py: 4 }}>
+                      <Heart sx={{ width: 48, height: 48, color: "grey.300", mx: "auto", mb: 2 }} />
+                      <Typography variant="body1" sx={{ color: "grey.500" }}>暂无紧急联系人信息</Typography>
                       {isEditing && (
                         <Button
                           onClick={() => setShowEmergencyModal(true)}
-                          className="mt-4"
+                          sx={{ mt: 2 }}
                         >
-                          <Plus className="w-4 h-4 mr-2" />
+                          <Plus sx={{ width: 16, height: 16, mr: 1 }} />
                           添加紧急联系人
                         </Button>
                       )}
-                    </div>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
@@ -558,47 +560,49 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <Typography variant="h6" sx={{ fontWeight: 600 }} className="text-lg">其他信息</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>其他信息</Typography>
             </CardHeader>
-            <CardContent className="grid grid-cols-4 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500">创建时间</p>
-                <p className="font-medium mt-1">
-                  <Calendar className="w-4 h-4 text-gray-400 inline mr-1" />
-                  {new Date(employee.created_at).toLocaleString()}
-                </p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500">更新时间</p>
-                <p className="font-medium mt-1">
-                  <Calendar className="w-4 h-4 text-gray-400 inline mr-1" />
-                  {new Date(employee.updated_at).toLocaleString()}
-                </p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500">员工ID</p>
-                <p className="font-medium mt-1 font-mono text-sm">
-                  {employee.id.substring(0, 8)}...
-                </p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-500">状态</p>
-                <p className="font-medium mt-1">
-                  <Chip size="small"
-                    variant={employee.status === "active" ? "filled" : "outlined"}
-                    label={employee.status === "active" ? "在职" : "离职"} />
-                </p>
-              </div>
+            <CardContent>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 4 }, gap: 2 }}>
+                <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>创建时间</Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    <Calendar sx={{ width: 16, height: 16, color: "grey.400", mr: 0.5, verticalAlign: "middle" }} />
+                    {new Date(employee.created_at).toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>更新时间</Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    <Calendar sx={{ width: 16, height: 16, color: "grey.400", mr: 0.5, verticalAlign: "middle" }} />
+                    {new Date(employee.updated_at).toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>员工ID</Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5, fontFamily: "monospace", fontSize: "0.875rem" }}>
+                    {employee.id.substring(0, 8)}...
+                  </Typography>
+                </Box>
+                <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 2 }}>
+                  <Typography variant="body2" sx={{ color: "grey.500" }}>状态</Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    <Chip size="small"
+                      variant={employee.status === "active" ? "filled" : "outlined"}
+                      label={employee.status === "active" ? "在职" : "离职"} />
+                  </Typography>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </Box>
+      </Container>
 
       <Dialog open={showEmergencyModal} onClose={() => setShowEmergencyModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle>添加紧急联系人</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
-            <div>
+            <Box>
               <InputLabel htmlFor="emergency-name">联系人姓名 *</InputLabel>
               <TextField
                 id="emergency-name"
@@ -613,10 +617,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
                   })
                 }
                 placeholder="请输入联系人姓名"
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.5 }}
               />
-            </div>
-            <div>
+            </Box>
+            <Box>
               <InputLabel htmlFor="emergency-phone">联系电话 *</InputLabel>
               <TextField
                 id="emergency-phone"
@@ -631,9 +635,9 @@ const HrmEmployeeDetailPage: React.FC = () => {
                   })
                 }
                 placeholder="请输入联系电话"
-                sx={{ mt: 1 }}
+                sx={{ mt: 0.5 }}
               />
-            </div>
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -643,7 +647,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
           <Button onClick={() => setShowEmergencyModal(false)}>保存</Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

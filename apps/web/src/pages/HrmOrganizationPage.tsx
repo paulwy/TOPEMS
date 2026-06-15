@@ -535,7 +535,7 @@ const HrmOrganizationPage: React.FC = () => {
           <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>组织架构</Typography>
-              <Button size="small" onClick={handleCreateCompany} startIcon={<Plus className="w-4 h-4" />}>
+              <Button size="small" onClick={handleCreateCompany} startIcon={<Plus sx={{ width: 16, height: 16 }} />}>
                 新增
               </Button>
             </Box>
@@ -549,7 +549,7 @@ const HrmOrganizationPage: React.FC = () => {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search className="w-4 h-4 text-grey-400" />
+                      <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
                     </InputAdornment>
                   ),
                 }
@@ -561,12 +561,12 @@ const HrmOrganizationPage: React.FC = () => {
             {loading ? (
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 128 }}>
                 <Box sx={{ animation: "spin 1s linear infinite", display: "flex", alignItems: "center" }}>
-                  <RefreshCw className="w-5 h-5 text-primary.main" />
+                  <RefreshCw sx={{ width: 20, height: 20, color: "primary.main" }} />
                 </Box>
               </Box>
             ) : filteredTreeData.length === 0 ? (
               <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-                <Building className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <Building sx={{ width: 48, height: 48, mx: "auto", mb: 2, opacity: 0.5 }} />
                 <Typography>暂无组织架构数据</Typography>
               </Box>
             ) : (
@@ -582,9 +582,9 @@ const HrmOrganizationPage: React.FC = () => {
                 {selectedNode ? (
                   <>
                     {selectedNode.type === "company" ? (
-                      <Building style={{ width: 24, height: 24, color: "primary.main" }} />
+                      <Building sx={{ width: 24, height: 24, color: "primary.main" }} />
                     ) : (
-                      <Building2 style={{ width: 24, height: 24, color: "success.main" }} />
+                      <Building2 sx={{ width: 24, height: 24, color: "success.main" }} />
                     )}
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -615,7 +615,7 @@ const HrmOrganizationPage: React.FC = () => {
                         ? handleViewCompany
                         : handleViewDepartment
                     }
-                    startIcon={<Eye className="w-4 h-4" />}
+                    startIcon={<Eye sx={{ width: 16, height: 16 }} />}
                   >
                     查看
                   </Button>
@@ -627,7 +627,7 @@ const HrmOrganizationPage: React.FC = () => {
                         ? handleEditCompany
                         : handleEditDepartment
                     }
-                    startIcon={<Edit className="w-4 h-4" />}
+                    startIcon={<Edit sx={{ width: 16, height: 16 }} />}
                   >
                     编辑
                   </Button>
@@ -636,7 +636,7 @@ const HrmOrganizationPage: React.FC = () => {
                       variant="outlined"
                       size="small"
                       onClick={handleCreateDepartment}
-                      startIcon={<Plus className="w-4 h-4" />}
+                      startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                     >
                       添加子部门
                     </Button>
@@ -650,7 +650,7 @@ const HrmOrganizationPage: React.FC = () => {
                         ? handleDeleteCompany
                         : handleDeleteDepartment
                     }
-                    startIcon={<Trash2 className="w-4 h-4" />}
+                    startIcon={<Trash2 sx={{ width: 16, height: 16 }} />}
                   >
                     删除
                   </Button>
@@ -664,14 +664,14 @@ const HrmOrganizationPage: React.FC = () => {
               <Card>
                 <CardHeader>
                   <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
-                    <Users className="w-5 h-5" />
+                    <Users sx={{ width: 20, height: 20 }} />
                     员工列表
                   </Typography>
                 </CardHeader>
                 <CardContent>
                   {employees.length === 0 ? (
                     <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-                      <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <Users sx={{ width: 48, height: 48, mx: "auto", mb: 2, opacity: 0.5 }} />
                       <Typography>暂无员工</Typography>
                     </Box>
                   ) : (
@@ -682,7 +682,7 @@ const HrmOrganizationPage: React.FC = () => {
                           sx={{ display: "flex", alignItems: "center", gap: 2, p: 1.5, bgcolor: "grey.50", borderRadius: 1, "&:hover": { bgcolor: "grey.100" } }}
                         >
                           <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Users className="w-5 h-5 text-primary.main" />
+                            <Users sx={{ width: 20, height: 20, color: "primary.main" }} />
                           </Box>
                           <Box sx={{ flex: 1 }}>
                             <Typography sx={{ fontWeight: 500 }}>{emp.name}</Typography>
@@ -700,7 +700,7 @@ const HrmOrganizationPage: React.FC = () => {
             ) : (
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
                 <Box sx={{ textAlign: "center", color: "text.secondary" }}>
-                  <Building className="w-16 h-16 mx-auto mb-3 opacity-50" />
+                  <Building sx={{ width: 64, height: 64, mx: "auto", mb: 3, opacity: 0.5 }} />
                   <Typography variant="h6" sx={{ fontWeight: 500 }}>选择一个组织</Typography>
                   <Typography variant="body2">在左侧树形结构中选择公司或部门</Typography>
                 </Box>

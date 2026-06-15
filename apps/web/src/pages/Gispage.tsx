@@ -2,19 +2,16 @@ import React, { useState, useMemo, useCallback } from "react";
 import {
   MapPin,
   Plus,
-  Search,
+  Search as SearchIcon,
   ChevronRight,
   ArrowRight,
   Warehouse,
   Camera,
-  Loader2,
   X,
   Edit,
   Trash2,
   Map,
   Building2,
-  PieChart,
-  BarChart3,
   Layers,
   RefreshCw,
   AlertTriangle,
@@ -23,6 +20,7 @@ import {
   FileText,
   Upload,
   Download,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useGis, GisProvider } from "../context/GisContext";
@@ -38,8 +36,36 @@ import type {
   EvidenceRecord,
   FactoryMap,
   BusinessLocation,
-  GisStatistics,
 } from "../api/gis";
+import {
+  Box,
+  Paper,
+  Stack,
+  Chip,
+  Button,
+  IconButton,
+  TextField,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
+  Grid,
+  Snackbar,
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Checkbox,
+  FormControlLabel,
+  InputAdornment,
+  CircularProgress,
+} from "@mui/material";
 
 type TabType =
   | "map"
@@ -113,7 +139,6 @@ const GisContent: React.FC = () => {
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3000);
   };
 
   const validateForm = useCallback((): boolean => {
@@ -473,27 +498,61 @@ const GisContent: React.FC = () => {
     setShowModal(true);
   };
 
-  const tabs = [
-    { id: "map", label: "地图视图", icon: Layers },
-    { id: "devicePoints", label: "设备点位", icon: MapPin },
-    { id: "pipelines", label: "管线管理", icon: ArrowRight },
-    { id: "storageLocations", label: "仓储位置", icon: Warehouse },
-    { id: "evidenceRecords", label: "现场取证", icon: Camera },
-    { id: "factoryMaps", label: "厂区地图", icon: Map },
-    { id: "businessLocations", label: "业务位置", icon: Building2 },
+  const tabs: Array<{ id: TabType; label: string; icon: React.ReactNode }> = [
+    { id: "map", label: "地图视图", icon: <Layers size={18} /> },
+    { id: "devicePoints", label: "设备点位", icon: <MapPin size={18} /> },
+    { id: "pipelines", label: "管线管理", icon: <ArrowRight size={18} /> },
+    { id: "storageLocations", label: "仓储位置", icon: <Warehouse size={18} /> },
+    { id: "evidenceRecords", label: "现场取证", icon: <Camera size={18} /> },
+    { id: "factoryMaps", label: "厂区地图", icon: <Map size={18} /> },
+    { id: "businessLocations", label: "业务位置", icon: <Building2 size={18} /> },
   ];
 
-  const getStatusColor = (status: string) => {
-    if (!status) return "bg-gray-100 text-gray-800";
+  const getStatusStyle = (status: string) => {
+    if (!status) return { bgcolor: "#f1f5f9", color: "#475569" };
     const s = status.toLowerCase();
     if (s.includes("active") || s.includes("启用"))
-      return "bg-green-100 text-green-800";
+      return { bgcolor: "#dcfce7", color: "#15803d" };
     if (s.includes("pending") || s.includes("待处理"))
-      return "bg-yellow-100 text-yellow-800";
+      return { bgcolor: "#fef3c7", color: "#b45309" };
     if (s.includes("inactive") || s.includes("禁用"))
-      return "bg-red-100 text-red-800";
-    return "bg-gray-100 text-gray-800";
+      return { bgcolor: "#fee2e2", color: "#b91c1c" };
+    return { bgcolor: "#f1f5f9", color: "#475569" };
   };
+
+  const StatusChip: React.FC<{ status: string }> = ({ status }) => {
+    const style = getStatusStyle(status);
+    return (
+      <Chip
+        label={status}
+        size="small"
+        sx={{ bgcolor: style.bgcolor, color: style.color, fontWeight: 500 }}
+      />
+    );
+  };
+
+  const ActionButtons: React.FC<{ item: any }> = ({ item }) => (
+    <Stack direction="row" spacing={1}>
+      <IconButton
+        size="small"
+        sx={{ color: "info.main" }}
+        onClick={() => openEditModal(item)}
+      >
+        <Edit size={16} />
+      </IconButton>
+      <IconButton
+        size="small"
+        color="error"
+        onClick={() => {
+          if (confirm("确定要删除此项吗？")) {
+            handleDelete(item.id);
+          }
+        }}
+      >
+        <Trash2 size={16} />
+      </IconButton>
+    </Stack>
+  );
 
   const devicePointColumns: ColumnDef<DevicePoint>[] = [
     { accessorKey: "name", header: "设备名称" },
@@ -503,37 +562,12 @@ const GisContent: React.FC = () => {
     {
       accessorKey: "status",
       header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }) => <StatusChip status={row.original.status} />,
     },
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openEditModal(row.original)}
-            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定要删除此项吗？")) {
-                handleDelete(row.original.id);
-              }
-            }}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
+      cell: ({ row }) => <ActionButtons item={row.original} />,
     },
   ];
 
@@ -563,37 +597,12 @@ const GisContent: React.FC = () => {
     {
       accessorKey: "status",
       header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }) => <StatusChip status={row.original.status} />,
     },
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openEditModal(row.original)}
-            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定要删除此项吗？")) {
-                handleDelete(row.original.id);
-              }
-            }}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
+      cell: ({ row }) => <ActionButtons item={row.original} />,
     },
   ];
 
@@ -612,26 +621,7 @@ const GisContent: React.FC = () => {
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openEditModal(row.original)}
-            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定要删除此项吗？")) {
-                handleDelete(row.original.id);
-              }
-            }}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
+      cell: ({ row }) => <ActionButtons item={row.original} />,
     },
   ];
 
@@ -643,36 +633,17 @@ const GisContent: React.FC = () => {
       accessorKey: "recorded_at",
       header: "记录时间",
       cell: ({ row }) => (
-        <span>
+        <Typography variant="body2">
           {row.original.recorded_at
             ? new Date(row.original.recorded_at).toLocaleString()
             : ""}
-        </span>
+        </Typography>
       ),
     },
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openEditModal(row.original)}
-            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定要删除此项吗？")) {
-                handleDelete(row.original.id);
-              }
-            }}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
+      cell: ({ row }) => <ActionButtons item={row.original} />,
     },
   ];
 
@@ -684,36 +655,17 @@ const GisContent: React.FC = () => {
       accessorKey: "created_at",
       header: "创建时间",
       cell: ({ row }) => (
-        <span>
+        <Typography variant="body2">
           {row.original.created_at
             ? new Date(row.original.created_at).toLocaleDateString()
             : ""}
-        </span>
+        </Typography>
       ),
     },
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openEditModal(row.original)}
-            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定要删除此项吗？")) {
-                handleDelete(row.original.id);
-              }
-            }}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
+      cell: ({ row }) => <ActionButtons item={row.original} />,
     },
   ];
 
@@ -725,37 +677,12 @@ const GisContent: React.FC = () => {
     {
       accessorKey: "status",
       header: "状态",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(row.original.status)}`}
-        >
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }) => <StatusChip status={row.original.status} />,
     },
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openEditModal(row.original)}
-            className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定要删除此项吗？")) {
-                handleDelete(row.original.id);
-              }
-            }}
-            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      ),
+      cell: ({ row }) => <ActionButtons item={row.original} />,
     },
   ];
 
@@ -1002,260 +929,306 @@ const GisContent: React.FC = () => {
     onChange: (value: any) => void;
     error?: string;
     placeholder?: string;
-    step?: string;
     required?: boolean;
-  }> = ({
-    label,
-    name,
-    type = "text",
-    value,
-    onChange,
-    error,
-    placeholder,
-    step,
-    required,
-  }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
+  }> = ({ label, type = "text", value, onChange, error, required }) => (
+    <Box>
+      <Typography variant="body2" fontWeight={500} mb={0.5}>
+        {label} {required && <span style={{ color: "#ef4444" }}>*</span>}
+      </Typography>
+      <TextField
+        fullWidth
+        size="small"
         type={type}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        step={step}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-cyan-500 ${error ? "border-red-500" : "border-gray-300"}`}
+        error={Boolean(error)}
+        helperText={error}
       />
-      {error && (
-        <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-          <AlertCircle className="w-4 h-4" />
-          {error}
-        </p>
-      )}
-    </div>
+    </Box>
   );
 
   const TextAreaField: React.FC<{
     label: string;
-    name: string;
     value: any;
     onChange: (value: any) => void;
-    error?: string;
     rows?: number;
-  }> = ({ label, name, value, onChange, error, rows = 3 }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+  }> = ({ label, value, onChange, rows = 3 }) => (
+    <Box>
+      <Typography variant="body2" fontWeight={500} mb={0.5}>
         {label}
-      </label>
-      <textarea
+      </Typography>
+      <TextField
+        fullWidth
+        size="small"
+        multiline
+        rows={rows}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        rows={rows}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-cyan-500 ${error ? "border-red-500" : "border-gray-300"}`}
       />
-      {error && (
-        <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
-          <AlertCircle className="w-4 h-4" />
-          {error}
-        </p>
-      )}
-    </div>
+    </Box>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-cyan-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <ChevronRight className="w-6 h-6 rotate-180" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f8fafc 0%, #ecfeff 100%)",
+      }}
+    >
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3 }, py: 4 }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={4}
+          flexWrap="wrap"
+          spacing={2}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <IconButton onClick={() => navigate("/dashboard")}>
+              <ChevronRight style={{ transform: "rotate(180deg)" }} />
+            </IconButton>
+            <Box>
+              <Typography variant="h4" fontWeight={700}>
                 厂区空间数字化
-              </h1>
-              <p className="text-gray-500">
+              </Typography>
+              <Typography color="text.secondary">
                 管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
+              </Typography>
+            </Box>
+          </Stack>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<Upload size={16} />}
               onClick={() => setShowImportModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              <Upload className="w-4 h-4" />
               导入
-            </button>
+            </Button>
             {activeTab !== "map" && (
-              <button
+              <Button
+                variant="contained"
+                sx={{
+                  bgcolor: "#06b6d4",
+                  "&:hover": { bgcolor: "#0891b2" },
+                }}
+                startIcon={<Plus size={16} />}
                 onClick={openCreateModal}
-                className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
               >
-                <Plus className="w-5 h-5" />
                 新建
-              </button>
+              </Button>
             )}
-            <button
+            <IconButton
               onClick={() => loadAllData(true)}
-              className="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              sx={{ border: 1, borderColor: "divider" }}
             >
               <RefreshCw
-                className={`w-5 h-5 ${loading ? "animate-spin" : ""}`}
+                size={20}
+                className={loading ? "animate-spin" : ""}
+                style={{
+                  animation: loading ? "spin 1s linear infinite" : undefined,
+                }}
               />
-            </button>
-          </div>
-        </div>
+            </IconButton>
+          </Stack>
+        </Stack>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-            <span className="text-red-700">{error}</span>
-          </div>
-        )}
-
-        {notification && (
-          <div
-            className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${notification.type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}
+          <Alert
+            severity="error"
+            icon={<AlertTriangle size={20} />}
+            sx={{ mb: 3 }}
           >
-            {notification.type === "success" ? (
-              <CheckCircle2 className="w-5 h-5" />
-            ) : (
-              <AlertCircle className="w-5 h-5" />
-            )}
-            {notification.message}
-          </div>
+            {error}
+          </Alert>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-          <MetricCard
-            title="设备点位"
-            value={statistics?.device_points || 0}
-            icon={<MapPin className="w-6 h-6" />}
-            gradient={["#00C897", "#00A878"]}
-            subtitle={`启用: ${statistics?.active_devices || 0}`}
-          />
-          <MetricCard
-            title="管线管理"
-            value={statistics?.pipelines || 0}
-            icon={<ArrowRight className="w-6 h-6" />}
-            gradient={["#6366F1", "#4F46E5"]}
-            subtitle={`启用: ${statistics?.active_pipelines || 0}`}
-          />
-          <MetricCard
-            title="仓储位置"
-            value={statistics?.storage_locations || 0}
-            icon={<Warehouse className="w-6 h-6" />}
-            gradient={["#F59E0B", "#D97706"]}
-          />
-          <MetricCard
-            title="现场取证"
-            value={statistics?.evidence_records || 0}
-            icon={<Camera className="w-6 h-6" />}
-            gradient={["#EC4899", "#DB2777"]}
-          />
-          <MetricCard
-            title="厂区地图"
-            value={statistics?.factory_maps || 0}
-            icon={<Map className="w-6 h-6" />}
-            gradient={["#8B5CF6", "#7C3AED"]}
-          />
-          <MetricCard
-            title="业务位置"
-            value={statistics?.business_locations || 0}
-            icon={<Building2 className="w-6 h-6" />}
-            gradient={["#14B8A6", "#0D9488"]}
-          />
-        </div>
+        <Snackbar
+          open={Boolean(notification)}
+          autoHideDuration={3000}
+          onClose={() => setNotification(null)}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            severity={notification?.type === "success" ? "success" : "error"}
+            onClose={() => setNotification(null)}
+            icon={
+              notification?.type === "success" ? (
+                <CheckCircle2 size={20} />
+              ) : (
+                <AlertCircle size={20} />
+              )
+            }
+          >
+            {notification?.message}
+          </Alert>
+        </Snackbar>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <StatsChart
-            title="业务类型分布"
-            type="pie"
-            data={[
-              {
-                name: "设备点位",
-                value: statistics?.device_points || 0,
-                color: "#00C897",
-              },
-              {
-                name: "管线",
-                value: statistics?.pipelines || 0,
-                color: "#6366F1",
-              },
-              {
-                name: "仓储位置",
-                value: statistics?.storage_locations || 0,
-                color: "#F59E0B",
-              },
-              {
-                name: "厂区地图",
-                value: statistics?.factory_maps || 0,
-                color: "#8B5CF6",
-              },
-              {
-                name: "业务位置",
-                value: statistics?.business_locations || 0,
-                color: "#14B8A6",
-              },
-            ].filter((d) => d.value > 0)}
-            dataKey="value"
-            nameKey="name"
-          />
-          <StatsChart
-            title="启用状态对比"
-            type="bar"
-            data={[
-              {
-                name: "设备点位",
-                启用: statistics?.active_devices || 0,
-                总数: statistics?.device_points || 0,
-              },
-              {
-                name: "管线",
-                启用: statistics?.active_pipelines || 0,
-                总数: statistics?.pipelines || 0,
-              },
-            ]}
-            dataKey="name"
-            yKeys={["启用", "总数"]}
-            colors={["#00C897", "#6366F1"]}
-          />
-        </div>
+        <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="设备点位"
+              value={statistics?.device_points || 0}
+              icon={<MapPin size={24} />}
+              gradient={["#00C897", "#00A878"]}
+              subtitle={`启用: ${statistics?.active_devices || 0}`}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="管线管理"
+              value={statistics?.pipelines || 0}
+              icon={<ArrowRight size={24} />}
+              gradient={["#6366F1", "#4F46E5"]}
+              subtitle={`启用: ${statistics?.active_pipelines || 0}`}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="仓储位置"
+              value={statistics?.storage_locations || 0}
+              icon={<Warehouse size={24} />}
+              gradient={["#F59E0B", "#D97706"]}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="现场取证"
+              value={statistics?.evidence_records || 0}
+              icon={<Camera size={24} />}
+              gradient={["#EC4899", "#DB2777"]}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="厂区地图"
+              value={statistics?.factory_maps || 0}
+              icon={<Map size={24} />}
+              gradient={["#8B5CF6", "#7C3AED"]}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4} lg={2}>
+            <MetricCard
+              title="业务位置"
+              value={statistics?.business_locations || 0}
+              icon={<Building2 size={24} />}
+              gradient={["#14B8A6", "#0D9488"]}
+            />
+          </Grid>
+        </Grid>
 
-        <div className="flex gap-2 mb-6 border-b border-gray-200 overflow-x-auto">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} lg={6}>
+            <StatsChart
+              title="业务类型分布"
+              type="pie"
+              data={[
+                {
+                  name: "设备点位",
+                  value: statistics?.device_points || 0,
+                  color: "#00C897",
+                },
+                {
+                  name: "管线",
+                  value: statistics?.pipelines || 0,
+                  color: "#6366F1",
+                },
+                {
+                  name: "仓储位置",
+                  value: statistics?.storage_locations || 0,
+                  color: "#F59E0B",
+                },
+                {
+                  name: "厂区地图",
+                  value: statistics?.factory_maps || 0,
+                  color: "#8B5CF6",
+                },
+                {
+                  name: "业务位置",
+                  value: statistics?.business_locations || 0,
+                  color: "#14B8A6",
+                },
+              ].filter((d) => d.value > 0)}
+              dataKey="value"
+              nameKey="name"
+            />
+          </Grid>
+          <Grid item xs={12} lg={6}>
+            <StatsChart
+              title="启用状态对比"
+              type="bar"
+              data={[
+                {
+                  name: "设备点位",
+                  启用: statistics?.active_devices || 0,
+                  总数: statistics?.device_points || 0,
+                },
+                {
+                  name: "管线",
+                  启用: statistics?.active_pipelines || 0,
+                  总数: statistics?.pipelines || 0,
+                },
+              ]}
+              dataKey="name"
+              yKeys={["启用", "总数"]}
+              colors={["#00C897", "#6366F1"]}
+            />
+          </Grid>
+        </Grid>
+
+        <Paper
+          elevation={0}
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            mb: 3,
+            overflowX: "auto",
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ minHeight: 48 }}
+          >
+            {tabs.map((tab) => (
+              <Tab
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
-                className={`flex items-center gap-2 px-6 py-3 border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "border-cyan-600 text-cyan-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+                value={tab.id}
+                label={tab.label}
+                icon={tab.icon as React.ReactElement}
+                iconPosition="start"
+                sx={{ minHeight: 48, fontWeight: 500 }}
+              />
+            ))}
+          </Tabs>
+        </Paper>
 
         {activeTab === "map" ? (
-          <div
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-            style={{ height: "500px" }}
+          <Paper
+            elevation={0}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1.5,
+              overflow: "hidden",
+              height: 500,
+              position: "relative",
+            }}
           >
             {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
-              </div>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <CircularProgress sx={{ color: "#06b6d4" }} />
+              </Box>
             ) : (
               <MapView
                 devicePoints={devicePoints}
@@ -1264,42 +1237,79 @@ const GisContent: React.FC = () => {
                 onMarkerClick={(item) => setSelectedItem(item)}
               />
             )}
-          </div>
+          </Paper>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="搜索..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                  />
-                </div>
-                <button
+          <Paper
+            elevation={0}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1.5,
+              overflow: "hidden",
+            }}
+          >
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "grey.50" }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                spacing={2}
+              >
+                <TextField
+                  size="small"
+                  placeholder="搜索..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  sx={{ flex: 1, maxWidth: 400 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon size={18} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <Button
+                  size="small"
+                  startIcon={<Download size={16} />}
                   onClick={downloadTemplate}
-                  className="ml-4 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2"
+                  sx={{ color: "text.secondary" }}
                 >
-                  <Download className="w-4 h-4" />
                   下载模板
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
+                </Button>
+              </Stack>
+            </Box>
+            <Box sx={{ p: 3 }}>
               {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
-                </div>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    py: 6,
+                  }}
+                >
+                  <CircularProgress sx={{ color: "#06b6d4" }} />
+                </Box>
               ) : filteredData.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Search className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <p className="text-gray-500">暂无数据</p>
-                </div>
+                <Box sx={{ textAlign: "center", py: 6 }}>
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      mx: "auto",
+                      mb: 2,
+                      bgcolor: "grey.100",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <SearchIcon size={32} color="#9ca3af" />
+                  </Box>
+                  <Typography color="text.secondary">暂无数据</Typography>
+                </Box>
               ) : (
                 <>
                   {activeTab === "devicePoints" && (
@@ -1358,46 +1368,51 @@ const GisContent: React.FC = () => {
                   )}
                 </>
               )}
-            </div>
-          </div>
+            </Box>
+          </Paper>
         )}
 
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {modalType === "create" ? "新建" : "编辑"}
-                </h3>
-                <button
-                  onClick={resetModal}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="p-6 space-y-4">
-                {activeTab === "devicePoints" && (
-                  <>
-                    <InputField
-                      label="名称"
-                      name="name"
-                      value={formData.name}
-                      onChange={(v) => setFormData({ ...formData, name: v })}
-                      error={formErrors.name}
-                      required
-                    />
-                    <InputField
-                      label="设备类型"
-                      name="device_type"
-                      value={formData.device_type}
-                      onChange={(v) =>
-                        setFormData({ ...formData, device_type: v })
-                      }
-                      error={formErrors.device_type}
-                      required
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+        <Dialog
+          open={showModal}
+          onClose={resetModal}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 2 } }}
+        >
+          <DialogTitle>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6" fontWeight={600}>
+                {modalType === "create" ? "新建" : "编辑"}
+              </Typography>
+              <IconButton onClick={resetModal} size="small">
+                <X size={20} />
+              </IconButton>
+            </Stack>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={3} sx={{ pt: 1 }}>
+              {activeTab === "devicePoints" && (
+                <Stack spacing={3}>
+                  <InputField
+                    label="名称"
+                    name="name"
+                    value={formData.name}
+                    onChange={(v) => setFormData({ ...formData, name: v })}
+                    error={formErrors.name}
+                    required
+                  />
+                  <InputField
+                    label="设备类型"
+                    name="device_type"
+                    value={formData.device_type}
+                    onChange={(v) =>
+                      setFormData({ ...formData, device_type: v })
+                    }
+                    error={formErrors.device_type}
+                    required
+                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="纬度"
                         name="latitude"
@@ -1407,9 +1422,10 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, latitude: v })
                         }
                         error={formErrors.latitude}
-                        step="0.000001"
                         required
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="经度"
                         name="longitude"
@@ -1419,41 +1435,41 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, longitude: v })
                         }
                         error={formErrors.longitude}
-                        step="0.000001"
                         required
                       />
-                    </div>
-                    <TextAreaField
-                      label="描述"
-                      name="description"
-                      value={formData.description}
-                      onChange={(v) =>
-                        setFormData({ ...formData, description: v })
-                      }
-                    />
-                  </>
-                )}
-                {activeTab === "pipelines" && (
-                  <>
-                    <InputField
-                      label="名称"
-                      name="name"
-                      value={formData.name}
-                      onChange={(v) => setFormData({ ...formData, name: v })}
-                      error={formErrors.name}
-                      required
-                    />
-                    <InputField
-                      label="管线类型"
-                      name="pipeline_type"
-                      value={formData.pipeline_type}
-                      onChange={(v) =>
-                        setFormData({ ...formData, pipeline_type: v })
-                      }
-                      error={formErrors.pipeline_type}
-                      required
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                    </Grid>
+                  </Grid>
+                  <TextAreaField
+                    label="描述"
+                    value={formData.description}
+                    onChange={(v) =>
+                      setFormData({ ...formData, description: v })
+                    }
+                  />
+                </Stack>
+              )}
+              {activeTab === "pipelines" && (
+                <Stack spacing={3}>
+                  <InputField
+                    label="名称"
+                    name="name"
+                    value={formData.name}
+                    onChange={(v) => setFormData({ ...formData, name: v })}
+                    error={formErrors.name}
+                    required
+                  />
+                  <InputField
+                    label="管线类型"
+                    name="pipeline_type"
+                    value={formData.pipeline_type}
+                    onChange={(v) =>
+                      setFormData({ ...formData, pipeline_type: v })
+                    }
+                    error={formErrors.pipeline_type}
+                    required
+                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="起点纬度"
                         name="start_lat"
@@ -1463,9 +1479,10 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, start_lat: v })
                         }
                         error={formErrors.start_lat}
-                        step="0.000001"
                         required
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="起点经度"
                         name="start_lng"
@@ -1475,11 +1492,12 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, start_lng: v })
                         }
                         error={formErrors.start_lng}
-                        step="0.000001"
                         required
                       />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    </Grid>
+                  </Grid>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="终点纬度"
                         name="end_lat"
@@ -1489,9 +1507,10 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, end_lat: v })
                         }
                         error={formErrors.end_lat}
-                        step="0.000001"
                         required
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="终点经度"
                         name="end_lng"
@@ -1501,33 +1520,34 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, end_lng: v })
                         }
                         error={formErrors.end_lng}
-                        step="0.000001"
                         required
                       />
-                    </div>
-                  </>
-                )}
-                {activeTab === "storageLocations" && (
-                  <>
-                    <InputField
-                      label="名称"
-                      name="name"
-                      value={formData.name}
-                      onChange={(v) => setFormData({ ...formData, name: v })}
-                      error={formErrors.name}
-                      required
-                    />
-                    <InputField
-                      label="类型"
-                      name="location_type"
-                      value={formData.location_type}
-                      onChange={(v) =>
-                        setFormData({ ...formData, location_type: v })
-                      }
-                      error={formErrors.location_type}
-                      required
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                    </Grid>
+                  </Grid>
+                </Stack>
+              )}
+              {activeTab === "storageLocations" && (
+                <Stack spacing={3}>
+                  <InputField
+                    label="名称"
+                    name="name"
+                    value={formData.name}
+                    onChange={(v) => setFormData({ ...formData, name: v })}
+                    error={formErrors.name}
+                    required
+                  />
+                  <InputField
+                    label="类型"
+                    name="location_type"
+                    value={formData.location_type}
+                    onChange={(v) =>
+                      setFormData({ ...formData, location_type: v })
+                    }
+                    error={formErrors.location_type}
+                    required
+                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="纬度"
                         name="latitude"
@@ -1537,9 +1557,10 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, latitude: v })
                         }
                         error={formErrors.latitude}
-                        step="0.000001"
                         required
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="经度"
                         name="longitude"
@@ -1549,11 +1570,12 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, longitude: v })
                         }
                         error={formErrors.longitude}
-                        step="0.000001"
                         required
                       />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    </Grid>
+                  </Grid>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="容量"
                         name="capacity"
@@ -1563,6 +1585,8 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, capacity: v })
                         }
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="当前用量"
                         name="current_usage"
@@ -1572,30 +1596,32 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, current_usage: v })
                         }
                       />
-                    </div>
-                  </>
-                )}
-                {activeTab === "evidenceRecords" && (
-                  <>
-                    <InputField
-                      label="标题"
-                      name="title"
-                      value={formData.title}
-                      onChange={(v) => setFormData({ ...formData, title: v })}
-                      error={formErrors.title}
-                      required
-                    />
-                    <InputField
-                      label="类型"
-                      name="evidence_type"
-                      value={formData.evidence_type}
-                      onChange={(v) =>
-                        setFormData({ ...formData, evidence_type: v })
-                      }
-                      error={formErrors.evidence_type}
-                      required
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                    </Grid>
+                  </Grid>
+                </Stack>
+              )}
+              {activeTab === "evidenceRecords" && (
+                <Stack spacing={3}>
+                  <InputField
+                    label="标题"
+                    name="title"
+                    value={formData.title}
+                    onChange={(v) => setFormData({ ...formData, title: v })}
+                    error={formErrors.title}
+                    required
+                  />
+                  <InputField
+                    label="类型"
+                    name="evidence_type"
+                    value={formData.evidence_type}
+                    onChange={(v) =>
+                      setFormData({ ...formData, evidence_type: v })
+                    }
+                    error={formErrors.evidence_type}
+                    required
+                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="纬度"
                         name="latitude"
@@ -1605,9 +1631,10 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, latitude: v })
                         }
                         error={formErrors.latitude}
-                        step="0.000001"
                         required
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="经度"
                         name="longitude"
@@ -1617,83 +1644,84 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, longitude: v })
                         }
                         error={formErrors.longitude}
-                        step="0.000001"
                         required
                       />
-                    </div>
-                    <InputField
-                      label="记录人"
-                      name="recorded_by"
-                      value={formData.recorded_by}
-                      onChange={(v) =>
-                        setFormData({ ...formData, recorded_by: v })
-                      }
-                      error={formErrors.recorded_by}
-                      required
-                    />
-                  </>
-                )}
-                {activeTab === "factoryMaps" && (
-                  <>
-                    <InputField
-                      label="名称"
-                      name="name"
-                      value={formData.name}
-                      onChange={(v) => setFormData({ ...formData, name: v })}
-                      error={formErrors.name}
-                      required
-                    />
-                    <InputField
-                      label="编号"
-                      name="code"
-                      value={formData.code}
-                      onChange={(v) => setFormData({ ...formData, code: v })}
-                      error={formErrors.code}
-                      required
-                    />
-                    <InputField
-                      label="地图类型"
-                      name="map_type"
-                      value={formData.map_type}
-                      onChange={(v) =>
-                        setFormData({ ...formData, map_type: v })
-                      }
-                      error={formErrors.map_type}
-                      required
-                    />
-                    <InputField
-                      label="文件URL"
-                      name="file_url"
-                      value={formData.file_url}
-                      onChange={(v) =>
-                        setFormData({ ...formData, file_url: v })
-                      }
-                    />
-                  </>
-                )}
-                {activeTab === "businessLocations" && (
-                  <>
-                    <InputField
-                      label="业务名称"
-                      name="business_name"
-                      value={formData.business_name}
-                      onChange={(v) =>
-                        setFormData({ ...formData, business_name: v })
-                      }
-                      error={formErrors.business_name}
-                      required
-                    />
-                    <InputField
-                      label="业务类型"
-                      name="business_type"
-                      value={formData.business_type}
-                      onChange={(v) =>
-                        setFormData({ ...formData, business_type: v })
-                      }
-                      error={formErrors.business_type}
-                      required
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                    </Grid>
+                  </Grid>
+                  <InputField
+                    label="记录人"
+                    name="recorded_by"
+                    value={formData.recorded_by}
+                    onChange={(v) =>
+                      setFormData({ ...formData, recorded_by: v })
+                    }
+                    error={formErrors.recorded_by}
+                    required
+                  />
+                </Stack>
+              )}
+              {activeTab === "factoryMaps" && (
+                <Stack spacing={3}>
+                  <InputField
+                    label="名称"
+                    name="name"
+                    value={formData.name}
+                    onChange={(v) => setFormData({ ...formData, name: v })}
+                    error={formErrors.name}
+                    required
+                  />
+                  <InputField
+                    label="编号"
+                    name="code"
+                    value={formData.code}
+                    onChange={(v) => setFormData({ ...formData, code: v })}
+                    error={formErrors.code}
+                    required
+                  />
+                  <InputField
+                    label="地图类型"
+                    name="map_type"
+                    value={formData.map_type}
+                    onChange={(v) =>
+                      setFormData({ ...formData, map_type: v })
+                    }
+                    error={formErrors.map_type}
+                    required
+                  />
+                  <InputField
+                    label="文件URL"
+                    name="file_url"
+                    value={formData.file_url}
+                    onChange={(v) =>
+                      setFormData({ ...formData, file_url: v })
+                    }
+                  />
+                </Stack>
+              )}
+              {activeTab === "businessLocations" && (
+                <Stack spacing={3}>
+                  <InputField
+                    label="业务名称"
+                    name="business_name"
+                    value={formData.business_name}
+                    onChange={(v) =>
+                      setFormData({ ...formData, business_name: v })
+                    }
+                    error={formErrors.business_name}
+                    required
+                  />
+                  <InputField
+                    label="业务类型"
+                    name="business_type"
+                    value={formData.business_type}
+                    onChange={(v) =>
+                      setFormData({ ...formData, business_type: v })
+                    }
+                    error={formErrors.business_type}
+                    required
+                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="纬度"
                         name="lat"
@@ -1701,9 +1729,10 @@ const GisContent: React.FC = () => {
                         value={formData.lat}
                         onChange={(v) => setFormData({ ...formData, lat: v })}
                         error={formErrors.lat}
-                        step="0.000001"
                         required
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="经度"
                         name="lng"
@@ -1711,17 +1740,18 @@ const GisContent: React.FC = () => {
                         value={formData.lng}
                         onChange={(v) => setFormData({ ...formData, lng: v })}
                         error={formErrors.lng}
-                        step="0.000001"
                         required
                       />
-                    </div>
-                    <InputField
-                      label="地址"
-                      name="address"
-                      value={formData.address}
-                      onChange={(v) => setFormData({ ...formData, address: v })}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
+                    </Grid>
+                  </Grid>
+                  <InputField
+                    label="地址"
+                    name="address"
+                    value={formData.address}
+                    onChange={(v) => setFormData({ ...formData, address: v })}
+                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <InputField
                         label="联系人"
                         name="contact_person"
@@ -1730,6 +1760,8 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, contact_person: v })
                         }
                       />
+                    </Grid>
+                    <Grid item xs={6}>
                       <InputField
                         label="联系电话"
                         name="contact_phone"
@@ -1738,176 +1770,192 @@ const GisContent: React.FC = () => {
                           setFormData({ ...formData, contact_phone: v })
                         }
                       />
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                <button
-                  onClick={resetModal}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={modalType === "create" ? handleCreate : handleEdit}
-                  className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
-                >
-                  {modalType === "create" ? "创建" : "保存"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+                    </Grid>
+                  </Grid>
+                </Stack>
+              )}
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={resetModal} variant="outlined">
+              取消
+            </Button>
+            <Button
+              onClick={modalType === "create" ? handleCreate : handleEdit}
+              variant="contained"
+              sx={{
+                bgcolor: "#06b6d4",
+                "&:hover": { bgcolor: "#0891b2" },
+              }}
+            >
+              {modalType === "create" ? "创建" : "保存"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-        {showImportModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  导入数据
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowImportModal(false);
-                    setImportFile(null);
-                    setImportPreview(null);
-                    setImportConfirm(false);
+        <Dialog
+          open={showImportModal}
+          onClose={() => {
+            setShowImportModal(false);
+            setImportFile(null);
+            setImportPreview(null);
+            setImportConfirm(false);
+          }}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 2 } }}
+        >
+          <DialogTitle>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6" fontWeight={600}>
+                导入数据
+              </Typography>
+              <IconButton
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportFile(null);
+                  setImportPreview(null);
+                  setImportConfirm(false);
+                }}
+                size="small"
+              >
+                <X size={20} />
+              </IconButton>
+            </Stack>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={3} sx={{ pt: 1 }}>
+              <Box>
+                <Typography variant="body2" fontWeight={500} mb={1}>
+                  选择CSV文件
+                </Typography>
+                <Box
+                  sx={{
+                    border: 2,
+                    borderStyle: "dashed",
+                    borderColor: "divider",
+                    borderRadius: 1.5,
+                    p: 4,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    "&:hover": { borderColor: "#06b6d4" },
                   }}
-                  className="text-gray-400 hover:text-gray-500"
+                  component="label"
+                  htmlFor="csv-upload"
                 >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    选择CSV文件
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-cyan-400 transition-colors">
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={handleFileChange}
-                      className="hidden"
-                      id="csv-upload"
-                    />
-                    <label htmlFor="csv-upload" className="cursor-pointer">
-                      <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-                      <p className="text-gray-600">点击或拖拽文件到此处</p>
-                      <p className="text-sm text-gray-400 mt-1">
-                        支持CSV格式文件
-                      </p>
-                    </label>
-                  </div>
-                </div>
-                {importFile && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-8 h-8 text-gray-500" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            {importFile.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {(importFile.size / 1024).toFixed(1)} KB
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setImportFile(null);
-                          setImportPreview(null);
-                          setImportConfirm(false);
-                        }}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {importPreview && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      文件预览（前10行）
-                    </label>
-                    <div className="max-h-48 overflow-auto border border-gray-200 rounded-lg">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-gray-50">
-                            {importPreview[0]?.map((header, index) => (
-                              <th
-                                key={index}
-                                className="px-3 py-2 text-left font-medium text-gray-600"
-                              >
-                                {header}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {importPreview.slice(1).map((row, rowIndex) => (
-                            <tr
-                              key={rowIndex}
-                              className="border-t border-gray-100"
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    style={{ display: "none" }}
+                    id="csv-upload"
+                  />
+                  <Upload size={48} color="#9ca3af" style={{ marginBottom: 8 }} />
+                  <Typography color="text.secondary">点击或拖拽文件到此处</Typography>
+                  <Typography variant="caption" color="text.disabled" mt={1}>
+                    支持CSV格式文件
+                  </Typography>
+                </Box>
+              </Box>
+              {importFile && (
+                <Paper sx={{ p: 1.5, bgcolor: "grey.50", borderRadius: 1.5 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <FileText size={32} color="#6b7280" />
+                      <Box>
+                        <Typography variant="body2" fontWeight={500}>
+                          {importFile.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {(importFile.size / 1024).toFixed(1)} KB
+                        </Typography>
+                      </Box>
+                    </Stack>
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setImportFile(null);
+                        setImportPreview(null);
+                        setImportConfirm(false);
+                      }}
+                    >
+                      <X size={20} />
+                    </IconButton>
+                  </Stack>
+                </Paper>
+              )}
+              {importPreview && (
+                <Box>
+                  <Typography variant="body2" fontWeight={500} mb={1}>
+                    文件预览（前10行）
+                  </Typography>
+                  <TableContainer
+                    component={Paper}
+                    variant="outlined"
+                    sx={{ maxHeight: 192, borderRadius: 1.5 }}
+                  >
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          {importPreview[0]?.map((header, index) => (
+                            <TableCell
+                              key={index}
+                              sx={{ fontWeight: 500, bgcolor: "grey.50" }}
                             >
-                              {row.map((cell, cellIndex) => (
-                                <td
-                                  key={cellIndex}
-                                  className="px-3 py-2 text-gray-700"
-                                >
-                                  {cell}
-                                </td>
-                              ))}
-                            </tr>
+                              {header}
+                            </TableCell>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="mt-3 flex items-center">
-                      <input
-                        type="checkbox"
-                        id="import-confirm"
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {importPreview.slice(1).map((row, rowIndex) => (
+                          <TableRow key={rowIndex} hover>
+                            {row.map((cell, cellIndex) => (
+                              <TableCell key={cellIndex}>{cell}</TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <FormControlLabel
+                    sx={{ mt: 1.5 }}
+                    control={
+                      <Checkbox
                         checked={importConfirm}
                         onChange={(e) => setImportConfirm(e.target.checked)}
                       />
-                      <label
-                        htmlFor="import-confirm"
-                        className="ml-2 text-sm text-gray-600"
-                      >
-                        我确认要导入以上数据
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setShowImportModal(false);
-                    setImportFile(null);
-                    setImportPreview(null);
-                    setImportConfirm(false);
-                  }}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleImport}
-                  disabled={!importFile || !importConfirm}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  确认导入
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+                    }
+                    label="我确认要导入以上数据"
+                  />
+                </Box>
+              )}
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button
+              onClick={() => {
+                setShowImportModal(false);
+                setImportFile(null);
+                setImportPreview(null);
+                setImportConfirm(false);
+              }}
+              variant="outlined"
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleImport}
+              variant="contained"
+              color="success"
+              disabled={!importFile || !importConfirm}
+            >
+              确认导入
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Box>
   );
 };
 
