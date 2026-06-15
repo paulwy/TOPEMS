@@ -1,27 +1,20 @@
-import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  Database,
   Plus,
-  Search,
-  Filter,
   RefreshCw,
+  Edit,
+  Trash2,
+  Eye,
+  TestTube,
+  CheckCircle,
   XCircle,
   Clock,
-  Trash2,
-  Edit,
-  Eye,
-  MoreVertical,
+  Database,
   Server,
-  HardDrive,
-  Wifi,
-  WifiOff,
-  Grid3X3,
-  List,
-  Activity,
+  Search,
+  Filter,
 } from "lucide-react";
-import { EmptyState } from "../components/EmptyState";
 import {
   Button,
   Card,
@@ -36,7 +29,16 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TablePagination,
+  Chip,
+  Tooltip,
 } from "@mui/material";
+import { EmptyState } from "../components/EmptyState";
 
 interface DataSource {
   id: string;
@@ -46,405 +48,67 @@ interface DataSource {
   host: string;
   database: string;
   last_sync?: string;
-  sync_frequency?: string;
-  tables_count?: number;
+  dataVolume?: number;
 }
 
-const DataSourceCard = ({
-  datasource,
-  onSync,
-  onView,
-  onEdit,
-  onDelete,
-}: {
-  datasource: DataSource;
-  onSync: () => void;
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) => {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case "active":
-        return {
-          color: "success.light",
-          icon: <Wifi size={14} />,
-          label: "活跃",
-          dotColor: "success.main",
-        };
-      case "inactive":
-        return {
-          color: "grey.100",
-          icon: <WifiOff size={14} />,
-          label: "未激活",
-          dotColor: "grey.400",
-        };
-      case "error":
-        return {
-          color: "error.light",
-          icon: <XCircle size={14} />,
-          label: "异常",
-          dotColor: "error.main",
-        };
-      default:
-        return {
-          color: "grey.100",
-          icon: <Activity size={14} />,
-          label: status,
-          dotColor: "grey.400",
-        };
-    }
-  };
-
-  const getTypeConfig = (type: string) => {
-    switch (type) {
-      case "postgresql":
-        return {
-          icon: "🐘",
-          color: "info.light",
-          label: "PostgreSQL",
-        };
-      case "mysql":
-        return {
-          icon: "🐬",
-          color: "info.light",
-          label: "MySQL",
-        };
-      case "mongodb":
-        return {
-          icon: "🍃",
-          color: "success.light",
-          label: "MongoDB",
-        };
-      case "redis":
-        return {
-          icon: "🔴",
-          color: "error.light",
-          label: "Redis",
-        };
-      case "elasticsearch":
-        return {
-          icon: "🔍",
-          color: "warning.light",
-          label: "Elasticsearch",
-        };
-      default:
-        return { icon: "💾", color: "grey.100", label: type };
-    }
-  };
-
-  const statusConfig = getStatusConfig(datasource.status);
-  const typeConfig = getTypeConfig(datasource.type);
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  return (
-    <Box
-      sx={{
-        bgcolor: "background.paper",
-        borderRadius: 4,
-        boxShadow: 1,
-        border: 1,
-        borderColor: "grey.200",
-        overflow: "hidden",
-        transition: "all 0.3s",
-        "&:hover": { boxShadow: 6, borderColor: "grey.300" },
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          position: "relative",
-          px: 2.5,
-          py: 2,
-          bgcolor: "grey.50",
-          borderBottom: 1,
-          borderColor: "grey.100",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
-              sx={{
-                p: 1.25,
-                borderRadius: 1.25,
-                border: 1,
-                borderColor: "divider",
-                bgcolor: typeConfig.color,
-              }}
-            >
-              <Typography
-                component="span"
-                sx={{ fontSize: "1.25rem", lineHeight: 1 }}
-              >
-                {typeConfig.icon}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 600, color: "grey.900" }}
-              >
-                {datasource.name}
-              </Typography>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}
-              >
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    bgcolor: statusConfig.dotColor,
-                    animation: "pulse 1.5s ease-in-out infinite",
-                  }}
-                />
-                <Typography
-                  component="span"
-                  sx={{ fontSize: "0.75rem", color: "grey.500" }}
-                >
-                  {typeConfig.label}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              px: 1.25,
-              py: 0.5,
-              fontSize: "0.75rem",
-              fontWeight: 500,
-              borderRadius: 4,
-              border: 1,
-              borderColor: "divider",
-              bgcolor: statusConfig.color,
-              display: "flex",
-              alignItems: "center",
-              gap: 0.5,
-            }}
-          >
-            {statusConfig.icon}
-            {statusConfig.label}
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Content */}
-      <Box sx={{ p: 2.5 }}>
-        {/* Connection Info */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              fontSize: "0.875rem",
-            }}
-          >
-            <Server size={16} color="#94a3b8" />
-            <Typography component="span" sx={{ color: "grey.500" }}>
-              主机:
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ fontWeight: 500, color: "grey.700" }}
-            >
-              {datasource.host}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              fontSize: "0.875rem",
-            }}
-          >
-            <HardDrive size={16} color="#94a3b8" />
-            <Typography component="span" sx={{ color: "grey.500" }}>
-              数据库:
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ fontWeight: 500, color: "grey.700" }}
-            >
-              {datasource.database}
-            </Typography>
-          </Box>
-          {datasource.tables_count && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                fontSize: "0.875rem",
-              }}
-            >
-              <Database size={16} color="#94a3b8" />
-              <Typography component="span" sx={{ color: "grey.500" }}>
-                表数量:
-              </Typography>
-              <Typography
-                component="span"
-                sx={{ fontWeight: 500, color: "grey.700" }}
-              >
-                {datasource.tables_count}
-              </Typography>
-            </Box>
-          )}
-          {datasource.last_sync && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                fontSize: "0.875rem",
-              }}
-            >
-              <Clock size={16} color="#94a3b8" />
-              <Typography component="span" sx={{ color: "grey.500" }}>
-                最后同步:
-              </Typography>
-              <Typography
-                component="span"
-                sx={{ fontWeight: 500, color: "grey.700", fontSize: "0.75rem" }}
-              >
-                {new Date(datasource.last_sync).toLocaleString("zh-CN")}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-
-        {/* Actions */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={onSync}
-            sx={{ flex: 1 }}
-          >
-            <RefreshCw size={14} sx={{ mr: 1 }} />
-            同步
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={onView}
-            sx={{ flex: 1 }}
-          >
-            <Eye size={14} sx={{ mr: 1 }} />
-            查看
-          </Button>
-          <IconButton size="small" onClick={handleMenuOpen}>
-            <MoreVertical size={16} />
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-          >
-            <MenuItem
-              onClick={() => {
-                onEdit();
-                handleMenuClose();
-              }}
-            >
-              <Edit size={16} sx={{ mr: 2 }} />
-              编辑
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                onDelete();
-                handleMenuClose();
-              }}
-              sx={{ color: "error.main" }}
-            >
-              <Trash2 size={16} sx={{ mr: 2 }} />
-              删除
-            </MenuItem>
-          </Menu>
-        </Box>
-      </Box>
-    </Box>
-  );
+const getStatusConfig = (status: string) => {
+  switch (status) {
+    case "active":
+      return {
+        color: "success" as const,
+        icon: <CheckCircle size={14} />,
+        label: "已连接",
+      };
+    case "inactive":
+      return {
+        color: "default" as const,
+        icon: <Clock size={14} />,
+        label: "未激活",
+      };
+    case "error":
+      return {
+        color: "error" as const,
+        icon: <XCircle size={14} />,
+        label: "异常",
+      };
+    default:
+      return {
+        color: "default" as const,
+        icon: <Clock size={14} />,
+        label: status,
+      };
+  }
 };
 
-const DataSourceCardSkeleton = () => (
-  <Box
-    sx={{
-      bgcolor: "background.paper",
-      borderRadius: 4,
-      boxShadow: 1,
-      border: 1,
-      borderColor: "grey.200",
-      overflow: "hidden",
-    }}
-  >
-    <Box
-      sx={{
-        px: 2.5,
-        py: 2,
-        bgcolor: "grey.50",
-        borderBottom: 1,
-        borderColor: "grey.100",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Skeleton variant="rounded" width={40} height={40} />
-          <Box>
-            <Skeleton variant="text" width={96} height={20} sx={{ mb: 0.5 }} />
-            <Skeleton variant="text" width={64} height={12} />
-          </Box>
-        </Box>
-        <Skeleton variant="rounded" width={64} height={24} />
-      </Box>
-    </Box>
-    <Box sx={{ p: 2.5 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2 }}>
-        {[1, 2, 3].map((i) => (
-          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Skeleton variant="circular" width={16} height={16} />
-            <Skeleton variant="text" width={48} height={16} />
-            <Skeleton variant="text" width={80} height={16} />
-          </Box>
-        ))}
-      </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Skeleton variant="rounded" width={80} height={36} />
-        <Skeleton variant="rounded" width={80} height={36} />
-        <Skeleton variant="rounded" width={36} height={36} />
-      </Box>
-    </Box>
-  </Box>
-);
+const getTypeConfig = (type: string) => {
+  switch (type) {
+    case "postgresql":
+      return { icon: "🐘", label: "PostgreSQL" };
+    case "mysql":
+      return { icon: "🐬", label: "MySQL" };
+    case "mongodb":
+      return { icon: "🍃", label: "MongoDB" };
+    case "redis":
+      return { icon: "🔴", label: "Redis" };
+    case "elasticsearch":
+      return { icon: "🔍", label: "Elasticsearch" };
+    case "api":
+      return { icon: "🌐", label: "API" };
+    case "file":
+      return { icon: "📁", label: "文件" };
+    default:
+      return { icon: "💾", label: type };
+  }
+};
 
 const BIDataSourcePage = () => {
   const [datasources, setDatasources] = useState<DataSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     loadDatasources();
@@ -462,7 +126,7 @@ const BIDataSourcePage = () => {
           host: "localhost:5432",
           database: "topems_rs",
           last_sync: new Date().toISOString(),
-          tables_count: 45,
+          dataVolume: 1250000,
         },
         {
           id: "2",
@@ -472,7 +136,7 @@ const BIDataSourcePage = () => {
           host: "localhost:5432",
           database: "topems_lims",
           last_sync: new Date().toISOString(),
-          tables_count: 38,
+          dataVolume: 850000,
         },
         {
           id: "3",
@@ -482,7 +146,7 @@ const BIDataSourcePage = () => {
           host: "localhost:5432",
           database: "topems_qms",
           last_sync: new Date().toISOString(),
-          tables_count: 52,
+          dataVolume: 620000,
         },
         {
           id: "4",
@@ -491,7 +155,7 @@ const BIDataSourcePage = () => {
           status: "inactive",
           host: "localhost:5432",
           database: "topems_pdm",
-          tables_count: 28,
+          dataVolume: 2100000,
         },
         {
           id: "5",
@@ -501,6 +165,7 @@ const BIDataSourcePage = () => {
           host: "localhost:6379",
           database: "default",
           last_sync: new Date().toISOString(),
+          dataVolume: 15000,
         },
         {
           id: "6",
@@ -509,6 +174,27 @@ const BIDataSourcePage = () => {
           status: "error",
           host: "localhost:9200",
           database: "logs",
+          dataVolume: 3500000,
+        },
+        {
+          id: "7",
+          name: "ERP系统接口",
+          type: "api",
+          status: "active",
+          host: "erp.company.com",
+          database: "ERP",
+          last_sync: new Date().toISOString(),
+          dataVolume: 450000,
+        },
+        {
+          id: "8",
+          name: "财务数据文件",
+          type: "file",
+          status: "active",
+          host: "/data/finance",
+          database: "Excel",
+          last_sync: new Date().toISOString(),
+          dataVolume: 8500,
         },
       ]);
     } catch (error) {
@@ -519,19 +205,30 @@ const BIDataSourcePage = () => {
   };
 
   const filteredDatasources = datasources.filter((ds) => {
-    const matchesSearch = ds.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      ds.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ds.database.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === "all" || ds.type === filterType;
     const matchesStatus = filterStatus === "all" || ds.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesType && matchesStatus;
   });
 
-  const statusOptions = [
-    { value: "all", label: "全部状态" },
-    { value: "active", label: "活跃" },
-    { value: "inactive", label: "未激活" },
-    { value: "error", label: "异常" },
-  ];
+  const handleChangePage = (_: any, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: any) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleSync = (ds: DataSource) => {
+    console.log("Sync:", ds.id);
+  };
+
+  const handleTestConnection = (ds: DataSource) => {
+    console.log("Test connection:", ds.id);
+  };
 
   if (loading) {
     return (
@@ -545,7 +242,6 @@ const BIDataSourcePage = () => {
           gap: 3,
         }}
       >
-        {/* Header skeleton */}
         <Box
           sx={{
             display: "flex",
@@ -562,189 +258,232 @@ const BIDataSourcePage = () => {
             <Skeleton variant="rounded" width={112} height={40} />
           </Box>
         </Box>
-
-        {/* Filter skeleton */}
-        <Skeleton variant="rounded" width="100%" height={56} />
-
-        {/* Cards skeleton */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              md: "repeat(2, 1fr)",
-              lg: "repeat(3, 1fr)",
-            },
-            gap: 2,
-          }}
-        >
-          {[1, 2, 3, 4].map((i) => (
-            <DataSourceCardSkeleton key={i} />
-          ))}
-        </Box>
+        <Skeleton variant="rounded" width="100%" height={80} />
+        <Skeleton variant="rounded" width="100%" height={400} />
       </Box>
     );
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "grey.50",
-        p: 3,
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Box>
-          <Typography
-            variant="h4"
-            sx={{ fontWeight: 700, fontSize: "1.5rem", color: "grey.900" }}
-          >
-            数据源管理
-          </Typography>
-          <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
-            配置和管理BI数据源连接
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Link to="/bi/dashboard">
-            <Button variant="outlined">返回数据大屏</Button>
-          </Link>
-          <Button variant="contained">
-            <Plus size={16} sx={{ mr: 2 }} />
-            添加数据源
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Filters */}
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <TextField
-              placeholder="搜索数据源名称..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ flex: 1 }}
-              size="small"
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />
-                  ),
-                },
-              }}
-            />
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Filter size={16} color="#94a3b8" />
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>状态</InputLabel>
-                <Select
-                  value={filterStatus}
-                  label="状态"
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  {statusOptions.map((status) => (
-                    <MenuItem key={status.value} value={status.value}>
-                      {status.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                bgcolor: "grey.100",
-                borderRadius: 1,
-                p: 0.5,
-              }}
-            >
-              <Button
-                onClick={() => setViewMode("grid")}
-                size="small"
-                sx={{
-                  p: 0.75,
-                  borderRadius: 0.5,
-                  bgcolor:
-                    viewMode === "grid" ? "background.paper" : "transparent",
-                  boxShadow: viewMode === "grid" ? 1 : 0,
-                  color: viewMode === "grid" ? "primary.main" : "grey.500",
-                  minWidth: "auto",
-                }}
-              >
-                <Grid3X3 size={16} />
-              </Button>
-              <Button
-                onClick={() => setViewMode("list")}
-                size="small"
-                sx={{
-                  p: 0.75,
-                  borderRadius: 0.5,
-                  bgcolor:
-                    viewMode === "list" ? "background.paper" : "transparent",
-                  boxShadow: viewMode === "list" ? 1 : 0,
-                  color: viewMode === "list" ? "primary.main" : "grey.500",
-                  minWidth: "auto",
-                }}
-              >
-                <List size={16} />
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Content */}
-      {filteredDatasources.length === 0 ? (
-        <EmptyState
-          icon="folder"
-          title="暂无数据源"
-          description="还没有配置任何数据源，点击下方按钮添加第一个数据源"
-          action={{
-            label: "添加数据源",
-            onClick: () => console.log("Add datasource"),
-          }}
-        />
-      ) : (
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         <Box
-          sx={
-            viewMode === "grid"
-              ? {
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    md: "repeat(2, 1fr)",
-                    lg: "repeat(3, 1fr)",
-                  },
-                  gap: 2,
-                }
-              : { display: "flex", flexDirection: "column", gap: 2 }
-          }
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
         >
-          {filteredDatasources.map((ds) => (
-            <DataSourceCard
-              key={ds.id}
-              datasource={ds}
-              onSync={() => console.log("Sync:", ds.id)}
-              onView={() => console.log("View:", ds.id)}
-              onEdit={() => console.log("Edit:", ds.id)}
-              onDelete={() => console.log("Delete:", ds.id)}
-            />
-          ))}
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, color: "grey.900" }}
+            >
+              数据源管理
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
+              配置和管理BI数据源连接
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Link to="/bi/dashboard">
+              <Button variant="outlined">返回数据大屏</Button>
+            </Link>
+            <Button variant="contained">
+              <Plus size={16} sx={{ mr: 1 }} />
+              新增数据源
+            </Button>
+          </Box>
         </Box>
-      )}
+
+        <Card>
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <TextField
+                placeholder="搜索数据源名称..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ flex: 1 }}
+                size="small"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <Search size={16} color="#94a3b8" sx={{ mr: 1 }} />
+                    ),
+                  },
+                }}
+              />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Filter size={16} color="#94a3b8" />
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>数据源类型</InputLabel>
+                  <Select
+                    value={filterType}
+                    label="数据源类型"
+                    onChange={(e) => setFilterType(e.target.value)}
+                  >
+                    <MenuItem value="all">全部类型</MenuItem>
+                    <MenuItem value="postgresql">PostgreSQL</MenuItem>
+                    <MenuItem value="mysql">MySQL</MenuItem>
+                    <MenuItem value="mongodb">MongoDB</MenuItem>
+                    <MenuItem value="redis">Redis</MenuItem>
+                    <MenuItem value="elasticsearch">Elasticsearch</MenuItem>
+                    <MenuItem value="api">API</MenuItem>
+                    <MenuItem value="file">文件</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 100 }}>
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={filterStatus}
+                    label="状态"
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <MenuItem value="all">全部</MenuItem>
+                    <MenuItem value="active">已连接</MenuItem>
+                    <MenuItem value="inactive">未激活</MenuItem>
+                    <MenuItem value="error">异常</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {filteredDatasources.length === 0 ? (
+          <EmptyState
+            icon="folder"
+            title="暂无数据源"
+            description="还没有配置任何数据源，点击下方按钮添加第一个数据源"
+            action={{
+              label: "添加数据源",
+              onClick: () => console.log("Add datasource"),
+            }}
+          />
+        ) : (
+          <Card>
+            <Box sx={{ overflow: "auto" }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>数据源名称</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>连接状态</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>最后同步时间</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>数据量</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }} align="right">操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredDatasources
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((ds) => {
+                      const statusConfig = getStatusConfig(ds.status);
+                      const typeConfig = getTypeConfig(ds.type);
+                      return (
+                        <TableRow key={ds.id} hover>
+                          <TableCell>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                              <Database size={18} color="#64748b" />
+                              <Box>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {ds.name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  <Server size={12} /> {ds.host}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              icon={<Typography component="span">{typeConfig.icon}</Typography>}
+                              label={typeConfig.label}
+                              size="small"
+                              variant="outlined"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              icon={statusConfig.icon}
+                              label={statusConfig.label}
+                              size="small"
+                              color={statusConfig.color}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {ds.last_sync ? (
+                              <Typography variant="body2" color="text.secondary">
+                                <Clock size={12} />{" "}
+                                {new Date(ds.last_sync).toLocaleString("zh-CN")}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                未同步
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {ds.dataVolume
+                                ? `${(ds.dataVolume / 1000).toFixed(1)}K`
+                                : "-"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+                              <Tooltip title="同步">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleSync(ds)}
+                                >
+                                  <RefreshCw size={16} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="测试连接">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleTestConnection(ds)}
+                                >
+                                  <TestTube size={16} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="查看">
+                                <IconButton size="small">
+                                  <Eye size={16} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="编辑">
+                                <IconButton size="small">
+                                  <Edit size={16} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="删除">
+                                <IconButton size="small" sx={{ color: "error.main" }}>
+                                  <Trash2 size={16} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </Box>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 20, 50]}
+              component="div"
+              count={filteredDatasources.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="每页行数"
+            />
+          </Card>
+        )}
+      </Box>
     </Box>
   );
 };
