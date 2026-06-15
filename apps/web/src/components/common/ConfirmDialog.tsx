@@ -16,7 +16,13 @@ export interface ConfirmDialogConfig {
   message: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmColor?: "primary" | "secondary" | "success" | "warning" | "error" | "danger";
+  confirmColor?:
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning"
+    | "error"
+    | "danger";
   size?: "sm" | "md" | "lg" | "xl";
   confirmDisabled?: boolean;
 }
@@ -56,7 +62,15 @@ export default function ConfirmDialog({
     <Dialog
       open={isOpen}
       onClose={isLoading ? undefined : onClose}
-      maxWidth={size === "sm" ? "xs" : size === "md" ? "sm" : size === "lg" ? "md" : "lg"}
+      maxWidth={
+        size === "sm"
+          ? "xs"
+          : size === "md"
+            ? "sm"
+            : size === "lg"
+              ? "md"
+              : "lg"
+      }
       slotProps={{
         paper: {
           sx: { width: sizeMap[size], maxWidth: "100%" },
@@ -75,7 +89,11 @@ export default function ConfirmDialog({
           onClick={handleConfirm}
           disabled={confirmDisabled || isLoading}
         >
-          {isLoading ? <CircularProgress size={24} color="inherit" /> : confirmLabel}
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            confirmLabel
+          )}
         </Button>
       </DialogActions>
     </Dialog>

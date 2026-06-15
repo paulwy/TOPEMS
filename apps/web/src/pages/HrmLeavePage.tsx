@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  X,
-  Check,
-} from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, X, Check } from "lucide-react";
 import {
   Button,
   TextField,
@@ -262,14 +254,16 @@ const LeaveManagementPage: React.FC = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 sx={{ minWidth: 200 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box sx={{ display: "flex" }}>
-                        <Search size={18} />
-                      </Box>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Box sx={{ display: "flex" }}>
+                          <Search size={18} />
+                        </Box>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -353,7 +347,11 @@ const LeaveManagementPage: React.FC = () => {
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      sx={{ textAlign: "center", color: "text.secondary", py: 6 }}
+                      sx={{
+                        textAlign: "center",
+                        color: "text.secondary",
+                        py: 6,
+                      }}
                     >
                       暂无数据
                     </TableCell>
@@ -362,8 +360,8 @@ const LeaveManagementPage: React.FC = () => {
                   data.items.map((item) => (
                     <TableRow key={item.id} hover>
                       <TableCell sx={{ fontWeight: 500 }}>
-                        {employees.find((e) => e.id === item.employee_id)?.name ||
-                          "-"}
+                        {employees.find((e) => e.id === item.employee_id)
+                          ?.name || "-"}
                       </TableCell>
                       <TableCell>{getLeaveTypeText(item.leave_type)}</TableCell>
                       <TableCell>{item.start_date}</TableCell>
@@ -497,7 +495,9 @@ const LeaveManagementPage: React.FC = () => {
             {editingLeave ? "编辑休假申请" : "新增休假申请"}
           </DialogTitle>
           <DialogContent dividers>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}
+            >
               <FormControl fullWidth>
                 <InputLabel>员工 *</InputLabel>
                 <Select
@@ -660,14 +660,22 @@ const LeaveManagementPage: React.FC = () => {
                     {editingLeave.reason || "-"}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography variant="body2" color="text.secondary">
                     状态:
                   </Typography>
                   {getLeaveStatusBadge(editingLeave.status)}
                 </Box>
                 {editingLeave.approver_id && (
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
                     <Typography variant="body2" color="text.secondary">
                       审批人:
                     </Typography>
@@ -677,7 +685,9 @@ const LeaveManagementPage: React.FC = () => {
                   </Box>
                 )}
                 {editingLeave.rejection_reason && (
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
                     <Typography variant="body2" color="text.secondary">
                       审批意见:
                     </Typography>

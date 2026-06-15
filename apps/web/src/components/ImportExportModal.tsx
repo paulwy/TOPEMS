@@ -1,4 +1,16 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Dialog, DialogContent, DialogActions, DialogTitle, Box } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  Box,
+} from "@mui/material";
 import React, { useState, useRef } from "react";
 import {
   AlertCircle,
@@ -35,7 +47,9 @@ export const ImportExportModal = <T extends Record<string, any>>({
   transform,
 }: ImportExportModalProps<T>) => {
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<ImportResult<T> | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult<T> | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportExcel = () => {
@@ -92,8 +106,22 @@ export const ImportExportModal = <T extends Record<string, any>>({
           <Box sx={{ py: 3 }}>
             {importResult.success ? (
               <Box sx={{ textAlign: "center" }}>
-                <Box sx={{ width: 64, height: 64, borderRadius: "50%", backgroundColor: "success.light", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
-                  <CheckCircle style={{ width: 32, height: 32, color: "green" }} />
+                <Box
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: "50%",
+                    backgroundColor: "success.light",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mx: "auto",
+                    mb: 2,
+                  }}
+                >
+                  <CheckCircle
+                    style={{ width: 32, height: 32, color: "green" }}
+                  />
                 </Box>
                 <Typography variant="h6" sx={{ color: "success.main", mb: 1 }}>
                   导入成功
@@ -104,16 +132,51 @@ export const ImportExportModal = <T extends Record<string, any>>({
               </Box>
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, backgroundColor: "error.light", borderRadius: 1 }}>
-                  <AlertCircle style={{ width: 20, height: 20, color: "red", flexShrink: 0 }} />
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    p: 1.5,
+                    backgroundColor: "error.light",
+                    borderRadius: 1,
+                  }}
+                >
+                  <AlertCircle
+                    style={{
+                      width: 20,
+                      height: 20,
+                      color: "red",
+                      flexShrink: 0,
+                    }}
+                  />
                   <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500, color: "error.main" }}>导入失败</Typography>
-                    <Typography variant="body2" sx={{ color: "error.dark" }}>共 {importResult.errors.length} 条错误</Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 500, color: "error.main" }}
+                    >
+                      导入失败
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "error.dark" }}>
+                      共 {importResult.errors.length} 条错误
+                    </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ maxHeight: 192, overflowY: "auto", display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box
+                  sx={{
+                    maxHeight: 192,
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                  }}
+                >
                   {importResult.errors.slice(0, 10).map((error, index) => (
-                    <Typography key={index} variant="body2" sx={{ color: "error.main", fontSize: 14 }}>
+                    <Typography
+                      key={index}
+                      variant="body2"
+                      sx={{ color: "error.main", fontSize: 14 }}
+                    >
                       <strong>第 {error.row} 行:</strong> {error.message}
                     </Typography>
                   ))}
@@ -129,8 +192,12 @@ export const ImportExportModal = <T extends Record<string, any>>({
         ) : (
           <Box sx={{ py: 2, display: "flex", flexDirection: "column", gap: 3 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Typography variant="body2" color="text.secondary">导出数据</Typography>
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                导出数据
+              </Typography>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}
+              >
                 <Button
                   variant="outlined"
                   onClick={handleExportExcel}
@@ -151,7 +218,9 @@ export const ImportExportModal = <T extends Record<string, any>>({
             <Box sx={{ height: 1, backgroundColor: "divider" }} />
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Typography variant="body2" color="text.secondary">导入数据</Typography>
+              <Typography variant="body2" color="text.secondary">
+                导入数据
+              </Typography>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -188,9 +257,18 @@ export const ImportExportModal = <T extends Record<string, any>>({
       </DialogContent>
       <DialogActions>
         {importResult ? (
-          <Box sx={{ display: "flex", gap: 1, width: "100%", justifyContent: "flex-end" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              width: "100%",
+              justifyContent: "flex-end",
+            }}
+          >
             {!importResult.success && (
-              <Button variant="outlined" onClick={handleRetry}>重新导入</Button>
+              <Button variant="outlined" onClick={handleRetry}>
+                重新导入
+              </Button>
             )}
             <Button onClick={handleClose}>确定</Button>
           </Box>

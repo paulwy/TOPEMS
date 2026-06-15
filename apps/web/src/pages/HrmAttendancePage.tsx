@@ -442,7 +442,10 @@ const HrmAttendancePage: React.FC = () => {
                   </Box>
                   考勤管理
                 </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "text.secondary", mt: 0.5 }}
+                >
                   管理员工考勤打卡、请假申请和考勤统计
                 </Typography>
               </Box>
@@ -453,7 +456,7 @@ const HrmAttendancePage: React.FC = () => {
                 size="small"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                InputProps={{ sx: { borderRadius: 2 } }}
+                slotProps={{ input: { sx: { borderRadius: 2 } } }}
               />
               <Button
                 variant="outlined"
@@ -468,7 +471,9 @@ const HrmAttendancePage: React.FC = () => {
       </Box>
 
       {/* Tabs */}
-      <Box sx={{ maxWidth: "7xl", mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+      <Box
+        sx={{ maxWidth: "7xl", mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
+      >
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
@@ -482,19 +487,31 @@ const HrmAttendancePage: React.FC = () => {
           }}
         >
           <Tab
-            icon={<Box sx={{ display: "flex" }}><Calendar size={18} /></Box>}
+            icon={
+              <Box sx={{ display: "flex" }}>
+                <Calendar size={18} />
+              </Box>
+            }
             iconPosition="start"
             label="考勤记录"
             value="records"
           />
           <Tab
-            icon={<Box sx={{ display: "flex" }}><Clock size={18} /></Box>}
+            icon={
+              <Box sx={{ display: "flex" }}>
+                <Clock size={18} />
+              </Box>
+            }
             iconPosition="start"
             label="请假申请"
             value="leaves"
           />
           <Tab
-            icon={<Box sx={{ display: "flex" }}><BarChart3 size={18} /></Box>}
+            icon={
+              <Box sx={{ display: "flex" }}>
+                <BarChart3 size={18} />
+              </Box>
+            }
             iconPosition="start"
             label="考勤统计"
             value="statistics"
@@ -511,14 +528,16 @@ const HrmAttendancePage: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{ flex: 1 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box sx={{ display: "flex", color: "text.secondary" }}>
-                        <Search size={20} />
-                      </Box>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Box sx={{ display: "flex", color: "text.secondary" }}>
+                          <Search size={20} />
+                        </Box>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <Button
@@ -607,7 +626,9 @@ const HrmAttendancePage: React.FC = () => {
                         {leave.employee_name}
                       </TableCell>
                       <TableCell>{leave.department}</TableCell>
-                      <TableCell>{getLeaveTypeName(leave.leave_type)}</TableCell>
+                      <TableCell>
+                        {getLeaveTypeName(leave.leave_type)}
+                      </TableCell>
                       <TableCell>{leave.start_date}</TableCell>
                       <TableCell>{leave.end_date}</TableCell>
                       <TableCell>{leave.days}天</TableCell>
@@ -667,28 +688,44 @@ const HrmAttendancePage: React.FC = () => {
               <MetricCard
                 title="总员工数"
                 value={attendanceStats.totalEmployees}
-                icon={<Box sx={{ display: "flex" }}><Users size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <Users size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="blue"
               />
               <MetricCard
                 title="出勤人数"
                 value={attendanceStats.totalPresent}
-                icon={<Box sx={{ display: "flex" }}><CheckCircle size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <CheckCircle size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="green"
               />
               <MetricCard
                 title="出勤率"
                 value={`${attendanceStats.presentRate}%`}
-                icon={<Box sx={{ display: "flex" }}><BarChart3 size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <BarChart3 size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="blue"
               />
               <MetricCard
                 title="平均工时"
                 value={`${attendanceStats.avgWorkHours}h`}
-                icon={<Box sx={{ display: "flex" }}><Clock size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <Clock size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="purple"
               />
@@ -708,28 +745,44 @@ const HrmAttendancePage: React.FC = () => {
               <MetricCard
                 title="迟到人数"
                 value={attendanceStats.totalLate}
-                icon={<Box sx={{ display: "flex" }}><AlertCircle size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <AlertCircle size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="yellow"
               />
               <MetricCard
                 title="缺勤人数"
                 value={attendanceStats.totalAbsent}
-                icon={<Box sx={{ display: "flex" }}><XCircle size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <XCircle size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="red"
               />
               <MetricCard
                 title="待审批请假"
                 value={attendanceStats.pendingLeaves}
-                icon={<Box sx={{ display: "flex" }}><Clock size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <Clock size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="orange"
               />
               <MetricCard
                 title="准时率"
                 value={`${attendanceStats.avgOnTimeRate}%`}
-                icon={<Box sx={{ display: "flex" }}><CheckCircle size={20} /></Box>}
+                icon={
+                  <Box sx={{ display: "flex" }}>
+                    <CheckCircle size={20} />
+                  </Box>
+                }
                 trend={null}
                 color="green"
               />
@@ -799,17 +852,29 @@ const HrmAttendancePage: React.FC = () => {
                           {summary.department}
                         </TableCell>
                         <TableCell>{summary.total_employees}</TableCell>
-                        <TableCell sx={{ color: "success.main", fontWeight: 500 }}>
+                        <TableCell
+                          sx={{ color: "success.main", fontWeight: 500 }}
+                        >
                           {summary.present_count}
                         </TableCell>
-                        <TableCell sx={{ color: "error.main", fontWeight: 500 }}>
+                        <TableCell
+                          sx={{ color: "error.main", fontWeight: 500 }}
+                        >
                           {summary.absent_count}
                         </TableCell>
-                        <TableCell sx={{ color: "warning.main", fontWeight: 500 }}>
+                        <TableCell
+                          sx={{ color: "warning.main", fontWeight: 500 }}
+                        >
                           {summary.late_count}
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
                             <Typography variant="body2">
                               {summary.on_time_rate}%
                             </Typography>

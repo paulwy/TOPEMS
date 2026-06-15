@@ -369,7 +369,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         accessorKey: "purchase_amount",
         header: "采购金额",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.primary" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "0.875rem",
+              color: "text.primary",
+            }}
+          >
             <span style={{ marginRight: 4 }}>
               <DollarSign size={12} style={{ color: "green" }} />
             </span>
@@ -383,7 +390,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         accessorKey: "responsible_id",
         header: "负责人",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "text.primary" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "0.875rem",
+              color: "text.primary",
+            }}
+          >
             <span style={{ marginRight: 4 }}>
               <User size={12} style={{ color: "blue" }} />
             </span>
@@ -402,7 +416,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         cell: ({ row }) => {
           const asset = row.original;
           return (
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
+            >
               <Tooltip title="编辑">
                 <Button
                   variant="text"
@@ -436,25 +457,57 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft size={20} />
               </Button>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "text.primary" }}
+                >
                   资产管理
                 </Typography>
-                <Typography sx={{ mt: 0.5, fontSize: "0.875rem", color: "text.secondary" }}>
+                <Typography
+                  sx={{
+                    mt: 0.5,
+                    fontSize: "0.875rem",
+                    color: "text.secondary",
+                  }}
+                >
                   管理企业资产、设备台账
                 </Typography>
               </Box>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)}>
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+              >
                 <Plus size={20} sx={{ mr: 1 }} />
                 新增资产
               </Button>
@@ -463,19 +516,35 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
+      <Box
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
+      >
         <Card>
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", borderRadius: "50%", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent" }} />
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    animation: "spin 1s linear infinite",
+                    borderRadius: "50%",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "primary.main",
+                    borderTopColor: "transparent",
+                  }}
+                />
                 <Typography sx={{ mt: 1, color: "text.secondary" }}>
                   加载中...
                 </Typography>
               </Box>
             ) : error ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <LucideBox size={48} style={{ color: "red", margin: "0 auto 12px" }} />
+                <LucideBox
+                  size={48}
+                  style={{ color: "red", margin: "0 auto 12px" }}
+                />
                 <Typography sx={{ color: "error.main" }}>{error}</Typography>
                 <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
@@ -484,12 +553,28 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
             ) : (
               <>
                 {selectedIds.length > 0 && (
-                  <Box sx={{ bgcolor: "grey.100", borderBottom: 1, borderColor: "divider", px: 3, py: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{
+                      bgcolor: "grey.100",
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      px: 3,
+                      py: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Checkbox
                           checked={selectedIds.length === assets.length}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+                          onChange={(
+                            event: React.ChangeEvent<HTMLInputElement>,
+                            checked: boolean,
+                          ) => {
                             if (checked) {
                               setSelectedIds(assets.map((a) => a.id));
                             } else {
@@ -497,7 +582,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                             }
                           }}
                         />
-                        <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
+                        <Typography
+                          sx={{ fontSize: "0.875rem", color: "text.secondary" }}
+                        >
                           已选择 {selectedIds.length} 项
                         </Typography>
                       </Box>
@@ -567,7 +654,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
         <DialogContent sx={{ maxHeight: "70vh", overflowY: "auto" }}>
           <Box component="form" onSubmit={handleCreateAsset}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gap: 2,
+                }}
+              >
                 <TextField
                   label="资产编号 *"
                   value={newAsset.asset_number || ""}
@@ -588,7 +681,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 />
               </Box>
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gap: 2,
+                }}
+              >
                 <TextField
                   label="类别"
                   value={newAsset.category || ""}
@@ -615,7 +714,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 />
               </Box>
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gap: 2,
+                }}
+              >
                 <TextField
                   label="序列号"
                   value={newAsset.serial_number || ""}
@@ -645,11 +750,17 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 />
               </Box>
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gap: 2,
+                }}
+              >
                 <TextField
                   label="额定功率 (kW)"
                   type="number"
-                  InputProps={{ inputProps: { step: "0.01" } }}
+                  slotProps={{ input: { inputProps: { step: "0.01" } } }}
                   value={newAsset.rated_power || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -662,7 +773,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <TextField
                   label="额定电压 (V)"
                   type="number"
-                  InputProps={{ inputProps: { step: "0.01" } }}
+                  slotProps={{ input: { inputProps: { step: "0.01" } } }}
                   value={newAsset.rated_voltage || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -675,7 +786,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <TextField
                   label="额定电流 (A)"
                   type="number"
-                  InputProps={{ inputProps: { step: "0.01" } }}
+                  slotProps={{ input: { inputProps: { step: "0.01" } } }}
                   value={newAsset.rated_current || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -687,7 +798,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 />
               </Box>
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gap: 2,
+                }}
+              >
                 <TextField
                   label="采购日期"
                   type="date"
@@ -699,12 +816,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                     })
                   }
                   fullWidth
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <TextField
                   label="采购金额"
                   type="number"
-                  InputProps={{ inputProps: { min: 0, step: "0.01" } }}
+                  slotProps={{
+                    input: { inputProps: { min: 0, step: "0.01" } },
+                  }}
                   value={newAsset.purchase_amount || ""}
                   onChange={(e) =>
                     setNewAsset({
@@ -725,14 +844,23 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 fullWidth
               />
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gap: 2,
+                }}
+              >
                 <FormControl fullWidth>
                   <InputLabel>负责人</InputLabel>
                   <Select
                     value={newAsset.responsible_id || ""}
                     label="负责人"
                     onChange={(e) =>
-                      setNewAsset({ ...newAsset, responsible_id: e.target.value })
+                      setNewAsset({
+                        ...newAsset,
+                        responsible_id: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="none">无</MenuItem>
@@ -761,7 +889,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               </Box>
             </Box>
 
-            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
+            >
               <Button
                 variant="outlined"
                 onClick={() => setShowCreateModal(false)}
@@ -787,7 +922,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
           {selectedAsset && (
             <Box component="form" onSubmit={handleEditAsset}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     label="资产编号 *"
                     value={selectedAsset.asset_number}
@@ -814,7 +955,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   />
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     label="类别"
                     value={selectedAsset.category || ""}
@@ -850,7 +997,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   />
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     label="序列号"
                     value={selectedAsset.serial_number || ""}
@@ -886,11 +1039,17 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   />
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     label="额定功率 (kW)"
                     type="number"
-                    InputProps={{ inputProps: { step: "0.01" } }}
+                    slotProps={{ input: { inputProps: { step: "0.01" } } }}
                     value={selectedAsset.rated_power || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -903,7 +1062,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   <TextField
                     label="额定电压 (V)"
                     type="number"
-                    InputProps={{ inputProps: { step: "0.01" } }}
+                    slotProps={{ input: { inputProps: { step: "0.01" } } }}
                     value={selectedAsset.rated_voltage || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -916,7 +1075,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   <TextField
                     label="额定电流 (A)"
                     type="number"
-                    InputProps={{ inputProps: { step: "0.01" } }}
+                    slotProps={{ input: { inputProps: { step: "0.01" } } }}
                     value={selectedAsset.rated_current || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -928,7 +1087,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   />
                 </Box>
 
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     label="采购日期"
                     type="date"
@@ -940,12 +1105,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                       })
                     }
                     fullWidth
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                   />
                   <TextField
                     label="采购金额"
                     type="number"
-                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
+                    slotProps={{
+                      input: { inputProps: { min: 0, step: "0.01" } },
+                    }}
                     value={selectedAsset.purchase_amount || ""}
                     onChange={(e) =>
                       setSelectedAsset({
@@ -969,7 +1136,13 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                   fullWidth
                 />
 
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gap: 2,
+                  }}
+                >
                   <FormControl fullWidth>
                     <InputLabel>负责人</InputLabel>
                     <Select
@@ -1013,7 +1186,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 </Box>
               </Box>
 
-              <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+              <Box
+                sx={{
+                  mt: 3,
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 1,
+                }}
+              >
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -1056,7 +1236,9 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
             </FormControl>
             <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
               将批量更新{" "}
-              <Box component="span" sx={{ fontWeight: 600 }}>{selectedIds.length}</Box>{" "}
+              <Box component="span" sx={{ fontWeight: 600 }}>
+                {selectedIds.length}
+              </Box>{" "}
               条资产的状态
             </Typography>
           </Box>

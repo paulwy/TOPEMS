@@ -347,7 +347,11 @@ const HrmPerformancePage: React.FC = () => {
           }}
         >
           <Box
-            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box
@@ -360,12 +364,19 @@ const HrmPerformancePage: React.FC = () => {
                   transition: "background-color 0.2s",
                 }}
               >
-                <ChevronLeft style={{ width: 20, height: 20, color: "#9ca3af" }} />
+                <ChevronLeft
+                  style={{ width: 20, height: 20, color: "#9ca3af" }}
+                />
               </Box>
               <Box>
                 <Typography
                   variant="h5"
-                  sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center" }}
+                  sx={{
+                    fontWeight: 700,
+                    color: "grey.900",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
                 >
                   <TrendingUp size={28} color="#ea580c" />
                   绩效管理
@@ -460,7 +471,15 @@ const HrmPerformancePage: React.FC = () => {
         </Box>
 
         {/* Search Bar */}
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 2, mb: 3 }}>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 1,
+            boxShadow: 1,
+            p: 2,
+            mb: 3,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ flex: 1, position: "relative" }}>
               <Box
@@ -518,7 +537,14 @@ const HrmPerformancePage: React.FC = () => {
         </Box>
 
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 10 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              py: 10,
+            }}
+          >
             <Box
               sx={{
                 width: 48,
@@ -539,56 +565,138 @@ const HrmPerformancePage: React.FC = () => {
           <Box>
             {/* Content */}
             {activeTab === "reviews" && (
-              <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, overflow: "hidden" }}>
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 1,
+                  boxShadow: 1,
+                  overflow: "hidden",
+                }}
+              >
                 <Box sx={{ overflowX: "auto" }}>
-                  <Box component="table" sx={{ minWidth: "100%", borderCollapse: "collapse" }}>
+                  <Box
+                    component="table"
+                    sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                  >
                     <Box component="thead" sx={{ bgcolor: "grey.50" }}>
                       <Box component="tr">
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           员工姓名
                         </Box>
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           部门/岗位
                         </Box>
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           考核周期
                         </Box>
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           自评分
                         </Box>
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           上级评分
                         </Box>
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           最终得分
                         </Box>
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           状态
                         </Box>
                         <Box
                           component="th"
-                          sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                          sx={{
+                            px: 3,
+                            py: 1.5,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           操作
                         </Box>
@@ -602,28 +710,46 @@ const HrmPerformancePage: React.FC = () => {
                           sx={{ "&:hover": { bgcolor: "grey.50" } }}
                         >
                           <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                            <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500, color: "grey.900" }}
+                            >
                               {review.employee_name}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "grey.500" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.500" }}
+                            >
                               {review.employee_no}
                             </Typography>
                           </Box>
                           <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                            <Typography variant="body2" sx={{ color: "grey.900" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.900" }}
+                            >
                               {review.department}
                             </Typography>
-                            <Typography variant="body2" sx={{ color: "grey.500" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.500" }}
+                            >
                               {review.position}
                             </Typography>
                           </Box>
                           <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                            <Typography variant="body2" sx={{ color: "grey.900" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.900" }}
+                            >
                               {review.review_period}
                             </Typography>
                           </Box>
                           <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                            <Typography variant="body2" sx={{ color: "grey.900" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.900" }}
+                            >
                               {review.self_score !== undefined ? (
                                 <Typography
                                   component="span"
@@ -641,14 +767,20 @@ const HrmPerformancePage: React.FC = () => {
                                   {review.self_score}
                                 </Typography>
                               ) : (
-                                <Typography component="span" sx={{ color: "grey.400" }}>
+                                <Typography
+                                  component="span"
+                                  sx={{ color: "grey.400" }}
+                                >
                                   -
                                 </Typography>
                               )}
                             </Typography>
                           </Box>
                           <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                            <Typography variant="body2" sx={{ color: "grey.900" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.900" }}
+                            >
                               {review.manager_score !== undefined ? (
                                 <Typography
                                   component="span"
@@ -666,7 +798,10 @@ const HrmPerformancePage: React.FC = () => {
                                   {review.manager_score}
                                 </Typography>
                               ) : (
-                                <Typography component="span" sx={{ color: "grey.400" }}>
+                                <Typography
+                                  component="span"
+                                  sx={{ color: "grey.400" }}
+                                >
                                   -
                                 </Typography>
                               )}
@@ -682,7 +817,10 @@ const HrmPerformancePage: React.FC = () => {
                                 {review.final_score}
                               </Typography>
                             ) : (
-                              <Typography component="span" sx={{ color: "grey.400" }}>
+                              <Typography
+                                component="span"
+                                sx={{ color: "grey.400" }}
+                              >
                                 -
                               </Typography>
                             )}
@@ -694,14 +832,20 @@ const HrmPerformancePage: React.FC = () => {
                             <Box sx={{ display: "flex", gap: 1 }}>
                               <Box
                                 component="button"
-                                sx={{ color: "blue.600", "&:hover": { color: "blue.800" } }}
+                                sx={{
+                                  color: "blue.600",
+                                  "&:hover": { color: "blue.800" },
+                                }}
                               >
                                 查看
                               </Box>
                               {review.status !== "completed" && (
                                 <Box
                                   component="button"
-                                  sx={{ color: "blue.600", "&:hover": { color: "blue.800" } }}
+                                  sx={{
+                                    color: "blue.600",
+                                    "&:hover": { color: "blue.800" },
+                                  }}
                                 >
                                   编辑
                                 </Box>
@@ -727,34 +871,71 @@ const HrmPerformancePage: React.FC = () => {
                 {goals.map((goal) => (
                   <Box
                     key={goal.id}
-                    sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 1,
+                      boxShadow: 1,
+                      p: 3,
+                    }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        mb: 2,
+                      }}
+                    >
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 600, color: "grey.900" }}
+                        >
                           {goal.goal_title}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "grey.500", mt: 0.5 }}
+                        >
                           {goal.employee_name}
                         </Typography>
                       </Box>
                       {getPerformanceStatusBadge(goal.status)}
                     </Box>
 
-                    <Typography variant="body2" sx={{ color: "grey.600", mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "grey.600", mb: 2 }}
+                    >
                       {goal.goal_description}
                     </Typography>
 
                     <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 0.5,
+                        }}
+                      >
                         <Typography variant="body2" sx={{ color: "grey.600" }}>
                           目标进度
                         </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 500, color: "blue.600" }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 500, color: "blue.600" }}
+                        >
                           {goal.progress}%
                         </Typography>
                       </Box>
-                      <Box sx={{ width: "100%", bgcolor: "grey.200", borderRadius: 1, height: 8 }}>
+                      <Box
+                        sx={{
+                          width: "100%",
+                          bgcolor: "grey.200",
+                          borderRadius: 1,
+                          height: 8,
+                        }}
+                      >
                         <Box
                           sx={{
                             width: `${goal.progress}%`,
@@ -793,14 +974,33 @@ const HrmPerformancePage: React.FC = () => {
                       </Box>
                     </Box>
 
-                    <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "grey.200" }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        pt: 2,
+                        borderTop: 1,
+                        borderColor: "grey.200",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: "0.875rem",
+                        }}
+                      >
                         <Typography sx={{ color: "grey.600" }}>
                           目标值：{goal.target_value}
                         </Typography>
                       </Box>
                       {goal.current_value && (
-                        <Typography sx={{ mt: 0.5, fontSize: "0.875rem", color: "grey.600" }}>
+                        <Typography
+                          sx={{
+                            mt: 0.5,
+                            fontSize: "0.875rem",
+                            color: "grey.600",
+                          }}
+                        >
                           当前值：{goal.current_value}
                         </Typography>
                       )}
@@ -889,8 +1089,18 @@ const HrmPerformancePage: React.FC = () => {
                     gap: 3,
                   }}
                 >
-                  <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 1,
+                      boxShadow: 1,
+                      p: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}
+                    >
                       绩效评估状态分布
                     </Typography>
                     <StatsChart
@@ -900,16 +1110,36 @@ const HrmPerformancePage: React.FC = () => {
                     />
                   </Box>
 
-                  <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 1,
+                      boxShadow: 1,
+                      p: 3,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}
+                    >
                       绩效目标状态分布
                     </Typography>
                     <StatsChart type="pie" data={goalStatusData} height={250} />
                   </Box>
                 </Box>
 
-                <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, p: 3 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
+                <Box
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 1,
+                    boxShadow: 1,
+                    p: 3,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}
+                  >
                     部门平均绩效得分
                   </Typography>
                   <StatsChart
@@ -920,62 +1150,147 @@ const HrmPerformancePage: React.FC = () => {
                 </Box>
 
                 {/* 排名表格 */}
-                <Box sx={{ bgcolor: "background.paper", borderRadius: 1, boxShadow: 1, overflow: "hidden" }}>
+                <Box
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 1,
+                    boxShadow: 1,
+                    overflow: "hidden",
+                  }}
+                >
                   <Box sx={{ overflowX: "auto" }}>
-                    <Box component="table" sx={{ minWidth: "100%", borderCollapse: "collapse" }}>
+                    <Box
+                      component="table"
+                      sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                    >
                       <Box component="thead" sx={{ bgcolor: "grey.50" }}>
                         <Box component="tr">
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             排名
                           </Box>
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             员工姓名
                           </Box>
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             部门/岗位
                           </Box>
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             KPI得分
                           </Box>
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             能力得分
                           </Box>
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             态度得分
                           </Box>
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             综合得分
                           </Box>
                           <Box
                             component="th"
-                            sx={{ px: 3, py: 1.5, textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
                           >
                             考核周期
                           </Box>
                         </Box>
                       </Box>
-                      <Box component="tbody" sx={{ bgcolor: "background.paper" }}>
+                      <Box
+                        component="tbody"
+                        sx={{ bgcolor: "background.paper" }}
+                      >
                         {rankings.map((employee, index) => (
                           <Box
                             component="tr"
@@ -983,10 +1298,7 @@ const HrmPerformancePage: React.FC = () => {
                             sx={{ "&:hover": { bgcolor: "grey.50" } }}
                           >
                             <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                              <Typography
-                                variant="h6"
-                                sx={{ fontWeight: 700 }}
-                              >
+                              <Typography variant="h6" sx={{ fontWeight: 700 }}>
                                 <Typography
                                   component="span"
                                   sx={{
@@ -1007,30 +1319,48 @@ const HrmPerformancePage: React.FC = () => {
                               </Typography>
                             </Box>
                             <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 500, color: "grey.900" }}
+                              >
                                 {employee.employee_name}
                               </Typography>
                             </Box>
                             <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                              <Typography variant="body2" sx={{ color: "grey.900" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.900" }}
+                              >
                                 {employee.department}
                               </Typography>
-                              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.500" }}
+                              >
                                 {employee.position}
                               </Typography>
                             </Box>
                             <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                              <Typography variant="body2" sx={{ color: "grey.900" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.900" }}
+                              >
                                 {employee.kpi_score}
                               </Typography>
                             </Box>
                             <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                              <Typography variant="body2" sx={{ color: "grey.900" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.900" }}
+                              >
                                 {employee.capability_score}
                               </Typography>
                             </Box>
                             <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                              <Typography variant="body2" sx={{ color: "grey.900" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.900" }}
+                              >
                                 {employee.attitude_score}
                               </Typography>
                             </Box>
@@ -1044,7 +1374,10 @@ const HrmPerformancePage: React.FC = () => {
                               </Typography>
                             </Box>
                             <Box sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}>
-                              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.500" }}
+                              >
                                 {employee.review_period}
                               </Typography>
                             </Box>

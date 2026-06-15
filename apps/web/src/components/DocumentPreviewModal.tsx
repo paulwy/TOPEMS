@@ -82,11 +82,15 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           // 如果内容不是以 PK (ZIP 头) 开头，说明返回了错误
           const bytes = await blob.arrayBuffer();
           const view = new DataView(bytes);
-          const header = String.fromCharCode(view.getUint8(0)) + String.fromCharCode(view.getUint8(1));
+          const header =
+            String.fromCharCode(view.getUint8(0)) +
+            String.fromCharCode(view.getUint8(1));
           console.log("文件头:", header, "(应该是 'PK')");
 
           if (header !== "PK") {
-            throw new Error(`文件格式错误：期望 DOCX (ZIP)，实际得到 ${blob.type || 'unknown'}`);
+            throw new Error(
+              `文件格式错误：期望 DOCX (ZIP)，实际得到 ${blob.type || "unknown"}`,
+            );
           }
 
           // 再次检查容器是否还存在

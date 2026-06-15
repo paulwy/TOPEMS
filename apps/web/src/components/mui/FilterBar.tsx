@@ -69,7 +69,7 @@ const FilterControl: React.FC<{
     variant: variant as any,
     fullWidth: true,
   };
-  
+
   const formControlProps = {
     variant: variant as any,
     fullWidth: true,
@@ -78,7 +78,10 @@ const FilterControl: React.FC<{
   switch (filter.type) {
     case "select":
       return (
-        <FormControl {...formControlProps} sx={{ minWidth: filter.width || 150 }}>
+        <FormControl
+          {...formControlProps}
+          sx={{ minWidth: filter.width || 150 }}
+        >
           <InputLabel>{filter.label}</InputLabel>
           <Select
             size="small"
@@ -98,7 +101,10 @@ const FilterControl: React.FC<{
 
     case "multiselect":
       return (
-        <FormControl {...formControlProps} sx={{ minWidth: filter.width || 200 }}>
+        <FormControl
+          {...formControlProps}
+          sx={{ minWidth: filter.width || 200 }}
+        >
           <InputLabel>{filter.label}</InputLabel>
           <Select
             size="small"

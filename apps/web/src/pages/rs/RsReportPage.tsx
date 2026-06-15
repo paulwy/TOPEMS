@@ -1,9 +1,9 @@
+import { Grid } from "@/components/Grid";
 import React from "react";
 import {
   Box,
   Container,
   Typography,
-  Grid,
   Card,
   CardContent,
   Stack,
@@ -195,7 +195,10 @@ const RsReportPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2">小试阶段</Typography>
-                  <Stack sx={{ flexDirection: "row", alignItems: "center" }} spacing={1}>
+                  <Stack
+                    sx={{ flexDirection: "row", alignItems: "center" }}
+                    spacing={1}
+                  >
                     <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                       {reportData.experiments.lab}
                     </Typography>
@@ -213,7 +216,10 @@ const RsReportPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2">中试阶段</Typography>
-                  <Stack sx={{ flexDirection: "row", alignItems: "center" }} spacing={1}>
+                  <Stack
+                    sx={{ flexDirection: "row", alignItems: "center" }}
+                    spacing={1}
+                  >
                     <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                       {reportData.experiments.pilot}
                     </Typography>
@@ -232,7 +238,10 @@ const RsReportPage: React.FC = () => {
                   }}
                 >
                   <Typography variant="body2">放大试验</Typography>
-                  <Stack sx={{ flexDirection: "row", alignItems: "center" }} spacing={1}>
+                  <Stack
+                    sx={{ flexDirection: "row", alignItems: "center" }}
+                    spacing={1}
+                  >
                     <Typography variant="body2" sx={{ fontWeight: "bold" }}>
                       {reportData.experiments.scaleup}
                     </Typography>

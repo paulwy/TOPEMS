@@ -73,7 +73,8 @@ export default function FormBuilder({
   const [values, setValues] = React.useState<Record<string, any>>(() => {
     const initial: Record<string, any> = {};
     fields.forEach((field) => {
-      initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? "";
+      initial[field.name] =
+        initialValues[field.name] ?? field.defaultValue ?? "";
     });
     return initial;
   });
@@ -85,33 +86,37 @@ export default function FormBuilder({
     setErrors((prev) => ({ ...prev, [name]: "" }));
   }, []);
 
-  const validateField = useCallback((field: FormFieldConfig, value: any): string => {
-    if (field.required && !value) {
-      return `${field.label}为必填项`;
-    }
-    if (field.validation) {
-      const { minLength, maxLength, min, max, pattern, custom } = field.validation;
-      if (minLength && value.length < minLength) {
-        return `${field.label}长度不能少于${minLength}个字符`;
+  const validateField = useCallback(
+    (field: FormFieldConfig, value: any): string => {
+      if (field.required && !value) {
+        return `${field.label}为必填项`;
       }
-      if (maxLength && value.length > maxLength) {
-        return `${field.label}长度不能超过${maxLength}个字符`;
+      if (field.validation) {
+        const { minLength, maxLength, min, max, pattern, custom } =
+          field.validation;
+        if (minLength && value.length < minLength) {
+          return `${field.label}长度不能少于${minLength}个字符`;
+        }
+        if (maxLength && value.length > maxLength) {
+          return `${field.label}长度不能超过${maxLength}个字符`;
+        }
+        if (min !== undefined && Number(value) < min) {
+          return `${field.label}不能小于${min}`;
+        }
+        if (max !== undefined && Number(value) > max) {
+          return `${field.label}不能大于${max}`;
+        }
+        if (pattern && !pattern.test(value)) {
+          return `${field.label}格式不正确`;
+        }
+        if (custom) {
+          return custom(value) || "";
+        }
       }
-      if (min !== undefined && Number(value) < min) {
-        return `${field.label}不能小于${min}`;
-      }
-      if (max !== undefined && Number(value) > max) {
-        return `${field.label}不能大于${max}`;
-      }
-      if (pattern && !pattern.test(value)) {
-        return `${field.label}格式不正确`;
-      }
-      if (custom) {
-        return custom(value) || "";
-      }
-    }
-    return "";
-  }, []);
+      return "";
+    },
+    [],
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -135,7 +140,8 @@ export default function FormBuilder({
   const handleReset = useCallback(() => {
     const initial: Record<string, any> = {};
     fields.forEach((field) => {
-      initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? "";
+      initial[field.name] =
+        initialValues[field.name] ?? field.defaultValue ?? "";
     });
     setValues(initial);
     setErrors({});
@@ -191,7 +197,14 @@ export default function FormBuilder({
           );
         case "select":
           return (
-            <FormControl key={field.name} fullWidth size="small" required={isRequired} disabled={isDisabled} error={!!error}>
+            <FormControl
+              key={field.name}
+              fullWidth
+              size="small"
+              required={isRequired}
+              disabled={isDisabled}
+              error={!!error}
+            >
               <InputLabel>{field.label}</InputLabel>
               <Select
                 name={field.name}
@@ -227,7 +240,9 @@ export default function FormBuilder({
               <DatePicker
                 label={field.label}
                 value={value ? dayjs(value) : null}
-                onChange={(newValue) => handleChange(field.name, newValue?.toISOString())}
+                onChange={(newValue) =>
+                  handleChange(field.name, newValue?.toISOString())
+                }
                 disabled={isDisabled}
                 slotProps={{
                   textField: {
@@ -243,7 +258,12 @@ export default function FormBuilder({
           );
         case "file":
           return (
-            <Button key={field.name} variant="outlined" component="label" disabled={isDisabled}>
+            <Button
+              key={field.name}
+              variant="outlined"
+              component="label"
+              disabled={isDisabled}
+            >
               {field.label}
               <input
                 type="file"
@@ -308,7 +328,9 @@ export default function FormBuilder({
       <CardContent>
         <form onSubmit={handleSubmit} onReset={handleReset}>
           {renderForm()}
-          <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 3 }}>
+          <Box
+            sx={{ display: "flex", gap: 2, justifyContent: "flex-end", mt: 3 }}
+          >
             {showReset && (
               <Button type="reset" variant="outlined">
                 {resetLabel}

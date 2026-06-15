@@ -12,7 +12,17 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
-import { Card, CardHeader, CardContent, Button, Menu, MenuItem, Skeleton, Typography, Chip } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Button,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Typography,
+  Chip,
+} from "@mui/material";
 
 type ChartType = "bar" | "line" | "area" | "pie";
 
@@ -85,15 +95,26 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   trend,
   trendValue,
 }) => {
-  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(null);
-  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
+  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
 
   const getTrendIcon = () => {
     if (!trend || trend === "stable") return null;
     return trend === "up" ? (
       <TrendingUp style={{ width: 16, height: 16, color: "#10B981" }} />
     ) : (
-      <TrendingUp style={{ width: 16, height: 16, color: "#EF4444", transform: "rotate(180deg)" }} />
+      <TrendingUp
+        style={{
+          width: 16,
+          height: 16,
+          color: "#EF4444",
+          transform: "rotate(180deg)",
+        }}
+      />
     );
   };
 
@@ -103,13 +124,31 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   };
 
   return (
-    <Card sx={{ overflow: "hidden", transition: "all 0.3s", "&:hover": { boxShadow: 2 } }} className={className}>
+    <Card
+      sx={{
+        overflow: "hidden",
+        transition: "all 0.3s",
+        "&:hover": { boxShadow: 2 },
+      }}
+      className={className}
+    >
       <CardHeader
-        sx={{ padding: "16px 24px", borderBottom: "1px solid rgba(0,0,0,0.05)" }}
+        sx={{
+          padding: "16px 24px",
+          borderBottom: "1px solid rgba(0,0,0,0.05)",
+        }}
         action={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {showChartType && chartTypes.length > 1 && (
-              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#F1F5F9", borderRadius: 8, padding: 2 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "#F1F5F9",
+                  borderRadius: 8,
+                  padding: 2,
+                }}
+              >
                 {chartTypes.map((type) => (
                   <button
                     key={type}
@@ -118,10 +157,15 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       padding: 6,
                       borderRadius: 6,
                       border: "none",
-                      backgroundColor: activeChartType === type ? "white" : "transparent",
-                      color: activeChartType === type ? "#1D4ED8" : "text.secondary",
+                      backgroundColor:
+                        activeChartType === type ? "white" : "transparent",
+                      color:
+                        activeChartType === type ? "#1D4ED8" : "text.secondary",
                       cursor: "pointer",
-                      boxShadow: activeChartType === type ? "0 1px 2px rgba(0,0,0,0.1)" : "none",
+                      boxShadow:
+                        activeChartType === type
+                          ? "0 1px 2px rgba(0,0,0,0.1)"
+                          : "none",
                     }}
                     title={type}
                   >
@@ -139,7 +183,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 sx={{ textTransform: "none", padding: "6px 12px" }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 4 }} />
-                <span>{timeRanges.find((r) => r.value === timeRange)?.label || "本月"}</span>
+                <span>
+                  {timeRanges.find((r) => r.value === timeRange)?.label ||
+                    "本月"}
+                </span>
               </Button>
             )}
 
@@ -158,14 +205,27 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             {title}
           </Typography>
           {trend && trendValue && (
-            <div style={{ display: "flex", alignItems: "center", gap: 4, color: getTrendColor() }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                color: getTrendColor(),
+              }}
+            >
               {getTrendIcon()}
-              <span style={{ fontSize: 12, fontWeight: 500 }}>{trendValue}</span>
+              <span style={{ fontSize: 12, fontWeight: 500 }}>
+                {trendValue}
+              </span>
             </div>
           )}
         </div>
         {subtitle && (
-          <Typography variant="body2" color="text.secondary" sx={{ marginTop: 2 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ marginTop: 2 }}
+          >
             {subtitle}
           </Typography>
         )}
@@ -178,11 +238,39 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             <Skeleton sx={{ width: "100%", height: 200, borderRadius: 8 }} />
           </div>
         ) : error ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
-            <div style={{ width: 48, height: 48, backgroundColor: "#FEF2F2", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-              <AlertCircle style={{ width: 24, height: 24, color: "#EF4444" }} />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 32,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                backgroundColor: "#FEF2F2",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 12,
+              }}
+            >
+              <AlertCircle
+                style={{ width: 24, height: 24, color: "#EF4444" }}
+              />
             </div>
-            <Typography variant="body1" color="text.secondary" sx={{ marginBottom: 8 }}>{error}</Typography>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ marginBottom: 8 }}
+            >
+              {error}
+            </Typography>
             {onRefresh && (
               <Button variant="outlined" size="small" onClick={onRefresh}>
                 <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
@@ -195,7 +283,11 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         )}
       </CardContent>
 
-      <Menu anchorEl={timeMenuAnchor} open={Boolean(timeMenuAnchor)} onClose={() => setTimeMenuAnchor(null)}>
+      <Menu
+        anchorEl={timeMenuAnchor}
+        open={Boolean(timeMenuAnchor)}
+        onClose={() => setTimeMenuAnchor(null)}
+      >
         {timeRanges.map((range) => (
           <MenuItem
             key={range.value}
@@ -210,21 +302,40 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         ))}
       </Menu>
 
-      <Menu anchorEl={actionMenuAnchor} open={Boolean(actionMenuAnchor)} onClose={() => setActionMenuAnchor(null)}>
+      <Menu
+        anchorEl={actionMenuAnchor}
+        open={Boolean(actionMenuAnchor)}
+        onClose={() => setActionMenuAnchor(null)}
+      >
         {showRefresh && (
-          <MenuItem onClick={() => { onRefresh?.(); setActionMenuAnchor(null); }}>
+          <MenuItem
+            onClick={() => {
+              onRefresh?.();
+              setActionMenuAnchor(null);
+            }}
+          >
             <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
             刷新数据
           </MenuItem>
         )}
         {showExport && (
-          <MenuItem onClick={() => { onExport?.(); setActionMenuAnchor(null); }}>
+          <MenuItem
+            onClick={() => {
+              onExport?.();
+              setActionMenuAnchor(null);
+            }}
+          >
             <Download style={{ width: 16, height: 16, marginRight: 8 }} />
             导出数据
           </MenuItem>
         )}
         {showFullscreen && (
-          <MenuItem onClick={() => { onFullscreen?.(); setActionMenuAnchor(null); }}>
+          <MenuItem
+            onClick={() => {
+              onFullscreen?.();
+              setActionMenuAnchor(null);
+            }}
+          >
             <Maximize2 style={{ width: 16, height: 16, marginRight: 8 }} />
             全屏查看
           </MenuItem>

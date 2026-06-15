@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import type { ModuleStatus } from "./StatusBadge";
 import { StatusBadge } from "./StatusBadge";
 
-type IconComponent = React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+type IconComponent = React.ComponentType<{
+  className?: string;
+  style?: React.CSSProperties;
+}>;
 
 export interface ModuleItem {
   title: string;
@@ -76,9 +79,11 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
             ? "0 20px 40px rgba(0, 0, 0, 0.4)"
             : "0 20px 40px rgba(0, 0, 0, 0.1)"
           : isDarkMode
-          ? "0 4px 6px rgba(0, 0, 0, 0.3)"
-          : "0 4px 6px rgba(0, 0, 0, 0.1)",
-        border: isDarkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+            ? "0 4px 6px rgba(0, 0, 0, 0.3)"
+            : "0 4px 6px rgba(0, 0, 0, 0.1)",
+        border: isDarkMode
+          ? "1px solid rgba(255,255,255,0.1)"
+          : "1px solid rgba(0,0,0,0.1)",
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
@@ -87,7 +92,8 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
             width: currentSize.iconSize,
             height: currentSize.iconSize,
             borderRadius: "14px",
-            background: colorToGradient[item.color] || colorToGradient["bg-blue-500"],
+            background:
+              colorToGradient[item.color] || colorToGradient["bg-blue-500"],
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -96,10 +102,23 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
             transform: isHovered ? "scale(1.1)" : "scale(1)",
           }}
         >
-          <Icon style={{ width: currentSize.iconSize * 0.55, height: currentSize.iconSize * 0.55, color: "#ffffff" }} />
+          <Icon
+            style={{
+              width: currentSize.iconSize * 0.55,
+              height: currentSize.iconSize * 0.55,
+              color: "#ffffff",
+            }}
+          />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "4px",
+            }}
+          >
             <h3
               style={{
                 fontSize: currentSize.titleSize,

@@ -7,35 +7,24 @@ import {
   Avatar,
   Badge,
   Tooltip,
-  useTheme,
-  useMediaQuery,
 } from "@mui/material";
-import {
-  Bell,
-  ChevronDown,
-} from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  topNavItems,
-  type NavItem,
-} from "../../config/navigation";
+import { topNavItems, type NavItem } from "../../config/navigation";
 import { ModeToggle } from "../ModeToggle";
 import { NavDropdown, useDropdown } from "./NavDropdown";
 import { MobileNav } from "./MobileNav";
+import { useResponsive } from "../../hooks/useResponsive";
 
 interface TopNavProps {
   onNavHover?: (event: React.MouseEvent<HTMLElement>, item: NavItem) => void;
   onNavLeave?: () => void;
 }
 
-export const TopNav: React.FC<TopNavProps> = ({
-  onNavHover,
-  onNavLeave,
-}) => {
+export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const { isMobile, isTablet, isDesktop, breakpoint } = useResponsive();
   const { setAnchorEl, setOpenMenu } = useDropdown();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -146,9 +135,7 @@ export const TopNav: React.FC<TopNavProps> = ({
               justifyContent: "center",
             }}
           >
-            <Typography
-              sx={{ color: "white", fontWeight: 700, fontSize: 16 }}
-            >
+            <Typography sx={{ color: "white", fontWeight: 700, fontSize: 16 }}>
               T
             </Typography>
           </Box>

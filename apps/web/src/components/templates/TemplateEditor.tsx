@@ -190,7 +190,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(2, 1fr)" }, gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: "repeat(2, 1fr)" },
+              gap: 2,
+            }}
+          >
             <Box>
               <FormLabel component="legend">模板名称 *</FormLabel>
               <TextField
@@ -220,7 +226,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             </Box>
           </Box>
 
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(2, 1fr)" }, gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: "repeat(2, 1fr)" },
+              gap: 2,
+            }}
+          >
             <Box>
               <FormLabel component="legend">模板类型</FormLabel>
               <Select
@@ -249,7 +261,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 size="small"
                 value={formData.category_id || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, category_id: e.target.value || undefined })
+                  setFormData({
+                    ...formData,
+                    category_id: e.target.value || undefined,
+                  })
                 }
                 sx={{ mt: 1 }}
               >
@@ -278,8 +293,21 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             />
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography
+              sx={{
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
               <span>模板变量</span>
               <Button
                 size="small"
@@ -304,12 +332,39 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               {formData.variables.map((variable, index) => (
                 <Box
                   key={index}
-                  sx={{ display: "flex", alignItems: "flex-start", gap: 1, p: 2, backgroundColor: "#f9fafb", borderRadius: 1 }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1,
+                    p: 2,
+                    backgroundColor: "#f9fafb",
+                    borderRadius: 1,
+                  }}
                 >
-                  <GripVertical size={16} style={{ color: "#9ca3af", marginTop: 8, cursor: "move", flexShrink: 0 }} />
-                  <Box sx={{ flex: 1, display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(4, 1fr)" }, gap: 2 }}>
+                  <GripVertical
+                    size={16}
+                    style={{
+                      color: "#9ca3af",
+                      marginTop: 8,
+                      cursor: "move",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: "grid",
+                      gridTemplateColumns: { xs: 1, md: "repeat(4, 1fr)" },
+                      gap: 2,
+                    }}
+                  >
                     <Box>
-                      <FormLabel component="legend" sx={{ fontSize: "0.75rem" }}>变量标识</FormLabel>
+                      <FormLabel
+                        component="legend"
+                        sx={{ fontSize: "0.75rem" }}
+                      >
+                        变量标识
+                      </FormLabel>
                       <TextField
                         fullWidth
                         size="small"
@@ -321,7 +376,12 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       />
                     </Box>
                     <Box>
-                      <FormLabel component="legend" sx={{ fontSize: "0.75rem" }}>显示名称</FormLabel>
+                      <FormLabel
+                        component="legend"
+                        sx={{ fontSize: "0.75rem" }}
+                      >
+                        显示名称
+                      </FormLabel>
                       <TextField
                         fullWidth
                         size="small"
@@ -333,7 +393,12 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                       />
                     </Box>
                     <Box>
-                      <FormLabel component="legend" sx={{ fontSize: "0.75rem" }}>类型</FormLabel>
+                      <FormLabel
+                        component="legend"
+                        sx={{ fontSize: "0.75rem" }}
+                      >
+                        类型
+                      </FormLabel>
                       <Select
                         fullWidth
                         size="small"
@@ -350,16 +415,28 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         ))}
                       </Select>
                     </Box>
-                    <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}
+                    >
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Switch
                           size="small"
                           checked={variable.required || false}
                           onChange={(e) =>
-                            handleVariableChange(index, "required", e.target.checked)
+                            handleVariableChange(
+                              index,
+                              "required",
+                              e.target.checked,
+                            )
                           }
                         />
-                        <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>必填</Typography>
+                        <Typography
+                          sx={{ fontSize: "0.75rem", color: "#4b5563" }}
+                        >
+                          必填
+                        </Typography>
                       </Box>
                       <Button
                         size="small"
@@ -377,7 +454,14 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           )}
 
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
+              }}
+            >
               <FormLabel component="legend">模板内容</FormLabel>
               <Box sx={{ display: "flex", gap: 1 }}>
                 {(formData.variables || []).map((v) => (
@@ -393,7 +477,16 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               </Box>
             </Box>
             {isPreview ? (
-              <Box sx={{ p: 2, backgroundColor: "#f9fafb", borderRadius: 1, border: "1px solid #e5e7eb", minHeight: 200, whiteSpace: "pre-wrap" }}>
+              <Box
+                sx={{
+                  p: 2,
+                  backgroundColor: "#f9fafb",
+                  borderRadius: 1,
+                  border: "1px solid #e5e7eb",
+                  minHeight: 200,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
                 {previewContent()}
               </Box>
             ) : (
@@ -406,13 +499,31 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   setFormData({ ...formData, content: e.target.value })
                 }
                 placeholder="输入模板内容，使用 {{变量名}} 引用变量"
-                sx={{ mt: 1, "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.875rem" } }}
+                sx={{
+                  mt: 1,
+                  "& .MuiInputBase-input": {
+                    fontFamily: "monospace",
+                    fontSize: "0.875rem",
+                  },
+                }}
               />
             )}
           </Box>
 
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(3, 1fr)" }, gap: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: "repeat(3, 1fr)" },
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Switch
                   size="small"
@@ -424,7 +535,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 <FormLabel component="legend">启用状态</FormLabel>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Switch
                   size="small"
@@ -436,7 +553,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 <FormLabel component="legend">公开模板</FormLabel>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Switch
                   size="small"
@@ -445,7 +568,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     setFormData({ ...formData, ai_enabled: e.target.checked })
                   }
                 />
-                <FormLabel component="legend" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <FormLabel
+                  component="legend"
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                >
                   <Sparkles size={16} style={{ color: "#f59e0b" }} />
                   AI 辅助
                 </FormLabel>

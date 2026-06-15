@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Card as MuiCard,
-  CardContent,
-  CardHeader,
-  Box,
-} from "@mui/material";
+import { Card as MuiCard, CardContent, CardHeader, Box } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import { crmApi } from "@/api/crm";
@@ -245,18 +240,47 @@ const CRMDashboardPage: React.FC = () => {
       <MuiCard>
         <CardHeader>
           <Typography variant="h6">CRM 仪表板</Typography>
-          <Typography variant="body2" color="text.secondary">客户关系管理数据概览</Typography>
+          <Typography variant="body2" color="text.secondary">
+            客户关系管理数据概览
+          </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 2, md: 4 }, gap: 2, mb: 4 }}>
-            <Box sx={{ background: "linear-gradient(to bottom right, #3b82f6, #2563eb)", borderRadius: 2, p: 2, color: "white" }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 2, md: 4 },
+              gap: 2,
+              mb: 4,
+            }}
+          >
+            <Box
+              sx={{
+                background:
+                  "linear-gradient(to bottom right, #3b82f6, #2563eb)",
+                borderRadius: 2,
+                p: 2,
+                color: "white",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: "#dbeafe", fontSize: "0.875rem" }}>客户总数</Typography>
-                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>
+                  <Typography sx={{ color: "#dbeafe", fontSize: "0.875rem" }}>
+                    客户总数
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}
+                  >
                     {stats.totalCustomers}
                   </Typography>
-                  <Typography sx={{ color: "#bfdbfe", fontSize: "0.875rem", mt: 0.5 }}>
+                  <Typography
+                    sx={{ color: "#bfdbfe", fontSize: "0.875rem", mt: 0.5 }}
+                  >
                     活跃: {stats.activeCustomers} (
                     {Math.round(
                       (stats.activeCustomers / stats.totalCustomers) * 100,
@@ -268,27 +292,69 @@ const CRMDashboardPage: React.FC = () => {
               </Box>
             </Box>
 
-            <Box sx={{ background: "linear-gradient(to bottom right, #8b5cf6, #7c3aed)", borderRadius: 2, p: 2, color: "white" }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                background:
+                  "linear-gradient(to bottom right, #8b5cf6, #7c3aed)",
+                borderRadius: 2,
+                p: 2,
+                color: "white",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: "#e9d5ff", fontSize: "0.875rem" }}>联系人</Typography>
-                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>
+                  <Typography sx={{ color: "#e9d5ff", fontSize: "0.875rem" }}>
+                    联系人
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}
+                  >
                     {stats.totalContacts}
                   </Typography>
-                  <Typography sx={{ color: "#c4b5fd", fontSize: "0.875rem", mt: 0.5 }}>预计估算</Typography>
+                  <Typography
+                    sx={{ color: "#c4b5fd", fontSize: "0.875rem", mt: 0.5 }}
+                  >
+                    预计估算
+                  </Typography>
                 </Box>
                 <Target sx={{ width: 40, height: 40, color: "#c4b5fd" }} />
               </Box>
             </Box>
 
-            <Box sx={{ background: "linear-gradient(to bottom right, #f59e0b, #d97706)", borderRadius: 2, p: 2, color: "white" }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                background:
+                  "linear-gradient(to bottom right, #f59e0b, #d97706)",
+                borderRadius: 2,
+                p: 2,
+                color: "white",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: "#fef3c7", fontSize: "0.875rem" }}>商机总额</Typography>
-                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>
+                  <Typography sx={{ color: "#fef3c7", fontSize: "0.875rem" }}>
+                    商机总额
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}
+                  >
                     ¥{stats.totalOpportunityValue.toLocaleString()}
                   </Typography>
-                  <Typography sx={{ color: "#fcd34d", fontSize: "0.875rem", mt: 0.5 }}>
+                  <Typography
+                    sx={{ color: "#fcd34d", fontSize: "0.875rem", mt: 0.5 }}
+                  >
                     共 {stats.totalOpportunities} 个商机
                   </Typography>
                 </Box>
@@ -296,12 +362,34 @@ const CRMDashboardPage: React.FC = () => {
               </Box>
             </Box>
 
-            <Box sx={{ background: "linear-gradient(to bottom right, #10b981, #059669)", borderRadius: 2, p: 2, color: "white" }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                background:
+                  "linear-gradient(to bottom right, #10b981, #059669)",
+                borderRadius: 2,
+                p: 2,
+                color: "white",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography sx={{ color: "#d1fae5", fontSize: "0.875rem" }}>成交率</Typography>
-                  <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}>{stats.winRate}%</Typography>
-                  <Typography sx={{ color: "#a7f3d0", fontSize: "0.875rem", mt: 0.5 }}>
+                  <Typography sx={{ color: "#d1fae5", fontSize: "0.875rem" }}>
+                    成交率
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: "1.875rem", fontWeight: 700, mt: 0.5 }}
+                  >
+                    {stats.winRate}%
+                  </Typography>
+                  <Typography
+                    sx={{ color: "#a7f3d0", fontSize: "0.875rem", mt: 0.5 }}
+                  >
                     已成交 ¥{stats.closedWonValue.toLocaleString()}
                   </Typography>
                 </Box>
@@ -310,11 +398,20 @@ const CRMDashboardPage: React.FC = () => {
             </Box>
           </Box>
 
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 3 }, gap: 3 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, lg: 3 },
+              gap: 3,
+            }}
+          >
             <Box sx={{ gridColumn: { lg: "span 2" } }}>
               <MuiCard>
                 <CardHeader>
-                  <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                  >
                     <BarChart3 sx={{ width: 20, height: 20 }} />
                     销售趋势
                   </Typography>
@@ -357,7 +454,10 @@ const CRMDashboardPage: React.FC = () => {
 
             <MuiCard>
               <CardHeader>
-                <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <PieChart sx={{ width: 20, height: 20 }} />
                   行业分布
                 </Typography>
@@ -394,15 +494,34 @@ const CRMDashboardPage: React.FC = () => {
                     </RePieChart>
                   </ResponsiveContainer>
                 </Box>
-                <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box
+                  sx={{
+                    mt: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                  }}
+                >
                   {industryDistribution.map((item, index) => (
                     <Box
                       key={item.name}
-                      sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.875rem" }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: "0.875rem",
+                      }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Box
-                          sx={{ width: 12, height: 12, borderRadius: "50%", backgroundColor: COLORS[index % COLORS.length] }}
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            backgroundColor: COLORS[index % COLORS.length],
+                          }}
                         />
                         <span>{item.name}</span>
                       </Box>
@@ -416,16 +535,27 @@ const CRMDashboardPage: React.FC = () => {
             </MuiCard>
           </Box>
 
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, lg: 2 },
+              gap: 3,
+            }}
+          >
             <MuiCard>
               <CardHeader>
-                <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <Activity sx={{ width: 20, height: 20 }} />
                   销售漏斗
                 </Typography>
               </CardHeader>
               <CardContent>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
+                >
                   {funnelData.map((item, index) => (
                     <Box key={item.stage} sx={{ position: "relative" }}>
                       <Box
@@ -442,8 +572,12 @@ const CRMDashboardPage: React.FC = () => {
                           width: `${100 - index * 12}%`,
                         }}
                       >
-                        <Typography sx={{ fontWeight: 500 }}>{item.stage}</Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {item.stage}
+                        </Typography>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                        >
                           <Typography>{item.count} 个</Typography>
                           <Typography sx={{ fontWeight: 700 }}>
                             ¥{item.value.toLocaleString()}
@@ -458,37 +592,73 @@ const CRMDashboardPage: React.FC = () => {
 
             <MuiCard>
               <CardHeader>
-                <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
                   <Calendar sx={{ width: 20, height: 20 }} />
                   最近活动
                 </Typography>
               </CardHeader>
               <CardContent>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
+                >
                   {recentActivities.length > 0 ? (
                     recentActivities.map((activity, index) => (
                       <Box
                         key={index}
-                        sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, backgroundColor: "grey.100", borderRadius: 1 }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          p: 1.5,
+                          backgroundColor: "grey.100",
+                          borderRadius: 1,
+                        }}
                       >
-                        <Chip label={activity.type} color="secondary" size="small" />
+                        <Chip
+                          label={activity.type}
+                          color="secondary"
+                          size="small"
+                        />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography sx={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <Typography
+                            sx={{
+                              fontWeight: 500,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             {activity.title}
                           </Typography>
                           {activity.customer && (
-                            <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
+                            <Typography
+                              sx={{
+                                fontSize: "0.875rem",
+                                color: "text.secondary",
+                              }}
+                            >
                               {activity.customer}
                             </Typography>
                           )}
                         </Box>
-                        <Typography sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
+                        <Typography
+                          sx={{ fontSize: "0.875rem", color: "text.secondary" }}
+                        >
                           {activity.time}
                         </Typography>
                       </Box>
                     ))
                   ) : (
-                    <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: 4,
+                        color: "text.secondary",
+                      }}
+                    >
                       暂无活动记录
                     </Box>
                   )}

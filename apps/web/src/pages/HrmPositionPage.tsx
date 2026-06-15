@@ -239,7 +239,13 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
   const getStatusBadge = (status: string) => {
     const colors: Record<
       string,
-      "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"
+      | "default"
+      | "primary"
+      | "secondary"
+      | "error"
+      | "info"
+      | "success"
+      | "warning"
     > = {
       active: "success",
       inactive: "default",
@@ -249,7 +255,11 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
       inactive: "禁用",
     };
     return (
-      <Chip size="small" color={colors[status] || "default"} label={labels[status] || status} />
+      <Chip
+        size="small"
+        color={colors[status] || "default"}
+        label={labels[status] || status}
+      />
     );
   };
 
@@ -261,11 +271,26 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
         cell: ({ row }) => {
           return (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box sx={{ width: 40, height: 40, bgcolor: "indigo.100", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Briefcase sx={{ width: 20, height: 20, color: "indigo.600" }} />
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "indigo.100",
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Briefcase
+                  sx={{ width: 20, height: 20, color: "indigo.600" }}
+                />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, color: "grey.900" }}
+                >
                   {row.original.name}
                 </Typography>
                 {row.original.code && (
@@ -319,19 +344,13 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
           return (
             <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
               <Tooltip title="查看">
-                <IconButton
-                  size="small"
-                  onClick={() => handleView(position)}
-                >
+                <IconButton size="small" onClick={() => handleView(position)}>
                   <Eye sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
 
               <Tooltip title="编辑">
-                <IconButton
-                  size="small"
-                  onClick={() => handleEdit(position)}
-                >
+                <IconButton size="small" onClick={() => handleEdit(position)}>
                   <Edit sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
@@ -355,12 +374,29 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
 
   return (
     <HrmLayout title="岗位管理" subtitle="管理企业岗位信息、薪资范围">
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          boxShadow: 1,
+          p: 3,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
           <Box></Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <ModeToggle />
-            <Button onClick={handleAdd} startIcon={<Plus sx={{ width: 20, height: 20 }} />}>
+            <Button
+              onClick={handleAdd}
+              startIcon={<Plus sx={{ width: 20, height: 20 }} />}
+            >
               新增岗位
             </Button>
           </Box>
@@ -369,7 +405,14 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card sx={{ mb: 0 }}>
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, alignItems: "center" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  alignItems: "center",
+                }}
+              >
                 <Box sx={{ flex: 1, minWidth: 200, position: "relative" }}>
                   <Box
                     sx={{
@@ -435,14 +478,33 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
             <CardContent sx={{ p: 0 }}>
               {loading ? (
                 <Box sx={{ p: 4, textAlign: "center" }}>
-                  <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", width: 32, height: 32 }} />
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      animation: "spin 1s linear infinite",
+                      border: 4,
+                      borderColor: "primary.main",
+                      borderTopColor: "transparent",
+                      borderRadius: "50%",
+                      width: 32,
+                      height: 32,
+                    }}
+                  />
                   <Typography sx={{ mt: 2, color: "text.secondary" }}>
                     加载中...
                   </Typography>
                 </Box>
               ) : data.items.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: "center" }}>
-                  <Briefcase sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
+                  <Briefcase
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      color: "grey.400",
+                      mx: "auto",
+                      mb: 2,
+                    }}
+                  />
                   <Typography sx={{ color: "text.secondary" }}>
                     暂无岗位数据
                   </Typography>
@@ -461,13 +523,18 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
           </Card>
         </Box>
 
-        <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
+        <Dialog
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+        >
           <DialogTitle>新增岗位</DialogTitle>
           <DialogContent sx={{ maxWidth: 500 }}>
             <form onSubmit={handleCreate}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位名称 *</Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    岗位名称 *
+                  </Typography>
                   <TextField
                     id="create-name"
                     size="small"
@@ -475,30 +542,40 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                     required
                     fullWidth
                     value={(formData as Position)?.name || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("name", e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange("name", e.target.value)
+                    }
                     placeholder="请输入岗位名称"
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位编码</Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    岗位编码
+                  </Typography>
                   <TextField
                     id="create-code"
                     size="small"
                     type="text"
                     fullWidth
                     value={(formData as Position)?.code || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("code", e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange("code", e.target.value)
+                    }
                     placeholder="请输入岗位编码"
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>所属部门</Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    所属部门
+                  </Typography>
                   <FormControl size="small" fullWidth>
                     <InputLabel>请选择</InputLabel>
                     <Select
                       value={(formData as Position)?.department_id || ""}
                       label="请选择"
-                      onChange={(e) => handleInputChange("department_id", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("department_id", e.target.value)
+                      }
                     >
                       <MenuItem value="none">无</MenuItem>
                       {departments.map((d) => (
@@ -510,20 +587,34 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   </FormControl>
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位级别</Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    岗位级别
+                  </Typography>
                   <TextField
                     id="create-level"
                     size="small"
                     type="text"
                     fullWidth
                     value={(formData as Position)?.level || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange("level", e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange("level", e.target.value)
+                    }
                     placeholder="请输入岗位级别"
                   />
                 </Box>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>最低薪资</Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      最低薪资
+                    </Typography>
                     <TextField
                       id="create-min-salary"
                       size="small"
@@ -531,13 +622,20 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       fullWidth
                       value={(formData as Position)?.min_salary || ""}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("min_salary", parseFloat(e.target.value) || 0)
+                        handleInputChange(
+                          "min_salary",
+                          parseFloat(e.target.value) || 0,
+                        )
                       }
                       placeholder="最低薪资"
                     />
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>最高薪资</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      最高薪资
+                    </Typography>
                     <TextField
                       id="create-max-salary"
                       size="small"
@@ -545,14 +643,19 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       fullWidth
                       value={(formData as Position)?.max_salary || ""}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("max_salary", parseFloat(e.target.value) || 0)
+                        handleInputChange(
+                          "max_salary",
+                          parseFloat(e.target.value) || 0,
+                        )
                       }
                       placeholder="最高薪资"
                     />
                   </Box>
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>岗位描述</Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    岗位描述
+                  </Typography>
                   <TextField
                     id="create-description"
                     size="small"
@@ -567,7 +670,9 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>任职要求</Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    任职要求
+                  </Typography>
                   <TextField
                     id="create-requirements"
                     size="small"
@@ -582,13 +687,17 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>状态</Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    状态
+                  </Typography>
                   <FormControl size="small" fullWidth>
                     <InputLabel>请选择</InputLabel>
                     <Select
                       value={(formData as Position)?.status || "active"}
                       label="请选择"
-                      onChange={(e) => handleInputChange("status", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("status", e.target.value)
+                      }
                     >
                       <MenuItem value="active">启用</MenuItem>
                       <MenuItem value="inactive">禁用</MenuItem>
@@ -604,7 +713,9 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                 >
                   取消
                 </Button>
-                <Button type="submit" variant="contained">创建</Button>
+                <Button type="submit" variant="contained">
+                  创建
+                </Button>
               </DialogActions>
             </form>
           </DialogContent>
@@ -616,8 +727,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
             {selectedPosition && (
               <form onSubmit={handleUpdate}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位名称 *</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      岗位名称 *
+                    </Typography>
                     <TextField
                       id="edit-name"
                       size="small"
@@ -630,8 +745,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       }
                     />
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位编码</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      岗位编码
+                    </Typography>
                     <TextField
                       id="edit-code"
                       size="small"
@@ -643,14 +762,20 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       }
                     />
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>所属部门</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      所属部门
+                    </Typography>
                     <FormControl size="small" fullWidth>
                       <InputLabel>请选择</InputLabel>
                       <Select
                         value={(formData as Position)?.department_id || ""}
                         label="请选择"
-                        onChange={(e) => handleInputChange("department_id", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("department_id", e.target.value)
+                        }
                       >
                         <MenuItem value="none">无</MenuItem>
                         {departments.map((d) => (
@@ -661,8 +786,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       </Select>
                     </FormControl>
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位级别</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      岗位级别
+                    </Typography>
                     <TextField
                       id="edit-level"
                       size="small"
@@ -674,9 +803,19 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       }
                     />
                   </Box>
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                      <Typography variant="body2" sx={{ mb: 0.5 }}>最低薪资</Typography>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        最低薪资
+                      </Typography>
                       <TextField
                         id="edit-min-salary"
                         size="small"
@@ -684,12 +823,19 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                         fullWidth
                         value={(formData as Position)?.min_salary || ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange("min_salary", parseFloat(e.target.value) || 0)
+                          handleInputChange(
+                            "min_salary",
+                            parseFloat(e.target.value) || 0,
+                          )
                         }
                       />
                     </Box>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                      <Typography variant="body2" sx={{ mb: 0.5 }}>最高薪资</Typography>
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        最高薪资
+                      </Typography>
                       <TextField
                         id="edit-max-salary"
                         size="small"
@@ -697,13 +843,20 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                         fullWidth
                         value={(formData as Position)?.max_salary || ""}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          handleInputChange("max_salary", parseFloat(e.target.value) || 0)
+                          handleInputChange(
+                            "max_salary",
+                            parseFloat(e.target.value) || 0,
+                          )
                         }
                       />
                     </Box>
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>岗位描述</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      岗位描述
+                    </Typography>
                     <TextField
                       id="edit-description"
                       size="small"
@@ -716,8 +869,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       }
                     />
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>任职要求</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      任职要求
+                    </Typography>
                     <TextField
                       id="edit-requirements"
                       size="small"
@@ -730,14 +887,20 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                       }
                     />
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>状态</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      状态
+                    </Typography>
                     <FormControl size="small" fullWidth>
                       <InputLabel>请选择</InputLabel>
                       <Select
                         value={(formData as Position)?.status || "active"}
                         label="请选择"
-                        onChange={(e) => handleInputChange("status", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("status", e.target.value)
+                        }
                       >
                         <MenuItem value="active">启用</MenuItem>
                         <MenuItem value="inactive">禁用</MenuItem>
@@ -756,7 +919,9 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
                   >
                     取消
                   </Button>
-                  <Button type="submit" variant="contained">保存</Button>
+                  <Button type="submit" variant="contained">
+                    保存
+                  </Button>
                 </DialogActions>
               </form>
             )}
@@ -768,65 +933,145 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
           <DialogContent sx={{ maxWidth: 500 }}>
             {selectedPosition && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位名称</Typography>
-                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>{selectedPosition.name}</Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      岗位名称
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                      {selectedPosition.name}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位编码</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      岗位编码
+                    </Typography>
                     <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedPosition.code || "-"}
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>所属部门</Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      所属部门
+                    </Typography>
                     <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {departments.find(
                         (d) => d.id === selectedPosition.department_id,
                       )?.name || "-"}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位级别</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      岗位级别
+                    </Typography>
                     <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedPosition.level || "-"}
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>薪资范围</Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      薪资范围
+                    </Typography>
                     <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {selectedPosition.min_salary || 0} -{" "}
                       {selectedPosition.max_salary || 0}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>状态</Typography>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      状态
+                    </Typography>
                     <Typography variant="body1" sx={{ fontWeight: "medium" }}>
                       {getStatusBadge(selectedPosition.status)}
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>岗位描述</Typography>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    岗位描述
+                  </Typography>
                   <Typography variant="body2" sx={{ color: "text.primary" }}>
                     {selectedPosition.description || "-"}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>任职要求</Typography>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    任职要求
+                  </Typography>
                   <Typography variant="body2" sx={{ color: "text.primary" }}>
                     {selectedPosition.requirements || "-"}
                   </Typography>
                 </Box>
                 {selectedPosition.created_at && (
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>创建时间</Typography>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      创建时间
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >
                       {selectedPosition.created_at}
                     </Typography>
                   </Box>
@@ -834,7 +1079,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
               </Box>
             )}
             <DialogActions sx={{ mt: 3 }}>
-              <Button onClick={() => setShowViewModal(false)} variant="contained">关闭</Button>
+              <Button
+                onClick={() => setShowViewModal(false)}
+                variant="contained"
+              >
+                关闭
+              </Button>
             </DialogActions>
           </DialogContent>
         </Dialog>

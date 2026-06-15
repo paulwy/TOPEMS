@@ -51,7 +51,9 @@ const ContactManagementPage: React.FC = () => {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [formData, setFormData] = useState<CreateContactRequest & { customer_id?: string }>({
+  const [formData, setFormData] = useState<
+    CreateContactRequest & { customer_id?: string }
+  >({
     first_name: "",
     last_name: "",
     email: "",
@@ -218,7 +220,17 @@ const ContactManagementPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<
       string,
-      { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }
+      {
+        label: string;
+        color:
+          | "default"
+          | "primary"
+          | "secondary"
+          | "error"
+          | "info"
+          | "success"
+          | "warning";
+      }
     > = {
       active: { label: "活跃", color: "success" },
       inactive: { label: "非活跃", color: "default" },
@@ -237,15 +249,32 @@ const ContactManagementPage: React.FC = () => {
     <Box sx={{ mt: 3 }}>
       <Card>
         <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>联系人管理</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            联系人管理
+          </Typography>
           <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理联系人信息,包括姓名、联系方式、职位等
           </Typography>
         </CardHeader>
         <CardContent>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ mb: 3 }}
+          >
             <Box sx={{ flex: 1, position: "relative" }}>
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "gray" }} />
+              <Search
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
+                style={{
+                  position: "absolute",
+                  left: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 16,
+                  height: 16,
+                  color: "gray",
+                }}
+              />
               <TextField
                 size="small"
                 placeholder="搜索联系人姓名或邮箱..."
@@ -286,8 +315,13 @@ const ContactManagementPage: React.FC = () => {
 
           {selectedIds.length > 0 && (
             <Paper sx={{ p: 1.5, mb: 2, bgcolor: "grey.100" }}>
-              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="body2">已选择 {selectedIds.length} 个联系人</Typography>
+              <Stack
+                direction="row"
+                sx={{ justifyContent: "space-between", alignItems: "center" }}
+              >
+                <Typography variant="body2">
+                  已选择 {selectedIds.length} 个联系人
+                </Typography>
                 <Button
                   variant="contained"
                   color="error"
@@ -307,7 +341,10 @@ const ContactManagementPage: React.FC = () => {
                 <TableRow>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selectedIds.length === contacts.length && contacts.length > 0}
+                      checked={
+                        selectedIds.length === contacts.length &&
+                        contacts.length > 0
+                      }
                       onChange={toggleSelectAll}
                     />
                   </TableCell>
@@ -346,14 +383,28 @@ const ContactManagementPage: React.FC = () => {
                       <TableCell>{contact.position || "-"}</TableCell>
                       <TableCell>{getStatusBadge(contact.status)}</TableCell>
                       <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} sx={{ justifyContent: "flex-end" }}>
-                          <IconButton size="small" onClick={() => handleViewDetail(contact)}>
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          sx={{ justifyContent: "flex-end" }}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => handleViewDetail(contact)}
+                          >
                             <Eye style={{ width: 16, height: 16 }} />
                           </IconButton>
-                          <IconButton size="small" onClick={() => handleEdit(contact)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEdit(contact)}
+                          >
                             <Edit style={{ width: 16, height: 16 }} />
                           </IconButton>
-                          <IconButton size="small" color="error" onClick={() => handleDelete(contact.id)}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(contact.id)}
+                          >
                             <Trash2 style={{ width: 16, height: 16 }} />
                           </IconButton>
                         </Stack>
@@ -365,9 +416,17 @@ const ContactManagementPage: React.FC = () => {
             </Table>
           </TableContainer>
 
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
-              共 {total} 条记录,第 {currentPage} / {Math.ceil(total / pageSize) || 1} 页
+              共 {total} 条记录,第 {currentPage} /{" "}
+              {Math.ceil(total / pageSize) || 1} 页
             </Typography>
             <Pagination
               count={Math.ceil(total / pageSize) || 1}
@@ -381,41 +440,65 @@ const ContactManagementPage: React.FC = () => {
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{selectedContact ? "编辑联系人" : "新增联系人"}</DialogTitle>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedContact ? "编辑联系人" : "新增联系人"}
+        </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 2,
+                pt: 1,
+              }}
+            >
               <TextField
                 label="名 *"
                 required
                 value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, first_name: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="姓"
                 value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, last_name: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="邮箱"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="电话"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="职位"
                 value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, position: e.target.value })
+                }
                 fullWidth
                 sx={{ gridColumn: "span 2" }}
               />
@@ -424,7 +507,9 @@ const ContactManagementPage: React.FC = () => {
                 multiline
                 rows={3}
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 fullWidth
                 sx={{ gridColumn: "span 2" }}
               />
@@ -432,51 +517,90 @@ const ContactManagementPage: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button type="submit" variant="contained">保存</Button>
+            <Button type="submit" variant="contained">
+              保存
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>联系人详情</DialogTitle>
         {selectedContact && (
           <DialogContent>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 2,
+              }}
+            >
               <Box>
-                <Typography variant="caption" color="text.secondary">名</Typography>
-                <Typography sx={{ fontWeight: "medium" }}>{selectedContact.first_name}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  名
+                </Typography>
+                <Typography sx={{ fontWeight: "medium" }}>
+                  {selectedContact.first_name}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">姓</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  姓
+                </Typography>
                 <Typography>{selectedContact.last_name || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">邮箱</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  邮箱
+                </Typography>
                 <Typography>{selectedContact.email || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">电话</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  电话
+                </Typography>
                 <Typography>{selectedContact.phone || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">职位</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  职位
+                </Typography>
                 <Typography>{selectedContact.position || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">状态</Typography>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedContact.status)}</Box>
+                <Typography variant="caption" color="text.secondary">
+                  状态
+                </Typography>
+                <Box sx={{ mt: 0.5 }}>
+                  {getStatusBadge(selectedContact.status)}
+                </Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">创建时间</Typography>
-                <Typography>{new Date(selectedContact.created_at).toLocaleString("zh-CN")}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  创建时间
+                </Typography>
+                <Typography>
+                  {new Date(selectedContact.created_at).toLocaleString("zh-CN")}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">更新时间</Typography>
-                <Typography>{new Date(selectedContact.updated_at).toLocaleString("zh-CN")}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  更新时间
+                </Typography>
+                <Typography>
+                  {new Date(selectedContact.updated_at).toLocaleString("zh-CN")}
+                </Typography>
               </Box>
               <Box sx={{ gridColumn: "span 2" }}>
-                <Typography variant="caption" color="text.secondary">备注</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  备注
+                </Typography>
                 <Typography>{selectedContact.notes || "-"}</Typography>
               </Box>
             </Box>

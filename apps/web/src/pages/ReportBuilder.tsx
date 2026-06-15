@@ -11,7 +11,14 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-import { Box, Typography, Button, TextField, Checkbox, FormControlLabel } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Checkbox,
+  FormControlLabel,
+} from "@mui/material";
 import type {
   ReportTypeInfo,
   ReportType,
@@ -249,39 +256,59 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
     : [];
 
   return (
-    <Box sx={{
-      position: "fixed",
-      inset: 0,
-      bgcolor: "rgba(0, 0, 0, 0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 50,
-    }}>
-      <Box sx={{
-        bgcolor: "background.paper",
-        borderRadius: 2,
-        width: "100%",
-        maxWidth: 896,
-        maxHeight: "90vh",
-        overflow: "hidden",
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        bgcolor: "rgba(0, 0, 0, 0.5)",
         display: "flex",
-        flexDirection: "column",
-      }}>
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          width: "100%",
+          maxWidth: 896,
+          maxHeight: "90vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* Header */}
-        <Box sx={{
-          background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-          color: "white",
-          p: 3,
-        }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+            color: "white",
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <FileText sx={{ width: 24, height: 24 }} />
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>报表构建器</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                报表构建器
+              </Typography>
             </Box>
             <Button
               onClick={onClose}
-              sx={{ p: 1, color: "white", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" }, borderRadius: 2, minWidth: "auto" }}
+              sx={{
+                p: 1,
+                color: "white",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+                borderRadius: 2,
+                minWidth: "auto",
+              }}
             >
               <X sx={{ width: 24, height: 24 }} />
             </Button>
@@ -292,17 +319,36 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
         </Box>
 
         {/* Form */}
-        <Box sx={{ flex: 1, overflowY: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box
+          sx={{
+            flex: 1,
+            overflowY: "auto",
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+          }}
+        >
           {/* Basic Info */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <FileText sx={{ width: 20, height: 20, color: "primary.main", mr: 1 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>基本信息</Typography>
+              <FileText
+                sx={{ width: 20, height: 20, color: "primary.main", mr: 1 }}
+              />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                基本信息
+              </Typography>
             </Box>
 
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}>
-                报表标题 <Typography component="span" sx={{ color: "error.main" }}>*</Typography>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}
+              >
+                报表标题{" "}
+                <Typography component="span" sx={{ color: "error.main" }}>
+                  *
+                </Typography>
               </Typography>
               <TextField
                 fullWidth
@@ -322,7 +368,15 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 }}
               />
               {errors.title && (
-                <Box sx={{ display: "flex", alignItems: "center", mt: 0.5, color: "error.main", fontSize: 14 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mt: 0.5,
+                    color: "error.main",
+                    fontSize: 14,
+                  }}
+                >
                   <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
                   {errors.title}
                 </Box>
@@ -330,7 +384,10 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             </Box>
 
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}
+              >
                 报表描述
               </Typography>
               <TextField
@@ -354,12 +411,24 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           {/* Report Type */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Columns sx={{ width: 20, height: 20, color: "secondary.main", mr: 1 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>报表类型 <Typography component="span" sx={{ color: "error.main" }}>*</Typography>
+              <Columns
+                sx={{ width: 20, height: 20, color: "secondary.main", mr: 1 }}
+              />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                报表类型{" "}
+                <Typography component="span" sx={{ color: "error.main" }}>
+                  *
+                </Typography>
               </Typography>
             </Box>
 
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                gap: 2,
+              }}
+            >
               {reportTypes.map((type) => (
                 <Box
                   key={type.type}
@@ -369,22 +438,43 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                     border: 2,
                     borderRadius: 2,
                     cursor: "pointer",
-                    borderColor: formData.reportType === type.type ? "primary.main" : "grey.200",
-                    bgcolor: formData.reportType === type.type ? "primary.light" : "transparent",
+                    borderColor:
+                      formData.reportType === type.type
+                        ? "primary.main"
+                        : "grey.200",
+                    bgcolor:
+                      formData.reportType === type.type
+                        ? "primary.light"
+                        : "transparent",
                     "&:hover": {
-                      borderColor: formData.reportType === type.type ? "primary.main" : "primary.light",
+                      borderColor:
+                        formData.reportType === type.type
+                          ? "primary.main"
+                          : "primary.light",
                     },
                   }}
                 >
-                  <Typography sx={{ fontWeight: 500, color: "grey.900" }}>{type.name}</Typography>
-                  <Typography variant="caption" sx={{ color: "grey.500", mt: 0.5 }}>
+                  <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
+                    {type.name}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "grey.500", mt: 0.5 }}
+                  >
                     {type.module}
                   </Typography>
                 </Box>
               ))}
             </Box>
             {errors.reportType && (
-              <Box sx={{ display: "flex", alignItems: "center", color: "error.main", fontSize: 14 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "error.main",
+                  fontSize: 14,
+                }}
+              >
                 <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
                 {errors.reportType}
               </Box>
@@ -394,13 +484,20 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           {/* Date Range */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Calendar sx={{ width: 20, height: 20, color: "success.main", mr: 1 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>时间范围</Typography>
+              <Calendar
+                sx={{ width: 20, height: 20, color: "success.main", mr: 1 }}
+              />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                时间范围
+              </Typography>
             </Box>
 
             <Box sx={{ display: "grid", gridTemplateColumns: 2, gap: 2 }}>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}
+                >
                   开始日期
                 </Typography>
                 <TextField
@@ -418,7 +515,10 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, mb: 1, color: "grey.700" }}
+                >
                   结束日期
                 </Typography>
                 <TextField
@@ -437,7 +537,14 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
               </Box>
             </Box>
             {errors.dateRange && (
-              <Box sx={{ display: "flex", alignItems: "center", color: "error.main", fontSize: 14 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "error.main",
+                  fontSize: 14,
+                }}
+              >
                 <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
                 {errors.dateRange}
               </Box>
@@ -447,32 +554,58 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           {/* Column Selection */}
           {availableColumns.length > 0 && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Columns sx={{ width: 20, height: 20, color: "warning.main", mr: 1 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>选择列 <Typography component="span" sx={{ color: "error.main" }}>*</Typography>
+                  <Columns
+                    sx={{ width: 20, height: 20, color: "warning.main", mr: 1 }}
+                  />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    选择列{" "}
+                    <Typography component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Typography>
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", gap: 2 }}>
                   <Button
                     onClick={handleSelectAllColumns}
                     size="small"
-                    sx={{ color: "primary.main", "&:hover": { bgcolor: "primary.light" } }}
+                    sx={{
+                      color: "primary.main",
+                      "&:hover": { bgcolor: "primary.light" },
+                    }}
                   >
                     全选
                   </Button>
-                  <Typography sx={{ color: "grey.400", lineHeight: "32px" }}>|</Typography>
+                  <Typography sx={{ color: "grey.400", lineHeight: "32px" }}>
+                    |
+                  </Typography>
                   <Button
                     onClick={handleDeselectAllColumns}
                     size="small"
-                    sx={{ color: "grey.700", "&:hover": { bgcolor: "grey.100" } }}
+                    sx={{
+                      color: "grey.700",
+                      "&:hover": { bgcolor: "grey.100" },
+                    }}
                   >
                     取消全选
                   </Button>
                 </Box>
               </Box>
 
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 3 }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gap: 2,
+                }}
+              >
                 {availableColumns.map((column) => (
                   <Box
                     key={column}
@@ -491,14 +624,28 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                     <Checkbox
                       checked={formData.selectedColumns.includes(column)}
                       size="small"
-                      sx={{ p: 0, mr: 1, color: "grey.400", "&.Mui-checked": { color: "primary.main" } }}
+                      sx={{
+                        p: 0,
+                        mr: 1,
+                        color: "grey.400",
+                        "&.Mui-checked": { color: "primary.main" },
+                      }}
                     />
-                    <Typography variant="body2" sx={{ color: "grey.700" }}>{column}</Typography>
+                    <Typography variant="body2" sx={{ color: "grey.700" }}>
+                      {column}
+                    </Typography>
                   </Box>
                 ))}
               </Box>
               {errors.selectedColumns && (
-                <Box sx={{ display: "flex", alignItems: "center", color: "error.main", fontSize: 14 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    color: "error.main",
+                    fontSize: 14,
+                  }}
+                >
                   <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
                   {errors.selectedColumns}
                 </Box>
@@ -512,8 +659,12 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           {/* Export Format */}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <FileText sx={{ width: 20, height: 20, color: "info.main", mr: 1 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>导出格式</Typography>
+              <FileText
+                sx={{ width: 20, height: 20, color: "info.main", mr: 1 }}
+              />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                导出格式
+              </Typography>
             </Box>
 
             <Box sx={{ display: "grid", gridTemplateColumns: 3, gap: 2 }}>
@@ -526,24 +677,51 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                     border: 2,
                     borderRadius: 2,
                     cursor: "pointer",
-                    borderColor: formData.format === format ? "primary.main" : "grey.200",
-                    bgcolor: formData.format === format ? "primary.light" : "transparent",
+                    borderColor:
+                      formData.format === format ? "primary.main" : "grey.200",
+                    bgcolor:
+                      formData.format === format
+                        ? "primary.light"
+                        : "transparent",
                     "&:hover": {
-                      borderColor: formData.format === format ? "primary.main" : "primary.light",
+                      borderColor:
+                        formData.format === format
+                          ? "primary.main"
+                          : "primary.light",
                     },
                   }}
                 >
-                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <Box sx={{
-                      mb: 1,
-                      color: formData.format === format ? "primary.main" : "grey.500",
-                    }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        mb: 1,
+                        color:
+                          formData.format === format
+                            ? "primary.main"
+                            : "grey.500",
+                      }}
+                    >
                       {getFormatIcon(format)}
                     </Box>
-                    <Typography sx={{ fontWeight: 500, color: "grey.900", textTransform: "capitalize" }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        color: "grey.900",
+                        textTransform: "capitalize",
+                      }}
+                    >
                       {format}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "grey.500", mt: 0.5 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "grey.500", mt: 0.5 }}
+                    >
                       {format === "excel" && ".xlsx 文件"}
                       {format === "pdf" && ".pdf 文件"}
                       {format === "csv" && ".csv 文件"}
@@ -556,15 +734,39 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
         </Box>
 
         {/* Footer */}
-        <Box sx={{ bgcolor: "grey.100", px: 3, py: 2, borderTop: 1, borderColor: "grey.200" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            bgcolor: "grey.100",
+            px: 3,
+            py: 2,
+            borderTop: 1,
+            borderColor: "grey.200",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ fontSize: 14, color: "grey.600" }}>
               {formData.selectedColumns.length > 0 && (
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <CheckCircle sx={{ width: 16, height: 16, color: "success.main", mr: 0.5 }} />
+                  <CheckCircle
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      color: "success.main",
+                      mr: 0.5,
+                    }}
+                  />
                   已配置 {formData.selectedColumns.length} 列
                   {formData.reportType && (
-                    <Typography component="span" sx={{ ml: 1, color: "grey.400" }}>
+                    <Typography
+                      component="span"
+                      sx={{ ml: 1, color: "grey.400" }}
+                    >
                       (
                       {
                         REPORT_COLUMNS[formData.reportType as ReportType]
@@ -581,7 +783,12 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 onClick={onClose}
                 disabled={submitting}
                 variant="outlined"
-                sx={{ borderRadius: 2, borderColor: "grey.300", color: "grey.700", "&:hover": { bgcolor: "grey.100" } }}
+                sx={{
+                  borderRadius: 2,
+                  borderColor: "grey.300",
+                  color: "grey.700",
+                  "&:hover": { bgcolor: "grey.100" },
+                }}
               >
                 取消
               </Button>
@@ -589,7 +796,19 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 onClick={handleSubmit}
                 disabled={submitting}
                 variant="contained"
-                startIcon={submitting ? <Loader2 sx={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} /> : <FileText sx={{ width: 16, height: 16 }} />}
+                startIcon={
+                  submitting ? (
+                    <Loader2
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        animation: "spin 1s linear infinite",
+                      }}
+                    />
+                  ) : (
+                    <FileText sx={{ width: 16, height: 16 }} />
+                  )
+                }
                 sx={{ borderRadius: 2 }}
               >
                 {submitting ? "生成中..." : "生成报表"}
@@ -597,7 +816,15 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
             </Box>
           </Box>
           {errors.submit && (
-            <Box sx={{ mt: 1, color: "error.main", fontSize: 14, display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                mt: 1,
+                color: "error.main",
+                fontSize: 14,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
               <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
               {errors.submit}
             </Box>

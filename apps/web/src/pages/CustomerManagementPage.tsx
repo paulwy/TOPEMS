@@ -265,7 +265,17 @@ const CustomerManagementPage: React.FC = () => {
   const getStatusChip = (status: string) => {
     const statusMap: Record<
       string,
-      { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }
+      {
+        label: string;
+        color:
+          | "default"
+          | "primary"
+          | "secondary"
+          | "error"
+          | "info"
+          | "success"
+          | "warning";
+      }
     > = {
       active: { label: "活跃", color: "success" },
       inactive: { label: "非活跃", color: "default" },
@@ -280,9 +290,16 @@ const CustomerManagementPage: React.FC = () => {
   return (
     <Box sx={{ mt: 3 }}>
       <Card>
-        <CardHeader title="客户管理" subheader="管理客户信息,包括客户基本信息、联系方式等" />
+        <CardHeader
+          title="客户管理"
+          subheader="管理客户信息,包括客户基本信息、联系方式等"
+        />
         <CardContent>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ mb: 3 }}
+          >
             <Box sx={{ flex: 1, position: "relative" }}>
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <TextField
@@ -322,15 +339,24 @@ const CustomerManagementPage: React.FC = () => {
             >
               新增客户
             </Button>
-            <Button variant="outlined" onClick={() => setShowImportExport(true)} startIcon={<Download className="w-4 h-4" />}>
+            <Button
+              variant="outlined"
+              onClick={() => setShowImportExport(true)}
+              startIcon={<Download className="w-4 h-4" />}
+            >
               导入导出
             </Button>
           </Stack>
 
           {selectedIds.length > 0 && (
             <Paper sx={{ p: 1.5, mb: 2, bgcolor: "grey.100" }}>
-              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-                <Typography variant="body2">已选择 {selectedIds.length} 个客户</Typography>
+              <Stack
+                direction="row"
+                sx={{ justifyContent: "space-between", alignItems: "center" }}
+              >
+                <Typography variant="body2">
+                  已选择 {selectedIds.length} 个客户
+                </Typography>
                 <Button
                   variant="contained"
                   color="error"
@@ -350,7 +376,10 @@ const CustomerManagementPage: React.FC = () => {
                 <TableRow>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selectedIds.length === customers.length && customers.length > 0}
+                      checked={
+                        selectedIds.length === customers.length &&
+                        customers.length > 0
+                      }
                       onChange={toggleSelectAll}
                     />
                   </TableCell>
@@ -382,21 +411,37 @@ const CustomerManagementPage: React.FC = () => {
                           onChange={() => toggleSelect(customer.id)}
                         />
                       </TableCell>
-                      <TableCell sx={{ fontWeight: "medium" }}>{customer.name}</TableCell>
+                      <TableCell sx={{ fontWeight: "medium" }}>
+                        {customer.name}
+                      </TableCell>
                       <TableCell>{customer.code || "-"}</TableCell>
                       <TableCell>{customer.industry || "-"}</TableCell>
                       <TableCell>{customer.email || "-"}</TableCell>
                       <TableCell>{customer.phone || "-"}</TableCell>
                       <TableCell>{getStatusChip(customer.status)}</TableCell>
                       <TableCell align="right">
-                        <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                          <Button size="small" onClick={() => handleViewDetail(customer)}>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ justifyContent: "flex-end" }}
+                        >
+                          <Button
+                            size="small"
+                            onClick={() => handleViewDetail(customer)}
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button size="small" onClick={() => handleEdit(customer)}>
+                          <Button
+                            size="small"
+                            onClick={() => handleEdit(customer)}
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button size="small" color="error" onClick={() => handleDelete(customer.id)}>
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(customer.id)}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </Stack>
@@ -408,9 +453,17 @@ const CustomerManagementPage: React.FC = () => {
             </Table>
           </TableContainer>
 
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
-              共 {total} 条记录,第 {currentPage} / {Math.ceil(total / pageSize) || 1} 页
+              共 {total} 条记录,第 {currentPage} /{" "}
+              {Math.ceil(total / pageSize) || 1} 页
             </Typography>
             <Stack direction="row" spacing={1}>
               <Button
@@ -420,7 +473,10 @@ const CustomerManagementPage: React.FC = () => {
               >
                 上一页
               </Button>
-              {Array.from({ length: Math.min(5, Math.ceil(total / pageSize)) }, (_, i) => i + 1).map((page) => (
+              {Array.from(
+                { length: Math.min(5, Math.ceil(total / pageSize)) },
+                (_, i) => i + 1,
+              ).map((page) => (
                 <Button
                   key={page}
                   size="small"
@@ -433,7 +489,11 @@ const CustomerManagementPage: React.FC = () => {
               <Button
                 size="small"
                 disabled={currentPage >= Math.ceil(total / pageSize)}
-                onClick={() => setCurrentPage(Math.min(Math.ceil(total / pageSize), currentPage + 1))}
+                onClick={() =>
+                  setCurrentPage(
+                    Math.min(Math.ceil(total / pageSize), currentPage + 1),
+                  )
+                }
               >
                 下一页
               </Button>
@@ -453,54 +513,80 @@ const CustomerManagementPage: React.FC = () => {
       />
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>{selectedCustomer ? "编辑客户" : "新增客户"}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2, pt: 1 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 2,
+                pt: 1,
+              }}
+            >
               <TextField
                 label="客户名称 *"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="客户代码"
                 value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="行业"
                 value={formData.industry}
-                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, industry: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="网站"
                 type="url"
                 value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, website: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="邮箱"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="电话"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 fullWidth
               />
               <TextField
                 label="地址"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
                 fullWidth
                 sx={{ gridColumn: "span 2" }}
               />
@@ -509,7 +595,9 @@ const CustomerManagementPage: React.FC = () => {
                 multiline
                 rows={3}
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 fullWidth
                 sx={{ gridColumn: "span 2" }}
               />
@@ -517,55 +605,94 @@ const CustomerManagementPage: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button type="submit" variant="contained">保存</Button>
+            <Button type="submit" variant="contained">
+              保存
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>客户详情</DialogTitle>
         {selectedCustomer && (
           <DialogContent>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 2,
+              }}
+            >
               <Box>
-                <Typography variant="caption" color="text.secondary">客户名称</Typography>
-                <Typography sx={{ fontWeight: "medium" }}>{selectedCustomer.name}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  客户名称
+                </Typography>
+                <Typography sx={{ fontWeight: "medium" }}>
+                  {selectedCustomer.name}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">客户代码</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  客户代码
+                </Typography>
                 <Typography>{selectedCustomer.code || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">行业</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  行业
+                </Typography>
                 <Typography>{selectedCustomer.industry || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">网站</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  网站
+                </Typography>
                 <Typography>{selectedCustomer.website || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">邮箱</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  邮箱
+                </Typography>
                 <Typography>{selectedCustomer.email || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">电话</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  电话
+                </Typography>
                 <Typography>{selectedCustomer.phone || "-"}</Typography>
               </Box>
               <Box sx={{ gridColumn: "span 2" }}>
-                <Typography variant="caption" color="text.secondary">地址</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  地址
+                </Typography>
                 <Typography>{selectedCustomer.address || "-"}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">状态</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  状态
+                </Typography>
                 <Box>{getStatusChip(selectedCustomer.status)}</Box>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">创建时间</Typography>
-                <Typography>{new Date(selectedCustomer.created_at).toLocaleString("zh-CN")}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  创建时间
+                </Typography>
+                <Typography>
+                  {new Date(selectedCustomer.created_at).toLocaleString(
+                    "zh-CN",
+                  )}
+                </Typography>
               </Box>
               <Box sx={{ gridColumn: "span 2" }}>
-                <Typography variant="caption" color="text.secondary">备注</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  备注
+                </Typography>
                 <Typography>{selectedCustomer.notes || "-"}</Typography>
               </Box>
             </Box>

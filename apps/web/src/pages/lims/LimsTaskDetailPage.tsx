@@ -107,22 +107,31 @@ const LimsTaskDetailPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#fef9c3', color: '#ca8a04', label: "待测试" },
-      待测试: { bg: '#fef9c3', color: '#ca8a04', label: "待测试" },
-      in_progress: { bg: '#dbeafe', color: '#2563eb', label: "进行中" },
-      进行中: { bg: '#dbeafe', color: '#2563eb', label: "进行中" },
-      completed: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
-      已完成: { bg: '#dcfce7', color: '#16a34a', label: "已完成" },
-      cancelled: { bg: '#fee2e2', color: '#dc2626', label: "已终止" },
-      已终止: { bg: '#fee2e2', color: '#dc2626', label: "已终止" },
+    const statusMap: Record<
+      string,
+      { bg: string; color: string; label: string }
+    > = {
+      pending: { bg: "#fef9c3", color: "#ca8a04", label: "待测试" },
+      待测试: { bg: "#fef9c3", color: "#ca8a04", label: "待测试" },
+      in_progress: { bg: "#dbeafe", color: "#2563eb", label: "进行中" },
+      进行中: { bg: "#dbeafe", color: "#2563eb", label: "进行中" },
+      completed: { bg: "#dcfce7", color: "#16a34a", label: "已完成" },
+      已完成: { bg: "#dcfce7", color: "#16a34a", label: "已完成" },
+      cancelled: { bg: "#fee2e2", color: "#dc2626", label: "已终止" },
+      已终止: { bg: "#fee2e2", color: "#dc2626", label: "已终止" },
     };
     const item = statusMap[status] || {
-      bg: '#f3f4f6',
-      color: '#4b5563',
+      bg: "#f3f4f6",
+      color: "#4b5563",
       label: status,
     };
-    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.bg, color: item.color }} />;
+    return (
+      <Chip
+        label={item.label}
+        size="small"
+        sx={{ backgroundColor: item.bg, color: item.color }}
+      />
+    );
   };
 
   const handleCompleteStep = async () => {
@@ -222,7 +231,11 @@ const LimsTaskDetailPage: React.FC = () => {
                   >
                     添加记录
                   </Button>
-                  <Button variant="contained" onClick={() => setShowCompleteModal(true)} startIcon={<Box component={Play} sx={{ fontSize: 16 }} />}>
+                  <Button
+                    variant="contained"
+                    onClick={() => setShowCompleteModal(true)}
+                    startIcon={<Box component={Play} sx={{ fontSize: 16 }} />}
+                  >
                     完成任务
                   </Button>
                 </>
@@ -237,8 +250,14 @@ const LimsTaskDetailPage: React.FC = () => {
           <div className="lg:col-span-1 space-y-6">
             <Card>
               <CardHeader sx={{ pb: 1 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box component={ClipboardCheck} sx={{ fontSize: 20, color: '#7c3aed' }} />
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Box
+                    component={ClipboardCheck}
+                    sx={{ fontSize: 20, color: "#7c3aed" }}
+                  />
                   任务信息
                 </Typography>
               </CardHeader>
@@ -295,8 +314,14 @@ const LimsTaskDetailPage: React.FC = () => {
 
             <Card>
               <CardHeader sx={{ pb: 1 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box component={CheckCircle} sx={{ fontSize: 20, color: '#16a34a' }} />
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Box
+                    component={CheckCircle}
+                    sx={{ fontSize: 20, color: "#16a34a" }}
+                  />
                   检验进度
                 </Typography>
               </CardHeader>
@@ -364,9 +389,23 @@ const LimsTaskDetailPage: React.FC = () => {
 
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box component={FileText} sx={{ fontSize: 20, color: '#2563eb' }} />
+              <CardHeader
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  pb: 1,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Box
+                    component={FileText}
+                    sx={{ fontSize: 20, color: "#2563eb" }}
+                  />
                   检验记录列表
                 </Typography>
               </CardHeader>
@@ -398,12 +437,27 @@ const LimsTaskDetailPage: React.FC = () => {
         </div>
       </main>
 
-      <Dialog open={showRecordModal} onClose={() => setShowRecordModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showRecordModal}
+        onClose={() => setShowRecordModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>添加检验记录</DialogTitle>
         <DialogContent>
           <Box className="space-y-4" sx={{ mt: 1 }}>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验步骤 *</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                检验步骤 *
+              </Box>
               <TextField
                 size="small"
                 fullWidth
@@ -418,7 +472,17 @@ const LimsTaskDetailPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验员 *</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                检验员 *
+              </Box>
               <TextField
                 size="small"
                 fullWidth
@@ -433,18 +497,45 @@ const LimsTaskDetailPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>检验结果 *</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                检验结果 *
+              </Box>
               <textarea
                 value={recordForm.result}
                 onChange={(e) =>
                   setRecordForm((prev) => ({ ...prev, result: e.target.value }))
                 }
                 placeholder="请详细描述检验结果..."
-                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '128px' }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "6px",
+                  border: "1px solid #e2e8f0",
+                  resize: "none",
+                  height: "128px",
+                }}
               />
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>结论</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                结论
+              </Box>
               <select
                 value={recordForm.conclusion}
                 onChange={(e) =>
@@ -453,7 +544,12 @@ const LimsTaskDetailPage: React.FC = () => {
                     conclusion: e.target.value,
                   }))
                 }
-                style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                }}
               >
                 <option value="">请选择结论</option>
                 <option value="合格">合格</option>
@@ -464,19 +560,39 @@ const LimsTaskDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowRecordModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCompleteStep}>保存记录</Button>
+          <Button variant="outlined" onClick={() => setShowRecordModal(false)}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={handleCompleteStep}>
+            保存记录
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showCompleteModal} onClose={() => setShowCompleteModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>完成检验任务</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
-            <Typography sx={{ color: 'text.secondary' }}>
+            <Typography sx={{ color: "text.secondary" }}>
               确定要完成此检验任务吗？这将标记所有未完成的步骤为已完成状态。
             </Typography>
-            <Box sx={{ mt: 2, p: 2, backgroundColor: '#fefce8', borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1, color: '#854d0e' }}>
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                backgroundColor: "#fefce8",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                color: "#854d0e",
+              }}
+            >
               <AlertCircle className="w-5 h-5" />
               <span className="text-sm">
                 任务编号: {task.task_no || task.id}
@@ -485,8 +601,22 @@ const LimsTaskDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowCompleteModal(false)}>取消</Button>
-          <Button variant="contained" onClick={() => setShowCompleteModal(false)} sx={{ backgroundColor: '#16a34a', '&:hover': { backgroundColor: '#15803d' } }}>确认完成</Button>
+          <Button
+            variant="outlined"
+            onClick={() => setShowCompleteModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setShowCompleteModal(false)}
+            sx={{
+              backgroundColor: "#16a34a",
+              "&:hover": { backgroundColor: "#15803d" },
+            }}
+          >
+            确认完成
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

@@ -118,8 +118,16 @@ export function AIDataCompleter({
       confirmText="应用所选"
     >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>推荐补全的字段</Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            推荐补全的字段
+          </Typography>
           {hasCompletions && (
             <Box sx={{ display: "flex", gap: 1 }}>
               <Button variant="outlined" size="small" onClick={selectAll}>
@@ -133,29 +141,47 @@ export function AIDataCompleter({
         </Box>
 
         {hasCompletions ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1, maxHeight: 320, overflowY: "auto" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              maxHeight: 320,
+              overflowY: "auto",
+            }}
+          >
             {Object.entries(completions).map(([field, item]) => (
               <Card
                 key={field}
                 sx={{
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  borderColor: selectedFields.has(field) ? "purple.500" : "grey.300",
-                  bgcolor: selectedFields.has(field) ? "purple.50" : "background.paper",
+                  borderColor: selectedFields.has(field)
+                    ? "purple.500"
+                    : "grey.300",
+                  bgcolor: selectedFields.has(field)
+                    ? "purple.50"
+                    : "background.paper",
                   "&:hover": { borderColor: "purple.200" },
                 }}
                 onClick={() => toggleField(field)}
               >
                 <CardContent sx={{ p: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                  <Box
+                    sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}
+                  >
                     <Box
                       sx={{
                         width: 20,
                         height: 20,
                         borderRadius: "50%",
                         border: 2,
-                        borderColor: selectedFields.has(field) ? "purple.600" : "grey.300",
-                        bgcolor: selectedFields.has(field) ? "purple.600" : "white",
+                        borderColor: selectedFields.has(field)
+                          ? "purple.600"
+                          : "grey.300",
+                        bgcolor: selectedFields.has(field)
+                          ? "purple.600"
+                          : "white",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -167,22 +193,41 @@ export function AIDataCompleter({
                       )}
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>{field}</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {field}
+                        </Typography>
                         <Typography
                           variant="caption"
                           sx={{
                             px: 1,
                             py: 0.25,
                             borderRadius: 1,
-                            bgcolor: sourceColorMap[item.source] || sourceColorMap.inference,
-                            color: sourceTextColorMap[item.source] || sourceTextColorMap.inference,
+                            bgcolor:
+                              sourceColorMap[item.source] ||
+                              sourceColorMap.inference,
+                            color:
+                              sourceTextColorMap[item.source] ||
+                              sourceTextColorMap.inference,
                           }}
                         >
                           {sourceLabelMap[item.source] || item.source}
                         </Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mt: 0.5,
+                        }}
+                      >
                         <Typography
                           variant="body2"
                           sx={{
@@ -199,12 +244,38 @@ export function AIDataCompleter({
                         >
                           {item.value}
                         </Typography>
-                        <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.75rem", color: "grey.500" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            fontSize: "0.75rem",
+                            color: "grey.500",
+                          }}
+                        >
                           <span>置信度:</span>
-                          <Box sx={{ ml: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <Box sx={{ width: 64, height: 6, bgcolor: "grey.200", borderRadius: 1, overflow: "hidden" }}>
+                          <Box
+                            sx={{
+                              ml: 0.5,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 64,
+                                height: 6,
+                                bgcolor: "grey.200",
+                                borderRadius: 1,
+                                overflow: "hidden",
+                              }}
+                            >
                               <Box
-                                sx={{ height: "100%", bgcolor: "purple.500", width: `${item.confidence * 100}%` }}
+                                sx={{
+                                  height: "100%",
+                                  bgcolor: "purple.500",
+                                  width: `${item.confidence * 100}%`,
+                                }}
                               />
                             </Box>
                             <span>{Math.round(item.confidence * 100)}%</span>
@@ -219,7 +290,10 @@ export function AIDataCompleter({
           </Box>
         ) : (
           <Box sx={{ textAlign: "center", py: 4, color: "grey.500" }}>
-            <Sparkles size={40} style={{ opacity: 0.5, margin: "0 auto 12px" }} />
+            <Sparkles
+              size={40}
+              style={{ opacity: 0.5, margin: "0 auto 12px" }}
+            />
             <Typography variant="body2">正在分析数据...</Typography>
           </Box>
         )}

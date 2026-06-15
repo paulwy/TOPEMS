@@ -249,10 +249,23 @@ const FinanceReportsPage: React.FC = () => {
   }> = ({ title, value, change, icon, color }) => (
     <Card sx={{ "&:hover": { boxShadow: 2 }, transition: "box-shadow 0.2s" }}>
       <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box>
-            <Typography variant="body2" color="text.secondary">{title}</Typography>
-            <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5, color }}>{value}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {title}
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: "bold", mt: 0.5, color }}
+            >
+              {value}
+            </Typography>
             {change !== undefined && (
               <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
                 {change >= 0 ? (
@@ -260,7 +273,13 @@ const FinanceReportsPage: React.FC = () => {
                 ) : (
                   <ArrowDownRight size={16} style={{ color: "#dc2626" }} />
                 )}
-                <Typography variant="body2" sx={{ color: change >= 0 ? "success.main" : "error.main", ml: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: change >= 0 ? "success.main" : "error.main",
+                    ml: 0.5,
+                  }}
+                >
                   {Math.abs(change)}%
                 </Typography>
               </Box>
@@ -270,7 +289,11 @@ const FinanceReportsPage: React.FC = () => {
             sx={{
               p: 1.5,
               borderRadius: "50%",
-              bgcolor: color.includes("green") ? "success.light" : color.includes("red") ? "error.light" : "primary.light",
+              bgcolor: color.includes("green")
+                ? "success.light"
+                : color.includes("red")
+                  ? "error.light"
+                  : "primary.light",
             }}
           >
             {icon}
@@ -285,14 +308,25 @@ const FinanceReportsPage: React.FC = () => {
     ratio: number;
     target?: number;
   }> = ({ title, ratio, target }) => (
-    <Card sx={{ background: "linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%)" }}>
+    <Card
+      sx={{ background: "linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 100%)" }}
+    >
       <CardContent sx={{ p: 2 }}>
-        <Typography variant="body2" color="text.secondary">{title}</Typography>
-        <Typography variant="h5" sx={{ fontWeight: "bold", color: "#6366f1", mt: 0.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          {title}
+        </Typography>
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: "bold", color: "#6366f1", mt: 0.5 }}
+        >
           {formatPercentLocal(ratio)}
         </Typography>
         {target && (
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 0.5, display: "block" }}
+          >
             目标: {formatPercentLocal(target)}
           </Typography>
         )}
@@ -305,8 +339,17 @@ const FinanceReportsPage: React.FC = () => {
   }) => (
     <Card sx={{ "&:hover": { boxShadow: 2 }, transition: "box-shadow 0.2s" }}>
       <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{project.project_name}</Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1.5,
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            {project.project_name}
+          </Typography>
           <Chip
             label={project.status}
             size="small"
@@ -315,41 +358,86 @@ const FinanceReportsPage: React.FC = () => {
         </Box>
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
           <Box>
-            <Typography variant="caption" color="text.secondary">合同金额</Typography>
-            <Typography variant="body1" sx={{ fontWeight: "bold", color: "#6366f1" }}>
+            <Typography variant="caption" color="text.secondary">
+              合同金额
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: "bold", color: "#6366f1" }}
+            >
               {formatCurrencyLocal(project.contract_amount)}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">已收款</Typography>
-            <Typography variant="body1" sx={{ fontWeight: "bold", color: "#16a34a" }}>
+            <Typography variant="caption" color="text.secondary">
+              已收款
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: "bold", color: "#16a34a" }}
+            >
               {formatCurrencyLocal(project.received_amount)}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">应付金额</Typography>
-            <Typography variant="body1" sx={{ fontWeight: "bold", color: "#ea580c" }}>
+            <Typography variant="caption" color="text.secondary">
+              应付金额
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: "bold", color: "#ea580c" }}
+            >
               {formatCurrencyLocal(project.payable_amount)}
             </Typography>
           </Box>
           <Box>
-            <Typography variant="caption" color="text.secondary">已付款</Typography>
-            <Typography variant="body1" sx={{ fontWeight: "bold", color: "#dc2626" }}>
+            <Typography variant="caption" color="text.secondary">
+              已付款
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: "bold", color: "#dc2626" }}
+            >
               {formatCurrencyLocal(project.paid_amount)}
             </Typography>
           </Box>
         </Box>
         <Box sx={{ mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="body2" color="text.secondary">项目利润</Typography>
-            <Typography variant="body1" sx={{ fontWeight: "bold", color: project.profit >= 0 ? "success.main" : "error.main" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              项目利润
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: "bold",
+                color: project.profit >= 0 ? "success.main" : "error.main",
+              }}
+            >
               {formatCurrencyLocal(project.profit)}
             </Typography>
           </Box>
           <Box sx={{ mt: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography variant="body2" color="text.secondary">利润率</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: "#6366f1" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                利润率
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: "#6366f1" }}
+              >
                 {formatPercentLocal(project.margin)}
               </Typography>
             </Box>
@@ -363,7 +451,12 @@ const FinanceReportsPage: React.FC = () => {
                 bgcolor: "grey.200",
                 "& .MuiLinearProgress-bar": {
                   borderRadius: 4,
-                  bgcolor: project.margin >= 20 ? "success.main" : project.margin >= 10 ? "warning.main" : "error.main",
+                  bgcolor:
+                    project.margin >= 20
+                      ? "success.main"
+                      : project.margin >= 10
+                        ? "warning.main"
+                        : "error.main",
                 },
               }}
             />
@@ -378,8 +471,17 @@ const FinanceReportsPage: React.FC = () => {
   }) => (
     <Card sx={{ "&:hover": { boxShadow: 2 }, transition: "box-shadow 0.2s" }}>
       <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{dept.department_name}</Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1.5,
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            {dept.department_name}
+          </Typography>
           <Chip
             label={dept.budget_usage >= 90 ? "预算紧张" : "正常"}
             size="small"
@@ -388,27 +490,51 @@ const FinanceReportsPage: React.FC = () => {
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography variant="body2" color="text.secondary">总费用</Typography>
-            <Typography variant="body1" sx={{ fontWeight: "bold", color: "#6366f1" }}>
+            <Typography variant="body2" color="text.secondary">
+              总费用
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: "bold", color: "#6366f1" }}
+            >
               {formatCurrencyLocal(dept.total_expenses)}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography variant="body2" color="text.secondary">预算金额</Typography>
+            <Typography variant="body2" color="text.secondary">
+              预算金额
+            </Typography>
             <Typography variant="body1" sx={{ fontWeight: "bold" }}>
               {formatCurrencyLocal(dept.budget_amount)}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography variant="body2" color="text.secondary">费用笔数</Typography>
+            <Typography variant="body2" color="text.secondary">
+              费用笔数
+            </Typography>
             <Typography variant="body1" sx={{ fontWeight: "bold" }}>
               {dept.expense_count}笔
             </Typography>
           </Box>
           <Box sx={{ mt: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography variant="body2" color="text.secondary">预算使用率</Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: dept.budget_usage >= 90 ? "error.main" : "success.main" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                预算使用率
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  color:
+                    dept.budget_usage >= 90 ? "error.main" : "success.main",
+                }}
+              >
                 {formatPercentLocal(dept.budget_usage)}
               </Typography>
             </Box>
@@ -422,7 +548,12 @@ const FinanceReportsPage: React.FC = () => {
                 bgcolor: "grey.200",
                 "& .MuiLinearProgress-bar": {
                   borderRadius: 4,
-                  bgcolor: dept.budget_usage >= 90 ? "error.main" : dept.budget_usage >= 70 ? "warning.main" : "success.main",
+                  bgcolor:
+                    dept.budget_usage >= 90
+                      ? "error.main"
+                      : dept.budget_usage >= 70
+                        ? "warning.main"
+                        : "success.main",
                 },
               }}
             />
@@ -448,19 +579,46 @@ const FinanceReportsPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft size={20} />
               </IconButton>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
-                  <BarChart3 size={28} style={{ marginRight: 12, color: "#6366f1" }} />
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <BarChart3
+                    size={28}
+                    style={{ marginRight: 12, color: "#6366f1" }}
+                  />
                   财务报表分析
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
                   企业经营状况与项目财务汇总分析
                 </Typography>
               </Box>
@@ -520,60 +678,107 @@ const FinanceReportsPage: React.FC = () => {
         </Card>
 
         <Box sx={{ mt: 3 }}>
-          {activeTab === 0 && (
-            loading ? (
+          {activeTab === 0 &&
+            (loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
                 <CircularProgress />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>加载中...</Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
+                  加载中...
+                </Typography>
               </Box>
             ) : (
               businessOverview && (
                 <>
-                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: {
+                        xs: "1fr",
+                        sm: "repeat(2, 1fr)",
+                        md: "repeat(4, 1fr)",
+                      },
+                      gap: 2,
+                      mb: 3,
+                    }}
+                  >
                     <StatCard
                       title="总资产"
                       value={formatCurrencyLocal(businessOverview.total_assets)}
                       change={5.2}
-                      icon={<DollarSign size={20} style={{ color: "#6366f1" }} />}
+                      icon={
+                        <DollarSign size={20} style={{ color: "#6366f1" }} />
+                      }
                       color="#6366f1"
                     />
                     <StatCard
                       title="总负债"
-                      value={formatCurrencyLocal(businessOverview.total_liabilities)}
+                      value={formatCurrencyLocal(
+                        businessOverview.total_liabilities,
+                      )}
                       change={-2.1}
-                      icon={<TrendingDown size={20} style={{ color: "#ea580c" }} />}
+                      icon={
+                        <TrendingDown size={20} style={{ color: "#ea580c" }} />
+                      }
                       color="#ea580c"
                     />
                     <StatCard
                       title="总收入"
-                      value={formatCurrencyLocal(businessOverview.total_revenue)}
+                      value={formatCurrencyLocal(
+                        businessOverview.total_revenue,
+                      )}
                       change={12.5}
-                      icon={<TrendingUp size={20} style={{ color: "#16a34a" }} />}
+                      icon={
+                        <TrendingUp size={20} style={{ color: "#16a34a" }} />
+                      }
                       color="#16a34a"
                     />
                     <StatCard
                       title="净利润"
                       value={formatCurrencyLocal(businessOverview.net_profit)}
                       change={18.3}
-                      icon={<TrendingUp size={20} style={{ color: "#059669" }} />}
+                      icon={
+                        <TrendingUp size={20} style={{ color: "#059669" }} />
+                      }
                       color="#059669"
                     />
                   </Box>
 
-                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" }, gap: 3, mb: 3 }}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
+                      gap: 3,
+                      mb: 3,
+                    }}
+                  >
                     <Card>
                       <CardHeader
                         title={
-                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
                             <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <LineChartIcon size={20} style={{ marginRight: 8, color: "#6366f1" }} />
+                              <LineChartIcon
+                                size={20}
+                                style={{ marginRight: 8, color: "#6366f1" }}
+                              />
                               <Typography variant="h6">月度趋势分析</Typography>
                             </Box>
                             <Button
                               variant="outlined"
                               size="small"
                               startIcon={<Download size={16} />}
-                              onClick={() => exportToCSV(monthlyTrends, "monthly-trend")}
+                              onClick={() =>
+                                exportToCSV(monthlyTrends, "monthly-trend")
+                              }
                             >
                               导出
                             </Button>
@@ -598,19 +803,52 @@ const FinanceReportsPage: React.FC = () => {
                       <CardHeader
                         title={
                           <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <PieChart size={20} style={{ marginRight: 8, color: "#6366f1" }} />
+                            <PieChart
+                              size={20}
+                              style={{ marginRight: 8, color: "#6366f1" }}
+                            />
                             <Typography variant="h6">关键财务指标</Typography>
                           </Box>
                         }
                       />
-                      <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <CardContent
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2,
+                        }}
+                      >
                         {businessOverview.key_ratios && (
                           <>
-                            <KeyRatioCard title="流动比率" ratio={businessOverview.key_ratios.current_ratio} target={2.0} />
-                            <KeyRatioCard title="资产负债率" ratio={businessOverview.key_ratios.debt_ratio} target={40.0} />
-                            <KeyRatioCard title="净资产收益率" ratio={businessOverview.key_ratios.return_on_equity} target={15.0} />
-                            <KeyRatioCard title="利润率" ratio={businessOverview.key_ratios.profit_margin} target={20.0} />
-                            <KeyRatioCard title="总资产收益率" ratio={businessOverview.key_ratios.return_on_assets} target={10.0} />
+                            <KeyRatioCard
+                              title="流动比率"
+                              ratio={businessOverview.key_ratios.current_ratio}
+                              target={2.0}
+                            />
+                            <KeyRatioCard
+                              title="资产负债率"
+                              ratio={businessOverview.key_ratios.debt_ratio}
+                              target={40.0}
+                            />
+                            <KeyRatioCard
+                              title="净资产收益率"
+                              ratio={
+                                businessOverview.key_ratios.return_on_equity
+                              }
+                              target={15.0}
+                            />
+                            <KeyRatioCard
+                              title="利润率"
+                              ratio={businessOverview.key_ratios.profit_margin}
+                              target={20.0}
+                            />
+                            <KeyRatioCard
+                              title="总资产收益率"
+                              ratio={
+                                businessOverview.key_ratios.return_on_assets
+                              }
+                              target={10.0}
+                            />
                           </>
                         )}
                       </CardContent>
@@ -621,46 +859,110 @@ const FinanceReportsPage: React.FC = () => {
                     <CardHeader
                       title={
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <DollarSign size={20} style={{ marginRight: 8, color: "#6366f1" }} />
+                          <DollarSign
+                            size={20}
+                            style={{ marginRight: 8, color: "#6366f1" }}
+                          />
                           <Typography variant="h6">财务摘要</Typography>
                         </Box>
                       }
                     />
                     <CardContent>
-                      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(6, 1fr)" }, gap: 2 }}>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "repeat(2, 1fr)",
+                            md: "repeat(6, 1fr)",
+                          },
+                          gap: 2,
+                        }}
+                      >
                         <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-                          <Typography variant="body2" color="text.secondary">所有者权益</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#6366f1", mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            所有者权益
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: "bold",
+                              color: "#6366f1",
+                              mt: 0.5,
+                            }}
+                          >
                             {formatCurrencyLocal(businessOverview.total_equity)}
                           </Typography>
                         </Paper>
                         <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-                          <Typography variant="body2" color="text.secondary">总费用</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#ea580c", mt: 0.5 }}>
-                            {formatCurrencyLocal(businessOverview.total_expenses)}
+                          <Typography variant="body2" color="text.secondary">
+                            总费用
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: "bold",
+                              color: "#ea580c",
+                              mt: 0.5,
+                            }}
+                          >
+                            {formatCurrencyLocal(
+                              businessOverview.total_expenses,
+                            )}
                           </Typography>
                         </Paper>
                         <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-                          <Typography variant="body2" color="text.secondary">现金流量</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#16a34a", mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            现金流量
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: "bold",
+                              color: "#16a34a",
+                              mt: 0.5,
+                            }}
+                          >
                             {formatCurrencyLocal(businessOverview.cash_flow)}
                           </Typography>
                         </Paper>
                         <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-                          <Typography variant="body2" color="text.secondary">应收账款周转</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#2563eb", mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            应收账款周转
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: "bold",
+                              color: "#2563eb",
+                              mt: 0.5,
+                            }}
+                          >
                             {businessOverview.receivable_turnover.toFixed(2)}次
                           </Typography>
                         </Paper>
                         <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-                          <Typography variant="body2" color="text.secondary">存货周转</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: "bold", color: "#9333ea", mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            存货周转
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: "bold",
+                              color: "#9333ea",
+                              mt: 0.5,
+                            }}
+                          >
                             {businessOverview.inventory_turnover.toFixed(2)}次
                           </Typography>
                         </Paper>
                         <Paper sx={{ p: 2, bgcolor: "grey.100" }}>
-                          <Typography variant="body2" color="text.secondary">报告期间</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: "bold", mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            报告期间
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{ fontWeight: "bold", mt: 0.5 }}
+                          >
                             {businessOverview.period}
                           </Typography>
                         </Paper>
@@ -669,8 +971,7 @@ const FinanceReportsPage: React.FC = () => {
                   </Card>
                 </>
               )
-            )
-          )}
+            ))}
 
           {activeTab >= 1 && (
             <Box sx={{ p: 4, textAlign: "center" }}>

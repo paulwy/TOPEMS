@@ -200,25 +200,49 @@ const ProductionOrderManagementPage: React.FC = () => {
       cancelled: { label: "已取消", variant: "destructive" },
     };
     const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Chip size="small" variant={s.variant === "outline" ? "outlined" : "filled"} label={s.label} />;
+    return (
+      <Chip
+        size="small"
+        variant={s.variant === "outline" ? "outlined" : "filled"}
+        label={s.label}
+      />
+    );
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>生产订单管理</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            生产订单管理
+          </Typography>
           <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理生产订单信息,包括订单号、产品名称、数量、计划时间等
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              mb: 3,
+            }}
+          >
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ position: 'relative' }}>
-                <Search style={{ position: 'absolute', left: 8, top: 12, width: 16, height: 16, color: 'text.secondary' }} />
+              <Box sx={{ position: "relative" }}>
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: 8,
+                    top: 12,
+                    width: 16,
+                    height: 16,
+                    color: "text.secondary",
+                  }}
+                />
                 <TextField
                   placeholder="搜索订单号或产品名称..."
                   value={searchTerm}
@@ -227,7 +251,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                     setCurrentPage(1);
                   }}
                   size="small"
-                  sx={{ pl: 4, width: '100%' }}
+                  sx={{ pl: 4, width: "100%" }}
                 />
               </Box>
             </Box>
@@ -261,7 +285,17 @@ const ProductionOrderManagementPage: React.FC = () => {
           </Box>
 
           {selectedIds.length > 0 && (
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box
+              sx={{
+                mb: 2,
+                p: 2,
+                bgcolor: "action.hover",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography variant="body2">
                 已选择 {selectedIds.length} 个订单
               </Typography>
@@ -275,7 +309,13 @@ const ProductionOrderManagementPage: React.FC = () => {
             </Box>
           )}
 
-          <Box sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+          <Box
+            sx={{
+              borderRadius: 1,
+              border: "1px solid",
+              borderColor: "divider",
+            }}
+          >
             <Table>
               <TableHead>
                 <TableRow>
@@ -294,13 +334,13 @@ const ProductionOrderManagementPage: React.FC = () => {
                   <TableCell>计划开始时间</TableCell>
                   <TableCell>计划结束时间</TableCell>
                   <TableCell>状态</TableCell>
-                  <TableCell sx={{ textAlign: 'right' }}>操作</TableCell>
+                  <TableCell sx={{ textAlign: "right" }}>操作</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} sx={{ textAlign: 'center' }}>
+                    <TableCell colSpan={8} sx={{ textAlign: "center" }}>
                       <EmptyState
                         title="暂无生产订单数据"
                         description="点击上方按钮添加第一个生产订单"
@@ -332,17 +372,14 @@ const ProductionOrderManagementPage: React.FC = () => {
                         ).toLocaleDateString("zh-CN")}
                       </TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell sx={{ textAlign: 'right' }}>
+                      <TableCell sx={{ textAlign: "right" }}>
                         <Button
                           size="small"
                           onClick={() => handleViewDetail(order)}
                         >
                           <Eye style={{ width: 16, height: 16 }} />
                         </Button>
-                        <Button
-                          size="small"
-                          onClick={() => handleEdit(order)}
-                        >
+                        <Button size="small" onClick={() => handleEdit(order)}>
                           <Edit style={{ width: 16, height: 16 }} />
                         </Button>
                         <Button
@@ -359,8 +396,15 @@ const ProductionOrderManagementPage: React.FC = () => {
             </Table>
           </Box>
 
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
             </Typography>
@@ -371,24 +415,35 @@ const ProductionOrderManagementPage: React.FC = () => {
               rowsPerPage={pageSize}
               onPageChange={(_, newPage) => setCurrentPage(newPage + 1)}
               rowsPerPageOptions={[]}
-              sx={{ '.MuiTablePagination-toolbar': { minHeight: 0 } }}
+              sx={{ ".MuiTablePagination-toolbar": { minHeight: 0 } }}
             />
           </Box>
         </CardContent>
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md">
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth="md"
+      >
         <DialogTitle>
           {selectedOrder ? "编辑生产订单" : "新增生产订单"}
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
             {selectedOrder ? "修改生产订单信息" : "填写新生产订单信息"}
           </Typography>
           <form onSubmit={handleSubmit}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, py: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                gap: 2,
+                py: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <InputLabel htmlFor="order_number">订单号 *</InputLabel>
                 <TextField
                   id="order_number"
@@ -400,7 +455,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                   }
                 />
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <InputLabel htmlFor="product_name">产品名称 *</InputLabel>
                 <TextField
                   id="product_name"
@@ -412,7 +467,7 @@ const ProductionOrderManagementPage: React.FC = () => {
                   }
                 />
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 <InputLabel htmlFor="quantity">数量 *</InputLabel>
                 <TextField
                   id="quantity"
@@ -428,8 +483,10 @@ const ProductionOrderManagementPage: React.FC = () => {
                   }
                 />
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor="scheduled_start_date">计划开始时间 *</InputLabel>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <InputLabel htmlFor="scheduled_start_date">
+                  计划开始时间 *
+                </InputLabel>
                 <TextField
                   id="scheduled_start_date"
                   type="datetime-local"
@@ -444,8 +501,10 @@ const ProductionOrderManagementPage: React.FC = () => {
                   }
                 />
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <InputLabel htmlFor="scheduled_end_date">计划结束时间 *</InputLabel>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <InputLabel htmlFor="scheduled_end_date">
+                  计划结束时间 *
+                </InputLabel>
                 <TextField
                   id="scheduled_end_date"
                   type="datetime-local"
@@ -478,30 +537,52 @@ const ProductionOrderManagementPage: React.FC = () => {
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md">
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="md"
+      >
         <DialogTitle>生产订单详情</DialogTitle>
         <DialogContent>
           {selectedOrder && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                  gap: 2,
+                }}
+              >
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>订单号</InputLabel>
-                  <Typography sx={{ fontWeight: 500 }}>{selectedOrder.order_number}</Typography>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    订单号
+                  </InputLabel>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {selectedOrder.order_number}
+                  </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>产品名称</InputLabel>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    产品名称
+                  </InputLabel>
                   <Typography>{selectedOrder.product_name}</Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>数量</InputLabel>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    数量
+                  </InputLabel>
                   <Typography>{selectedOrder.quantity}</Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    状态
+                  </InputLabel>
                   <Box>{getStatusBadge(selectedOrder.status)}</Box>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>计划开始时间</InputLabel>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    计划开始时间
+                  </InputLabel>
                   <Typography>
                     {new Date(
                       selectedOrder.scheduled_start_date || "",
@@ -509,7 +590,9 @@ const ProductionOrderManagementPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>计划结束时间</InputLabel>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    计划结束时间
+                  </InputLabel>
                   <Typography>
                     {new Date(
                       selectedOrder.scheduled_end_date || "",
@@ -517,13 +600,17 @@ const ProductionOrderManagementPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    创建时间
+                  </InputLabel>
                   <Typography>
                     {new Date(selectedOrder.created_at).toLocaleString("zh-CN")}
                   </Typography>
                 </Box>
                 <Box>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>更新时间</InputLabel>
+                  <InputLabel sx={{ color: "text.secondary", fontSize: 12 }}>
+                    更新时间
+                  </InputLabel>
                   <Typography>
                     {new Date(selectedOrder.updated_at).toLocaleString("zh-CN")}
                   </Typography>

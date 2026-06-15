@@ -148,7 +148,14 @@ const FlowInstanceListPage: React.FC = () => {
 
   const getStatusBadgeVariant = (
     status: string,
-  ): "success" | "error" | "info" | "warning" | "default" | "primary" | "secondary" => {
+  ):
+    | "success"
+    | "error"
+    | "info"
+    | "warning"
+    | "default"
+    | "primary"
+    | "secondary" => {
     switch (status) {
       case "completed":
         return "success";
@@ -219,7 +226,9 @@ const FlowInstanceListPage: React.FC = () => {
           return (
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <FileText size={16} />
-              <Typography variant="body2">{workflow?.name || "未知"}</Typography>
+              <Typography variant="body2">
+                {workflow?.name || "未知"}
+              </Typography>
             </Stack>
           );
         },
@@ -234,7 +243,11 @@ const FlowInstanceListPage: React.FC = () => {
               {getStatusIcon(status)}
               <Chip
                 size="small"
-                variant={getStatusBadgeVariant(status) === "warning" ? "outlined" : "filled"}
+                variant={
+                  getStatusBadgeVariant(status) === "warning"
+                    ? "outlined"
+                    : "filled"
+                }
                 color={getStatusBadgeVariant(status)}
                 label={getStatusText(status)}
               />
@@ -278,9 +291,7 @@ const FlowInstanceListPage: React.FC = () => {
               <Tooltip title="查看详情">
                 <IconButton
                   size="small"
-                  onClick={() =>
-                    navigate(`/flow/instances/${row.original.id}`)
-                  }
+                  onClick={() => navigate(`/flow/instances/${row.original.id}`)}
                 >
                   <Eye size={20} />
                 </IconButton>
@@ -298,17 +309,34 @@ const FlowInstanceListPage: React.FC = () => {
       {/* Header */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 3 }}>
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft size={20} />
               </IconButton>
-              <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: "primary.light",
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <GitBranch size={24} style={{ color: "#6366f1" }} />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>工作流实例</Typography>
-                <Typography variant="body2" color="text.secondary">管理运行中的工作流实例</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  工作流实例
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  管理运行中的工作流实例
+                </Typography>
               </Box>
             </Stack>
             <Stack direction="row" spacing={1}>
@@ -326,7 +354,14 @@ const FlowInstanceListPage: React.FC = () => {
       </Card>
 
       {/* Stats Cards */}
-      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 2, mb: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: 2,
+          mb: 3,
+        }}
+      >
         {Object.entries(statusCounts).map(([status, count]) => (
           <Card
             key={status}
@@ -338,7 +373,9 @@ const FlowInstanceListPage: React.FC = () => {
             onClick={() => setStatusFilter(status)}
           >
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>{count}</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                {count}
+              </Typography>
               <Typography variant="body2" color="text.secondary">
                 {status === "all" ? "全部" : getStatusText(status)}
               </Typography>
@@ -380,7 +417,22 @@ const FlowInstanceListPage: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Button variant="outlined" onClick={loadData} startIcon={loading ? <Loader2 size={20} sx={{ animation: loading ? "spin 1s linear infinite" : "none" }} /> : <RefreshIcon />}>
+            <Button
+              variant="outlined"
+              onClick={loadData}
+              startIcon={
+                loading ? (
+                  <Loader2
+                    size={20}
+                    sx={{
+                      animation: loading ? "spin 1s linear infinite" : "none",
+                    }}
+                  />
+                ) : (
+                  <RefreshIcon />
+                )
+              }
+            >
               刷新
             </Button>
           </Stack>
@@ -394,7 +446,12 @@ const FlowInstanceListPage: React.FC = () => {
             <Box sx={{ p: 4 }}>
               <Stack spacing={2}>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <Stack key={i} direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                  <Stack
+                    key={i}
+                    direction="row"
+                    spacing={2}
+                    sx={{ alignItems: "center" }}
+                  >
                     <Skeleton variant="circular" width={48} height={48} />
                     <Box sx={{ flex: 1 }}>
                       <Skeleton variant="text" width="75%" />
@@ -416,7 +473,12 @@ const FlowInstanceListPage: React.FC = () => {
       </Card>
 
       {/* Create Modal */}
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>启动工作流实例</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -425,7 +487,12 @@ const FlowInstanceListPage: React.FC = () => {
               <Select
                 value={createFormData.workflow_id}
                 label="选择工作流 *"
-                onChange={(e) => setCreateFormData({ ...createFormData, workflow_id: e.target.value })}
+                onChange={(e) =>
+                  setCreateFormData({
+                    ...createFormData,
+                    workflow_id: e.target.value,
+                  })
+                }
               >
                 {workflows.map((w) => (
                   <MenuItem key={w.id} value={w.id}>
@@ -438,7 +505,12 @@ const FlowInstanceListPage: React.FC = () => {
               size="small"
               label="发起人ID"
               value={createFormData.initiator_id}
-              onChange={(e) => setCreateFormData({ ...createFormData, initiator_id: e.target.value })}
+              onChange={(e) =>
+                setCreateFormData({
+                  ...createFormData,
+                  initiator_id: e.target.value,
+                })
+              }
               placeholder="可选"
               fullWidth
             />
@@ -452,7 +524,11 @@ const FlowInstanceListPage: React.FC = () => {
             variant="contained"
             onClick={handleStartInstance}
             disabled={creating || !createFormData.workflow_id}
-            startIcon={creating ? <Loader2 size={16} className="animate-spin" /> : undefined}
+            startIcon={
+              creating ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : undefined
+            }
           >
             启动
           </Button>

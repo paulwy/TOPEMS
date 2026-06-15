@@ -51,7 +51,9 @@ interface UseOfflineTilesReturn {
   ) => Promise<boolean>;
 
   // 缓存管理
-  preloadTiles: (tiles: Array<{ source: string; z: number; x: number; y: number }>) => Promise<void>;
+  preloadTiles: (
+    tiles: Array<{ source: string; z: number; x: number; y: number }>,
+  ) => Promise<void>;
   clearCache: () => Promise<void>;
 }
 
@@ -126,12 +128,7 @@ export function useOfflineTiles(
   // 获取瓦片 URL
   // 优先返回本地路径，如果 Service Worker 已注册则返回原始 URL
   const getTileUrl = useCallback(
-    (
-      source: string,
-      z: number,
-      x: number,
-      y: number,
-    ): string | null => {
+    (source: string, z: number, x: number, y: number): string | null => {
       if (!sources.includes(source)) {
         return null;
       }
@@ -151,7 +148,12 @@ export function useOfflineTiles(
 
   // 检查瓦片是否已缓存
   const isTileCached = useCallback(
-    async (source: string, z: number, x: number, y: number): Promise<boolean> => {
+    async (
+      source: string,
+      z: number,
+      x: number,
+      y: number,
+    ): Promise<boolean> => {
       if (!("indexedDB" in window)) return false;
 
       try {

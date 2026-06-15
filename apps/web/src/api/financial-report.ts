@@ -341,7 +341,8 @@ export const financialReportApi = {
     include_notes?: boolean; // 包含附注
     include_comparison?: boolean; // 包含对比数据
   }): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
     return downloadBlob(baseURL, "/api/v1/reports/export", { params });
   },
 
@@ -366,15 +367,20 @@ export const financialReportApi = {
     currency_code?: string;
     format: "pdf" | "xlsx";
   }): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, `/api/v1/reports/consolidated/${params.consolidation_id}/export`, {
-      params: {
-        report_type: params.report_type,
-        period: params.period,
-        currency_code: params.currency_code,
-        format: params.format,
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(
+      baseURL,
+      `/api/v1/reports/consolidated/${params.consolidation_id}/export`,
+      {
+        params: {
+          report_type: params.report_type,
+          period: params.period,
+          currency_code: params.currency_code,
+          format: params.format,
+        },
       },
-    });
+    );
   },
 
   // ============================================

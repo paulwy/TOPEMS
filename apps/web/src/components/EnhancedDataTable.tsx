@@ -128,8 +128,10 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   });
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [exportAnchorEl, setExportAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [settingsAnchorEl, setSettingsAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [exportAnchorEl, setExportAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+  const [settingsAnchorEl, setSettingsAnchorEl] =
+    React.useState<null | HTMLElement>(null);
   const addNotification = useAppStore((state) => state.addNotification);
 
   const { exportToCSV, exportToExcel } = useExportData(columns);
@@ -275,8 +277,24 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, width: "100%" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 2,
+              width: "100%",
+            }}
+          >
             {searchKey && (
               <Box sx={{ position: "relative", width: "100%", maxWidth: 320 }}>
                 <Search
@@ -312,7 +330,15 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
             )}
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
             {onRefresh && (
               <Button
                 variant="outlined"
@@ -361,7 +387,9 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                 transformOrigin={{ vertical: "top", horizontal: "right" }}
               >
                 <MenuList>
-                  <Box sx={{ px: 2, py: 1, fontWeight: 500, fontSize: "0.875rem" }}>
+                  <Box
+                    sx={{ px: 2, py: 1, fontWeight: 500, fontSize: "0.875rem" }}
+                  >
                     显示/隐藏列
                   </Box>
                   <Divider />
@@ -375,9 +403,13 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                         {(column.columnDef.header as string) || column.id}
                       </span>
                       {column.getIsVisible() ? (
-                        <Eye style={{ width: 16, height: 16, color: "green" }} />
+                        <Eye
+                          style={{ width: 16, height: 16, color: "green" }}
+                        />
                       ) : (
-                        <EyeOff style={{ width: 16, height: 16, color: "gray" }} />
+                        <EyeOff
+                          style={{ width: 16, height: 16, color: "gray" }}
+                        />
                       )}
                     </MenuItem>
                   ))}
@@ -388,12 +420,27 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
         </Box>
 
         {hasSelected && (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "primary.light", px: 2, py: 1.5, borderRadius: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              bgcolor: "primary.light",
+              px: 2,
+              py: 1.5,
+              borderRadius: 1,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <span style={{ fontSize: "0.875rem", color: "primary.dark" }}>
                 已选择{" "}
-                <Chip label={selectedIds.length} size="small" color="primary" sx={{ mx: 0.5 }} />
-                {" "}条记录
+                <Chip
+                  label={selectedIds.length}
+                  size="small"
+                  color="primary"
+                  sx={{ mx: 0.5 }}
+                />{" "}
+                条记录
               </span>
             </Box>
             <Button
@@ -407,7 +454,14 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
         )}
       </Box>
 
-      <Box sx={{ borderRadius: 1, overflow: "hidden", border: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          borderRadius: 1,
+          overflow: "hidden",
+          border: 1,
+          borderColor: "divider",
+        }}
+      >
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table size={compact ? "small" : "medium"}>
             <TableHead>
@@ -425,16 +479,32 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                   {headerGroup.headers.map((header) => (
                     <TableCell
                       key={header.id}
-                      sx={{ whiteSpace: "nowrap", ...(compact && { py: 1, fontSize: "0.75rem" }) }}
+                      sx={{
+                        whiteSpace: "nowrap",
+                        ...(compact && { py: 1, fontSize: "0.75rem" }),
+                      }}
                     >
                       {header.isPlaceholder ? null : (
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, cursor: "pointer" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            cursor: "pointer",
+                          }}
+                        >
                           {flexRender(
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
                           {header.column.getCanSort() && (
-                            <ChevronDown style={{ width: 12, height: 12, color: "rgba(0,0,0,0.25)" }} />
+                            <ChevronDown
+                              style={{
+                                width: 12,
+                                height: 12,
+                                color: "rgba(0,0,0,0.25)",
+                              }}
+                            />
                           )}
                         </Box>
                       )}
@@ -450,7 +520,14 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                     colSpan={columns.length + (enableSelection ? 1 : 0)}
                     sx={{ height: 96, textAlign: "center" }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 1,
+                      }}
+                    >
                       <CircularProgress size={16} />
                       <span>加载中...</span>
                     </Box>
@@ -464,8 +541,13 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                     onClick={() => onRowClick?.(row.original)}
                     sx={{
                       cursor: onRowClick ? "pointer" : "default",
-                      "&:hover": { bgcolor: onRowClick ? "action.hover" : "inherit" },
-                      bgcolor: striped && row.index % 2 === 0 ? "action.hover" : "inherit",
+                      "&:hover": {
+                        bgcolor: onRowClick ? "action.hover" : "inherit",
+                      },
+                      bgcolor:
+                        striped && row.index % 2 === 0
+                          ? "action.hover"
+                          : "inherit",
                       ...(compact && { fontSize: "0.875rem" }),
                     }}
                   >
@@ -507,9 +589,20 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                     sx={{ height: 96, textAlign: "center" }}
                   >
                     {emptyState || (
-                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 1,
+                        }}
+                      >
                         <Box sx={{ color: "text.disabled" }}>暂无数据</Box>
-                        <Button variant="outlined" size="small" onClick={onRefresh}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={onRefresh}
+                        >
                           刷新数据
                         </Button>
                       </Box>
@@ -524,7 +617,15 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
 
       {(enablePagination || table.getPageCount() > 1) && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <span style={{ fontSize: "0.875rem", color: "text.secondary" }}>
                 {totalItems !== undefined
@@ -533,11 +634,17 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
               </span>
               {(onPageSizeChange || !enablePagination) && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <span style={{ fontSize: "0.875rem", color: "text.secondary" }}>每页</span>
+                  <span
+                    style={{ fontSize: "0.875rem", color: "text.secondary" }}
+                  >
+                    每页
+                  </span>
                   <Box
                     component="select"
                     value={enablePagination ? pageSize : pagination.pageSize}
-                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    onChange={(e) =>
+                      handlePageSizeChange(Number(e.target.value))
+                    }
                     sx={{
                       border: "1px solid",
                       borderColor: "divider",
@@ -572,7 +679,11 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                   (enablePagination && currentPage <= 0) ||
                   !table.getCanPreviousPage()
                 }
-                sx={{ display: { xs: "flex", sm: "none" }, minWidth: 32, p: 0.5 }}
+                sx={{
+                  display: { xs: "flex", sm: "none" },
+                  minWidth: 32,
+                  p: 0.5,
+                }}
               >
                 <ChevronLeft style={{ width: 16, height: 16 }} />
               </Button>
@@ -599,7 +710,9 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                 {pageButtons.map((pageNum) => (
                   <Button
                     key={pageNum}
-                    variant={displayPageIndex === pageNum ? "contained" : "outlined"}
+                    variant={
+                      displayPageIndex === pageNum ? "contained" : "outlined"
+                    }
                     size="small"
                     onClick={() => {
                       if (enablePagination && onPageChange) {
@@ -647,7 +760,11 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                   (enablePagination && currentPage >= (totalPages || 1) - 1) ||
                   !table.getCanNextPage()
                 }
-                sx={{ display: { xs: "flex", sm: "none" }, minWidth: 32, p: 0.5 }}
+                sx={{
+                  display: { xs: "flex", sm: "none" },
+                  minWidth: 32,
+                  p: 0.5,
+                }}
               >
                 <ChevronRight style={{ width: 16, height: 16 }} />
               </Button>
@@ -667,8 +784,17 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
             {advancedFilters.map((filter) => (
-              <Box key={String(filter.key)} sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <Box sx={{ fontSize: "0.875rem", fontWeight: 500, color: "text.primary" }}>
+              <Box
+                key={String(filter.key)}
+                sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+              >
+                <Box
+                  sx={{
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "text.primary",
+                  }}
+                >
                   {filter.label}
                 </Box>
                 {filter.type === "select" && filter.options ? (
@@ -706,7 +832,14 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                 )}
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 1,
+                mt: 2,
+              }}
+            >
               <Button
                 variant="outlined"
                 onClick={() => {
@@ -716,7 +849,10 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
               >
                 重置
               </Button>
-              <Button variant="contained" onClick={() => setShowAdvancedFilter(false)}>
+              <Button
+                variant="contained"
+                onClick={() => setShowAdvancedFilter(false)}
+              >
                 应用筛选
               </Button>
             </Box>

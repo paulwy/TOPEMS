@@ -63,14 +63,20 @@ const contractTypes = [
   { value: "consulting", label: "咨询合同" },
 ];
 
-const statusMap: Record<string, { text: string; color: "success" | "error" | "default" | "warning" }> = {
+const statusMap: Record<
+  string,
+  { text: string; color: "success" | "error" | "default" | "warning" }
+> = {
   active: { text: "生效中", color: "success" },
   expired: { text: "已到期", color: "error" },
   terminated: { text: "已终止", color: "default" },
   pending: { text: "待审批", color: "warning" },
 };
 
-const renewalStatusMap: Record<string, { text: string; color: "success" | "error" | "default" | "warning" | "info" }> = {
+const renewalStatusMap: Record<
+  string,
+  { text: string; color: "success" | "error" | "default" | "warning" | "info" }
+> = {
   pending: { text: "待审批", color: "warning" },
   approved: { text: "已批准", color: "success" },
   rejected: { text: "已拒绝", color: "error" },
@@ -492,18 +498,35 @@ export default function ContractManagementPage() {
         </DialogActions>
       </Dialog>
 
-      <Box sx={{ bgcolor: "white", borderBottom: 1, borderColor: "divider", boxShadow: 1 }}>
+      <Box
+        sx={{
+          bgcolor: "white",
+          borderBottom: 1,
+          borderColor: "divider",
+          boxShadow: 1,
+        }}
+      >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "grey.900" }}
+              >
                 合同管理
               </Typography>
               <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
                 管理员工合同信息，包括合同创建、到期提醒和续签流程
               </Typography>
             </Box>
-            <Button variant="contained" onClick={handleCreate} startIcon={<Plus size={18} />}>
+            <Button
+              variant="contained"
+              onClick={handleCreate}
+              startIcon={<Plus size={18} />}
+            >
               新建合同
             </Button>
           </Stack>
@@ -515,8 +538,16 @@ export default function ContractManagementPage() {
           <CardHeader
             sx={{ pb: 1 }}
             title={
-              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }} spacing={2}>
-                <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+              <Stack
+                direction="row"
+                sx={{ alignItems: "center", justifyContent: "space-between" }}
+                spacing={2}
+              >
+                <Stack
+                  direction="row"
+                  sx={{ alignItems: "center" }}
+                  spacing={2}
+                >
                   <TextField
                     size="small"
                     type="text"
@@ -524,7 +555,16 @@ export default function ContractManagementPage() {
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                    InputProps={{ startAdornment: <Search size={16} style={{ marginRight: 8, color: "#9ca3af" }} /> }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <Search
+                            size={16}
+                            style={{ marginRight: 8, color: "#9ca3af" }}
+                          />
+                        ),
+                      },
+                    }}
                     sx={{ width: 280 }}
                   />
                   <FormControl size="small" sx={{ width: 160 }}>
@@ -550,7 +590,11 @@ export default function ContractManagementPage() {
                         }}
                       />
                     }
-                    label={<Typography variant="body2">仅显示即将到期(30天内)</Typography>}
+                    label={
+                      <Typography variant="body2">
+                        仅显示即将到期(30天内)
+                      </Typography>
+                    }
                   />
                 </Stack>
                 <Button
@@ -582,13 +626,27 @@ export default function ContractManagementPage() {
                     <TableRow>
                       <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                         <Box sx={{ display: "flex", justifyContent: "center" }}>
-                          <Box sx={{ animation: "spin 1s linear infinite", width: 32, height: 32, border: 2, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%" }} />
+                          <Box
+                            sx={{
+                              animation: "spin 1s linear infinite",
+                              width: 32,
+                              height: 32,
+                              border: 2,
+                              borderColor: "primary.main",
+                              borderTopColor: "transparent",
+                              borderRadius: "50%",
+                            }}
+                          />
                         </Box>
                       </TableCell>
                     </TableRow>
                   ) : data.items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 6, color: "grey.500" }}>
+                      <TableCell
+                        colSpan={7}
+                        align="center"
+                        sx={{ py: 6, color: "grey.500" }}
+                      >
                         暂无数据
                       </TableCell>
                     </TableRow>
@@ -600,9 +658,18 @@ export default function ContractManagementPage() {
                       return (
                         <TableRow key={item.id} hover>
                           <TableCell>
-                            <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
-                              <FileTextIcon size={16} style={{ color: "#3b82f6" }} />
-                              <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
+                            <Stack
+                              direction="row"
+                              sx={{ alignItems: "center" }}
+                              spacing={1}
+                            >
+                              <FileTextIcon
+                                size={16}
+                                style={{ color: "#3b82f6" }}
+                              />
+                              <Typography
+                                sx={{ fontWeight: 500, color: "grey.900" }}
+                              >
                                 {item.contract_no || "-"}
                               </Typography>
                             </Stack>
@@ -621,11 +688,23 @@ export default function ContractManagementPage() {
                               : "-"}
                           </TableCell>
                           <TableCell>
-                            <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
-                              <Calendar size={14} style={{ color: "#9ca3af" }} />
+                            <Stack
+                              direction="row"
+                              sx={{ alignItems: "center" }}
+                              spacing={1}
+                            >
+                              <Calendar
+                                size={14}
+                                style={{ color: "#9ca3af" }}
+                              />
                               <Typography
                                 variant="body2"
-                                sx={{ color: isExpiringSoon ? "warning.main" : "grey.600", fontWeight: isExpiringSoon ? 500 : 400 }}
+                                sx={{
+                                  color: isExpiringSoon
+                                    ? "warning.main"
+                                    : "grey.600",
+                                  fontWeight: isExpiringSoon ? 500 : 400,
+                                }}
                               >
                                 {new Date(item.start_date).toLocaleDateString(
                                   "zh-CN",
@@ -639,9 +718,22 @@ export default function ContractManagementPage() {
                               </Typography>
                             </Stack>
                             {isExpiringSoon && days !== null && (
-                              <Stack sx={{ display: "flex", flexDirection: "row", alignItems: "center", mt: 0.5 }}>
-                                <AlertCircle size={12} style={{ color: "#ea580c" }} />
-                                <Typography variant="caption" sx={{ color: "warning.main" }}>
+                              <Stack
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "row",
+                                  alignItems: "center",
+                                  mt: 0.5,
+                                }}
+                              >
+                                <AlertCircle
+                                  size={12}
+                                  style={{ color: "#ea580c" }}
+                                />
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: "warning.main" }}
+                                >
                                   剩余{days}天到期
                                 </Typography>
                               </Stack>
@@ -650,19 +742,27 @@ export default function ContractManagementPage() {
                           <TableCell>
                             <Chip
                               size="small"
-                              label={statusMap[item.status]?.text || item.status}
+                              label={
+                                statusMap[item.status]?.text || item.status
+                              }
                               color={statusMap[item.status]?.color || "default"}
                             />
                           </TableCell>
                           <TableCell>
                             <Stack direction="row" spacing={0.5}>
                               <Tooltip title="查看">
-                                <IconButton size="small" onClick={() => handleView(item)}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleView(item)}
+                                >
                                   <Eye size={16} />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="编辑">
-                                <IconButton size="small" onClick={() => handleEdit(item)}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEdit(item)}
+                                >
                                   <Edit2 size={16} />
                                 </IconButton>
                               </Tooltip>
@@ -671,7 +771,10 @@ export default function ContractManagementPage() {
                                   <IconButton
                                     size="small"
                                     onClick={() => handleRenew(item)}
-                                    sx={{ color: "success.main", "&:hover": { bgcolor: "success.lighter" } }}
+                                    sx={{
+                                      color: "success.main",
+                                      "&:hover": { bgcolor: "success.lighter" },
+                                    }}
                                   >
                                     <RefreshCw size={16} />
                                   </IconButton>
@@ -685,7 +788,10 @@ export default function ContractManagementPage() {
                                       handleDelete(item.id),
                                     )
                                   }
-                                  sx={{ color: "error.main", "&:hover": { bgcolor: "error.lighter" } }}
+                                  sx={{
+                                    color: "error.main",
+                                    "&:hover": { bgcolor: "error.lighter" },
+                                  }}
                                 >
                                   <Trash2 size={16} />
                                 </IconButton>
@@ -701,7 +807,10 @@ export default function ContractManagementPage() {
             </TableContainer>
 
             <Divider sx={{ my: 2 }} />
-            <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Stack
+              direction="row"
+              sx={{ alignItems: "center", justifyContent: "space-between" }}
+            >
               <Typography variant="body2" sx={{ color: "grey.500" }}>
                 共 {data.total} 条记录
               </Typography>
@@ -753,7 +862,10 @@ export default function ContractManagementPage() {
                     value={formState.employee_id}
                     label="员工"
                     onChange={(e) =>
-                      setFormState((s) => ({ ...s, employee_id: e.target.value }))
+                      setFormState((s) => ({
+                        ...s,
+                        employee_id: e.target.value,
+                      }))
                     }
                   >
                     <MenuItem value="">请选择员工</MenuItem>
@@ -789,7 +901,10 @@ export default function ContractManagementPage() {
                     value={formState.contract_type}
                     label="合同类型"
                     onChange={(e) =>
-                      setFormState((s) => ({ ...s, contract_type: e.target.value }))
+                      setFormState((s) => ({
+                        ...s,
+                        contract_type: e.target.value,
+                      }))
                     }
                   >
                     <MenuItem value="">请选择合同类型</MenuItem>
@@ -966,17 +1081,25 @@ export default function ContractManagementPage() {
               {currentContract && (
                 <Stack spacing={2}>
                   <Stack direction="row" spacing={2}>
-                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                    <Card
+                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
+                    >
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>合同编号</Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          合同编号
+                        </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
                           {currentContract.contract_no || "-"}
                         </Typography>
                       </CardContent>
                     </Card>
-                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                    <Card
+                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
+                    >
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>员工</Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          员工
+                        </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
                           {getEmployeeName(currentContract.employee_id)}
                         </Typography>
@@ -984,9 +1107,13 @@ export default function ContractManagementPage() {
                     </Card>
                   </Stack>
                   <Stack direction="row" spacing={2}>
-                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                    <Card
+                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
+                    >
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>合同类型</Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          合同类型
+                        </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
                           {contractTypes.find(
                             (t) => t.value === currentContract.contract_type,
@@ -994,29 +1121,47 @@ export default function ContractManagementPage() {
                         </Typography>
                       </CardContent>
                     </Card>
-                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                    <Card
+                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
+                    >
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>状态</Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          状态
+                        </Typography>
                         <Chip
                           size="small"
-                          label={statusMap[currentContract.status]?.text || currentContract.status}
-                          color={statusMap[currentContract.status]?.color || "default"}
+                          label={
+                            statusMap[currentContract.status]?.text ||
+                            currentContract.status
+                          }
+                          color={
+                            statusMap[currentContract.status]?.color ||
+                            "default"
+                          }
                         />
                       </CardContent>
                     </Card>
                   </Stack>
                   <Stack direction="row" spacing={2}>
-                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                    <Card
+                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
+                    >
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>薪资</Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          薪资
+                        </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
                           {currentContract.salary?.toLocaleString() || "-"}
                         </Typography>
                       </CardContent>
                     </Card>
-                    <Card sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}>
+                    <Card
+                      sx={{ flex: 1, bgcolor: "grey.50", boxShadow: "none" }}
+                    >
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>试用期</Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          试用期
+                        </Typography>
                         <Typography sx={{ fontWeight: 500 }}>
                           {currentContract.probation_period_days || 0} 天
                         </Typography>
@@ -1025,7 +1170,9 @@ export default function ContractManagementPage() {
                   </Stack>
                   <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
                     <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: "grey.500" }}>有效期</Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        有效期
+                      </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
                         {new Date(
                           currentContract.start_date,
@@ -1041,7 +1188,9 @@ export default function ContractManagementPage() {
                   </Card>
                   <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
                     <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: "grey.500" }}>甲方信息</Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        甲方信息
+                      </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
                         {currentContract.party_a_name || "-"}
                       </Typography>
@@ -1052,7 +1201,9 @@ export default function ContractManagementPage() {
                   </Card>
                   <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
                     <CardContent sx={{ p: 1.5 }}>
-                      <Typography variant="body2" sx={{ color: "grey.500" }}>乙方信息</Typography>
+                      <Typography variant="body2" sx={{ color: "grey.500" }}>
+                        乙方信息
+                      </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
                         {currentContract.party_b_name || "-"}
                       </Typography>
@@ -1064,8 +1215,12 @@ export default function ContractManagementPage() {
                   {currentContract.notes && (
                     <Card sx={{ bgcolor: "grey.50", boxShadow: "none" }}>
                       <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>备注</Typography>
-                        <Typography sx={{ fontWeight: 500 }}>{currentContract.notes}</Typography>
+                        <Typography variant="body2" sx={{ color: "grey.500" }}>
+                          备注
+                        </Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {currentContract.notes}
+                        </Typography>
                       </CardContent>
                     </Card>
                   )}
@@ -1073,37 +1228,66 @@ export default function ContractManagementPage() {
               )}
 
               {showRenewals && (
-                <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
-                  <Typography sx={{ fontWeight: 500, mb: 1.5 }}>续签记录</Typography>
+                <Box
+                  sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}
+                >
+                  <Typography sx={{ fontWeight: 500, mb: 1.5 }}>
+                    续签记录
+                  </Typography>
                   {renewals.length === 0 ? (
-                    <Typography sx={{ color: "grey.500", textAlign: "center", py: 2 }}>
+                    <Typography
+                      sx={{ color: "grey.500", textAlign: "center", py: 2 }}
+                    >
                       暂无续签记录
                     </Typography>
                   ) : (
                     <Stack spacing={1}>
                       {renewals.map((renewal) => (
-                        <Card key={renewal.id} sx={{ border: 1, borderColor: "divider" }}>
+                        <Card
+                          key={renewal.id}
+                          sx={{ border: 1, borderColor: "divider" }}
+                        >
                           <CardContent sx={{ p: 1.5 }}>
-                            <Stack sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                            <Stack
+                              sx={{
+                                display: "flex",
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                mb: 1,
+                              }}
+                            >
                               <Box>
                                 <Typography sx={{ fontWeight: 500 }}>
                                   {renewalTypes.find(
                                     (t) => t.value === renewal.renewal_type,
                                   )?.label || renewal.renewal_type}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: "grey.500", ml: 1 }}>
-                                  {new Date(
-                                    renewal.created_at,
-                                  ).toLocaleString("zh-CN")}
+                                <Typography
+                                  variant="body2"
+                                  sx={{ color: "grey.500", ml: 1 }}
+                                >
+                                  {new Date(renewal.created_at).toLocaleString(
+                                    "zh-CN",
+                                  )}
                                 </Typography>
                               </Box>
                               <Chip
                                 size="small"
-                                label={renewalStatusMap[renewal.status]?.text || renewal.status}
-                                color={renewalStatusMap[renewal.status]?.color || "default"}
+                                label={
+                                  renewalStatusMap[renewal.status]?.text ||
+                                  renewal.status
+                                }
+                                color={
+                                  renewalStatusMap[renewal.status]?.color ||
+                                  "default"
+                                }
                               />
                             </Stack>
-                            <Typography variant="body2" sx={{ color: "grey.600", mb: 1 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "grey.600", mb: 1 }}
+                            >
                               新合同期限:{" "}
                               {new Date(
                                 renewal.new_start_date,
@@ -1116,17 +1300,26 @@ export default function ContractManagementPage() {
                                 : "无固定期限"}
                             </Typography>
                             {renewal.new_salary && (
-                              <Typography variant="body2" sx={{ color: "grey.600", mb: 1 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.600", mb: 1 }}
+                              >
                                 新薪资: {renewal.new_salary.toLocaleString()}
                               </Typography>
                             )}
                             {renewal.renewal_reason && (
-                              <Typography variant="body2" sx={{ color: "grey.600", mb: 1 }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "grey.600", mb: 1 }}
+                              >
                                 续签原因: {renewal.renewal_reason}
                               </Typography>
                             )}
                             {renewal.rejection_reason && (
-                              <Typography variant="body2" sx={{ color: "error.main" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ color: "error.main" }}
+                              >
                                 拒绝理由: {renewal.rejection_reason}
                               </Typography>
                             )}
@@ -1191,10 +1384,18 @@ export default function ContractManagementPage() {
             </>
           ) : (
             <>
-              <Button color="inherit" onClick={() => setShowRenewals(!showRenewals)}>
+              <Button
+                color="inherit"
+                onClick={() => setShowRenewals(!showRenewals)}
+              >
                 {showRenewals ? "隐藏续签记录" : "查看续签记录"}
               </Button>
-              <Button variant="contained" onClick={() => setModalVisible(false)}>关闭</Button>
+              <Button
+                variant="contained"
+                onClick={() => setModalVisible(false)}
+              >
+                关闭
+              </Button>
             </>
           )}
         </DialogActions>
@@ -1217,7 +1418,10 @@ export default function ContractManagementPage() {
                   value={renewFormState.renewal_type}
                   label="续签类型"
                   onChange={(e) =>
-                    setRenewFormState((s) => ({ ...s, renewal_type: e.target.value }))
+                    setRenewFormState((s) => ({
+                      ...s,
+                      renewal_type: e.target.value,
+                    }))
                   }
                 >
                   {renewalTypes.map((t) => (
@@ -1297,7 +1501,9 @@ export default function ContractManagementPage() {
           <Button color="inherit" onClick={() => setRenewModalVisible(false)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleSubmitRenew}>提交申请</Button>
+          <Button variant="contained" onClick={handleSubmitRenew}>
+            提交申请
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

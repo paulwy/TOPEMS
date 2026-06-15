@@ -608,7 +608,10 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
               <FileText sx={{ width: 20, height: 20, color: "white" }} />
             </Box>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.800" }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: "grey.800" }}
+              >
                 工作流模板演示
               </Typography>
               <Typography variant="caption" sx={{ color: "grey.500" }}>
@@ -660,12 +663,17 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   flexShrink: 0,
                 }}
               >
-                <Typography sx={{ color: "white", fontWeight: 700, fontSize: 14 }}>
+                <Typography
+                  sx={{ color: "white", fontWeight: 700, fontSize: 14 }}
+                >
                   1
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 500, color: "grey.800" }}
+                >
                   选择模板
                 </Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -695,12 +703,17 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   flexShrink: 0,
                 }}
               >
-                <Typography sx={{ color: "white", fontWeight: 700, fontSize: 14 }}>
+                <Typography
+                  sx={{ color: "white", fontWeight: 700, fontSize: 14 }}
+                >
                   2
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 500, color: "grey.800" }}
+                >
                   配置变量
                 </Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -730,12 +743,17 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   flexShrink: 0,
                 }}
               >
-                <Typography sx={{ color: "white", fontWeight: 700, fontSize: 14 }}>
+                <Typography
+                  sx={{ color: "white", fontWeight: 700, fontSize: 14 }}
+                >
                   3
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 500, color: "grey.800" }}
+                >
                   渲染应用
                 </Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -786,14 +804,23 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
             }}
           >
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "grey.800" }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 600, color: "grey.800" }}
+              >
                 可用模板
               </Typography>
               <Typography variant="body2" sx={{ color: "grey.500" }}>
                 共 {templates.length} 个模板
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", gap: 2, width: { xs: "100%", sm: "auto" } }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                width: { xs: "100%", sm: "auto" },
+              }}
+            >
               <Box sx={{ position: "relative", flex: { xs: 1, sm: "none" } }}>
                 <Search
                   sx={{
@@ -841,9 +868,19 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
               }}
             >
               <RefreshCw
-                sx={{ fontSize: 24, color: "primary.main", animation: "spin 1s linear infinite", "@keyframes spin": { "0%": { transform: "rotate(0deg)" }, "100%": { transform: "rotate(360deg)" } } }}
+                sx={{
+                  fontSize: 24,
+                  color: "primary.main",
+                  animation: "spin 1s linear infinite",
+                  "@keyframes spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "100%": { transform: "rotate(360deg)" },
+                  },
+                }}
               />
-              <Typography sx={{ ml: 1, color: "grey.500" }}>加载中...</Typography>
+              <Typography sx={{ ml: 1, color: "grey.500" }}>
+                加载中...
+              </Typography>
             </Box>
           ) : (
             <Box
@@ -884,22 +921,35 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                         }}
                       >
                         <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 600 }}
+                          >
                             {template.name}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: "grey.500" }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "grey.500" }}
+                          >
                             {template.description}
                           </Typography>
                         </Box>
                         {template.ai_enabled && (
-                          <Sparkles sx={{ fontSize: 16, color: "warning.main" }} />
+                          <Sparkles
+                            sx={{ fontSize: 16, color: "warning.main" }}
+                          />
                         )}
                       </Box>
                     }
                   />
                   <CardContent>
                     <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
                     >
                       <Chip
                         label={template.template_type}
@@ -964,7 +1014,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                   }
                   subheader="请填写以下变量值"
                 />
-                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <CardContent
+                  sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                >
                   {selectedTemplate.variables?.map(
                     (varDef: TemplateVariable) => (
                       <FormControl key={varDef.key} fullWidth>
@@ -978,7 +1030,9 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                         >
                           {varDef.label}
                           {varDef.required && (
-                            <Typography sx={{ color: "error.main" }}>*</Typography>
+                            <Typography sx={{ color: "error.main" }}>
+                              *
+                            </Typography>
                           )}
                         </FormLabel>
                         {varDef.type === "select" ? (
@@ -1038,10 +1092,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
               </Card>
 
               <Box sx={{ display: "flex", gap: 2 }}>
-                <Button
-                  onClick={() => setActiveTab(0)}
-                  variant="outlined"
-                >
+                <Button onClick={() => setActiveTab(0)} variant="outlined">
                   返回选择
                 </Button>
                 <Button
@@ -1088,12 +1139,18 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                         justifyContent: "space-between",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Play sx={{ fontSize: 18 }} />
                         <Typography variant="h6">渲染结果预览</Typography>
                       </Box>
                       <Box sx={{ display: "flex", gap: 1 }}>
-                        <Button variant="outlined" size="small" startIcon={<Download sx={{ fontSize: 16 }} />}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<Download sx={{ fontSize: 16 }} />}
+                        >
                           导出
                         </Button>
                       </Box>
@@ -1147,7 +1204,10 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
                         <Typography variant="body2" sx={{ color: "grey.500" }}>
                           {key}
                         </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.800" }}>
+                        <Typography
+                          variant="body2"
+                          sx={{ fontWeight: 500, color: "grey.800" }}
+                        >
                           {typeof value === "boolean"
                             ? value
                               ? "是"
@@ -1161,10 +1221,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
               </Card>
 
               <Box sx={{ display: "flex", gap: 2 }}>
-                <Button
-                  onClick={() => setActiveTab(1)}
-                  variant="outlined"
-                >
+                <Button onClick={() => setActiveTab(1)} variant="outlined">
                   返回配置
                 </Button>
                 <Button

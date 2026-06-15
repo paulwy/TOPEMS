@@ -343,13 +343,20 @@ const KnowledgeBasePage: React.FC = () => {
       <Box sx={{ maxWidth: 1280, mx: "auto" }}>
         {/* 页面头部 */}
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box
                 sx={{
                   width: 48,
                   height: 48,
-                  background: "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                  background:
+                    "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
                   borderRadius: 2,
                   display: "flex",
                   alignItems: "center",
@@ -410,7 +417,13 @@ const KnowledgeBasePage: React.FC = () => {
                   fullWidth
                   slotProps={{
                     input: {
-                      startAdornment: <Search size={16} color="#9ca3af" style={{ marginRight: 8 }} />,
+                      startAdornment: (
+                        <Search
+                          size={16}
+                          color="#9ca3af"
+                          style={{ marginRight: 8 }}
+                        />
+                      ),
                     },
                   }}
                 />
@@ -421,7 +434,9 @@ const KnowledgeBasePage: React.FC = () => {
                   value={selectedCategory}
                   label="分类"
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  startAdornment={<Filter size={16} style={{ marginRight: 8 }} />}
+                  startAdornment={
+                    <Filter size={16} style={{ marginRight: 8 }} />
+                  }
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat.value} value={cat.value}>
@@ -435,7 +450,14 @@ const KnowledgeBasePage: React.FC = () => {
         </Card>
 
         {/* 文档统计 */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 2, mb: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           <Card>
             <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -487,14 +509,28 @@ const KnowledgeBasePage: React.FC = () => {
         <Card>
           <CardHeader
             title={
-              <Typography variant="h6" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <span>文档列表 ({filteredDocuments.length})</span>
               </Typography>
             }
           />
           <CardContent>
             {loading ? (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 6,
+                }}
+              >
                 <Box
                   sx={{
                     display: "inline-flex",
@@ -510,7 +546,11 @@ const KnowledgeBasePage: React.FC = () => {
               </Box>
             ) : filteredDocuments.length === 0 ? (
               <Box sx={{ textAlign: "center", py: 6 }}>
-                <FileSearch size={64} color="#9ca3af" style={{ margin: "0 auto 16px" }} />
+                <FileSearch
+                  size={64}
+                  color="#9ca3af"
+                  style={{ margin: "0 auto 16px" }}
+                />
                 <Typography sx={{ color: "grey.500", mb: 1 }}>
                   暂无文档
                 </Typography>
@@ -531,25 +571,76 @@ const KnowledgeBasePage: React.FC = () => {
                       "&:hover": { bgcolor: "grey.100" },
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1 }}>
-                        <FileText size={24} color="#a855f7" style={{ marginTop: 4 }} />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 1.5,
+                          flex: 1,
+                        }}
+                      >
+                        <FileText
+                          size={24}
+                          color="#a855f7"
+                          style={{ marginTop: 4 }}
+                        />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mb: 0.5,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: 600,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
                               {doc.title}
                             </Typography>
                             {doc.category && (
-                              <Chip label={doc.category} size="small" variant="outlined" />
+                              <Chip
+                                label={doc.category}
+                                size="small"
+                                variant="outlined"
+                              />
                             )}
                             {doc.status === "processed" && (
-                              <Chip label="已处理" size="small" color="success" />
+                              <Chip
+                                label="已处理"
+                                size="small"
+                                color="success"
+                              />
                             )}
                           </Box>
-                          <Typography variant="body2" sx={{ color: "grey.500", mb: 1 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "grey.500", mb: 1 }}
+                          >
                             文件名: {doc.filename}
                           </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "grey.400" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                              fontSize: "0.75rem",
+                              color: "grey.400",
+                            }}
+                          >
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                               <Calendar size={12} style={{ marginRight: 4 }} />
                               {formatDate(doc.created_at)}
@@ -563,7 +654,14 @@ const KnowledgeBasePage: React.FC = () => {
                             )}
                           </Box>
                           {doc.tags && doc.tags.length > 0 && (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                mt: 1,
+                              }}
+                            >
                               <Tag size={12} color="#9ca3af" />
                               {doc.tags.map((tag, idx) => (
                                 <Chip
@@ -577,7 +675,9 @@ const KnowledgeBasePage: React.FC = () => {
                           )}
                         </Box>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <Button
                           variant="text"
                           size="small"
@@ -596,7 +696,10 @@ const KnowledgeBasePage: React.FC = () => {
                           variant="text"
                           size="small"
                           onClick={() => handleDelete(doc.id)}
-                          sx={{ color: "error.main", "&:hover": { bgcolor: "error.light" } }}
+                          sx={{
+                            color: "error.main",
+                            "&:hover": { bgcolor: "error.light" },
+                          }}
                         >
                           <Trash2 size={16} />
                         </Button>
@@ -610,7 +713,10 @@ const KnowledgeBasePage: React.FC = () => {
         </Card>
 
         {/* 上传对话框 */}
-        <Dialog open={showUploadDialog} onClose={() => setShowUploadDialog(false)}>
+        <Dialog
+          open={showUploadDialog}
+          onClose={() => setShowUploadDialog(false)}
+        >
           <DialogTitle>上传文档</DialogTitle>
           <DialogContentText sx={{ px: 3, pt: 1 }}>
             上传文档到知识库,支持 txt、md、json、pdf、doc、docx 格式
@@ -634,7 +740,11 @@ const KnowledgeBasePage: React.FC = () => {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <Upload size={48} color="#9ca3af" style={{ margin: "0 auto 16px" }} />
+                <Upload
+                  size={48}
+                  color="#9ca3af"
+                  style={{ margin: "0 auto 16px" }}
+                />
                 <Typography sx={{ color: "grey.600", mb: 1 }}>
                   拖拽文件到这里,或点击选择文件
                 </Typography>
@@ -673,10 +783,15 @@ const KnowledgeBasePage: React.FC = () => {
                         borderRadius: 1,
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         <FileText size={16} color="#a855f7" />
                         <Typography variant="body2">{file.name}</Typography>
-                        <Typography variant="caption" sx={{ color: "grey.500" }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "grey.500" }}
+                        >
                           {formatFileSize(file.size)}
                         </Typography>
                       </Box>
@@ -731,42 +846,67 @@ const KnowledgeBasePage: React.FC = () => {
         </Dialog>
 
         {/* 文档详情对话框 */}
-        <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md" fullWidth>
+        <Dialog
+          open={showDetailDialog}
+          onClose={() => setShowDetailDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
           <DialogTitle>文档详情</DialogTitle>
           <DialogContent>
             {selectedDocument && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: 2,
+                  }}
+                >
                   <Box>
-                    <Typography variant="body2" color="text.secondary">文档标题</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      文档标题
+                    </Typography>
                     <Typography variant="body1" sx={{ fontWeight: 500 }}>
                       {selectedDocument.title}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">文件名</Typography>
-                    <Typography variant="body1">{selectedDocument.filename}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      文件名
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedDocument.filename}
+                    </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">文件大小</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      文件大小
+                    </Typography>
                     <Typography variant="body1">
                       {formatFileSize(selectedDocument.file_size)}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">文件类型</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      文件类型
+                    </Typography>
                     <Typography variant="body1">
                       {selectedDocument.mime_type || "未知"}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">创建时间</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      创建时间
+                    </Typography>
                     <Typography variant="body1">
                       {formatDate(selectedDocument.created_at)}
                     </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">更新时间</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      更新时间
+                    </Typography>
                     <Typography variant="body1">
                       {formatDate(selectedDocument.updated_at)}
                     </Typography>
@@ -774,23 +914,39 @@ const KnowledgeBasePage: React.FC = () => {
                 </Box>
                 {selectedDocument.category && (
                   <Box>
-                    <Typography variant="body2" color="text.secondary">分类</Typography>
-                    <Chip label={selectedDocument.category} size="small" variant="outlined" sx={{ mt: 0.5 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      分类
+                    </Typography>
+                    <Chip
+                      label={selectedDocument.category}
+                      size="small"
+                      variant="outlined"
+                      sx={{ mt: 0.5 }}
+                    />
                   </Box>
                 )}
                 {selectedDocument.tags && selectedDocument.tags.length > 0 && (
                   <Box>
-                    <Typography variant="body2" color="text.secondary">标签</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      标签
+                    </Typography>
                     <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
                       {selectedDocument.tags.map((tag, idx) => (
-                        <Chip key={idx} label={tag} size="small" variant="outlined" />
+                        <Chip
+                          key={idx}
+                          label={tag}
+                          size="small"
+                          variant="outlined"
+                        />
                       ))}
                     </Stack>
                   </Box>
                 )}
                 {selectedDocument.description && (
                   <Box>
-                    <Typography variant="body2" color="text.secondary">描述</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      描述
+                    </Typography>
                     <Typography variant="body1" sx={{ mt: 0.5 }}>
                       {selectedDocument.description}
                     </Typography>
@@ -798,8 +954,14 @@ const KnowledgeBasePage: React.FC = () => {
                 )}
                 {selectedDocument.file_path && (
                   <Box>
-                    <Typography variant="body2" color="text.secondary">文件路径</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      文件路径
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.5 }}
+                    >
                       {selectedDocument.file_path}
                     </Typography>
                   </Box>
@@ -827,7 +989,12 @@ const KnowledgeBasePage: React.FC = () => {
         </Dialog>
 
         {/* 编辑文档对话框 */}
-        <Dialog open={showEditDialog} onClose={() => setShowEditDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showEditDialog}
+          onClose={() => setShowEditDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>编辑文档信息</DialogTitle>
           <DialogContentText sx={{ px: 3, pt: 1 }}>
             更新文档的标题、描述、分类和标签信息
@@ -835,7 +1002,9 @@ const KnowledgeBasePage: React.FC = () => {
           <DialogContent>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <Box>
-                <Typography variant="body2" sx={{ mb: 1 }}>文档标题</Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  文档标题
+                </Typography>
                 <TextField
                   id="title"
                   value={editForm.title}
@@ -847,7 +1016,9 @@ const KnowledgeBasePage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 1 }}>分类</Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  分类
+                </Typography>
                 <FormControl size="small" fullWidth>
                   <Select
                     value={editForm.category}
@@ -856,7 +1027,9 @@ const KnowledgeBasePage: React.FC = () => {
                     }
                     displayEmpty
                   >
-                    <MenuItem value="" disabled>选择分类</MenuItem>
+                    <MenuItem value="" disabled>
+                      选择分类
+                    </MenuItem>
                     {categories
                       .filter((c) => c.value !== "all")
                       .map((cat) => (
@@ -868,7 +1041,9 @@ const KnowledgeBasePage: React.FC = () => {
                 </FormControl>
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 1 }}>标签(用逗号分隔)</Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  标签(用逗号分隔)
+                </Typography>
                 <TextField
                   id="tags"
                   value={editForm.tags}
@@ -881,7 +1056,9 @@ const KnowledgeBasePage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ mb: 1 }}>描述</Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  描述
+                </Typography>
                 <TextField
                   id="description"
                   value={editForm.description}
@@ -898,10 +1075,7 @@ const KnowledgeBasePage: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button
-              variant="outlined"
-              onClick={() => setShowEditDialog(false)}
-            >
+            <Button variant="outlined" onClick={() => setShowEditDialog(false)}>
               取消
             </Button>
             <Button variant="contained" onClick={handleSaveEdit}>

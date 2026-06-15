@@ -129,7 +129,14 @@ export const AdvancedFilter = <T extends Record<string, any>>({
         sx={{ width: 480 }}
       >
         <Box sx={{ p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
             <Box sx={{ fontWeight: 500 }}>高级筛选</Box>
             {conditions.length > 0 && (
               <Button
@@ -146,8 +153,12 @@ export const AdvancedFilter = <T extends Record<string, any>>({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {conditions.length === 0 ? (
               <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-                <Box component="p" sx={{ mb: 1 }}>暂无筛选条件</Box>
-                <Box component="p" sx={{ fontSize: "0.875rem" }}>点击下方按钮添加筛选条件</Box>
+                <Box component="p" sx={{ mb: 1 }}>
+                  暂无筛选条件
+                </Box>
+                <Box component="p" sx={{ fontSize: "0.875rem" }}>
+                  点击下方按钮添加筛选条件
+                </Box>
               </Box>
             ) : (
               conditions.map((condition, index) => {
@@ -212,7 +223,9 @@ export const AdvancedFilter = <T extends Record<string, any>>({
                               value={String(condition.value || "")}
                               label="选择值"
                               onChange={(e) =>
-                                updateCondition(index, { value: e.target.value })
+                                updateCondition(index, {
+                                  value: e.target.value,
+                                })
                               }
                             >
                               {options.map((opt) => (
@@ -228,17 +241,23 @@ export const AdvancedFilter = <T extends Record<string, any>>({
                             size="small"
                             value={
                               condition.value
-                                ? dayjs(condition.value as Date).format("YYYY-MM-DD")
+                                ? dayjs(condition.value as Date).format(
+                                    "YYYY-MM-DD",
+                                  )
                                 : ""
                             }
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>,
+                            ) =>
                               updateCondition(index, {
-                                value: e.target.value ? new Date(e.target.value) : null,
+                                value: e.target.value
+                                  ? new Date(e.target.value)
+                                  : null,
                               })
                             }
                             sx={{ width: "100%" }}
                             slotProps={{
-                              inputLabel: { shrink: true }
+                              inputLabel: { shrink: true },
                             }}
                           />
                         ) : fieldType === "number" ? (
@@ -282,7 +301,17 @@ export const AdvancedFilter = <T extends Record<string, any>>({
             )}
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mt: 2,
+              pt: 2,
+              borderTop: 1,
+              borderColor: "divider",
+            }}
+          >
             <Button
               variant="outlined"
               size="small"
@@ -320,7 +349,10 @@ export const AdvancedFilter = <T extends Record<string, any>>({
               <Chip
                 key={index}
                 label={
-                  <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Box
+                    component="span"
+                    sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                  >
                     {fieldLabel} {operator?.label}
                     {condition.value && ` "${condition.value}"`}
                   </Box>

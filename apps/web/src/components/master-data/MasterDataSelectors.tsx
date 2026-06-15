@@ -142,17 +142,35 @@ function PopupSelector<T>({
   return (
     <Dialog open={open} onClose={onOpenChange} maxWidth="lg" fullWidth>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
+      <DialogContent
+        sx={{ maxHeight: "80vh", display: "flex", flexDirection: "column" }}
+      >
         <Box sx={{ flex: 1, overflow: "auto" }}>
           {loading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 256 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: 256,
+              }}
+            >
               <CircularProgress />
             </Box>
           ) : (
             children
           )}
         </Box>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, pt: 2, borderTop: 1, borderColor: "divider" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1,
+            pt: 2,
+            borderTop: 1,
+            borderColor: "divider",
+          }}
+        >
           <Button variant="outlined" onClick={onCancel}>
             取消
           </Button>
@@ -228,7 +246,11 @@ export function CounterpartySelector({
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
+        sx={{
+          width: "100%",
+          justifyContent: "space-between",
+          ...(className && { className }),
+        }}
       >
         {selectedEntity ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -268,9 +290,21 @@ export function CounterpartySelector({
         loading={loading}
         title="选择往来单位"
       >
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v as any)} sx={{ width: "100%" }}>
-          <Tab label={`客户 (${customers.length})`} value="customer" sx={{ flex: 1 }} />
-          <Tab label={`供应商 (${suppliers.length})`} value="supplier" sx={{ flex: 1 }} />
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v as any)}
+          sx={{ width: "100%" }}
+        >
+          <Tab
+            label={`客户 (${customers.length})`}
+            value="customer"
+            sx={{ flex: 1 }}
+          />
+          <Tab
+            label={`供应商 (${suppliers.length})`}
+            value="supplier"
+            sx={{ flex: 1 }}
+          />
         </Tabs>
 
         <Box sx={{ mt: 2 }}>
@@ -313,7 +347,8 @@ export function CounterpartySelector({
                     p: 1.5,
                     borderRadius: 1,
                     cursor: "pointer",
-                    bgcolor: value === entity.id ? "action.selected" : "transparent",
+                    bgcolor:
+                      value === entity.id ? "action.selected" : "transparent",
                     "&:hover": { bgcolor: "action.hover" },
                   }}
                   onClick={() => handleSelect(entity)}
@@ -327,11 +362,16 @@ export function CounterpartySelector({
                       />
                       <span style={{ fontWeight: 500 }}>{entity.name}</span>
                     </Box>
-                    <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.5 }}>
+                    <Box
+                      sx={{
+                        fontSize: "0.875rem",
+                        color: "text.secondary",
+                        mt: 0.5,
+                      }}
+                    >
                       {(entity.contact_person || entity.contact_name) && (
                         <span>
-                          联系人:{" "}
-                          {entity.contact_person || entity.contact_name}
+                          联系人: {entity.contact_person || entity.contact_name}
                         </span>
                       )}
                       {(entity.phone || entity.contact_phone) && (
@@ -342,7 +382,9 @@ export function CounterpartySelector({
                     </Box>
                   </Box>
                   {value === entity.id && (
-                    <Check style={{ width: 16, height: 16, color: "primary.main" }} />
+                    <Check
+                      style={{ width: 16, height: 16, color: "primary.main" }}
+                    />
                   )}
                 </Box>
               ))
@@ -407,11 +449,19 @@ export function ProjectSelector({
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
+        sx={{
+          width: "100%",
+          justifyContent: "space-between",
+          ...(className && { className }),
+        }}
       >
         {selectedProject ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Chip label={selectedProject.code} size="small" variant="outlined" />
+            <Chip
+              label={selectedProject.code}
+              size="small"
+              variant="outlined"
+            />
             <span>{selectedProject.name}</span>
           </Box>
         ) : (
@@ -477,29 +527,48 @@ export function ProjectSelector({
                     p: 1.5,
                     borderRadius: 1,
                     cursor: "pointer",
-                    bgcolor: value === project.id ? "action.selected" : "transparent",
+                    bgcolor:
+                      value === project.id ? "action.selected" : "transparent",
                     "&:hover": { bgcolor: "action.hover" },
                   }}
                   onClick={() => handleSelect(project)}
                 >
                   <Box sx={{ flex: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Chip label={project.code} size="small" variant="outlined" />
+                      <Chip
+                        label={project.code}
+                        size="small"
+                        variant="outlined"
+                      />
                       <span style={{ fontWeight: 500 }}>{project.name}</span>
                       <Chip
-                        label={project.status === "active" ? "进行中" : project.status}
+                        label={
+                          project.status === "active"
+                            ? "进行中"
+                            : project.status
+                        }
                         size="small"
-                        color={project.status === "active" ? "primary" : "default"}
+                        color={
+                          project.status === "active" ? "primary" : "default"
+                        }
                       />
                     </Box>
                     {project.budget && (
-                      <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.5 }}>
+                      <Box
+                        sx={{
+                          fontSize: "0.875rem",
+                          color: "text.secondary",
+                          mt: 0.5,
+                        }}
+                      >
                         预算: ¥{project.budget.toLocaleString()}
                       </Box>
                     )}
                   </Box>
                   {value === project.id && (
-                    <Check style={{ width: 16, height: 16, color: "primary.main" }} />
+                    <Check
+                      style={{ width: 16, height: 16, color: "primary.main" }}
+                    />
                   )}
                 </Box>
               ))
@@ -600,11 +669,18 @@ export function DepartmentSelector({
             )}
             {!hasChildren && <Box sx={{ width: 24 }} />}
             {showCode && dept.code && (
-              <Chip label={dept.code} size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+              <Chip
+                label={dept.code}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: "0.75rem" }}
+              />
             )}
             <span>{dept.name}</span>
           </Box>
-          {value === dept.id && <Check style={{ width: 16, height: 16, color: "primary.main" }} />}
+          {value === dept.id && (
+            <Check style={{ width: 16, height: 16, color: "primary.main" }} />
+          )}
         </Box>
         {hasChildren && isExpanded && (
           <Box>
@@ -622,7 +698,11 @@ export function DepartmentSelector({
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
+        sx={{
+          width: "100%",
+          justifyContent: "space-between",
+          ...(className && { className }),
+        }}
       >
         {selectedDepartment ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -759,7 +839,9 @@ export function AccountSelector({
             cursor: hasChildren ? "default" : "pointer",
             pl: `${level * 16 + 8}px`,
             bgcolor: value === account.id ? "action.selected" : "transparent",
-            "&:hover": { bgcolor: hasChildren ? "transparent" : "action.hover" },
+            "&:hover": {
+              bgcolor: hasChildren ? "transparent" : "action.hover",
+            },
           }}
           onClick={() => {
             if (!hasChildren) {
@@ -780,7 +862,12 @@ export function AccountSelector({
             </span>
             <span>{account.name}</span>
             {account.balance_direction === "debit" ? (
-              <Chip label="借" size="small" variant="outlined" sx={{ fontSize: "0.75rem" }} />
+              <Chip
+                label="借"
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: "0.75rem" }}
+              />
             ) : (
               <Chip label="贷" size="small" sx={{ fontSize: "0.75rem" }} />
             )}
@@ -805,7 +892,11 @@ export function AccountSelector({
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
+        sx={{
+          width: "100%",
+          justifyContent: "space-between",
+          ...(className && { className }),
+        }}
       >
         {selectedAccount ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -879,7 +970,9 @@ export function AccountSelector({
           <Box sx={{ overflow: "auto", height: 350 }}>
             <Box sx={{ display: "flex", flexDirection: "column" }}>
               {filteredAccounts.length === 0 ? (
-                <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
+                <Box
+                  sx={{ textAlign: "center", py: 8, color: "text.secondary" }}
+                >
                   未找到匹配的科目
                 </Box>
               ) : (
@@ -948,7 +1041,11 @@ export function EmployeeSelector({
         role="combobox"
         onClick={() => !disabled && setOpen(true)}
         disabled={disabled}
-        sx={{ width: "100%", justifyContent: "space-between", ...(className && { className }) }}
+        sx={{
+          width: "100%",
+          justifyContent: "space-between",
+          ...(className && { className }),
+        }}
       >
         {selectedEmployee ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -1018,27 +1115,42 @@ export function EmployeeSelector({
                     p: 1.5,
                     borderRadius: 1,
                     cursor: "pointer",
-                    bgcolor: value === employee.id ? "action.selected" : "transparent",
+                    bgcolor:
+                      value === employee.id ? "action.selected" : "transparent",
                     "&:hover": { bgcolor: "action.hover" },
                   }}
                   onClick={() => handleSelect(employee)}
                 >
                   <Box sx={{ flex: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Chip label={employee.employee_no} size="small" variant="outlined" />
+                      <Chip
+                        label={employee.employee_no}
+                        size="small"
+                        variant="outlined"
+                      />
                       <span style={{ fontWeight: 500 }}>{employee.name}</span>
                     </Box>
-                    <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mt: 0.5 }}>
+                    <Box
+                      sx={{
+                        fontSize: "0.875rem",
+                        color: "text.secondary",
+                        mt: 0.5,
+                      }}
+                    >
                       {employee.department_id && (
                         <span>{employee.department_id}</span>
                       )}
                       {employee.position && (
-                        <span style={{ marginLeft: 8 }}>{employee.position}</span>
+                        <span style={{ marginLeft: 8 }}>
+                          {employee.position}
+                        </span>
                       )}
                     </Box>
                   </Box>
                   {value === employee.id && (
-                    <Check style={{ width: 16, height: 16, color: "primary.main" }} />
+                    <Check
+                      style={{ width: 16, height: 16, color: "primary.main" }}
+                    />
                   )}
                 </Box>
               ))

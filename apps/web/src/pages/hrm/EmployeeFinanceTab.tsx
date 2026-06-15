@@ -124,7 +124,13 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* 操作栏 */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography variant="h6">财务信息</Typography>
           {hasFinanceInfo && (
@@ -146,7 +152,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               variant="contained"
               onClick={handleSave}
               disabled={updateFinanceInfo.isPending}
-              startIcon={<Save style={{ width: 16, height: 16, marginRight: 4 }} />}
+              startIcon={
+                <Save style={{ width: 16, height: 16, marginRight: 4 }} />
+              }
             >
               保存
             </Button>
@@ -162,7 +170,12 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
       {/* 银行账户信息 */}
       <Card>
         <CardHeader
-          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 1,
+          }}
           title={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Banknote style={{ width: 20, height: 20, color: "#2563eb" }} />
@@ -171,9 +184,17 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }
         />
         <CardContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 2,
+            }}
+          >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>开户银行</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                开户银行
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.bank_name || ""}
@@ -192,7 +213,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>银行卡号</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                银行卡号
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.bank_card_number || ""}
@@ -214,7 +237,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>支行名称</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                支行名称
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.bank_branch || ""}
@@ -239,7 +264,12 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
       {/* 薪资信息 */}
       <Card>
         <CardHeader
-          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 1,
+          }}
           title={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <DollarSign style={{ width: 20, height: 20, color: "#16a34a" }} />
@@ -248,9 +278,17 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }
         />
         <CardContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 2,
+            }}
+          >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>基本工资</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                基本工资
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type="number"
@@ -266,13 +304,17 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   sx={{ mt: 0.5 }}
                 />
               ) : (
-                <Typography sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}>
+                <Typography
+                  sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}
+                >
                   ¥{(financeInfo?.base_salary || 0).toLocaleString("zh-CN")}
                 </Typography>
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>岗位工资</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                岗位工资
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type="number"
@@ -288,13 +330,17 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   sx={{ mt: 0.5 }}
                 />
               ) : (
-                <Typography sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}>
+                <Typography
+                  sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}
+                >
                   ¥{(financeInfo?.position_salary || 0).toLocaleString("zh-CN")}
                 </Typography>
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>技能工资</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                技能工资
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type="number"
@@ -310,7 +356,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   sx={{ mt: 0.5 }}
                 />
               ) : (
-                <Typography sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}>
+                <Typography
+                  sx={{ mt: 0.5, fontFamily: "monospace", fontWeight: 500 }}
+                >
                   ¥{(financeInfo?.skill_salary || 0).toLocaleString("zh-CN")}
                 </Typography>
               )}
@@ -319,9 +367,20 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
 
           {hasFinanceInfo && (
             <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>月薪合计</Typography>
-                <Typography variant="h6" sx={{ fontWeight: "bold", color: "success.main" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  月薪合计
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: "bold", color: "success.main" }}
+                >
                   ¥
                   {(
                     (financeInfo?.base_salary || 0) +
@@ -338,7 +397,12 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
       {/* 社保公积金 */}
       <Card>
         <CardHeader
-          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 1,
+          }}
           title={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Shield style={{ width: 20, height: 20, color: "#ea580c" }} />
@@ -347,9 +411,17 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }
         />
         <CardContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 2,
+            }}
+          >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>社保基数</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                社保基数
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type="number"
@@ -374,7 +446,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>社保比例</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                社保比例
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type="number"
@@ -382,7 +456,8 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   onChange={(e) =>
                     setEditData({
                       ...editData,
-                      social_security_ratio: parseFloat((e.target as HTMLInputElement).value) || 0,
+                      social_security_ratio:
+                        parseFloat((e.target as HTMLInputElement).value) || 0,
                     })
                   }
                   size="small"
@@ -398,7 +473,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>公积金基数</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                公积金基数
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type="number"
@@ -423,7 +500,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>公积金比例</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                公积金比例
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   type="number"
@@ -431,7 +510,8 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   onChange={(e) =>
                     setEditData({
                       ...editData,
-                      housing_fund_ratio: parseFloat((e.target as HTMLInputElement).value) || 0,
+                      housing_fund_ratio:
+                        parseFloat((e.target as HTMLInputElement).value) || 0,
                     })
                   }
                   size="small"
@@ -448,9 +528,27 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           </Box>
 
           {hasFinanceInfo && (
-            <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider", display: "flex", flexDirection: "column", gap: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>个人社保扣款(估算)</Typography>
+            <Box
+              sx={{
+                mt: 2,
+                pt: 2,
+                borderTop: 1,
+                borderColor: "divider",
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  个人社保扣款(估算)
+                </Typography>
                 <Typography sx={{ fontFamily: "monospace" }}>
                   ¥
                   {(
@@ -462,8 +560,16 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   })}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>个人公积金扣款(估算)</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  个人公积金扣款(估算)
+                </Typography>
                 <Typography sx={{ fontFamily: "monospace" }}>
                   ¥
                   {(
@@ -483,7 +589,12 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
       {/* 费用归属 */}
       <Card>
         <CardHeader
-          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 1,
+          }}
           title={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <DollarSign style={{ width: 20, height: 20, color: "#7c3aed" }} />
@@ -492,9 +603,17 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }
         />
         <CardContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 2,
+            }}
+          >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>成本中心</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                成本中心
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.cost_center_id || ""}
@@ -513,7 +632,9 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>费用科目</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                费用科目
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.expense_account_id || ""}
@@ -541,7 +662,12 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
       {/* 税务信息 */}
       <Card>
         <CardHeader
-          sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1 }}
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 1,
+          }}
           title={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Shield style={{ width: 20, height: 20, color: "#dc2626" }} />
@@ -550,9 +676,17 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }
         />
         <CardContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: 2,
+            }}
+          >
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>纳税人识别号</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                纳税人识别号
+              </FormLabel>
               {isEditing ? (
                 <TextField
                   value={editData.tax_id || ""}
@@ -565,17 +699,24 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   sx={{ mt: 0.5 }}
                 />
               ) : (
-                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>{financeInfo?.tax_id || "-"}</Typography>
+                <Typography sx={{ mt: 0.5, fontFamily: "monospace" }}>
+                  {financeInfo?.tax_id || "-"}
+                </Typography>
               )}
             </Box>
             <Box>
-              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>专项附加扣除</FormLabel>
+              <FormLabel sx={{ fontSize: 14, color: "text.secondary" }}>
+                专项附加扣除
+              </FormLabel>
               {isEditing ? (
                 <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
                   <Select
                     value={editData.tax_level?.toString() || "0"}
                     onChange={(e) =>
-                      setEditData({ ...editData, tax_level: parseInt(e.target.value) })
+                      setEditData({
+                        ...editData,
+                        tax_level: parseInt(e.target.value),
+                      })
                     }
                   >
                     <MenuItem value="0">无扣除</MenuItem>

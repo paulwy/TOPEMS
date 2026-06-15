@@ -1,4 +1,11 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+} from "@mui/material";
 import type { ReactNode } from "react";
 import React from "react";
 import { usePermission } from "../hooks/usePermission";
@@ -305,9 +312,9 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({
   };
 
   return (
-    <Chip 
-      size="small" 
-      variant={config.variant === "outline" ? "outlined" : "filled"} 
+    <Chip
+      size="small"
+      variant={config.variant === "outline" ? "outlined" : "filled"}
       className={`${sizeClasses[size]} gap-1`}
       label={config.label}
     />

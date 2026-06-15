@@ -52,9 +52,13 @@ const LanguageSelector: React.FC = () => {
             onClick={() => handleChangeLanguage(lang.code)}
             selected={currentLang === lang.code}
             sx={{
-              backgroundColor: currentLang === lang.code ? "action.selected" : "inherit",
+              backgroundColor:
+                currentLang === lang.code ? "action.selected" : "inherit",
               "&:hover": {
-                backgroundColor: currentLang === lang.code ? "action.selected" : "action.hover",
+                backgroundColor:
+                  currentLang === lang.code
+                    ? "action.selected"
+                    : "action.hover",
               },
             }}
           >
@@ -76,7 +80,12 @@ const LanguageSelector: React.FC = () => {
               </Box>
               <span>{lang.name}</span>
               {currentLang === lang.code && (
-                <Box component="span" sx={{ ml: 1, fontSize: 12, color: "text.disabled" }}>✓</Box>
+                <Box
+                  component="span"
+                  sx={{ ml: 1, fontSize: 12, color: "text.disabled" }}
+                >
+                  ✓
+                </Box>
               )}
             </Box>
           </MenuItem>

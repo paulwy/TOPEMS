@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   ClipboardList,
@@ -35,7 +36,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
   Card,
   CardContent,
   FormControlLabel,
@@ -3439,7 +3439,7 @@ const Limspage: React.FC = () => {
                   label="购买日期"
                   type="date"
                   fullWidth
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                   value={instrumentFormData.purchase_date}
                   onChange={(e) =>
                     setInstrumentFormData({
@@ -3454,7 +3454,7 @@ const Limspage: React.FC = () => {
                   label="上次校准日期"
                   type="date"
                   fullWidth
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                   value={instrumentFormData.calibration_date}
                   onChange={(e) =>
                     setInstrumentFormData({
@@ -3471,7 +3471,7 @@ const Limspage: React.FC = () => {
                   label="下次校准日期"
                   type="date"
                   fullWidth
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                   value={instrumentFormData.next_calibration_date}
                   onChange={(e) =>
                     setInstrumentFormData({
@@ -3975,7 +3975,7 @@ const Limspage: React.FC = () => {
                     type="date"
                     required
                     fullWidth
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={maintenanceFormData.performed_at}
                     onChange={(e) =>
                       setMaintenanceFormData({
@@ -3992,7 +3992,7 @@ const Limspage: React.FC = () => {
                     label="下次维护日期"
                     type="date"
                     fullWidth
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={maintenanceFormData.next_maintenance_date}
                     onChange={(e) =>
                       setMaintenanceFormData({

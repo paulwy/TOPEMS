@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useState, useEffect } from "react";
 import {
   File,
@@ -15,7 +16,6 @@ import {
   Share2,
   Star,
   Clock,
-  Grid,
   List,
   X,
   CheckCircle,
@@ -180,10 +180,14 @@ const DocumentCenterPage: React.FC = () => {
         return <FileText sx={{ width: 32, height: 32, color: "error.main" }} />;
       case "docx":
       case "doc":
-        return <FileText sx={{ width: 32, height: 32, color: "primary.main" }} />;
+        return (
+          <FileText sx={{ width: 32, height: 32, color: "primary.main" }} />
+        );
       case "xlsx":
       case "xls":
-        return <FileText sx={{ width: 32, height: 32, color: "success.main" }} />;
+        return (
+          <FileText sx={{ width: 32, height: 32, color: "success.main" }} />
+        );
       default:
         return <File sx={{ width: 32, height: 32, color: "grey.500" }} />;
     }
@@ -234,18 +238,46 @@ const DocumentCenterPage: React.FC = () => {
       />
 
       {/* Header */}
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Box
                 onClick={() => navigate("/dashboard")}
-                sx={{ p: 1, "&:hover": { bgcolor: "grey.200" }, borderRadius: 1, cursor: "pointer" }}
+                sx={{
+                  p: 1,
+                  "&:hover": { bgcolor: "grey.200" },
+                  borderRadius: 1,
+                  cursor: "pointer",
+                }}
               >
-                <ChevronLeft sx={{ width: 20, height: 20, color: "grey.600" }} />
+                <ChevronLeft
+                  sx={{ width: 20, height: 20, color: "grey.600" }}
+                />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "grey.900",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                  }}
+                >
                   <File sx={{ width: 28, height: 28, color: "primary.main" }} />
                   文档中心
                 </Typography>
@@ -257,7 +289,17 @@ const DocumentCenterPage: React.FC = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box
                 onClick={handleUpload}
-                sx={{ display: "flex", alignItems: "center", px: 2, py: 1, bgcolor: "primary.main", color: "white", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "primary.dark" } }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  bgcolor: "primary.main",
+                  color: "white",
+                  borderRadius: 2,
+                  cursor: "pointer",
+                  "&:hover": { bgcolor: "primary.dark" },
+                }}
               >
                 <Upload sx={{ width: 20, height: 20, mr: 1 }} />
                 上传文件
@@ -269,10 +311,21 @@ const DocumentCenterPage: React.FC = () => {
 
       {/* Breadcrumb */}
       <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: "0.875rem" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            fontSize: "0.875rem",
+          }}
+        >
           <Box
             onClick={() => setCurrentPath([])}
-            sx={{ color: "primary.main", cursor: "pointer", "&:hover": { color: "primary.dark" } }}
+            sx={{
+              color: "primary.main",
+              cursor: "pointer",
+              "&:hover": { color: "primary.dark" },
+            }}
           >
             全部文档
           </Box>
@@ -281,7 +334,15 @@ const DocumentCenterPage: React.FC = () => {
               <ChevronRight sx={{ width: 16, height: 16, color: "grey.400" }} />
               <Box
                 onClick={() => setCurrentPath(currentPath.slice(0, idx + 1))}
-                sx={idx === currentPath.length - 1 ? { color: "grey.900" } : { color: "primary.main", cursor: "pointer", "&:hover": { color: "primary.dark" } }}
+                sx={
+                  idx === currentPath.length - 1
+                    ? { color: "grey.900" }
+                    : {
+                        color: "primary.main",
+                        cursor: "pointer",
+                        "&:hover": { color: "primary.dark" },
+                      }
+                }
               >
                 {path}
               </Box>
@@ -292,23 +353,57 @@ const DocumentCenterPage: React.FC = () => {
 
       {/* Filters */}
       <Box sx={{ maxWidth: 1400, mx: "auto", px: 3 }}>
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 2, mb: 3 }}>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            p: 2,
+            mb: 3,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ flex: 1, position: "relative" }}>
-              <Search sx={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "grey.400" }} />
+              <Search
+                sx={{
+                  position: "absolute",
+                  left: 2,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 20,
+                  height: 20,
+                  color: "grey.400",
+                }}
+              />
               <input
                 type="text"
                 placeholder="搜索文件名、标签..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 8, paddingBottom: 8, border: "1px solid", borderColor: "grey.300", borderRadius: 8, outline: "none" }}
+                style={{
+                  width: "100%",
+                  paddingLeft: 40,
+                  paddingRight: 16,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                  border: "1px solid",
+                  borderColor: "grey.300",
+                  borderRadius: 8,
+                  outline: "none",
+                }}
               />
             </Box>
 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              style={{ padding: "8px 16px", border: "1px solid", borderColor: "grey.300", borderRadius: 8, outline: "none" }}
+              style={{
+                padding: "8px 16px",
+                border: "1px solid",
+                borderColor: "grey.300",
+                borderRadius: 8,
+                outline: "none",
+              }}
             >
               <option value="">全部分类</option>
               <option value="项目文档">项目文档</option>
@@ -316,16 +411,42 @@ const DocumentCenterPage: React.FC = () => {
               <option value="规章制度">规章制度</option>
             </select>
 
-            <Box sx={{ border: 1, borderColor: "grey.300", borderRadius: 1, overflow: "hidden", display: "flex" }}>
+            <Box
+              sx={{
+                border: 1,
+                borderColor: "grey.300",
+                borderRadius: 1,
+                overflow: "hidden",
+                display: "flex",
+              }}
+            >
               <Box
                 onClick={() => setViewMode("grid")}
-                sx={{ p: 1, bgcolor: viewMode === "grid" ? "primary.main" : "background.paper", color: viewMode === "grid" ? "white" : "grey.600", cursor: "pointer", "&:hover": { bgcolor: viewMode === "grid" ? "primary.main" : "grey.100" } }}
+                sx={{
+                  p: 1,
+                  bgcolor:
+                    viewMode === "grid" ? "primary.main" : "background.paper",
+                  color: viewMode === "grid" ? "white" : "grey.600",
+                  cursor: "pointer",
+                  "&:hover": {
+                    bgcolor: viewMode === "grid" ? "primary.main" : "grey.100",
+                  },
+                }}
               >
                 <Grid sx={{ width: 20, height: 20 }} />
               </Box>
               <Box
                 onClick={() => setViewMode("list")}
-                sx={{ p: 1, bgcolor: viewMode === "list" ? "primary.main" : "background.paper", color: viewMode === "list" ? "white" : "grey.600", cursor: "pointer", "&:hover": { bgcolor: viewMode === "list" ? "primary.main" : "grey.100" } }}
+                sx={{
+                  p: 1,
+                  bgcolor:
+                    viewMode === "list" ? "primary.main" : "background.paper",
+                  color: viewMode === "list" ? "white" : "grey.600",
+                  cursor: "pointer",
+                  "&:hover": {
+                    bgcolor: viewMode === "list" ? "primary.main" : "grey.100",
+                  },
+                }}
               >
                 <List sx={{ width: 20, height: 20 }} />
               </Box>
@@ -333,7 +454,15 @@ const DocumentCenterPage: React.FC = () => {
 
             <Box
               onClick={loadData}
-              sx={{ px: 2, py: 1, color: "grey.700", bgcolor: "grey.200", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.300" } }}
+              sx={{
+                px: 2,
+                py: 1,
+                color: "grey.700",
+                bgcolor: "grey.200",
+                borderRadius: 2,
+                cursor: "pointer",
+                "&:hover": { bgcolor: "grey.300" },
+              }}
             >
               刷新
             </Box>
@@ -346,16 +475,52 @@ const DocumentCenterPage: React.FC = () => {
         {/* Folders */}
         {currentPath.length === 0 && folders.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>文件夹</Typography>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 }, gap: 2 }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}
+            >
+              文件夹
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 },
+                gap: 2,
+              }}
+            >
               {folders.map((folder) => (
                 <Box
                   key={folder.id}
                   onClick={() => setCurrentPath([...currentPath, folder.name])}
-                  sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2, border: 1, borderColor: "grey.200", cursor: "pointer", "&:hover": { boxShadow: 3, borderColor: "primary.light" }, transition: "all 0.2s" }}
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    p: 2,
+                    border: 1,
+                    borderColor: "grey.200",
+                    cursor: "pointer",
+                    "&:hover": { boxShadow: 3, borderColor: "primary.light" },
+                    transition: "all 0.2s",
+                  }}
                 >
-                  <Folder sx={{ width: 40, height: 40, color: "warning.main", mb: 1.5 }} />
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Folder
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      color: "warning.main",
+                      mb: 1.5,
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      color: "grey.900",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {folder.name}
                   </Typography>
                   <Typography variant="caption" sx={{ color: "grey.500" }}>
@@ -368,65 +533,182 @@ const DocumentCenterPage: React.FC = () => {
         )}
 
         {/* Documents */}
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, overflow: "hidden" }}>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            overflow: "hidden",
+          }}
+        >
           {loading ? (
             <Box sx={{ p: 8, textAlign: "center" }}>
-              <Loader2 sx={{ width: 48, height: 48, color: "primary.main", mx: "auto", animation: "spin 1s linear infinite" }} />
-              <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>加载中...</Typography>
+              <Loader2
+                sx={{
+                  width: 48,
+                  height: 48,
+                  color: "primary.main",
+                  mx: "auto",
+                  animation: "spin 1s linear infinite",
+                }}
+              />
+              <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>
+                加载中...
+              </Typography>
             </Box>
           ) : filteredDocuments.length === 0 ? (
             <Box sx={{ p: 8, textAlign: "center" }}>
-              <File sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 1.5 }} />
+              <File
+                sx={{
+                  width: 48,
+                  height: 48,
+                  color: "grey.400",
+                  mx: "auto",
+                  mb: 1.5,
+                }}
+              />
               <Typography sx={{ color: "grey.500" }}>暂无文档</Typography>
             </Box>
           ) : viewMode === "grid" ? (
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 }, gap: 2, p: 3 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 },
+                gap: 2,
+                p: 3,
+              }}
+            >
               {filteredDocuments.map((doc) => (
                 <Box
                   key={doc.id}
-                  sx={{ bgcolor: "grey.50", borderRadius: 2, p: 2, border: 1, borderColor: "grey.200", "&:hover": { boxShadow: 2 }, transition: "box-shadow 0.2s", "&:hover .hidden-actions": { opacity: 1 } }}
+                  sx={{
+                    bgcolor: "grey.50",
+                    borderRadius: 2,
+                    p: 2,
+                    border: 1,
+                    borderColor: "grey.200",
+                    "&:hover": { boxShadow: 2 },
+                    transition: "box-shadow 0.2s",
+                    "&:hover .hidden-actions": { opacity: 1 },
+                  }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
-                    <Box sx={{ width: 48, height: 48, bgcolor: "background.paper", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      mb: 1.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: "background.paper",
+                        borderRadius: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: 1,
+                      }}
+                    >
                       {getFileIcon(doc.type)}
                     </Box>
                     <Box
                       onClick={() => handleToggleFavorite(doc.id)}
-                      sx={{ p: 0.5, borderRadius: 1, cursor: "pointer", color: doc.is_favorite ? "warning.main" : "grey.400", "&:hover": { color: "warning.main" } }}
+                      sx={{
+                        p: 0.5,
+                        borderRadius: 1,
+                        cursor: "pointer",
+                        color: doc.is_favorite ? "warning.main" : "grey.400",
+                        "&:hover": { color: "warning.main" },
+                      }}
                     >
                       <Star
                         sx={{ width: 16, height: 16 }}
-                        style={{ fill: doc.is_favorite ? "currentColor" : "none" }}
+                        style={{
+                          fill: doc.is_favorite ? "currentColor" : "none",
+                        }}
                       />
                     </Box>
                   </Box>
 
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900", mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={doc.name}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      color: "grey.900",
+                      mb: 0.5,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                    title={doc.name}
+                  >
                     {doc.name}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "grey.500", mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "grey.500", mb: 1 }}
+                  >
                     {formatFileSize(doc.size)}
                   </Typography>
 
-                  <Box className="hidden-actions" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", opacity: 0, transition: "opacity 0.2s" }}>
+                  <Box
+                    className="hidden-actions"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      opacity: 0,
+                      transition: "opacity 0.2s",
+                    }}
+                  >
                     <Box sx={{ display: "flex", gap: 0.5 }}>
                       <Box
                         onClick={() => handlePreview(doc)}
-                        sx={{ p: 0.5, color: "grey.500", "&:hover": { color: "primary.main", bgcolor: "primary.50" }, borderRadius: 1, cursor: "pointer" }}
+                        sx={{
+                          p: 0.5,
+                          color: "grey.500",
+                          "&:hover": {
+                            color: "primary.main",
+                            bgcolor: "primary.50",
+                          },
+                          borderRadius: 1,
+                          cursor: "pointer",
+                        }}
                         title="预览"
                       >
                         <Eye sx={{ width: 16, height: 16 }} />
                       </Box>
                       <Box
                         onClick={() => handleDownload(doc)}
-                        sx={{ p: 0.5, color: "grey.500", "&:hover": { color: "success.main", bgcolor: "success.50" }, borderRadius: 1, cursor: "pointer" }}
+                        sx={{
+                          p: 0.5,
+                          color: "grey.500",
+                          "&:hover": {
+                            color: "success.main",
+                            bgcolor: "success.50",
+                          },
+                          borderRadius: 1,
+                          cursor: "pointer",
+                        }}
                         title="下载"
                       >
                         <Download sx={{ width: 16, height: 16 }} />
                       </Box>
                       <Box
                         onClick={() => handleDelete(doc.id)}
-                        sx={{ p: 0.5, color: "grey.500", "&:hover": { color: "error.main", bgcolor: "error.50" }, borderRadius: 1, cursor: "pointer" }}
+                        sx={{
+                          p: 0.5,
+                          color: "grey.500",
+                          "&:hover": {
+                            color: "error.main",
+                            bgcolor: "error.50",
+                          },
+                          borderRadius: 1,
+                          cursor: "pointer",
+                        }}
                         title="删除"
                       >
                         <Trash2 sx={{ width: 16, height: 16 }} />
@@ -437,26 +719,81 @@ const DocumentCenterPage: React.FC = () => {
               ))}
             </Box>
           ) : (
-            <Box sx={{ "& > *": { borderTop: 1, borderColor: "divider" }, "& > *:first-of-type": { borderTop: 0 } }}>
+            <Box
+              sx={{
+                "& > *": { borderTop: 1, borderColor: "divider" },
+                "& > *:first-of-type": { borderTop: 0 },
+              }}
+            >
               {filteredDocuments.map((doc) => (
                 <Box
                   key={doc.id}
-                  sx={{ p: 2, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                  sx={{
+                    p: 2,
+                    "&:hover": { bgcolor: "grey.50" },
+                    transition: "background-color 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
-                    <Box sx={{ width: 40, height: 40, bgcolor: "grey.100", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      flex: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: "grey.100",
+                        borderRadius: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {getFileIcon(doc.type)}
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 500,
+                            color: "grey.900",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {doc.name}
                         </Typography>
                         {doc.is_favorite && (
-                          <Star sx={{ width: 16, height: 16, color: "warning.main" }} style={{ fill: "currentColor" }} />
+                          <Star
+                            sx={{
+                              width: 16,
+                              height: 16,
+                              color: "warning.main",
+                            }}
+                            style={{ fill: "currentColor" }}
+                          />
                         )}
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.875rem", color: "grey.500" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          fontSize: "0.875rem",
+                          color: "grey.500",
+                        }}
+                      >
                         <span>{formatFileSize(doc.size)}</span>
                         <span>·</span>
                         <span>{doc.category}</span>
@@ -468,25 +805,63 @@ const DocumentCenterPage: React.FC = () => {
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Box
                       onClick={() => handleToggleFavorite(doc.id)}
-                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "warning.main", bgcolor: "warning.50" }, borderRadius: 2, cursor: "pointer" }}
+                      sx={{
+                        p: 1,
+                        color: "grey.400",
+                        "&:hover": {
+                          color: "warning.main",
+                          bgcolor: "warning.50",
+                        },
+                        borderRadius: 2,
+                        cursor: "pointer",
+                      }}
                     >
-                      <Star sx={{ width: 16, height: 16 }} style={{ fill: doc.is_favorite ? "currentColor" : "none" }} />
+                      <Star
+                        sx={{ width: 16, height: 16 }}
+                        style={{
+                          fill: doc.is_favorite ? "currentColor" : "none",
+                        }}
+                      />
                     </Box>
                     <Box
                       onClick={() => handlePreview(doc)}
-                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "primary.main", bgcolor: "primary.50" }, borderRadius: 2, cursor: "pointer" }}
+                      sx={{
+                        p: 1,
+                        color: "grey.400",
+                        "&:hover": {
+                          color: "primary.main",
+                          bgcolor: "primary.50",
+                        },
+                        borderRadius: 2,
+                        cursor: "pointer",
+                      }}
                     >
                       <Eye sx={{ width: 16, height: 16 }} />
                     </Box>
                     <Box
                       onClick={() => handleDownload(doc)}
-                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "success.main", bgcolor: "success.50" }, borderRadius: 2, cursor: "pointer" }}
+                      sx={{
+                        p: 1,
+                        color: "grey.400",
+                        "&:hover": {
+                          color: "success.main",
+                          bgcolor: "success.50",
+                        },
+                        borderRadius: 2,
+                        cursor: "pointer",
+                      }}
                     >
                       <Download sx={{ width: 16, height: 16 }} />
                     </Box>
                     <Box
                       onClick={() => handleDelete(doc.id)}
-                      sx={{ p: 1, color: "grey.400", "&:hover": { color: "error.main", bgcolor: "error.50" }, borderRadius: 2, cursor: "pointer" }}
+                      sx={{
+                        p: 1,
+                        color: "grey.400",
+                        "&:hover": { color: "error.main", bgcolor: "error.50" },
+                        borderRadius: 2,
+                        cursor: "pointer",
+                      }}
                     >
                       <Trash2 sx={{ width: 16, height: 16 }} />
                     </Box>
@@ -555,13 +930,48 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, p: 2 }}>
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 6, width: "100%", maxWidth: 600 }}>
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>上传文件</Typography>
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        bgcolor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        p: 2,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 3,
+          boxShadow: 6,
+          width: "100%",
+          maxWidth: 600,
+        }}
+      >
+        <Box
+          sx={{
+            p: 3,
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+            上传文件
+          </Typography>
           <Box
             onClick={onClose}
-            sx={{ p: 1, "&:hover": { bgcolor: "grey.100" }, borderRadius: 1, cursor: "pointer" }}
+            sx={{
+              p: 1,
+              "&:hover": { bgcolor: "grey.100" },
+              borderRadius: 1,
+              cursor: "pointer",
+            }}
           >
             <X sx={{ width: 20, height: 20 }} />
           </Box>
@@ -573,12 +983,35 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            sx={{ border: 2, borderStyle: "dashed", borderRadius: 2, p: 6, textAlign: "center", borderColor: dragActive ? "primary.main" : "grey.300", bgcolor: dragActive ? "primary.50" : "transparent", "&:hover": { borderColor: "primary.light" }, transition: "all 0.2s" }}
+            sx={{
+              border: 2,
+              borderStyle: "dashed",
+              borderRadius: 2,
+              p: 6,
+              textAlign: "center",
+              borderColor: dragActive ? "primary.main" : "grey.300",
+              bgcolor: dragActive ? "primary.50" : "transparent",
+              "&:hover": { borderColor: "primary.light" },
+              transition: "all 0.2s",
+            }}
           >
-            <Upload sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
+            <Upload
+              sx={{
+                width: 48,
+                height: 48,
+                color: "grey.400",
+                mx: "auto",
+                mb: 2,
+              }}
+            />
             <Typography sx={{ color: "grey.600", mb: 1 }}>
               拖拽文件到此处，或{" "}
-              <Box component="span" sx={{ color: "primary.main", cursor: "pointer" }}>点击选择</Box>
+              <Box
+                component="span"
+                sx={{ color: "primary.main", cursor: "pointer" }}
+              >
+                点击选择
+              </Box>
             </Typography>
             <Typography variant="caption" sx={{ color: "grey.500" }}>
               支持 .pdf, .docx, .xlsx, .txt 等格式，单个文件不超过 100MB
@@ -586,19 +1019,35 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
           </Box>
 
           {files.length > 0 && (
-            <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box
+              sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}
+            >
               {files.map((file, idx) => (
                 <Box
                   key={idx}
-                  sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1.5, bgcolor: "grey.50", borderRadius: 2 }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 1.5,
+                    bgcolor: "grey.50",
+                    borderRadius: 2,
+                  }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <File sx={{ width: 20, height: 20, color: "grey.500" }} />
-                    <Typography variant="body2" sx={{ color: "grey.700" }}>{file.name}</Typography>
+                    <Typography variant="body2" sx={{ color: "grey.700" }}>
+                      {file.name}
+                    </Typography>
                   </Box>
                   <Box
                     onClick={() => setFiles(files.filter((_, i) => i !== idx))}
-                    sx={{ p: 0.5, color: "grey.400", "&:hover": { color: "error.main" }, cursor: "pointer" }}
+                    sx={{
+                      p: 0.5,
+                      color: "grey.400",
+                      "&:hover": { color: "error.main" },
+                      cursor: "pointer",
+                    }}
                   >
                     <X sx={{ width: 16, height: 16 }} />
                   </Box>
@@ -608,16 +1057,43 @@ const UploadModal: React.FC<UploadModalProps> = ({ onClose, onSuccess }) => {
           )}
         </Box>
 
-        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end", gap: 1.5 }}>
+        <Box
+          sx={{
+            p: 3,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1.5,
+          }}
+        >
           <Box
             onClick={onClose}
-            sx={{ px: 2, py: 1, color: "grey.700", bgcolor: "grey.100", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.200" } }}
+            sx={{
+              px: 2,
+              py: 1,
+              color: "grey.700",
+              bgcolor: "grey.100",
+              borderRadius: 2,
+              cursor: "pointer",
+              "&:hover": { bgcolor: "grey.200" },
+            }}
           >
             取消
           </Box>
           <Box
             onClick={onSuccess}
-            sx={{ px: 2, py: 1, bgcolor: files.length === 0 ? "grey.400" : "primary.main", color: "white", borderRadius: 2, cursor: files.length === 0 ? "not-allowed" : "pointer", "&:hover": { bgcolor: files.length === 0 ? "grey.400" : "primary.dark" } }}
+            sx={{
+              px: 2,
+              py: 1,
+              bgcolor: files.length === 0 ? "grey.400" : "primary.main",
+              color: "white",
+              borderRadius: 2,
+              cursor: files.length === 0 ? "not-allowed" : "pointer",
+              "&:hover": {
+                bgcolor: files.length === 0 ? "grey.400" : "primary.dark",
+              },
+            }}
           >
             开始上传
           </Box>
@@ -648,11 +1124,46 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   };
 
   return (
-    <Box sx={{ position: "fixed", inset: 0, bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, p: 2 }}>
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 6, width: "100%", maxWidth: 900, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        bgcolor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        p: 2,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 3,
+          boxShadow: 6,
+          width: "100%",
+          maxWidth: 900,
+          maxHeight: "90vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box
+          sx={{
+            p: 3,
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900" }}
+            >
               {document.name}
             </Typography>
             <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
@@ -662,33 +1173,83 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
           </Box>
           <Box
             onClick={onClose}
-            sx={{ p: 1, "&:hover": { bgcolor: "grey.100" }, borderRadius: 1, cursor: "pointer" }}
+            sx={{
+              p: 1,
+              "&:hover": { bgcolor: "grey.100" },
+              borderRadius: 1,
+              cursor: "pointer",
+            }}
           >
             <X sx={{ width: 20, height: 20 }} />
           </Box>
         </Box>
 
         <Box sx={{ flex: 1, overflow: "auto", p: 3, bgcolor: "grey.100" }}>
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 6, textAlign: "center" }}>
-            <File sx={{ width: 96, height: 96, color: "grey.400", mx: "auto", mb: 2 }} />
-            <Typography sx={{ color: "grey.500" }}>文件预览功能开发中...</Typography>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              p: 6,
+              textAlign: "center",
+            }}
+          >
+            <File
+              sx={{
+                width: 96,
+                height: 96,
+                color: "grey.400",
+                mx: "auto",
+                mb: 2,
+              }}
+            />
+            <Typography sx={{ color: "grey.500" }}>
+              文件预览功能开发中...
+            </Typography>
             <Typography variant="caption" sx={{ color: "grey.400", mt: 1 }}>
               支持 PDF、Word、Excel 等格式的在线预览
             </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end", gap: 1.5 }}>
+        <Box
+          sx={{
+            p: 3,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1.5,
+          }}
+        >
           <Box
             onClick={onDownload}
-            sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1, bgcolor: "primary.main", color: "white", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "primary.dark" } }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: 2,
+              py: 1,
+              bgcolor: "primary.main",
+              color: "white",
+              borderRadius: 2,
+              cursor: "pointer",
+              "&:hover": { bgcolor: "primary.dark" },
+            }}
           >
             <Download sx={{ width: 16, height: 16 }} />
             <span>下载</span>
           </Box>
           <Box
             onClick={onClose}
-            sx={{ px: 2, py: 1, bgcolor: "grey.100", color: "grey.700", borderRadius: 2, cursor: "pointer", "&:hover": { bgcolor: "grey.200" } }}
+            sx={{
+              px: 2,
+              py: 1,
+              bgcolor: "grey.100",
+              color: "grey.700",
+              borderRadius: 2,
+              cursor: "pointer",
+              "&:hover": { bgcolor: "grey.200" },
+            }}
           >
             关闭
           </Box>

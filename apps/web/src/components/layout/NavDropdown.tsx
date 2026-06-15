@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useEffect, createContext, useContext } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  createContext,
+  useContext,
+} from "react";
 import {
   Box,
   Typography,
@@ -8,9 +14,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import {
-  type NavItem,
-} from "../../config/navigation";
+import { type NavItem } from "../../config/navigation";
 
 interface DropdownContextType {
   anchorEl: HTMLElement | null;
@@ -29,12 +33,16 @@ export const useDropdown = () => {
   return context;
 };
 
-export const DropdownProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const DropdownProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
 
   return (
-    <DropdownContext.Provider value={{ anchorEl, openMenu, setAnchorEl, setOpenMenu }}>
+    <DropdownContext.Provider
+      value={{ anchorEl, openMenu, setAnchorEl, setOpenMenu }}
+    >
       {children}
     </DropdownContext.Provider>
   );

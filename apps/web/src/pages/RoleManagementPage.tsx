@@ -1,4 +1,19 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Box, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip, IconButton } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Box,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import {
   Shield,
@@ -249,15 +264,35 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       {/* 顶部导航 */}
-      <Box sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft />
               </IconButton>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
                   <Shield size={28} color="#6366f1" />
                   角色管理
                 </Typography>
@@ -268,7 +303,11 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
-              <Button variant="contained" onClick={() => setShowCreateModal(true)} startIcon={<Plus size={20} />}>
+              <Button
+                variant="contained"
+                onClick={() => setShowCreateModal(true)}
+                startIcon={<Plus size={20} />}
+              >
                 创建角色
               </Button>
             </Box>
@@ -280,7 +319,17 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
         {/* 搜索栏 */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
           <Box sx={{ flex: 1, position: "relative" }}>
-            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, color: "#9e9e9e" }} />
+            <Search
+              style={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 20,
+                height: 20,
+                color: "#9e9e9e",
+              }}
+            />
             <TextField
               size="small"
               placeholder="搜索角色名称或描述..."
@@ -299,7 +348,18 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
           <CardContent sx={{ p: 0 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTop: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "primary.main",
+                    borderTop: "transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
                 <Typography sx={{ mt: 2, color: "text.secondary" }}>
                   加载中...
                 </Typography>
@@ -307,7 +367,9 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
             ) : error ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
                 <AlertCircle size={48} color="#d32f2f" />
-                <Typography sx={{ color: "error.main", mt: 2 }}>{error}</Typography>
+                <Typography sx={{ color: "error.main", mt: 2 }}>
+                  {error}
+                </Typography>
                 <Button sx={{ mt: 2 }} onClick={loadData}>
                   重试
                 </Button>
@@ -315,37 +377,86 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
             ) : filteredRoles.length === 0 ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
                 <Shield size={48} color="#9e9e9e" />
-                <Typography sx={{ color: "text.secondary", mt: 2 }}>暂无角色</Typography>
+                <Typography sx={{ color: "text.secondary", mt: 2 }}>
+                  暂无角色
+                </Typography>
               </Box>
             ) : (
               <Box>
                 {filteredRoles.map((role) => (
                   <Box
                     key={role.id}
-                    sx={{ p: 3, borderBottom: 1, borderColor: "divider", "&:hover": { bgcolor: "grey.50" } }}
+                    sx={{
+                      p: 3,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      "&:hover": { bgcolor: "grey.50" },
+                    }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
-                        <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "primary.light", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 2,
+                            bgcolor: "primary.light",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
                           <Shield size={24} color="#6366f1" />
                         </Box>
                         <Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600 }}
+                            >
                               {role.name}
                             </Typography>
                           </Box>
                           {role.description && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mt: 0.5 }}
+                            >
                               {role.description}
                             </Typography>
                           )}
-                          <Typography variant="caption" color="text.disabled" sx={{ mt: 1, display: "block" }}>
-                            创建时间: {new Date(role.created_at).toLocaleString("zh-CN")}
+                          <Typography
+                            variant="caption"
+                            color="text.disabled"
+                            sx={{ mt: 1, display: "block" }}
+                          >
+                            创建时间:{" "}
+                            {new Date(role.created_at).toLocaleString("zh-CN")}
                           </Typography>
                         </Box>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                      >
                         <Tooltip title="编辑角色">
                           <IconButton
                             size="small"
@@ -385,16 +496,25 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
       </Box>
 
       {/* 创建角色对话框 */}
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>创建新角色</DialogTitle>
         <form onSubmit={handleCreateRole}>
           <DialogContent>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+            >
               <TextField
                 label="角色名称 *"
                 required
                 value={newRole.name}
-                onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, name: e.target.value })
+                }
                 placeholder="例如：管理员、普通用户"
                 fullWidth
               />
@@ -403,7 +523,9 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
                 multiline
                 rows={3}
                 value={newRole.description}
-                onChange={(e) => setNewRole({ ...newRole, description: e.target.value })}
+                onChange={(e) =>
+                  setNewRole({ ...newRole, description: e.target.value })
+                }
                 placeholder="描述这个角色的用途"
                 fullWidth
               />
@@ -418,23 +540,34 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
             >
               取消
             </Button>
-            <Button type="submit" variant="contained">创建</Button>
+            <Button type="submit" variant="contained">
+              创建
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
 
       {/* 编辑角色对话框 */}
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>编辑角色</DialogTitle>
         {selectedRole && (
           <form onSubmit={handleEditRole}>
             <DialogContent>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+              <Box
+                sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+              >
                 <TextField
                   label="角色名称 *"
                   required
                   value={selectedRole.name}
-                  onChange={(e) => setSelectedRole({ ...selectedRole, name: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedRole({ ...selectedRole, name: e.target.value })
+                  }
                   placeholder="例如：管理员、普通用户"
                   fullWidth
                 />
@@ -443,7 +576,12 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
                   multiline
                   rows={3}
                   value={selectedRole.description || ""}
-                  onChange={(e) => setSelectedRole({ ...selectedRole, description: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedRole({
+                      ...selectedRole,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="描述这个角色的用途"
                   fullWidth
                 />
@@ -458,17 +596,26 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
               >
                 取消
               </Button>
-              <Button type="submit" variant="contained">保存</Button>
+              <Button type="submit" variant="contained">
+                保存
+              </Button>
             </DialogActions>
           </form>
         )}
       </Dialog>
 
       {/* 权限管理对话框 */}
-      <Dialog open={showPermissionsModal} onClose={() => setShowPermissionsModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showPermissionsModal}
+        onClose={() => setShowPermissionsModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>角色权限 - {selectedRole?.name}</DialogTitle>
         <DialogContent sx={{ overflow: "auto", maxHeight: "60vh" }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>可选权限</Typography>
+          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+            可选权限
+          </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {allPermissions.map((perm) => {
               const hasPermission = rolePermissions.some(
@@ -477,7 +624,14 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
               return (
                 <Box
                   key={perm.id}
-                  sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.100", borderRadius: 2 }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 2,
+                    bgcolor: "grey.100",
+                    borderRadius: 2,
+                  }}
                 >
                   <Box sx={{ flex: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -488,7 +642,11 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
                         <CheckCircle size={16} color="#2e7d32" />
                       )}
                     </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.5 }}
+                    >
                       {perm.description}
                     </Typography>
                     <Typography variant="caption" color="text.disabled">
@@ -525,9 +683,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowPermissionsModal(false)}>
-            关闭
-          </Button>
+          <Button onClick={() => setShowPermissionsModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
     </Box>

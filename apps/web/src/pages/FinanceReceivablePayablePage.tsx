@@ -333,7 +333,16 @@ const FinanceReceivablePayablePage: React.FC = () => {
     `¥${amount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}`;
 
   const getStatusBadge = (status: string) => {
-    const colorMap: Record<string, "default" | "primary" | "secondary" | "success" | "error" | "info" | "warning"> = {
+    const colorMap: Record<
+      string,
+      | "default"
+      | "primary"
+      | "secondary"
+      | "success"
+      | "error"
+      | "info"
+      | "warning"
+    > = {
       pending: "warning",
       partial: "warning",
       paid: "success",
@@ -348,7 +357,11 @@ const FinanceReceivablePayablePage: React.FC = () => {
       cancelled: "已取消",
     };
     return (
-      <Chip size="small" color={colorMap[status] || "default"} label={labelMap[status] || status} />
+      <Chip
+        size="small"
+        color={colorMap[status] || "default"}
+        label={labelMap[status] || status}
+      />
     );
   };
 
@@ -398,79 +411,168 @@ const FinanceReceivablePayablePage: React.FC = () => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: "bold" }}>应收应付管理</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>管理企业应收账款和应付账款</Typography>
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            应收应付管理
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            管理企业应收账款和应付账款
+          </Typography>
         </Box>
-        <Button
-          variant="contained"
-          onClick={() => setShowCreateDialog(true)}
-        >
+        <Button variant="contained" onClick={() => setShowCreateDialog(true)}>
           <Plus sx={{ width: 16, height: 16, mr: 1 }} />
           <span>新增{activeTab === "receivable" ? "应收" : "应付"}</span>
         </Button>
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
-        <Card sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", color: "white" }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+          gap: 2,
+        }}
+      >
+        <Card
+          sx={{
+            background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+            color: "white",
+          }}
+        >
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>应收总额</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  应收总额
+                </Typography>
                 <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                   {formatCurrency(totalReceivable)}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.2)",
+                }}
+              >
                 <ArrowUpRight sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
         </Card>
 
-        <Card sx={{ background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)", color: "white" }}>
+        <Card
+          sx={{
+            background: "linear-gradient(135deg, #22c55e 0%, #10b981 100%)",
+            color: "white",
+          }}
+        >
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>应付总额</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  应付总额
+                </Typography>
                 <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                   {formatCurrency(totalPayable)}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.2)",
+                }}
+              >
                 <ArrowDownRight sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
         </Card>
 
-        <Card sx={{ background: "linear-gradient(135deg, #f97316 0%, #ef4444 100%)", color: "white" }}>
+        <Card
+          sx={{
+            background: "linear-gradient(135deg, #f97316 0%, #ef4444 100%)",
+            color: "white",
+          }}
+        >
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>待收金额</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  待收金额
+                </Typography>
                 <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                   {formatCurrency(pendingReceivable)}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.2)",
+                }}
+              >
                 <CreditCard sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
         </Card>
 
-        <Card sx={{ background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", color: "white" }}>
+        <Card
+          sx={{
+            background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+            color: "white",
+          }}
+        >
           <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ opacity: 0.8 }}>待付金额</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  待付金额
+                </Typography>
                 <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
                   {formatCurrency(pendingPayable)}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)" }}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.2)",
+                }}
+              >
                 <CreditCard sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
@@ -481,25 +583,47 @@ const FinanceReceivablePayablePage: React.FC = () => {
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-            <Tab value="receivable" label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <ArrowUpRight sx={{ width: 16, height: 16 }} />
-                <span>应收账款</span>
-              </Box>
-            } />
-            <Tab value="payable" label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <ArrowDownRight sx={{ width: 16, height: 16 }} />
-                <span>应付账款</span>
-              </Box>
-            } />
+            <Tab
+              value="receivable"
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <ArrowUpRight sx={{ width: 16, height: 16 }} />
+                  <span>应收账款</span>
+                </Box>
+              }
+            />
+            <Tab
+              value="payable"
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <ArrowDownRight sx={{ width: 16, height: 16 }} />
+                  <span>应付账款</span>
+                </Box>
+              }
+            />
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 3, display: activeTab === "receivable" ? "block" : "none" }}>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+        <Box
+          sx={{ p: 3, display: activeTab === "receivable" ? "block" : "none" }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              mb: 3,
+            }}
+          >
             <Box sx={{ position: "relative", flex: 1 }}>
-              <Box sx={{ position: "absolute", left: 3, top: "50%", transform: "translateY(-50%)" }}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 3,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
                 <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
               </Box>
               <TextField
@@ -531,21 +655,52 @@ const FinanceReceivablePayablePage: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Users sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>应收账款列表</Typography>
+                  <Users
+                    sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
+                  />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    应收账款列表
+                  </Typography>
                 </Box>
                 {overdueReceivable > 0 && (
-                  <Chip size="small" color="error" label={`逾期 ${formatCurrency(overdueReceivable)}`} />
+                  <Chip
+                    size="small"
+                    color="error"
+                    label={`逾期 ${formatCurrency(overdueReceivable)}`}
+                  />
                 )}
               </Box>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <Box sx={{ p: 8, textAlign: "center" }}>
-                  <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>加载中...</Typography>
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      width: 32,
+                      height: 32,
+                      border: 4,
+                      borderColor: "primary.main",
+                      borderTopColor: "transparent",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                  >
+                    加载中...
+                  </Typography>
                 </Box>
               ) : (
                 <Table>
@@ -577,26 +732,63 @@ const FinanceReceivablePayablePage: React.FC = () => {
                           <TableCell align="right">
                             {formatCurrency(item.received_amount || 0)}
                           </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: "medium", color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "warning.main" }}>
+                          <TableCell
+                            align="right"
+                            sx={{
+                              fontWeight: "medium",
+                              color:
+                                isOverdue(item.due_date) &&
+                                item.status !== "paid"
+                                  ? "error.main"
+                                  : "warning.main",
+                            }}
+                          >
                             {formatCurrency(
                               item.amount - (item.received_amount || 0),
                             )}
                           </TableCell>
-                          <TableCell sx={{ color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "text.primary" }}>
+                          <TableCell
+                            sx={{
+                              color:
+                                isOverdue(item.due_date) &&
+                                item.status !== "paid"
+                                  ? "error.main"
+                                  : "text.primary",
+                            }}
+                          >
                             {item.due_date
                               ? new Date(item.due_date).toLocaleDateString()
                               : "-"}
                           </TableCell>
                           <TableCell>{getStatusBadge(item.status)}</TableCell>
                           <TableCell align="right">
-                            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-                              <Button variant="text" size="small" onClick={() => openDetailDialog(item)}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Button
+                                variant="text"
+                                size="small"
+                                onClick={() => openDetailDialog(item)}
+                              >
                                 <Eye sx={{ width: 16, height: 16 }} />
                               </Button>
-                              <Button variant="text" size="small" onClick={() => openEditDialog(item)}>
+                              <Button
+                                variant="text"
+                                size="small"
+                                onClick={() => openEditDialog(item)}
+                              >
                                 <Edit2 sx={{ width: 16, height: 16 }} />
                               </Button>
-                              <Button variant="text" size="small" color="error" onClick={() => handleDeleteReceivable(item.id)}>
+                              <Button
+                                variant="text"
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeleteReceivable(item.id)}
+                              >
                                 <Trash2 sx={{ width: 16, height: 16 }} />
                               </Button>
                             </Box>
@@ -606,8 +798,18 @@ const FinanceReceivablePayablePage: React.FC = () => {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
-                          <AlertCircle sx={{ width: 48, height: 48, mx: "auto", color: "grey.300", mb: 1 }} />
-                          <Typography color="text.secondary">暂无应收账款数据</Typography>
+                          <AlertCircle
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              mx: "auto",
+                              color: "grey.300",
+                              mb: 1,
+                            }}
+                          />
+                          <Typography color="text.secondary">
+                            暂无应收账款数据
+                          </Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -619,9 +821,23 @@ const FinanceReceivablePayablePage: React.FC = () => {
         </Box>
 
         <Box sx={{ p: 3, display: activeTab === "payable" ? "block" : "none" }}>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              mb: 3,
+            }}
+          >
             <Box sx={{ position: "relative", flex: 1 }}>
-              <Box sx={{ position: "absolute", left: 3, top: "50%", transform: "translateY(-50%)" }}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 3,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
                 <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
               </Box>
               <TextField
@@ -653,21 +869,52 @@ const FinanceReceivablePayablePage: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <CreditCard sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>应付账款列表</Typography>
+                  <CreditCard
+                    sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
+                  />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    应付账款列表
+                  </Typography>
                 </Box>
                 {overduePayable > 0 && (
-                  <Chip size="small" color="error" label={`逾期 ${formatCurrency(overduePayable)}`} />
+                  <Chip
+                    size="small"
+                    color="error"
+                    label={`逾期 ${formatCurrency(overduePayable)}`}
+                  />
                 )}
               </Box>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <Box sx={{ p: 8, textAlign: "center" }}>
-                  <Box sx={{ display: "inline-block", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>加载中...</Typography>
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      width: 32,
+                      height: 32,
+                      border: 4,
+                      borderColor: "primary.main",
+                      borderTopColor: "transparent",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 2 }}
+                  >
+                    加载中...
+                  </Typography>
                 </Box>
               ) : (
                 <Table>
@@ -699,26 +946,63 @@ const FinanceReceivablePayablePage: React.FC = () => {
                           <TableCell align="right">
                             {formatCurrency(item.paid_amount || 0)}
                           </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: "medium", color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "warning.main" }}>
+                          <TableCell
+                            align="right"
+                            sx={{
+                              fontWeight: "medium",
+                              color:
+                                isOverdue(item.due_date) &&
+                                item.status !== "paid"
+                                  ? "error.main"
+                                  : "warning.main",
+                            }}
+                          >
                             {formatCurrency(
                               item.amount - (item.paid_amount || 0),
                             )}
                           </TableCell>
-                          <TableCell sx={{ color: isOverdue(item.due_date) && item.status !== "paid" ? "error.main" : "text.primary" }}>
+                          <TableCell
+                            sx={{
+                              color:
+                                isOverdue(item.due_date) &&
+                                item.status !== "paid"
+                                  ? "error.main"
+                                  : "text.primary",
+                            }}
+                          >
                             {item.due_date
                               ? new Date(item.due_date).toLocaleDateString()
                               : "-"}
                           </TableCell>
                           <TableCell>{getStatusBadge(item.status)}</TableCell>
                           <TableCell align="right">
-                            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
-                              <Button variant="text" size="small" onClick={() => openDetailDialog(item)}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Button
+                                variant="text"
+                                size="small"
+                                onClick={() => openDetailDialog(item)}
+                              >
                                 <Eye sx={{ width: 16, height: 16 }} />
                               </Button>
-                              <Button variant="text" size="small" onClick={() => openEditDialog(item)}>
+                              <Button
+                                variant="text"
+                                size="small"
+                                onClick={() => openEditDialog(item)}
+                              >
                                 <Edit2 sx={{ width: 16, height: 16 }} />
                               </Button>
-                              <Button variant="text" size="small" color="error" onClick={() => handleDeletePayable(item.id)}>
+                              <Button
+                                variant="text"
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeletePayable(item.id)}
+                              >
                                 <Trash2 sx={{ width: 16, height: 16 }} />
                               </Button>
                             </Box>
@@ -728,8 +1012,18 @@ const FinanceReceivablePayablePage: React.FC = () => {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
-                          <AlertCircle sx={{ width: 48, height: 48, mx: "auto", color: "grey.300", mb: 1 }} />
-                          <Typography color="text.secondary">暂无应付账款数据</Typography>
+                          <AlertCircle
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              mx: "auto",
+                              color: "grey.300",
+                              mb: 1,
+                            }}
+                          />
+                          <Typography color="text.secondary">
+                            暂无应付账款数据
+                          </Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -741,7 +1035,16 @@ const FinanceReceivablePayablePage: React.FC = () => {
         </Box>
       </Card>
 
-      <Dialog open={showCreateDialog} onClose={() => { setShowCreateDialog(false); setEditingItem(null); resetForm(); }} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateDialog}
+        onClose={() => {
+          setShowCreateDialog(false);
+          setEditingItem(null);
+          resetForm();
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           {editingItem ? "编辑" : "新增"}
           {activeTab === "receivable" ? "应收账款" : "应付账款"}
@@ -831,7 +1134,9 @@ const FinanceReceivablePayablePage: React.FC = () => {
               fullWidth
               size="small"
             />
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 label="开票日期"
                 type="date"
@@ -899,12 +1204,21 @@ const FinanceReceivablePayablePage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
           {selectedItem && "customer_name" in selectedItem ? (
-            <ArrowUpRight sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
+            <ArrowUpRight
+              sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
+            />
           ) : (
-            <ArrowDownRight sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }} />
+            <ArrowDownRight
+              sx={{ width: 20, height: 20, mr: 1, color: "indigo.600" }}
+            />
           )}
           {selectedItem && "customer_name" in selectedItem
             ? "应收账款"
@@ -913,24 +1227,38 @@ const FinanceReceivablePayablePage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           {selectedItem && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}
+            >
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                }}
+              >
                 <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">单据编号</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    单据编号
+                  </Typography>
                   <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedItem.invoice_number}
                   </Typography>
                 </Box>
                 {"customer_name" in selectedItem ? (
                   <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                    <Typography variant="body2" color="text.secondary">客户名称</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      客户名称
+                    </Typography>
                     <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                       {selectedItem.customer_name || "-"}
                     </Typography>
                   </Box>
                 ) : (
                   <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                    <Typography variant="body2" color="text.secondary">供应商</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      供应商
+                    </Typography>
                     <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                       {selectedItem.supplier_name || "-"}
                     </Typography>
@@ -940,7 +1268,9 @@ const FinanceReceivablePayablePage: React.FC = () => {
 
               {"project_name" in selectedItem && selectedItem.project_name && (
                 <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">项目名称</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    项目名称
+                  </Typography>
                   <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedItem.project_name}
                   </Typography>
@@ -949,24 +1279,55 @@ const FinanceReceivablePayablePage: React.FC = () => {
 
               {"category" in selectedItem && selectedItem.category && (
                 <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">费用类别</Typography>
-                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>{selectedItem.category}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    费用类别
+                  </Typography>
+                  <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
+                    {selectedItem.category}
+                  </Typography>
                 </Box>
               )}
 
-              <Box sx={{ p: 3, bgcolor: "linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%)", borderRadius: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">总金额</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main" }}>
+              <Box
+                sx={{
+                  p: 3,
+                  bgcolor: "linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%)",
+                  borderRadius: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    总金额
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: "bold", color: "primary.main" }}
+                  >
                     {formatCurrency(selectedItem.amount)}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: 2,
+                  }}
+                >
                   <Box>
                     <Typography variant="body2" color="text.secondary">
                       {"received_amount" in selectedItem ? "已收" : "已付"}
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: "bold", color: "success.main" }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: "bold", color: "success.main" }}
+                    >
                       {formatCurrency(
                         ("received_amount" in selectedItem
                           ? selectedItem.received_amount
@@ -978,7 +1339,17 @@ const FinanceReceivablePayablePage: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       {"received_amount" in selectedItem ? "待收" : "待付"}
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: "bold", color: isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "error.main" : "warning.main" }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: "bold",
+                        color:
+                          isOverdue(selectedItem.due_date) &&
+                          selectedItem.status !== "paid"
+                            ? "error.main"
+                            : "warning.main",
+                      }}
+                    >
                       {formatCurrency(
                         selectedItem.amount -
                           (("received_amount" in selectedItem
@@ -990,18 +1361,48 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 </Box>
               </Box>
 
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                }}
+              >
                 <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">开票日期</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    开票日期
+                  </Typography>
                   <Typography sx={{ fontWeight: "medium", mt: 0.5 }}>
                     {selectedItem.invoice_date
                       ? new Date(selectedItem.invoice_date).toLocaleDateString()
                       : "-"}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "error.50" : "grey.50", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">到期日期</Typography>
-                  <Typography sx={{ fontWeight: "medium", mt: 0.5, color: isOverdue(selectedItem.due_date) && selectedItem.status !== "paid" ? "error.main" : "text.primary" }}>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor:
+                      isOverdue(selectedItem.due_date) &&
+                      selectedItem.status !== "paid"
+                        ? "error.50"
+                        : "grey.50",
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    到期日期
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontWeight: "medium",
+                      mt: 0.5,
+                      color:
+                        isOverdue(selectedItem.due_date) &&
+                        selectedItem.status !== "paid"
+                          ? "error.main"
+                          : "text.primary",
+                    }}
+                  >
                     {selectedItem.due_date
                       ? new Date(selectedItem.due_date).toLocaleDateString()
                       : "-"}
@@ -1009,12 +1410,31 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 </Box>
               </Box>
 
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary">状态</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  p: 2,
+                  bgcolor: "grey.50",
+                  borderRadius: 1,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  状态
+                </Typography>
                 {getStatusBadge(selectedItem.status)}
               </Box>
 
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", typography: "body2", color: "text.secondary" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  typography: "body2",
+                  color: "text.secondary",
+                }}
+              >
                 <span>
                   创建时间: {new Date(selectedItem.created_at).toLocaleString()}
                 </span>

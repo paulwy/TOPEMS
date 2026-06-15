@@ -20,14 +20,7 @@ import {
   Tooltip,
   Stack,
 } from "@mui/material";
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  FileText,
-} from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, FileText } from "lucide-react";
 
 interface Formula {
   id: string;
@@ -127,7 +120,10 @@ const RsFormulaListPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <div style={{ marginBottom: 12 }}>
-        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", justifyContent: "space-between" }}
+        >
           <div>
             <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
               配方管理
@@ -153,13 +149,15 @@ const RsFormulaListPage: React.FC = () => {
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-           }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
+          }}
           sx={{ width: 300 }}
         />
       </Paper>
@@ -203,7 +201,11 @@ const RsFormulaListPage: React.FC = () => {
                   <TableCell>{formula.created_by}</TableCell>
                   <TableCell>{formula.created_at}</TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ justifyContent: "center" }}
+                    >
                       <Tooltip title="查看">
                         <IconButton
                           size="small"

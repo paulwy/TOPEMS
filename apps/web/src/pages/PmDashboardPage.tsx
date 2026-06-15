@@ -440,9 +440,7 @@ const PmDashboardPage: React.FC = () => {
               暂无项目
             </Box>
           ) : (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {projects.slice(0, 5).map((project) => (
                 <Box
                   key={project.id}
@@ -574,9 +572,7 @@ const PmDashboardPage: React.FC = () => {
               />
             </Box>
           ) : (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {projects.slice(0, 5).map((project) => (
                 <Box
                   key={project.id}
@@ -596,7 +592,11 @@ const PmDashboardPage: React.FC = () => {
                     }}
                   >
                     <Typography
-                      sx={{ fontWeight: 500, color: "grey.900", fontSize: "0.875rem" }}
+                      sx={{
+                        fontWeight: 500,
+                        color: "grey.900",
+                        fontSize: "0.875rem",
+                      }}
                     >
                       {project.name}
                     </Typography>
@@ -625,10 +625,7 @@ const PmDashboardPage: React.FC = () => {
                       }}
                     />
                   </Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "grey.500", mt: 1 }}
-                  >
+                  <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
                     {formatDate(project.start_date)} -{" "}
                     {formatDate(project.end_date)}
                   </Typography>
@@ -705,9 +702,7 @@ const PmDashboardPage: React.FC = () => {
               暂无合同
             </Box>
           ) : (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {contracts.slice(0, 5).map((contract) => (
                 <Box
                   key={contract.id}
@@ -748,7 +743,9 @@ const PmDashboardPage: React.FC = () => {
                       {formatDate(contract.signing_date)}
                     </Typography>
                   </Box>
-                  <FileCheck sx={{ width: 20, height: 20, color: "grey.400" }} />
+                  <FileCheck
+                    sx={{ width: 20, height: 20, color: "grey.400" }}
+                  />
                 </Box>
               ))}
             </Box>

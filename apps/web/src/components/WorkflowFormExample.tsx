@@ -1,5 +1,15 @@
 import { useForm, Controller } from "react-hook-form";
-import { Button, Card, CardContent, CardActions, Typography, TextField, Box, Switch, FormControlLabel } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardActions,
+  Typography,
+  TextField,
+  Box,
+  Switch,
+  FormControlLabel,
+} from "@mui/material";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppStore } from "@/store";
@@ -30,7 +40,12 @@ export function WorkflowFormExample({
 }: WorkflowFormExampleProps) {
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const { control, handleSubmit, reset, formState: { errors } } = useForm<WorkflowFormValues>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<WorkflowFormValues>({
     resolver: zodResolver(workflowFormSchema) as any,
     defaultValues: {
       name: initialValues?.name || "",
@@ -53,12 +68,18 @@ export function WorkflowFormExample({
   return (
     <Card sx={{ maxWidth: 600, mx: "auto" }}>
       <CardContent>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>工作流表单示例</Typography>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          工作流表单示例
+        </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
           使用 React Hook Form + Zod + MUI 的示例
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit(onFormSubmit)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(onFormSubmit)}
+          sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+        >
           <Controller
             name="name"
             control={control}
@@ -106,8 +127,12 @@ export function WorkflowFormExample({
           />
 
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button type="submit" variant="contained">保存</Button>
-            <Button type="button" variant="outlined" onClick={() => reset()}>重置</Button>
+            <Button type="submit" variant="contained">
+              保存
+            </Button>
+            <Button type="button" variant="outlined" onClick={() => reset()}>
+              重置
+            </Button>
           </Box>
         </Box>
       </CardContent>

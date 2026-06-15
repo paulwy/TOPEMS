@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useEffect, useState } from "react";
 import {
   Users,
@@ -38,7 +39,6 @@ import {
   Tab,
   Snackbar,
   Alert,
-  Grid,
   InputAdornment,
 } from "@mui/material";
 import type {
@@ -479,8 +479,10 @@ const Srmpage: React.FC = () => {
   };
 
   const getRiskStyle = (level: string) => {
-    if (level === "low") return { bgcolor: "#dcfce7", color: "#15803d", label: "低" };
-    if (level === "medium") return { bgcolor: "#fef3c7", color: "#b45309", label: "中" };
+    if (level === "low")
+      return { bgcolor: "#dcfce7", color: "#15803d", label: "低" };
+    if (level === "medium")
+      return { bgcolor: "#fef3c7", color: "#b45309", label: "中" };
     return { bgcolor: "#fee2e2", color: "#b91c1c", label: "高" };
   };
 
@@ -849,7 +851,8 @@ const Srmpage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    background: "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
+                    background:
+                      "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
                     borderRadius: 1,
                     display: "flex",
                     alignItems: "center",
@@ -899,7 +902,9 @@ const Srmpage: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}>
+      <Box
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
+      >
         <Paper
           elevation={0}
           sx={{
@@ -1110,12 +1115,14 @@ const Srmpage: React.FC = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     sx={{ width: 256 }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon size={18} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon size={18} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </Stack>
@@ -1499,7 +1506,7 @@ const Srmpage: React.FC = () => {
                       fullWidth
                       type="date"
                       label="预计交付日期"
-                      InputLabelProps={{ shrink: true }}
+                      slotProps={{ inputLabel: { shrink: true } }}
                       value={formData.expected_date?.split("T")[0] || ""}
                       onChange={(e) =>
                         setFormData({
@@ -1624,7 +1631,7 @@ const Srmpage: React.FC = () => {
                       fullWidth
                       type="date"
                       label="签订日期"
-                      InputLabelProps={{ shrink: true }}
+                      slotProps={{ inputLabel: { shrink: true } }}
                       value={formData.sign_date?.split("T")[0] || ""}
                       onChange={(e) =>
                         setFormData({
@@ -1639,7 +1646,7 @@ const Srmpage: React.FC = () => {
                       fullWidth
                       type="date"
                       label="生效日期"
-                      InputLabelProps={{ shrink: true }}
+                      slotProps={{ inputLabel: { shrink: true } }}
                       value={formData.start_date?.split("T")[0] || ""}
                       onChange={(e) =>
                         setFormData({
@@ -1654,7 +1661,7 @@ const Srmpage: React.FC = () => {
                       fullWidth
                       type="date"
                       label="到期日期"
-                      InputLabelProps={{ shrink: true }}
+                      slotProps={{ inputLabel: { shrink: true } }}
                       value={formData.end_date?.split("T")[0] || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, end_date: e.target.value })
@@ -1728,10 +1735,7 @@ const SrmFinanceTab: React.FC = () => {
   return (
     <Stack spacing={3}>
       {/* 子Tab切换 */}
-      <Paper
-        elevation={0}
-        sx={{ borderRadius: 1, p: 0.5, bgcolor: "grey.50" }}
-      >
+      <Paper elevation={0} sx={{ borderRadius: 1, p: 0.5, bgcolor: "grey.50" }}>
         <Tabs
           value={financeTab}
           onChange={(_, v) => setFinanceTab(v)}
@@ -1801,7 +1805,12 @@ const SrmFinanceTab: React.FC = () => {
                 <Typography variant="caption" color="#15803d">
                   正常
                 </Typography>
-                <Typography variant="h5" fontWeight={700} color="#15803d" mt={1}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color="#15803d"
+                  mt={1}
+                >
                   ¥0
                 </Typography>
               </Paper>
@@ -1817,7 +1826,12 @@ const SrmFinanceTab: React.FC = () => {
                 <Typography variant="caption" color="#b45309">
                   30天内
                 </Typography>
-                <Typography variant="h5" fontWeight={700} color="#b45309" mt={1}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color="#b45309"
+                  mt={1}
+                >
                   ¥0
                 </Typography>
               </Paper>
@@ -1833,7 +1847,12 @@ const SrmFinanceTab: React.FC = () => {
                 <Typography variant="caption" color="#c2410c">
                   60天内
                 </Typography>
-                <Typography variant="h5" fontWeight={700} color="#c2410c" mt={1}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color="#c2410c"
+                  mt={1}
+                >
                   ¥0
                 </Typography>
               </Paper>
@@ -1849,7 +1868,12 @@ const SrmFinanceTab: React.FC = () => {
                 <Typography variant="caption" color="#b91c1c">
                   90天以上
                 </Typography>
-                <Typography variant="h5" fontWeight={700} color="#b91c1c" mt={1}>
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color="#b91c1c"
+                  mt={1}
+                >
                   ¥0
                 </Typography>
               </Paper>

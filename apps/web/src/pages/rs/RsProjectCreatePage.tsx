@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -5,7 +6,6 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
   TextField,
   Button,
   MenuItem,
@@ -251,9 +251,11 @@ const RsProjectCreatePage: React.FC = () => {
               value={formData.budget}
               onChange={(e) => handleInputChange("budget", e.target.value)}
               placeholder="请输入预算金额"
-              InputProps={{
-                endAdornment: <Typography variant="body2">元</Typography>,
-               }}
+              slotProps={{
+                input: {
+                  endAdornment: <Typography variant="body2">元</Typography>,
+                },
+              }}
             />
           </Grid>
 
@@ -355,7 +357,11 @@ const RsProjectCreatePage: React.FC = () => {
           {/* 操作按钮 */}
           <Grid size={{ xs: 12 }}>
             <Divider sx={{ mb: 2 }} />
-            <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end" }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ justifyContent: "flex-end" }}
+            >
               <Button
                 variant="outlined"
                 startIcon={<X />}

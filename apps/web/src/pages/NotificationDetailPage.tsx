@@ -135,10 +135,24 @@ const NotificationDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "grey.100",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Box sx={{ textAlign: "center" }}>
-          <Loader2 size={48} color="#1976d2" style={{ margin: "0 auto", animation: "spin 1s linear infinite" }} />
-          <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>加载中...</Typography>
+          <Loader2
+            size={48}
+            color="#1976d2"
+            style={{ margin: "0 auto", animation: "spin 1s linear infinite" }}
+          />
+          <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>
+            加载中...
+          </Typography>
         </Box>
       </Box>
     );
@@ -153,18 +167,40 @@ const NotificationDetailPage: React.FC = () => {
         />
 
         {/* Header */}
-        <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
-          <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            boxShadow: 1,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Box
+            sx={{
+              maxWidth: 900,
+              mx: "auto",
+              px: { xs: 2, sm: 3, lg: 4 },
+              py: 3,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box
                 component="button"
                 onClick={() => navigate("/notifications")}
-                sx={{ p: 1, borderRadius: 2, "&:hover": { bgcolor: "grey.100" }, transition: "background-color 0.2s" }}
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "grey.100" },
+                  transition: "background-color 0.2s",
+                }}
               >
                 <ChevronLeft size={20} color="#666" />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "grey.900" }}
+                >
                   通知详情
                 </Typography>
               </Box>
@@ -172,10 +208,27 @@ const NotificationDetailPage: React.FC = () => {
           </Box>
         </Box>
 
-        <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, p: 6, textAlign: "center" }}>
-            <AlertCircle size={64} color="#666" style={{ margin: "0 auto 16px" }} />
-            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+        <Box
+          sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
+        >
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: 1,
+              p: 6,
+              textAlign: "center",
+            }}
+          >
+            <AlertCircle
+              size={64}
+              color="#666"
+              style={{ margin: "0 auto 16px" }}
+            />
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+            >
               通知不存在
             </Typography>
             <Typography variant="body2" sx={{ color: "grey.500", mb: 3 }}>
@@ -184,7 +237,14 @@ const NotificationDetailPage: React.FC = () => {
             <Box
               component="button"
               onClick={() => navigate("/notifications")}
-              sx={{ px: 2, py: 1, bgcolor: "primary.main", color: "white", borderRadius: 2, "&:hover": { bgcolor: "primary.dark" } }}
+              sx={{
+                px: 2,
+                py: 1,
+                bgcolor: "primary.main",
+                color: "white",
+                borderRadius: 2,
+                "&:hover": { bgcolor: "primary.dark" },
+              }}
             >
               返回通知列表
             </Box>
@@ -205,19 +265,47 @@ const NotificationDetailPage: React.FC = () => {
       />
 
       {/* Header */}
-      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
-        <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box
                 component="button"
                 onClick={() => navigate("/notifications")}
-                sx={{ p: 1, borderRadius: 2, "&:hover": { bgcolor: "grey.100" }, transition: "background-color 0.2s" }}
+                sx={{
+                  p: 1,
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "grey.100" },
+                  transition: "background-color 0.2s",
+                }}
               >
                 <ChevronLeft size={20} color="#666" />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "grey.900",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
                   <Bell size={24} style={{ marginRight: 12 }} color="#1976d2" />
                   通知详情
                 </Typography>
@@ -292,11 +380,27 @@ const NotificationDetailPage: React.FC = () => {
       </Box>
 
       {/* Content */}
-      <Box sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, overflow: "hidden" }}>
+      <Box
+        sx={{ maxWidth: 900, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
+      >
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            overflow: "hidden",
+          }}
+        >
           {/* Header */}
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Box
                   component="span"
@@ -359,7 +463,10 @@ const NotificationDetailPage: React.FC = () => {
               </Typography>
             </Box>
 
-            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+            >
               {notification.title}
             </Typography>
           </Box>
@@ -375,35 +482,47 @@ const NotificationDetailPage: React.FC = () => {
 
           {/* Meta Info */}
           {(notification.read_at || notification.data) && (
-            <Box sx={{ p: 3, bgcolor: "grey.50", borderTop: 1, borderColor: "divider" }}>
+            <Box
+              sx={{
+                p: 3,
+                bgcolor: "grey.50",
+                borderTop: 1,
+                borderColor: "divider",
+              }}
+            >
               {notification.read_at && (
                 <Box sx={{ fontSize: "0.875rem", color: "grey.500", mb: 1 }}>
-                  阅读时间：{new Date(notification.read_at).toLocaleString("zh-CN")}
+                  阅读时间：
+                  {new Date(notification.read_at).toLocaleString("zh-CN")}
                 </Box>
               )}
 
-              {notification.data && Object.keys(notification.data).length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 1 }}>
-                    附加数据
-                  </Typography>
-                  <Box
-                    component="pre"
-                    sx={{
-                      fontSize: "0.75rem",
-                      color: "grey.600",
-                      bgcolor: "background.paper",
-                      p: 1.5,
-                      borderRadius: 1,
-                      border: 1,
-                      borderColor: "grey.200",
-                      overflow: "auto",
-                    }}
-                  >
-                    {JSON.stringify(notification.data, null, 2)}
+              {notification.data &&
+                Object.keys(notification.data).length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 500, color: "grey.700", mb: 1 }}
+                    >
+                      附加数据
+                    </Typography>
+                    <Box
+                      component="pre"
+                      sx={{
+                        fontSize: "0.75rem",
+                        color: "grey.600",
+                        bgcolor: "background.paper",
+                        p: 1.5,
+                        borderRadius: 1,
+                        border: 1,
+                        borderColor: "grey.200",
+                        overflow: "auto",
+                      }}
+                    >
+                      {JSON.stringify(notification.data, null, 2)}
+                    </Box>
                   </Box>
-                </Box>
-              )}
+                )}
             </Box>
           )}
         </Box>

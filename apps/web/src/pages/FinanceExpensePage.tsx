@@ -137,7 +137,17 @@ const FinanceExpensePage: React.FC = () => {
   const getStatusChip = (status: string) => {
     const configs: Record<
       string,
-      { color: "default" | "primary" | "secondary" | "success" | "error" | "info" | "warning"; label: string }
+      {
+        color:
+          | "default"
+          | "primary"
+          | "secondary"
+          | "success"
+          | "error"
+          | "info"
+          | "warning";
+        label: string;
+      }
     > = {
       pending: { color: "warning", label: "待审批" },
       approved: { color: "primary", label: "已审批" },
@@ -145,7 +155,10 @@ const FinanceExpensePage: React.FC = () => {
       rejected: { color: "error", label: "已拒绝" },
     };
 
-    const config = configs[status] || { color: "default" as const, label: status };
+    const config = configs[status] || {
+      color: "default" as const,
+      label: status,
+    };
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
@@ -477,8 +490,16 @@ const FinanceExpensePage: React.FC = () => {
         accessorKey: "applicant_name",
         header: "申请人",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", color: "text.primary" }}>
-            <User sx={{ width: 16, height: 16, mr: 1, color: "primary.main" }} />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              color: "text.primary",
+            }}
+          >
+            <User
+              sx={{ width: 16, height: 16, mr: 1, color: "primary.main" }}
+            />
             {getEmployeeName(row.original.applicant_name || "")}
           </Box>
         ),
@@ -514,7 +535,14 @@ const FinanceExpensePage: React.FC = () => {
         accessorKey: "expense_date",
         header: "日期",
         cell: ({ row }) => (
-          <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary", fontSize: "0.875rem" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              color: "text.secondary",
+              fontSize: "0.875rem",
+            }}
+          >
             <Calendar sx={{ width: 12, height: 12, mr: 0.5 }} />
             {row.original.expense_date?.split("T")[0] || "-"}
           </Box>
@@ -672,16 +700,42 @@ const FinanceExpensePage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box sx={{ bgcolor: "background.paper", boxShadow: "sm", borderBottom: 1, borderColor: "divider" }}>
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: "sm",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Stack
+            direction="row"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
+          >
             <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft sx={{ width: 20, height: 20 }} />
               </IconButton>
               <Box>
-                <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <FileText sx={{ width: 28, height: 28, mr: 1.5, color: "indigo.600" }} />
+                <Typography
+                  variant="h5"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontWeight: 700,
+                  }}
+                >
+                  <FileText
+                    sx={{ width: 28, height: 28, mr: 1.5, color: "indigo.600" }}
+                  />
                   费用报销
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -703,8 +757,17 @@ const FinanceExpensePage: React.FC = () => {
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2, lg: 4 }, gap: 2, mb: 3 }}>
+      <Box
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 2, lg: 4 },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           <MetricCard
             title="待审批"
             value={expenseStats.pendingCount}
@@ -735,7 +798,14 @@ const FinanceExpensePage: React.FC = () => {
           />
         </Box>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 3 }, gap: 2, mb: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 3 },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           <MetricCard
             title="已拒绝"
             value={expenseStats.rejectedCount}
@@ -759,15 +829,36 @@ const FinanceExpensePage: React.FC = () => {
           />
         </Box>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: 2 }, gap: 3, mb: 3 }}>
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 1.5, boxShadow: 1, p: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, lg: 2 },
+            gap: 3,
+            mb: 3,
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 1.5,
+              boxShadow: 1,
+              p: 3,
+            }}
+          >
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               费用状态分布
             </Typography>
             <StatsChart type="pie" data={expenseStatusData} height={250} />
           </Box>
 
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 1.5, boxShadow: 1, p: 3 }}>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 1.5,
+              boxShadow: 1,
+              p: 3,
+            }}
+          >
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               费用类型分布
             </Typography>
@@ -775,7 +866,15 @@ const FinanceExpensePage: React.FC = () => {
           </Box>
         </Box>
 
-        <Stack sx={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", mb: 2 }} spacing={2}>
+        <Stack
+          sx={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+          spacing={2}
+        >
           <OrganizationFilter
             value={organizationFilter}
             onChange={setOrganizationFilter}
@@ -796,7 +895,10 @@ const FinanceExpensePage: React.FC = () => {
         {selectedIds.length > 0 && (
           <Card sx={{ mb: 2, bgcolor: "action.selected" }}>
             <CardContent>
-              <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+              <Stack
+                direction="row"
+                sx={{ justifyContent: "space-between", alignItems: "center" }}
+              >
                 <Typography variant="body2" color="primary">
                   已选择 <Chip label={selectedIds.length} size="small" /> 条记录
                 </Typography>
@@ -845,8 +947,23 @@ const FinanceExpensePage: React.FC = () => {
           <CardContent>
             {loading ? (
               <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box sx={{ display: "inline-block", animation: "spin 1s linear infinite", borderRadius: "50%", width: 32, height: 32, border: 4, borderColor: "primary.main", borderTopColor: "transparent" }} />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    animation: "spin 1s linear infinite",
+                    borderRadius: "50%",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "primary.main",
+                    borderTopColor: "transparent",
+                  }}
+                />
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
                   加载中...
                 </Typography>
               </Box>
@@ -872,7 +989,12 @@ const FinanceExpensePage: React.FC = () => {
       </Box>
 
       {/* Create Dialog */}
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建费用报销</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 2 }}>
@@ -911,7 +1033,10 @@ const FinanceExpensePage: React.FC = () => {
                   value={newExpense.department_id}
                   label="部门"
                   onChange={(e) =>
-                    setNewExpense({ ...newExpense, department_id: e.target.value })
+                    setNewExpense({
+                      ...newExpense,
+                      department_id: e.target.value,
+                    })
                   }
                 >
                   <MenuItem value="">请选择部门</MenuItem>
@@ -928,7 +1053,10 @@ const FinanceExpensePage: React.FC = () => {
                   value={newExpense.expense_type}
                   label="费用类型"
                   onChange={(e) =>
-                    setNewExpense({ ...newExpense, expense_type: e.target.value })
+                    setNewExpense({
+                      ...newExpense,
+                      expense_type: e.target.value,
+                    })
                   }
                 >
                   <MenuItem value="">请选择类型</MenuItem>
@@ -956,7 +1084,7 @@ const FinanceExpensePage: React.FC = () => {
                     amount: parseFloat(e.target.value) || 0,
                   })
                 }
-                InputProps={{ inputProps: { min: 0, step: 0.01 } }}
+                slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
                 placeholder="请输入金额"
               />
               <TextField
@@ -985,7 +1113,7 @@ const FinanceExpensePage: React.FC = () => {
                   receipt_count: parseInt(e.target.value) || 0,
                 })
               }
-              InputProps={{ inputProps: { min: 0 } }}
+              slotProps={{ input: { inputProps: { min: 0 } } }}
               placeholder="请输入票据数量"
             />
 
@@ -1004,12 +1132,19 @@ const FinanceExpensePage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCreate}>提交申请</Button>
+          <Button variant="contained" onClick={handleCreate}>
+            提交申请
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingExpense} onClose={() => setEditingExpense(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={!!editingExpense}
+        onClose={() => setEditingExpense(null)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>编辑费用报销</DialogTitle>
         <DialogContent>
           {editingExpense && (
@@ -1019,7 +1154,7 @@ const FinanceExpensePage: React.FC = () => {
                   label="报销编号"
                   fullWidth
                   value={editingExpense.expense_number}
-                  InputProps={{ readOnly: true }}
+                  slotProps={{ input: { readOnly: true } }}
                 />
                 <TextField
                   label="申请人"
@@ -1091,7 +1226,7 @@ const FinanceExpensePage: React.FC = () => {
                       amount: parseFloat(e.target.value) || 0,
                     })
                   }
-                  InputProps={{ inputProps: { min: 0, step: 0.01 } }}
+                  slotProps={{ input: { inputProps: { min: 0, step: 0.01 } } }}
                 />
                 <TextField
                   label="日期"
@@ -1120,7 +1255,7 @@ const FinanceExpensePage: React.FC = () => {
                       receipt_count: parseInt(e.target.value) || 0,
                     })
                   }
-                  InputProps={{ inputProps: { min: 0 } }}
+                  slotProps={{ input: { inputProps: { min: 0 } } }}
                 />
                 <FormControl fullWidth>
                   <InputLabel>状态</InputLabel>
@@ -1128,7 +1263,10 @@ const FinanceExpensePage: React.FC = () => {
                     value={editingExpense.status}
                     label="状态"
                     onChange={(e) =>
-                      setEditingExpense({ ...editingExpense, status: e.target.value })
+                      setEditingExpense({
+                        ...editingExpense,
+                        status: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="pending">待审批</MenuItem>
@@ -1158,7 +1296,9 @@ const FinanceExpensePage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditingExpense(null)}>取消</Button>
-          <Button variant="contained" onClick={handleUpdate}>保存</Button>
+          <Button variant="contained" onClick={handleUpdate}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

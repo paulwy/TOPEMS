@@ -13,7 +13,20 @@ import {
   Table,
   Eye,
 } from "lucide-react";
-import { Box, Typography, Button, TextField, Table as MuiTable, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Table as MuiTable,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+} from "@mui/material";
 import type { ReportData } from "../api/report";
 
 interface ReportViewerProps {
@@ -94,36 +107,52 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
   };
 
   return (
-    <Box sx={{
-      position: "fixed",
-      inset: 0,
-      bgcolor: "rgba(0, 0, 0, 0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 50,
-    }}>
-      <Box sx={{
-        bgcolor: "background.paper",
-        borderRadius: 2,
-        width: "100%",
-        maxWidth: 1152,
-        maxHeight: "90vh",
-        overflow: "hidden",
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        bgcolor: "rgba(0, 0, 0, 0.5)",
         display: "flex",
-        flexDirection: "column",
-      }}>
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 2,
+          width: "100%",
+          maxWidth: 1152,
+          maxHeight: "90vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* Header */}
-        <Box sx={{
-          background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-          color: "white",
-          p: 3,
-        }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+            color: "white",
+            p: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}
+              >
                 <FileText sx={{ width: 24, height: 24 }} />
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>{report.config.title}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  {report.config.title}
+                </Typography>
               </Box>
               {report.config.description && (
                 <Typography sx={{ color: "primary.light", fontSize: 14 }}>
@@ -133,7 +162,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             </Box>
             <Button
               onClick={onClose}
-              sx={{ p: 1, color: "white", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" }, borderRadius: 2, minWidth: "auto" }}
+              sx={{
+                p: 1,
+                color: "white",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+                borderRadius: 2,
+                minWidth: "auto",
+              }}
             >
               <X sx={{ width: 24, height: 24 }} />
             </Button>
@@ -141,9 +176,33 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         </Box>
 
         {/* Meta Info */}
-        <Box sx={{ bgcolor: "grey.100", px: 3, py: 2, borderBottom: 1, borderColor: "grey.200" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, color: "grey.600" }}>
+        <Box
+          sx={{
+            bgcolor: "grey.100",
+            px: 3,
+            py: 2,
+            borderBottom: 1,
+            borderColor: "grey.200",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 14,
+                color: "grey.600",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Hash sx={{ width: 16, height: 16, mr: 0.5 }} />
                 报表ID: {report.id}
@@ -154,7 +213,8 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 {new Date(report.created_at).toLocaleDateString("zh-CN")}
               </Box>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Table sx={{ width: 16, height: 16, mr: 0.5 }} />共 {report.row_count} 条记录
+                <Table sx={{ width: 16, height: 16, mr: 0.5 }} />共{" "}
+                {report.row_count} 条记录
               </Box>
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <User sx={{ width: 16, height: 16, mr: 0.5 }} />
@@ -200,15 +260,17 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         <Box sx={{ px: 3, py: 2, borderBottom: 1, borderColor: "grey.200" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ flex: 1, position: "relative" }}>
-              <Search sx={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 20,
-                height: 20,
-                color: "grey.400"
-              }} />
+              <Search
+                sx={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 20,
+                  height: 20,
+                  color: "grey.400",
+                }}
+              />
               <TextField
                 fullWidth
                 size="small"
@@ -240,7 +302,15 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         <Box sx={{ flex: 1, overflow: "auto", p: 3 }}>
           {paginatedData.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 6 }}>
-              <FileText sx={{ width: 64, height: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+              <FileText
+                sx={{
+                  width: 64,
+                  height: 64,
+                  color: "grey.300",
+                  mx: "auto",
+                  mb: 2,
+                }}
+              />
               <Typography sx={{ color: "grey.500" }}>暂无数据</Typography>
             </Box>
           ) : (
@@ -248,11 +318,19 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               <MuiTable sx={{ minWidth: "100%" }} size="small">
                 <TableHead sx={{ bgcolor: "grey.100" }}>
                   <TableRow>
-                    <TableCell sx={{ width: 64, fontWeight: 600, color: "grey.600" }}>#</TableCell>
+                    <TableCell
+                      sx={{ width: 64, fontWeight: 600, color: "grey.600" }}
+                    >
+                      #
+                    </TableCell>
                     {displayColumns.map((column) => (
                       <TableCell
                         key={column}
-                        sx={{ fontWeight: 600, color: "grey.600", whiteSpace: "nowrap" }}
+                        sx={{
+                          fontWeight: 600,
+                          color: "grey.600",
+                          whiteSpace: "nowrap",
+                        }}
                       >
                         {column}
                       </TableCell>
@@ -286,8 +364,22 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <Box sx={{ bgcolor: "background.paper", borderTop: 1, borderColor: "grey.200", px: 3, py: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderTop: 1,
+              borderColor: "grey.200",
+              px: 3,
+              py: 2,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box sx={{ fontSize: 14, color: "grey.600" }}>
                 显示 {(currentPage - 1) * itemsPerPage + 1} -{" "}
                 {Math.min(currentPage * itemsPerPage, filteredData.length)} 条，
@@ -298,7 +390,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   size="small"
-                  sx={{ border: 1, borderColor: "grey.200", "&:hover": { bgcolor: "grey.50" }, "&.Mui-disabled": { opacity: 0.5 } }}
+                  sx={{
+                    border: 1,
+                    borderColor: "grey.200",
+                    "&:hover": { bgcolor: "grey.50" },
+                    "&.Mui-disabled": { opacity: 0.5 },
+                  }}
                 >
                   <ChevronLeft sx={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -318,7 +415,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
                       size="small"
-                      variant={currentPage === pageNum ? "contained" : "outlined"}
+                      variant={
+                        currentPage === pageNum ? "contained" : "outlined"
+                      }
                       sx={{ minWidth: "auto", px: 1.5, borderRadius: 1 }}
                     >
                       {pageNum}
@@ -326,10 +425,17 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   );
                 })}
                 <IconButton
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                   size="small"
-                  sx={{ border: 1, borderColor: "grey.200", "&:hover": { bgcolor: "grey.50" }, "&.Mui-disabled": { opacity: 0.5 } }}
+                  sx={{
+                    border: 1,
+                    borderColor: "grey.200",
+                    "&:hover": { bgcolor: "grey.50" },
+                    "&.Mui-disabled": { opacity: 0.5 },
+                  }}
                 >
                   <ChevronRight sx={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -340,8 +446,23 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
 
         {/* Date Range Info */}
         {report.config.date_range && (
-          <Box sx={{ bgcolor: "grey.100", px: 3, py: 1.5, borderTop: 1, borderColor: "grey.200" }}>
-            <Box sx={{ display: "flex", alignItems: "center", fontSize: 14, color: "grey.600" }}>
+          <Box
+            sx={{
+              bgcolor: "grey.100",
+              px: 3,
+              py: 1.5,
+              borderTop: 1,
+              borderColor: "grey.200",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                fontSize: 14,
+                color: "grey.600",
+              }}
+            >
               <Calendar sx={{ width: 16, height: 16, mr: 1 }} />
               时间范围: {report.config.date_range.start_date} 至{" "}
               {report.config.date_range.end_date}

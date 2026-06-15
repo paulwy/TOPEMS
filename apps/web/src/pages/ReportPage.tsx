@@ -15,7 +15,15 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Button, TextField, Select, MenuItem, Chip } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  Chip,
+} from "@mui/material";
 import type { ReportData, ReportTypeInfo } from "../api/report";
 import { reportApi } from "../api/report";
 import ReportBuilder from "./ReportBuilder";
@@ -234,7 +242,10 @@ const ReportPage: React.FC = () => {
   };
 
   const getModuleColor = (module: string) => {
-    const colors: Record<string, "warning" | "info" | "success" | "error" | "secondary"> = {
+    const colors: Record<
+      string,
+      "warning" | "info" | "success" | "error" | "secondary"
+    > = {
       RS: "warning",
       LIMS: "info",
       QMS: "success",
@@ -277,15 +288,26 @@ const ReportPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
-      }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+        }}
+      >
         <Box sx={{ textAlign: "center" }}>
-          <Loader2 sx={{ width: 48, height: 48, color: "primary.main", animation: "spin 1s linear infinite", mx: "auto", mb: 2 }} />
+          <Loader2
+            sx={{
+              width: 48,
+              height: 48,
+              color: "primary.main",
+              animation: "spin 1s linear infinite",
+              mx: "auto",
+              mb: 2,
+            }}
+          />
           <Typography sx={{ color: "grey.700" }}>加载中...</Typography>
         </Box>
       </Box>
@@ -294,28 +316,45 @@ const ReportPage: React.FC = () => {
 
   if (!isServiceUp("report")) {
     return (
-      <Box sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
-      }}>
-        <Box sx={{ textAlign: "center", maxWidth: 448, mx: "auto", p: 4, bgcolor: "background.paper", borderRadius: 3, boxShadow: 2 }}>
-          <Box sx={{
-            width: 64,
-            height: 64,
-            bgcolor: "primary.light",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+        }}
+      >
+        <Box
+          sx={{
+            textAlign: "center",
+            maxWidth: 448,
             mx: "auto",
-            mb: 3,
-          }}>
+            p: 4,
+            bgcolor: "background.paper",
+            borderRadius: 3,
+            boxShadow: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              bgcolor: "primary.light",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
+              mb: 3,
+            }}
+          >
             <FileText sx={{ width: 32, height: 32, color: "primary.main" }} />
           </Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: "grey.900" }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 700, mb: 2, color: "grey.900" }}
+          >
             报表服务未启动
           </Typography>
           <Typography sx={{ mb: 3, color: "grey.700" }}>
@@ -334,42 +373,71 @@ const ReportPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+      }}
+    >
       {/* Header */}
-      <Box sx={{
-        bgcolor: "background.paper",
-        boxShadow: 1,
-        borderBottom: 1,
-        borderColor: "grey.200",
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-      }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "grey.200",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Button
                 onClick={() => navigate("/dashboard")}
-                sx={{ p: 1, color: "grey.600", "&:hover": { bgcolor: "grey.100" }, borderRadius: 2 }}
+                sx={{
+                  p: 1,
+                  color: "grey.600",
+                  "&:hover": { bgcolor: "grey.100" },
+                  borderRadius: 2,
+                }}
               >
                 <X sx={{ width: 20, height: 20 }} />
               </Button>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Box sx={{
-                  width: 40,
-                  height: 40,
-                  bgcolor: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
-                }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    bgcolor:
+                      "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                    borderRadius: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background:
+                      "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                  }}
+                >
                   <FileText sx={{ width: 24, height: 24, color: "white" }} />
                 </Box>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900" }}>报表中心</Typography>
-                  <Typography variant="caption" sx={{ color: "grey.500" }}>Report Center</Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, color: "grey.900" }}
+                  >
+                    报表中心
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "grey.500" }}>
+                    Report Center
+                  </Typography>
                 </Box>
               </Box>
             </Box>
@@ -398,14 +466,17 @@ const ReportPage: React.FC = () => {
             p: 2,
             borderRadius: 2,
             boxShadow: 2,
-            bgcolor: notification.type === "success" ? "success.main" : "error.main",
+            bgcolor:
+              notification.type === "success" ? "success.main" : "error.main",
             color: "white",
             display: "flex",
             alignItems: "center",
             gap: 1,
           }}
         >
-          {notification.type === "success" && <CheckCircle sx={{ width: 20, height: 20 }} />}
+          {notification.type === "success" && (
+            <CheckCircle sx={{ width: 20, height: 20 }} />
+          )}
           <span>{notification.message}</span>
         </Box>
       )}
@@ -415,22 +486,30 @@ const ReportPage: React.FC = () => {
         {/* Search and Filter */}
         <Box sx={{ mb: 3, display: "flex", gap: 3 }}>
           <Box sx={{ flex: 1, position: "relative" }}>
-            <Search sx={{
-              position: "absolute",
-              left: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 20,
-              height: 20,
-              color: "grey.400"
-            }} />
+            <Search
+              sx={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 20,
+                height: 20,
+                color: "grey.400",
+              }}
+            />
             <TextField
               fullWidth
               size="small"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="搜索报表..."
-              sx={{ pl: 5, "& .MuiOutlinedInput-root": { bgcolor: "background.paper", borderRadius: 2 } }}
+              sx={{
+                pl: 5,
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                },
+              }}
             />
           </Box>
           <Select
@@ -449,25 +528,80 @@ const ReportPage: React.FC = () => {
         </Box>
 
         {/* Stats */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 4 }, gap: 3, mb: 4 }}>
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 4 },
+            gap: 3,
+            mb: 4,
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              p: 3,
+              boxShadow: 1,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>报表总数</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                  报表总数
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: "grey.900" }}
+                >
                   {reports.length}
                 </Typography>
               </Box>
-              <Box sx={{ width: 48, height: 48, bgcolor: "primary.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <FileText sx={{ width: 24, height: 24, color: "primary.main" }} />
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: "primary.light",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <FileText
+                  sx={{ width: 24, height: 24, color: "primary.main" }}
+                />
               </Box>
             </Box>
           </Box>
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              p: 3,
+              boxShadow: 1,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>RS 模块</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: "warning.main" }}>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                  RS 模块
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: "warning.main" }}
+                >
                   {
                     reports.filter(
                       (r) =>
@@ -476,16 +610,46 @@ const ReportPage: React.FC = () => {
                   }
                 </Typography>
               </Box>
-              <Box sx={{ width: 48, height: 48, bgcolor: "warning.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <FileText sx={{ width: 24, height: 24, color: "warning.main" }} />
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: "warning.light",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <FileText
+                  sx={{ width: 24, height: 24, color: "warning.main" }}
+                />
               </Box>
             </Box>
           </Box>
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              p: 3,
+              boxShadow: 1,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>LIMS 模块</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: "info.main" }}>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                  LIMS 模块
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: "info.main" }}
+                >
                   {
                     reports.filter(
                       (r) =>
@@ -495,16 +659,44 @@ const ReportPage: React.FC = () => {
                   }
                 </Typography>
               </Box>
-              <Box sx={{ width: 48, height: 48, bgcolor: "info.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: "info.light",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <FileText sx={{ width: 24, height: 24, color: "info.main" }} />
               </Box>
             </Box>
           </Box>
-          <Box sx={{ bgcolor: "background.paper", borderRadius: 3, p: 3, boxShadow: 1 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              p: 3,
+              boxShadow: 1,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>QMS 模块</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: "success.main" }}>
+                <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
+                  QMS 模块
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: "success.main" }}
+                >
                   {
                     reports.filter(
                       (r) =>
@@ -513,22 +705,56 @@ const ReportPage: React.FC = () => {
                   }
                 </Typography>
               </Box>
-              <Box sx={{ width: 48, height: 48, bgcolor: "success.light", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <FileText sx={{ width: 24, height: 24, color: "success.main" }} />
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: "success.light",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <FileText
+                  sx={{ width: 24, height: 24, color: "success.main" }}
+                />
               </Box>
             </Box>
           </Box>
         </Box>
 
         {/* Report List */}
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 1 }}>
+        <Box
+          sx={{ bgcolor: "background.paper", borderRadius: 3, boxShadow: 1 }}
+        >
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "grey.200" }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>报表列表</Typography>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, color: "grey.900" }}
+            >
+              报表列表
+            </Typography>
           </Box>
-          <Box sx={{ "& > div:not(:last-child)": { borderBottom: 1, borderColor: "grey.200" } }}>
+          <Box
+            sx={{
+              "& > div:not(:last-child)": {
+                borderBottom: 1,
+                borderColor: "grey.200",
+              },
+            }}
+          >
             {filteredReports.length === 0 ? (
               <Box sx={{ p: 6, textAlign: "center" }}>
-                <FileText sx={{ width: 64, height: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <FileText
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    color: "grey.300",
+                    mx: "auto",
+                    mb: 2,
+                  }}
+                />
                 <Typography sx={{ color: "grey.600" }}>暂无报表</Typography>
                 <Button
                   onClick={() => setShowBuilder(true)}
@@ -544,22 +770,46 @@ const ReportPage: React.FC = () => {
                   key={report.id}
                   sx={{ p: 3, "&:hover": { bgcolor: "grey.50" } }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mb: 1,
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 600, color: "grey.900" }}
+                        >
                           {report.config.title}
                         </Typography>
                         <Chip
-                          label={getModuleFromReportType(report.config.report_type)}
-                          color={getModuleColor(getModuleFromReportType(report.config.report_type))}
+                          label={getModuleFromReportType(
+                            report.config.report_type,
+                          )}
+                          color={getModuleColor(
+                            getModuleFromReportType(report.config.report_type),
+                          )}
                           size="small"
                           sx={{ borderRadius: "50%" }}
                         />
                         <Chip
                           label={`${report.row_count} 条数据`}
                           size="small"
-                          sx={{ bgcolor: "grey.100", color: "grey.700", borderRadius: "50%" }}
+                          sx={{
+                            bgcolor: "grey.100",
+                            color: "grey.700",
+                            borderRadius: "50%",
+                          }}
                         />
                       </Box>
                       {report.config.description && (
@@ -567,21 +817,47 @@ const ReportPage: React.FC = () => {
                           {report.config.description}
                         </Typography>
                       )}
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 3, fontSize: 14, color: "grey.600" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 3,
+                          fontSize: 14,
+                          color: "grey.600",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Calendar sx={{ width: 16, height: 16 }} />
                           创建时间:{" "}
                           {new Date(report.created_at).toLocaleDateString(
                             "zh-CN",
                           )}
                         </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           {getFormatIcon(report.config.format)}
                           <span style={{ marginLeft: 4 }}>
                             {report.config.format.toUpperCase()}
                           </span>
                         </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Columns sx={{ width: 16, height: 16 }} />
                           {report.config.columns.length} 列
                         </Box>
@@ -592,7 +868,11 @@ const ReportPage: React.FC = () => {
                         onClick={() => handleView(report)}
                         size="small"
                         startIcon={<Eye sx={{ width: 16, height: 16 }} />}
-                        sx={{ color: "info.main", "&:hover": { bgcolor: "info.light" }, borderRadius: 2 }}
+                        sx={{
+                          color: "info.main",
+                          "&:hover": { bgcolor: "info.light" },
+                          borderRadius: 2,
+                        }}
                       >
                         查看
                       </Button>
@@ -600,14 +880,24 @@ const ReportPage: React.FC = () => {
                         onClick={() => handleExport(report)}
                         size="small"
                         startIcon={<Download sx={{ width: 16, height: 16 }} />}
-                        sx={{ color: "success.main", "&:hover": { bgcolor: "success.light" }, borderRadius: 2 }}
+                        sx={{
+                          color: "success.main",
+                          "&:hover": { bgcolor: "success.light" },
+                          borderRadius: 2,
+                        }}
                       >
                         导出
                       </Button>
                       <Button
                         onClick={() => handleDelete(report.id)}
                         size="small"
-                        sx={{ color: "error.main", "&:hover": { bgcolor: "error.light" }, borderRadius: 2, p: 1, minWidth: "auto" }}
+                        sx={{
+                          color: "error.main",
+                          "&:hover": { bgcolor: "error.light" },
+                          borderRadius: 2,
+                          p: 1,
+                          minWidth: "auto",
+                        }}
                       >
                         <Trash2 sx={{ width: 20, height: 20 }} />
                       </Button>

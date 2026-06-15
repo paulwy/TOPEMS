@@ -1,4 +1,22 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Tooltip, Box, TextField } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Tooltip,
+  Box,
+  TextField,
+} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Calendar,
@@ -228,7 +246,11 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
       cancelled: "已取消",
     };
     return (
-      <Chip size="small" variant={(colors[status] || "outlined") as "filled" | "outlined"} label={labels[status] || status} />
+      <Chip
+        size="small"
+        variant={(colors[status] || "outlined") as "filled" | "outlined"}
+        label={labels[status] || status}
+      />
     );
   };
 
@@ -283,7 +305,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         cell: ({ row }) => {
           const room = row.original;
           return (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
               <Tooltip title="预约">
                 <Button
                   variant="text"
@@ -318,7 +340,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                 <Button
                   variant="text"
                   size="small"
-                  sx={{ color: 'error.main' }}
+                  sx={{ color: "error.main" }}
                   onClick={() => handleDeleteRoom(room.id)}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -421,7 +443,9 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <Card>
           <CardHeader>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>会议室列表</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              会议室列表
+            </Typography>
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
@@ -453,7 +477,9 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         {bookings.length > 0 && (
           <Card>
             <CardHeader>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>预约记录</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                预约记录
+              </Typography>
             </CardHeader>
             <CardContent className="p-0">
               <DataTable
@@ -467,11 +493,17 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         )}
       </div>
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="xl">
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="xl"
+      >
         <DialogTitle>新增会议室</DialogTitle>
-        <DialogContent sx={{ maxWidth: 540, overflowY: 'auto' }}>
+        <DialogContent sx={{ maxWidth: 540, overflowY: "auto" }}>
           <form onSubmit={handleCreateRoom}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}
+            >
               <TextField
                 label="会议室名称 *"
                 value={newRoom.name || ""}
@@ -483,7 +515,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                 fullWidth
               />
 
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   label="容量 *"
                   type="number"
@@ -556,12 +588,23 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="xl">
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="xl"
+      >
         <DialogTitle>编辑会议室</DialogTitle>
-        <DialogContent sx={{ maxWidth: 540, overflowY: 'auto' }}>
+        <DialogContent sx={{ maxWidth: 540, overflowY: "auto" }}>
           {selectedRoom && (
             <form onSubmit={handleEditRoom}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2.5,
+                  pt: 1,
+                }}
+              >
                 <TextField
                   label="会议室名称 *"
                   value={selectedRoom.name}
@@ -572,7 +615,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                   fullWidth
                 />
 
-                <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box sx={{ display: "flex", gap: 2 }}>
                   <TextField
                     label="容量 *"
                     type="number"
@@ -622,7 +665,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                     value={selectedRoom.status}
                     label="状态"
                     onChange={(e) =>
-                      setSelectedRoom({ ...selectedRoom, status: e.target.value })
+                      setSelectedRoom({
+                        ...selectedRoom,
+                        status: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="active">可用</MenuItem>
@@ -649,11 +695,17 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showBookingModal} onClose={() => setShowBookingModal(false)} maxWidth="xl">
+      <Dialog
+        open={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        maxWidth="xl"
+      >
         <DialogTitle>预约会议室</DialogTitle>
-        <DialogContent sx={{ maxWidth: 540, overflowY: 'auto' }}>
+        <DialogContent sx={{ maxWidth: 540, overflowY: "auto" }}>
           <form onSubmit={handleCreateBooking}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}
+            >
               <TextField
                 label="会议室"
                 value={selectedBooking.room_name || ""}
@@ -690,7 +742,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                 fullWidth
               />
 
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   label="开始时间 *"
                   type="datetime-local"

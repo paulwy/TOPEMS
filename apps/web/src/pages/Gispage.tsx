@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useState, useMemo, useCallback } from "react";
 import {
   MapPin,
@@ -52,7 +53,6 @@ import {
   DialogActions,
   Tabs,
   Tab,
-  Grid,
   Snackbar,
   Alert,
   Table,
@@ -502,10 +502,18 @@ const GisContent: React.FC = () => {
     { id: "map", label: "地图视图", icon: <Layers size={18} /> },
     { id: "devicePoints", label: "设备点位", icon: <MapPin size={18} /> },
     { id: "pipelines", label: "管线管理", icon: <ArrowRight size={18} /> },
-    { id: "storageLocations", label: "仓储位置", icon: <Warehouse size={18} /> },
+    {
+      id: "storageLocations",
+      label: "仓储位置",
+      icon: <Warehouse size={18} />,
+    },
     { id: "evidenceRecords", label: "现场取证", icon: <Camera size={18} /> },
     { id: "factoryMaps", label: "厂区地图", icon: <Map size={18} /> },
-    { id: "businessLocations", label: "业务位置", icon: <Building2 size={18} /> },
+    {
+      id: "businessLocations",
+      label: "业务位置",
+      icon: <Building2 size={18} />,
+    },
   ];
 
   const getStatusStyle = (status: string) => {
@@ -1248,7 +1256,14 @@ const GisContent: React.FC = () => {
               overflow: "hidden",
             }}
           >
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "grey.50" }}>
+            <Box
+              sx={{
+                p: 2,
+                borderBottom: 1,
+                borderColor: "divider",
+                bgcolor: "grey.50",
+              }}
+            >
               <Stack
                 direction="row"
                 justifyContent="space-between"
@@ -1261,12 +1276,14 @@ const GisContent: React.FC = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   sx={{ flex: 1, maxWidth: 400 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon size={18} />
-                      </InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon size={18} />
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
                 <Button
@@ -1380,7 +1397,11 @@ const GisContent: React.FC = () => {
           PaperProps={{ sx: { borderRadius: 2 } }}
         >
           <DialogTitle>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
               <Typography variant="h6" fontWeight={600}>
                 {modalType === "create" ? "新建" : "编辑"}
               </Typography>
@@ -1682,9 +1703,7 @@ const GisContent: React.FC = () => {
                     label="地图类型"
                     name="map_type"
                     value={formData.map_type}
-                    onChange={(v) =>
-                      setFormData({ ...formData, map_type: v })
-                    }
+                    onChange={(v) => setFormData({ ...formData, map_type: v })}
                     error={formErrors.map_type}
                     required
                   />
@@ -1692,9 +1711,7 @@ const GisContent: React.FC = () => {
                     label="文件URL"
                     name="file_url"
                     value={formData.file_url}
-                    onChange={(v) =>
-                      setFormData({ ...formData, file_url: v })
-                    }
+                    onChange={(v) => setFormData({ ...formData, file_url: v })}
                   />
                 </Stack>
               )}
@@ -1806,7 +1823,11 @@ const GisContent: React.FC = () => {
           PaperProps={{ sx: { borderRadius: 2 } }}
         >
           <DialogTitle>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
               <Typography variant="h6" fontWeight={600}>
                 导入数据
               </Typography>
@@ -1850,8 +1871,14 @@ const GisContent: React.FC = () => {
                     style={{ display: "none" }}
                     id="csv-upload"
                   />
-                  <Upload size={48} color="#9ca3af" style={{ marginBottom: 8 }} />
-                  <Typography color="text.secondary">点击或拖拽文件到此处</Typography>
+                  <Upload
+                    size={48}
+                    color="#9ca3af"
+                    style={{ marginBottom: 8 }}
+                  />
+                  <Typography color="text.secondary">
+                    点击或拖拽文件到此处
+                  </Typography>
                   <Typography variant="caption" color="text.disabled" mt={1}>
                     支持CSV格式文件
                   </Typography>
@@ -1859,7 +1886,11 @@ const GisContent: React.FC = () => {
               </Box>
               {importFile && (
                 <Paper sx={{ p: 1.5, bgcolor: "grey.50", borderRadius: 1.5 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <FileText size={32} color="#6b7280" />
                       <Box>

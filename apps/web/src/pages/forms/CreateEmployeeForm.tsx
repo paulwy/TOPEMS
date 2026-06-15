@@ -97,7 +97,11 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
     >
       <DialogTitle>新增员工</DialogTitle>
       <DialogContent>
-        <Box component="form" onSubmit={handleCreateEmployee} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+        <Box
+          component="form"
+          onSubmit={handleCreateEmployee}
+          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
+        >
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
             <TextField
               id="employee_no"
@@ -240,10 +244,14 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               placeholder="请输入登录密码"
               size="small"
               fullWidth
-              InputProps={{ inputProps: { minLength: 6 } }}
+              slotProps={{ input: { inputProps: { minLength: 6 } } }}
             />
           </Box>
-          <Typography variant="caption" color="textSecondary" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+          >
             <Key style={{ width: 14, height: 14 }} />
             至少6个字符，员工将用此密码登录系统
           </Typography>

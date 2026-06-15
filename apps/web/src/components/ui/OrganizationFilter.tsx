@@ -93,7 +93,10 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
   const selectedEmployee = employees.find((e) => e.id === value.employeeId);
 
   return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }} className={className}>
+    <Box
+      sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5 }}
+      className={className}
+    >
       {showCompany && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Building2 style={{ width: 16, height: 16 }} />
@@ -104,7 +107,8 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
               label="选择公司"
               onChange={(e) =>
                 onChange({
-                  companyId: e.target.value === "all" ? undefined : e.target.value,
+                  companyId:
+                    e.target.value === "all" ? undefined : e.target.value,
                   departmentId: undefined,
                   employeeId: undefined,
                 })
@@ -124,7 +128,11 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
       {showDepartment && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Users style={{ width: 16, height: 16 }} />
-          <FormControl size="small" sx={{ minWidth: 160 }} disabled={disabled || (!value.companyId && companies.length > 0)}>
+          <FormControl
+            size="small"
+            sx={{ minWidth: 160 }}
+            disabled={disabled || (!value.companyId && companies.length > 0)}
+          >
             <InputLabel>选择部门</InputLabel>
             <Select
               value={value.departmentId || "all"}
@@ -132,7 +140,8 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
               onChange={(e) =>
                 onChange({
                   ...value,
-                  departmentId: e.target.value === "all" ? undefined : e.target.value,
+                  departmentId:
+                    e.target.value === "all" ? undefined : e.target.value,
                   employeeId: undefined,
                 })
               }
@@ -151,7 +160,13 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
       {showEmployee && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <User style={{ width: 16, height: 16 }} />
-          <FormControl size="small" sx={{ minWidth: 160 }} disabled={disabled || (!value.departmentId && departments.length > 0)}>
+          <FormControl
+            size="small"
+            sx={{ minWidth: 160 }}
+            disabled={
+              disabled || (!value.departmentId && departments.length > 0)
+            }
+          >
             <InputLabel>选择员工</InputLabel>
             <Select
               value={value.employeeId || "all"}
@@ -159,7 +174,8 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
               onChange={(e) =>
                 onChange({
                   ...value,
-                  employeeId: e.target.value === "all" ? undefined : e.target.value,
+                  employeeId:
+                    e.target.value === "all" ? undefined : e.target.value,
                 })
               }
             >

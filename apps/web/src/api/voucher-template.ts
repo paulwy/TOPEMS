@@ -278,11 +278,19 @@ export const voucherTemplateApi = {
   /**
    * 导出模板
    */
-  exportTemplate: async (templateId: string, format: "json" | "yaml"): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, `/api/v1/voucher/templates/${templateId}/export`, {
-      params: { format },
-    });
+  exportTemplate: async (
+    templateId: string,
+    format: "json" | "yaml",
+  ): Promise<Blob> => {
+    const baseURL =
+      (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    return downloadBlob(
+      baseURL,
+      `/api/v1/voucher/templates/${templateId}/export`,
+      {
+        params: { format },
+      },
+    );
   },
 
   /**

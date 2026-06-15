@@ -8,12 +8,7 @@ import {
   SxProps,
   Theme,
 } from "@mui/material";
-import {
-  ChevronRight,
-  ChevronDown,
-  Folder,
-  File,
-} from "lucide-react";
+import { ChevronRight, ChevronDown, Folder, File } from "lucide-react";
 
 export interface TreeNode {
   id: string;
@@ -93,7 +88,7 @@ function TreeNodeItem({
         onToggle(node.id);
       }
     },
-    [node.id, isDisabled, hasChildren, onToggle]
+    [node.id, isDisabled, hasChildren, onToggle],
   );
 
   const getNodeIcon = () => {
@@ -230,7 +225,7 @@ export default function TreeView({
   density = "normal",
 }: TreeViewProps) {
   const [internalExpanded, setInternalExpanded] = useState<Set<string>>(
-    () => new Set(controlledExpanded || [])
+    () => new Set(controlledExpanded || []),
   );
 
   const expanded = controlledExpanded
@@ -254,7 +249,7 @@ export default function TreeView({
         onExpand?.(nodeId);
       }
     },
-    [controlledExpanded, onExpand]
+    [controlledExpanded, onExpand],
   );
 
   return (

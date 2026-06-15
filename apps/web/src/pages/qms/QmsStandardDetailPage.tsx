@@ -109,7 +109,28 @@ const QmsStandardDetailPage: React.FC = () => {
       color: "bg-gray-100 text-gray-700",
       label: status,
     };
-    return <Chip label={item.label} size="small" sx={{ backgroundColor: item.color.includes('green') ? '#dcfce7' : item.color.includes('yellow') ? '#fef9c3' : item.color.includes('red') ? '#fee2e2' : '#f3f4f6', color: item.color.includes('green') ? '#15803d' : item.color.includes('yellow') ? '#a16207' : item.color.includes('red') ? '#b91c1c' : '#4b5563' }} />;
+    return (
+      <Chip
+        label={item.label}
+        size="small"
+        sx={{
+          backgroundColor: item.color.includes("green")
+            ? "#dcfce7"
+            : item.color.includes("yellow")
+              ? "#fef9c3"
+              : item.color.includes("red")
+                ? "#fee2e2"
+                : "#f3f4f6",
+          color: item.color.includes("green")
+            ? "#15803d"
+            : item.color.includes("yellow")
+              ? "#a16207"
+              : item.color.includes("red")
+                ? "#b91c1c"
+                : "#4b5563",
+        }}
+      />
+    );
   };
 
   const handleUpdateStandard = async () => {
@@ -166,7 +187,11 @@ const QmsStandardDetailPage: React.FC = () => {
       accessorKey: "version",
       header: "版本号",
       cell: ({ row }) => (
-        <Chip label={`v${row.original.version}`} size="small" sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }} />
+        <Chip
+          label={`v${row.original.version}`}
+          size="small"
+          sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
+        />
       ),
     },
     { accessorKey: "description", header: "变更说明" },
@@ -225,12 +250,12 @@ const QmsStandardDetailPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Button
-              variant="outlined"
-              onClick={() => navigate("/qms")}
-              sx={{ minWidth: 'auto', padding: '4px 8px' }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
+                variant="outlined"
+                onClick={() => navigate("/qms")}
+                sx={{ minWidth: "auto", padding: "4px 8px" }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
               <div>
                 <h1 className="text-xl font-bold text-slate-900">
                   质量标准详情
@@ -265,7 +290,16 @@ const QmsStandardDetailPage: React.FC = () => {
           <div className="lg:col-span-1 space-y-6">
             <Card>
               <CardHeader sx={{ pb: 1 }}>
-                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    color: "primary.main",
+                  }}
+                >
                   <FileText className="w-5 h-5" />
                   标准信息
                 </Typography>
@@ -290,7 +324,11 @@ const QmsStandardDetailPage: React.FC = () => {
                   <div>
                     <p className="text-sm text-slate-500">版本</p>
                     <p className="text-slate-900 mt-1">
-                      <Chip label={`v${standard.version}`} size="small" sx={{ backgroundColor: '#f3e8ff', color: '#7c3aed' }} />
+                      <Chip
+                        label={`v${standard.version}`}
+                        size="small"
+                        sx={{ backgroundColor: "#f3e8ff", color: "#7c3aed" }}
+                      />
                     </p>
                   </div>
                   <div>
@@ -322,16 +360,35 @@ const QmsStandardDetailPage: React.FC = () => {
 
             <Card>
               <CardHeader sx={{ pb: 1 }}>
-                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'success.main' }}>
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    color: "success.main",
+                  }}
+                >
                   <FileCheck className="w-5 h-5" />
                   操作
                 </Typography>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button fullWidth sx={{ justifyContent: 'flex-start' }} variant="outlined" startIcon={<Download className="w-4 h-4" />}>
+                <Button
+                  fullWidth
+                  sx={{ justifyContent: "flex-start" }}
+                  variant="outlined"
+                  startIcon={<Download className="w-4 h-4" />}
+                >
                   下载标准文档
                 </Button>
-                <Button fullWidth sx={{ justifyContent: 'flex-start' }} variant="outlined" startIcon={<Upload className="w-4 h-4" />}>
+                <Button
+                  fullWidth
+                  sx={{ justifyContent: "flex-start" }}
+                  variant="outlined"
+                  startIcon={<Upload className="w-4 h-4" />}
+                >
                   上传新版本文件
                 </Button>
               </CardContent>
@@ -340,8 +397,25 @@ const QmsStandardDetailPage: React.FC = () => {
 
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+              <CardHeader
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  pb: 1,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    color: "primary.main",
+                  }}
+                >
                   <FileText className="w-5 h-5" />
                   版本历史
                 </Typography>
@@ -377,13 +451,28 @@ const QmsStandardDetailPage: React.FC = () => {
         </div>
       </main>
 
-      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        maxWidth="lg"
+        fullWidth
+      >
         <DialogTitle>编辑质量标准</DialogTitle>
         <DialogContent>
           <Box className="space-y-4" sx={{ mt: 1 }}>
             <Box className="grid grid-cols-2 gap-4">
               <Box>
-                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>标准编号 *</Box>
+                <Box
+                  component="label"
+                  sx={{
+                    display: "block",
+                    mb: 0.5,
+                    fontSize: "0.875rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  标准编号 *
+                </Box>
                 <TextField
                   size="small"
                   fullWidth
@@ -395,7 +484,17 @@ const QmsStandardDetailPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>版本号</Box>
+                <Box
+                  component="label"
+                  sx={{
+                    display: "block",
+                    mb: 0.5,
+                    fontSize: "0.875rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  版本号
+                </Box>
                 <TextField
                   size="small"
                   fullWidth
@@ -411,7 +510,17 @@ const QmsStandardDetailPage: React.FC = () => {
               </Box>
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>标准名称 *</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                标准名称 *
+              </Box>
               <TextField
                 size="small"
                 fullWidth
@@ -424,7 +533,17 @@ const QmsStandardDetailPage: React.FC = () => {
             </Box>
             <Box className="grid grid-cols-2 gap-4">
               <Box>
-                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>分类</Box>
+                <Box
+                  component="label"
+                  sx={{
+                    display: "block",
+                    mb: 0.5,
+                    fontSize: "0.875rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  分类
+                </Box>
                 <TextField
                   size="small"
                   fullWidth
@@ -439,13 +558,28 @@ const QmsStandardDetailPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>状态</Box>
+                <Box
+                  component="label"
+                  sx={{
+                    display: "block",
+                    mb: 0.5,
+                    fontSize: "0.875rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  状态
+                </Box>
                 <select
                   value={formData.status}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, status: e.target.value }))
                   }
-                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                  }}
                 >
                   <option value="active">有效</option>
                   <option value="draft">草稿</option>
@@ -455,7 +589,17 @@ const QmsStandardDetailPage: React.FC = () => {
               </Box>
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>生效日期</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                生效日期
+              </Box>
               <TextField
                 type="date"
                 size="small"
@@ -470,7 +614,17 @@ const QmsStandardDetailPage: React.FC = () => {
               />
             </Box>
             <Box>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>描述</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                描述
+              </Box>
               <textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -480,40 +634,91 @@ const QmsStandardDetailPage: React.FC = () => {
                   }))
                 }
                 placeholder="请输入标准描述..."
-                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "6px",
+                  border: "1px solid #e2e8f0",
+                  resize: "none",
+                  height: "96px",
+                }}
               />
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowEditModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleUpdateStandard}>保存更改</Button>
+          <Button variant="outlined" onClick={() => setShowEditModal(false)}>
+            取消
+          </Button>
+          <Button variant="contained" onClick={handleUpdateStandard}>
+            保存更改
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showRevisionModal} onClose={() => setShowRevisionModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showRevisionModal}
+        onClose={() => setShowRevisionModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建版本</DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <Box component="span" sx={{ color: 'text.secondary' }}>当前版本:</Box>
-              <Box component="span" sx={{ fontWeight: 500 }}>{standard.version}</Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <Box component="span" sx={{ color: "text.secondary" }}>
+                当前版本:
+              </Box>
+              <Box component="span" sx={{ fontWeight: 500 }}>
+                {standard.version}
+              </Box>
             </Box>
-            <Box sx={{ color: 'text.secondary', mt: 2 }}>
+            <Box sx={{ color: "text.secondary", mt: 2 }}>
               创建新版本后，版本号将自动递增（如 1.0 → 1.1）
             </Box>
             <Box sx={{ mt: 2 }}>
-              <Box component="label" sx={{ display: 'block', mb: 0.5, fontSize: '0.875rem', color: 'text.secondary' }}>变更说明</Box>
+              <Box
+                component="label"
+                sx={{
+                  display: "block",
+                  mb: 0.5,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                }}
+              >
+                变更说明
+              </Box>
               <textarea
                 placeholder="请描述本次版本变更的内容..."
-                style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', resize: 'none', height: '96px' }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "6px",
+                  border: "1px solid #e2e8f0",
+                  resize: "none",
+                  height: "96px",
+                }}
               />
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setShowRevisionModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCreateRevision} sx={{ backgroundColor: '#7c3aed', '&:hover': { backgroundColor: '#6d28d9' } }}>创建版本</Button>
+          <Button
+            variant="outlined"
+            onClick={() => setShowRevisionModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateRevision}
+            sx={{
+              backgroundColor: "#7c3aed",
+              "&:hover": { backgroundColor: "#6d28d9" },
+            }}
+          >
+            创建版本
+          </Button>
         </DialogActions>
       </Dialog>
     </div>

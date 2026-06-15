@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 /**
  * 合并报表查看页面
  * 查看多公司合并后的财务报表
@@ -35,7 +36,6 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  Grid,
   IconButton,
   InputLabel,
   MenuItem,
@@ -171,7 +171,9 @@ export default function ConsolidationReportsPage() {
       cell: ({ row }) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <GitMerge style={{ width: 16, height: 16, color: "#2563eb" }} />
-          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{row.getValue("report_no")}</Typography>
+          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+            {row.getValue("report_no")}
+          </Typography>
         </Box>
       ),
     },
@@ -214,7 +216,15 @@ export default function ConsolidationReportsPage() {
         }
 
         return (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, fontWeight: 500, color }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              fontWeight: 500,
+              color,
+            }}
+          >
             <IconComponent style={{ width: 16, height: 16 }} />
             {name}
           </Box>
@@ -226,7 +236,11 @@ export default function ConsolidationReportsPage() {
       header: "合并范围",
       accessorKey: "scope_name",
       cell: ({ row }) => (
-        <Chip size="small" variant="outlined" label={row.getValue("scope_name")} />
+        <Chip
+          size="small"
+          variant="outlined"
+          label={row.getValue("scope_name")}
+        />
       ),
     },
     {
@@ -234,7 +248,9 @@ export default function ConsolidationReportsPage() {
       header: "期间",
       accessorKey: "period",
       cell: ({ row }) => (
-        <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{row.getValue("period")}</Typography>
+        <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+          {row.getValue("period")}
+        </Typography>
       ),
     },
     {
@@ -258,7 +274,10 @@ export default function ConsolidationReportsPage() {
       header: "资产总计",
       accessorKey: "total_assets",
       cell: ({ row }) => (
-        <Typography variant="body2" sx={{ fontFamily: "monospace", textAlign: "right" }}>
+        <Typography
+          variant="body2"
+          sx={{ fontFamily: "monospace", textAlign: "right" }}
+        >
           {row.original.total_assets
             ? `¥${row.original.total_assets.toLocaleString("zh-CN")}`
             : "-"}
@@ -310,8 +329,14 @@ export default function ConsolidationReportsPage() {
             size="small"
             label={config.label}
             sx={{
-              bgcolor: config.color.split(" ")[0].replace("bg-", "").replace("-100", ".lighter"),
-              color: config.color.split(" ")[1].replace("text-", "").replace("-800", ".main"),
+              bgcolor: config.color
+                .split(" ")[0]
+                .replace("bg-", "")
+                .replace("-100", ".lighter"),
+              color: config.color
+                .split(" ")[1]
+                .replace("text-", "")
+                .replace("-800", ".main"),
             }}
           />
         );
@@ -334,8 +359,14 @@ export default function ConsolidationReportsPage() {
             size="small"
             label={config.label}
             sx={{
-              bgcolor: config.color.split(" ")[0].replace("bg-", "").replace("-100", ".lighter"),
-              color: config.color.split(" ")[1].replace("text-", "").replace("-800", ".main"),
+              bgcolor: config.color
+                .split(" ")[0]
+                .replace("bg-", "")
+                .replace("-100", ".lighter"),
+              color: config.color
+                .split(" ")[1]
+                .replace("text-", "")
+                .replace("-800", ".main"),
             }}
           />
         );
@@ -346,7 +377,10 @@ export default function ConsolidationReportsPage() {
       header: "操作",
       cell: ({ row }) => (
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton size="small" onClick={() => handleViewReport(row.original)}>
+          <IconButton
+            size="small"
+            onClick={() => handleViewReport(row.original)}
+          >
             <Eye style={{ width: 16, height: 16 }} />
           </IconButton>
           {row.original.approval_status === "pending" &&
@@ -376,11 +410,31 @@ export default function ConsolidationReportsPage() {
   ];
 
   return (
-    <Box sx={{ containerType: "inline-size", mx: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box
+      sx={{
+        containerType: "inline-size",
+        mx: "auto",
+        p: 3,
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
+    >
       {/* 页面标题 */}
-      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+      <Stack
+        direction="row"
+        sx={{ alignItems: "center", justifyContent: "space-between" }}
+      >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
             <GitMerge style={{ width: 24, height: 24, color: "#2563eb" }} />
             合并报表
           </Typography>
@@ -402,7 +456,11 @@ export default function ConsolidationReportsPage() {
         <CardContent sx={{ pt: 3 }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
                 合并范围
               </Typography>
               <FormControl size="small" fullWidth>
@@ -421,7 +479,11 @@ export default function ConsolidationReportsPage() {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
                 报表类型
               </Typography>
               <FormControl size="small" fullWidth>
@@ -442,7 +504,11 @@ export default function ConsolidationReportsPage() {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
                 会计期间
               </Typography>
               <TextField
@@ -454,11 +520,25 @@ export default function ConsolidationReportsPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
                 搜索
               </Typography>
               <Box sx={{ position: "relative" }}>
-                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 16,
+                    height: 16,
+                    color: "#9ca3af",
+                  }}
+                />
                 <TextField
                   size="small"
                   placeholder="报表编号..."
@@ -469,7 +549,10 @@ export default function ConsolidationReportsPage() {
                 />
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 2.4 }} sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
+            <Grid
+              size={{ xs: 12, md: 2.4 }}
+              sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}
+            >
               <Button variant="outlined" onClick={() => refetch()}>
                 <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
                 刷新
@@ -527,10 +610,23 @@ export default function ConsolidationReportsPage() {
                 onClick={() => setReportType(key as ConsolidationReportType)}
               >
                 <CardContent sx={{ pt: 3 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Box>
-                      <Typography variant="body2" color="text.secondary">{name}</Typography>
-                      <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>{count}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {name}
+                      </Typography>
+                      <Typography
+                        variant="h5"
+                        sx={{ fontWeight: "bold", mt: 0.5 }}
+                      >
+                        {count}
+                      </Typography>
                     </Box>
                     <Box
                       sx={{
@@ -559,7 +655,9 @@ export default function ConsolidationReportsPage() {
         <CardHeader
           title={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <FileSpreadsheet style={{ width: 20, height: 20, color: "#2563eb" }} />
+              <FileSpreadsheet
+                style={{ width: 20, height: 20, color: "#2563eb" }}
+              />
               <Typography variant="subtitle1">合并报表列表</Typography>
             </Box>
           }
@@ -582,7 +680,13 @@ export default function ConsolidationReportsPage() {
           fullWidth
         >
           <DialogTitle>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Box>
                 <Typography variant="h6">
                   {REPORT_TYPE_CONFIG[selectedReport.report_type]?.name ||
@@ -604,8 +708,13 @@ export default function ConsolidationReportsPage() {
                 <Grid size={{ xs: 12, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary">资产总计</Typography>
-                      <Typography variant="h6" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        资产总计
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontFamily: "monospace", fontWeight: "bold" }}
+                      >
                         ¥{selectedReport.total_assets.toLocaleString("zh-CN")}
                       </Typography>
                     </CardContent>
@@ -616,8 +725,13 @@ export default function ConsolidationReportsPage() {
                 <Grid size={{ xs: 12, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary">负债合计</Typography>
-                      <Typography variant="h6" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        负债合计
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontFamily: "monospace", fontWeight: "bold" }}
+                      >
                         ¥
                         {selectedReport.total_liabilities.toLocaleString(
                           "zh-CN",
@@ -631,8 +745,13 @@ export default function ConsolidationReportsPage() {
                 <Grid size={{ xs: 12, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary">所有者权益</Typography>
-                      <Typography variant="h6" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        所有者权益
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontFamily: "monospace", fontWeight: "bold" }}
+                      >
                         ¥{selectedReport.total_equity.toLocaleString("zh-CN")}
                       </Typography>
                     </CardContent>
@@ -643,13 +762,18 @@ export default function ConsolidationReportsPage() {
                 <Grid size={{ xs: 12, md: 3 }}>
                   <Card variant="outlined">
                     <CardContent>
-                      <Typography variant="body2" color="text.secondary">净利润</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        净利润
+                      </Typography>
                       <Typography
                         variant="h6"
                         sx={{
                           fontFamily: "monospace",
                           fontWeight: "bold",
-                          color: selectedReport.net_profit >= 0 ? "success.main" : "error.main",
+                          color:
+                            selectedReport.net_profit >= 0
+                              ? "success.main"
+                              : "error.main",
                         }}
                       >
                         ¥{selectedReport.net_profit.toLocaleString("zh-CN")}
@@ -689,13 +813,22 @@ export default function ConsolidationReportsPage() {
                         >
                           {line.item_name}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                        <TableCell
+                          align="right"
+                          sx={{ fontFamily: "monospace" }}
+                        >
                           {line.current_period.toLocaleString("zh-CN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: "monospace", color: "text.secondary" }}>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            fontFamily: "monospace",
+                            color: "text.secondary",
+                          }}
+                        >
                           {line.prior_period?.toLocaleString("zh-CN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
@@ -717,7 +850,8 @@ export default function ConsolidationReportsPage() {
                           align="right"
                           sx={{
                             fontFamily: "monospace",
-                            color: changeRate >= 0 ? "success.main" : "error.main",
+                            color:
+                              changeRate >= 0 ? "success.main" : "error.main",
                           }}
                         >
                           {changeRate.toFixed(2)}%

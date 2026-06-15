@@ -1,5 +1,12 @@
 import React from "react";
-import { Button, Chip, Card, CardContent, CardHeader, Typography } from "@mui/material";
+import {
+  Button,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+} from "@mui/material";
 import { Settings, Database, Code, Server } from "lucide-react";
 import config from "../config/runtime";
 
@@ -26,9 +33,13 @@ const ConfigDebugPage: React.FC = () => {
             <CardHeader>
               <div className="flex items-center space-x-3">
                 <Server className="w-5 h-5 text-indigo-600" />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>服务配置</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  服务配置
+                </Typography>
               </div>
-              <Typography variant="body2" sx={{ color: "grey.500" }}>各微服务的连接配置信息</Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                各微服务的连接配置信息
+              </Typography>
             </CardHeader>
             <CardContent>
               <pre className="bg-gray-900 dark:bg-gray-800 text-gray-300 dark:text-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
@@ -41,9 +52,13 @@ const ConfigDebugPage: React.FC = () => {
             <CardHeader>
               <div className="flex items-center space-x-3">
                 <Database className="w-5 h-5 text-green-600" />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>API 配置</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  API 配置
+                </Typography>
               </div>
-              <Typography variant="body2" sx={{ color: "grey.500" }}>API 端点和请求配置</Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                API 端点和请求配置
+              </Typography>
             </CardHeader>
             <CardContent>
               <pre className="bg-gray-900 dark:bg-gray-800 text-gray-300 dark:text-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
@@ -56,9 +71,13 @@ const ConfigDebugPage: React.FC = () => {
             <CardHeader>
               <div className="flex items-center space-x-3">
                 <Code className="w-5 h-5 text-orange-600" />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>环境变量</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  环境变量
+                </Typography>
               </div>
-              <Typography variant="body2" sx={{ color: "grey.500" }}>前端运行时环境变量</Typography>
+              <Typography variant="body2" sx={{ color: "grey.500" }}>
+                前端运行时环境变量
+              </Typography>
             </CardHeader>
             <CardContent>
               <pre className="bg-gray-900 dark:bg-gray-800 text-gray-300 dark:text-gray-200 p-4 rounded-lg overflow-x-auto text-sm font-mono">

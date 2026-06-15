@@ -100,7 +100,13 @@ export function AIDocumentGenerator({
             variant="outlined"
             size="small"
             onClick={handleCopy}
-            startIcon={copied ? <Check style={{ fontSize: 16 }} /> : <Copy style={{ fontSize: 16 }} />}
+            startIcon={
+              copied ? (
+                <Check style={{ fontSize: 16 }} />
+              ) : (
+                <Copy style={{ fontSize: 16 }} />
+              )
+            }
           >
             {copied ? "已复制" : "复制"}
           </Button>
@@ -132,18 +138,34 @@ export function AIDocumentGenerator({
 
         {selectedTemplate && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ fontSize: "0.875rem", color: "text.secondary", bgcolor: "grey.50", p: 2, borderRadius: 1 }}>
+            <Box
+              sx={{
+                fontSize: "0.875rem",
+                color: "text.secondary",
+                bgcolor: "grey.50",
+                p: 2,
+                borderRadius: 1,
+              }}
+            >
               {selectedTemplate.description}
             </Box>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {selectedTemplate.fields.map(
                 (field: AITemplate["fields"][number]) => (
-                  <Box key={field.name} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                  <Box
+                    key={field.name}
+                    sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                  >
                     <InputLabel shrink sx={{ fontSize: "0.875rem" }}>
                       {field.label}
                       {field.required && (
-                        <Box component="span" sx={{ color: "error.main", ml: 0.5 }}>*</Box>
+                        <Box
+                          component="span"
+                          sx={{ color: "error.main", ml: 0.5 }}
+                        >
+                          *
+                        </Box>
                       )}
                     </InputLabel>
                     {field.type === "textarea" ? (
@@ -163,7 +185,10 @@ export function AIDocumentGenerator({
                         <Select
                           value={formData[field.name] || ""}
                           onChange={(e) =>
-                            handleFieldChange(field.name, e.target.value as string)
+                            handleFieldChange(
+                              field.name,
+                              e.target.value as string,
+                            )
                           }
                           displayEmpty
                         >
@@ -172,10 +197,7 @@ export function AIDocumentGenerator({
                           </MenuItem>
                           {field.options?.map(
                             (option: { label: string; value: string }) => (
-                              <MenuItem
-                                key={option.value}
-                                value={option.value}
-                              >
+                              <MenuItem key={option.value} value={option.value}>
                                 {option.label}
                               </MenuItem>
                             ),
@@ -212,8 +234,17 @@ export function AIDocumentGenerator({
             {hasResult && (
               <Card>
                 <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                    <InputLabel sx={{ color: "purple.700", fontWeight: 500, mb: 0 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 1,
+                    }}
+                  >
+                    <InputLabel
+                      sx={{ color: "purple.700", fontWeight: 500, mb: 0 }}
+                    >
                       生成的文档
                     </InputLabel>
                     <Button
@@ -225,8 +256,25 @@ export function AIDocumentGenerator({
                       重新生成
                     </Button>
                   </Box>
-                  <Box sx={{ bgcolor: "purple.50", border: "1px solid", borderColor: "purple.200", borderRadius: 1, p: 2 }}>
-                    <Box component="pre" sx={{ color: "grey.700", whiteSpace: "pre-wrap", fontSize: "0.875rem", m: 0, fontFamily: "inherit" }}>
+                  <Box
+                    sx={{
+                      bgcolor: "purple.50",
+                      border: "1px solid",
+                      borderColor: "purple.200",
+                      borderRadius: 1,
+                      p: 2,
+                    }}
+                  >
+                    <Box
+                      component="pre"
+                      sx={{
+                        color: "grey.700",
+                        whiteSpace: "pre-wrap",
+                        fontSize: "0.875rem",
+                        m: 0,
+                        fontFamily: "inherit",
+                      }}
+                    >
                       {result}
                     </Box>
                   </Box>

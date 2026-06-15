@@ -11,6 +11,6 @@ export const StyledIcon = styled(
   React.forwardRef<SVGSVGElement, StyledIconProps>(
     ({ icon: Icon, size = 24, ...props }, ref) => (
       <Icon ref={ref as React.Ref<SVGSVGElement>} size={size} {...props} />
-    )
-  )
+    ),
+  ),
 )<StyledIconProps>``;

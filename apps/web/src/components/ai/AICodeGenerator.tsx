@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Check, RefreshCw } from "lucide-react";
-import { Button, Card, CardContent, Box, Typography, TextField } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  Box,
+  Typography,
+  TextField,
+} from "@mui/material";
 import { AIGenerateModal } from "./AIGenerateModal";
 import type { CodeGenerateContext } from "../../types/ai";
 
@@ -390,8 +397,17 @@ export function AICodeGenerator({
             💡 提示：请先在名称中输入内容，才能生成个性化编码
           </Box>
         )}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "text.secondary" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 500, color: "text.secondary" }}
+          >
             推荐编码 (点击即选)
           </Typography>
           <Button
@@ -399,9 +415,7 @@ export function AICodeGenerator({
             size="small"
             onClick={handleRegenerate}
             disabled={regenerating}
-            startIcon={
-              <RefreshCw style={{ width: 16, height: 16 }} />
-            }
+            startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
           >
             重新生成
           </Button>
@@ -421,8 +435,16 @@ export function AICodeGenerator({
               }}
               onClick={(e) => handleSelectCode(e, code)}
             >
-              <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <code style={{ fontSize: "16px", fontFamily: "monospace" }}>{code}</code>
+              <CardContent
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <code style={{ fontSize: "16px", fontFamily: "monospace" }}>
+                  {code}
+                </code>
                 <Check
                   style={{
                     width: 20,
@@ -439,7 +461,10 @@ export function AICodeGenerator({
         </Box>
 
         <Box sx={{ pt: 1 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1.5 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 500, color: "text.secondary", mb: 1.5 }}
+          >
             或自定义编码
           </Typography>
           <TextField

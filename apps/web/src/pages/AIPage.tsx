@@ -670,7 +670,14 @@ const AIPage: React.FC = () => {
         }}
       >
         <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               AI 智能助手
             </Typography>
@@ -803,8 +810,22 @@ const AIPage: React.FC = () => {
                         : {}),
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1, minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 1.5,
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
                         <Box sx={{ display: "flex", alignItems: "center" }}>
                           {conv.assistantRole &&
                             ASSISTANT_ROLES.find(
@@ -957,7 +978,10 @@ const AIPage: React.FC = () => {
                 overflowY: "auto",
               }}
             >
-              <Typography variant="caption" sx={{ color: "grey.500", mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "grey.500", mb: 1, display: "block" }}
+              >
                 知识库文档列表:
               </Typography>
               {documents.map((doc) => (
@@ -994,13 +1018,20 @@ const AIPage: React.FC = () => {
                 p: 2,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Box
                     sx={{
                       width: 40,
                       height: 40,
-                      background: "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                      background:
+                        "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
                       borderRadius: 2,
                       display: "flex",
                       alignItems: "center",
@@ -1028,11 +1059,7 @@ const AIPage: React.FC = () => {
                     size="small"
                     sx={{ width: 200 }}
                   />
-                  <Button
-                    variant="text"
-                    size="small"
-                    onClick={handleSearch}
-                  >
+                  <Button variant="text" size="small" onClick={handleSearch}>
                     <Search size={16} />
                   </Button>
                 </Box>
@@ -1087,7 +1114,12 @@ const AIPage: React.FC = () => {
                         }}
                       >
                         {message.role === "user" ? (
-                          <Typography variant="body2" sx={{ color: "common.white" }}>U</Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "common.white" }}
+                          >
+                            U
+                          </Typography>
                         ) : (
                           <Bot size={20} />
                         )}
@@ -1141,12 +1173,15 @@ const AIPage: React.FC = () => {
 
               {isTyping && (
                 <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+                  <Box
+                    sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}
+                  >
                     <Box
                       sx={{
                         width: 32,
                         height: 32,
-                        background: "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
+                        background:
+                          "linear-gradient(135deg, #a855f7 0%, #3b82f6 100%)",
                         borderRadius: "50%",
                         display: "flex",
                         alignItems: "center",
@@ -1223,7 +1258,13 @@ const AIPage: React.FC = () => {
                       e.key === "Enter" && !e.shiftKey && handleSend()
                     }
                     placeholder="输入你的问题..."
-                    sx={{ flex: 1, "& .MuiInputBase-input": { background: "transparent", border: "none" } }}
+                    sx={{
+                      flex: 1,
+                      "& .MuiInputBase-input": {
+                        background: "transparent",
+                        border: "none",
+                      },
+                    }}
                     size="small"
                   />
                   <Button
@@ -1270,13 +1311,21 @@ const AIPage: React.FC = () => {
           <Box sx={{ flex: 1, p: 3 }}>
             <Card sx={{ height: "100%" }}>
               <CardHeader>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     <Box sx={{ p: 1, bgcolor: "purple.100", borderRadius: 2 }}>
                       <Wand2 size={24} color="#9333ea" />
                     </Box>
                     <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>AI 文档生成</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        AI 文档生成
+                      </Typography>
                       <Typography variant="body2" sx={{ color: "grey.500" }}>
                         选择模板,填写信息,AI 帮你生成专业文档
                       </Typography>
@@ -1290,7 +1339,11 @@ const AIPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <Box sx={{ textAlign: "center", py: 6, color: "grey.500" }}>
-                  <Wand2 size={64} color="#9ca3af" style={{ margin: "0 auto 16px", opacity: 0.5 }} />
+                  <Wand2
+                    size={64}
+                    color="#9ca3af"
+                    style={{ margin: "0 auto 16px", opacity: 0.5 }}
+                  />
                   <Typography>点击"开始创建"选择模板并生成文档</Typography>
                 </Box>
               </CardContent>
@@ -1307,7 +1360,9 @@ const AIPage: React.FC = () => {
                     <BarChart2 size={24} color="#2563eb" />
                   </Box>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>AI 文本分析</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      AI 文本分析
+                    </Typography>
                     <Typography variant="body2" sx={{ color: "grey.500" }}>
                       对文本进行情感分析、分类、实体提取和关键词提取
                     </Typography>

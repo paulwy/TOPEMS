@@ -1,4 +1,17 @@
-import { Button, Box, Typography, IconButton, Menu, MenuItem, Divider, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import {
+  Button,
+  Box,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 import React from "react";
 import type {
   ColumnDef,
@@ -63,12 +76,15 @@ export function DataTable<TData, TValue>({
   responsive = true,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: currentPage,
     pageSize: 10,
   });
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const addNotification = useAppStore((state) => state.addNotification);
 
@@ -152,20 +168,52 @@ export function DataTable<TData, TValue>({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
         {searchKey && (
-          <Box sx={{ width: { xs: "100%", sm: "auto" }, flex: { sm: 1 }, maxWidth: { sm: 280 } }}>
+          <Box
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              flex: { sm: 1 },
+              maxWidth: { sm: 280 },
+            }}
+          >
             <input
               type="text"
               placeholder={searchPlaceholder}
-              value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-              onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
-              style={{ width: "100%", padding: "8px 12px", border: "1px solid #e0e0e0", borderRadius: 4, fontSize: 14 }}
+              value={
+                (table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn(searchKey)?.setFilterValue(event.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                border: "1px solid #e0e0e0",
+                borderRadius: 4,
+                fontSize: 14,
+              }}
             />
           </Box>
         )}
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: { xs: "center", sm: "flex-end" } }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap",
+            justifyContent: { xs: "center", sm: "flex-end" },
+          }}
+        >
           <Button
             variant="outlined"
             size="small"
@@ -180,13 +228,19 @@ export function DataTable<TData, TValue>({
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
           >
-            <MenuItem sx={{ fontWeight: 600, fontSize: 14 }}>显示/隐藏列</MenuItem>
+            <MenuItem sx={{ fontWeight: 600, fontSize: 14 }}>
+              显示/隐藏列
+            </MenuItem>
             <Divider />
             {table.getAllLeafColumns().map((column) => (
               <MenuItem
                 key={column.id}
                 onClick={() => column.toggleVisibility()}
-                sx={{ display: "flex", justifyContent: "space-between", minWidth: 180 }}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  minWidth: 180,
+                }}
               >
                 <span>{(column.columnDef.header as string) || column.id}</span>
                 {column.getIsVisible() ? (
@@ -218,17 +272,30 @@ export function DataTable<TData, TValue>({
         </Box>
       </Box>
 
-      <Box sx={{ borderRadius: 1, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
+      <Box
+        sx={{
+          borderRadius: 1,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Box sx={{ overflowX: responsive ? "auto" : "hidden" }}>
           <Table sx={{ minWidth: 640 }}>
             <TableHead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableCell key={header.id} sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}>
+                    <TableCell
+                      key={header.id}
+                      sx={{ whiteSpace: "nowrap", fontWeight: "bold" }}
+                    >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -237,9 +304,29 @@ export function DataTable<TData, TValue>({
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} sx={{ height: 96, textAlign: "center" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                      <Box sx={{ width: 16, height: 16, border: 2, borderColor: "grey.300", borderTopColor: "grey.600", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <TableCell
+                    colSpan={columns.length}
+                    sx={{ height: 96, textAlign: "center" }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          border: 2,
+                          borderColor: "grey.300",
+                          borderTopColor: "grey.600",
+                          borderRadius: "50%",
+                          animation: "spin 1s linear infinite",
+                        }}
+                      />
                       <span>加载中...</span>
                     </Box>
                   </TableCell>
@@ -250,18 +337,29 @@ export function DataTable<TData, TValue>({
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     onClick={() => onRowClick?.(row.original)}
-                    sx={{ cursor: onRowClick ? "pointer" : "default", "&:hover": { backgroundColor: onRowClick ? "grey.50" : "inherit" } }}
+                    sx={{
+                      cursor: onRowClick ? "pointer" : "default",
+                      "&:hover": {
+                        backgroundColor: onRowClick ? "grey.50" : "inherit",
+                      },
+                    }}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} sx={{ whiteSpace: "nowrap" }}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} sx={{ height: 96, textAlign: "center" }}>
+                  <TableCell
+                    colSpan={columns.length}
+                    sx={{ height: 96, textAlign: "center" }}
+                  >
                     暂无数据
                   </TableCell>
                 </TableRow>
@@ -272,8 +370,23 @@ export function DataTable<TData, TValue>({
       </Box>
 
       {(enablePagination || table.getPageCount() > 1) && (
-        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: "center", justifyContent: "space-between", gap: 2, py: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+            py: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
             <Typography variant="body2" color="text.secondary">
               {totalItems !== undefined
                 ? `共 ${totalItems} 条记录`
@@ -281,11 +394,18 @@ export function DataTable<TData, TValue>({
             </Typography>
             {onPageSizeChange && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Typography variant="body2" color="text.secondary">每页</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  每页
+                </Typography>
                 <select
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                  style={{ border: "1px solid #e0e0e0", borderRadius: 4, padding: "4px 8px", fontSize: 14 }}
+                  style={{
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 4,
+                    padding: "4px 8px",
+                    fontSize: 14,
+                  }}
                 >
                   <option value={10}>10</option>
                   <option value={20}>20</option>
@@ -324,8 +444,12 @@ export function DataTable<TData, TValue>({
             >
               <ChevronLeft style={{ width: 20, height: 20 }} />
             </IconButton>
-            <Typography variant="body2" sx={{ minWidth: 100, textAlign: "center" }}>
-              第 {currentPage + 1} / {totalPages || pageCount || table.getPageCount()} 页
+            <Typography
+              variant="body2"
+              sx={{ minWidth: 100, textAlign: "center" }}
+            >
+              第 {currentPage + 1} /{" "}
+              {totalPages || pageCount || table.getPageCount()} 页
             </Typography>
             <Button
               variant="outlined"
@@ -337,7 +461,9 @@ export function DataTable<TData, TValue>({
                   table.nextPage();
                 }
               }}
-              disabled={currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()}
+              disabled={
+                currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()
+              }
               sx={{ display: { xs: "none", sm: "flex" } }}
             >
               下一页
@@ -350,7 +476,9 @@ export function DataTable<TData, TValue>({
                   table.nextPage();
                 }
               }}
-              disabled={currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()}
+              disabled={
+                currentPage >= (totalPages || 1) - 1 && !table.getCanNextPage()
+              }
               sx={{ display: { xs: "flex", sm: "none" } }}
             >
               <ChevronRight style={{ width: 20, height: 20 }} />

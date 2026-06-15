@@ -62,21 +62,40 @@ export const FullscreenChart = ({
             transition: "opacity 0.2s",
             cursor: "pointer",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "0")}
           title="全屏查看"
         >
-          <Maximize2 style={{ width: 16, height: 16, color: "text.secondary" }} />
+          <Maximize2
+            style={{ width: 16, height: 16, color: "text.secondary" }}
+          />
         </button>
       </div>
     );
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, backgroundColor: "white" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 2, borderBottom: "1px solid rgba(0,0,0,0.1)" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        backgroundColor: "white",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: 2,
+          borderBottom: "1px solid rgba(0,0,0,0.1)",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Typography variant="h5" sx={{ fontWeight: "bold" }}>{title || "图表详情"}</Typography>
+          <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+            {title || "图表详情"}
+          </Typography>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <Button
@@ -93,7 +112,14 @@ export const FullscreenChart = ({
             onClick={handleResetZoom}
             title="重置"
           >
-            <span style={{ fontSize: 14, fontWeight: 500, width: 24, textAlign: "center" }}>
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                width: 24,
+                textAlign: "center",
+              }}
+            >
               {Math.round(scale * 100)}%
             </span>
           </Button>

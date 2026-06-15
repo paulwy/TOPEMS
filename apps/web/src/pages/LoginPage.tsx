@@ -9,11 +9,7 @@ import { isDevelopment } from "../config/runtime";
 import { useAppStore } from "../store";
 
 import Button from "@mui/material/Button";
-import {
-  Card as MuiCard,
-  CardContent,
-  Box,
-} from "@mui/material";
+import { Card as MuiCard, CardContent, Box } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import { ModeToggle } from "@/components/ModeToggle";
@@ -99,23 +95,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <Box sx={{ 
-      minHeight: "100vh", 
-      display: "flex", 
-      alignItems: "center", 
-      justifyContent: "center",
-      position: "relative",
-      overflow: "hidden",
-    }}>
-      <Box 
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <Box
         sx={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+          background:
+            "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
         }}
       />
-      
-      <Box 
+
+      <Box
         sx={{
           position: "absolute",
           top: -100,
@@ -127,7 +126,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           filter: "blur(60px)",
         }}
       />
-      <Box 
+      <Box
         sx={{
           position: "absolute",
           bottom: -100,
@@ -140,7 +139,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         }}
       />
 
-      <Box 
+      <Box
         sx={{
           position: "absolute",
           top: 20,
@@ -153,7 +152,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Box 
+          <Box
             sx={{
               width: 40,
               height: 40,
@@ -174,11 +173,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <ModeToggle />
       </Box>
 
-      <MuiCard 
-        sx={{ 
-          width: "100%", 
-          maxWidth: 400, 
-          mx: 2, 
+      <MuiCard
+        sx={{
+          width: "100%",
+          maxWidth: 400,
+          mx: 2,
           background: "rgba(255, 255, 255, 0.95)",
           backdropFilter: "blur(20px)",
           borderRadius: 3,
@@ -187,12 +186,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           animation: "fadeInUp 0.5s ease-out",
         }}
       >
-        <Box sx={{ 
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          padding: 4,
-          textAlign: "center",
-        }}>
-          <Box 
+        <Box
+          sx={{
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            padding: 4,
+            textAlign: "center",
+          }}
+        >
+          <Box
             sx={{
               width: 72,
               height: 72,
@@ -209,7 +210,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <Typography variant="h4" sx={{ fontWeight: 700, color: "white" }}>
             {isRegister ? "用户注册" : "欢迎回来"}
           </Typography>
-          <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.8)", mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: "rgba(255, 255, 255, 0.8)", mt: 1 }}
+          >
             {isRegister ? "创建您的账号" : "请登录您的账号"}
           </Typography>
         </Box>
@@ -228,12 +232,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               helperText={form.formState.errors.username?.message as string}
               size="small"
               fullWidth
-              InputProps={{
-                startAdornment: (
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 2, color: "grey.400" }}>
-                    <User sx={{ width: 18, height: 18 }} />
-                  </Box>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        mr: 2,
+                        color: "grey.400",
+                      }}
+                    >
+                      <User sx={{ width: 18, height: 18 }} />
+                    </Box>
+                  ),
+                },
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -278,33 +291,42 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               helperText={form.formState.errors.password?.message as string}
               size="small"
               fullWidth
-              InputProps={{
-                startAdornment: (
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 2, color: "grey.400" }}>
-                    <Lock sx={{ width: 18, height: 18 }} />
-                  </Box>
-                ),
-                endAdornment: (
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    sx={{ 
-                      color: "grey.400", 
-                      "&:hover": { color: "grey.600" },
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      p: 0,
-                      minWidth: "auto",
-                    }}
-                  >
-                    {showPassword ? (
-                      <EyeOff sx={{ width: 20, height: 20 }} />
-                    ) : (
-                      <Eye sx={{ width: 20, height: 20 }} />
-                    )}
-                  </button>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        mr: 2,
+                        color: "grey.400",
+                      }}
+                    >
+                      <Lock sx={{ width: 18, height: 18 }} />
+                    </Box>
+                  ),
+                  endAdornment: (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      sx={{
+                        color: "grey.400",
+                        "&:hover": { color: "grey.600" },
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        p: 0,
+                        minWidth: "auto",
+                      }}
+                    >
+                      {showPassword ? (
+                        <EyeOff sx={{ width: 20, height: 20 }} />
+                      ) : (
+                        <Eye sx={{ width: 20, height: 20 }} />
+                      )}
+                    </button>
+                  ),
+                },
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
@@ -324,62 +346,79 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Box
-                    sx={{ 
-                      width: 8, 
-                      height: 8, 
-                      borderRadius: "50%", 
-                      bgcolor: form.watch("password")?.match(/[A-Z]/) ? "#22c55e" : "#e5e7eb" 
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      bgcolor: form.watch("password")?.match(/[A-Z]/)
+                        ? "#22c55e"
+                        : "#e5e7eb",
                     }}
                   ></Box>
-                  <Typography variant="caption" sx={{ color: "#6b7280" }}>大写字母</Typography>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                    大写字母
+                  </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Box
-                    sx={{ 
-                      width: 8, 
-                      height: 8, 
-                      borderRadius: "50%", 
-                      bgcolor: form.watch("password")?.match(/[a-z]/) ? "#22c55e" : "#e5e7eb" 
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      bgcolor: form.watch("password")?.match(/[a-z]/)
+                        ? "#22c55e"
+                        : "#e5e7eb",
                     }}
                   ></Box>
-                  <Typography variant="caption" sx={{ color: "#6b7280" }}>小写字母</Typography>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                    小写字母
+                  </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Box
-                    sx={{ 
-                      width: 8, 
-                      height: 8, 
-                      borderRadius: "50%", 
-                      bgcolor: form.watch("password")?.match(/[0-9]/) ? "#22c55e" : "#e5e7eb" 
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      bgcolor: form.watch("password")?.match(/[0-9]/)
+                        ? "#22c55e"
+                        : "#e5e7eb",
                     }}
                   ></Box>
-                  <Typography variant="caption" sx={{ color: "#6b7280" }}>数字</Typography>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                    数字
+                  </Typography>
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                   <Box
-                    sx={{ 
-                      width: 8, 
-                      height: 8, 
-                      borderRadius: "50%", 
-                      bgcolor: form.watch("password")?.match(/[^a-zA-Z0-9]/) ? "#22c55e" : "#e5e7eb" 
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      bgcolor: form.watch("password")?.match(/[^a-zA-Z0-9]/)
+                        ? "#22c55e"
+                        : "#e5e7eb",
                     }}
                   ></Box>
-                  <Typography variant="caption" sx={{ color: "#6b7280" }}>特殊字符</Typography>
+                  <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                    特殊字符
+                  </Typography>
                 </Box>
               </Box>
             )}
 
-            <Button 
-              type="submit" 
-              variant="contained" 
-              sx={{ 
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
                 width: "100%",
                 height: 48,
                 borderRadius: 1.5,
                 fontWeight: 600,
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 "&:hover": {
-                  background: "linear-gradient(135deg, #5a6fd6 0%, #6a4090 100%)",
+                  background:
+                    "linear-gradient(135deg, #5a6fd6 0%, #6a4090 100%)",
                 },
                 "&:disabled": {
                   background: "grey.400",
@@ -395,9 +434,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <button
               type="button"
               onClick={() => setIsRegister(!isRegister)}
-              sx={{ 
-                color: "#667eea", 
-                "&:hover": { color: "#5a6fd6" }, 
+              sx={{
+                color: "#667eea",
+                "&:hover": { color: "#5a6fd6" },
                 fontSize: "0.875rem",
                 background: "transparent",
                 border: "none",
@@ -411,7 +450,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
           {isDevelopment() && (
             <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid #e5e7eb" }}>
-              <Typography variant="caption" sx={{ color: "#9ca3af", textAlign: "center", display: "block" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "#9ca3af", textAlign: "center", display: "block" }}
+              >
                 演示账号: admin / admin123 (管理员) | user / user123 (普通员工)
               </Typography>
             </Box>

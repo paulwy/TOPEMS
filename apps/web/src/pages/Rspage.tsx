@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
@@ -23,7 +24,6 @@ import {
   Paper,
   Tooltip,
   Divider,
-  Grid,
   Tabs,
   Tab,
   FormControl,
@@ -102,15 +102,26 @@ const getStatusColor = (status: string): { bgcolor: string; color: string } => {
   return { bgcolor: c.bg, color: c.color };
 };
 
-const getExperimentTypeColor = (type: string): { bgcolor: string; color: string } => {
-  const c = EXPERIMENT_TYPE_COLORS[type] || { bg: "grey.200", color: "grey.700" };
+const getExperimentTypeColor = (
+  type: string,
+): { bgcolor: string; color: string } => {
+  const c = EXPERIMENT_TYPE_COLORS[type] || {
+    bg: "grey.200",
+    color: "grey.700",
+  };
   return { bgcolor: c.bg, color: c.color };
 };
 
 const getFormulaStatusColor = (status: string) => getStatusColor(status);
 
-const StatusChip: React.FC<{ status: string; type?: "experiment" }> = ({ status, type }) => {
-  const colorMap = type === "experiment" ? getExperimentTypeColor(status) : getStatusColor(status);
+const StatusChip: React.FC<{ status: string; type?: "experiment" }> = ({
+  status,
+  type,
+}) => {
+  const colorMap =
+    type === "experiment"
+      ? getExperimentTypeColor(status)
+      : getStatusColor(status);
   return (
     <Chip
       size="small"
@@ -925,7 +936,10 @@ const Rspage: React.FC = () => {
 
   const handleCreateFormulaVersion = async () => {
     if (!selectedFormula) return;
-    if (!formulaVersionFormData.version.trim() || !formulaVersionFormData.changes.trim()) {
+    if (
+      !formulaVersionFormData.version.trim() ||
+      !formulaVersionFormData.changes.trim()
+    ) {
       showNotification("error", "请填写版本号和变更说明");
       return;
     }
@@ -992,14 +1006,17 @@ const Rspage: React.FC = () => {
 
   const handleBatchDelete = async () => {
     if (selectedProjectIds.size === 0) return;
-    if (!confirm(`确定要删除选中的 ${selectedProjectIds.size} 个项目吗？`)) return;
+    if (!confirm(`确定要删除选中的 ${selectedProjectIds.size} 个项目吗？`))
+      return;
 
     try {
       const deletePromises = Array.from(selectedProjectIds).map((id) =>
         rsApi.deleteProject(id),
       );
       const results = await Promise.allSettled(deletePromises);
-      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      const successCount = results.filter(
+        (r) => r.status === "fulfilled",
+      ).length;
       showNotification("success", `成功删除 ${successCount} 个项目`);
       setSelectedProjectIds(new Set());
       loadProjects();
@@ -1052,7 +1069,9 @@ const Rspage: React.FC = () => {
       setCreating(true);
       const promises = validItems.map((item) => rsApi.createProject(item));
       const results = await Promise.allSettled(promises);
-      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      const successCount = results.filter(
+        (r) => r.status === "fulfilled",
+      ).length;
       showNotification("success", `成功创建 ${successCount} 个项目`);
       setShowBatchCreateModal(false);
       setBatchCreateData([
@@ -1155,7 +1174,9 @@ const Rspage: React.FC = () => {
 
   const getFormulaApprovalStatusIcon = (status: string) => {
     if (status === "已批准" || status === "approved") {
-      return <CheckCircleOutline sx={{ fontSize: 20, color: "success.main" }} />;
+      return (
+        <CheckCircleOutline sx={{ fontSize: 20, color: "success.main" }} />
+      );
     }
     if (status === "已拒绝" || status === "rejected") {
       return <Cancel sx={{ fontSize: 20, color: "error.main" }} />;
@@ -1183,15 +1204,23 @@ const Rspage: React.FC = () => {
 
   if (!isServiceUp("rs") && !loading) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "grey.50" }}>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "grey.50",
+        }}
+      >
         <Card sx={{ p: 4, textAlign: "center", maxWidth: 400 }}>
-          <Science sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+          <Science
+            sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }}
+          />
           <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
             科研研发服务未启动
           </Typography>
-          <Typography color="text.secondary">
-            正在等待服务启动...
-          </Typography>
+          <Typography color="text.secondary">正在等待服务启动...</Typography>
         </Card>
       </Box>
     );
@@ -1199,13 +1228,36 @@ const Rspage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      <AppBar position="sticky" color="default" elevation={1} sx={{ bgcolor: "background.paper" }}>
-        <Toolbar sx={{ maxWidth: 1280, mx: "auto", width: "100%", px: { xs: 2, md: 3 } }}>
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1 }}>
+      <AppBar
+        position="sticky"
+        color="default"
+        elevation={1}
+        sx={{ bgcolor: "background.paper" }}
+      >
+        <Toolbar
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            width: "100%",
+            px: { xs: 2, md: 3 },
+          }}
+        >
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            sx={{ flexGrow: 1 }}
+          >
             <IconButton onClick={() => navigate("/dashboard")}>
               <ChevronRight sx={{ transform: "rotate(180deg)" }} />
             </IconButton>
-            <Avatar sx={{ background: "linear-gradient(135deg, #f97316, #ef4444)", width: 40, height: 40 }}>
+            <Avatar
+              sx={{
+                background: "linear-gradient(135deg, #f97316, #ef4444)",
+                width: 40,
+                height: 40,
+              }}
+            >
               <Science sx={{ color: "white" }} />
             </Avatar>
             <Box>
@@ -1220,7 +1272,11 @@ const Rspage: React.FC = () => {
           <Stack direction="row" spacing={1}>
             {activeTab === "projects" && (
               <>
-                <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                <ModuleGate
+                  module={MODULES.RS}
+                  action="write"
+                  showDisabled={true}
+                >
                   <Button
                     variant="contained"
                     color="primary"
@@ -1230,7 +1286,11 @@ const Rspage: React.FC = () => {
                     新建项目
                   </Button>
                 </ModuleGate>
-                <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                <ModuleGate
+                  module={MODULES.RS}
+                  action="write"
+                  showDisabled={true}
+                >
                   <Button
                     variant="contained"
                     color="success"
@@ -1240,7 +1300,11 @@ const Rspage: React.FC = () => {
                     批量创建
                   </Button>
                 </ModuleGate>
-                <ModuleGate module={MODULES.RS} action="read" showDisabled={true}>
+                <ModuleGate
+                  module={MODULES.RS}
+                  action="read"
+                  showDisabled={true}
+                >
                   <Button
                     variant="contained"
                     color="primary"
@@ -1251,7 +1315,11 @@ const Rspage: React.FC = () => {
                     导出
                   </Button>
                 </ModuleGate>
-                <ModuleGate module={MODULES.RS} action="write" showDisabled={true}>
+                <ModuleGate
+                  module={MODULES.RS}
+                  action="write"
+                  showDisabled={true}
+                >
                   <Button
                     variant="contained"
                     color="warning"
@@ -1293,7 +1361,10 @@ const Rspage: React.FC = () => {
         onClose={() => setNotification(null)}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert severity={notification?.type === "success" ? "success" : "error"} onClose={() => setNotification(null)}>
+        <Alert
+          severity={notification?.type === "success" ? "success" : "error"}
+          onClose={() => setNotification(null)}
+        >
           {notification?.message}
         </Alert>
       </Snackbar>
@@ -1304,10 +1375,12 @@ const Rspage: React.FC = () => {
           placeholder="搜索项目..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <Search sx={{ color: "text.secondary", mr: 1 }} />
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <Search sx={{ color: "text.secondary", mr: 1 }} />
+              ),
+            },
           }}
           sx={{ mb: 3, bgcolor: "background.paper" }}
         />
@@ -1409,10 +1482,26 @@ const Rspage: React.FC = () => {
               title="项目状态分布"
               type="pie"
               data={[
-                { name: "进行中", value: stats.in_progress_projects, color: "#6366F1" },
-                { name: "已完成", value: stats.completed_projects, color: "#00C897" },
-                { name: "待开始", value: stats.pending_projects, color: "#F59E0B" },
-                { name: "已取消", value: stats.cancelled_projects, color: "#6B7280" },
+                {
+                  name: "进行中",
+                  value: stats.in_progress_projects,
+                  color: "#6366F1",
+                },
+                {
+                  name: "已完成",
+                  value: stats.completed_projects,
+                  color: "#00C897",
+                },
+                {
+                  name: "待开始",
+                  value: stats.pending_projects,
+                  color: "#F59E0B",
+                },
+                {
+                  name: "已取消",
+                  value: stats.cancelled_projects,
+                  color: "#6B7280",
+                },
               ].filter((d) => d.value > 0)}
               dataKey="value"
               nameKey="name"
@@ -1423,9 +1512,21 @@ const Rspage: React.FC = () => {
               title="试验状态分布"
               type="pie"
               data={[
-                { name: "进行中", value: stats.in_progress_experiments, color: "#6366F1" },
-                { name: "已完成", value: stats.completed_experiments, color: "#00C897" },
-                { name: "待开始", value: stats.pending_experiments, color: "#F59E0B" },
+                {
+                  name: "进行中",
+                  value: stats.in_progress_experiments,
+                  color: "#6366F1",
+                },
+                {
+                  name: "已完成",
+                  value: stats.completed_experiments,
+                  color: "#00C897",
+                },
+                {
+                  name: "待开始",
+                  value: stats.pending_experiments,
+                  color: "#F59E0B",
+                },
               ].filter((d) => d.value > 0)}
               dataKey="value"
               nameKey="name"
@@ -1436,11 +1537,29 @@ const Rspage: React.FC = () => {
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {[
             {
-              label: activeTab === "projects" ? "项目总数" : activeTab === "experiments" ? "试验总数" : "配方总数",
-              value: activeTab === "projects" ? safeProjects.length : activeTab === "experiments" ? safeExperiments.length : safeFormulas.length,
-              icon: activeTab === "projects" ? <Science /> : activeTab === "experiments" ? <Biotech /> : <Code />,
+              label:
+                activeTab === "projects"
+                  ? "项目总数"
+                  : activeTab === "experiments"
+                    ? "试验总数"
+                    : "配方总数",
+              value:
+                activeTab === "projects"
+                  ? safeProjects.length
+                  : activeTab === "experiments"
+                    ? safeExperiments.length
+                    : safeFormulas.length,
+              icon:
+                activeTab === "projects" ? (
+                  <Science />
+                ) : activeTab === "experiments" ? (
+                  <Biotech />
+                ) : (
+                  <Code />
+                ),
               bg: "primary.50",
-              color: activeTab === "formulas" ? "secondary.main" : "primary.main",
+              color:
+                activeTab === "formulas" ? "secondary.main" : "primary.main",
             },
             {
               label: "进行中",
@@ -1448,7 +1567,8 @@ const Rspage: React.FC = () => {
                 activeTab === "projects"
                   ? safeProjects.filter((p) => p.status === "进行中").length
                   : activeTab === "experiments"
-                    ? safeExperiments.filter((e) => e.status === "进行中").length
+                    ? safeExperiments.filter((e) => e.status === "进行中")
+                        .length
                     : safeFormulas.filter((f) => f.status === "草稿").length,
               icon: <AccessTime />,
               bg: "warning.50",
@@ -1460,8 +1580,11 @@ const Rspage: React.FC = () => {
                 activeTab === "projects"
                   ? safeProjects.filter((p) => p.status === "已完成").length
                   : activeTab === "experiments"
-                    ? safeExperiments.filter((e) => e.status === "已完成").length
-                    : safeFormulas.filter((f) => f.status === "已批准" || f.status === "已发布").length,
+                    ? safeExperiments.filter((e) => e.status === "已完成")
+                        .length
+                    : safeFormulas.filter(
+                        (f) => f.status === "已批准" || f.status === "已发布",
+                      ).length,
               icon: <CheckCircle />,
               bg: "success.50",
               color: "success.main",
@@ -1469,16 +1592,35 @@ const Rspage: React.FC = () => {
           ].map((stat) => (
             <Grid item xs={12} md={4} key={stat.label}>
               <Card sx={{ p: 3, boxShadow: 1, borderRadius: 2 }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
                   <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       {stat.label}
                     </Typography>
-                    <Typography variant="h4" fontWeight="bold" color={stat.color}>
+                    <Typography
+                      variant="h4"
+                      fontWeight="bold"
+                      color={stat.color}
+                    >
                       {stat.value}
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: stat.bg, color: stat.color, width: 48, height: 48 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: stat.bg,
+                      color: stat.color,
+                      width: 48,
+                      height: 48,
+                    }}
+                  >
                     {stat.icon}
                   </Avatar>
                 </Stack>
@@ -1494,18 +1636,43 @@ const Rspage: React.FC = () => {
           </Stack>
         ) : activeTab === "projects" ? (
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, borderBottom: 1, borderColor: "divider", bgcolor: "grey.50" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                p: 2,
+                borderBottom: 1,
+                borderColor: "divider",
+                bgcolor: "grey.50",
+              }}
+            >
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={selectedProjectIds.size === filteredProjects.length && filteredProjects.length > 0}
-                    onChange={(e) => (e.target.checked ? selectAllProjects() : deselectAllProjects())}
+                    checked={
+                      selectedProjectIds.size === filteredProjects.length &&
+                      filteredProjects.length > 0
+                    }
+                    onChange={(e) =>
+                      e.target.checked
+                        ? selectAllProjects()
+                        : deselectAllProjects()
+                    }
                   />
                 }
-                label={selectedProjectIds.size > 0 ? `已选择 ${selectedProjectIds.size} 项` : "全部选择"}
+                label={
+                  selectedProjectIds.size > 0
+                    ? `已选择 ${selectedProjectIds.size} 项`
+                    : "全部选择"
+                }
               />
               {selectedProjectIds.size > 0 && (
-                <ModuleGate module={MODULES.RS} action="delete" showDisabled={true}>
+                <ModuleGate
+                  module={MODULES.RS}
+                  action="delete"
+                  showDisabled={true}
+                >
                   <Button
                     color="error"
                     size="small"
@@ -1519,26 +1686,52 @@ const Rspage: React.FC = () => {
               )}
             </Box>
             <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-              <Typography variant="h6" fontWeight="bold">项目列表</Typography>
+              <Typography variant="h6" fontWeight="bold">
+                项目列表
+              </Typography>
             </Box>
             {filteredProjects.length === 0 ? (
               <Box sx={{ p: 6, textAlign: "center" }}>
-                <Science sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <Science
+                  sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }}
+                />
                 <Typography color="text.secondary">暂无项目</Typography>
               </Box>
             ) : (
               <Stack divider={<Divider />}>
                 {filteredProjects.map((project) => (
-                  <Box key={project.id} sx={{ p: 3, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s" }}>
-                    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-                      <Stack direction="row" alignItems="flex-start" spacing={2} sx={{ flex: 1 }}>
+                  <Box
+                    key={project.id}
+                    sx={{
+                      p: 3,
+                      "&:hover": { bgcolor: "grey.50" },
+                      transition: "background-color 0.2s",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      spacing={2}
+                    >
+                      <Stack
+                        direction="row"
+                        alignItems="flex-start"
+                        spacing={2}
+                        sx={{ flex: 1 }}
+                      >
                         <Checkbox
                           checked={selectedProjectIds.has(project.id)}
                           onChange={() => toggleProjectSelect(project.id)}
                           sx={{ pt: 0.5 }}
                         />
                         <Box sx={{ flex: 1 }}>
-                          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1.5}
+                            sx={{ mb: 1 }}
+                          >
                             <Typography variant="h6" fontWeight="bold">
                               {project.name}
                             </Typography>
@@ -1547,30 +1740,60 @@ const Rspage: React.FC = () => {
                           <Typography color="text.secondary" sx={{ mb: 1.5 }}>
                             {project.description}
                           </Typography>
-                          <Stack direction="row" alignItems="center" spacing={3}>
-                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={3}
+                          >
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              spacing={0.5}
+                            >
                               <AccessTime sx={{ fontSize: 16 }} />
-                              <Typography variant="body2" color="text.secondary">
-                                开始时间: {new Date(project.start_date).toLocaleDateString("zh-CN")}
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                开始时间:{" "}
+                                {new Date(
+                                  project.start_date,
+                                ).toLocaleDateString("zh-CN")}
                               </Typography>
                             </Stack>
                           </Stack>
                         </Box>
                       </Stack>
                       <Stack direction="row" spacing={1}>
-                        <Button size="small" color="primary" onClick={() => openDetailModal(project)}>
+                        <Button
+                          size="small"
+                          color="primary"
+                          onClick={() => openDetailModal(project)}
+                        >
                           查看详情
                         </Button>
-                        <Button size="small" color="warning" startIcon={<Biotech />} onClick={() => openExperimentModal(project)}>
+                        <Button
+                          size="small"
+                          color="warning"
+                          startIcon={<Biotech />}
+                          onClick={() => openExperimentModal(project)}
+                        >
                           添加试验
                         </Button>
                         <Tooltip title="编辑">
-                          <IconButton size="small" onClick={() => openEditModal(project)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => openEditModal(project)}
+                          >
                             <Edit fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="删除">
-                          <IconButton size="small" color="error" onClick={() => handleDelete(project.id)}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(project.id)}
+                          >
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -1584,25 +1807,49 @@ const Rspage: React.FC = () => {
         ) : activeTab === "experiments" ? (
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
             <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-              <Typography variant="h6" fontWeight="bold">试验记录</Typography>
+              <Typography variant="h6" fontWeight="bold">
+                试验记录
+              </Typography>
             </Box>
             {filteredExperiments.length === 0 ? (
               <Box sx={{ p: 6, textAlign: "center" }}>
-                <Biotech sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <Biotech
+                  sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }}
+                />
                 <Typography color="text.secondary">暂无试验记录</Typography>
               </Box>
             ) : (
               <Stack divider={<Divider />}>
                 {filteredExperiments.map((experiment) => (
-                  <Box key={experiment.id} sx={{ p: 3, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s" }}>
-                    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                  <Box
+                    key={experiment.id}
+                    sx={{
+                      p: 3,
+                      "&:hover": { bgcolor: "grey.50" },
+                      transition: "background-color 0.2s",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      spacing={2}
+                    >
                       <Box sx={{ flex: 1 }}>
-                        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={1.5}
+                          sx={{ mb: 1 }}
+                        >
                           <Typography variant="h6" fontWeight="bold">
                             {experiment.name}
                           </Typography>
                           <StatusChip status={experiment.status} />
-                          <StatusChip status={experiment.experiment_type} type="experiment" />
+                          <StatusChip
+                            status={experiment.experiment_type}
+                            type="experiment"
+                          />
                         </Stack>
                         <Typography color="text.secondary" sx={{ mb: 1 }}>
                           目标: {experiment.objective}
@@ -1613,10 +1860,17 @@ const Rspage: React.FC = () => {
                           </Typography>
                         )}
                         <Stack direction="row" alignItems="center" spacing={3}>
-                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={0.5}
+                          >
                             <AccessTime sx={{ fontSize: 16 }} />
                             <Typography variant="body2" color="text.secondary">
-                              开始日期: {new Date(experiment.started_at).toLocaleDateString("zh-CN")}
+                              开始日期:{" "}
+                              {new Date(
+                                experiment.started_at,
+                              ).toLocaleDateString("zh-CN")}
                             </Typography>
                           </Stack>
                           <Typography variant="body2" color="text.secondary">
@@ -1627,24 +1881,49 @@ const Rspage: React.FC = () => {
                           </Typography>
                         </Stack>
                         {experiment.conclusions && (
-                          <Box sx={{ mt: 1.5, p: 1.5, bgcolor: "success.50", borderRadius: 1 }}>
-                            <Typography variant="body2" fontWeight="medium" color="success.dark">
+                          <Box
+                            sx={{
+                              mt: 1.5,
+                              p: 1.5,
+                              bgcolor: "success.50",
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight="medium"
+                              color="success.dark"
+                            >
                               结论: {experiment.conclusions}
                             </Typography>
                           </Box>
                         )}
                       </Box>
                       <Stack direction="row" spacing={1}>
-                        <Button size="small" color="primary" startIcon={<Visibility />} onClick={() => openExperimentDetailModal(experiment)}>
+                        <Button
+                          size="small"
+                          color="primary"
+                          startIcon={<Visibility />}
+                          onClick={() => openExperimentDetailModal(experiment)}
+                        >
                           查看详情
                         </Button>
                         <Tooltip title="编辑">
-                          <IconButton size="small" onClick={() => openEditExperimentModal(experiment)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => openEditExperimentModal(experiment)}
+                          >
                             <Edit fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="删除">
-                          <IconButton size="small" color="error" onClick={() => handleDeleteExperiment(experiment.id)}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() =>
+                              handleDeleteExperiment(experiment.id)
+                            }
+                          >
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -1658,79 +1937,167 @@ const Rspage: React.FC = () => {
         ) : (
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
             <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-              <Typography variant="h6" fontWeight="bold">配方列表</Typography>
+              <Typography variant="h6" fontWeight="bold">
+                配方列表
+              </Typography>
             </Box>
             {safeFormulas.length === 0 ? (
               <Box sx={{ p: 6, textAlign: "center" }}>
-                <Code sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }} />
+                <Code
+                  sx={{ fontSize: 64, color: "grey.300", mx: "auto", mb: 2 }}
+                />
                 <Typography color="text.secondary">暂无配方</Typography>
               </Box>
             ) : (
               <Stack divider={<Divider />}>
                 {safeFormulas.map((formula) => (
-                  <Box key={formula.id} sx={{ p: 3, "&:hover": { bgcolor: "grey.50" }, transition: "background-color 0.2s" }}>
-                    <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
-                      <Stack direction="row" alignItems="flex-start" spacing={2} sx={{ flex: 1 }}>
-                        <Avatar sx={{ bgcolor: "secondary.50", color: "secondary.main", width: 48, height: 48 }}>
+                  <Box
+                    key={formula.id}
+                    sx={{
+                      p: 3,
+                      "&:hover": { bgcolor: "grey.50" },
+                      transition: "background-color 0.2s",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      spacing={2}
+                    >
+                      <Stack
+                        direction="row"
+                        alignItems="flex-start"
+                        spacing={2}
+                        sx={{ flex: 1 }}
+                      >
+                        <Avatar
+                          sx={{
+                            bgcolor: "secondary.50",
+                            color: "secondary.main",
+                            width: 48,
+                            height: 48,
+                          }}
+                        >
                           <Code />
                         </Avatar>
                         <Box sx={{ flex: 1 }}>
-                          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1.5}
+                            sx={{ mb: 1 }}
+                          >
                             <Typography variant="h6" fontWeight="bold">
                               {formula.name}
                             </Typography>
                             <StatusChip status={formula.status} />
-                            <Chip size="small" label={formula.version} sx={{ bgcolor: "secondary.50", color: "secondary.dark" }} />
+                            <Chip
+                              size="small"
+                              label={formula.version}
+                              sx={{
+                                bgcolor: "secondary.50",
+                                color: "secondary.dark",
+                              }}
+                            />
                             {formula.approval_status && (
-                              <Box sx={{ display: "flex", alignItems: "center" }}>
-                                {getFormulaApprovalStatusIcon(formula.approval_status)}
+                              <Box
+                                sx={{ display: "flex", alignItems: "center" }}
+                              >
+                                {getFormulaApprovalStatusIcon(
+                                  formula.approval_status,
+                                )}
                               </Box>
                             )}
                           </Stack>
                           <Typography color="text.secondary" sx={{ mb: 1.5 }}>
                             {formula.description || "暂无描述"}
                           </Typography>
-                          <Stack direction="row" alignItems="center" spacing={3} sx={{ flexWrap: "wrap", gap: 1 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={3}
+                            sx={{ flexWrap: "wrap", gap: 1 }}
+                          >
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ fontFamily: "monospace" }}
+                            >
                               编号: {formula.code}
                             </Typography>
                             {formula.category && (
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
                                 分类: {formula.category}
                               </Typography>
                             )}
-                            {formula.ingredients && formula.ingredients.length > 0 && (
-                              <Typography variant="body2" color="text.secondary">
-                                配方成分: {formula.ingredients.length} 种
-                              </Typography>
-                            )}
+                            {formula.ingredients &&
+                              formula.ingredients.length > 0 && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  配方成分: {formula.ingredients.length} 种
+                                </Typography>
+                              )}
                           </Stack>
-                          <Stack direction="row" alignItems="center" spacing={3} sx={{ mt: 1 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={3}
+                            sx={{ mt: 1 }}
+                          >
                             <Typography variant="body2" color="text.secondary">
                               项目: {getProjectName(formula.project_id)}
                             </Typography>
                             {formula.effective_date && (
-                              <Typography variant="body2" color="text.secondary">
-                                生效日期: {new Date(formula.effective_date).toLocaleDateString("zh-CN")}
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                生效日期:{" "}
+                                {new Date(
+                                  formula.effective_date,
+                                ).toLocaleDateString("zh-CN")}
                               </Typography>
                             )}
                           </Stack>
                         </Box>
                       </Stack>
                       <Stack direction="row" spacing={1}>
-                        <Button size="small" color="primary" startIcon={<Visibility />} onClick={() => openFormulaDetailModal(formula)}>
+                        <Button
+                          size="small"
+                          color="primary"
+                          startIcon={<Visibility />}
+                          onClick={() => openFormulaDetailModal(formula)}
+                        >
                           详情
                         </Button>
-                        <Button size="small" color="secondary" startIcon={<AccountTree />} onClick={() => openFormulaVersionModal(formula)}>
+                        <Button
+                          size="small"
+                          color="secondary"
+                          startIcon={<AccountTree />}
+                          onClick={() => openFormulaVersionModal(formula)}
+                        >
                           版本
                         </Button>
                         <Tooltip title="编辑">
-                          <IconButton size="small" onClick={() => openFormulaModal(formula)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => openFormulaModal(formula)}
+                          >
                             <Edit fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="删除">
-                          <IconButton size="small" color="error" onClick={() => handleDeleteFormula(formula.id)}>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteFormula(formula.id)}
+                          >
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -1745,11 +2112,27 @@ const Rspage: React.FC = () => {
       </Box>
 
       {/* Create/Edit Project Modal */}
-      <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">{isEditing ? "编辑项目" : "新建项目"}</Typography>
-            <IconButton onClick={() => { setShowModal(false); setIsEditing(false); }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Typography variant="h6">
+              {isEditing ? "编辑项目" : "新建项目"}
+            </Typography>
+            <IconButton
+              onClick={() => {
+                setShowModal(false);
+                setIsEditing(false);
+              }}
+            >
               <Close />
             </IconButton>
           </Stack>
@@ -1769,7 +2152,11 @@ const Rspage: React.FC = () => {
               error={!!(projectErrors.name && touched.project_name)}
             />
             <FieldError
-              error={projectErrors.name && touched.project_name ? projectErrors.name : undefined}
+              error={
+                projectErrors.name && touched.project_name
+                  ? projectErrors.name
+                  : undefined
+              }
             />
             <TextField
               fullWidth
@@ -1784,7 +2171,11 @@ const Rspage: React.FC = () => {
               error={!!(projectErrors.code && touched.project_code)}
             />
             <FieldError
-              error={projectErrors.code && touched.project_code ? projectErrors.code : undefined}
+              error={
+                projectErrors.code && touched.project_code
+                  ? projectErrors.code
+                  : undefined
+              }
             />
             <TextField
               fullWidth
@@ -1799,14 +2190,20 @@ const Rspage: React.FC = () => {
               error={!!(projectErrors.leader && touched.project_leader)}
             />
             <FieldError
-              error={projectErrors.leader && touched.project_leader ? projectErrors.leader : undefined}
+              error={
+                projectErrors.leader && touched.project_leader
+                  ? projectErrors.leader
+                  : undefined
+              }
             />
             <FormControl fullWidth>
               <InputLabel>项目类型</InputLabel>
               <Select
                 value={formData.project_type}
                 label="项目类型"
-                onChange={(e) => setFormData({ ...formData, project_type: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, project_type: e.target.value })
+                }
               >
                 <MenuItem value="研发">研发</MenuItem>
                 <MenuItem value="改进">改进</MenuItem>
@@ -1819,8 +2216,10 @@ const Rspage: React.FC = () => {
               type="date"
               label="开始日期"
               value={formData.start_date}
-              onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
+              onChange={(e) =>
+                setFormData({ ...formData, start_date: e.target.value })
+              }
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               fullWidth
@@ -1830,14 +2229,22 @@ const Rspage: React.FC = () => {
                 setFormData({ ...formData, description: e.target.value });
                 handleProjectFieldChange("description", e.target.value);
               }}
-              onBlur={(e) => handleProjectFieldBlur("description", e.target.value)}
+              onBlur={(e) =>
+                handleProjectFieldBlur("description", e.target.value)
+              }
               placeholder="请输入项目描述"
               multiline
               rows={4}
-              error={!!(projectErrors.description && touched.project_description)}
+              error={
+                !!(projectErrors.description && touched.project_description)
+              }
             />
             <FieldError
-              error={projectErrors.description && touched.project_description ? projectErrors.description : undefined}
+              error={
+                projectErrors.description && touched.project_description
+                  ? projectErrors.description
+                  : undefined
+              }
             />
           </Stack>
         </DialogContent>
@@ -1848,16 +2255,34 @@ const Rspage: React.FC = () => {
             onClick={isEditing ? handleEdit : handleCreate}
             disabled={creating}
           >
-            {creating ? (isEditing ? "更新中..." : "创建中...") : isEditing ? "更新" : "创建"}
+            {creating
+              ? isEditing
+                ? "更新中..."
+                : "创建中..."
+              : isEditing
+                ? "更新"
+                : "创建"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Detail Project Modal */}
-      <Dialog open={showDetailModal && !!selectedProject} onClose={() => setShowDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailModal && !!selectedProject}
+        onClose={() => setShowDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-            <Typography variant="h5" fontWeight="bold">项目详情</Typography>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: 3 }}
+          >
+            <Typography variant="h5" fontWeight="bold">
+              项目详情
+            </Typography>
             <IconButton onClick={() => setShowDetailModal(false)}>
               <Close />
             </IconButton>
@@ -1866,36 +2291,78 @@ const Rspage: React.FC = () => {
           {selectedProject && (
             <Stack spacing={3}>
               <Box>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                  <Typography variant="h6" fontWeight="bold">{selectedProject.name}</Typography>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ mb: 2 }}
+                >
+                  <Typography variant="h6" fontWeight="bold">
+                    {selectedProject.name}
+                  </Typography>
                   <StatusChip status={selectedProject.status} />
                 </Stack>
-                <Typography color="text.secondary">{selectedProject.description}</Typography>
+                <Typography color="text.secondary">
+                  {selectedProject.description}
+                </Typography>
               </Box>
 
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>项目编号</Typography>
-                  <Typography fontWeight="medium" sx={{ fontFamily: "monospace", fontSize: 14 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    项目编号
+                  </Typography>
+                  <Typography
+                    fontWeight="medium"
+                    sx={{ fontFamily: "monospace", fontSize: 14 }}
+                  >
                     {selectedProject.id}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>开始时间</Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    开始时间
+                  </Typography>
                   <Typography fontWeight="medium">
-                    {new Date(selectedProject.start_date).toLocaleDateString("zh-CN")}
+                    {new Date(selectedProject.start_date).toLocaleDateString(
+                      "zh-CN",
+                    )}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>创建时间</Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    创建时间
+                  </Typography>
                   <Typography fontWeight="medium">
-                    {new Date(selectedProject.created_at).toLocaleString("zh-CN")}
+                    {new Date(selectedProject.created_at).toLocaleString(
+                      "zh-CN",
+                    )}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>更新时间</Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    更新时间
+                  </Typography>
                   <Typography fontWeight="medium">
-                    {new Date(selectedProject.updated_at).toLocaleString("zh-CN")}
+                    {new Date(selectedProject.updated_at).toLocaleString(
+                      "zh-CN",
+                    )}
                   </Typography>
                 </Grid>
               </Grid>
@@ -1905,11 +2372,17 @@ const Rspage: React.FC = () => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => { setShowDetailModal(false); openEditModal(selectedProject); }}
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    openEditModal(selectedProject);
+                  }}
                 >
                   编辑
                 </Button>
-                <Button variant="outlined" onClick={() => setShowDetailModal(false)}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowDetailModal(false)}
+                >
                   关闭
                 </Button>
               </Stack>
@@ -1919,44 +2392,79 @@ const Rspage: React.FC = () => {
       </Dialog>
 
       {/* Experiment Create/Edit Modal */}
-      <Dialog open={showExperimentModal} onClose={() => setShowExperimentModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showExperimentModal}
+        onClose={() => setShowExperimentModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">{isEditingExperiment ? "编辑试验记录" : "新建试验记录"}</Typography>
-            <IconButton onClick={() => { setShowExperimentModal(false); setIsEditingExperiment(false); }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Typography variant="h6">
+              {isEditingExperiment ? "编辑试验记录" : "新建试验记录"}
+            </Typography>
+            <IconButton
+              onClick={() => {
+                setShowExperimentModal(false);
+                setIsEditingExperiment(false);
+              }}
+            >
               <Close />
             </IconButton>
           </Stack>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <FormControl fullWidth error={!!(experimentErrors.project_id && touched.experiment_project_id)}>
+            <FormControl
+              fullWidth
+              error={
+                !!(experimentErrors.project_id && touched.experiment_project_id)
+              }
+            >
               <InputLabel>关联项目 *</InputLabel>
               <Select
                 value={experimentFormData.project_id}
                 label="关联项目 *"
                 onChange={(e) => {
-                  setExperimentFormData({ ...experimentFormData, project_id: e.target.value });
+                  setExperimentFormData({
+                    ...experimentFormData,
+                    project_id: e.target.value,
+                  });
                   handleExperimentFieldChange("project_id", e.target.value);
                 }}
-                onBlur={(e) => handleExperimentFieldBlur("project_id", e.target.value)}
+                onBlur={(e) =>
+                  handleExperimentFieldBlur("project_id", e.target.value)
+                }
                 disabled={isEditingExperiment}
               >
                 <MenuItem value="">请选择项目</MenuItem>
                 {safeProjects.map((project) => (
-                  <MenuItem key={project.id} value={project.id}>{project.name}</MenuItem>
+                  <MenuItem key={project.id} value={project.id}>
+                    {project.name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <FieldError
-              error={experimentErrors.project_id && touched.experiment_project_id ? experimentErrors.project_id : undefined}
+              error={
+                experimentErrors.project_id && touched.experiment_project_id
+                  ? experimentErrors.project_id
+                  : undefined
+              }
             />
             <TextField
               fullWidth
               label="试验名称 *"
               value={experimentFormData.name}
               onChange={(e) => {
-                setExperimentFormData({ ...experimentFormData, name: e.target.value });
+                setExperimentFormData({
+                  ...experimentFormData,
+                  name: e.target.value,
+                });
                 handleExperimentFieldChange("name", e.target.value);
               }}
               onBlur={(e) => handleExperimentFieldBlur("name", e.target.value)}
@@ -1964,14 +2472,21 @@ const Rspage: React.FC = () => {
               error={!!(experimentErrors.name && touched.experiment_name)}
             />
             <FieldError
-              error={experimentErrors.name && touched.experiment_name ? experimentErrors.name : undefined}
+              error={
+                experimentErrors.name && touched.experiment_name
+                  ? experimentErrors.name
+                  : undefined
+              }
             />
             <TextField
               fullWidth
               label="试验编号 *"
               value={experimentFormData.code}
               onChange={(e) => {
-                setExperimentFormData({ ...experimentFormData, code: e.target.value });
+                setExperimentFormData({
+                  ...experimentFormData,
+                  code: e.target.value,
+                });
                 handleExperimentFieldChange("code", e.target.value);
               }}
               onBlur={(e) => handleExperimentFieldBlur("code", e.target.value)}
@@ -1979,14 +2494,23 @@ const Rspage: React.FC = () => {
               error={!!(experimentErrors.code && touched.experiment_code)}
             />
             <FieldError
-              error={experimentErrors.code && touched.experiment_code ? experimentErrors.code : undefined}
+              error={
+                experimentErrors.code && touched.experiment_code
+                  ? experimentErrors.code
+                  : undefined
+              }
             />
             <FormControl fullWidth>
               <InputLabel>试验类型</InputLabel>
               <Select
                 value={experimentFormData.experiment_type}
                 label="试验类型"
-                onChange={(e) => setExperimentFormData({ ...experimentFormData, experiment_type: e.target.value })}
+                onChange={(e) =>
+                  setExperimentFormData({
+                    ...experimentFormData,
+                    experiment_type: e.target.value,
+                  })
+                }
               >
                 <MenuItem value="小试">小试</MenuItem>
                 <MenuItem value="中试">中试</MenuItem>
@@ -1998,7 +2522,12 @@ const Rspage: React.FC = () => {
               <Select
                 value={experimentFormData.phase}
                 label="试验阶段"
-                onChange={(e) => setExperimentFormData({ ...experimentFormData, phase: e.target.value })}
+                onChange={(e) =>
+                  setExperimentFormData({
+                    ...experimentFormData,
+                    phase: e.target.value,
+                  })
+                }
               >
                 <MenuItem value="小试">小试</MenuItem>
                 <MenuItem value="中试">中试</MenuItem>
@@ -2010,42 +2539,72 @@ const Rspage: React.FC = () => {
               label="试验员"
               value={experimentFormData.experimenter}
               onChange={(e) => {
-                setExperimentFormData({ ...experimentFormData, experimenter: e.target.value });
+                setExperimentFormData({
+                  ...experimentFormData,
+                  experimenter: e.target.value,
+                });
                 handleExperimentFieldChange("experimenter", e.target.value);
               }}
-              onBlur={(e) => handleExperimentFieldBlur("experimenter", e.target.value)}
+              onBlur={(e) =>
+                handleExperimentFieldBlur("experimenter", e.target.value)
+              }
               placeholder="请输入试验员姓名"
-              error={!!(experimentErrors.experimenter && touched.experiment_experimenter)}
+              error={
+                !!(
+                  experimentErrors.experimenter &&
+                  touched.experiment_experimenter
+                )
+              }
             />
             <FieldError
-              error={experimentErrors.experimenter && touched.experiment_experimenter ? experimentErrors.experimenter : undefined}
+              error={
+                experimentErrors.experimenter && touched.experiment_experimenter
+                  ? experimentErrors.experimenter
+                  : undefined
+              }
             />
             <TextField
               fullWidth
               label="试验目标"
               value={experimentFormData.objective}
               onChange={(e) => {
-                setExperimentFormData({ ...experimentFormData, objective: e.target.value });
+                setExperimentFormData({
+                  ...experimentFormData,
+                  objective: e.target.value,
+                });
                 handleExperimentFieldChange("objective", e.target.value);
               }}
-              onBlur={(e) => handleExperimentFieldBlur("objective", e.target.value)}
+              onBlur={(e) =>
+                handleExperimentFieldBlur("objective", e.target.value)
+              }
               placeholder="请输入试验目标"
               multiline
               rows={3}
-              error={!!(experimentErrors.objective && touched.experiment_objective)}
+              error={
+                !!(experimentErrors.objective && touched.experiment_objective)
+              }
             />
             <FieldError
-              error={experimentErrors.objective && touched.experiment_objective ? experimentErrors.objective : undefined}
+              error={
+                experimentErrors.objective && touched.experiment_objective
+                  ? experimentErrors.objective
+                  : undefined
+              }
             />
             <TextField
               fullWidth
               label="试验方法"
               value={experimentFormData.method}
               onChange={(e) => {
-                setExperimentFormData({ ...experimentFormData, method: e.target.value });
+                setExperimentFormData({
+                  ...experimentFormData,
+                  method: e.target.value,
+                });
                 handleExperimentFieldChange("method", e.target.value);
               }}
-              onBlur={(e) => handleExperimentFieldBlur("method", e.target.value)}
+              onBlur={(e) =>
+                handleExperimentFieldBlur("method", e.target.value)
+              }
               placeholder="请输入试验方法"
               multiline
               rows={4}
@@ -2053,22 +2612,51 @@ const Rspage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => { setShowExperimentModal(false); setIsEditingExperiment(false); }}>取消</Button>
+          <Button
+            onClick={() => {
+              setShowExperimentModal(false);
+              setIsEditingExperiment(false);
+            }}
+          >
+            取消
+          </Button>
           <Button
             variant="contained"
-            onClick={isEditingExperiment ? handleUpdateExperiment : handleCreateExperiment}
+            onClick={
+              isEditingExperiment
+                ? handleUpdateExperiment
+                : handleCreateExperiment
+            }
             disabled={creating}
           >
-            {creating ? (isEditingExperiment ? "更新中..." : "创建中...") : isEditingExperiment ? "更新" : "创建"}
+            {creating
+              ? isEditingExperiment
+                ? "更新中..."
+                : "创建中..."
+              : isEditingExperiment
+                ? "更新"
+                : "创建"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Experiment Detail Modal */}
-      <Dialog open={showExperimentDetailModal && !!selectedExperiment} onClose={() => setShowExperimentDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showExperimentDetailModal && !!selectedExperiment}
+        onClose={() => setShowExperimentDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-            <Typography variant="h5" fontWeight="bold">试验记录详情</Typography>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: 3 }}
+          >
+            <Typography variant="h5" fontWeight="bold">
+              试验记录详情
+            </Typography>
             <IconButton onClick={() => setShowExperimentDetailModal(false)}>
               <Close />
             </IconButton>
@@ -2077,53 +2665,124 @@ const Rspage: React.FC = () => {
           {selectedExperiment && (
             <Stack spacing={3}>
               <Box>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                  <Typography variant="h6" fontWeight="bold">{selectedExperiment.name}</Typography>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ mb: 2 }}
+                >
+                  <Typography variant="h6" fontWeight="bold">
+                    {selectedExperiment.name}
+                  </Typography>
                   <Stack direction="row" spacing={1}>
                     <StatusChip status={selectedExperiment.status} />
-                    <StatusChip status={selectedExperiment.experiment_type} type="experiment" />
+                    <StatusChip
+                      status={selectedExperiment.experiment_type}
+                      type="experiment"
+                    />
                   </Stack>
                 </Stack>
-                <Typography color="text.secondary">目标: {selectedExperiment.objective}</Typography>
+                <Typography color="text.secondary">
+                  目标: {selectedExperiment.objective}
+                </Typography>
               </Box>
 
               <Card variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>试验方法</Typography>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  sx={{ mb: 1 }}
+                >
+                  试验方法
+                </Typography>
                 <Typography>{selectedExperiment.method}</Typography>
               </Card>
 
               {selectedExperiment.results && (
                 <Card variant="outlined" sx={{ p: 2, bgcolor: "primary.50" }}>
-                  <Typography variant="subtitle1" fontWeight="bold" color="primary.dark" sx={{ mb: 1 }}>试验结果</Typography>
-                  <Typography color="primary.dark">{String(selectedExperiment.results)}</Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    color="primary.dark"
+                    sx={{ mb: 1 }}
+                  >
+                    试验结果
+                  </Typography>
+                  <Typography color="primary.dark">
+                    {String(selectedExperiment.results)}
+                  </Typography>
                 </Card>
               )}
 
               {selectedExperiment.conclusions && (
                 <Card variant="outlined" sx={{ p: 2, bgcolor: "success.50" }}>
-                  <Typography variant="subtitle1" fontWeight="bold" color="success.dark" sx={{ mb: 1 }}>试验结论</Typography>
-                  <Typography color="success.dark">{selectedExperiment.conclusions}</Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    color="success.dark"
+                    sx={{ mb: 1 }}
+                  >
+                    试验结论
+                  </Typography>
+                  <Typography color="success.dark">
+                    {selectedExperiment.conclusions}
+                  </Typography>
                 </Card>
               )}
 
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>试验编号</Typography>
-                  <Typography fontWeight="medium" sx={{ fontFamily: "monospace" }}>{selectedExperiment.code}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>关联项目</Typography>
-                  <Typography fontWeight="medium">{getProjectName(selectedExperiment.project_id)}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>开始日期</Typography>
-                  <Typography fontWeight="medium">
-                    {new Date(selectedExperiment.started_at).toLocaleDateString("zh-CN")}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    试验编号
+                  </Typography>
+                  <Typography
+                    fontWeight="medium"
+                    sx={{ fontFamily: "monospace" }}
+                  >
+                    {selectedExperiment.code}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>试验员</Typography>
-                  <Typography fontWeight="medium">{selectedExperiment.experimenter}</Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    关联项目
+                  </Typography>
+                  <Typography fontWeight="medium">
+                    {getProjectName(selectedExperiment.project_id)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    开始日期
+                  </Typography>
+                  <Typography fontWeight="medium">
+                    {new Date(selectedExperiment.started_at).toLocaleDateString(
+                      "zh-CN",
+                    )}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    试验员
+                  </Typography>
+                  <Typography fontWeight="medium">
+                    {selectedExperiment.experimenter}
+                  </Typography>
                 </Grid>
               </Grid>
 
@@ -2132,11 +2791,17 @@ const Rspage: React.FC = () => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => { setShowExperimentDetailModal(false); openEditExperimentModal(selectedExperiment); }}
+                  onClick={() => {
+                    setShowExperimentDetailModal(false);
+                    openEditExperimentModal(selectedExperiment);
+                  }}
                 >
                   编辑
                 </Button>
-                <Button variant="outlined" onClick={() => setShowExperimentDetailModal(false)}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowExperimentDetailModal(false)}
+                >
                   关闭
                 </Button>
               </Stack>
@@ -2146,17 +2811,34 @@ const Rspage: React.FC = () => {
       </Dialog>
 
       {/* Batch Create Modal */}
-      <Dialog open={showBatchCreateModal} onClose={() => setShowBatchCreateModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showBatchCreateModal}
+        onClose={() => setShowBatchCreateModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
             <Typography variant="h6">批量创建项目</Typography>
-            <IconButton onClick={() => {
-              setShowBatchCreateModal(false);
-              setBatchCreateData([{
-                name: "", code: "", description: "", project_type: "研发", leader: "",
-                start_date: new Date().toISOString().split("T")[0],
-              }]);
-            }}>
+            <IconButton
+              onClick={() => {
+                setShowBatchCreateModal(false);
+                setBatchCreateData([
+                  {
+                    name: "",
+                    code: "",
+                    description: "",
+                    project_type: "研发",
+                    leader: "",
+                    start_date: new Date().toISOString().split("T")[0],
+                  },
+                ]);
+              }}
+            >
               <Close />
             </IconButton>
           </Stack>
@@ -2165,10 +2847,19 @@ const Rspage: React.FC = () => {
           <Stack spacing={2} sx={{ mt: 1 }}>
             {batchCreateData.map((item, index) => (
               <Card key={index} variant="outlined" sx={{ p: 2 }}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ mb: 2 }}
+                >
                   <Typography fontWeight="medium">项目 {index + 1}</Typography>
                   {batchCreateData.length > 1 && (
-                    <IconButton size="small" color="error" onClick={() => removeBatchCreateItem(index)}>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => removeBatchCreateItem(index)}
+                    >
                       <Delete fontSize="small" />
                     </IconButton>
                   )}
@@ -2178,21 +2869,27 @@ const Rspage: React.FC = () => {
                     fullWidth
                     label="项目名称 *"
                     value={item.name}
-                    onChange={(e) => updateBatchCreateItem(index, "name", e.target.value)}
+                    onChange={(e) =>
+                      updateBatchCreateItem(index, "name", e.target.value)
+                    }
                     placeholder="请输入项目名称"
                   />
                   <TextField
                     fullWidth
                     label="项目编号 *"
                     value={item.code}
-                    onChange={(e) => updateBatchCreateItem(index, "code", e.target.value)}
+                    onChange={(e) =>
+                      updateBatchCreateItem(index, "code", e.target.value)
+                    }
                     placeholder="请输入项目编号"
                   />
                   <TextField
                     fullWidth
                     label="负责人 *"
                     value={item.leader}
-                    onChange={(e) => updateBatchCreateItem(index, "leader", e.target.value)}
+                    onChange={(e) =>
+                      updateBatchCreateItem(index, "leader", e.target.value)
+                    }
                     placeholder="请输入负责人"
                   />
                   <FormControl fullWidth>
@@ -2200,7 +2897,13 @@ const Rspage: React.FC = () => {
                     <Select
                       value={item.project_type}
                       label="项目类型"
-                      onChange={(e) => updateBatchCreateItem(index, "project_type", e.target.value)}
+                      onChange={(e) =>
+                        updateBatchCreateItem(
+                          index,
+                          "project_type",
+                          e.target.value,
+                        )
+                      }
                     >
                       <MenuItem value="研发">研发</MenuItem>
                       <MenuItem value="改进">改进</MenuItem>
@@ -2213,14 +2916,22 @@ const Rspage: React.FC = () => {
                     type="date"
                     label="开始日期"
                     value={item.start_date}
-                    onChange={(e) => updateBatchCreateItem(index, "start_date", e.target.value)}
-                    InputLabelProps={{ shrink: true }}
+                    onChange={(e) =>
+                      updateBatchCreateItem(index, "start_date", e.target.value)
+                    }
+                    slotProps={{ inputLabel: { shrink: true } }}
                   />
                   <TextField
                     fullWidth
                     label="项目描述"
                     value={item.description}
-                    onChange={(e) => updateBatchCreateItem(index, "description", e.target.value)}
+                    onChange={(e) =>
+                      updateBatchCreateItem(
+                        index,
+                        "description",
+                        e.target.value,
+                      )
+                    }
                     placeholder="请输入项目描述"
                     multiline
                     rows={2}
@@ -2241,18 +2952,38 @@ const Rspage: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setShowBatchCreateModal(false)}>取消</Button>
-          <Button variant="contained" color="success" onClick={handleBatchCreate} disabled={creating}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleBatchCreate}
+            disabled={creating}
+          >
             {creating ? "创建中..." : "批量创建"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Import Modal */}
-      <Dialog open={showImportModal} onClose={() => setShowImportModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
             <Typography variant="h6">导入项目</Typography>
-            <IconButton onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }}>
+            <IconButton
+              onClick={() => {
+                setShowImportModal(false);
+                setImportFile(null);
+                setImportPreview(null);
+              }}
+            >
               <Close />
             </IconButton>
           </Stack>
@@ -2260,9 +2991,20 @@ const Rspage: React.FC = () => {
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <Box>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                <Typography variant="body2" fontWeight="medium">选择 CSV 文件</Typography>
-                <Button size="small" startIcon={<Download />} onClick={downloadTemplate}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mb: 2 }}
+              >
+                <Typography variant="body2" fontWeight="medium">
+                  选择 CSV 文件
+                </Typography>
+                <Button
+                  size="small"
+                  startIcon={<Download />}
+                  onClick={downloadTemplate}
+                >
                   下载模板
                 </Button>
               </Stack>
@@ -2287,14 +3029,22 @@ const Rspage: React.FC = () => {
                   style={{ display: "none" }}
                 />
                 <label htmlFor="rs-file-upload" style={{ cursor: "pointer" }}>
-                  <Upload sx={{ fontSize: 40, color: "text.secondary", mb: 1.5 }} />
+                  <Upload
+                    sx={{ fontSize: 40, color: "text.secondary", mb: 1.5 }}
+                  />
                   <Typography sx={{ mb: 0.5 }}>点击或拖拽文件到这里</Typography>
-                  <Typography variant="body2" color="text.secondary">支持 CSV 格式</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    支持 CSV 格式
+                  </Typography>
                 </label>
               </Box>
               {importFile && (
                 <Card variant="outlined" sx={{ mt: 2, p: 1.5 }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <Description color="warning" />
                       <Typography variant="body2">{importFile.name}</Typography>
@@ -2302,7 +3052,13 @@ const Rspage: React.FC = () => {
                         ({(importFile.size / 1024).toFixed(1)} KB)
                       </Typography>
                     </Stack>
-                    <IconButton size="small" onClick={() => { setImportFile(null); setImportPreview(null); }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setImportFile(null);
+                        setImportPreview(null);
+                      }}
+                    >
                       <Close fontSize="small" />
                     </IconButton>
                   </Stack>
@@ -2312,14 +3068,31 @@ const Rspage: React.FC = () => {
 
             {importPreview && (
               <Box>
-                <Typography variant="body2" fontWeight="medium" sx={{ mb: 1.5 }}>文件预览（前5行）</Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight="medium"
+                  sx={{ mb: 1.5 }}
+                >
+                  文件预览（前5行）
+                </Typography>
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
                     <TableBody>
                       {importPreview.map((row, rowIndex) => (
-                        <TableRow key={rowIndex} sx={{ bgcolor: rowIndex === 0 ? "grey.50" : "inherit" }}>
+                        <TableRow
+                          key={rowIndex}
+                          sx={{
+                            bgcolor: rowIndex === 0 ? "grey.50" : "inherit",
+                          }}
+                        >
                           {row.map((cell, cellIndex) => (
-                            <TableCell key={cellIndex} sx={{ borderBottom: rowIndex === importPreview.length - 1 ? 0 : 1 }}>
+                            <TableCell
+                              key={cellIndex}
+                              sx={{
+                                borderBottom:
+                                  rowIndex === importPreview.length - 1 ? 0 : 1,
+                              }}
+                            >
                               {cell}
                             </TableCell>
                           ))}
@@ -2332,29 +3105,66 @@ const Rspage: React.FC = () => {
             )}
 
             <Alert severity="warning" variant="outlined">
-              <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>CSV 格式说明</Typography>
+              <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>
+                CSV 格式说明
+              </Typography>
               <Stack spacing={0.5}>
-                <Typography variant="body2">• <code>name</code>：项目名称（必填）</Typography>
-                <Typography variant="body2">• <code>description</code>：项目描述</Typography>
-                <Typography variant="body2">• <code>status</code>：状态（立项、进行中、已完成、已终止）</Typography>
+                <Typography variant="body2">
+                  • <code>name</code>：项目名称（必填）
+                </Typography>
+                <Typography variant="body2">
+                  • <code>description</code>：项目描述
+                </Typography>
+                <Typography variant="body2">
+                  • <code>status</code>：状态（立项、进行中、已完成、已终止）
+                </Typography>
               </Stack>
             </Alert>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => { setShowImportModal(false); setImportFile(null); setImportPreview(null); }}>取消</Button>
-          <Button variant="contained" color="warning" onClick={handleImport} disabled={creating || !importFile}>
+          <Button
+            onClick={() => {
+              setShowImportModal(false);
+              setImportFile(null);
+              setImportPreview(null);
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={handleImport}
+            disabled={creating || !importFile}
+          >
             {creating ? "导入中..." : "导入"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Create/Edit Formula Modal */}
-      <Dialog open={showFormulaModal} onClose={() => setShowFormulaModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showFormulaModal}
+        onClose={() => setShowFormulaModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">{isEditingFormula ? "编辑配方" : "添加配方"}</Typography>
-            <IconButton onClick={() => { setShowFormulaModal(false); setIsEditingFormula(false); }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Typography variant="h6">
+              {isEditingFormula ? "编辑配方" : "添加配方"}
+            </Typography>
+            <IconButton
+              onClick={() => {
+                setShowFormulaModal(false);
+                setIsEditingFormula(false);
+              }}
+            >
               <Close />
             </IconButton>
           </Stack>
@@ -2367,7 +3177,12 @@ const Rspage: React.FC = () => {
                   fullWidth
                   label="配方名称 *"
                   value={formulaFormData.name}
-                  onChange={(e) => setFormulaFormData({ ...formulaFormData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormulaFormData({
+                      ...formulaFormData,
+                      name: e.target.value,
+                    })
+                  }
                   placeholder="请输入配方名称"
                 />
               </Grid>
@@ -2376,7 +3191,12 @@ const Rspage: React.FC = () => {
                   fullWidth
                   label="配方编号 *"
                   value={formulaFormData.code}
-                  onChange={(e) => setFormulaFormData({ ...formulaFormData, code: e.target.value })}
+                  onChange={(e) =>
+                    setFormulaFormData({
+                      ...formulaFormData,
+                      code: e.target.value,
+                    })
+                  }
                   placeholder="请输入配方编号"
                 />
               </Grid>
@@ -2388,12 +3208,19 @@ const Rspage: React.FC = () => {
                   <Select
                     value={formulaFormData.project_id}
                     label="关联项目 *"
-                    onChange={(e) => setFormulaFormData({ ...formulaFormData, project_id: e.target.value })}
+                    onChange={(e) =>
+                      setFormulaFormData({
+                        ...formulaFormData,
+                        project_id: e.target.value,
+                      })
+                    }
                     disabled={isEditingFormula}
                   >
                     <MenuItem value="">请选择项目</MenuItem>
                     {safeProjects.map((project) => (
-                      <MenuItem key={project.id} value={project.id}>{project.name}</MenuItem>
+                      <MenuItem key={project.id} value={project.id}>
+                        {project.name}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -2403,7 +3230,12 @@ const Rspage: React.FC = () => {
                   fullWidth
                   label="版本号"
                   value={formulaFormData.version}
-                  onChange={(e) => setFormulaFormData({ ...formulaFormData, version: e.target.value })}
+                  onChange={(e) =>
+                    setFormulaFormData({
+                      ...formulaFormData,
+                      version: e.target.value,
+                    })
+                  }
                   placeholder="如 v1.0"
                 />
               </Grid>
@@ -2415,7 +3247,12 @@ const Rspage: React.FC = () => {
                   <Select
                     value={formulaFormData.category}
                     label="分类"
-                    onChange={(e) => setFormulaFormData({ ...formulaFormData, category: e.target.value })}
+                    onChange={(e) =>
+                      setFormulaFormData({
+                        ...formulaFormData,
+                        category: e.target.value,
+                      })
+                    }
                   >
                     <MenuItem value="">请选择分类</MenuItem>
                     <MenuItem value="食品配方">食品配方</MenuItem>
@@ -2432,7 +3269,12 @@ const Rspage: React.FC = () => {
                   <Select
                     value={formulaFormData.status}
                     label="状态"
-                    onChange={(e) => setFormulaFormData({ ...formulaFormData, status: e.target.value })}
+                    onChange={(e) =>
+                      setFormulaFormData({
+                        ...formulaFormData,
+                        status: e.target.value,
+                      })
+                    }
                   >
                     <MenuItem value="草稿">草稿</MenuItem>
                     <MenuItem value="待审批">待审批</MenuItem>
@@ -2450,8 +3292,13 @@ const Rspage: React.FC = () => {
                   type="date"
                   label="生效日期"
                   value={formulaFormData.effective_date}
-                  onChange={(e) => setFormulaFormData({ ...formulaFormData, effective_date: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) =>
+                    setFormulaFormData({
+                      ...formulaFormData,
+                      effective_date: e.target.value,
+                    })
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Grid>
               <Grid item xs={6}>
@@ -2460,8 +3307,13 @@ const Rspage: React.FC = () => {
                   type="date"
                   label="失效日期"
                   value={formulaFormData.expiration_date}
-                  onChange={(e) => setFormulaFormData({ ...formulaFormData, expiration_date: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
+                  onChange={(e) =>
+                    setFormulaFormData({
+                      ...formulaFormData,
+                      expiration_date: e.target.value,
+                    })
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Grid>
             </Grid>
@@ -2469,7 +3321,12 @@ const Rspage: React.FC = () => {
               fullWidth
               label="配方描述"
               value={formulaFormData.description}
-              onChange={(e) => setFormulaFormData({ ...formulaFormData, description: e.target.value })}
+              onChange={(e) =>
+                setFormulaFormData({
+                  ...formulaFormData,
+                  description: e.target.value,
+                })
+              }
               placeholder="请输入配方描述"
               multiline
               rows={3}
@@ -2478,7 +3335,12 @@ const Rspage: React.FC = () => {
               fullWidth
               label="工艺流程"
               value={formulaFormData.process_steps}
-              onChange={(e) => setFormulaFormData({ ...formulaFormData, process_steps: e.target.value })}
+              onChange={(e) =>
+                setFormulaFormData({
+                  ...formulaFormData,
+                  process_steps: e.target.value,
+                })
+              }
               placeholder="请输入工艺流程步骤"
               multiline
               rows={4}
@@ -2486,23 +3348,50 @@ const Rspage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => { setShowFormulaModal(false); setIsEditingFormula(false); }}>取消</Button>
+          <Button
+            onClick={() => {
+              setShowFormulaModal(false);
+              setIsEditingFormula(false);
+            }}
+          >
+            取消
+          </Button>
           <Button
             variant="contained"
             color="secondary"
-            onClick={isEditingFormula ? handleUpdateFormula : handleCreateFormula}
+            onClick={
+              isEditingFormula ? handleUpdateFormula : handleCreateFormula
+            }
             disabled={creating}
           >
-            {creating ? (isEditingFormula ? "更新中..." : "创建中...") : isEditingFormula ? "更新" : "创建"}
+            {creating
+              ? isEditingFormula
+                ? "更新中..."
+                : "创建中..."
+              : isEditingFormula
+                ? "更新"
+                : "创建"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Formula Detail Modal */}
-      <Dialog open={showFormulaDetailModal && !!selectedFormula} onClose={() => setShowFormulaDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showFormulaDetailModal && !!selectedFormula}
+        onClose={() => setShowFormulaDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-            <Typography variant="h5" fontWeight="bold">配方详情</Typography>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mb: 3 }}
+          >
+            <Typography variant="h5" fontWeight="bold">
+              配方详情
+            </Typography>
             <IconButton onClick={() => setShowFormulaDetailModal(false)}>
               <Close />
             </IconButton>
@@ -2511,115 +3400,251 @@ const Rspage: React.FC = () => {
           {selectedFormula && (
             <Stack spacing={3}>
               <Box>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                  <Typography variant="h6" fontWeight="bold">{selectedFormula.name}</Typography>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ mb: 2 }}
+                >
+                  <Typography variant="h6" fontWeight="bold">
+                    {selectedFormula.name}
+                  </Typography>
                   <StatusChip status={selectedFormula.status} />
                 </Stack>
-                <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexWrap: "wrap", gap: 1 }}>
-                  <Chip size="small" label={selectedFormula.version} sx={{ bgcolor: "secondary.50", color: "secondary.dark" }} />
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{ mb: 1.5, flexWrap: "wrap", gap: 1 }}
+                >
+                  <Chip
+                    size="small"
+                    label={selectedFormula.version}
+                    sx={{ bgcolor: "secondary.50", color: "secondary.dark" }}
+                  />
                   {selectedFormula.category && (
-                    <Chip size="small" label={selectedFormula.category} sx={{ bgcolor: "grey.100", color: "text.primary" }} />
+                    <Chip
+                      size="small"
+                      label={selectedFormula.category}
+                      sx={{ bgcolor: "grey.100", color: "text.primary" }}
+                    />
                   )}
                   {selectedFormula.approval_status && (
                     <Chip
                       size="small"
-                      icon={getFormulaApprovalStatusIcon(selectedFormula.approval_status)}
+                      icon={getFormulaApprovalStatusIcon(
+                        selectedFormula.approval_status,
+                      )}
                       label={selectedFormula.approval_status}
                       sx={{ bgcolor: "grey.100", color: "text.primary" }}
                     />
                   )}
                 </Stack>
-                <Typography color="text.secondary">{selectedFormula.description || "暂无描述"}</Typography>
+                <Typography color="text.secondary">
+                  {selectedFormula.description || "暂无描述"}
+                </Typography>
               </Box>
 
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>配方编号</Typography>
-                  <Typography fontWeight="medium" sx={{ fontFamily: "monospace" }}>{selectedFormula.code}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>关联项目</Typography>
-                  <Typography fontWeight="medium">{getProjectName(selectedFormula.project_id)}</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>生效日期</Typography>
-                  <Typography fontWeight="medium">
-                    {selectedFormula.effective_date ? new Date(selectedFormula.effective_date).toLocaleDateString("zh-CN") : "-"}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    配方编号
+                  </Typography>
+                  <Typography
+                    fontWeight="medium"
+                    sx={{ fontFamily: "monospace" }}
+                  >
+                    {selectedFormula.code}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>失效日期</Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    关联项目
+                  </Typography>
                   <Typography fontWeight="medium">
-                    {selectedFormula.expiration_date ? new Date(selectedFormula.expiration_date).toLocaleDateString("zh-CN") : "-"}
+                    {getProjectName(selectedFormula.project_id)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    生效日期
+                  </Typography>
+                  <Typography fontWeight="medium">
+                    {selectedFormula.effective_date
+                      ? new Date(
+                          selectedFormula.effective_date,
+                        ).toLocaleDateString("zh-CN")
+                      : "-"}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
+                    失效日期
+                  </Typography>
+                  <Typography fontWeight="medium">
+                    {selectedFormula.expiration_date
+                      ? new Date(
+                          selectedFormula.expiration_date,
+                        ).toLocaleDateString("zh-CN")
+                      : "-"}
                   </Typography>
                 </Grid>
                 {selectedFormula.approved_by && (
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>审批人</Typography>
-                    <Typography fontWeight="medium">{selectedFormula.approved_by}</Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
+                      审批人
+                    </Typography>
+                    <Typography fontWeight="medium">
+                      {selectedFormula.approved_by}
+                    </Typography>
                   </Grid>
                 )}
                 {selectedFormula.approved_at && (
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>审批时间</Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
+                      审批时间
+                    </Typography>
                     <Typography fontWeight="medium">
-                      {new Date(selectedFormula.approved_at).toLocaleString("zh-CN")}
+                      {new Date(selectedFormula.approved_at).toLocaleString(
+                        "zh-CN",
+                      )}
                     </Typography>
                   </Grid>
                 )}
               </Grid>
 
-              {selectedFormula.ingredients && selectedFormula.ingredients.length > 0 && (
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>配方成分</Typography>
-                  <Stack spacing={1}>
-                    {selectedFormula.ingredients.map((ingredient, idx) => (
-                      <Card key={idx} variant="outlined" sx={{ p: 1.5 }}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between">
-                          <Typography fontWeight="medium">{ingredient.name}</Typography>
-                          <Typography variant="body2" color="secondary.main">
-                            {ingredient.quantity} {ingredient.unit || ""}
-                          </Typography>
-                        </Stack>
-                        {ingredient.purity && (
-                          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                            纯度: {ingredient.purity}
-                          </Typography>
-                        )}
-                      </Card>
-                    ))}
-                  </Stack>
-                </Box>
-              )}
+              {selectedFormula.ingredients &&
+                selectedFormula.ingredients.length > 0 && (
+                  <Box>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight="bold"
+                      sx={{ mb: 1.5 }}
+                    >
+                      配方成分
+                    </Typography>
+                    <Stack spacing={1}>
+                      {selectedFormula.ingredients.map((ingredient, idx) => (
+                        <Card key={idx} variant="outlined" sx={{ p: 1.5 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
+                            <Typography fontWeight="medium">
+                              {ingredient.name}
+                            </Typography>
+                            <Typography variant="body2" color="secondary.main">
+                              {ingredient.quantity} {ingredient.unit || ""}
+                            </Typography>
+                          </Stack>
+                          {ingredient.purity && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block", mt: 0.5 }}
+                            >
+                              纯度: {ingredient.purity}
+                            </Typography>
+                          )}
+                        </Card>
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
 
               {selectedFormula.process_steps && (
                 <Box>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>工艺流程</Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    sx={{ mb: 1.5 }}
+                  >
+                    工艺流程
+                  </Typography>
                   <Card variant="outlined" sx={{ p: 2 }}>
-                    <Typography sx={{ whiteSpace: "pre-wrap" }}>{selectedFormula.process_steps}</Typography>
+                    <Typography sx={{ whiteSpace: "pre-wrap" }}>
+                      {selectedFormula.process_steps}
+                    </Typography>
                   </Card>
                 </Box>
               )}
 
               <Box>
-                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>版本历史</Typography>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  sx={{ mb: 1.5 }}
+                >
+                  版本历史
+                </Typography>
                 {formulaVersions.length === 0 ? (
-                  <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>暂无版本记录</Typography>
+                  <Typography
+                    color="text.secondary"
+                    sx={{ textAlign: "center", py: 2 }}
+                  >
+                    暂无版本记录
+                  </Typography>
                 ) : (
                   <Stack spacing={1.5}>
                     {formulaVersions.map((version) => (
                       <Card key={version.id} variant="outlined" sx={{ p: 2 }}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                          <Typography fontWeight="medium" color="secondary.dark">{version.version}</Typography>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          sx={{ mb: 1 }}
+                        >
+                          <Typography
+                            fontWeight="medium"
+                            color="secondary.dark"
+                          >
+                            {version.version}
+                          </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {new Date(version.created_at).toLocaleDateString("zh-CN")}
+                            {new Date(version.created_at).toLocaleDateString(
+                              "zh-CN",
+                            )}
                           </Typography>
                         </Stack>
-                        <Typography sx={{ mb: 1 }}>{version.changes || "无变更说明"}</Typography>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between">
-                          <Typography variant="body2" color="text.secondary">创建人: {version.created_by || "-"}</Typography>
+                        <Typography sx={{ mb: 1 }}>
+                          {version.changes || "无变更说明"}
+                        </Typography>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                        >
+                          <Typography variant="body2" color="text.secondary">
+                            创建人: {version.created_by || "-"}
+                          </Typography>
                           {version.approved_by && (
-                            <Typography variant="body2" color="text.secondary">审批人: {version.approved_by}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              审批人: {version.approved_by}
+                            </Typography>
                           )}
                         </Stack>
                       </Card>
@@ -2631,25 +3656,38 @@ const Rspage: React.FC = () => {
               <Divider />
               <Stack direction="row" spacing={1} justifyContent="flex-end">
                 {selectedFormula.status === "待审批" && (
-                  <Button variant="contained" color="success" onClick={() => handleApproveFormula(selectedFormula.id)}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={() => handleApproveFormula(selectedFormula.id)}
+                  >
                     审批通过
                   </Button>
                 )}
                 <Button
                   variant="outlined"
                   color="secondary"
-                  onClick={() => { setShowFormulaDetailModal(false); openFormulaVersionModal(selectedFormula); }}
+                  onClick={() => {
+                    setShowFormulaDetailModal(false);
+                    openFormulaVersionModal(selectedFormula);
+                  }}
                 >
                   新建版本
                 </Button>
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => { setShowFormulaDetailModal(false); openFormulaModal(selectedFormula); }}
+                  onClick={() => {
+                    setShowFormulaDetailModal(false);
+                    openFormulaModal(selectedFormula);
+                  }}
                 >
                   编辑
                 </Button>
-                <Button variant="outlined" onClick={() => setShowFormulaDetailModal(false)}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowFormulaDetailModal(false)}
+                >
                   关闭
                 </Button>
               </Stack>
@@ -2659,9 +3697,18 @@ const Rspage: React.FC = () => {
       </Dialog>
 
       {/* Formula Version Modal */}
-      <Dialog open={showFormulaVersionModal} onClose={() => setShowFormulaVersionModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showFormulaVersionModal}
+        onClose={() => setShowFormulaVersionModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
             <Typography variant="h6">新建配方版本</Typography>
             <IconButton onClick={() => setShowFormulaVersionModal(false)}>
               <Close />
@@ -2672,25 +3719,49 @@ const Rspage: React.FC = () => {
           {selectedFormula && (
             <Stack spacing={2} sx={{ mt: 1 }}>
               <Box>
-                <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>配方名称</Typography>
-                <Typography color="secondary.dark" fontWeight="medium">{selectedFormula.name}</Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight="medium"
+                  sx={{ mb: 0.5 }}
+                >
+                  配方名称
+                </Typography>
+                <Typography color="secondary.dark" fontWeight="medium">
+                  {selectedFormula.name}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant="body2" fontWeight="medium" sx={{ mb: 0.5 }}>当前版本</Typography>
+                <Typography
+                  variant="body2"
+                  fontWeight="medium"
+                  sx={{ mb: 0.5 }}
+                >
+                  当前版本
+                </Typography>
                 <Typography>{selectedFormula.version}</Typography>
               </Box>
               <TextField
                 fullWidth
                 label="新版本号 *"
                 value={formulaVersionFormData.version}
-                onChange={(e) => setFormulaVersionFormData({ ...formulaVersionFormData, version: e.target.value })}
+                onChange={(e) =>
+                  setFormulaVersionFormData({
+                    ...formulaVersionFormData,
+                    version: e.target.value,
+                  })
+                }
                 placeholder="如 v2.0"
               />
               <TextField
                 fullWidth
                 label="变更说明 *"
                 value={formulaVersionFormData.changes}
-                onChange={(e) => setFormulaVersionFormData({ ...formulaVersionFormData, changes: e.target.value })}
+                onChange={(e) =>
+                  setFormulaVersionFormData({
+                    ...formulaVersionFormData,
+                    changes: e.target.value,
+                  })
+                }
                 placeholder="请输入本次变更的详细说明"
                 multiline
                 rows={4}
@@ -2699,8 +3770,15 @@ const Rspage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setShowFormulaVersionModal(false)}>取消</Button>
-          <Button variant="contained" color="secondary" onClick={handleCreateFormulaVersion} disabled={creating}>
+          <Button onClick={() => setShowFormulaVersionModal(false)}>
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleCreateFormulaVersion}
+            disabled={creating}
+          >
             {creating ? "创建中..." : "创建版本"}
           </Button>
         </DialogActions>

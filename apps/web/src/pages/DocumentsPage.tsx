@@ -1,3 +1,4 @@
+import { Grid } from "@/components/Grid";
 import React, {
   useState,
   useEffect,
@@ -124,7 +125,9 @@ const CreateFolderModal: React.FC<{
         <DialogTitle>创建文件夹</DialogTitle>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <Typography variant="body2" sx={{ mb: 1 }}>文件夹名称</Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              文件夹名称
+            </Typography>
             <TextField
               id="folderName"
               type="text"
@@ -147,7 +150,11 @@ const CreateFolderModal: React.FC<{
             >
               取消
             </Button>
-            <Button type="submit" variant="contained" disabled={creating || !folderName.trim()}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={creating || !folderName.trim()}
+            >
               {creating ? "创建中..." : "创建"}
             </Button>
           </DialogActions>
@@ -582,14 +589,34 @@ const DocumentsPage: React.FC = () => {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       {/* Header */}
-      <Box component="header" sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }}>
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
         <Box sx={{ maxWidth: 1400, mx: "auto", px: 3 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              height: 64,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
                 <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 700, color: "grey.900" }}
+              >
                 文件管理
               </Typography>
               {selectedFolder && (
@@ -600,8 +627,20 @@ const DocumentsPage: React.FC = () => {
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <ModeToggle />
-              <Box sx={{ position: "relative", flex: "1 1 auto", maxWidth: 320 }}>
-                <Search sx={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "grey.400" }} />
+              <Box
+                sx={{ position: "relative", flex: "1 1 auto", maxWidth: 320 }}
+              >
+                <Search
+                  sx={{
+                    position: "absolute",
+                    left: 2,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 16,
+                    height: 16,
+                    color: "grey.400",
+                  }}
+                />
                 <TextField
                   type="text"
                   placeholder="搜索文件..."
@@ -622,12 +661,24 @@ const DocumentsPage: React.FC = () => {
                   </Button>
                 </span>
               </Tooltip>
-              <Box sx={{ display: "flex", alignItems: "center", bgcolor: "grey.200", borderRadius: 2, p: 0.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  bgcolor: "grey.200",
+                  borderRadius: 2,
+                  p: 0.5,
+                }}
+              >
                 <Button
                   variant="text"
                   size="small"
                   onClick={() => setViewMode("grid")}
-                  sx={{ bgcolor: viewMode === "grid" ? "background.paper" : "transparent", boxShadow: viewMode === "grid" ? 1 : 0 }}
+                  sx={{
+                    bgcolor:
+                      viewMode === "grid" ? "background.paper" : "transparent",
+                    boxShadow: viewMode === "grid" ? 1 : 0,
+                  }}
                 >
                   <Grid3X3 sx={{ width: 16, height: 16 }} />
                 </Button>
@@ -635,7 +686,11 @@ const DocumentsPage: React.FC = () => {
                   variant="text"
                   size="small"
                   onClick={() => setViewMode("list")}
-                  sx={{ bgcolor: viewMode === "list" ? "background.paper" : "transparent", boxShadow: viewMode === "list" ? 1 : 0 }}
+                  sx={{
+                    bgcolor:
+                      viewMode === "list" ? "background.paper" : "transparent",
+                    boxShadow: viewMode === "list" ? 1 : 0,
+                  }}
                 >
                   <List sx={{ width: 16, height: 16 }} />
                 </Button>
@@ -669,13 +724,28 @@ const DocumentsPage: React.FC = () => {
 
           {/* Filters Bar */}
           {showFilters && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, py: 1.5, borderTop: 1, borderColor: "divider" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                py: 1.5,
+                borderTop: 1,
+                borderColor: "divider",
+              }}
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Type sx={{ width: 16, height: 16, color: "grey.400" }} />
                 <select
                   value={fileTypeFilter}
                   onChange={(e) => setFileTypeFilter(e.target.value)}
-                  style={{ backgroundColor: "transparent", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: "0.875rem" }}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "6px 12px",
+                    fontSize: "0.875rem",
+                  }}
                 >
                   <option value="all">全部类型</option>
                   <option value="pdf">PDF</option>
@@ -694,7 +764,9 @@ const DocumentsPage: React.FC = () => {
                   variant="text"
                   size="small"
                   onClick={() => toggleSort("date")}
-                  sx={{ color: sortBy === "date" ? "primary.main" : "grey.700" }}
+                  sx={{
+                    color: sortBy === "date" ? "primary.main" : "grey.700",
+                  }}
                 >
                   时间{" "}
                   {sortBy === "date" &&
@@ -708,7 +780,9 @@ const DocumentsPage: React.FC = () => {
                   variant="text"
                   size="small"
                   onClick={() => toggleSort("name")}
-                  sx={{ color: sortBy === "name" ? "primary.main" : "grey.700" }}
+                  sx={{
+                    color: sortBy === "name" ? "primary.main" : "grey.700",
+                  }}
                 >
                   名称{" "}
                   {sortBy === "name" &&
@@ -722,7 +796,9 @@ const DocumentsPage: React.FC = () => {
                   variant="text"
                   size="small"
                   onClick={() => toggleSort("size")}
-                  sx={{ color: sortBy === "size" ? "primary.main" : "grey.700" }}
+                  sx={{
+                    color: sortBy === "size" ? "primary.main" : "grey.700",
+                  }}
                 >
                   大小{" "}
                   {sortBy === "size" &&
@@ -741,18 +817,49 @@ const DocumentsPage: React.FC = () => {
       {/* Upload Progress */}
       {uploading && (
         <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 2 }}>
-          <Card sx={{ bgcolor: "primary.50", border: 1, borderColor: "primary.200" }}>
+          <Card
+            sx={{
+              bgcolor: "primary.50",
+              border: 1,
+              borderColor: "primary.200",
+            }}
+          >
             <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 500, color: "primary.900" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, color: "primary.900" }}
+                >
                   文件上传中...
                 </Typography>
                 <Typography variant="body2" sx={{ color: "primary.700" }}>
                   {uploadProgress}%
                 </Typography>
               </Box>
-              <Box sx={{ width: "100%", bgcolor: "primary.200", borderRadius: 1, height: 8 }}>
-                <Box sx={{ bgcolor: "primary.main", height: 8, borderRadius: 1, transition: "width 0.3s", width: `${uploadProgress}%` }} />
+              <Box
+                sx={{
+                  width: "100%",
+                  bgcolor: "primary.200",
+                  borderRadius: 1,
+                  height: 8,
+                }}
+              >
+                <Box
+                  sx={{
+                    bgcolor: "primary.main",
+                    height: 8,
+                    borderRadius: 1,
+                    transition: "width 0.3s",
+                    width: `${uploadProgress}%`,
+                  }}
+                />
               </Box>
             </CardContent>
           </Card>
@@ -766,7 +873,9 @@ const DocumentsPage: React.FC = () => {
           <Box sx={{ width: 256, flexShrink: 0 }}>
             <Card sx={{ position: "sticky", top: 96 }}>
               <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
                   <Button
                     variant="text"
                     onClick={() => handleFolderSelect(null)}
@@ -781,7 +890,10 @@ const DocumentsPage: React.FC = () => {
                   </Button>
 
                   {folders.map((folder) => (
-                    <Box key={folder.id} sx={{ "&:hover > .delete-btn": { opacity: 1 } }}>
+                    <Box
+                      key={folder.id}
+                      sx={{ "&:hover > .delete-btn": { opacity: 1 } }}
+                    >
                       <Box sx={{ display: "flex", alignItems: "center" }}>
                         <Button
                           variant="text"
@@ -789,11 +901,20 @@ const DocumentsPage: React.FC = () => {
                           sx={{ flex: 1, justifyContent: "flex-start" }}
                         >
                           {selectedFolderId === folder.id ? (
-                            <FolderOpen sx={{ width: 20, height: 20, mr: 1.5 }} />
+                            <FolderOpen
+                              sx={{ width: 20, height: 20, mr: 1.5 }}
+                            />
                           ) : (
                             <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
                           )}
-                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span
+                            style={{
+                              fontWeight: 500,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             {folder.name}
                           </span>
                         </Button>
@@ -803,7 +924,14 @@ const DocumentsPage: React.FC = () => {
                               variant="text"
                               size="small"
                               className="delete-btn"
-                              sx={{ opacity: 0, color: "grey.400", "&:hover": { color: "error.main", bgcolor: "error.50" } }}
+                              sx={{
+                                opacity: 0,
+                                color: "grey.400",
+                                "&:hover": {
+                                  color: "error.main",
+                                  bgcolor: "error.50",
+                                },
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDeleteFolder(folder.id, folder.name);
@@ -824,7 +952,14 @@ const DocumentsPage: React.FC = () => {
           {/* Content Area */}
           <Box sx={{ flex: 1 }}>
             {/* Quick Stats */}
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 4 }, gap: 3, mb: 3 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, md: 4 },
+                gap: 3,
+                mb: 3,
+              }}
+            >
               <StatCard
                 icon={Folder}
                 title="文件夹"
@@ -853,13 +988,34 @@ const DocumentsPage: React.FC = () => {
 
             {/* Batch Actions Bar */}
             {selectedFiles.length > 0 && (
-              <Card sx={{ mb: 3, border: 1, borderColor: "primary.200", bgcolor: "primary.50" }}>
-                <CardContent sx={{ p: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Card
+                sx={{
+                  mb: 3,
+                  border: 1,
+                  borderColor: "primary.200",
+                  bgcolor: "primary.50",
+                }}
+              >
+                <CardContent
+                  sx={{
+                    p: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 500, color: "primary.900" }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 500, color: "primary.900" }}
+                    >
                       已选择 {selectedFiles.length} 个文件
                     </Typography>
-                    <Button variant="text" size="small" onClick={clearSelection}>
+                    <Button
+                      variant="text"
+                      size="small"
+                      onClick={clearSelection}
+                    >
                       取消选择
                     </Button>
                   </Box>
@@ -884,10 +1040,32 @@ const DocumentsPage: React.FC = () => {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              sx={{ mb: 3, border: 2, borderStyle: "dashed", borderRadius: 3, p: 4, textAlign: "center", borderColor: isDragging ? "primary.main" : "grey.300", bgcolor: isDragging ? "primary.50" : "transparent", "&:hover": { borderColor: "grey.400" }, transition: "all 0.2s" }}
+              sx={{
+                mb: 3,
+                border: 2,
+                borderStyle: "dashed",
+                borderRadius: 3,
+                p: 4,
+                textAlign: "center",
+                borderColor: isDragging ? "primary.main" : "grey.300",
+                bgcolor: isDragging ? "primary.50" : "transparent",
+                "&:hover": { borderColor: "grey.400" },
+                transition: "all 0.2s",
+              }}
             >
-              <Upload sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: isDragging ? "primary.main" : "grey.400" }} />
-              <Typography variant="h6" sx={{ mb: 1, color: isDragging ? "primary.main" : "grey.700" }}>
+              <Upload
+                sx={{
+                  width: 48,
+                  height: 48,
+                  mx: "auto",
+                  mb: 2,
+                  color: isDragging ? "primary.main" : "grey.400",
+                }}
+              />
+              <Typography
+                variant="h6"
+                sx={{ mb: 1, color: isDragging ? "primary.main" : "grey.700" }}
+              >
                 {isDragging ? "释放以上传文件" : "拖拽文件到这里上传"}
               </Typography>
               <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -896,27 +1074,70 @@ const DocumentsPage: React.FC = () => {
             </Box>
 
             {/* Files Grid/List */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-              <Tabs value={viewMode} onChange={(_, val) => setViewMode(val as "grid" | "list")}>
+            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+              <Tabs
+                value={viewMode}
+                onChange={(_, val) => setViewMode(val as "grid" | "list")}
+              >
                 <Tab value="grid" label="网格视图" />
                 <Tab value="list" label="列表视图" />
               </Tabs>
             </Box>
             {viewMode === "grid" && (
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2, lg: 3, xl: 4 }, gap: 3 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: 1, md: 2, lg: 3, xl: 4 },
+                  gap: 3,
+                }}
+              >
                 {filteredItems.map((item) =>
                   item.type === "folder" ? (
                     <Card
                       key={item.id}
                       onClick={() => handleFolderSelect(item.id)}
-                      sx={{ "&:hover": { boxShadow: 6 }, transition: "box-shadow 0.2s", cursor: "pointer" }}
+                      sx={{
+                        "&:hover": { boxShadow: 6 },
+                        transition: "box-shadow 0.2s",
+                        cursor: "pointer",
+                      }}
                     >
                       <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-                          <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: "primary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <Folder sx={{ width: 28, height: 28, color: "primary.main" }} />
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            justifyContent: "space-between",
+                            mb: 2,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 56,
+                              height: 56,
+                              borderRadius: 2,
+                              bgcolor: "primary.100",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Folder
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                color: "primary.main",
+                              }}
+                            />
                           </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              opacity: 0,
+                            }}
+                          >
                             <Tooltip title="删除文件夹">
                               <Button
                                 variant="text"
@@ -931,7 +1152,17 @@ const DocumentsPage: React.FC = () => {
                             </Tooltip>
                           </Box>
                         </Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            color: "grey.900",
+                            mb: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {item.name}
                         </Typography>
                         <Typography variant="body2" sx={{ color: "grey.500" }}>
@@ -960,38 +1191,141 @@ const DocumentsPage: React.FC = () => {
                     <Box component="table" sx={{ width: "100%" }}>
                       <Box component="thead" sx={{ bgcolor: "grey.100" }}>
                         <tr>
-                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>名称</th>
-                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>大小</th>
-                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>更新时间</th>
-                          <th style={{ padding: "12px 24px", textAlign: "left", fontSize: "0.75rem", fontWeight: 500, color: "grey.500", textTransform: "uppercase", letterSpacing: "0.05em" }}>操作</th>
+                          <th
+                            style={{
+                              padding: "12px 24px",
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 500,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            名称
+                          </th>
+                          <th
+                            style={{
+                              padding: "12px 24px",
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 500,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            大小
+                          </th>
+                          <th
+                            style={{
+                              padding: "12px 24px",
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 500,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            更新时间
+                          </th>
+                          <th
+                            style={{
+                              padding: "12px 24px",
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 500,
+                              color: "grey.500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            操作
+                          </th>
                         </tr>
                       </Box>
-                      <Box component="tbody" sx={{ "& > tr": { borderTop: 1, borderColor: "divider" } }}>
+                      <Box
+                        component="tbody"
+                        sx={{
+                          "& > tr": { borderTop: 1, borderColor: "divider" },
+                        }}
+                      >
                         {filteredItems.map((item) =>
                           item.type === "folder" ? (
                             <tr
                               key={item.id}
                               onClick={() => handleFolderSelect(item.id)}
-                              sx={{ "&:hover": { bgcolor: "grey.50" }, cursor: "pointer" }}
+                              sx={{
+                                "&:hover": { bgcolor: "grey.50" },
+                                cursor: "pointer",
+                              }}
                             >
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>
-                                <Box sx={{ display: "flex", alignItems: "center" }}>
-                                  <Folder sx={{ width: 20, height: 20, color: "primary.main", mr: 1.5 }} />
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <Box
+                                  sx={{ display: "flex", alignItems: "center" }}
+                                >
+                                  <Folder
+                                    sx={{
+                                      width: 20,
+                                      height: 20,
+                                      color: "primary.main",
+                                      mr: 1.5,
+                                    }}
+                                  />
                                   <Box>
-                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontWeight: 500,
+                                        color: "grey.900",
+                                      }}
+                                    >
                                       {item.name}
                                     </Typography>
                                   </Box>
                                 </Box>
                               </td>
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  color: "grey.500",
+                                }}
+                              >
                                 -
                               </td>
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  color: "grey.500",
+                                }}
+                              >
                                 {item.updatedAt}
                               </td>
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", fontWeight: 500 }}>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
                                   <Button
                                     variant="text"
                                     size="small"
@@ -1006,30 +1340,87 @@ const DocumentsPage: React.FC = () => {
                               </td>
                             </tr>
                           ) : (
-                            <tr key={item.id} sx={{ "&:hover": { bgcolor: "grey.50" } }}>
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap" }}>
-                                <Box sx={{ display: "flex", alignItems: "center" }}>
-                                  <FileText sx={{ width: 20, height: 20, color: "secondary.main", mr: 1.5 }} />
+                            <tr
+                              key={item.id}
+                              sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                            >
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <Box
+                                  sx={{ display: "flex", alignItems: "center" }}
+                                >
+                                  <FileText
+                                    sx={{
+                                      width: 20,
+                                      height: 20,
+                                      color: "secondary.main",
+                                      mr: 1.5,
+                                    }}
+                                  />
                                   <Box>
-                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontWeight: 500,
+                                        color: "grey.900",
+                                      }}
+                                    >
                                       {item.name}
                                     </Typography>
-                                    <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
+                                    <Box
+                                      sx={{ display: "flex", gap: 1, mt: 0.5 }}
+                                    >
                                       {item.tags.map((tag) => (
-                                        <Chip key={tag} label={tag} size="small" variant="outlined" />
+                                        <Chip
+                                          key={tag}
+                                          label={tag}
+                                          size="small"
+                                          variant="outlined"
+                                        />
                                       ))}
                                     </Box>
                                   </Box>
                                 </Box>
                               </td>
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  color: "grey.500",
+                                }}
+                              >
                                 {item.size || "-"}
                               </td>
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", color: "grey.500" }}>
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  color: "grey.500",
+                                }}
+                              >
                                 {item.updatedAt}
                               </td>
-                              <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: "0.875rem", fontWeight: 500 }}>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <td
+                                style={{
+                                  padding: "16px 24px",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "0.875rem",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
                                   <Button
                                     variant="text"
                                     size="small"
@@ -1051,7 +1442,11 @@ const DocumentsPage: React.FC = () => {
                                   >
                                     <Star
                                       sx={{ width: 16, height: 16 }}
-                                      style={{ fill: item.starred ? "currentColor" : "none" }}
+                                      style={{
+                                        fill: item.starred
+                                          ? "currentColor"
+                                          : "none",
+                                      }}
                                     />
                                   </Button>
                                   <Button
@@ -1118,17 +1513,35 @@ const StatCard: React.FC<StatCardProps> = ({
   return (
     <Card>
       <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box>
             <Typography variant="body2" sx={{ color: "grey.600", mb: 0.5 }}>
               {title}
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 700, color: "grey.900" }}
+            >
               {value}
             </Typography>
           </Box>
           <Box
-            sx={{ width: 48, height: 48, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", color: "white", bgcolor: colors[color as keyof typeof colors] }}
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              bgcolor: colors[color as keyof typeof colors],
+            }}
           >
             <Icon sx={{ width: 24, height: 24 }} />
           </Box>
@@ -1157,7 +1570,14 @@ const FileCard: React.FC<FileCardProps> = ({
 }) => {
   return (
     <Card
-      sx={{ "&:hover": { boxShadow: 6 }, transition: "box-shadow 0.2s", cursor: "pointer", position: "relative", "&:hover .hidden-actions": { opacity: 1 }, ...(isSelected && { ring: 2, ringColor: "primary.main" }) }}
+      sx={{
+        "&:hover": { boxShadow: 6 },
+        transition: "box-shadow 0.2s",
+        cursor: "pointer",
+        position: "relative",
+        "&:hover .hidden-actions": { opacity: 1 },
+        ...(isSelected && { ring: 2, ringColor: "primary.main" }),
+      }}
     >
       {onSelect && (
         <Box sx={{ position: "absolute", top: 1, left: 1, zIndex: 1 }}>
@@ -1166,18 +1586,52 @@ const FileCard: React.FC<FileCardProps> = ({
               e.stopPropagation();
               onSelect(file.id);
             }}
-            sx={{ width: 20, height: 20, borderRadius: "4px", border: 2, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", borderColor: isSelected ? "primary.main" : "grey.300", bgcolor: isSelected ? "primary.main" : "white", cursor: "pointer" }}
+            sx={{
+              width: 20,
+              height: 20,
+              borderRadius: "4px",
+              border: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s",
+              borderColor: isSelected ? "primary.main" : "grey.300",
+              bgcolor: isSelected ? "primary.main" : "white",
+              cursor: "pointer",
+            }}
           >
-            {isSelected && <CheckCircle sx={{ width: 12, height: 12, color: "white" }} />}
+            {isSelected && (
+              <CheckCircle sx={{ width: 12, height: 12, color: "white" }} />
+            )}
           </Box>
         </Box>
       )}
       <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-          <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: "secondary.100", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              bgcolor: "secondary.100",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <FileText sx={{ width: 28, height: 28, color: "secondary.main" }} />
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0 }} className="hidden-actions">
+          <Box
+            sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0 }}
+            className="hidden-actions"
+          >
             <Tooltip title="星标">
               <span>
                 <Button
@@ -1189,7 +1643,11 @@ const FileCard: React.FC<FileCardProps> = ({
                   }}
                 >
                   <Star
-                    sx={{ width: 16, height: 16, color: file.starred ? "warning.main" : "grey.400" }}
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      color: file.starred ? "warning.main" : "grey.400",
+                    }}
                     style={{ fill: file.starred ? "currentColor" : "none" }}
                   />
                 </Button>
@@ -1198,16 +1656,36 @@ const FileCard: React.FC<FileCardProps> = ({
             <Tooltip title="更多操作">
               <span>
                 <Button variant="text" size="small">
-                  <MoreVertical sx={{ width: 16, height: 16, color: "grey.400" }} />
+                  <MoreVertical
+                    sx={{ width: 16, height: 16, color: "grey.400" }}
+                  />
                 </Button>
               </span>
             </Tooltip>
           </Box>
         </Box>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 600,
+            color: "grey.900",
+            mb: 1,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
           {file.name}
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "grey.500", mb: 1.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            fontSize: "0.875rem",
+            color: "grey.500",
+            mb: 1.5,
+          }}
+        >
           {file.size && <span>{file.size}</span>}
           {file.size && <span style={{ margin: "0 8px" }}>•</span>}
           <span>{file.updatedAt}</span>
@@ -1218,7 +1696,20 @@ const FileCard: React.FC<FileCardProps> = ({
           ))}
         </Box>
       </CardContent>
-      <Box sx={{ px: 3, py: 1.5, bgcolor: "grey.50", borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: 0 }} className="hidden-actions">
+      <Box
+        sx={{
+          px: 3,
+          py: 1.5,
+          bgcolor: "grey.50",
+          borderTop: 1,
+          borderColor: "divider",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          opacity: 0,
+        }}
+        className="hidden-actions"
+      >
         <Button
           variant="text"
           size="small"

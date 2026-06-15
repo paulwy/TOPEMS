@@ -1,4 +1,27 @@
-import { Button, Card, CardContent, CardHeader, Chip, Typography, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Checkbox, Box, TextField } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Checkbox,
+  Box,
+  TextField,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 import type {
   Supplier,
@@ -184,7 +207,13 @@ const SupplierManagementPage: React.FC = () => {
       blocked: { label: "已冻结", variant: "destructive" },
     };
     const s = statusMap[status] || { label: status, variant: "outline" };
-    return <Chip size="small" variant={s.variant === "outline" ? "outlined" : "filled"} label={s.label} />;
+    return (
+      <Chip
+        size="small"
+        variant={s.variant === "outline" ? "outlined" : "filled"}
+        label={s.label}
+      />
+    );
   };
 
   if (loading) return <LoadingSpinner />;
@@ -193,15 +222,32 @@ const SupplierManagementPage: React.FC = () => {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>供应商管理</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            供应商管理
+          </Typography>
           <Typography variant="body2" sx={{ color: "grey.500" }}>
             管理供应商信息,包括基本信息、联系方式、银行账户等
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
-            <Box sx={{ flex: 1, position: 'relative' }}>
-              <Box sx={{ position: 'absolute', left: 1, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              mb: 3,
+            }}
+          >
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 1,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  zIndex: 1,
+                }}
+              >
                 <Search sx={{ width: 16, height: 16 }} />
               </Box>
               <TextField
@@ -244,7 +290,17 @@ const SupplierManagementPage: React.FC = () => {
           </Box>
 
           {selectedIds.length > 0 && (
-            <Box sx={{ mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box
+              sx={{
+                mb: 2,
+                p: 1.5,
+                bgcolor: "action.hover",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography variant="body2">
                 已选择 {selectedIds.length} 个供应商
               </Typography>
@@ -258,7 +314,7 @@ const SupplierManagementPage: React.FC = () => {
             </Box>
           )}
 
-          <Box sx={{ borderRadius: 1, border: 1, borderColor: 'divider' }}>
+          <Box sx={{ borderRadius: 1, border: 1, borderColor: "divider" }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -277,13 +333,13 @@ const SupplierManagementPage: React.FC = () => {
                   <TableHead>联系电话</TableHead>
                   <TableHead>邮箱</TableHead>
                   <TableHead>状态</TableHead>
-                  <TableHead sx={{ textAlign: 'right' }}>操作</TableHead>
+                  <TableHead sx={{ textAlign: "right" }}>操作</TableHead>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {suppliers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} sx={{ textAlign: 'center' }}>
+                    <TableCell colSpan={8} sx={{ textAlign: "center" }}>
                       <EmptyState
                         title="暂无供应商数据"
                         description="点击上方按钮添加第一个供应商"
@@ -307,7 +363,7 @@ const SupplierManagementPage: React.FC = () => {
                       <TableCell>{supplier.contact_phone || "-"}</TableCell>
                       <TableCell>{supplier.email || "-"}</TableCell>
                       <TableCell>{getStatusBadge(supplier.status)}</TableCell>
-                      <TableCell sx={{ textAlign: 'right' }}>
+                      <TableCell sx={{ textAlign: "right" }}>
                         <Button
                           variant="text"
                           size="small"
@@ -337,12 +393,19 @@ const SupplierManagementPage: React.FC = () => {
             </Table>
           </Box>
 
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               共 {total} 条记录,第 {currentPage} /{" "}
               {Math.ceil(total / pageSize) || 1} 页
             </Typography>
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 0.5 }}>
               <Button
                 size="small"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -383,17 +446,23 @@ const SupplierManagementPage: React.FC = () => {
       </Card>
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth="md">
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth="md"
+      >
         <DialogTitle>
           {selectedSupplier ? "编辑供应商" : "新增供应商"}
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
             {selectedSupplier ? "修改供应商信息" : "填写新供应商信息"}
           </Typography>
           <form onSubmit={handleSubmit}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box
+              sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+            >
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   label="供应商名称 *"
                   value={formData.name}
@@ -413,7 +482,7 @@ const SupplierManagementPage: React.FC = () => {
                   fullWidth
                 />
               </Box>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   label="联系人"
                   value={formData.contact_name}
@@ -433,7 +502,7 @@ const SupplierManagementPage: React.FC = () => {
                   fullWidth
                 />
               </Box>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <TextField
                   label="邮箱"
                   type="email"
@@ -488,50 +557,116 @@ const SupplierManagementPage: React.FC = () => {
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth="md">
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth="md"
+      >
         <DialogTitle>供应商详情</DialogTitle>
         <DialogContent>
           {selectedSupplier && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>供应商名称</Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{selectedSupplier.name}</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    供应商名称
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {selectedSupplier.name}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>简称</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    简称
+                  </Typography>
                   <Typography>{selectedSupplier.short_name || "-"}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>联系人</Typography>
-                  <Typography>{selectedSupplier.contact_name || "-"}</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    联系人
+                  </Typography>
+                  <Typography>
+                    {selectedSupplier.contact_name || "-"}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>联系电话</Typography>
-                  <Typography>{selectedSupplier.contact_phone || "-"}</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    联系电话
+                  </Typography>
+                  <Typography>
+                    {selectedSupplier.contact_phone || "-"}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>邮箱</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    邮箱
+                  </Typography>
                   <Typography>{selectedSupplier.email || "-"}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>银行账户</Typography>
-                  <Typography>{selectedSupplier.bank_account || "-"}</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    银行账户
+                  </Typography>
+                  <Typography>
+                    {selectedSupplier.bank_account || "-"}
+                  </Typography>
                 </Box>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>地址</Typography>
+                <Box sx={{ gridColumn: "1 / -1" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    地址
+                  </Typography>
                   <Typography>{selectedSupplier.address || "-"}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>税号</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    税号
+                  </Typography>
                   <Typography>{selectedSupplier.tax_number || "-"}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>状态</Typography>
-                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedSupplier.status)}</Box>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    状态
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>
+                    {getStatusBadge(selectedSupplier.status)}
+                  </Box>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>创建时间</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    创建时间
+                  </Typography>
                   <Typography>
                     {new Date(selectedSupplier.created_at).toLocaleString(
                       "zh-CN",
@@ -539,7 +674,12 @@ const SupplierManagementPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>更新时间</Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    更新时间
+                  </Typography>
                   <Typography>
                     {new Date(selectedSupplier.updated_at).toLocaleString(
                       "zh-CN",

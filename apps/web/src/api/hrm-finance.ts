@@ -477,11 +477,9 @@ export const hrmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.hrm as any).defaults?.baseURL || config.services.hrm;
-    return downloadBlob(
-      baseURL,
-      "/api/v1/hrm/social-security/export-details",
-      { params },
-    );
+    return downloadBlob(baseURL, "/api/v1/hrm/social-security/export-details", {
+      params,
+    });
   },
 };
 

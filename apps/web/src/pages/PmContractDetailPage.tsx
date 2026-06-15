@@ -181,7 +181,10 @@ const PmContractDetailPage: React.FC = () => {
               <ArrowLeft size={20} />
             </button>
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: "grey.900" }}>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 700, color: "grey.900" }}
+              >
                 {contract.contract_name}
               </Typography>
               <Typography sx={{ color: "grey.500" }}>
@@ -289,7 +292,9 @@ const PmContractDetailPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: "success.light", borderRadius: "50%" }}>
+              <Box
+                sx={{ p: 1.5, bgcolor: "success.light", borderRadius: "50%" }}
+              >
                 <Building size={24} color="#16a34a" />
               </Box>
               <Box>
@@ -424,7 +429,13 @@ const PmContractDetailPage: React.FC = () => {
           >
             <Typography
               variant="h6"
-              sx={{ fontWeight: 600, mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+              sx={{
+                fontWeight: 600,
+                mb: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
             >
               <CheckCircle size={20} color="#2563eb" />
               合同里程碑
@@ -513,7 +524,13 @@ const PmContractDetailPage: React.FC = () => {
           >
             <Typography
               variant="h6"
-              sx={{ fontWeight: 600, mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+              sx={{
+                fontWeight: 600,
+                mb: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
             >
               <DollarSign size={20} color="#7e22ce" />
               付款计划
@@ -657,7 +674,10 @@ const PmContractDetailPage: React.FC = () => {
                       >
                         {payment.payment_percent || 0}%
                       </Box>
-                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: "0.875rem" }}>
+                      <Box
+                        component="td"
+                        sx={{ px: 2, py: 1.5, fontSize: "0.875rem" }}
+                      >
                         <Box
                           component="span"
                           sx={{

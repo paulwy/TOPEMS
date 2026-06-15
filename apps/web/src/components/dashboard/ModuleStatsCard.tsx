@@ -31,7 +31,9 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
     >
       <div
         className="absolute top-0 left-0 w-full h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-t-2xl"
-        style={{ background: `linear-gradient(90deg, ${iconColor}, transparent)` }}
+        style={{
+          background: `linear-gradient(90deg, ${iconColor}, transparent)`,
+        }}
       />
 
       <div className="flex items-start justify-between">
@@ -56,7 +58,9 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
           }}
         >
           <CheckCircle2 size={14} color="#4ade80" />
-          <span className="text-sm font-semibold text-green-400">{active} 活跃</span>
+          <span className="text-sm font-semibold text-green-400">
+            {active} 活跃
+          </span>
         </div>
       </div>
 

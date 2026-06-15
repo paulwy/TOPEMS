@@ -42,7 +42,10 @@ const Sparkline: React.FC<SparklineProps> = ({
     if (i === 0) return 0;
     const prev = points[i - 1].split(",").map(Number);
     const curr = points[i].split(",").map(Number);
-    return acc + Math.sqrt(Math.pow(curr[0] - prev[0], 2) + Math.pow(curr[1] - prev[1], 2));
+    return (
+      acc +
+      Math.sqrt(Math.pow(curr[0] - prev[0], 2) + Math.pow(curr[1] - prev[1], 2))
+    );
   }, 0);
 
   return (
@@ -120,12 +123,27 @@ interface MetricCardProps {
 }
 
 const colorMap: Record<string, { bg: string; gradient: string }> = {
-  green: { bg: "#10B981", gradient: "linear-gradient(135deg, #10B981, #059669)" },
-  purple: { bg: "#8B5CF6", gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)" },
-  blue: { bg: "#3B82F6", gradient: "linear-gradient(135deg, #3B82F6, #2563EB)" },
-  orange: { bg: "#F59E0B", gradient: "linear-gradient(135deg, #F59E0B, #D97706)" },
+  green: {
+    bg: "#10B981",
+    gradient: "linear-gradient(135deg, #10B981, #059669)",
+  },
+  purple: {
+    bg: "#8B5CF6",
+    gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+  },
+  blue: {
+    bg: "#3B82F6",
+    gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
+  },
+  orange: {
+    bg: "#F59E0B",
+    gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
+  },
   red: { bg: "#EF4444", gradient: "linear-gradient(135deg, #EF4444, #DC2626)" },
-  cyan: { bg: "#06B6D4", gradient: "linear-gradient(135deg, #06B6D4, #0891B2)" },
+  cyan: {
+    bg: "#06B6D4",
+    gradient: "linear-gradient(135deg, #06B6D4, #0891B2)",
+  },
 };
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -157,7 +175,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (cardRef.current) {
@@ -197,10 +215,15 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     return () => clearInterval(timer);
   }, [value, animate, isVisible]);
 
-  const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
+  const computedTrend =
+    trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
 
   const getTrendIcon = () => {
-    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") {
+    if (
+      !computedTrend ||
+      computedTrend === "neutral" ||
+      computedTrend === "stable"
+    ) {
       return <Minus size={16} color="#94A3B8" />;
     }
     return computedTrend === "up" ? (
@@ -211,7 +234,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   const getTrendColor = () => {
-    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") return "#64748B";
+    if (
+      !computedTrend ||
+      computedTrend === "neutral" ||
+      computedTrend === "stable"
+    )
+      return "#64748B";
     return computedTrend === "up" ? "#10B981" : "#EF4444";
   };
 
@@ -220,10 +248,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       return <Activity size={24} color="white" />;
     }
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon as React.ReactElement<{ size?: number; color?: string }>, {
-        size: 24,
-        color: "white",
-      });
+      return React.cloneElement(
+        icon as React.ReactElement<{ size?: number; color?: string }>,
+        {
+          size: 24,
+          color: "white",
+        },
+      );
     }
     const IconComponent = icon as LucideIcon;
     return <IconComponent size={24} color="white" />;
@@ -238,7 +269,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   const getSparklineColor = () => {
-    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") return "#64748B";
+    if (
+      !computedTrend ||
+      computedTrend === "neutral" ||
+      computedTrend === "stable"
+    )
+      return "#64748B";
     return computedTrend === "up" ? "#10B981" : "#EF4444";
   };
 
@@ -256,7 +292,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         boxShadow: isHovered
           ? "0 20px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)"
           : "0 1px 3px rgba(0, 0, 0, 0.05)",
-        transform: isHovered ? "scale(1.03) translateY(-4px)" : "scale(1) translateY(0)",
+        transform: isHovered
+          ? "scale(1.03) translateY(-4px)"
+          : "scale(1) translateY(0)",
         opacity: isVisible ? 1 : 0,
         animation: isVisible ? "fadeInUp 0.6s ease-out forwards" : "none",
       }}
@@ -289,7 +327,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         sx={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, transparent 50%)",
+          background:
+            "linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, transparent 50%)",
           opacity: isHovered ? 1 : 0,
           transition: "opacity 0.3s",
         }}
@@ -355,7 +394,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 </Typography>
               )}
               {suffix && (
-                <Typography variant="body2" sx={{ color: "#94A3B8", fontSize: "0.875rem" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#94A3B8", fontSize: "0.875rem" }}
+                >
                   {suffix}
                 </Typography>
               )}
@@ -382,7 +424,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 ? "0 8px 25px rgba(0, 0, 0, 0.15)"
                 : "0 4px 15px rgba(0, 0, 0, 0.1)",
               transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-              transform: isHovered ? "scale(1.15) rotate(5deg)" : "scale(1) rotate(0deg)",
+              transform: isHovered
+                ? "scale(1.15) rotate(5deg)"
+                : "scale(1) rotate(0deg)",
             }}
           >
             <Box
@@ -395,7 +439,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 justifyContent: "center",
                 background: getIconGradient(),
                 transition: "box-shadow 0.3s",
-                boxShadow: isHovered ? "inset 0 2px 4px rgba(0, 0, 0, 0.2)" : "none",
+                boxShadow: isHovered
+                  ? "inset 0 2px 4px rgba(0, 0, 0, 0.2)"
+                  : "none",
               }}
             >
               {renderIcon()}
@@ -403,7 +449,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Box
               sx={{
@@ -413,7 +465,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: computedTrend === "up" ? "#DCFCE7" : computedTrend === "down" ? "#FEE2E2" : "#F1F5F9",
+                backgroundColor:
+                  computedTrend === "up"
+                    ? "#DCFCE7"
+                    : computedTrend === "down"
+                      ? "#FEE2E2"
+                      : "#F1F5F9",
                 transition: "all 0.3s",
                 transform: isHovered ? "scale(1.1)" : "scale(1)",
               }}
@@ -423,12 +480,24 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             <Box>
               <Typography
                 variant="body2"
-                sx={{ fontWeight: 700, color: getTrendColor(), fontSize: "0.875rem" }}
+                sx={{
+                  fontWeight: 700,
+                  color: getTrendColor(),
+                  fontSize: "0.875rem",
+                }}
               >
-                {change !== undefined ? `${change > 0 ? "+" : ""}${change}%` : "——"}
+                {change !== undefined
+                  ? `${change > 0 ? "+" : ""}${change}%`
+                  : "——"}
               </Typography>
-              {(computedTrend && computedTrend !== "neutral" && computedTrend !== "stable") || change !== undefined ? (
-                <Typography variant="caption" sx={{ color: "#94A3B8", fontSize: "0.7rem" }}>
+              {(computedTrend &&
+                computedTrend !== "neutral" &&
+                computedTrend !== "stable") ||
+              change !== undefined ? (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#94A3B8", fontSize: "0.7rem" }}
+                >
                   vs last period
                 </Typography>
               ) : null}
@@ -438,7 +507,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           {sparklineData && sparklineData.length > 0 && (
             <Box
               sx={{
-                transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                transition:
+                  "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                 transform: isHovered ? "scale(1.15)" : "scale(1)",
               }}
             >

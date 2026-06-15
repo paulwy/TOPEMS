@@ -290,7 +290,11 @@ const NotificationTemplatesPage: React.FC = () => {
                     alignItems: "center",
                   }}
                 >
-                  <FileText size={28} style={{ marginRight: 12 }} color="#1976d2" />
+                  <FileText
+                    size={28}
+                    style={{ marginRight: 12 }}
+                    color="#1976d2"
+                  />
                   通知模板管理
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
@@ -341,7 +345,9 @@ const NotificationTemplatesPage: React.FC = () => {
       </Box>
 
       {/* Filters */}
-      <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
+      <Box
+        sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
+      >
         <Box
           sx={{
             bgcolor: "background.paper",
@@ -428,7 +434,10 @@ const NotificationTemplatesPage: React.FC = () => {
               <Loader2
                 size={48}
                 color="#1976d2"
-                style={{ margin: "0 auto", animation: "spin 1s linear infinite" }}
+                style={{
+                  margin: "0 auto",
+                  animation: "spin 1s linear infinite",
+                }}
               />
               <Typography variant="body2" sx={{ mt: 1, color: "grey.500" }}>
                 加载中...
@@ -436,7 +445,11 @@ const NotificationTemplatesPage: React.FC = () => {
             </Box>
           ) : filteredTemplates.length === 0 ? (
             <Box sx={{ p: 4, textAlign: "center" }}>
-              <FileText size={48} color="#666" style={{ margin: "0 auto 12px" }} />
+              <FileText
+                size={48}
+                color="#666"
+                style={{ margin: "0 auto 12px" }}
+              />
               <Typography variant="body2" sx={{ color: "grey.500" }}>
                 暂无模板数据
               </Typography>
@@ -446,7 +459,10 @@ const NotificationTemplatesPage: React.FC = () => {
               <Box sx={{ overflowX: "auto" }}>
                 <Box
                   component="table"
-                  sx={{ minWidth: "100%", "& > * + *": { borderTop: 1, borderColor: "grey.200" } }}
+                  sx={{
+                    minWidth: "100%",
+                    "& > * + *": { borderTop: 1, borderColor: "grey.200" },
+                  }}
                 >
                   <Box component="thead" sx={{ bgcolor: "grey.50" }}>
                     <Box component="tr">
@@ -565,7 +581,9 @@ const NotificationTemplatesPage: React.FC = () => {
                     }}
                   >
                     {filteredTemplates.map((template) => {
-                      const typeColor = getTypeColor(template.notification_type);
+                      const typeColor = getTypeColor(
+                        template.notification_type,
+                      );
                       return (
                         <Box
                           component="tr"
@@ -575,7 +593,10 @@ const NotificationTemplatesPage: React.FC = () => {
                             transition: "background-color 0.2s",
                           }}
                         >
-                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
+                          >
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                               <Box
                                 sx={{
@@ -616,7 +637,10 @@ const NotificationTemplatesPage: React.FC = () => {
                               </Box>
                             </Box>
                           </Box>
-                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
+                          >
                             <Box
                               component="span"
                               sx={{
@@ -631,7 +655,10 @@ const NotificationTemplatesPage: React.FC = () => {
                               {getTypeLabel(template.notification_type)}
                             </Box>
                           </Box>
-                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
+                          >
                             <Typography
                               variant="body2"
                               sx={{
@@ -645,7 +672,10 @@ const NotificationTemplatesPage: React.FC = () => {
                               {template.title_template}
                             </Typography>
                           </Box>
-                          <Box component="td" sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}>
+                          <Box
+                            component="td"
+                            sx={{ px: 3, py: 2.5, whiteSpace: "nowrap" }}
+                          >
                             {getStatusBadge(template.status)}
                           </Box>
                           <Box
@@ -676,7 +706,9 @@ const NotificationTemplatesPage: React.FC = () => {
                               color: "grey.500",
                             }}
                           >
-                            {new Date(template.created_at).toLocaleDateString("zh-CN")}
+                            {new Date(template.created_at).toLocaleDateString(
+                              "zh-CN",
+                            )}
                           </Box>
                           <Box
                             component="td"
@@ -724,7 +756,9 @@ const NotificationTemplatesPage: React.FC = () => {
                                   borderRadius: 1,
                                   transition: "all 0.2s",
                                 }}
-                                title={template.status === "active" ? "禁用" : "启用"}
+                                title={
+                                  template.status === "active" ? "禁用" : "启用"
+                                }
                               >
                                 <Archive size={16} />
                               </Box>
@@ -747,7 +781,9 @@ const NotificationTemplatesPage: React.FC = () => {
                               </Box>
                               <Box
                                 component="button"
-                                onClick={() => handleDeleteTemplate(template.id)}
+                                onClick={() =>
+                                  handleDeleteTemplate(template.id)
+                                }
                                 sx={{
                                   p: 0.5,
                                   color: "error.main",
@@ -807,7 +843,9 @@ const NotificationTemplatesPage: React.FC = () => {
                     </Box>
                     <Box
                       component="button"
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
                       disabled={page >= totalPages}
                       sx={{
                         px: 1.5,
@@ -929,11 +967,24 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
           </Typography>
         </Box>
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ flex: 1, overflowY: "auto", p: 3 }}
+        >
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2 }, gap: 2 }}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, md: 2 },
+                gap: 2,
+              }}
+            >
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                >
                   模板名称 *
                 </Typography>
                 <Box
@@ -961,7 +1012,10 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                 />
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+                >
                   通知类型 *
                 </Typography>
                 <Box
@@ -998,7 +1052,10 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             </Box>
 
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+              >
                 描述
               </Typography>
               <Box
@@ -1026,7 +1083,10 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             </Box>
 
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+              >
                 标题模板 *
               </Typography>
               <Box
@@ -1055,7 +1115,10 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
             </Box>
 
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+              >
                 内容模板 *
               </Typography>
               <Box
@@ -1082,13 +1145,19 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
                 rows={6}
                 placeholder="请输入内容模板，使用 {{variable}} 格式定义变量"
               />
-              <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "grey.500", mt: 0.5 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontSize: "0.75rem", color: "grey.500", mt: 0.5 }}
+              >
                 使用 {"{{variable}}"} 格式定义变量
               </Typography>
             </Box>
 
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "grey.700", mb: 0.5 }}
+              >
                 默认优先级
               </Typography>
               <Box
@@ -1123,7 +1192,16 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
           </Box>
         </Box>
 
-        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end", gap: 1 }}>
+        <Box
+          sx={{
+            p: 3,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 1,
+          }}
+        >
           <Box
             component="button"
             type="button"
@@ -1203,10 +1281,21 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
         <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900", mb: 1 }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "grey.900", mb: 1 }}
+            >
               {template.name}
             </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.875rem", color: "grey.500" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                fontSize: "0.875rem",
+                color: "grey.500",
+              }}
+            >
               <span>类型：{getTypeLabel(template.notification_type)}</span>
               <span>状态：{template.status}</span>
               <span>优先级：{template.default_priority}</span>
@@ -1228,7 +1317,10 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               mb: 2,
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+            >
               标题模板：
             </Typography>
             <Box
@@ -1253,7 +1345,10 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               borderColor: "grey.200",
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+            >
               内容模板：
             </Typography>
             <Box
@@ -1271,7 +1366,10 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
           {template.data_schema && (
             <Box sx={{ mt: 3 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+              >
                 数据模式：
               </Typography>
               <Box
@@ -1292,7 +1390,15 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           )}
         </Box>
 
-        <Box sx={{ p: 3, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
+        <Box
+          sx={{
+            p: 3,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
           <Box
             component="button"
             onClick={onClose}

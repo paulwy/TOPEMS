@@ -258,8 +258,20 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Loader2 size={32} className="animate-spin" style={{ color: "#7c3aed" }} />
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "grey.50",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Loader2
+          size={32}
+          className="animate-spin"
+          style={{ color: "#7c3aed" }}
+        />
       </Box>
     );
   }
@@ -269,17 +281,34 @@ const FlowVersionHistoryPage: React.FC = () => {
       {/* Header */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 3 }}>
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
               <IconButton onClick={() => navigate(`/flow/workflows`)}>
                 <ArrowLeft size={20} />
               </IconButton>
-              <Box sx={{ width: 48, height: 48, bgcolor: "secondary.light", borderRadius: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: "secondary.light",
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <GitBranch size={24} style={{ color: "#7c3aed" }} />
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700 }}>版本历史</Typography>
-                <Typography variant="body2" color="text.secondary">{workflow?.name}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  版本历史
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {workflow?.name}
+                </Typography>
               </Box>
             </Stack>
             <Button
@@ -297,11 +326,16 @@ const FlowVersionHistoryPage: React.FC = () => {
       {/* Version Timeline */}
       <Card>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>版本列表</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+            版本列表
+          </Typography>
 
           {versions.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 6 }}>
-              <GitBranch size={64} style={{ color: "#d1d5db", margin: "0 auto", marginBottom: 16 }} />
+              <GitBranch
+                size={64}
+                style={{ color: "#d1d5db", margin: "0 auto", marginBottom: 16 }}
+              />
               <Typography sx={{ color: "grey.500" }}>暂无版本历史</Typography>
               <Button
                 onClick={() => setShowCreateModal(true)}
@@ -318,20 +352,34 @@ const FlowVersionHistoryPage: React.FC = () => {
                   key={version.id}
                   sx={{
                     border: 1,
-                    borderColor: version.is_active ? "secondary.main" : "divider",
+                    borderColor: version.is_active
+                      ? "secondary.main"
+                      : "divider",
                     borderRadius: 1,
                     p: 2,
                     bgcolor: version.is_active ? "secondary.50" : "transparent",
                   }}
                 >
-                  <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                    <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
+                  <Stack
+                    direction="row"
+                    sx={{
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      spacing={2}
+                      sx={{ alignItems: "flex-start" }}
+                    >
                       <Box
                         sx={{
                           width: 40,
                           height: 40,
                           borderRadius: "50%",
-                          bgcolor: version.is_active ? "secondary.main" : "grey.100",
+                          bgcolor: version.is_active
+                            ? "secondary.main"
+                            : "grey.100",
                           color: version.is_active ? "white" : "grey.600",
                           display: "flex",
                           alignItems: "center",
@@ -341,27 +389,63 @@ const FlowVersionHistoryPage: React.FC = () => {
                         {version.is_active ? (
                           <CheckCircle size={20} />
                         ) : (
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{index + 1}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            {index + 1}
+                          </Typography>
                         )}
                       </Box>
                       <Box>
-                        <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 0.5 }}>
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>v{version.version}</Typography>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ alignItems: "center", mb: 0.5 }}
+                        >
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            v{version.version}
+                          </Typography>
                           {version.is_active && (
-                            <Chip label="当前版本" size="small" sx={{ bgcolor: "secondary.main", color: "white" }} />
+                            <Chip
+                              label="当前版本"
+                              size="small"
+                              sx={{ bgcolor: "secondary.main", color: "white" }}
+                            />
                           )}
                         </Stack>
                         {version.change_description && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{version.change_description}</Typography>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mb: 1 }}
+                          >
+                            {version.change_description}
+                          </Typography>
                         )}
                         <Stack direction="row" spacing={2}>
-                          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            sx={{ alignItems: "center" }}
+                          >
                             <User size={14} />
-                            <Typography variant="caption" color="text.secondary">{version.created_by || "系统"}</Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {version.created_by || "系统"}
+                            </Typography>
                           </Stack>
-                          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            sx={{ alignItems: "center" }}
+                          >
                             <Calendar size={14} />
-                            <Typography variant="caption" color="text.secondary">{new Date(version.created_at).toLocaleString()}</Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {new Date(version.created_at).toLocaleString()}
+                            </Typography>
                           </Stack>
                         </Stack>
                       </Box>
@@ -397,7 +481,9 @@ const FlowVersionHistoryPage: React.FC = () => {
                         onClick={() => handleActivateVersion(version)}
                         disabled={version.is_active}
                         variant={version.is_active ? "outlined" : "contained"}
-                        sx={version.is_active ? {} : { bgcolor: "secondary.main" }}
+                        sx={
+                          version.is_active ? {} : { bgcolor: "secondary.main" }
+                        }
                       >
                         {version.is_active ? "已激活" : "激活"}
                       </Button>
@@ -414,13 +500,17 @@ const FlowVersionHistoryPage: React.FC = () => {
       <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)}>
         <DialogTitle>创建新版本</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>创建一个新的工作流版本</Typography>
+          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+            创建一个新的工作流版本
+          </Typography>
           <Stack spacing={2}>
             <TextField
               size="small"
               label="版本号 *"
               value={createForm.version}
-              onChange={(e) => setCreateForm({ ...createForm, version: e.target.value })}
+              onChange={(e) =>
+                setCreateForm({ ...createForm, version: e.target.value })
+              }
               placeholder="例如: 1.0.1"
               fullWidth
             />
@@ -428,7 +518,12 @@ const FlowVersionHistoryPage: React.FC = () => {
               size="small"
               label="变更说明"
               value={createForm.change_description}
-              onChange={(e) => setCreateForm({ ...createForm, change_description: e.target.value })}
+              onChange={(e) =>
+                setCreateForm({
+                  ...createForm,
+                  change_description: e.target.value,
+                })
+              }
               placeholder="描述本次变更内容"
               multiline
               rows={4}
@@ -445,7 +540,11 @@ const FlowVersionHistoryPage: React.FC = () => {
             onClick={handleCreateVersion}
             disabled={actionLoading || !createForm.version.trim()}
             sx={{ bgcolor: "secondary.main" }}
-            startIcon={actionLoading ? <Loader2 size={16} className="animate-spin" /> : undefined}
+            startIcon={
+              actionLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : undefined
+            }
           >
             创建
           </Button>
@@ -453,13 +552,17 @@ const FlowVersionHistoryPage: React.FC = () => {
       </Dialog>
 
       {/* Rollback Modal */}
-      <Dialog open={showRollbackModal} onClose={() => setShowRollbackModal(false)}>
+      <Dialog
+        open={showRollbackModal}
+        onClose={() => setShowRollbackModal(false)}
+      >
         <DialogTitle>回滚到 v{selectedVersion?.version}</DialogTitle>
         <DialogContent>
           {selectedVersion && (
             <>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                确定要回滚到版本 <strong>v{selectedVersion.version}</strong> 吗？
+                确定要回滚到版本 <strong>v{selectedVersion.version}</strong>{" "}
+                吗？
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 当前工作流将被更新为该版本的内容。
@@ -470,7 +573,9 @@ const FlowVersionHistoryPage: React.FC = () => {
             size="small"
             label="回滚原因"
             value={rollbackForm.reason}
-            onChange={(e) => setRollbackForm({ ...rollbackForm, reason: e.target.value })}
+            onChange={(e) =>
+              setRollbackForm({ ...rollbackForm, reason: e.target.value })
+            }
             placeholder="可选：输入回滚原因"
             multiline
             rows={3}
@@ -494,7 +599,11 @@ const FlowVersionHistoryPage: React.FC = () => {
             onClick={handleRollback}
             disabled={actionLoading}
             sx={{ bgcolor: "warning.main" }}
-            startIcon={actionLoading ? <Loader2 size={16} className="animate-spin" /> : undefined}
+            startIcon={
+              actionLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : undefined
+            }
           >
             确认回滚
           </Button>

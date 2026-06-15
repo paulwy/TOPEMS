@@ -1,4 +1,11 @@
-import { Button, Card, CardContent, Box, Typography, Tooltip } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  Box,
+  Typography,
+  Tooltip,
+} from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,7 +50,9 @@ const hrmMenuItems = [
   { path: "/hrm/reports", label: "报表统计", icon: BarChart3 },
 ];
 
-const getBreadcrumbs = (pathname: string): { label: string; path: string }[] => {
+const getBreadcrumbs = (
+  pathname: string,
+): { label: string; path: string }[] => {
   const crumbs: { label: string; path: string }[] = [
     { label: "首页", path: "/" },
     { label: "人力资源", path: "/hrm" },
@@ -90,7 +99,10 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
     setMobileMenuOpen(false);
   };
 
-  const renderMenuItem = (item: typeof hrmMenuItems[0], isMobile: boolean = false) => {
+  const renderMenuItem = (
+    item: (typeof hrmMenuItems)[0],
+    isMobile: boolean = false,
+  ) => {
     const Icon = item.icon;
     const isActive = location.pathname === item.path;
 
@@ -103,9 +115,13 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
         }}
         sx={{
           width: "100%",
-          justifyContent: isMobile ? "flex-start" : (sidebarCollapsed ? "center" : "flex-start"),
+          justifyContent: isMobile
+            ? "flex-start"
+            : sidebarCollapsed
+              ? "center"
+              : "flex-start",
           gap: 1.5,
-          px: isMobile ? 2 : (sidebarCollapsed ? 1 : 2),
+          px: isMobile ? 2 : sidebarCollapsed ? 1 : 2,
           py: 1.5,
           borderRadius: 1,
           textTransform: "none",
@@ -119,14 +135,16 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
       >
         <Icon style={{ width: 20, height: 20, flexShrink: 0 }} />
         {(!sidebarCollapsed || isMobile) && (
-          <span style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            opacity: sidebarCollapsed && !isMobile ? 0 : 1,
-            width: sidebarCollapsed && !isMobile ? 0 : "auto",
-            transition: "opacity 0.2s, width 0.2s",
-          }}>
+          <span
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              opacity: sidebarCollapsed && !isMobile ? 0 : 1,
+              width: sidebarCollapsed && !isMobile ? 0 : "auto",
+              transition: "opacity 0.2s, width 0.2s",
+            }}
+          >
             {item.label}
           </span>
         )}
@@ -145,7 +163,14 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        backgroundColor: "#f8fafc",
+      }}
+    >
       {/* Header */}
       <Box
         component="header"
@@ -160,7 +185,14 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
         }}
       >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              height: 64,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               <Button
                 variant="text"
@@ -168,7 +200,11 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 sx={{ display: { lg: "none" } }}
               >
-                {mobileMenuOpen ? <X style={{ width: 20, height: 20 }} /> : <Menu style={{ width: 20, height: 20 }} />}
+                {mobileMenuOpen ? (
+                  <X style={{ width: 20, height: 20 }} />
+                ) : (
+                  <Menu style={{ width: 20, height: 20 }} />
+                )}
               </Button>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Box
@@ -176,7 +212,8 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
                     width: 40,
                     height: 40,
                     borderRadius: 1.5,
-                    background: "linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%)",
+                    background:
+                      "linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -185,10 +222,19 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
                   <Users style={{ width: 20, height: 20, color: "white" }} />
                 </Box>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, fontSize: 18, color: "#0f172a" }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, fontSize: 18, color: "#0f172a" }}
+                  >
                     {title}
                   </Typography>
-                  <Typography variant="caption" sx={{ display: { xs: "none", sm: "block" }, color: "#64748b" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: { xs: "none", sm: "block" },
+                      color: "#64748b",
+                    }}
+                  >
                     {subtitle}
                   </Typography>
                 </Box>
@@ -196,14 +242,32 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
             </Box>
 
             {/* Breadcrumbs */}
-            <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 0.5 }}>
+            <Box
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                gap: 0.5,
+              }}
+            >
               {breadcrumbs.map((crumb, index) => (
                 <React.Fragment key={crumb.path}>
-                  {index > 0 && <ChevronRight style={{ width: 16, height: 16, color: "#94a3b8", margin: "0 4px" }} />}
+                  {index > 0 && (
+                    <ChevronRight
+                      style={{
+                        width: 16,
+                        height: 16,
+                        color: "#94a3b8",
+                        margin: "0 4px",
+                      }}
+                    />
+                  )}
                   <Button
                     onClick={() => handleBreadcrumbClick(crumb.path)}
                     sx={{
-                      color: index === breadcrumbs.length - 1 ? "#0f172a" : "#64748b",
+                      color:
+                        index === breadcrumbs.length - 1
+                          ? "#0f172a"
+                          : "#64748b",
                       fontWeight: index === breadcrumbs.length - 1 ? 500 : 400,
                       fontSize: 14,
                       textTransform: "none",
@@ -269,10 +333,19 @@ export const HrmLayout: React.FC<HrmLayoutProps> = ({
               >
                 <Card sx={{ m: 2 }}>
                   <CardContent sx={{ p: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: "#334155", mb: 2, px: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600, color: "#334155", mb: 2, px: 1 }}
+                    >
                       HRM 模块
                     </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.5,
+                      }}
+                    >
                       {hrmMenuItems.map((item) => renderMenuItem(item, true))}
                     </Box>
                   </CardContent>

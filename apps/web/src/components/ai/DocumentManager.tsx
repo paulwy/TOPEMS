@@ -1,4 +1,19 @@
-import { Button, Card, CardContent, Box, Typography, Dialog, DialogContent, DialogTitle, TextField, Tabs, Tab, Chip, IconButton, Tooltip } from "@mui/material";
+import {
+  Button,
+  Card,
+  CardContent,
+  Box,
+  Typography,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Tabs,
+  Tab,
+  Chip,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 import {
   Upload,
@@ -185,11 +200,24 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "processed":
-        return <CheckCircle style={{ width: 16, height: 16, color: "green" }} />;
+        return (
+          <CheckCircle style={{ width: 16, height: 16, color: "green" }} />
+        );
       case "pending":
-        return <Loader2 style={{ width: 16, height: 16, color: "orange", animation: "spin 1s linear infinite" }} />;
+        return (
+          <Loader2
+            style={{
+              width: 16,
+              height: 16,
+              color: "orange",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+        );
       case "partial":
-        return <AlertCircle style={{ width: 16, height: 16, color: "orange" }} />;
+        return (
+          <AlertCircle style={{ width: 16, height: 16, color: "orange" }} />
+        );
       default:
         return <AlertCircle style={{ width: 16, height: 16, color: "red" }} />;
     }
@@ -246,16 +274,29 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }} className={className}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+      className={className}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>文档管理</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            文档管理
+          </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             管理知识库文档，支持向量搜索
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Button onClick={loadDocuments} disabled={loading}>刷新</Button>
+          <Button onClick={loadDocuments} disabled={loading}>
+            刷新
+          </Button>
           <Button onClick={() => setUploadDialogOpen(true)}>
             <Upload style={{ width: 16, height: 16, marginRight: 8 }} />
             上传文档
@@ -264,29 +305,51 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       </Box>
 
       {stats && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" }, gap: 2 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+            gap: 2,
+          }}
+        >
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">文档总数</Typography>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.total_documents}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                文档总数
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {stats.total_documents}
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">分块数</Typography>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.total_chunks}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                分块数
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {stats.total_chunks}
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">向量数</Typography>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.total_vectors}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                向量数
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {stats.total_vectors}
+              </Typography>
             </CardContent>
           </Card>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="body2" color="text.secondary">向量维度</Typography>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>{stats.vector_dimension}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                向量维度
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                {stats.vector_dimension}
+              </Typography>
             </CardContent>
           </Card>
         </Box>
@@ -300,42 +363,103 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       {tabValue === 0 && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {loading ? (
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 6 }}>
-              <Loader2 style={{ width: 32, height: 32, animation: "spin 1s linear infinite" }} />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 6,
+              }}
+            >
+              <Loader2
+                style={{
+                  width: 32,
+                  height: 32,
+                  animation: "spin 1s linear infinite",
+                }}
+              />
             </Box>
           ) : (
             <>
               {(documents || []).map((doc) => (
                 <Card key={doc.id}>
                   <CardContent sx={{ p: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
-                        <Box sx={{ p: 1, borderRadius: 1, backgroundColor: "#f3e5f5" }}>
-                          <FileText style={{ width: 20, height: 20, color: "#7b1fa2" }} />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1,
+                            backgroundColor: "#f3e5f5",
+                          }}
+                        >
+                          <FileText
+                            style={{ width: 20, height: 20, color: "#7b1fa2" }}
+                          />
                         </Box>
                         <Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>{doc.title}</Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {doc.title}
+                            </Typography>
                             <Chip
                               size="small"
                               label={getStatusText(doc.status || "")}
                               sx={{
-                                backgroundColor: getStatusColor(doc.status || "").bg,
+                                backgroundColor: getStatusColor(
+                                  doc.status || "",
+                                ).bg,
                                 color: getStatusColor(doc.status || "").text,
                                 fontSize: 12,
                               }}
                             />
                           </Box>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5 }}
+                          >
                             {doc.filename} • {formatFileSize(doc.file_size)}
                           </Typography>
                           {doc.description && (
-                            <Typography variant="body2" sx={{ mt: 0.5 }}>{doc.description}</Typography>
+                            <Typography variant="body2" sx={{ mt: 0.5 }}>
+                              {doc.description}
+                            </Typography>
                           )}
                           {doc.error_message && (
-                            <Typography variant="caption" sx={{ color: "error.main", mt: 0.5 }}>错误: {doc.error_message}</Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{ color: "error.main", mt: 0.5 }}
+                            >
+                              错误: {doc.error_message}
+                            </Typography>
                           )}
-                          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ mt: 1, display: "block" }}
+                          >
                             上传于: {formatDate(doc.created_at)}
                           </Typography>
                         </Box>
@@ -343,7 +467,12 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                       <Tooltip title="删除文档">
                         <IconButton
                           onClick={() => handleDelete(doc)}
-                          sx={{ color: "error.main", "&:hover": { backgroundColor: "rgba(255, 0, 0, 0.1)" } }}
+                          sx={{
+                            color: "error.main",
+                            "&:hover": {
+                              backgroundColor: "rgba(255, 0, 0, 0.1)",
+                            },
+                          }}
                         >
                           <Trash2 style={{ width: 18, height: 18 }} />
                         </IconButton>
@@ -356,9 +485,22 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
               {(documents || []).length === 0 && (
                 <Card>
                   <CardContent sx={{ p: 4, textAlign: "center" }}>
-                    <FileText style={{ width: 48, height: 48, color: "#ccc", margin: "0 auto 16px" }} />
-                    <Typography variant="h6" sx={{ mb: 1 }}>暂无文档</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <FileText
+                      style={{
+                        width: 48,
+                        height: 48,
+                        color: "#ccc",
+                        margin: "0 auto 16px",
+                      }}
+                    />
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                      暂无文档
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
                       上传文档开始构建您的知识库
                     </Typography>
                     <Button onClick={() => fileInputRef.current?.click()}>
@@ -376,7 +518,9 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
       {tabValue === 1 && (
         <Card>
           <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+            >
               <TextField
                 fullWidth
                 size="small"
@@ -385,8 +529,22 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               />
-              <Button onClick={handleSearch} disabled={searching} variant="contained">
-                {searching ? <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} /> : <Search style={{ width: 16, height: 16 }} />}
+              <Button
+                onClick={handleSearch}
+                disabled={searching}
+                variant="contained"
+              >
+                {searching ? (
+                  <Loader2
+                    style={{
+                      width: 16,
+                      height: 16,
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                ) : (
+                  <Search style={{ width: 16, height: 16 }} />
+                )}
               </Button>
             </Box>
 
@@ -398,7 +556,14 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                 {searchResults.map((result, index) => (
                   <Card key={`${result.chunk_id}-${index}`} variant="outlined">
                     <CardContent sx={{ p: 2 }}>
-                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          mb: 1,
+                        }}
+                      >
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
                             {result.document_title || "相关文档"}
@@ -411,7 +576,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
                           />
                         </Box>
                       </Box>
-                      <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", color: "text.secondary" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ whiteSpace: "pre-wrap", color: "text.secondary" }}
+                      >
                         {result.content}
                       </Typography>
                     </CardContent>
@@ -422,28 +590,59 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
 
             {searchQuery && searchResults.length === 0 && !searching && (
               <Box sx={{ textAlign: "center", py: 4 }}>
-                <Search style={{ width: 48, height: 48, color: "#ccc", margin: "0 auto 16px" }} />
-                <Typography variant="body1" color="text.secondary">未找到相关内容</Typography>
+                <Search
+                  style={{
+                    width: 48,
+                    height: 48,
+                    color: "#ccc",
+                    margin: "0 auto 16px",
+                  }}
+                />
+                <Typography variant="body1" color="text.secondary">
+                  未找到相关内容
+                </Typography>
               </Box>
             )}
 
             {!searchQuery && (
               <Box sx={{ textAlign: "center", py: 4 }}>
-                <Search style={{ width: 48, height: 48, color: "#ccc", margin: "0 auto 16px" }} />
-                <Typography variant="body1" color="text.secondary">输入搜索内容开始向量搜索</Typography>
+                <Search
+                  style={{
+                    width: 48,
+                    height: 48,
+                    color: "#ccc",
+                    margin: "0 auto 16px",
+                  }}
+                />
+                <Typography variant="body1" color="text.secondary">
+                  输入搜索内容开始向量搜索
+                </Typography>
               </Box>
             )}
           </CardContent>
         </Card>
       )}
 
-      <Dialog open={uploadDialogOpen} onClose={() => setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>上传文档</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             支持上传文本文件、Markdown、PDF 等格式
           </Typography>
-          <Box sx={{ border: "2px dashed", borderColor: "divider", borderRadius: 1, p: 4, textAlign: "center" }}>
+          <Box
+            sx={{
+              border: "2px dashed",
+              borderColor: "divider",
+              borderRadius: 1,
+              p: 4,
+              textAlign: "center",
+            }}
+          >
             <input
               ref={fileInputRef}
               type="file"
@@ -453,12 +652,29 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({
               id="file-upload"
             />
             <label htmlFor="file-upload" style={{ cursor: "pointer" }}>
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <Upload style={{ width: 48, height: 48, color: "#999", marginBottom: 12 }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Upload
+                  style={{
+                    width: 48,
+                    height: 48,
+                    color: "#999",
+                    marginBottom: 12,
+                  }}
+                />
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   {uploading ? "上传中..." : "点击选择文件或拖放"}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1 }}
+                >
                   支持 .txt, .md, .pdf, .json, .csv
                 </Typography>
               </Box>

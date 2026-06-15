@@ -65,7 +65,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   const [localValue, setLocalValue] = useState(value);
   const [showDropdown, setShowDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   // 同步外部值
   useEffect(() => {
@@ -230,7 +232,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                         />
                       )}
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2">{suggestion.label}</Typography>
+                        <Typography variant="body2">
+                          {suggestion.label}
+                        </Typography>
                         {suggestion.description && (
                           <Typography variant="caption" color="text.secondary">
                             {suggestion.description}
@@ -288,7 +292,12 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     }}
                   >
                     <History
-                      style={{ width: 16, height: 16, marginRight: 12, opacity: 0.5 }}
+                      style={{
+                        width: 16,
+                        height: 16,
+                        marginRight: 12,
+                        opacity: 0.5,
+                      }}
                     />
                     <Typography variant="body2">{search}</Typography>
                   </ListItemButton>

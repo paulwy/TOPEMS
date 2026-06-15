@@ -249,7 +249,17 @@ const CRMCustomerScoringPage: React.FC = () => {
     };
     const config = gradeConfig[grade];
     return (
-      <Chip size="small" sx={{ bgcolor: config.color, color: "white", fontWeight: "bold", fontSize: "1.125rem", px: 1.5 }} label={config.label} />
+      <Chip
+        size="small"
+        sx={{
+          bgcolor: config.color,
+          color: "white",
+          fontWeight: "bold",
+          fontSize: "1.125rem",
+          px: 1.5,
+        }}
+        label={config.label}
+      />
     );
   };
 
@@ -261,8 +271,12 @@ const CRMCustomerScoringPage: React.FC = () => {
   };
 
   const getScoreTrend = (score: number) => {
-    if (score >= 80) return <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />;
-    if (score >= 60) return <Minus sx={{ width: 16, height: 16, color: "primary.main" }} />;
+    if (score >= 80)
+      return (
+        <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />
+      );
+    if (score >= 60)
+      return <Minus sx={{ width: 16, height: 16, color: "primary.main" }} />;
     return <TrendingDown sx={{ width: 16, height: 16, color: "error.main" }} />;
   };
 
@@ -279,7 +293,15 @@ const CRMCustomerScoringPage: React.FC = () => {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Card>
         <CardHeader>
-          <Typography variant="h6" sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
             <Award sx={{ width: 20, height: 20 }} />
             客户价值评分
           </Typography>
@@ -288,58 +310,180 @@ const CRMCustomerScoringPage: React.FC = () => {
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 4 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 2,
+              mb: 4,
+            }}
+          >
             <Box sx={{ bgcolor: "success.light", borderRadius: 2, p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" sx={{ color: "success.dark", fontWeight: 500, fontSize: "0.875rem" }}>A级客户</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "success.main", mt: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "success.dark",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    A级客户
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: "bold", color: "success.main", mt: 0.5 }}
+                  >
                     {gradeDistribution.A}
                   </Typography>
                 </Box>
-                <Box sx={{ width: 48, height: 48, bgcolor: "success.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "success.main",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Star sx={{ width: 24, height: 24, color: "white" }} />
                 </Box>
               </Box>
             </Box>
 
             <Box sx={{ bgcolor: "primary.light", borderRadius: 2, p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" sx={{ color: "primary.dark", fontWeight: 500, fontSize: "0.875rem" }}>B级客户</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "primary.main", mt: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "primary.dark",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    B级客户
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: "bold", color: "primary.main", mt: 0.5 }}
+                  >
                     {gradeDistribution.B}
                   </Typography>
                 </Box>
-                <Box sx={{ width: 48, height: 48, bgcolor: "primary.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "primary.main",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Star sx={{ width: 24, height: 24, color: "white" }} />
                 </Box>
               </Box>
             </Box>
 
             <Box sx={{ bgcolor: "warning.light", borderRadius: 2, p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" sx={{ color: "warning.dark", fontWeight: 500, fontSize: "0.875rem" }}>C级客户</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "warning.main", mt: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "warning.dark",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    C级客户
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: "bold", color: "warning.main", mt: 0.5 }}
+                  >
                     {gradeDistribution.C}
                   </Typography>
                 </Box>
-                <Box sx={{ width: 48, height: 48, bgcolor: "warning.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "warning.main",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Star sx={{ width: 24, height: 24, color: "white" }} />
                 </Box>
               </Box>
             </Box>
 
             <Box sx={{ bgcolor: "error.light", borderRadius: 2, p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" sx={{ color: "error.dark", fontWeight: 500, fontSize: "0.875rem" }}>D级客户</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold", color: "error.main", mt: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "error.dark",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    D级客户
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: "bold", color: "error.main", mt: 0.5 }}
+                  >
                     {gradeDistribution.D}
                   </Typography>
                 </Box>
-                <Box sx={{ width: 48, height: 48, bgcolor: "error.main", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    bgcolor: "error.main",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Star sx={{ width: 24, height: 24, color: "white" }} />
                 </Box>
               </Box>
@@ -347,10 +491,25 @@ const CRMCustomerScoringPage: React.FC = () => {
           </Box>
 
           <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 3, mb: 4 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>评分权重设置</Typography>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: 2, lg: 3 }, gap: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+              评分权重设置
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+                gap: 2,
+              }}
+            >
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <DollarSign sx={{ width: 16, height: 16 }} />
                     <Typography variant="body2">收入贡献</Typography>
@@ -369,7 +528,14 @@ const CRMCustomerScoringPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Users sx={{ width: 16, height: 16 }} />
                     <Typography variant="body2">互动频率</Typography>
@@ -388,7 +554,14 @@ const CRMCustomerScoringPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Target sx={{ width: 16, height: 16 }} />
                     <Typography variant="body2">最近互动</Typography>
@@ -407,12 +580,21 @@ const CRMCustomerScoringPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <TrendingUp sx={{ width: 16, height: 16 }} />
                     <Typography variant="body2">增长潜力</Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>{weights.growth}%</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    {weights.growth}%
+                  </Typography>
                 </Box>
                 <Slider
                   value={weights.growth}
@@ -424,7 +606,14 @@ const CRMCustomerScoringPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Award sx={{ width: 16, height: 16 }} />
                     <Typography variant="body2">参与度</Typography>
@@ -449,27 +638,56 @@ const CRMCustomerScoringPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {customers.length > 0 ? (
               customers.map((customer) => (
                 <Box
                   key={customer.customerId}
-                  sx={{ bgcolor: "background.paper", borderRadius: 2, border: 1, borderColor: "divider", p: 2, "&:hover": { boxShadow: 3 }, cursor: "pointer" }}
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    border: 1,
+                    borderColor: "divider",
+                    p: 2,
+                    "&:hover": { boxShadow: 3 },
+                    cursor: "pointer",
+                  }}
                   onClick={() => {
                     setSelectedCustomer(customer);
                     setShowDetailDialog(true);
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box sx={{ width: 48, height: 48, bgcolor: "grey.100", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: "grey.100",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                           {customer.customerName.charAt(0)}
                         </Typography>
                       </Box>
                       <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{customer.customerName}</Typography>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {customer.customerName}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary" }}
+                        >
                           点击查看详细评分
                         </Typography>
                       </Box>
@@ -478,13 +696,23 @@ const CRMCustomerScoringPage: React.FC = () => {
                       <Box sx={{ textAlign: "center" }}>
                         <Typography
                           variant="h5"
-                          sx={{ fontWeight: "bold", color: getScoreColor(customer.score) }}
+                          sx={{
+                            fontWeight: "bold",
+                            color: getScoreColor(customer.score),
+                          }}
                         >
                           {customer.score}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>评分</Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "text.secondary" }}
+                        >
+                          评分
+                        </Typography>
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
                         {getGradeBadge(customer.grade)}
                         {getScoreTrend(customer.score)}
                       </Box>
@@ -494,7 +722,15 @@ const CRMCustomerScoringPage: React.FC = () => {
               ))
             ) : (
               <Box sx={{ textAlign: "center", py: 6, color: "text.secondary" }}>
-                <Award sx={{ width: 64, height: 64, mx: "auto", mb: 2, opacity: 0.3 }} />
+                <Award
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    mx: "auto",
+                    mb: 2,
+                    opacity: 0.3,
+                  }}
+                />
                 <Typography>暂无客户评分数据</Typography>
               </Box>
             )}
@@ -502,7 +738,10 @@ const CRMCustomerScoringPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)}>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+      >
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Award sx={{ width: 20, height: 20 }} />
           {selectedCustomer?.customerName} - 评分详情
@@ -510,28 +749,59 @@ const CRMCustomerScoringPage: React.FC = () => {
         <DialogContent sx={{ maxWidth: 550 }}>
           {selectedCustomer && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <Box sx={{ display: "flex", justifyContent: "center", gap: 4, py: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 4,
+                  py: 2,
+                }}
+              >
                 <Box sx={{ textAlign: "center" }}>
                   <Typography
                     variant="h3"
-                    sx={{ fontWeight: "bold", color: getScoreColor(selectedCustomer.score) }}
+                    sx={{
+                      fontWeight: "bold",
+                      color: getScoreColor(selectedCustomer.score),
+                    }}
                   >
                     {selectedCustomer.score}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>综合评分</Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", mt: 0.5 }}
+                  >
+                    综合评分
+                  </Typography>
                 </Box>
                 <Box sx={{ textAlign: "center" }}>
                   {getGradeBadge(selectedCustomer.grade)}
-                  <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>客户等级</Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", mt: 0.5 }}
+                  >
+                    客户等级
+                  </Typography>
                 </Box>
               </Box>
 
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {selectedCustomer.factors.map((factor, index) => (
                   <Paper key={index} sx={{ p: 2, bgcolor: "grey.100" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>{factor.name}</Typography>
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {factor.name}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary" }}
+                      >
                         权重: {factor.weight}%
                       </Typography>
                     </Box>
@@ -540,14 +810,28 @@ const CRMCustomerScoringPage: React.FC = () => {
                         <LinearProgress
                           variant="determinate"
                           value={factor.score}
-                          sx={{ height: 8, borderRadius: 1, bgcolor: "grey.300" }}
+                          sx={{
+                            height: 8,
+                            borderRadius: 1,
+                            bgcolor: "grey.300",
+                          }}
                         />
                       </Box>
-                      <Typography variant="body2" sx={{ fontWeight: 500, width: 48, textAlign: "right" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 500, width: 48, textAlign: "right" }}
+                      >
                         {factor.score}/{factor.maxScore}
                       </Typography>
                     </Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5, display: "block" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        mt: 0.5,
+                        display: "block",
+                      }}
+                    >
                       {factor.description}
                     </Typography>
                   </Paper>

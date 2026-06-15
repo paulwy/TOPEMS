@@ -113,10 +113,19 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
           sx={{ textAlign: "center", pt: 4 }}
           title={
             <Box>
-              <Box sx={{ fontSize: "1.875rem", fontWeight: "bold", color: "primary.main", mb: 1 }}>
+              <Box
+                sx={{
+                  fontSize: "1.875rem",
+                  fontWeight: "bold",
+                  color: "primary.main",
+                  mb: 1,
+                }}
+              >
                 TOPEMS
               </Box>
-              <Box sx={{ fontSize: "0.875rem", color: "text.secondary", mb: 2 }}>
+              <Box
+                sx={{ fontSize: "0.875rem", color: "text.secondary", mb: 2 }}
+              >
                 企业数字化平台
               </Box>
               <Box sx={{ fontSize: "1.5rem", fontWeight: 600, pt: 2 }}>
@@ -126,7 +135,10 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
           }
         />
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            style={{ display: "flex", flexDirection: "column", gap: 24 }}
+          >
             {/* 用户名 */}
             <Controller
               name="username"
@@ -139,7 +151,9 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                     placeholder="请输入用户名"
                     size="small"
                     error={!!fieldState.error}
-                    helperText={fieldState.error?.message || "字母或数字组合，最多20位"}
+                    helperText={
+                      fieldState.error?.message || "字母或数字组合，最多20位"
+                    }
                   />
                 </FormControl>
               )}
@@ -199,7 +213,11 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                         "&:hover": { color: "text.primary" },
                       }}
                     >
-                      {showPassword ? <EyeOff style={{ width: 20, height: 20 }} /> : <Eye style={{ width: 20, height: 20 }} />}
+                      {showPassword ? (
+                        <EyeOff style={{ width: 20, height: 20 }} />
+                      ) : (
+                        <Eye style={{ width: 20, height: 20 }} />
+                      )}
                     </Box>
                   </Box>
                 </FormControl>
@@ -212,14 +230,18 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
                 name="rememberMe"
                 control={form.control}
                 render={({ field }) => (
-                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}
+                  >
                     <Checkbox
                       checked={field.value || false}
                       onChange={field.onChange}
                       size="small"
                     />
                     <Box>
-                      <FormLabel sx={{ fontSize: "0.875rem", cursor: "pointer" }}>
+                      <FormLabel
+                        sx={{ fontSize: "0.875rem", cursor: "pointer" }}
+                      >
                         记住我
                       </FormLabel>
                       <FormHelperText sx={{ m: 0 }}>
@@ -242,7 +264,16 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
             </Button>
           </form>
         </CardContent>
-        <Box sx={{ pb: 4, pt: 2, px: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box
+          sx={{
+            pb: 4,
+            pt: 2,
+            px: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
           <Box sx={{ textAlign: "center" }}>
             <Box
               component="button"
@@ -263,8 +294,21 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
 
           {/* 演示账号 */}
           {isDevelopment() && (
-            <Box sx={{ pt: 2, borderTop: 1, borderColor: "divider", width: "100%" }}>
-              <Box sx={{ fontSize: "0.75rem", color: "text.secondary", textAlign: "center" }}>
+            <Box
+              sx={{
+                pt: 2,
+                borderTop: 1,
+                borderColor: "divider",
+                width: "100%",
+              }}
+            >
+              <Box
+                sx={{
+                  fontSize: "0.75rem",
+                  color: "text.secondary",
+                  textAlign: "center",
+                }}
+              >
                 演示账号: admin / admin123 (管理员) | user / user123 (普通员工)
               </Box>
             </Box>

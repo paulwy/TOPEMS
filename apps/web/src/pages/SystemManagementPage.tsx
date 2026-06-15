@@ -87,7 +87,12 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({
   ];
 
   return (
-    <Box sx={{ minHeight: "100vh", background: "linear-gradient(to bottom right, #f1f5f9, #f8fafc)" }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(to bottom right, #f1f5f9, #f8fafc)",
+      }}
+    >
       <MobileHeader
         title="系统管理"
         onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -95,20 +100,52 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({
 
       {mobileMenuOpen && (
         <Box
-          sx={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, bgcolor: "rgba(0,0,0,0.5)", zIndex: 40 }}
+          sx={{
+            position: "fixed",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            bgcolor: "rgba(0,0,0,0.5)",
+            zIndex: 40,
+          }}
           onClick={() => setMobileMenuOpen(false)}
         >
           <Box
-            sx={{ position: "absolute", top: 56, left: 0, right: 0, bgcolor: "background.paper", maxHeight: "70vh", overflow: "auto" }}
+            sx={{
+              position: "absolute",
+              top: 56,
+              left: 0,
+              right: 0,
+              bgcolor: "background.paper",
+              maxHeight: "70vh",
+              overflow: "auto",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <Box sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>菜单</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 3,
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  菜单
+                </Typography>
                 <Box
                   component="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  sx={{ p: 1, borderRadius: 1, "&:hover": { bgcolor: "grey.100" }, border: "none", bgcolor: "transparent", cursor: "pointer" }}
+                  sx={{
+                    p: 1,
+                    borderRadius: 1,
+                    "&:hover": { bgcolor: "grey.100" },
+                    border: "none",
+                    bgcolor: "transparent",
+                    cursor: "pointer",
+                  }}
                 >
                   <X size={20} />
                 </Box>
@@ -124,7 +161,19 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({
                         navigate(feature.path);
                         setMobileMenuOpen(false);
                       }}
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: 1, "&:hover": { bgcolor: "grey.100" }, border: "none", bgcolor: "transparent", cursor: "pointer", width: "100%", textAlign: "left" }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                        p: 1.5,
+                        borderRadius: 1,
+                        "&:hover": { bgcolor: "grey.100" },
+                        border: "none",
+                        bgcolor: "transparent",
+                        cursor: "pointer",
+                        width: "100%",
+                        textAlign: "left",
+                      }}
                     >
                       <Icon sx={{ width: 20, height: 20 }} />
                       <Typography>{feature.title}</Typography>
@@ -137,22 +186,58 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({
         </Box>
       )}
 
-      <Box sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }} className="desktop-only">
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+        className="desktop-only"
+      >
         <Box sx={{ maxWidth: 1200, mx: "auto", px: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", height: 64 }}>
             <Box
               component="button"
               onClick={() => navigate("/dashboard")}
-              sx={{ p: 1, borderRadius: 1, "&:hover": { bgcolor: "grey.100" }, border: "none", bgcolor: "transparent", cursor: "pointer", mr: 1 }}
+              sx={{
+                p: 1,
+                borderRadius: 1,
+                "&:hover": { bgcolor: "grey.100" },
+                border: "none",
+                bgcolor: "transparent",
+                cursor: "pointer",
+                mr: 1,
+              }}
             >
               <ChevronLeft sx={{ width: 20, height: 20 }} />
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box sx={{ width: 40, height: 40, background: "linear-gradient(to bottom right, #475569, #475569)", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 2 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  background:
+                    "linear-gradient(to bottom right, #475569, #475569)",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: 2,
+                }}
+              >
                 <Settings sx={{ width: 24, height: 24, color: "white" }} />
               </Box>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: "grey.900" }}>系统管理</Typography>
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "grey.900" }}
+                >
+                  系统管理
+                </Typography>
                 <Typography variant="caption" sx={{ color: "grey.500" }}>
                   用户、角色、权限和系统配置
                 </Typography>
@@ -162,31 +247,80 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({
         </Box>
       </Box>
 
-      <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }} className="desktop-only">
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+      <Box
+        sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}
+        className="desktop-only"
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            },
+            gap: 3,
+          }}
+        >
           {systemFeatures.map((feature) => {
             const Icon = feature.icon;
             return (
               <Box
                 key={feature.id}
                 onClick={() => navigate(feature.path)}
-                sx={{ bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, "&:hover": { boxShadow: 3 }, cursor: "pointer", transition: "all 0.2s" }}
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                  boxShadow: 1,
+                  "&:hover": { boxShadow: 3 },
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
               >
                 <Box sx={{ p: 3 }}>
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
                     <Box
-                      sx={{ width: 48, height: 48, bgcolor: feature.color.replace("bg-", ""), borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: 2, "&:hover": { transform: "scale(1.1)" }, transition: "transform 0.2s" }}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        bgcolor: feature.color.replace("bg-", ""),
+                        borderRadius: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: 2,
+                        "&:hover": { transform: "scale(1.1)" },
+                        transition: "transform 0.2s",
+                      }}
                     >
                       <Icon sx={{ width: 24, height: 24, color: "white" }} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 0.5 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, color: "grey.900", mb: 0.5 }}
+                  >
                     {feature.title}
                   </Typography>
                   <Typography variant="body2" sx={{ color: "grey.600", mb: 2 }}>
                     {feature.description}
                   </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", color: "primary.main", fontSize: "0.875rem", fontWeight: 500 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "primary.main",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                    }}
+                  >
                     进入管理 →
                   </Box>
                 </Box>

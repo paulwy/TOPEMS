@@ -266,7 +266,10 @@ function getModuleFromPath(path: string): string | null {
 export function useAIContext(): AIContextState {
   const location = useLocation();
 
-  const module = useMemo(() => getModuleFromPath(location.pathname), [location.pathname]);
+  const module = useMemo(
+    () => getModuleFromPath(location.pathname),
+    [location.pathname],
+  );
 
   const recommendations = useMemo(() => {
     if (module && moduleRecommendations[module]) {

@@ -75,7 +75,11 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
 
   return (
     <>
-      <Box component="form" onSubmit={onSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box
+        component="form"
+        onSubmit={onSubmit}
+        sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+      >
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
           <TextField
             id={`${mode}-name`}
@@ -93,9 +97,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             label="工号"
             type="text"
             value={(formData as Employee)?.employee_no || ""}
-            onChange={(e) =>
-              handleInputChange("employee_no", e.target.value)
-            }
+            onChange={(e) => handleInputChange("employee_no", e.target.value)}
             placeholder="请输入工号"
             size="small"
             fullWidth
@@ -131,7 +133,10 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             value={(formData as Employee)?.department_id || "none"}
             label="所属部门"
             onChange={(e) =>
-              handleInputChange("department_id", e.target.value === "none" ? "" : e.target.value)
+              handleInputChange(
+                "department_id",
+                e.target.value === "none" ? "" : e.target.value,
+              )
             }
           >
             <MenuItem value="none">无</MenuItem>
@@ -181,7 +186,13 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             <MenuItem value="inactive">离职</MenuItem>
           </Select>
         </FormControl>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Button type="button" variant="outlined" onClick={onCancel}>
             取消
           </Button>
