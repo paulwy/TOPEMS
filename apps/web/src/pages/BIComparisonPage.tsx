@@ -13,21 +13,23 @@ import {
   PieChart,
   RadarChart,
 } from "../components/charts";
-import { Button } from "../components/ui/button";
 import {
+  Button,
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import {
   Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../components/ui/tabs";
-import { Checkbox } from "../components/ui/checkbox";
-import { Label } from "../components/ui/label";
+  Tab,
+  Checkbox,
+  Typography,
+  Box,
+  Paper,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@mui/material";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import ExportButton from "../components/ExportButton";
 import { getDateRange } from "../utils/export";
@@ -215,84 +217,90 @@ const BIComparisonPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <LoadingSpinner size="lg" />
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <Box sx={{ p: 6 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 6 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
           <Button
-            variant="ghost"
-            size="icon"
+            variant="text"
+            size="small"
             onClick={() => navigate(-1)}
-            className="rounded-full"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft sx={{ width: 20, height: 20 }} />
           </Button>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">数据对比分析</h2>
-            <p className="text-sm text-gray-500 mt-1">
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: "bold", color: "grey.800" }}>
+              数据对比分析
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
               选择多个模块进行数据对比
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
+            </Typography>
+          </Box>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
           <ExportButton
             data={exportData}
             columns={["module", "total", "active", "completed", "efficiency"]}
             filename="bi-comparison-data"
           />
-          <Button variant="secondary" onClick={() => navigate("/bi/dashboard")}>
+          <Button variant="outlined" onClick={() => navigate("/bi/dashboard")}>
             返回数据大屏
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>选择对比模块</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, lg: "1fr 2fr" }, gap: 6 }}>
+        <Box>
+          <Card sx={{ mb: 3 }}>
+            <CardHeader title="选择对比模块" />
+            <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {modules.map((module) => (
-                <label
+                <Box
                   key={module.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                    selectedModules.includes(module.id)
-                      ? "bg-blue-50 border border-blue-200"
-                      : "hover:bg-gray-50"
-                  }`}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
+                    p: 2,
+                    borderRadius: 1,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    bgcolor: selectedModules.includes(module.id) ? "primary.50" : "transparent",
+                    border: selectedModules.includes(module.id) ? "1px solid" : "none",
+                    borderColor: selectedModules.includes(module.id) ? "primary.200" : "transparent",
+                    "&:hover": { bgcolor: "grey.50" },
+                  }}
+                  onClick={() => handleModuleToggle(module.id)}
                 >
                   <Checkbox
                     checked={selectedModules.includes(module.id)}
-                    onCheckedChange={() => handleModuleToggle(module.id)}
+                    onChange={() => handleModuleToggle(module.id)}
                     disabled={
                       !selectedModules.includes(module.id) &&
                       selectedModules.length >= 4
                     }
                   />
-                  <span className="text-xl">{module.icon}</span>
-                  <span className="font-medium text-gray-800">
+                  <Typography variant="h5">{module.icon}</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 500, color: "grey.800" }}>
                     {module.name}
-                  </span>
-                </label>
+                  </Typography>
+                </Box>
               ))}
-              <p className="text-sm text-gray-500 mt-4">
+              <Typography variant="body2" sx={{ color: "grey.500", mt: 2 }}>
                 已选择 {selectedModules.length}/4 个模块
-              </p>
+              </Typography>
             </CardContent>
           </Card>
 
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>选中模块概览</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <Card>
+            <CardHeader title="选中模块概览" />
+            <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {selectedModules.map((moduleId, index) => {
                 const moduleData =
                   mockComparisonData[
@@ -300,61 +308,67 @@ const BIComparisonPage = () => {
                   ];
                 const moduleInfo = modules.find((m) => m.id === moduleId);
                 return (
-                  <div
+                  <Box
                     key={moduleId}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      p: 2,
+                      bgcolor: "grey.50",
+                      borderRadius: 1,
+                    }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{
-                          backgroundColor: COLORS[index % COLORS.length],
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          bgcolor: COLORS[index % COLORS.length],
                         }}
                       />
-                      <span className="text-xl">{moduleInfo?.icon}</span>
-                      <span className="font-medium text-gray-800">
+                      <Typography variant="h5">{moduleInfo?.icon}</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 500, color: "grey.800" }}>
                         {moduleInfo?.name}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-gray-800">
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: "right" }}>
+                      <Typography variant="body1" sx={{ fontWeight: "bold", color: "grey.800" }}>
                         {moduleData?.metrics.total || 0}
-                      </div>
-                      <div className="text-xs text-gray-500">总量</div>
-                    </div>
-                  </div>
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "grey.500" }}>总量</Typography>
+                    </Box>
+                  </Box>
                 );
               })}
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
-        <div className="lg:col-span-2">
+        <Box>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>对比图表</CardTitle>
+            <CardHeader 
+              sx={{ 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "space-between",
+                pb: 0,
+              }}
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>对比图表</Typography>
               <Tabs
                 value={chartType}
-                onValueChange={(v) => setChartType(v as any)}
-                className="w-auto"
+                onChange={(_, v) => setChartType(v as "bar" | "line" | "pie" | "radar")}
+                sx={{ minWidth: 200 }}
               >
-                <TabsList className="grid grid-cols-4">
-                  <TabsTrigger value="bar">
-                    <BarChart3 className="w-4 h-4" />
-                  </TabsTrigger>
-                  <TabsTrigger value="line">
-                    <LineChartIcon className="w-4 h-4" />
-                  </TabsTrigger>
-                  <TabsTrigger value="pie">
-                    <PieChartIcon className="w-4 h-4" />
-                  </TabsTrigger>
-                  <TabsTrigger value="radar">
-                    <Radar className="w-4 h-4" />
-                  </TabsTrigger>
-                </TabsList>
+                <Tab icon={<BarChart3 sx={{ width: 16, height: 16 }} />} value="bar" />
+                <Tab icon={<LineChartIcon sx={{ width: 16, height: 16 }} />} value="line" />
+                <Tab icon={<PieChartIcon sx={{ width: 16, height: 16 }} />} value="pie" />
+                <Tab icon={<Radar sx={{ width: 16, height: 16 }} />} value="radar" />
               </Tabs>
             </CardHeader>
-            <CardContent>
+            <CardContent sx={{ mt: 2 }}>
               {chartType === "bar" && (
                 <BarChart
                   data={getComparisonData()}
@@ -385,64 +399,59 @@ const BIComparisonPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>关键指标对比</CardTitle>
-            </CardHeader>
+          <Card sx={{ mt: 3 }}>
+            <CardHeader title="关键指标对比" />
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left p-3 font-medium text-gray-600">
-                        指标
-                      </th>
+              <Paper sx={{ overflow: "auto" }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600, color: "grey.600" }}>指标</TableCell>
                       {selectedModules.map((moduleId, index) => (
-                        <th
+                        <TableCell
                           key={moduleId}
-                          className="p-3 font-medium"
-                          style={{ color: COLORS[index % COLORS.length] }}
+                          sx={{ fontWeight: 600, color: COLORS[index % COLORS.length] }}
                         >
                           {modules.find((m) => m.id === moduleId)?.name}
-                        </th>
+                        </TableCell>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
                     {[
                       { key: "total", label: "总量" },
                       { key: "active", label: "活跃" },
                       { key: "completed", label: "完成" },
                       { key: "efficiency", label: "效率(%)" },
                     ].map((metric) => (
-                      <tr key={metric.key} className="border-b border-gray-100">
-                        <td className="p-3 text-gray-600">{metric.label}</td>
+                      <TableRow key={metric.key}>
+                        <TableCell sx={{ color: "grey.600" }}>{metric.label}</TableCell>
                         {selectedModules.map((moduleId) => {
                           const moduleData =
                             mockComparisonData[
                               moduleId as keyof typeof mockComparisonData
                             ];
                           return (
-                            <td
+                            <TableCell
                               key={moduleId}
-                              className="p-3 text-gray-800 font-medium"
+                              sx={{ fontWeight: 500, color: "grey.800" }}
                             >
                               {moduleData?.metrics[
                                 metric.key as keyof typeof moduleData.metrics
                               ] || "-"}
-                            </td>
+                            </TableCell>
                           );
                         })}
-                      </tr>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </TableBody>
+                </Table>
+              </Paper>
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

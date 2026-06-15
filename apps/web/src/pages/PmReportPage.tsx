@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Filter } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import { Input } from "../components/ui/input";
+import { Button, Card, CardContent, TextField, MenuItem } from "@mui/material";
 import ProjectReport from "../components/pm/ProjectReport";
 import { pmApi } from "../api/pm";
 import type { PmStatistics, ProjectBenefit } from "../api/pm";
@@ -102,41 +93,39 @@ const PmReportPage: React.FC = () => {
                   <Filter className="w-4 h-4 text-gray-500" />
                   <span className="text-sm text-gray-600">时间范围:</span>
                 </div>
-                <Select
+                <TextField
+                  select
                   value={selectedPeriod}
-                  onValueChange={setSelectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  sx={{ width: 144 }}
+                  placeholder="选择周期"
                 >
-                  <SelectTrigger className="w-36">
-                    <SelectValue placeholder="选择周期" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部时间</SelectItem>
-                    <SelectItem value="week">本周</SelectItem>
-                    <SelectItem value="month">本月</SelectItem>
-                    <SelectItem value="quarter">本季度</SelectItem>
-                    <SelectItem value="year">本年</SelectItem>
-                    <SelectItem value="custom">自定义</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <MenuItem value="all">全部时间</MenuItem>
+                  <MenuItem value="week">本周</MenuItem>
+                  <MenuItem value="month">本月</MenuItem>
+                  <MenuItem value="quarter">本季度</MenuItem>
+                  <MenuItem value="year">本年</MenuItem>
+                  <MenuItem value="custom">自定义</MenuItem>
+                </TextField>
                 {selectedPeriod === "custom" && (
                   <div className="flex items-center gap-2">
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
+                      <TextField
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="pl-10 w-36"
+                        sx={{ width: 144 }}
                       />
                     </div>
                     <span className="text-gray-400">至</span>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
+                      <TextField
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="pl-10 w-36"
+                        sx={{ width: 144 }}
                       />
                     </div>
                   </div>

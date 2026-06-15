@@ -365,7 +365,7 @@ const BIModuleDetailPage = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/bi/analytics">
-            <Button variant="ghost" size="icon" className="rounded-lg">
+            <Button variant="text" size="small" sx={{ borderRadius: 1 }}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
@@ -385,7 +385,7 @@ const BIModuleDetailPage = () => {
             <span>最后更新: {new Date().toLocaleString("zh-CN")}</span>
           </div>
           <Button
-            variant="outline"
+            variant="outlined"
             onClick={handleRefresh}
             disabled={isRefreshing}
           >

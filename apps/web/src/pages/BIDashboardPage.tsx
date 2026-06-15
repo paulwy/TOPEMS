@@ -144,7 +144,6 @@ const ActivityItem = ({
         p: 1.5,
         borderRadius: 2,
         border: "1px solid",
-        borderColor: "divider",
         transition: "all 0.3s",
         "&:hover": {
           boxShadow: 1,
@@ -421,7 +420,7 @@ const BIDashboardPage = () => {
               </Typography>
             </Box>
             <Button
-              variant="outline"
+              variant="outlined"
               onClick={handleRefresh}
               disabled={isRefreshing}
               sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
@@ -457,7 +456,6 @@ const BIDashboardPage = () => {
               icon={metric.icon}
               color={metric.color}
               sparklineData={(metric as any).sparklineData}
-              className="animate-fade-in"
             />
           ))}
         </Box>

@@ -512,7 +512,7 @@ const AIPage: React.FC = () => {
             </Box>
           ),
           thead: ({ ...props }) => (
-            <thead style={{ bgcolor: "#f3f4f6" }} {...props} />
+            <thead style={{ backgroundColor: "#f3f4f6" }} {...props} />
           ),
           th: ({ ...props }) => (
             <th

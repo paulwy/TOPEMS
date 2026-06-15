@@ -240,7 +240,7 @@ const ReportPage: React.FC = () => {
       QMS: "success",
       EHS: "error",
       SRM: "secondary",
-      PDM: "primary",
+      PDM: "info",
     };
     return colors[module] || "default";
   };

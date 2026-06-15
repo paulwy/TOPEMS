@@ -66,10 +66,7 @@ import type {
   CreateMaintenanceRecordRequest,
   LimsStatistics,
 } from "../api/lims";
-import {
-  limsApi,
-  BatchOperationResult,
-} from "../api/lims";
+import { limsApi, BatchOperationResult } from "../api/lims";
 import { ModuleGate } from "../components/PermissionGate";
 import { MODULES } from "../config/permissions";
 import { MetricCard } from "../components/MetricCard";
@@ -368,7 +365,9 @@ const Limspage: React.FC = () => {
     return iconMap[type] || iconMap["default"];
   };
 
-  const getInstrumentStatusColor = (status: string): {
+  const getInstrumentStatusColor = (
+    status: string,
+  ): {
     bgcolor: string;
     color: string;
   } => {
@@ -1181,7 +1180,8 @@ const Limspage: React.FC = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    background: "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
+                    background:
+                      "linear-gradient(135deg, #a855f7 0%, #ec4899 100%)",
                     borderRadius: 1.5,
                     display: "flex",
                     alignItems: "center",
@@ -1310,7 +1310,11 @@ const Limspage: React.FC = () => {
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4, px: { xs: 2, sm: 3 } }}>
         {/* Tabs */}
-        <Paper sx={{ mb: 3, p: 0.5, borderRadius: 2 }} elevation={0} variant="outlined">
+        <Paper
+          sx={{ mb: 3, p: 0.5, borderRadius: 2 }}
+          elevation={0}
+          variant="outlined"
+        >
           <Tabs
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
@@ -1416,10 +1420,26 @@ const Limspage: React.FC = () => {
               title="样品状态分布"
               type="pie"
               data={[
-                { name: "待测试", value: stats.pending_samples, color: "#F59E0B" },
-                { name: "测试中", value: stats.testing_samples, color: "#EC4899" },
-                { name: "已完成", value: stats.completed_samples, color: "#00C897" },
-                { name: "已终止", value: stats.cancelled_samples, color: "#6B7280" },
+                {
+                  name: "待测试",
+                  value: stats.pending_samples,
+                  color: "#F59E0B",
+                },
+                {
+                  name: "测试中",
+                  value: stats.testing_samples,
+                  color: "#EC4899",
+                },
+                {
+                  name: "已完成",
+                  value: stats.completed_samples,
+                  color: "#00C897",
+                },
+                {
+                  name: "已终止",
+                  value: stats.cancelled_samples,
+                  color: "#6B7280",
+                },
               ].filter((d) => d.value > 0)}
               dataKey="value"
               nameKey="name"
@@ -1430,10 +1450,26 @@ const Limspage: React.FC = () => {
               title="仪器状态分布"
               type="pie"
               data={[
-                { name: "正常", value: stats.normal_instruments, color: "#00C897" },
-                { name: "校准中", value: stats.calibration_instruments, color: "#F59E0B" },
-                { name: "维修中", value: stats.maintenance_instruments, color: "#EF4444" },
-                { name: "停用", value: stats.disabled_instruments, color: "#6B7280" },
+                {
+                  name: "正常",
+                  value: stats.normal_instruments,
+                  color: "#00C897",
+                },
+                {
+                  name: "校准中",
+                  value: stats.calibration_instruments,
+                  color: "#F59E0B",
+                },
+                {
+                  name: "维修中",
+                  value: stats.maintenance_instruments,
+                  color: "#EF4444",
+                },
+                {
+                  name: "停用",
+                  value: stats.disabled_instruments,
+                  color: "#6B7280",
+                },
               ].filter((d) => d.value > 0)}
               dataKey="value"
               nameKey="name"
@@ -1446,9 +1482,19 @@ const Limspage: React.FC = () => {
           <Grid item xs={12} sm={6} md={activeTab === "instruments" ? 6 : 3}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
                       {activeTab === "samples"
                         ? "样品总数"
                         : activeTab === "processes"
@@ -1497,14 +1543,29 @@ const Limspage: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <Card sx={{ borderRadius: 2 }} variant="outlined">
                   <CardContent>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
                           进行中
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="primary">
+                        <Typography
+                          variant="h4"
+                          fontWeight="bold"
+                          color="primary"
+                        >
                           {activeTab === "tasks"
-                            ? safeTasks.filter((t) => t.status === "进行中").length
+                            ? safeTasks.filter((t) => t.status === "进行中")
+                                .length
                             : "-"}
                         </Typography>
                       </Box>
@@ -1528,14 +1589,29 @@ const Limspage: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <Card sx={{ borderRadius: 2 }} variant="outlined">
                   <CardContent>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
                           已完成
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="success.main">
+                        <Typography
+                          variant="h4"
+                          fontWeight="bold"
+                          color="success.main"
+                        >
                           {activeTab === "tasks"
-                            ? safeTasks.filter((t) => t.status === "已完成").length
+                            ? safeTasks.filter((t) => t.status === "已完成")
+                                .length
                             : "-"}
                         </Typography>
                       </Box>
@@ -1563,13 +1639,30 @@ const Limspage: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <Card sx={{ borderRadius: 2 }} variant="outlined">
                   <CardContent>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
                           正常
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" color="success.main">
-                          {safeInstruments.filter((i) => i.status === "正常").length}
+                        <Typography
+                          variant="h4"
+                          fontWeight="bold"
+                          color="success.main"
+                        >
+                          {
+                            safeInstruments.filter((i) => i.status === "正常")
+                              .length
+                          }
                         </Typography>
                       </Box>
                       <Box
@@ -1592,13 +1685,30 @@ const Limspage: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <Card sx={{ borderRadius: 2 }} variant="outlined">
                   <CardContent>
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 1 }}
+                        >
                           需维护
                         </Typography>
-                        <Typography variant="h4" fontWeight="bold" sx={{ color: "#ea580c" }}>
-                          {safeInstruments.filter((i) => i.status === "维修中").length}
+                        <Typography
+                          variant="h4"
+                          fontWeight="bold"
+                          sx={{ color: "#ea580c" }}
+                        >
+                          {
+                            safeInstruments.filter((i) => i.status === "维修中")
+                              .length
+                          }
                         </Typography>
                       </Box>
                       <Box
@@ -1708,15 +1818,35 @@ const Limspage: React.FC = () => {
                           "&:last-of-type": { borderBottom: 0 },
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flex: 1 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: 2,
+                              flex: 1,
+                            }}
+                          >
                             <Checkbox
                               checked={selectedSampleIds.has(sample.id)}
                               onChange={() => toggleSampleSelect(sample.id)}
                               sx={{ pt: 0.5 }}
                             />
                             <Box sx={{ flex: 1 }}>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1.5,
+                                  mb: 1,
+                                }}
+                              >
                                 <Typography variant="h6" fontWeight="semibold">
                                   {sample.name}
                                 </Typography>
@@ -1730,19 +1860,41 @@ const Limspage: React.FC = () => {
                                   }}
                                 />
                               </Box>
-                              <Typography color="text.secondary" sx={{ mb: 1.5 }}>
+                              <Typography
+                                color="text.secondary"
+                                sx={{ mb: 1.5 }}
+                              >
                                 {sample.description}
                               </Typography>
-                              <Stack direction="row" spacing={3} sx={{ fontSize: 14 }} color="text.secondary">
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Stack
+                                direction="row"
+                                spacing={3}
+                                sx={{ fontSize: 14 }}
+                                color="text.secondary"
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                  }}
+                                >
                                   <Clock size={16} />
                                   接收日期:{" "}
-                                  {new Date(sample.received_date).toLocaleDateString("zh-CN")}
+                                  {new Date(
+                                    sample.received_date,
+                                  ).toLocaleDateString("zh-CN")}
                                 </Box>
                               </Stack>
                             </Box>
                           </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
                             <Button
                               size="small"
                               color="primary"
@@ -1818,19 +1970,38 @@ const Limspage: React.FC = () => {
                         "&:last-of-type": { borderBottom: 0 },
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <Box sx={{ flex: 1 }}>
-                          <Typography variant="h6" fontWeight="semibold" sx={{ mb: 1 }}>
+                          <Typography
+                            variant="h6"
+                            fontWeight="semibold"
+                            sx={{ mb: 1 }}
+                          >
                             {process.name}
                           </Typography>
                           <Typography color="text.secondary" sx={{ mb: 2 }}>
                             {process.description}
                           </Typography>
-                          <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                          <Stack
+                            direction="row"
+                            spacing={1.5}
+                            flexWrap="wrap"
+                            useFlexGap
+                          >
                             {(process.steps || []).map((step, idx) => (
                               <Box
                                 key={step.id}
-                                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
                               >
                                 <Avatar
                                   sx={{
@@ -1848,13 +2019,21 @@ const Limspage: React.FC = () => {
                                   {step.name}
                                 </Typography>
                                 {idx < process.steps.length - 1 && (
-                                  <Typography color="text.disabled">→</Typography>
+                                  <Typography color="text.disabled">
+                                    →
+                                  </Typography>
                                 )}
                               </Box>
                             ))}
                           </Stack>
                         </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Button
                             size="small"
                             color="secondary"
@@ -1907,9 +2086,22 @@ const Limspage: React.FC = () => {
                           "&:last-of-type": { borderBottom: 0 },
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            justifyContent: "space-between",
+                          }}
+                        >
                           <Box sx={{ flex: 1 }}>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                                mb: 1,
+                              }}
+                            >
                               <Typography variant="h6" fontWeight="semibold">
                                 {getSampleName(task.sample_id)}
                               </Typography>
@@ -1926,19 +2118,42 @@ const Limspage: React.FC = () => {
                             <Typography color="text.secondary" sx={{ mb: 1 }}>
                               检验流程: {getProcessName(task.process_id)}
                             </Typography>
-                            <Typography variant="body2" color="secondary.main" sx={{ mb: 1.5 }}>
+                            <Typography
+                              variant="body2"
+                              color="secondary.main"
+                              sx={{ mb: 1.5 }}
+                            >
                               当前步骤: {getCurrentStepName(task)}
                             </Typography>
-                            <Stack direction="row" spacing={3} sx={{ fontSize: 14 }} color="text.secondary">
+                            <Stack
+                              direction="row"
+                              spacing={3}
+                              sx={{ fontSize: 14 }}
+                              color="text.secondary"
+                            >
                               <span>检验员: {task.inspector}</span>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                }}
+                              >
                                 <Clock size={16} />
                                 开始:{" "}
-                                {new Date(task.started_at).toLocaleDateString("zh-CN")}
+                                {new Date(task.started_at).toLocaleDateString(
+                                  "zh-CN",
+                                )}
                               </Box>
                             </Stack>
                           </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
                             <Button
                               size="small"
                               color="primary"
@@ -1973,7 +2188,9 @@ const Limspage: React.FC = () => {
         <Container maxWidth="xl" sx={{ pb: 4, px: { xs: 2, sm: 3 } }}>
           <Paper sx={{ borderRadius: 2 }} variant="outlined">
             <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-              <Typography variant="h6" fontWeight="semibold">仪器设备</Typography>
+              <Typography variant="h6" fontWeight="semibold">
+                仪器设备
+              </Typography>
             </Box>
             <Box>
               {safeInstruments.length === 0 ? (
@@ -1987,7 +2204,9 @@ const Limspage: React.FC = () => {
                 </Box>
               ) : (
                 safeInstruments.map((instrument) => {
-                  const statusColor = getInstrumentStatusColor(instrument.status);
+                  const statusColor = getInstrumentStatusColor(
+                    instrument.status,
+                  );
                   const TypeIcon = getInstrumentTypeIcon(instrument.type);
                   return (
                     <Box
@@ -2001,8 +2220,21 @@ const Limspage: React.FC = () => {
                         "&:last-of-type": { borderBottom: 0 },
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, flex: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 2,
+                            flex: 1,
+                          }}
+                        >
                           <Box
                             sx={{
                               width: 48,
@@ -2018,7 +2250,15 @@ const Limspage: React.FC = () => {
                             <TypeIcon size={24} />
                           </Box>
                           <Box sx={{ flex: 1 }}>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1, flexWrap: "wrap" }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                                mb: 1,
+                                flexWrap: "wrap",
+                              }}
+                            >
                               <Typography variant="h6" fontWeight="semibold">
                                 {instrument.name}
                               </Typography>
@@ -2034,7 +2274,10 @@ const Limspage: React.FC = () => {
                               <Chip
                                 size="small"
                                 label={instrument.type}
-                                sx={{ bgcolor: "grey.100", color: "text.secondary" }}
+                                sx={{
+                                  bgcolor: "grey.100",
+                                  color: "text.secondary",
+                                }}
                               />
                             </Box>
                             <Typography color="text.secondary" sx={{ mb: 1.5 }}>
@@ -2044,7 +2287,14 @@ const Limspage: React.FC = () => {
                                   instrument.model ||
                                   "暂无型号信息"}
                             </Typography>
-                            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ fontSize: 14 }} color="text.secondary">
+                            <Stack
+                              direction="row"
+                              spacing={2}
+                              flexWrap="wrap"
+                              useFlexGap
+                              sx={{ fontSize: 14 }}
+                              color="text.secondary"
+                            >
                               <span>
                                 编号:{" "}
                                 <span style={{ fontFamily: "monospace" }}>
@@ -2055,23 +2305,42 @@ const Limspage: React.FC = () => {
                                 <span>位置: {instrument.location}</span>
                               )}
                               {instrument.responsible_person && (
-                                <span>负责人: {instrument.responsible_person}</span>
+                                <span>
+                                  负责人: {instrument.responsible_person}
+                                </span>
                               )}
                               {instrument.next_calibration_date && (
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "#ea580c" }}>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                    color: "#ea580c",
+                                  }}
+                                >
                                   <AlertCircle size={16} />
                                   下次校准:{" "}
-                                  {new Date(instrument.next_calibration_date).toLocaleDateString("zh-CN")}
+                                  {new Date(
+                                    instrument.next_calibration_date,
+                                  ).toLocaleDateString("zh-CN")}
                                 </Box>
                               )}
                             </Stack>
                           </Box>
                         </Box>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Button
                             size="small"
                             color="primary"
-                            onClick={() => openInstrumentDetailModal(instrument)}
+                            onClick={() =>
+                              openInstrumentDetailModal(instrument)
+                            }
                           >
                             查看详情
                           </Button>
@@ -2095,7 +2364,9 @@ const Limspage: React.FC = () => {
                             <IconButton
                               size="small"
                               color="error"
-                              onClick={() => handleDeleteInstrument(instrument.id)}
+                              onClick={() =>
+                                handleDeleteInstrument(instrument.id)
+                              }
                             >
                               <Trash2 size={20} />
                             </IconButton>
@@ -2121,7 +2392,13 @@ const Limspage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Typography variant="h6" fontWeight="semibold">
             {isEditing ? "编辑样品" : "新建样品"}
           </Typography>
@@ -2142,7 +2419,9 @@ const Limspage: React.FC = () => {
               required
               fullWidth
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="请输入样品名称"
             />
             <TextField
@@ -2151,7 +2430,9 @@ const Limspage: React.FC = () => {
               multiline
               rows={4}
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="请输入样品描述"
             />
             <FormControl fullWidth>
@@ -2159,7 +2440,9 @@ const Limspage: React.FC = () => {
               <Select
                 value={formData.status}
                 label="样品状态"
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
               >
                 <MenuItem value="待测试">待测试</MenuItem>
                 <MenuItem value="测试中">测试中</MenuItem>
@@ -2183,7 +2466,13 @@ const Limspage: React.FC = () => {
             variant="contained"
             color="secondary"
           >
-            {creating ? (isEditing ? "更新中..." : "创建中...") : isEditing ? "更新" : "创建"}
+            {creating
+              ? isEditing
+                ? "更新中..."
+                : "创建中..."
+              : isEditing
+                ? "更新"
+                : "创建"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -2195,8 +2484,16 @@ const Limspage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight="semibold">新建检验任务</Typography>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" fontWeight="semibold">
+            新建检验任务
+          </Typography>
           <IconButton size="small" onClick={() => setShowTaskModal(false)}>
             <X size={20} />
           </IconButton>
@@ -2209,7 +2506,10 @@ const Limspage: React.FC = () => {
                 value={taskFormData.sample_id}
                 label="样品"
                 onChange={(e) =>
-                  setTaskFormData({ ...taskFormData, sample_id: e.target.value })
+                  setTaskFormData({
+                    ...taskFormData,
+                    sample_id: e.target.value,
+                  })
                 }
               >
                 <MenuItem value="">请选择样品</MenuItem>
@@ -2226,7 +2526,10 @@ const Limspage: React.FC = () => {
                 value={taskFormData.process_id}
                 label="检验流程"
                 onChange={(e) =>
-                  setTaskFormData({ ...taskFormData, process_id: e.target.value })
+                  setTaskFormData({
+                    ...taskFormData,
+                    process_id: e.target.value,
+                  })
                 }
               >
                 <MenuItem value="">请选择流程</MenuItem>
@@ -2275,8 +2578,16 @@ const Limspage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight="semibold">完成检验步骤</Typography>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" fontWeight="semibold">
+            完成检验步骤
+          </Typography>
           <IconButton size="small" onClick={() => setShowRecordModal(false)}>
             <X size={20} />
           </IconButton>
@@ -2310,7 +2621,10 @@ const Limspage: React.FC = () => {
               rows={2}
               value={recordFormData.conclusion}
               onChange={(e) =>
-                setRecordFormData({ ...recordFormData, conclusion: e.target.value })
+                setRecordFormData({
+                  ...recordFormData,
+                  conclusion: e.target.value,
+                })
               }
               placeholder="请输入检验结论"
             />
@@ -2320,7 +2634,10 @@ const Limspage: React.FC = () => {
               fullWidth
               value={recordFormData.inspector}
               onChange={(e) =>
-                setRecordFormData({ ...recordFormData, inspector: e.target.value })
+                setRecordFormData({
+                  ...recordFormData,
+                  inspector: e.target.value,
+                })
               }
               placeholder="请输入检验员姓名"
             />
@@ -2356,7 +2673,14 @@ const Limspage: React.FC = () => {
         <DialogContent sx={{ p: 3 }}>
           {selectedTask && (
             <Box>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 3,
+                }}
+              >
                 <Typography variant="h5" fontWeight="semibold">
                   检验任务详情
                 </Typography>
@@ -2367,7 +2691,14 @@ const Limspage: React.FC = () => {
 
               <Stack spacing={3}>
                 <Box>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
                     <Typography variant="h6" fontWeight="semibold">
                       {getSampleName(selectedTask.sample_id)}
                     </Typography>
@@ -2390,17 +2721,32 @@ const Limspage: React.FC = () => {
                   </Typography>
                 </Box>
 
-                <Grid container spacing={2} sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}>
+                <Grid
+                  container
+                  spacing={2}
+                  sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}
+                >
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       任务编号
                     </Typography>
-                    <Typography fontWeight="medium" sx={{ fontFamily: "monospace", fontSize: 14 }}>
+                    <Typography
+                      fontWeight="medium"
+                      sx={{ fontFamily: "monospace", fontSize: 14 }}
+                    >
                       {selectedTask.id}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       检验员
                     </Typography>
                     <Typography fontWeight="medium">
@@ -2408,20 +2754,32 @@ const Limspage: React.FC = () => {
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       开始时间
                     </Typography>
                     <Typography fontWeight="medium">
-                      {new Date(selectedTask.started_at).toLocaleString("zh-CN")}
+                      {new Date(selectedTask.started_at).toLocaleString(
+                        "zh-CN",
+                      )}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       完成时间
                     </Typography>
                     <Typography fontWeight="medium">
                       {selectedTask.completed_at
-                        ? new Date(selectedTask.completed_at).toLocaleString("zh-CN")
+                        ? new Date(selectedTask.completed_at).toLocaleString(
+                            "zh-CN",
+                          )
                         : "-"}
                     </Typography>
                   </Grid>
@@ -2432,7 +2790,10 @@ const Limspage: React.FC = () => {
                     检验记录
                   </Typography>
                   {selectedTaskRecords.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
+                    <Typography
+                      color="text.secondary"
+                      sx={{ textAlign: "center", py: 2 }}
+                    >
                       暂无检验记录
                     </Typography>
                   ) : (
@@ -2443,19 +2804,35 @@ const Limspage: React.FC = () => {
                           variant="outlined"
                           sx={{ p: 2, borderRadius: 1.5 }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                            <Typography fontWeight="medium" color="secondary.main">
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              fontWeight="medium"
+                              color="secondary.main"
+                            >
                               步骤 {idx + 1}: {record.step_name}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {new Date(record.recorded_at).toLocaleString("zh-CN")}
+                              {new Date(record.recorded_at).toLocaleString(
+                                "zh-CN",
+                              )}
                             </Typography>
                           </Box>
                           <Typography sx={{ mb: 1 }}>
                             结果: {record.result}
                           </Typography>
                           {record.conclusion && (
-                            <Typography variant="body2" color="success.main" sx={{ mb: 1 }}>
+                            <Typography
+                              variant="body2"
+                              color="success.main"
+                              sx={{ mb: 1 }}
+                            >
                               结论: {record.conclusion}
                             </Typography>
                           )}
@@ -2474,7 +2851,10 @@ const Limspage: React.FC = () => {
                     onClick={() => setShowDetailModal(false)}
                     variant="contained"
                     color="inherit"
-                    sx={{ bgcolor: "grey.100", "&:hover": { bgcolor: "grey.200" } }}
+                    sx={{
+                      bgcolor: "grey.100",
+                      "&:hover": { bgcolor: "grey.200" },
+                    }}
                   >
                     关闭
                   </Button>
@@ -2496,13 +2876,23 @@ const Limspage: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: 2 } }}
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight="semibold">批量创建样品</Typography>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" fontWeight="semibold">
+            批量创建样品
+          </Typography>
           <IconButton
             size="small"
             onClick={() => {
               setShowBatchCreateModal(false);
-              setBatchCreateData([{ name: "", description: "", status: "待测试" }]);
+              setBatchCreateData([
+                { name: "", description: "", status: "待测试" },
+              ]);
             }}
           >
             <X size={20} />
@@ -2511,8 +2901,19 @@ const Limspage: React.FC = () => {
         <DialogContent dividers sx={{ maxHeight: "60vh" }}>
           <Stack spacing={2}>
             {batchCreateData.map((item, index) => (
-              <Paper key={index} variant="outlined" sx={{ p: 2, borderRadius: 1.5 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
+              <Paper
+                key={index}
+                variant="outlined"
+                sx={{ p: 2, borderRadius: 1.5 }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1.5,
+                  }}
+                >
                   <Typography fontWeight="medium">样品 {index + 1}</Typography>
                   {batchCreateData.length > 1 && (
                     <IconButton
@@ -2532,7 +2933,9 @@ const Limspage: React.FC = () => {
                       fullWidth
                       size="small"
                       value={item.name}
-                      onChange={(e) => updateBatchCreateItem(index, "name", e.target.value)}
+                      onChange={(e) =>
+                        updateBatchCreateItem(index, "name", e.target.value)
+                      }
                       placeholder="请输入样品名称"
                     />
                   </Grid>
@@ -2542,7 +2945,9 @@ const Limspage: React.FC = () => {
                       <Select
                         value={item.status}
                         label="状态"
-                        onChange={(e) => updateBatchCreateItem(index, "status", e.target.value)}
+                        onChange={(e) =>
+                          updateBatchCreateItem(index, "status", e.target.value)
+                        }
                       >
                         <MenuItem value="待测试">待测试</MenuItem>
                         <MenuItem value="测试中">测试中</MenuItem>
@@ -2560,7 +2965,13 @@ const Limspage: React.FC = () => {
                     multiline
                     rows={2}
                     value={item.description}
-                    onChange={(e) => updateBatchCreateItem(index, "description", e.target.value)}
+                    onChange={(e) =>
+                      updateBatchCreateItem(
+                        index,
+                        "description",
+                        e.target.value,
+                      )
+                    }
                     placeholder="请输入样品描述"
                   />
                 </Box>
@@ -2581,7 +2992,9 @@ const Limspage: React.FC = () => {
           <Button
             onClick={() => {
               setShowBatchCreateModal(false);
-              setBatchCreateData([{ name: "", description: "", status: "待测试" }]);
+              setBatchCreateData([
+                { name: "", description: "", status: "待测试" },
+              ]);
             }}
             variant="outlined"
             color="inherit"
@@ -2611,8 +3024,16 @@ const Limspage: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: 2 } }}
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight="semibold">导入样品</Typography>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" fontWeight="semibold">
+            导入样品
+          </Typography>
           <IconButton
             size="small"
             onClick={() => {
@@ -2626,7 +3047,14 @@ const Limspage: React.FC = () => {
         </DialogTitle>
         <DialogContent dividers sx={{ maxHeight: "70vh" }}>
           <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
               <Typography variant="body2" fontWeight="medium">
                 选择 CSV 文件
               </Typography>
@@ -2708,20 +3136,40 @@ const Limspage: React.FC = () => {
               <Typography variant="body2" fontWeight="medium" sx={{ mb: 1.5 }}>
                 文件预览（前5行）
               </Typography>
-              <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, overflow: "hidden" }}>
-                <Box component="table" sx={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
+              <Box
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1.5,
+                  overflow: "hidden",
+                }}
+              >
+                <Box
+                  component="table"
+                  sx={{
+                    width: "100%",
+                    fontSize: 14,
+                    borderCollapse: "collapse",
+                  }}
+                >
                   <tbody>
                     {importPreview.map((row, rowIndex) => (
                       <tr
                         key={rowIndex}
-                        style={{ background: rowIndex === 0 ? "#f8fafc" : "transparent" }}
+                        style={{
+                          background:
+                            rowIndex === 0 ? "#f8fafc" : "transparent",
+                        }}
                       >
                         {row.map((cell, cellIndex) => (
                           <td
                             key={cellIndex}
                             style={{
                               padding: "8px 12px",
-                              borderBottom: rowIndex === importPreview.length - 1 ? "none" : "1px solid #e2e8f0",
+                              borderBottom:
+                                rowIndex === importPreview.length - 1
+                                  ? "none"
+                                  : "1px solid #e2e8f0",
                             }}
                           >
                             {cell}
@@ -2739,24 +3187,53 @@ const Limspage: React.FC = () => {
             variant="outlined"
             sx={{ p: 2, bgcolor: "primary.50", borderColor: "primary.200" }}
           >
-            <Typography variant="body2" fontWeight="medium" color="primary.dark" sx={{ mb: 1 }}>
+            <Typography
+              variant="body2"
+              fontWeight="medium"
+              color="primary.dark"
+              sx={{ mb: 1 }}
+            >
               CSV 格式说明
             </Typography>
             <Stack spacing={0.5} sx={{ fontSize: 14 }} color="primary.dark">
               <Typography variant="body2">
-                • <Box component="code" sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}>name</Box>
+                •{" "}
+                <Box
+                  component="code"
+                  sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}
+                >
+                  name
+                </Box>
                 ：样品名称（必填）
               </Typography>
               <Typography variant="body2">
-                • <Box component="code" sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}>description</Box>
+                •{" "}
+                <Box
+                  component="code"
+                  sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}
+                >
+                  description
+                </Box>
                 ：样品描述
               </Typography>
               <Typography variant="body2">
-                • <Box component="code" sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}>status</Box>
+                •{" "}
+                <Box
+                  component="code"
+                  sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}
+                >
+                  status
+                </Box>
                 ：状态（待测试、测试中、已完成、已终止）
               </Typography>
               <Typography variant="body2">
-                • <Box component="code" sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}>project_id</Box>
+                •{" "}
+                <Box
+                  component="code"
+                  sx={{ bgcolor: "primary.100", px: 0.5, borderRadius: 0.5 }}
+                >
+                  project_id
+                </Box>
                 ：关联项目ID
               </Typography>
             </Stack>
@@ -2799,7 +3276,13 @@ const Limspage: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: 2 } }}
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Typography variant="h6" fontWeight="semibold">
             {isEditingInstrument ? "编辑仪器" : "添加仪器"}
           </Typography>
@@ -2823,7 +3306,10 @@ const Limspage: React.FC = () => {
                   fullWidth
                   value={instrumentFormData.name}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, name: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      name: e.target.value,
+                    })
                   }
                   placeholder="请输入仪器名称"
                 />
@@ -2835,7 +3321,10 @@ const Limspage: React.FC = () => {
                   fullWidth
                   value={instrumentFormData.code}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, code: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      code: e.target.value,
+                    })
                   }
                   placeholder="请输入仪器编号"
                 />
@@ -2849,7 +3338,10 @@ const Limspage: React.FC = () => {
                     value={instrumentFormData.type}
                     label="仪器类型"
                     onChange={(e) =>
-                      setInstrumentFormData({ ...instrumentFormData, type: e.target.value })
+                      setInstrumentFormData({
+                        ...instrumentFormData,
+                        type: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="">请选择类型</MenuItem>
@@ -2867,7 +3359,10 @@ const Limspage: React.FC = () => {
                     value={instrumentFormData.status}
                     label="仪器状态"
                     onChange={(e) =>
-                      setInstrumentFormData({ ...instrumentFormData, status: e.target.value })
+                      setInstrumentFormData({
+                        ...instrumentFormData,
+                        status: e.target.value,
+                      })
                     }
                   >
                     <MenuItem value="正常">正常</MenuItem>
@@ -2885,7 +3380,10 @@ const Limspage: React.FC = () => {
                   fullWidth
                   value={instrumentFormData.manufacturer}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, manufacturer: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      manufacturer: e.target.value,
+                    })
                   }
                   placeholder="请输入制造商"
                 />
@@ -2896,7 +3394,10 @@ const Limspage: React.FC = () => {
                   fullWidth
                   value={instrumentFormData.model}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, model: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      model: e.target.value,
+                    })
                   }
                   placeholder="请输入型号"
                 />
@@ -2909,7 +3410,10 @@ const Limspage: React.FC = () => {
                   fullWidth
                   value={instrumentFormData.serial_number}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, serial_number: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      serial_number: e.target.value,
+                    })
                   }
                   placeholder="请输入序列号"
                 />
@@ -2920,7 +3424,10 @@ const Limspage: React.FC = () => {
                   fullWidth
                   value={instrumentFormData.location}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, location: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      location: e.target.value,
+                    })
                   }
                   placeholder="请输入存放位置"
                 />
@@ -2935,7 +3442,10 @@ const Limspage: React.FC = () => {
                   InputLabelProps={{ shrink: true }}
                   value={instrumentFormData.purchase_date}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, purchase_date: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      purchase_date: e.target.value,
+                    })
                   }
                 />
               </Grid>
@@ -2947,7 +3457,10 @@ const Limspage: React.FC = () => {
                   InputLabelProps={{ shrink: true }}
                   value={instrumentFormData.calibration_date}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, calibration_date: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      calibration_date: e.target.value,
+                    })
                   }
                 />
               </Grid>
@@ -2961,7 +3474,10 @@ const Limspage: React.FC = () => {
                   InputLabelProps={{ shrink: true }}
                   value={instrumentFormData.next_calibration_date}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, next_calibration_date: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      next_calibration_date: e.target.value,
+                    })
                   }
                 />
               </Grid>
@@ -2971,7 +3487,10 @@ const Limspage: React.FC = () => {
                   fullWidth
                   value={instrumentFormData.responsible_person}
                   onChange={(e) =>
-                    setInstrumentFormData({ ...instrumentFormData, responsible_person: e.target.value })
+                    setInstrumentFormData({
+                      ...instrumentFormData,
+                      responsible_person: e.target.value,
+                    })
                   }
                   placeholder="请输入负责人"
                 />
@@ -2984,7 +3503,10 @@ const Limspage: React.FC = () => {
               rows={3}
               value={instrumentFormData.description}
               onChange={(e) =>
-                setInstrumentFormData({ ...instrumentFormData, description: e.target.value })
+                setInstrumentFormData({
+                  ...instrumentFormData,
+                  description: e.target.value,
+                })
               }
               placeholder="请输入备注说明"
             />
@@ -3003,7 +3525,9 @@ const Limspage: React.FC = () => {
           </Button>
           <Button
             onClick={
-              isEditingInstrument ? handleUpdateInstrument : handleCreateInstrument
+              isEditingInstrument
+                ? handleUpdateInstrument
+                : handleCreateInstrument
             }
             disabled={creating}
             variant="contained"
@@ -3034,7 +3558,14 @@ const Limspage: React.FC = () => {
         <DialogContent sx={{ p: 3 }}>
           {selectedInstrument && (
             <Box>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 3,
+                }}
+              >
                 <Typography variant="h5" fontWeight="semibold">
                   仪器详情
                 </Typography>
@@ -3045,7 +3576,14 @@ const Limspage: React.FC = () => {
 
               <Stack spacing={3}>
                 <Box>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
                     <Typography variant="h6" fontWeight="semibold">
                       {selectedInstrument.name}
                     </Typography>
@@ -3053,8 +3591,12 @@ const Limspage: React.FC = () => {
                       size="small"
                       label={selectedInstrument.status}
                       sx={{
-                        bgcolor: getInstrumentStatusColor(selectedInstrument.status).bgcolor,
-                        color: getInstrumentStatusColor(selectedInstrument.status).color,
+                        bgcolor: getInstrumentStatusColor(
+                          selectedInstrument.status,
+                        ).bgcolor,
+                        color: getInstrumentStatusColor(
+                          selectedInstrument.status,
+                        ).color,
                         fontWeight: 500,
                         px: 1.5,
                       }}
@@ -3081,9 +3623,17 @@ const Limspage: React.FC = () => {
                   </Typography>
                 </Box>
 
-                <Grid container spacing={2} sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}>
+                <Grid
+                  container
+                  spacing={2}
+                  sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}
+                >
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       制造商
                     </Typography>
                     <Typography fontWeight="medium">
@@ -3091,7 +3641,11 @@ const Limspage: React.FC = () => {
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       型号
                     </Typography>
                     <Typography fontWeight="medium">
@@ -3099,15 +3653,26 @@ const Limspage: React.FC = () => {
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       序列号
                     </Typography>
-                    <Typography fontWeight="medium" sx={{ fontFamily: "monospace" }}>
+                    <Typography
+                      fontWeight="medium"
+                      sx={{ fontFamily: "monospace" }}
+                    >
                       {selectedInstrument.serial_number || "-"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       存放位置
                     </Typography>
                     <Typography fontWeight="medium">
@@ -3115,7 +3680,11 @@ const Limspage: React.FC = () => {
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       负责人
                     </Typography>
                     <Typography fontWeight="medium">
@@ -3123,54 +3692,86 @@ const Limspage: React.FC = () => {
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       购买日期
                     </Typography>
                     <Typography fontWeight="medium">
                       {selectedInstrument.purchase_date
-                        ? new Date(selectedInstrument.purchase_date).toLocaleDateString("zh-CN")
+                        ? new Date(
+                            selectedInstrument.purchase_date,
+                          ).toLocaleDateString("zh-CN")
                         : "-"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       上次校准
                     </Typography>
                     <Typography fontWeight="medium">
                       {selectedInstrument.calibration_date
-                        ? new Date(selectedInstrument.calibration_date).toLocaleDateString("zh-CN")
+                        ? new Date(
+                            selectedInstrument.calibration_date,
+                          ).toLocaleDateString("zh-CN")
                         : "-"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       下次校准
                     </Typography>
                     <Typography
                       fontWeight="medium"
                       sx={{
-                        color: selectedInstrument.next_calibration_date ? "#ea580c" : "text.primary",
+                        color: selectedInstrument.next_calibration_date
+                          ? "#ea580c"
+                          : "text.primary",
                       }}
                     >
                       {selectedInstrument.next_calibration_date
-                        ? new Date(selectedInstrument.next_calibration_date).toLocaleDateString("zh-CN")
+                        ? new Date(
+                            selectedInstrument.next_calibration_date,
+                          ).toLocaleDateString("zh-CN")
                         : "-"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       创建时间
                     </Typography>
                     <Typography fontWeight="medium">
-                      {new Date(selectedInstrument.created_at).toLocaleString("zh-CN")}
+                      {new Date(selectedInstrument.created_at).toLocaleString(
+                        "zh-CN",
+                      )}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       更新时间
                     </Typography>
                     <Typography fontWeight="medium">
-                      {new Date(selectedInstrument.updated_at).toLocaleString("zh-CN")}
+                      {new Date(selectedInstrument.updated_at).toLocaleString(
+                        "zh-CN",
+                      )}
                     </Typography>
                   </Grid>
                 </Grid>
@@ -3180,7 +3781,10 @@ const Limspage: React.FC = () => {
                     维护记录
                   </Typography>
                   {instrumentMaintenanceRecords.length === 0 ? (
-                    <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
+                    <Typography
+                      color="text.secondary"
+                      sx={{ textAlign: "center", py: 2 }}
+                    >
                       暂无维护记录
                     </Typography>
                   ) : (
@@ -3191,18 +3795,38 @@ const Limspage: React.FC = () => {
                           variant="outlined"
                           sx={{ p: 2, borderRadius: 1.5 }}
                         >
-                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                            <Typography fontWeight="medium" sx={{ color: "#0f766e" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              fontWeight="medium"
+                              sx={{ color: "#0f766e" }}
+                            >
                               {record.maintenance_type}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {new Date(record.performed_at).toLocaleDateString("zh-CN")}
+                              {new Date(record.performed_at).toLocaleDateString(
+                                "zh-CN",
+                              )}
                             </Typography>
                           </Box>
                           <Typography sx={{ mb: 1 }}>
                             {record.description}
                           </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14 }} color="text.secondary">
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              fontSize: 14,
+                            }}
+                            color="text.secondary"
+                          >
                             <span>执行人: {record.performed_by}</span>
                             {record.cost && <span>费用: ¥{record.cost}</span>}
                           </Box>
@@ -3213,7 +3837,9 @@ const Limspage: React.FC = () => {
                 </Box>
 
                 <Divider />
-                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5 }}>
+                <Box
+                  sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5 }}
+                >
                   <Button
                     onClick={() => {
                       setShowInstrumentDetailModal(false);
@@ -3238,7 +3864,10 @@ const Limspage: React.FC = () => {
                     onClick={() => setShowInstrumentDetailModal(false)}
                     variant="contained"
                     color="inherit"
-                    sx={{ bgcolor: "grey.100", "&:hover": { bgcolor: "grey.200" } }}
+                    sx={{
+                      bgcolor: "grey.100",
+                      "&:hover": { bgcolor: "grey.200" },
+                    }}
                   >
                     关闭
                   </Button>
@@ -3257,9 +3886,20 @@ const Limspage: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: 2 } }}
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight="semibold">添加维护记录</Typography>
-          <IconButton size="small" onClick={() => setShowMaintenanceModal(false)}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="h6" fontWeight="semibold">
+            添加维护记录
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => setShowMaintenanceModal(false)}
+          >
             <X size={20} />
           </IconButton>
         </DialogTitle>
@@ -3267,7 +3907,11 @@ const Limspage: React.FC = () => {
           {selectedInstrument && (
             <Stack spacing={3}>
               <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 1 }}
+                >
                   仪器名称
                 </Typography>
                 <Typography sx={{ color: "#0f766e" }} fontWeight="medium">

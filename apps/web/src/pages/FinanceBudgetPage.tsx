@@ -474,14 +474,12 @@ const FinanceBudgetPage: React.FC = () => {
               placeholder="搜索预算类型或年度..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
-                    </InputAdornment>
-                  ),
-                },
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
+                  </InputAdornment>
+                ),
               }}
               sx={{ flex: 1 }}
             />

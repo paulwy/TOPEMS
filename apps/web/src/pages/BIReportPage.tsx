@@ -42,6 +42,7 @@ const ReportCard = ({
   onDelete: () => void;
   onPreview: () => void;
 }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const getTypeColor = (type: string) => {
     switch (type) {
       case "daily":
@@ -124,8 +125,8 @@ const ReportCard = ({
         {/* Actions */}
         <div className="flex items-center gap-2">
           <Button
-            size="sm"
-            variant="outline"
+            size="small"
+            variant="outlined"
             onClick={onPreview}
             className="flex-1"
           >
@@ -133,35 +134,37 @@ const ReportCard = ({
             预览
           </Button>
           <Button
-            size="sm"
-            variant="outline"
+            size="small"
+            variant="outlined"
             onClick={onExport}
             className="flex-1"
           >
             <Download className="w-3.5 h-3.5 mr-1.5" />
             导出
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost" className="p-2">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
-                <Edit className="w-4 h-4 mr-2" />
-                编辑
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="cursor-pointer text-red-600"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                删除
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            size="small"
+            variant="text"
+            className="p-2"
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+          >
+            <MoreVertical className="w-4 h-4" />
+          </Button>
         </div>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+        >
+          <MenuItem onClick={() => { onEdit(); setAnchorEl(null); }}>
+            <Edit className="w-4 h-4 mr-2" />
+            编辑
+          </MenuItem>
+          <MenuItem onClick={() => { onDelete(); setAnchorEl(null); }} sx={{ color: "red" }}>
+            <Trash2 className="w-4 h-4 mr-2" />
+            删除
+          </MenuItem>
+        </Menu>
       </div>
     </div>
   );
@@ -287,7 +290,7 @@ const BIReportPage = () => {
         </div>
         <div className="flex items-center gap-3">
           <Link to="/bi/dashboard">
-            <Button variant="secondary">返回数据大屏</Button>
+            <Button variant="text">返回数据大屏</Button>
           </Link>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
@@ -302,11 +305,12 @@ const BIReportPage = () => {
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
+              <TextField
                 placeholder="搜索报表名称..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                size="small"
               />
             </div>
             <div className="flex items-center gap-2">

@@ -115,7 +115,10 @@ type TabType =
 
 type ModalType = "create" | "edit" | "view";
 
-const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+const STATUS_STYLES: Record<
+  string,
+  { bg: string; color: string; label: string }
+> = {
   in_stock: { bg: "success.light", color: "success.dark", label: "库存充足" },
   low_stock: { bg: "warning.light", color: "warning.dark", label: "库存不足" },
   out_of_stock: { bg: "error.light", color: "error.dark", label: "已售罄" },
@@ -153,7 +156,9 @@ const AdministrationPage: React.FC = () => {
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]);
 
   const [officeSupplies, setOfficeSupplies] = useState<OfficeSupply[]>([]);
   const [meetingRooms, setMeetingRooms] = useState<MeetingRoom[]>([]);
@@ -290,7 +295,11 @@ const AdministrationPage: React.FC = () => {
   };
 
   const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-    const config = STATUS_STYLES[status] || { bg: "grey.200", color: "grey.700", label: status };
+    const config = STATUS_STYLES[status] || {
+      bg: "grey.200",
+      color: "grey.700",
+      label: status,
+    };
     return (
       <Chip
         size="small"
@@ -321,12 +330,16 @@ const AdministrationPage: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    const pendingLeaves = leaveRequests.filter((l) => l.status === "pending").length;
+    const pendingLeaves = leaveRequests.filter(
+      (l) => l.status === "pending",
+    ).length;
     const today = new Date().toISOString().split("T")[0];
     const todayAttendance = attendanceRecords.filter((a) =>
       a.check_in_time?.includes(today),
     ).length;
-    const pendingExpenses = expenseClaims.filter((e) => e.status === "pending").length;
+    const pendingExpenses = expenseClaims.filter(
+      (e) => e.status === "pending",
+    ).length;
 
     return {
       employees: employees.length,
@@ -343,12 +356,48 @@ const AdministrationPage: React.FC = () => {
     <Stack spacing={3}>
       <Grid container spacing={2}>
         {[
-          { label: "员工数量", value: stats.employees, color: "purple", icon: <Users />, bg: "#f3e8ff" },
-          { label: "待审批请假", value: stats.pendingLeaves, color: "orange", icon: <EventNote />, bg: "#ffedd5" },
-          { label: "今日考勤", value: stats.todayAttendance, color: "teal", icon: <UserCheck />, bg: "#ccfbf1" },
-          { label: "待审批报销", value: stats.pendingExpenses, color: "indigo", icon: <AttachMoney />, bg: "#e0e7ff" },
-          { label: "会议室", value: stats.meetingRooms, color: "blue", icon: <Calendar />, bg: "#dbeafe" },
-          { label: "车辆", value: stats.vehicles, color: "red", icon: <Car />, bg: "#fee2e2" },
+          {
+            label: "员工数量",
+            value: stats.employees,
+            color: "purple",
+            icon: <Users />,
+            bg: "#f3e8ff",
+          },
+          {
+            label: "待审批请假",
+            value: stats.pendingLeaves,
+            color: "orange",
+            icon: <EventNote />,
+            bg: "#ffedd5",
+          },
+          {
+            label: "今日考勤",
+            value: stats.todayAttendance,
+            color: "teal",
+            icon: <UserCheck />,
+            bg: "#ccfbf1",
+          },
+          {
+            label: "待审批报销",
+            value: stats.pendingExpenses,
+            color: "indigo",
+            icon: <AttachMoney />,
+            bg: "#e0e7ff",
+          },
+          {
+            label: "会议室",
+            value: stats.meetingRooms,
+            color: "blue",
+            icon: <Calendar />,
+            bg: "#dbeafe",
+          },
+          {
+            label: "车辆",
+            value: stats.vehicles,
+            color: "red",
+            icon: <Car />,
+            bg: "#fee2e2",
+          },
         ].map((stat) => (
           <Grid item xs={6} sm={4} md={2} key={stat.label}>
             <Card
@@ -360,16 +409,33 @@ const AdministrationPage: React.FC = () => {
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
                     {stat.label}
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
                     {stat.value}
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: stat.bg, color: `${stat.color}.600`, width: 48, height: 48 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: stat.bg,
+                    color: `${stat.color}.600`,
+                    width: 48,
+                    height: 48,
+                  }}
+                >
                   {stat.icon}
                 </Avatar>
               </Box>
@@ -382,7 +448,14 @@ const AdministrationPage: React.FC = () => {
         <Grid item xs={12} lg={6}>
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
             <CardContent>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
+              >
                 <Typography variant="h6" fontWeight="bold">
                   近期公告
                 </Typography>
@@ -407,9 +480,19 @@ const AdministrationPage: React.FC = () => {
                       "&:hover": { bgcolor: "grey.100" },
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                      }}
+                    >
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle2" fontWeight="medium" sx={{ mb: 0.5 }}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="medium"
+                          sx={{ mb: 0.5 }}
+                        >
                           {announcement.title}
                         </Typography>
                         <Typography
@@ -425,8 +508,15 @@ const AdministrationPage: React.FC = () => {
                         >
                           {announcement.content}
                         </Typography>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
-                          <UserCheck sx={{ fontSize: 12, color: "text.secondary" }} />
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          sx={{ mt: 1 }}
+                        >
+                          <UserCheck
+                            sx={{ fontSize: 12, color: "text.secondary" }}
+                          />
                           <Typography variant="caption" color="text.secondary">
                             {announcement.author}
                           </Typography>
@@ -450,7 +540,14 @@ const AdministrationPage: React.FC = () => {
         <Grid item xs={12} lg={6}>
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
             <CardContent>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
+              >
                 <Typography variant="h6" fontWeight="bold">
                   今日会议
                 </Typography>
@@ -464,7 +561,11 @@ const AdministrationPage: React.FC = () => {
               </Box>
               <Stack spacing={1.5}>
                 {meetingBookings
-                  .filter((b) => b.start_time.includes(new Date().toISOString().split("T")[0]))
+                  .filter((b) =>
+                    b.start_time.includes(
+                      new Date().toISOString().split("T")[0],
+                    ),
+                  )
                   .map((booking) => (
                     <Box
                       key={booking.id}
@@ -477,9 +578,19 @@ const AdministrationPage: React.FC = () => {
                         "&:hover": { bgcolor: "grey.100" },
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle2" fontWeight="medium" sx={{ mb: 0.5 }}>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight="medium"
+                            sx={{ mb: 0.5 }}
+                          >
                             {booking.title}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
@@ -511,7 +622,10 @@ const AdministrationPage: React.FC = () => {
       return true;
     });
     const totalPages = Math.ceil(filteredData.length / pageSize);
-    const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const paginatedData = filteredData.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize,
+    );
 
     return (
       <Stack spacing={2}>
@@ -574,7 +688,9 @@ const AdministrationPage: React.FC = () => {
               justifyContent: "space-between",
             }}
           >
-            <Typography color="primary.dark">已选择 {selectedIds.length} 条记录</Typography>
+            <Typography color="primary.dark">
+              已选择 {selectedIds.length} 条记录
+            </Typography>
             <Button
               color="error"
               size="small"
@@ -603,7 +719,14 @@ const AdministrationPage: React.FC = () => {
                     }),
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Checkbox
                         checked={selectedIds.includes(supply.id)}
@@ -617,7 +740,9 @@ const AdministrationPage: React.FC = () => {
                     <StatusBadge status={supply.status} />
                   </Box>
                   <Stack spacing={1}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         分类:
                       </Typography>
@@ -625,7 +750,9 @@ const AdministrationPage: React.FC = () => {
                         {supply.category}
                       </Typography>
                     </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         库存:
                       </Typography>
@@ -637,20 +764,24 @@ const AdministrationPage: React.FC = () => {
                             supply.status === "low_stock"
                               ? "warning.main"
                               : supply.status === "out_of_stock"
-                              ? "error.main"
-                              : "primary.main",
+                                ? "error.main"
+                                : "primary.main",
                         }}
                       >
                         {supply.quantity} {supply.unit}
                       </Typography>
                     </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         单价:
                       </Typography>
                       <Typography variant="body2">¥{supply.price}</Typography>
                     </Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
+                    >
                       <Typography variant="body2" color="text.secondary">
                         位置:
                       </Typography>
@@ -658,7 +789,9 @@ const AdministrationPage: React.FC = () => {
                     </Box>
                   </Stack>
                   <Divider sx={{ my: 2 }} />
-                  <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}
+                  >
                     <Tooltip title="编辑">
                       <IconButton
                         size="small"
@@ -700,10 +833,17 @@ const AdministrationPage: React.FC = () => {
 
         {totalPages > 1 && (
           <Card sx={{ p: 1.5, boxShadow: 1, borderRadius: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography variant="body2" color="text.secondary">
                 显示 {(currentPage - 1) * pageSize + 1} -{" "}
-                {Math.min(currentPage * pageSize, filteredData.length)} 条，共 {filteredData.length} 条
+                {Math.min(currentPage * pageSize, filteredData.length)} 条，共{" "}
+                {filteredData.length} 条
               </Typography>
               <Stack direction="row" spacing={1}>
                 <Button
@@ -714,21 +854,25 @@ const AdministrationPage: React.FC = () => {
                 >
                   上一页
                 </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    size="small"
-                    variant={currentPage === page ? "contained" : "outlined"}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </Button>
-                ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      size="small"
+                      variant={currentPage === page ? "contained" : "outlined"}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ),
+                )}
                 <Button
                   size="small"
                   variant="outlined"
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                 >
                   下一页
                 </Button>
@@ -759,7 +903,11 @@ const AdministrationPage: React.FC = () => {
             <Filter />
           </IconButton>
         </Stack>
-        <Button variant="contained" startIcon={<Plus />} onClick={() => handleOpenModal("create")}>
+        <Button
+          variant="contained"
+          startIcon={<Plus />}
+          onClick={() => handleOpenModal("create")}
+        >
           预约会议室
         </Button>
       </Box>
@@ -776,7 +924,14 @@ const AdministrationPage: React.FC = () => {
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
+              >
                 <Typography variant="h6" fontWeight="bold">
                   {room.name}
                 </Typography>
@@ -797,13 +952,19 @@ const AdministrationPage: React.FC = () => {
                   </Typography>
                   <Typography variant="body2">{room.location}</Typography>
                 </Box>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+                <Box
+                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}
+                >
                   {room.facilities?.map((facility, idx) => (
                     <Chip
                       key={idx}
                       label={facility}
                       size="small"
-                      sx={{ bgcolor: "grey.100", color: "text.primary", fontWeight: 500 }}
+                      sx={{
+                        bgcolor: "grey.100",
+                        color: "text.primary",
+                        fontWeight: 500,
+                      }}
                     />
                   ))}
                 </Box>
@@ -820,7 +981,14 @@ const AdministrationPage: React.FC = () => {
 
       <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
         <CardContent>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
             <Typography variant="h6" fontWeight="bold">
               今日会议预约
             </Typography>
@@ -834,7 +1002,9 @@ const AdministrationPage: React.FC = () => {
           </Box>
           <Stack spacing={1.5}>
             {meetingBookings
-              .filter((b) => b.start_time.includes(new Date().toISOString().split("T")[0]))
+              .filter((b) =>
+                b.start_time.includes(new Date().toISOString().split("T")[0]),
+              )
               .map((booking) => (
                 <Box
                   key={booking.id}
@@ -847,7 +1017,13 @@ const AdministrationPage: React.FC = () => {
                     "&:hover": { bgcolor: "grey.100" },
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="subtitle2" fontWeight="medium">
                         {booking.title}
@@ -893,7 +1069,11 @@ const AdministrationPage: React.FC = () => {
             <Filter />
           </IconButton>
         </Stack>
-        <Button variant="contained" startIcon={<Plus />} onClick={() => handleOpenModal("create")}>
+        <Button
+          variant="contained"
+          startIcon={<Plus />}
+          onClick={() => handleOpenModal("create")}
+        >
           新增车辆
         </Button>
       </Box>
@@ -909,7 +1089,14 @@ const AdministrationPage: React.FC = () => {
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}
+              >
                 <Typography variant="h6" fontWeight="bold">
                   {vehicle.plate_number}
                 </Typography>
@@ -944,7 +1131,9 @@ const AdministrationPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     上次保养:
                   </Typography>
-                  <Typography variant="body2">{vehicle.last_service}</Typography>
+                  <Typography variant="body2">
+                    {vehicle.last_service}
+                  </Typography>
                 </Box>
               </Stack>
               <Divider sx={{ my: 2 }} />
@@ -1002,33 +1191,54 @@ const AdministrationPage: React.FC = () => {
               <Table>
                 <TableHead sx={{ bgcolor: "grey.50" }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>员工</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>日期</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>签到时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>签退时间</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>状态</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      员工
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      日期
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      签到时间
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      签退时间
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      状态
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {attendanceRecords.length > 0 ? (
                     attendanceRecords.slice(0, 10).map((record) => (
                       <TableRow key={record.id} hover>
-                        <TableCell>{record.employee_name || "未知员工"}</TableCell>
-                        <TableCell>{record.check_in_time?.split("T")[0] || "-"}</TableCell>
                         <TableCell>
-                          {record.check_in_time?.split("T")[1]?.slice(0, 8) || "-"}
+                          {record.employee_name || "未知员工"}
                         </TableCell>
                         <TableCell>
-                          {record.check_out_time?.split("T")[1]?.slice(0, 8) || "-"}
+                          {record.check_in_time?.split("T")[0] || "-"}
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={record.attendance_status || "checked_in"} />
+                          {record.check_in_time?.split("T")[1]?.slice(0, 8) ||
+                            "-"}
+                        </TableCell>
+                        <TableCell>
+                          {record.check_out_time?.split("T")[1]?.slice(0, 8) ||
+                            "-"}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge
+                            status={record.attendance_status || "checked_in"}
+                          />
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} sx={{ textAlign: "center", py: 8 }}>
+                      <TableCell
+                        colSpan={5}
+                        sx={{ textAlign: "center", py: 8 }}
+                      >
                         <Avatar
                           sx={{
                             width: 64,
@@ -1041,7 +1251,9 @@ const AdministrationPage: React.FC = () => {
                         >
                           <Clock sx={{ fontSize: 32 }} />
                         </Avatar>
-                        <Typography color="text.secondary">暂无考勤记录</Typography>
+                        <Typography color="text.secondary">
+                          暂无考勤记录
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -1058,23 +1270,51 @@ const AdministrationPage: React.FC = () => {
                 今日统计
               </Typography>
               <Stack spacing={2}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography color="text.secondary">应到人数</Typography>
                   <Typography variant="h5" fontWeight="bold">
                     {employees.length}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography color="text.secondary">已签到</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="success.main">
+                  <Typography
+                    variant="h5"
+                    fontWeight="bold"
+                    color="success.main"
+                  >
                     {stats.todayAttendance}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography color="text.secondary">出勤率</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="primary.main">
+                  <Typography
+                    variant="h5"
+                    fontWeight="bold"
+                    color="primary.main"
+                  >
                     {employees.length > 0
-                      ? Math.round((stats.todayAttendance / employees.length) * 100)
+                      ? Math.round(
+                          (stats.todayAttendance / employees.length) * 100,
+                        )
                       : 0}
                     %
                   </Typography>
@@ -1085,7 +1325,15 @@ const AdministrationPage: React.FC = () => {
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                 本月考勤趋势
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", height: 128, gap: 0.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                  height: 128,
+                  gap: 0.5,
+                }}
+              >
                 {[1, 2, 3, 4, 5, 6, 7].map((_, i) => (
                   <Box
                     key={i}
@@ -1102,7 +1350,11 @@ const AdministrationPage: React.FC = () => {
                   />
                 ))}
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, textAlign: "center" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 1, textAlign: "center" }}
+              >
                 近7天出勤情况
               </Typography>
             </Card>
@@ -1131,7 +1383,11 @@ const AdministrationPage: React.FC = () => {
             <Filter />
           </IconButton>
         </Stack>
-        <Button variant="contained" startIcon={<Plus />} onClick={() => handleOpenModal("create")}>
+        <Button
+          variant="contained"
+          startIcon={<Plus />}
+          onClick={() => handleOpenModal("create")}
+        >
           申请请假
         </Button>
       </Box>
@@ -1143,20 +1399,36 @@ const AdministrationPage: React.FC = () => {
               <Table>
                 <TableHead sx={{ bgcolor: "grey.50" }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>申请人</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>类型</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>开始日期</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>结束日期</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>天数</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>操作</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      申请人
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      类型
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      开始日期
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      结束日期
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      天数
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      状态
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      操作
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {leaveRequests.length > 0 ? (
                     leaveRequests.map((leave) => (
                       <TableRow key={leave.id} hover>
-                        <TableCell>{leave.employee_name || "未知员工"}</TableCell>
+                        <TableCell>
+                          {leave.employee_name || "未知员工"}
+                        </TableCell>
                         <TableCell>{leave.leave_type || "-"}</TableCell>
                         <TableCell>{leave.start_date || "-"}</TableCell>
                         <TableCell>{leave.end_date || "-"}</TableCell>
@@ -1197,7 +1469,10 @@ const AdministrationPage: React.FC = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} sx={{ textAlign: "center", py: 8 }}>
+                      <TableCell
+                        colSpan={7}
+                        sx={{ textAlign: "center", py: 8 }}
+                      >
                         <Avatar
                           sx={{
                             width: 64,
@@ -1210,7 +1485,9 @@ const AdministrationPage: React.FC = () => {
                         >
                           <Calendar sx={{ fontSize: 32 }} />
                         </Avatar>
-                        <Typography color="text.secondary">暂无请假申请</Typography>
+                        <Typography color="text.secondary">
+                          暂无请假申请
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -1227,22 +1504,54 @@ const AdministrationPage: React.FC = () => {
                 统计概览
               </Typography>
               <Stack spacing={1.5}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography color="text.secondary">待审批</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="warning.main">
+                  <Typography
+                    variant="h5"
+                    fontWeight="bold"
+                    color="warning.main"
+                  >
                     {leaveRequests.filter((l) => l.status === "pending").length}
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography color="text.secondary">已批准</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="success.main">
-                    {leaveRequests.filter((l) => l.status === "approved").length}
+                  <Typography
+                    variant="h5"
+                    fontWeight="bold"
+                    color="success.main"
+                  >
+                    {
+                      leaveRequests.filter((l) => l.status === "approved")
+                        .length
+                    }
                   </Typography>
                 </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <Typography color="text.secondary">已拒绝</Typography>
                   <Typography variant="h5" fontWeight="bold" color="error.main">
-                    {leaveRequests.filter((l) => l.status === "rejected").length}
+                    {
+                      leaveRequests.filter((l) => l.status === "rejected")
+                        .length
+                    }
                   </Typography>
                 </Box>
               </Stack>
@@ -1253,22 +1562,45 @@ const AdministrationPage: React.FC = () => {
               </Typography>
               <Stack spacing={1.5}>
                 {["事假", "病假", "年假", "调休"].map((type, idx) => (
-                  <Box key={type} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    key={type}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Typography variant="body2" color="text.secondary">
                       {type}
                     </Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Box sx={{ width: 96, bgcolor: "grey.200", borderRadius: 5, height: 10 }}>
+                      <Box
+                        sx={{
+                          width: 96,
+                          bgcolor: "grey.200",
+                          borderRadius: 5,
+                          height: 10,
+                        }}
+                      >
                         <Box
                           sx={{
                             height: "100%",
                             borderRadius: 5,
                             width: `${Math.random() * 60 + 20}%`,
-                            bgcolor: ["primary.main", "success.main", "warning.main", "secondary.main"][idx],
+                            bgcolor: [
+                              "primary.main",
+                              "success.main",
+                              "warning.main",
+                              "secondary.main",
+                            ][idx],
                           }}
                         />
                       </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ width: 32, textAlign: "right" }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ width: 32, textAlign: "right" }}
+                      >
                         {Math.floor(Math.random() * 10 + 1)}
                       </Typography>
                     </Stack>
@@ -1301,7 +1633,11 @@ const AdministrationPage: React.FC = () => {
             <Filter />
           </IconButton>
         </Stack>
-        <Button variant="contained" startIcon={<Plus />} onClick={() => handleOpenModal("create")}>
+        <Button
+          variant="contained"
+          startIcon={<Plus />}
+          onClick={() => handleOpenModal("create")}
+        >
           发布公告
         </Button>
       </Box>
@@ -1317,7 +1653,14 @@ const AdministrationPage: React.FC = () => {
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  mb: 1.5,
+                }}
+              >
                 <Typography
                   variant="h6"
                   fontWeight="bold"
@@ -1345,7 +1688,13 @@ const AdministrationPage: React.FC = () => {
                 {announcement.content}
               </Typography>
               <Divider sx={{ my: 1.5 }} />
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Stack direction="row" spacing={1} alignItems="center">
                   <UserCheck sx={{ fontSize: 16, color: "text.secondary" }} />
                   <Typography variant="body2" color="text.secondary">
@@ -1408,7 +1757,11 @@ const AdministrationPage: React.FC = () => {
             <Filter />
           </IconButton>
         </Stack>
-        <Button variant="contained" startIcon={<Plus />} onClick={() => handleOpenModal("create")}>
+        <Button
+          variant="contained"
+          startIcon={<Plus />}
+          onClick={() => handleOpenModal("create")}
+        >
           提交报销
         </Button>
       </Box>
@@ -1420,24 +1773,40 @@ const AdministrationPage: React.FC = () => {
               <Table>
                 <TableHead sx={{ bgcolor: "grey.50" }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>报销标题</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>申请人</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>类别</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>金额</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>状态</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>操作</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      报销标题
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      申请人
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      类别
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      金额
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      状态
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 14 }}>
+                      操作
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {expenseClaims.map((claim) => (
                     <TableRow key={claim.id} hover>
                       <TableCell>
-                        <Typography fontWeight="medium">{claim.title}</Typography>
+                        <Typography fontWeight="medium">
+                          {claim.title}
+                        </Typography>
                       </TableCell>
                       <TableCell>{claim.employee}</TableCell>
                       <TableCell>{claim.category}</TableCell>
                       <TableCell>
-                        <Typography fontWeight="medium">¥{claim.amount.toLocaleString()}</Typography>
+                        <Typography fontWeight="medium">
+                          ¥{claim.amount.toLocaleString()}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={claim.status} />
@@ -1488,12 +1857,27 @@ const AdministrationPage: React.FC = () => {
               <Stack spacing={1.5}>
                 {[
                   { label: "待审批", status: "pending", color: "warning.main" },
-                  { label: "已批准", status: "approved", color: "success.main" },
+                  {
+                    label: "已批准",
+                    status: "approved",
+                    color: "success.main",
+                  },
                   { label: "已拒绝", status: "rejected", color: "error.main" },
                 ].map((item) => (
-                  <Box key={item.status} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Box
+                    key={item.status}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
                     <Typography color="text.secondary">{item.label}</Typography>
-                    <Typography variant="h5" fontWeight="bold" color={item.color}>
+                    <Typography
+                      variant="h5"
+                      fontWeight="bold"
+                      color={item.color}
+                    >
                       ¥
                       {expenseClaims
                         .filter((e) => e.status === item.status)
@@ -1510,23 +1894,49 @@ const AdministrationPage: React.FC = () => {
               </Typography>
               <Stack spacing={1.5}>
                 {["差旅费", "办公费", "招待费", "培训费"].map((cat, idx) => (
-                  <Box key={cat} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    key={cat}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Typography variant="body2" color="text.secondary">
                       {cat}
                     </Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Box sx={{ width: 96, bgcolor: "grey.200", borderRadius: 5, height: 10 }}>
+                      <Box
+                        sx={{
+                          width: 96,
+                          bgcolor: "grey.200",
+                          borderRadius: 5,
+                          height: 10,
+                        }}
+                      >
                         <Box
                           sx={{
                             height: "100%",
                             borderRadius: 5,
                             width: `${Math.random() * 60 + 20}%`,
-                            bgcolor: ["primary.main", "success.main", "warning.main", "secondary.main"][idx],
+                            bgcolor: [
+                              "primary.main",
+                              "success.main",
+                              "warning.main",
+                              "secondary.main",
+                            ][idx],
                           }}
                         />
                       </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ width: 64, textAlign: "right" }}>
-                        ¥{Math.floor(Math.random() * 5000 + 500).toLocaleString()}
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ width: 64, textAlign: "right" }}
+                      >
+                        ¥
+                        {Math.floor(
+                          Math.random() * 5000 + 500,
+                        ).toLocaleString()}
                       </Typography>
                     </Stack>
                   </Box>
@@ -1552,16 +1962,37 @@ const AdministrationPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          display: { xs: "flex", md: "none" },
+          alignItems: "center",
+          justifyContent: "space-between",
+          p: 2,
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
         <Typography variant="h6">行政管理</Typography>
         <IconButton onClick={() => setMobileMenuOpen(true)}>
           <MoreVert />
         </IconButton>
       </Box>
 
-      <Drawer anchor="left" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)}>
+      <Drawer
+        anchor="left"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      >
         <Box sx={{ width: 280, p: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 3,
+            }}
+          >
             <Typography variant="h6">菜单</Typography>
             <IconButton onClick={() => setMobileMenuOpen(false)}>
               <X />
@@ -1636,11 +2067,26 @@ const AdministrationPage: React.FC = () => {
         )}
       </Box>
 
-      <Dialog open={showModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showModal}
+        onClose={handleCloseModal}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Typography variant="h6">
-              {currentModalType === "create" ? "创建" : currentModalType === "edit" ? "编辑" : "查看"}
+              {currentModalType === "create"
+                ? "创建"
+                : currentModalType === "edit"
+                  ? "编辑"
+                  : "查看"}
             </Typography>
             <IconButton onClick={handleCloseModal}>
               <X />
@@ -1653,7 +2099,9 @@ const AdministrationPage: React.FC = () => {
               fullWidth
               label="名称"
               value={formData.name || ""}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               disabled={currentModalType === "view"}
               placeholder="请输入名称"
             />
@@ -1661,7 +2109,9 @@ const AdministrationPage: React.FC = () => {
               fullWidth
               label="描述"
               value={formData.description || ""}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               disabled={currentModalType === "view"}
               multiline
               rows={3}
