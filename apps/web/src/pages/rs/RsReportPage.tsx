@@ -11,11 +11,11 @@ import {
   Divider,
 } from "@mui/material";
 import {
-  Analytics as AnalyticsIcon,
+  BarChart3 as AnalyticsIcon,
   TrendingUp as TrendingUpIcon,
-  Science as ScienceIcon,
+  Flask as ScienceIcon,
   Folder as FolderIcon,
-} from "@mui/icons-material";
+} from "lucide-react";
 
 const RsReportPage: React.FC = () => {
   const reportData = {

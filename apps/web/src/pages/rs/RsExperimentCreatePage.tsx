@@ -17,7 +17,7 @@ import {
   Divider,
   Stack,
 } from "@mui/material";
-import { Save as SaveIcon, Cancel as CancelIcon } from "@mui/icons-material";
+import { Save, X } from "lucide-react";
 
 const RsExperimentCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -305,7 +305,7 @@ const RsExperimentCreatePage: React.FC = () => {
               </Button>
               <Button
                 variant="contained"
-                startIcon={<SaveIcon />}
+                startIcon={<Save />}
                 onClick={handleSubmit}
               >
                 {isEdit ? "保存修改" : "创建试验"}

@@ -503,12 +503,14 @@ export const ListPageTemplate = <T extends Record<string, any>>({
             value={searchInput}
             onChange={handleSearch}
             sx={{ minWidth: 200 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search style={{ width: 18, height: 18 }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search style={{ width: 18, height: 18 }} />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
         )}

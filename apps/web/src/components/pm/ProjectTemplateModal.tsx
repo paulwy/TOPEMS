@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import type { ProjectTemplate } from "./ProjectTemplateCard";
 import type { CreateProjectRequest } from "../../api/pm";
 
@@ -64,118 +67,112 @@ const ProjectTemplateModal: React.FC<ProjectTemplateModalProps> = ({
   if (!template) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>使用模板创建项目</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 mt-4">
-          <div>
-            <Label htmlFor="template-name">模板名称</Label>
-            <Input
-              id="template-name"
-              value={template.name}
-              disabled
-              className="mt-1 bg-gray-50"
-            />
-          </div>
+    <Dialog open={open} onClose={() => onOpenChange(false)} maxWidth="sm" fullWidth>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogTitle>使用模板创建项目</DialogTitle>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary">模板名称</Typography>
+          <TextField
+            value={template.name}
+            disabled
+            size="small"
+            sx={{ bgcolor: 'grey.100' }}
+          />
 
-          <div>
-            <Label htmlFor="project-name">项目名称 *</Label>
-            <Input
-              id="project-name"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="输入项目名称"
-              className="mt-1"
-            />
-          </div>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>项目名称 *</Typography>
+          <TextField
+            value={formData.name}
+            onChange={(e) =>
+              setFormData({ ...formData, name: e.target.value })
+            }
+            placeholder="输入项目名称"
+            size="small"
+            sx={{ mt: 0.5 }}
+          />
 
-          <div>
-            <Label htmlFor="project-code">项目编号 *</Label>
-            <Input
-              id="project-code"
-              value={formData.code}
-              onChange={(e) =>
-                setFormData({ ...formData, code: e.target.value })
-              }
-              placeholder="输入项目编号"
-              className="mt-1"
-            />
-          </div>
+          <Typography variant="body2" color="text.secondary">项目编号 *</Typography>
+          <TextField
+            value={formData.code}
+            onChange={(e) =>
+              setFormData({ ...formData, code: e.target.value })
+            }
+            placeholder="输入项目编号"
+            size="small"
+            sx={{ mt: 0.5 }}
+          />
 
-          <div>
-            <Label htmlFor="project-description">项目描述</Label>
-            <Input
-              id="project-description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="输入项目描述"
-              className="mt-1"
-            />
-          </div>
+          <Typography variant="body2" color="text.secondary">项目描述</Typography>
+          <TextField
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            placeholder="输入项目描述"
+            size="small"
+            sx={{ mt: 0.5 }}
+          />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="start-date">开始日期</Label>
-              <Input
-                id="start-date"
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">开始日期</Typography>
+              <TextField
                 type="date"
                 value={formData.start_date}
                 onChange={(e) =>
                   setFormData({ ...formData, start_date: e.target.value })
                 }
-                className="mt-1"
+                size="small"
+                sx={{ mt: 0.5, '& input': { padding: 1 } }}
               />
-            </div>
-            <div>
-              <Label htmlFor="budget">预算</Label>
-              <Input
-                id="budget"
+            </Box>
+            <Box>
+              <Typography variant="body2" color="text.secondary">预算</Typography>
+              <TextField
                 type="number"
                 value={formData.budget}
                 onChange={(e) =>
                   setFormData({ ...formData, budget: e.target.value })
                 }
                 placeholder="输入预算"
-                className="mt-1"
+                size="small"
+                sx={{ mt: 0.5 }}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="flex items-center justify-center gap-4 py-4 bg-gray-50 rounded-lg">
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900">
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, py: 3, bgcolor: 'grey.100', borderRadius: 1 }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {template.phases_count}
-              </div>
-              <div className="text-sm text-gray-500">预设阶段</div>
-            </div>
-            <div className="w-px h-12 bg-gray-200" />
-            <div className="text-center">
-              <div className="text-xl font-bold text-gray-900">
+              </Typography>
+              <Typography variant="body2" color="text.secondary">预设阶段</Typography>
+            </Box>
+            <Box sx={{ width: '1px', height: 48, bgcolor: 'grey.300' }} />
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {template.estimated_days}天
-              </div>
-              <div className="text-sm text-gray-500">预估周期</div>
-            </div>
-          </div>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">预估周期</Typography>
+            </Box>
+          </Box>
 
-          <div className="flex gap-3 mt-6">
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
             <Button
-              variant="outline"
-              className="flex-1"
+              variant="outlined"
+              fullWidth
               onClick={() => onOpenChange(false)}
             >
               取消
             </Button>
-            <Button className="flex-1" onClick={handleSubmit}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleSubmit}
+            >
               创建项目
             </Button>
-          </div>
-        </div>
+          </Box>
+        </Box>
       </DialogContent>
     </Dialog>
   );

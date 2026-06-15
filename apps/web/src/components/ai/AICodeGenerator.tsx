@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Check, RefreshCw } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
+import { Button, Card, CardContent, Box, Typography, TextField } from "@mui/material";
 import { AIGenerateModal } from "./AIGenerateModal";
 import type { CodeGenerateContext } from "../../types/ai";
 
@@ -13,9 +12,7 @@ export interface AICodeGeneratorProps {
   existingCodes?: string[];
 }
 
-// 更完整的中文→英文/拼音首字母映射表
 const chineseToEnglish: Record<string, string> = {
-  // 常见部门名称
   研发: "RD",
   技术: "Tech",
   产品: "PM",
@@ -39,7 +36,6 @@ const chineseToEnglish: Record<string, string> = {
   品管: "Quality",
   物流: "Logistics",
   生产: "Production",
-  // 常见人员职位
   总监: "Director",
   经理: "Manager",
   主管: "Supervisor",
@@ -49,7 +45,6 @@ const chineseToEnglish: Record<string, string> = {
   助理: "Assistant",
   总经理: "GM",
   首席执行官: "CEO",
-  // 常见单字映射
   研: "R",
   发: "D",
   部: "D",
@@ -154,7 +149,6 @@ const pinyinInitials: Record<string, string> = {
   险: "X",
 };
 
-// 生成英文完整翻译的函数
 function translateToEnglish(name: string): string {
   if (!name) return "Department";
   const cleanName = name
@@ -163,7 +157,6 @@ function translateToEnglish(name: string): string {
   let result = "";
   let i = 0;
 
-  // 优先匹配多字符映射（最长优先）
   while (i < cleanName.length) {
     let matched = false;
     for (let len = 4; len >= 2; len--) {
@@ -193,25 +186,21 @@ function translateToEnglish(name: string): string {
   return result || "Department";
 }
 
-// 生成首字母缩写的函数
 function generateInitialsFromName(name: string, maxLength: number = 4): string {
   if (!name) return "DEF";
-  // 移除空格和特殊字符
   const cleanName = name
     .replace(/\s+/g, "")
     .replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, "");
   let initials = "";
   let i = 0;
 
-  // 优先匹配多字符映射（最长优先）
   while (i < cleanName.length && initials.length < maxLength) {
     let matched = false;
-    // 尝试匹配 2 字符、3 字符的组合
     for (let len = 3; len >= 2; len--) {
       if (i + len <= cleanName.length) {
         const sub = cleanName.substring(i, i + len);
         if (chineseToEnglish[sub]) {
-          initials += chineseToEnglish[sub].toUpperCase().substring(0, 3); // 最多取3字符
+          initials += chineseToEnglish[sub].toUpperCase().substring(0, 3);
           i += len;
           matched = true;
           break;
@@ -221,10 +210,8 @@ function generateInitialsFromName(name: string, maxLength: number = 4): string {
     if (!matched) {
       const char = cleanName[i];
       if (/[a-zA-Z]/.test(char)) {
-        // 英文字母直接用
         initials += char.toUpperCase();
       } else if (/[\u4e00-\u9fa5]/.test(char)) {
-        // 中文字符用映射表，优先用英文映射，其次用拼音首字母
         if (chineseToEnglish[char]) {
           initials += chineseToEnglish[char].toUpperCase().substring(0, 1);
         } else if (pinyinInitials[char]) {
@@ -237,7 +224,6 @@ function generateInitialsFromName(name: string, maxLength: number = 4): string {
     }
   }
 
-  // 如果没有生成足够的，补充默认值
   if (!initials) initials = "DEF";
   return initials.substring(0, maxLength);
 }
@@ -311,7 +297,6 @@ function generateMockCodes(
     codes = codeRules[entityType].examples(name, seq, year);
   }
 
-  // 过滤已存在的编码
   return codes.filter((code) => !existingCodes.includes(code));
 }
 
@@ -328,14 +313,12 @@ export function AICodeGenerator({
   const [regenerating, setRegenerating] = useState(false);
   const savedNameRef = useRef<string>("");
 
-  // 保存最新的有值的name
   useEffect(() => {
     if (context.name) {
       savedNameRef.current = context.name;
     }
   }, [context.name]);
 
-  // 初始化时或context变化时生成模拟数据
   useEffect(() => {
     if (isOpen) {
       const codes = generateMockCodes(
@@ -351,7 +334,6 @@ export function AICodeGenerator({
 
   const handleRegenerate = () => {
     setRegenerating(true);
-    // 模拟生成过程，增加一些延迟体验
     setTimeout(() => {
       const codes = generateMockCodes(
         context,
@@ -392,59 +374,83 @@ export function AICodeGenerator({
       onConfirm={customCode ? handleConfirm : undefined}
       confirmText="使用自定义编码"
     >
-      <div className="space-y-4">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {!context.name && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+          <Box
+            sx={{
+              p: 2,
+              backgroundColor: "warning.light",
+              border: 1,
+              borderColor: "warning.main",
+              borderRadius: 1,
+              fontSize: "small",
+              color: "warning.dark",
+            }}
+          >
             💡 提示：请先在名称中输入内容，才能生成个性化编码
-          </div>
+          </Box>
         )}
-        <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-gray-700">
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "text.secondary" }}>
             推荐编码 (点击即选)
-          </h4>
+          </Typography>
           <Button
-            variant="secondary"
-            size="sm"
+            variant="outlined"
+            size="small"
             onClick={handleRegenerate}
             disabled={regenerating}
+            startIcon={
+              <RefreshCw style={{ width: 16, height: 16 }} />
+            }
           >
-            <RefreshCw
-              className={`w-4 h-4 mr-1 ${regenerating ? "animate-spin" : ""}`}
-            />
             重新生成
           </Button>
-        </div>
+        </Box>
 
-        <div className="grid gap-3">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {suggestedCodes.map((code, index) => (
             <Card
               key={index}
-              className={`cursor-pointer transition-all hover:border-purple-400 hover:bg-purple-50`}
+              sx={{
+                cursor: "pointer",
+                transition: "all 0.2s",
+                "&:hover": {
+                  borderColor: "secondary.main",
+                  backgroundColor: "secondary.light",
+                },
+              }}
               onClick={(e) => handleSelectCode(e, code)}
             >
-              <CardContent className="p-4 flex items-center justify-between">
-                <code className="text-lg font-mono">{code}</code>
-                <Check className="w-5 h-5 text-purple-600 opacity-0 hover:opacity-100 transition-opacity" />
+              <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <code style={{ fontSize: "16px", fontFamily: "monospace" }}>{code}</code>
+                <Check
+                  style={{
+                    width: 20,
+                    height: 20,
+                    color: "#8b5cf6",
+                    opacity: 0,
+                    transition: "opacity 0.2s",
+                  }}
+                  className="hover:opacity-100"
+                />
               </CardContent>
             </Card>
           ))}
-        </div>
+        </Box>
 
-        <div className="pt-2">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">
+        <Box sx={{ pt: 1 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1.5 }}>
             或自定义编码
-          </h4>
-          <input
-            type="text"
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
             value={customCode}
-            onChange={(e) => {
-              setCustomCode(e.target.value);
-            }}
+            onChange={(e) => setCustomCode(e.target.value)}
             placeholder="输入自定义编码..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
     </AIGenerateModal>
   );
 }

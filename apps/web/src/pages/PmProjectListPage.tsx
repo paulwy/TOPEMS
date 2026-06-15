@@ -12,27 +12,9 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button, Card, CardContent, CardHeader, Badge, TextField, LinearProgress, Table, TableBody, TableCell, TableHead, TableRow, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import type { Project } from "../api/pm";
 import { pmApi } from "../api/pm";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { Input } from "../components/ui/input";
-import { Progress } from "../components/ui/progress";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
 import {
   Select,
   SelectContent,

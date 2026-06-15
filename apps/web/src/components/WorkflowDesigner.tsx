@@ -1,8 +1,5 @@
-import React, { useState, useRef } from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Separator } from "./ui/separator";
+import React, { useState, useRef, type ChangeEvent } from "react";
+import { Button, TextField, FormLabel, Divider } from "@mui/material";
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from "lucide-react";
 
 // --- Types ---
@@ -183,19 +180,19 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           流程设计器
         </h2>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
 
-        <div className="flex gap-1">
+        <div style={{ display: "flex", gap: 4 }}>
           {(
             ["start", "task", "approval", "condition", "end"] as NodeType[]
           ).map((type) => (
             <Button
               key={type}
               onClick={() => addNode(type)}
-              variant="secondary"
-              size="sm"
+              variant="outlined"
+              size="small"
+              startIcon={<Plus style={{ width: 16, height: 16 }} />}
             >
-              <Plus className="w-4 h-4 mr-1" />
               {type === "start"
                 ? "开始"
                 : type === "task"
@@ -209,29 +206,29 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           ))}
         </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
 
-        <div className="flex gap-1">
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
           <Button
             onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
-            variant="ghost"
-            size="icon"
+            variant="text"
+            size="small"
           >
-            <ZoomOut className="w-4 h-4" />
+            <ZoomOut style={{ width: 16, height: 16 }} />
           </Button>
-          <span className="text-sm w-12 text-center">
+          <span style={{ fontSize: 12, width: 48, textAlign: "center" }}>
             {Math.round(zoom * 100)}%
           </span>
           <Button
             onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
-            variant="ghost"
-            size="icon"
+            variant="text"
+            size="small"
           >
-            <ZoomIn className="w-4 h-4" />
+            <ZoomIn style={{ width: 16, height: 16 }} />
           </Button>
         </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Divider orientation="vertical" sx={{ height: 24, mx: 2 }} />
 
         <Button onClick={() => onSave?.(nodes, edges)} className="ml-auto">
           <Save className="w-4 h-4 mr-2" /> 保存
@@ -404,55 +401,51 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           </div>
           <div className="p-4 flex-1 overflow-y-auto">
             {selectedNode ? (
-              <div className="space-y-4">
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <Label className="text-gray-700 dark:text-gray-300">
-                    节点 ID
-                  </Label>
-                  <Input
+                  <FormLabel sx={{ color: "text.secondary" }}>节点 ID</FormLabel>
+                  <TextField
                     value={selectedNode.id}
                     disabled
-                    className="mt-1 bg-gray-100 dark:bg-gray-700"
+                    sx={{ marginTop: 1, backgroundColor: "background.disabled" }}
+                    fullWidth
                   />
                 </div>
                 <div>
-                  <Label className="text-gray-700 dark:text-gray-300">
-                    类型
-                  </Label>
-                  <div className="mt-1 text-sm px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                  <FormLabel sx={{ color: "text.secondary" }}>类型</FormLabel>
+                  <div style={{ marginTop: 8, fontSize: 14, padding: "4px 8px", borderRadius: 4, backgroundColor: "#f3f4f6" }}>
                     {selectedNode.type}
                   </div>
                 </div>
                 <div>
-                  <Label className="text-gray-700 dark:text-gray-300">
-                    标签
-                  </Label>
-                  <Input
+                  <FormLabel sx={{ color: "text.secondary" }}>标签</FormLabel>
+                  <TextField
                     value={selectedNode.label}
-                    onChange={(e) =>
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       updateNode(selectedNode.id, { label: e.target.value })
                     }
-                    className="mt-1"
+                    sx={{ marginTop: 1 }}
+                    fullWidth
                   />
                 </div>
                 <div>
-                  <Label className="text-gray-700 dark:text-gray-300">
-                    描述
-                  </Label>
-                  <Input
+                  <FormLabel sx={{ color: "text.secondary" }}>描述</FormLabel>
+                  <TextField
                     value={selectedNode.description || ""}
-                    onChange={(e) =>
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       updateNode(selectedNode.id, {
                         description: e.target.value,
                       })
                     }
-                    className="mt-1"
+                    sx={{ marginTop: 1 }}
+                    fullWidth
                   />
                 </div>
-                <Separator />
+                <Divider />
                 <Button
-                  variant="destructive"
-                  className="w-full"
+                  variant="contained"
+                  color="error"
+                  fullWidth
                   onClick={() => deleteNode(selectedNode.id)}
                 >
                   <Trash2 className="w-4 h-4 mr-2" /> 删除节点

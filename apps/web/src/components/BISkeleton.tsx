@@ -1,249 +1,262 @@
 import React from "react";
-import { Skeleton } from "./ui/skeleton";
-
-// BI Dashboard Skeleton Components
+import { Skeleton, Box } from "@mui/material";
 
 export const MetricCardSkeleton: React.FC<{ className?: string }> = ({
   className,
 }) => (
-  <div
-    className={`bg-white rounded-2xl shadow-sm p-6 border border-slate-200/60 ${className}`}
+  <Box
+    sx={{
+      backgroundColor: "white",
+      borderRadius: 2,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+      p: 3,
+      border: "1px solid rgba(0,0,0,0.06)",
+    }}
   >
-    <div className="flex items-start justify-between mb-4">
-      <div className="flex-1">
-        <Skeleton className="h-4 w-24 mb-2" />
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-4 w-20" />
-      </div>
-      <Skeleton className="w-12 h-12 rounded-xl" />
-    </div>
-    <div className="flex items-center justify-between">
-      <Skeleton className="h-4 w-16" />
-      <Skeleton className="h-8 w-20" />
-    </div>
-  </div>
+    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
+      <Box sx={{ flex: 1 }}>
+        <Skeleton sx={{ height: 16, width: 96, mb: 1 }} />
+        <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+        <Skeleton sx={{ height: 16, width: 80 }} />
+      </Box>
+      <Skeleton sx={{ width: 48, height: 48, borderRadius: 1.5 }} />
+    </Box>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Skeleton sx={{ height: 16, width: 64 }} />
+      <Skeleton sx={{ height: 32, width: 80 }} />
+    </Box>
+  </Box>
 );
 
 export const ChartCardSkeleton: React.FC<{
   height?: number;
   className?: string;
-}> = ({ height = 280, className }) => (
-  <div
-    className={`bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden ${className}`}
+}> = ({ height = 280 }) => (
+  <Box
+    sx={{
+      backgroundColor: "white",
+      borderRadius: 2,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+      border: "1px solid rgba(0,0,0,0.06)",
+      overflow: "hidden",
+    }}
   >
-    <div className="px-6 py-4 border-b border-slate-100">
-      <Skeleton className="h-5 w-32 mb-1" />
-      <Skeleton className="h-4 w-24" />
-    </div>
-    <div className="p-6">
-      <Skeleton className="w-full rounded-lg" style={{ height: height - 60 }} />
-    </div>
-  </div>
+    <Box sx={{ px: 3, py: 2, borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+      <Skeleton sx={{ height: 20, width: 128, mb: 0.5 }} />
+      <Skeleton sx={{ height: 16, width: 96 }} />
+    </Box>
+    <Box sx={{ p: 3 }}>
+      <Skeleton sx={{ width: "100%", borderRadius: 1 }} style={{ height: height - 60 }} />
+    </Box>
+  </Box>
 );
 
 export const ModuleCardSkeleton: React.FC<{ className?: string }> = ({
   className,
 }) => (
-  <div
-    className={`bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 ${className}`}
+  <Box
+    sx={{
+      backgroundColor: "white",
+      borderRadius: 2,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+      border: "1px solid rgba(0,0,0,0.06)",
+      p: 3,
+    }}
   >
-    <div className="flex items-center justify-between mb-5">
-      <div className="flex items-center gap-3">
-        <Skeleton className="w-10 h-10 rounded-xl" />
-        <div>
-          <Skeleton className="h-5 w-20 mb-1" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      </div>
-      <Skeleton className="w-5 h-5" />
-    </div>
-    <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Skeleton sx={{ width: 40, height: 40, borderRadius: 1.5 }} />
+        <Box>
+          <Skeleton sx={{ height: 20, width: 80, mb: 0.5 }} />
+          <Skeleton sx={{ height: 16, width: 64 }} />
+        </Box>
+      </Box>
+      <Skeleton sx={{ width: 20, height: 20 }} />
+    </Box>
+    <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2, pt: 2, borderTop: "1px solid rgba(0,0,0,0.04)" }}>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="text-center">
-          <Skeleton className="h-6 w-12 mx-auto mb-1" />
-          <Skeleton className="h-4 w-8 mx-auto" />
-        </div>
+        <Box key={i} sx={{ textAlign: "center" }}>
+          <Skeleton sx={{ height: 24, width: 48, mx: "auto", mb: 0.5 }} />
+          <Skeleton sx={{ height: 16, width: 32, mx: "auto" }} />
+        </Box>
       ))}
-    </div>
-  </div>
+    </Box>
+  </Box>
 );
 
 export const VisualizationCardSkeleton: React.FC<{ className?: string }> = ({
   className,
 }) => (
-  <div
-    className={`bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden ${className}`}
+  <Box
+    sx={{
+      backgroundColor: "white",
+      borderRadius: 2,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+      border: "1px solid rgba(0,0,0,0.06)",
+      overflow: "hidden",
+    }}
   >
-    <div className="h-40 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-      <Skeleton className="w-16 h-16 rounded-xl" />
-    </div>
-    <div className="p-5">
-      <Skeleton className="h-5 w-32 mb-2" />
-      <Skeleton className="h-4 w-full mb-1" />
-      <Skeleton className="h-4 w-3/4 mb-3" />
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-16" />
-      </div>
-    </div>
-  </div>
+    <Box sx={{ height: 160, background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Skeleton sx={{ width: 64, height: 64, borderRadius: 1.5 }} />
+    </Box>
+    <Box sx={{ p: 2.5 }}>
+      <Skeleton sx={{ height: 20, width: 128, mb: 1 }} />
+      <Skeleton sx={{ height: 16, width: "100%", mb: 0.5 }} />
+      <Skeleton sx={{ height: 16, width: "75%", mb: 1.5 }} />
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Skeleton sx={{ height: 16, width: 80 }} />
+        <Skeleton sx={{ height: 16, width: 64 }} />
+      </Box>
+    </Box>
+  </Box>
 );
 
 export const ActivityItemSkeleton: React.FC<{ className?: string }> = ({
   className,
 }) => (
-  <div
-    className={`flex items-center gap-4 p-3 rounded-xl border border-slate-200 ${className}`}
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+      p: 1.5,
+      borderRadius: 1.5,
+      border: "1px solid rgba(0,0,0,0.08)",
+    }}
   >
-    <Skeleton className="w-10 h-10 rounded-xl" />
-    <div className="flex-1">
-      <Skeleton className="h-4 w-32 mb-1" />
-      <Skeleton className="h-3 w-16" />
-    </div>
-  </div>
+    <Skeleton sx={{ width: 40, height: 40, borderRadius: 1.5 }} />
+    <Box sx={{ flex: 1 }}>
+      <Skeleton sx={{ height: 16, width: 128, mb: 0.5 }} />
+      <Skeleton sx={{ height: 12, width: 64 }} />
+    </Box>
+  </Box>
 );
 
 export const TableSkeleton: React.FC<{
   rows?: number;
   columns?: number;
   className?: string;
-}> = ({ rows = 5, columns = 4, className }) => (
-  <div
-    className={`bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden ${className}`}
+}> = ({ rows = 5, columns = 4 }) => (
+  <Box
+    sx={{
+      backgroundColor: "white",
+      borderRadius: 1.5,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+      border: "1px solid rgba(0,0,0,0.06)",
+      overflow: "hidden",
+    }}
   >
-    <div className="px-6 py-4 border-b border-slate-100">
-      <Skeleton className="h-5 w-32" />
-    </div>
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex gap-4 mb-4">
+    <Box sx={{ px: 3, py: 2, borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
+      <Skeleton sx={{ height: 20, width: 128 }} />
+    </Box>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         {Array.from({ length: columns }).map((_, i) => (
-          <Skeleton key={i} className="h-4 flex-1" />
+          <Skeleton key={i} sx={{ height: 16, flex: 1 }} />
         ))}
-      </div>
-      {/* Rows */}
-      <div className="space-y-3">
+      </Box>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex gap-4 py-2">
+          <Box key={i} sx={{ display: "flex", gap: 2, py: 1 }}>
             {Array.from({ length: columns }).map((_, j) => (
-              <Skeleton key={j} className="h-4 flex-1" />
+              <Skeleton key={j} sx={{ height: 16, flex: 1 }} />
             ))}
-          </div>
+          </Box>
         ))}
-      </div>
-    </div>
-  </div>
+      </Box>
+    </Box>
+  </Box>
 );
 
 export const DashboardSkeleton: React.FC = () => (
-  <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
-    {/* Header */}
-    <div className="flex items-center justify-between">
-      <div>
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-4 w-24" />
-      </div>
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 w-24 rounded-lg" />
-      </div>
-    </div>
+  <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc", p: 3 }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Box>
+        <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+        <Skeleton sx={{ height: 16, width: 96 }} />
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Skeleton sx={{ height: 16, width: 128 }} />
+        <Skeleton sx={{ height: 40, width: 96, borderRadius: 1 }} />
+      </Box>
+    </Box>
 
-    {/* Metrics */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: 2, mb: 3 }}>
       {[1, 2, 3, 4].map((i) => (
         <MetricCardSkeleton key={i} />
       ))}
-    </div>
+    </Box>
 
-    {/* Charts Row 1 */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <ChartCardSkeleton height={280} />
-      </div>
-      <div>
-        <ChartCardSkeleton height={280} />
-      </div>
-    </div>
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "3fr 1fr" }, gap: 3, mb: 3 }}>
+      <ChartCardSkeleton height={280} />
+      <ChartCardSkeleton height={280} />
+    </Box>
 
-    {/* Charts Row 2 */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" }, gap: 3 }}>
       {[1, 2, 3].map((i) => (
         <ChartCardSkeleton key={i} height={260} />
       ))}
-    </div>
-  </div>
+    </Box>
+  </Box>
 );
 
 export const AnalyticsSkeleton: React.FC = () => (
-  <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
-    {/* Header */}
-    <div className="flex items-center justify-between">
-      <div>
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-4 w-24" />
-      </div>
-    </div>
+  <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc", p: 3 }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Box>
+        <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+        <Skeleton sx={{ height: 16, width: 96 }} />
+      </Box>
+    </Box>
 
-    {/* Filter */}
-    <Skeleton className="h-16 w-full rounded-xl" />
+    <Skeleton sx={{ height: 64, width: "100%", borderRadius: 1.5, mb: 3 }} />
 
-    {/* Charts */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <ChartCardSkeleton height={300} />
-      </div>
-      <div>
-        <ChartCardSkeleton height={300} />
-      </div>
-    </div>
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "3fr 1fr" }, gap: 3, mb: 3 }}>
+      <ChartCardSkeleton height={300} />
+      <ChartCardSkeleton height={300} />
+    </Box>
 
-    {/* Module Cards */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2, mb: 3 }}>
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <ModuleCardSkeleton key={i} />
       ))}
-    </div>
+    </Box>
 
-    {/* System Status */}
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 p-6">
-      <Skeleton className="h-5 w-24 mb-4" />
-      <div className="grid grid-cols-3 gap-6">
+    <Box sx={{ backgroundColor: "white", borderRadius: 1.5, boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid rgba(0,0,0,0.06)", p: 3 }}>
+      <Skeleton sx={{ height: 20, width: 96, mb: 2 }} />
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center justify-between py-3">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-6 w-16" />
-          </div>
+          <Box key={i} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1.5 }}>
+            <Skeleton sx={{ height: 16, width: 80 }} />
+            <Skeleton sx={{ height: 24, width: 64 }} />
+          </Box>
         ))}
-      </div>
-    </div>
-  </div>
+      </Box>
+    </Box>
+  </Box>
 );
 
 export const VisualizationSkeleton: React.FC = () => (
-  <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
-    {/* Header */}
-    <div className="flex items-center justify-between">
-      <div>
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-4 w-24" />
-      </div>
-      <div className="flex items-center gap-3">
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-28" />
-      </div>
-    </div>
+  <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc", p: 3 }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+      <Box>
+        <Skeleton sx={{ height: 32, width: 128, mb: 1 }} />
+        <Skeleton sx={{ height: 16, width: 96 }} />
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Skeleton sx={{ height: 40, width: 96 }} />
+        <Skeleton sx={{ height: 40, width: 112 }} />
+      </Box>
+    </Box>
 
-    {/* Filter */}
-    <Skeleton className="h-14 w-full rounded-xl" />
+    <Skeleton sx={{ height: 56, width: "100%", borderRadius: 1.5, mb: 3 }} />
 
-    {/* Cards */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
       {[1, 2, 3, 4].map((i) => (
         <VisualizationCardSkeleton key={i} />
       ))}
-    </div>
-  </div>
+    </Box>
+  </Box>
 );
 
 export default {

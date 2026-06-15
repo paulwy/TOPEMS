@@ -9,6 +9,7 @@ interface SparklineProps {
   width?: number;
   height?: number;
   strokeWidth?: number;
+  isAnimated?: boolean;
 }
 
 const Sparkline: React.FC<SparklineProps> = ({
@@ -17,6 +18,7 @@ const Sparkline: React.FC<SparklineProps> = ({
   width = 80,
   height = 32,
   strokeWidth = 2,
+  isAnimated = false,
 }) => {
   if (!data || data.length < 2) return null;
 
@@ -35,6 +37,13 @@ const Sparkline: React.FC<SparklineProps> = ({
 
   const pathD = `M ${points.join(" L ")}`;
   const areaD = `${pathD} L ${width},${height} L 0,${height} Z`;
+
+  const pathLength = data.reduce((acc, _, i) => {
+    if (i === 0) return 0;
+    const prev = points[i - 1].split(",").map(Number);
+    const curr = points[i].split(",").map(Number);
+    return acc + Math.sqrt(Math.pow(curr[0] - prev[0], 2) + Math.pow(curr[1] - prev[1], 2));
+  }, 0);
 
   return (
     <svg width={width} height={height} style={{ overflow: "visible" }}>
@@ -58,13 +67,39 @@ const Sparkline: React.FC<SparklineProps> = ({
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
+        style={
+          isAnimated
+            ? {
+                strokeDasharray: pathLength,
+                strokeDashoffset: pathLength,
+                animation: "drawLine 1s ease-out forwards",
+              }
+            : {}
+        }
       />
       <circle
         cx={width}
         cy={parseFloat(points[points.length - 1].split(",")[1])}
-        r={3}
+        r={isAnimated ? 0 : 3}
         fill={color}
+        style={
+          isAnimated
+            ? {
+                animation: "pulseDot 0.5s ease-out 0.8s forwards",
+              }
+            : {}
+        }
       />
+      <style>{`
+        @keyframes drawLine {
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes pulseDot {
+          0% { r: 0; opacity: 0; }
+          50% { r: 5; opacity: 1; }
+          100% { r: 3; opacity: 1; }
+        }
+      `}</style>
     </svg>
   );
 };
@@ -111,16 +146,35 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     animate && typeof value === "number" ? 0 : value,
   );
   const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!animate || typeof value !== "number") {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!animate || typeof value !== "number" || !isVisible) {
       setDisplayValue(value);
       return;
     }
 
-    const duration = 1000;
-    const steps = 30;
+    const duration = 1200;
+    const steps = 40;
     const stepDuration = duration / steps;
     const startValue = 0;
     const endValue = value as number;
@@ -133,7 +187,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         clearInterval(timer);
       } else {
         const progress = currentStep / steps;
-        const eased = 1 - Math.pow(1 - progress, 3);
+        const eased = 1 - Math.pow(1 - progress, 4);
         setDisplayValue(
           Math.round(startValue + (endValue - startValue) * eased),
         );
@@ -141,35 +195,38 @@ export const MetricCard: React.FC<MetricCardProps> = ({
     }, stepDuration);
 
     return () => clearInterval(timer);
-  }, [value, animate]);
+  }, [value, animate, isVisible]);
+
+  const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
 
   const getTrendIcon = () => {
-    if (!trend || trend === "neutral" || trend === "stable") {
-      return <Minus sx={{ width: 16, height: 16, color: "#94A3B8" }} />;
+    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") {
+      return <Minus size={16} color="#94A3B8" />;
     }
-    return trend === "up" ? (
-      <TrendingUp sx={{ width: 16, height: 16 }} />
+    return computedTrend === "up" ? (
+      <TrendingUp size={16} />
     ) : (
-      <TrendingDown sx={{ width: 16, height: 16 }} />
+      <TrendingDown size={16} />
     );
   };
 
   const getTrendColor = () => {
-    if (!trend || trend === "neutral" || trend === "stable") return "#64748B";
-    return trend === "up" ? "#10B981" : "#EF4444";
+    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") return "#64748B";
+    return computedTrend === "up" ? "#10B981" : "#EF4444";
   };
 
   const renderIcon = () => {
     if (!icon) {
-      return <Activity sx={{ width: 24, height: 24, color: "white" }} />;
+      return <Activity size={24} color="white" />;
     }
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon as React.ReactElement<{ sx?: object }>, {
-        sx: { width: 24, height: 24, color: "white" },
+      return React.cloneElement(icon as React.ReactElement<{ size?: number; color?: string }>, {
+        size: 24,
+        color: "white",
       });
     }
     const IconComponent = icon as LucideIcon;
-    return <IconComponent sx={{ width: 24, height: 24, color: "white" }} />;
+    return <IconComponent size={24} color="white" />;
   };
 
   const getIconGradient = () => {
@@ -181,8 +238,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   };
 
   const getSparklineColor = () => {
-    if (!trend || trend === "neutral" || trend === "stable") return "#64748B";
-    return trend === "up" ? "#10B981" : "#EF4444";
+    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") return "#64748B";
+    return computedTrend === "up" ? "#10B981" : "#EF4444";
   };
 
   return (
@@ -195,9 +252,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         padding: 3,
         border: "1px solid rgba(226, 232, 240, 0.6)",
         overflow: "hidden",
-        transition: "all 0.3s ease-out",
-        boxShadow: isHovered ? "0 10px 40px rgba(0, 0, 0, 0.1)" : "0 1px 3px rgba(0, 0, 0, 0.05)",
-        transform: isHovered ? "scale(1.02)" : "scale(1)",
+        transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        boxShadow: isHovered
+          ? "0 20px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1)"
+          : "0 1px 3px rgba(0, 0, 0, 0.05)",
+        transform: isHovered ? "scale(1.03) translateY(-4px)" : "scale(1) translateY(0)",
+        opacity: isVisible ? 1 : 0,
+        animation: isVisible ? "fadeInUp 0.6s ease-out forwards" : "none",
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -205,11 +266,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       <Box
         sx={{
           position: "absolute",
-          top: 0,
-          right: 0,
+          top: -64,
+          right: -64,
           width: 128,
           height: 128,
-          opacity: 0.05,
+          opacity: isHovered ? 0.15 : 0.05,
+          transition: "opacity 0.3s ease-out",
         }}
       >
         <Box
@@ -219,7 +281,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             background: getIconGradient(),
             borderRadius: "50%",
             filter: "blur(40px)",
-            transform: "translateX(32px) translateY(-32px)",
           }}
         />
       </Box>
@@ -228,37 +289,82 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         sx={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to bottom right, rgba(241, 245, 249, 1), transparent)",
+          background: "linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, transparent 50%)",
           opacity: isHovered ? 1 : 0,
           transition: "opacity 0.3s",
         }}
       />
 
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: getIconGradient(),
+          transform: isHovered ? "scaleX(1)" : "scaleX(0)",
+          transformOrigin: "left",
+          transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        }}
+      />
+
       <Box sx={{ position: "relative", zIndex: 10 }}>
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: 2,
+          }}
+        >
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" sx={{ color: "#64748B", fontWeight: 500, marginBottom: 0.5, letterSpacing: "0.05em" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#64748B",
+                fontWeight: 500,
+                marginBottom: 0.5,
+                letterSpacing: "0.05em",
+                fontSize: "0.75rem",
+                textTransform: "uppercase",
+              }}
+            >
               {title}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
-              <Typography variant="h3" sx={{ fontWeight: "bold", color: "#1E293B" }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 800,
+                  color: "#1E293B",
+                  fontSize: "2rem",
+                  lineHeight: 1.2,
+                }}
+              >
                 {typeof displayValue === "number"
                   ? displayValue.toLocaleString()
                   : displayValue}
               </Typography>
               {unit && (
-                <Typography variant="body1" sx={{ color: "#64748B", fontWeight: 500 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "#64748B", fontWeight: 600, fontSize: "1rem" }}
+                >
                   {unit}
                 </Typography>
               )}
               {suffix && (
-                <Typography variant="body2" sx={{ color: "#94A3B8" }}>
+                <Typography variant="body2" sx={{ color: "#94A3B8", fontSize: "0.875rem" }}>
                   {suffix}
                 </Typography>
               )}
             </Box>
             {subtitle && (
-              <Typography variant="caption" sx={{ color: "#94A3B8", marginTop: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "#94A3B8", marginTop: 0.5, display: "block" }}
+              >
                 {subtitle}
               </Typography>
             )}
@@ -266,15 +372,17 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
           <Box
             sx={{
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               borderRadius: 1.5,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-              transition: "transform 0.3s",
-              transform: isHovered ? "scale(1.1) rotate(3deg)" : "scale(1)",
+              boxShadow: isHovered
+                ? "0 8px 25px rgba(0, 0, 0, 0.15)"
+                : "0 4px 15px rgba(0, 0, 0, 0.1)",
+              transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+              transform: isHovered ? "scale(1.15) rotate(5deg)" : "scale(1) rotate(0deg)",
             }}
           >
             <Box
@@ -286,6 +394,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 alignItems: "center",
                 justifyContent: "center",
                 background: getIconGradient(),
+                transition: "box-shadow 0.3s",
+                boxShadow: isHovered ? "inset 0 2px 4px rgba(0, 0, 0, 0.2)" : "none",
               }}
             >
               {renderIcon()}
@@ -294,35 +404,68 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {getTrendIcon()}
-            <Typography variant="body2" sx={{ fontWeight: 600, color: getTrendColor() }}>
-              {change !== undefined ? `${change > 0 ? "+" : ""}${change}%` : ""}
-            </Typography>
-            {trend && trend !== "neutral" && trend !== "stable" && (
-              <Typography variant="caption" sx={{ color: "#94A3B8", marginLeft: 0.5 }}>
-                vs last period
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: computedTrend === "up" ? "#DCFCE7" : computedTrend === "down" ? "#FEE2E2" : "#F1F5F9",
+                transition: "all 0.3s",
+                transform: isHovered ? "scale(1.1)" : "scale(1)",
+              }}
+            >
+              {getTrendIcon()}
+            </Box>
+            <Box>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 700, color: getTrendColor(), fontSize: "0.875rem" }}
+              >
+                {change !== undefined ? `${change > 0 ? "+" : ""}${change}%` : "——"}
               </Typography>
-            )}
+              {(computedTrend && computedTrend !== "neutral" && computedTrend !== "stable") || change !== undefined ? (
+                <Typography variant="caption" sx={{ color: "#94A3B8", fontSize: "0.7rem" }}>
+                  vs last period
+                </Typography>
+              ) : null}
+            </Box>
           </Box>
 
           {sparklineData && sparklineData.length > 0 && (
             <Box
               sx={{
-                transition: "transform 0.5s",
-                transform: isHovered ? "scale(1.1)" : "scale(1)",
+                transition: "transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+                transform: isHovered ? "scale(1.15)" : "scale(1)",
               }}
             >
               <Sparkline
                 data={sparklineData}
                 color={getSparklineColor()}
-                width={80}
-                height={32}
+                width={85}
+                height={34}
+                isAnimated={isVisible}
               />
             </Box>
           )}
         </Box>
       </Box>
+
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </Box>
   );
 };

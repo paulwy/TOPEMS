@@ -1,22 +1,18 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   Box,
-  Paper,
   Typography,
   TextField,
   Button,
   IconButton,
   InputAdornment,
-  Divider,
-  Select,
-  MenuItem,
   FormControl,
   InputLabel,
   Alert,
-  Tooltip,
-  Tab,
   Tabs,
+  Tab,
   Chip,
+  Tooltip,
 } from "@mui/material";
 import {
   FileJson,
@@ -25,21 +21,15 @@ import {
   Shield,
   Copy,
   Check,
-  Trash2,
   ArrowRightLeft,
-  RefreshCw,
 } from "lucide-react";
 
-// ============ JSON 格式化工具 ============
-interface JsonFormatterProps {
-  onClose?: () => void;
-}
-
-const JsonFormatter: React.FC<JsonFormatterProps> = () => {
+const JsonFormatter: React.FC = () => {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const outputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleFormat = useCallback(() => {
     try {
@@ -113,36 +103,38 @@ const JsonFormatter: React.FC<JsonFormatterProps> = () => {
       {output && (
         <Box sx={{ position: "relative" }}>
           <TextField
+            inputRef={outputRef}
             multiline
-            rows={6}
+            rows={5}
             fullWidth
             value={output}
-            InputProps={{
-              readOnly: true,
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Tooltip title={copied ? "已复制" : "复制"}>
-                    <IconButton onClick={handleCopy} size="small">
-                      {copied ? (
-                        <Check style={{ width: 16, height: 16 }} />
-                      ) : (
-                        <Copy style={{ width: 16, height: 16 }} />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </InputAdornment>
-              ),
-            }}
+            disabled
+            sx={{ mb: 1 }}
           />
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Tooltip title={copied ? "已复制" : "复制结果"}>
+              <IconButton
+                size="small"
+                onClick={handleCopy}
+                color={copied ? "success" : "primary"}
+              >
+                {copied ? (
+                  <Check style={{ width: 16, height: 16 }} />
+                ) : (
+                  <Copy style={{ width: 16, height: 16 }} />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
       )}
     </Box>
   );
 };
 
-// ============ 日期计算器 ============
 const DateCalculator: React.FC = () => {
-  const [startDate, setStartDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
+  const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState("");
   const [result, setResult] = useState<{
     days: number;
@@ -173,16 +165,24 @@ const DateCalculator: React.FC = () => {
     setResult({ days: diffDays, workdays, weekends });
   }, [startDate, endDate]);
 
-  const addDays = useCallback(() => {
-    const today = new Date().toISOString().split("T")[0];
+  const addDays = useCallback((days: number) => {
     const base = startDate || today;
-    const days = prompt("输入要添加的天数:", "7");
-    if (days) {
-      const date = new Date(base);
-      date.setDate(date.getDate() + parseInt(days));
-      setStartDate(date.toISOString().split("T")[0]);
-    }
+    const date = new Date(base);
+    date.setDate(date.getDate() + days);
+    setStartDate(date.toISOString().split("T")[0]);
   }, [startDate]);
+
+  const setToToday = useCallback(() => {
+    setStartDate(today);
+    setEndDate(today);
+    calculate();
+  }, [today, calculate]);
+
+  const clear = useCallback(() => {
+    setStartDate(today);
+    setEndDate("");
+    setResult(null);
+  }, [today]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -198,7 +198,6 @@ const DateCalculator: React.FC = () => {
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           sx={{ flex: 1 }}
-          InputLabelProps={{ shrink: true }}
         />
         <TextField
           type="date"
@@ -207,7 +206,6 @@ const DateCalculator: React.FC = () => {
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
           sx={{ flex: 1 }}
-          InputLabelProps={{ shrink: true }}
         />
       </Box>
 
@@ -215,18 +213,16 @@ const DateCalculator: React.FC = () => {
         <Button size="small" variant="outlined" onClick={calculate}>
           计算
         </Button>
-        <Button size="small" variant="outlined" onClick={addDays}>
+        <Button size="small" variant="outlined" onClick={() => addDays(7)}>
           +7天
         </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={() => {
-            setStartDate("");
-            setEndDate("");
-            setResult(null);
-          }}
-        >
+        <Button size="small" variant="outlined" onClick={() => addDays(30)}>
+          +30天
+        </Button>
+        <Button size="small" variant="outlined" onClick={setToToday}>
+          今天
+        </Button>
+        <Button size="small" variant="outlined" onClick={clear}>
           清空
         </Button>
       </Box>
@@ -255,7 +251,6 @@ const DateCalculator: React.FC = () => {
   );
 };
 
-// ============ 单位换算 ============
 const unitCategories = {
   weight: {
     name: "重量",
@@ -274,6 +269,7 @@ const unitCategories = {
       { label: "升 (L)", factor: 1 },
       { label: "毫升 (mL)", factor: 1000 },
       { label: "立方米 (m³)", factor: 0.001 },
+      { label: "立方厘米 (cm³)", factor: 1000 },
       { label: "加仑 (gal)", factor: 0.264172 },
       { label: "夸脱 (qt)", factor: 1.05669 },
     ],
@@ -289,15 +285,24 @@ const unitCategories = {
       { label: "英尺 (ft)", factor: 3.28084 },
     ],
   },
+  temperature: {
+    name: "温度",
+    units: [
+      { label: "摄氏度 (°C)", factor: 1, isSpecial: true },
+      { label: "华氏度 (°F)", factor: 1, isSpecial: true },
+      { label: "开尔文 (K)", factor: 1, isSpecial: true },
+    ],
+  },
 };
 
+type CategoryKey = keyof typeof unitCategories;
+
 const UnitConverter: React.FC = () => {
-  const [category, setCategory] = useState<"weight" | "volume" | "length">(
-    "weight",
-  );
+  const [category, setCategory] = useState<CategoryKey>("weight");
   const [fromValue, setFromValue] = useState("");
   const [fromUnit, setFromUnit] = useState(0);
   const [toUnit, setToUnit] = useState(1);
+  const [copied, setCopied] = useState(false);
 
   const units = unitCategories[category].units;
 
@@ -306,18 +311,46 @@ const UnitConverter: React.FC = () => {
     const value = parseFloat(fromValue);
     if (isNaN(value)) return "";
 
+    if (category === "temperature") {
+      const fromLabel = units[fromUnit].label;
+      const toLabel = units[toUnit].label;
+
+      if (fromLabel.includes("°C") && toLabel.includes("°F")) {
+        return ((value * 9) / 5 + 32).toFixed(2);
+      } else if (fromLabel.includes("°F") && toLabel.includes("°C")) {
+        return (((value - 32) * 5) / 9).toFixed(2);
+      } else if (fromLabel.includes("°C") && toLabel.includes("K")) {
+        return (value + 273.15).toFixed(2);
+      } else if (fromLabel.includes("K") && toLabel.includes("°C")) {
+        return (value - 273.15).toFixed(2);
+      } else if (fromLabel.includes("°F") && toLabel.includes("K")) {
+        return (((value - 32) * 5) / 9 + 273.15).toFixed(2);
+      } else if (fromLabel.includes("K") && toLabel.includes("°F")) {
+        return (((value - 273.15) * 9) / 5 + 32).toFixed(2);
+      }
+      return value.toString();
+    }
+
     const fromFactor = units[fromUnit].factor;
     const toFactor = units[toUnit].factor;
-
     const baseValue = value / fromFactor;
     return (baseValue * toFactor).toFixed(6).replace(/\.?0+$/, "");
-  }, [fromValue, fromUnit, toUnit, units]);
+  }, [fromValue, fromUnit, toUnit, units, category]);
 
   const handleSwap = useCallback(() => {
     const temp = fromUnit;
     setFromUnit(toUnit);
     setToUnit(temp);
   }, [fromUnit, toUnit]);
+
+  const handleCopy = useCallback(() => {
+    const result = calculate();
+    if (result) {
+      navigator.clipboard.writeText(result);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [calculate]);
 
   const result = calculate();
 
@@ -329,19 +362,23 @@ const UnitConverter: React.FC = () => {
 
       <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
         <InputLabel>类别</InputLabel>
-        <Select
+        <TextField
+          select
           value={category}
           label="类别"
           onChange={(e) => {
-            setCategory(e.target.value as typeof category);
+            setCategory(e.target.value as CategoryKey);
             setFromUnit(0);
             setToUnit(1);
           }}
+          sx={{ minWidth: 120 }}
         >
-          <MenuItem value="weight">重量</MenuItem>
-          <MenuItem value="volume">体积</MenuItem>
-          <MenuItem value="length">长度</MenuItem>
-        </Select>
+          {(Object.keys(unitCategories) as CategoryKey[]).map((key) => (
+            <option key={key} value={key}>
+              {unitCategories[key].name}
+            </option>
+          ))}
+        </TextField>
       </FormControl>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
@@ -353,24 +390,27 @@ const UnitConverter: React.FC = () => {
           onChange={(e) => setFromValue(e.target.value)}
           sx={{ flex: 1 }}
         />
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <Select
-            value={fromUnit}
-            onChange={(e) => setFromUnit(e.target.value as number)}
-          >
-            {units.map((u, i) => (
-              <MenuItem key={i} value={i}>
-                {u.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <TextField
+          select
+          size="small"
+          value={fromUnit}
+          onChange={(e) => setFromUnit(Number(e.target.value))}
+          sx={{ minWidth: 120 }}
+        >
+          {units.map((u, i) => (
+            <option key={i} value={i}>
+              {u.label}
+            </option>
+          ))}
+        </TextField>
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "center", mb: 1.5 }}>
-        <IconButton size="small" onClick={handleSwap}>
-          <ArrowRightLeft style={{ width: 18, height: 18 }} />
-        </IconButton>
+        <Tooltip title="交换单位">
+          <IconButton size="small" onClick={handleSwap}>
+            <ArrowRightLeft style={{ width: 18, height: 18 }} />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
@@ -378,51 +418,75 @@ const UnitConverter: React.FC = () => {
           size="small"
           placeholder="结果"
           value={result}
-          InputProps={{ readOnly: true }}
+          disabled
           sx={{ flex: 1 }}
         />
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <Select
-            value={toUnit}
-            onChange={(e) => setToUnit(e.target.value as number)}
+        <TextField
+          select
+          size="small"
+          value={toUnit}
+          onChange={(e) => setToUnit(Number(e.target.value))}
+          sx={{ minWidth: 120 }}
+        >
+          {units.map((u, i) => (
+            <option key={i} value={i}>
+              {u.label}
+            </option>
+          ))}
+        </TextField>
+        <Tooltip title={copied ? "已复制" : "复制结果"}>
+          <IconButton
+            size="small"
+            onClick={handleCopy}
+            color={copied ? "success" : "primary"}
           >
-            {units.map((u, i) => (
-              <MenuItem key={i} value={i}>
-                {u.label}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            {copied ? (
+              <Check style={{ width: 14, height: 14 }} />
+            ) : (
+              <Copy style={{ width: 14, height: 14 }} />
+            )}
+          </IconButton>
+        </Tooltip>
       </Box>
     </Box>
   );
 };
 
-// ============ 数据脱敏 ============
 const maskTypes = [
   {
     id: "phone",
     label: "手机号",
     pattern: /(\d{3})\d{4}(\d{4})/,
     replacement: "$1****$2",
+    example: "13800138000 → 138****8000",
   },
   {
     id: "id",
     label: "身份证",
     pattern: /(\d{6})\d{8}(\d{4})/,
-    replacement: "$1**********$2",
+    replacement: "$1********$2",
+    example: "110101199001011234 → 110101********1234",
   },
   {
     id: "email",
     label: "邮箱",
     pattern: /(\w{1,3})\w+(@\w+\.\w+)/,
     replacement: "$1***$2",
+    example: "test@example.com → tes***@example.com",
   },
   {
     id: "bank",
     label: "银行卡",
     pattern: /(\d{4})\d+(\d{4})/,
     replacement: "$1****$2",
+    example: "6222021234567890123 → 6222****0123",
+  },
+  {
+    id: "name",
+    label: "姓名",
+    pattern: /([\u4e00-\u9fa5]{1})[\u4e00-\u9fa5]+/,
+    replacement: "$1**",
+    example: "张三 → 张**",
   },
 ];
 
@@ -430,10 +494,11 @@ const DataMasker: React.FC = () => {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [selectedType, setSelectedType] = useState("phone");
+  const [copied, setCopied] = useState(false);
 
   const handleMask = useCallback(() => {
     const mask = maskTypes.find((m) => m.id === selectedType);
-    if (!mask) return;
+    if (!mask || !input) return;
 
     const lines = input.split("\n");
     const masked = lines.map((line) => {
@@ -448,26 +513,45 @@ const DataMasker: React.FC = () => {
     setOutput("");
   }, []);
 
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(output);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [output]);
+
+  const currentMask = maskTypes.find((m) => m.id === selectedType);
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
         数据脱敏工具
       </Typography>
 
-      <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
+      <FormControl fullWidth size="small" sx={{ mb: 1 }}>
         <InputLabel>脱敏类型</InputLabel>
-        <Select
+        <TextField
+          select
           value={selectedType}
           label="脱敏类型"
           onChange={(e) => setSelectedType(e.target.value)}
         >
           {maskTypes.map((m) => (
-            <MenuItem key={m.id} value={m.id}>
+            <option key={m.id} value={m.id}>
               {m.label}
-            </MenuItem>
+            </option>
           ))}
-        </Select>
+        </TextField>
       </FormControl>
+
+      {currentMask && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mb: 1.5, display: "block" }}
+        >
+          示例: {currentMask.example}
+        </Typography>
+      )}
 
       <TextField
         multiline
@@ -487,6 +571,21 @@ const DataMasker: React.FC = () => {
         <Button size="small" variant="outlined" onClick={handleClear}>
           清空
         </Button>
+        {output && (
+          <Tooltip title={copied ? "已复制" : "复制结果"}>
+            <IconButton
+              size="small"
+              onClick={handleCopy}
+              color={copied ? "success" : "primary"}
+            >
+              {copied ? (
+                <Check style={{ width: 14, height: 14 }} />
+              ) : (
+                <Copy style={{ width: 14, height: 14 }} />
+              )}
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
       {output && (
@@ -495,30 +594,13 @@ const DataMasker: React.FC = () => {
           rows={3}
           fullWidth
           value={output}
-          InputProps={{
-            readOnly: true,
-            endAdornment: (
-              <InputAdornment position="end">
-                <Tooltip title="复制">
-                  <IconButton
-                    onClick={() => {
-                      navigator.clipboard.writeText(output);
-                    }}
-                    size="small"
-                  >
-                    <Copy style={{ width: 16, height: 16 }} />
-                  </IconButton>
-                </Tooltip>
-              </InputAdornment>
-            ),
-          }}
+          disabled
         />
       )}
     </Box>
   );
 };
 
-// ============ 主工具面板 ============
 interface AIToolsPanelProps {
   defaultTool?: string;
   onClose?: () => void;
@@ -560,7 +642,7 @@ export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({
   }, [defaultTool]);
 
   return (
-    <Box sx={{ width: 360, maxWidth: "100%" }}>
+    <Box sx={{ width: "100%", maxWidth: 400 }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
           value={activeTab}
@@ -586,7 +668,7 @@ export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({
         </Tabs>
       </Box>
 
-      <Box sx={{ maxHeight: 400, overflowY: "auto" }}>
+      <Box sx={{ maxHeight: 420, overflowY: "auto" }}>
         {activeTab === "json" && <JsonFormatter />}
         {activeTab === "date" && <DateCalculator />}
         {activeTab === "unit" && <UnitConverter />}

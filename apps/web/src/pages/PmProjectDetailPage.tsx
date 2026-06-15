@@ -13,30 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { Progress } from "../components/ui/progress";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
+import { Box, Typography, Button, Card, CardContent, CardHeader, Badge, LinearProgress, Tabs, Tab, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import GanttChart from "../components/pm/GanttChart";
 import { pmApi } from "../api/pm";
 import type {

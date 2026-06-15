@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Badge } from "../ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import InputLabel from "@mui/material/InputLabel";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
+import Box from "@mui/material/Box";
 import {
   Search,
   FileText,
@@ -152,29 +152,34 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>选择模板</DialogTitle>
-        </DialogHeader>
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="xl"
+      fullWidth
+      sx={{ maxHeight: "90vh" }}
+    >
+      <DialogContent sx={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>选择模板</Typography>
 
-        <div className="flex-1 overflow-hidden flex flex-col gap-4 p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
+        <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", gap: 2, p: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
+            <Box sx={{ flex: 1, position: "relative" }}>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
+              <TextField
                 placeholder="搜索模板..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10"
+                size="small"
+                sx={{ pl: 5, width: "100%" }}
               />
-            </div>
-            <div className="w-full sm:w-auto">
-              <Label className="block text-sm mb-1">分类筛选</Label>
-              <div className="flex flex-wrap gap-2">
+            </Box>
+            <Box sx={{ width: { xs: "100%", sm: "auto" } }}>
+              <InputLabel sx={{ fontSize: 14, mb: 0.5 }}>分类筛选</InputLabel>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                 <Button
-                  variant={!selectedCategory ? "default" : "outline"}
-                  size="sm"
+                  variant={!selectedCategory ? "contained" : "outlined"}
+                  size="small"
                   onClick={() => handleCategoryChange(undefined)}
                 >
                   全部
@@ -183,152 +188,152 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   <Button
                     key={cat.id}
                     variant={
-                      selectedCategory === cat.id ? "default" : "outline"
+                      selectedCategory === cat.id ? "contained" : "outlined"
                     }
-                    size="sm"
+                    size="small"
                     onClick={() => handleCategoryChange(cat.id)}
                   >
                     {cat.name}
                   </Button>
                 ))}
-              </div>
-            </div>
-          </div>
+              </Box>
+            </Box>
+          </Box>
 
           {!selectedTemplate ? (
-            <div className="flex-1 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Box sx={{ flex: 1, overflow: "auto" }}>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
                 {templates.map((template) => (
                   <Card
                     key={template.id}
-                    className="cursor-pointer transition-all hover:border-primary"
+                    sx={{
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      "&:hover": { borderColor: "primary.main" },
+                    }}
                     onClick={() => setSelectedTemplate(template)}
                   >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="p-2 bg-gray-100 rounded-lg">
+                    <CardHeader sx={{ pb: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box sx={{ p: 1, bgcolor: "grey.100", borderRadius: 1 }}>
                             {TYPE_ICONS[template.template_type]}
-                          </div>
-                          <div>
-                            <CardTitle className="text-base">
+                          </Box>
+                          <Box>
+                            <Typography variant="subtitle1">
                               {template.name}
-                            </CardTitle>
-                            <p className="text-xs text-gray-500">
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
                               {TYPE_LABELS[template.template_type]}
-                            </p>
-                          </div>
-                        </div>
+                            </Typography>
+                          </Box>
+                        </Box>
                         {template.ai_enabled && (
-                          <Badge
-                            variant="secondary"
-                            className="bg-amber-100 text-amber-700"
-                          >
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            AI
-                          </Badge>
+                          <Chip
+                            size="small"
+                            icon={<Sparkles style={{ width: 12, height: 12 }} />}
+                            label="AI"
+                            sx={{ bgcolor: "#fef3c7", color: "#b45309" }}
+                          />
                         )}
-                      </div>
+                      </Box>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {template.description || "暂无描述"}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">
-                            {template.category_name || "未分类"}
-                          </Badge>
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Chip size="small" variant="outlined" label={template.category_name || "未分类"} />
                           {template.is_public && (
-                            <Badge variant="secondary">公开</Badge>
+                            <Chip size="small" label="公开" />
                           )}
-                        </div>
-                        <span className="text-xs text-gray-400">
+                        </Box>
+                        <Typography variant="caption" color="text.disabled">
                           已使用 {template.use_count} 次
-                        </span>
-                      </div>
+                        </Typography>
+                      </Box>
                     </CardContent>
                   </Card>
                 ))}
-              </div>
+              </Box>
 
               {templates.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                  <FileText className="w-12 h-12 mb-4 opacity-50" />
-                  <p>暂无模板</p>
-                  <p className="text-sm">请先在系统管理中创建模板</p>
-                </div>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", py: 6, color: "text.secondary" }}>
+                  <FileText style={{ width: 48, height: 48, marginBottom: 16, opacity: 0.5 }} />
+                  <Typography>暂无模板</Typography>
+                  <Typography variant="body2">请先在系统管理中创建模板</Typography>
+                </Box>
               )}
-            </div>
+            </Box>
           ) : (
-            <div className="flex-1 overflow-y-auto space-y-4">
+            <Box sx={{ flex: 1, overflow: "auto" }}>
               <Card>
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-primary/10 rounded-lg">
+                  <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                      <Box sx={{ p: 1.5, bgcolor: "primary.light", borderRadius: 1 }}>
                         {TYPE_ICONS[selectedTemplate.template_type]}
-                      </div>
-                      <div>
-                        <CardTitle>{selectedTemplate.name}</CardTitle>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                      </Box>
+                      <Box>
+                        <Typography variant="h6">{selectedTemplate.name}</Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 14, color: "text.secondary" }}>
                           <span>
                             {TYPE_LABELS[selectedTemplate.template_type]}
                           </span>
                           {selectedTemplate.is_public && (
-                            <Badge variant="secondary">公开</Badge>
+                            <Chip size="small" label="公开" />
                           )}
                           {selectedTemplate.ai_enabled && (
-                            <Badge
-                              variant="secondary"
-                              className="bg-amber-100 text-amber-700"
-                            >
-                              <Sparkles className="w-3 h-3 mr-1" />
-                              AI 辅助
-                            </Badge>
+                            <Chip
+                              size="small"
+                              icon={<Sparkles style={{ width: 12, height: 12 }} />}
+                              label="AI 辅助"
+                              sx={{ bgcolor: "#fef3c7", color: "#b45309" }}
+                            />
                           )}
-                        </div>
-                      </div>
-                    </div>
+                        </Box>
+                      </Box>
+                    </Box>
                     <Button
-                      variant="ghost"
+                      variant="text"
                       onClick={() => setSelectedTemplate(null)}
                     >
                       返回列表
                     </Button>
-                  </div>
+                  </Box>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 mb-4">
+                  <Typography sx={{ mb: 2, color: "text.secondary" }}>
                     {selectedTemplate.description}
-                  </p>
+                  </Typography>
 
-                  <div className="mb-6">
-                    <Label className="block mb-2">模板预览</Label>
-                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[100px] whitespace-pre-wrap font-mono text-sm">
+                  <Box sx={{ mb: 3 }}>
+                    <InputLabel sx={{ mb: 1 }}>模板预览</InputLabel>
+                    <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1, border: "1px solid", borderColor: "grey.200", minHeight: 100, whiteSpace: "pre-wrap", fontFamily: "monospace", fontSize: 14 }}>
                       {selectedTemplate.content}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
 
                   {showVariables && selectedTemplate.variables.length > 0 && (
-                    <div>
-                      <Label className="block mb-3 font-semibold">
+                    <Box>
+                      <InputLabel sx={{ mb: 1.5, fontWeight: "bold" }}>
                         变量配置
-                      </Label>
-                      <div className="space-y-3">
+                      </InputLabel>
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                         {selectedTemplate.variables.map((variable) => (
-                          <div key={variable.key}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium">
+                          <Box key={variable.key}>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                              <span style={{ fontSize: 14, fontWeight: 500 }}>
                                 {variable.label}
                               </span>
                               {variable.required && (
-                                <span className="text-xs text-red-500">
+                                <span style={{ fontSize: 12, color: "#ef4444" }}>
                                   必填
                                 </span>
                               )}
-                            </div>
-                            <Input
+                            </Box>
+                            <TextField
                               placeholder={
                                 variable.placeholder || `输入${variable.label}`
                               }
@@ -339,24 +344,25 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                   e.target.value,
                                 )
                               }
-                              className="mt-1"
+                              size="small"
+                              sx={{ mt: 0.5 }}
                             />
-                          </div>
+                          </Box>
                         ))}
-                      </div>
-                    </div>
+                      </Box>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
-            </div>
+            </Box>
           )}
-        </div>
+        </Box>
 
-        <DialogFooter>
+        <DialogActions>
           {selectedTemplate ? (
             <>
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={() => setSelectedTemplate(null)}
               >
                 返回列表
@@ -366,7 +372,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   "处理中..."
                 ) : (
                   <>
-                    <Check className="w-4 h-4 mr-2" />
+                    <Check style={{ width: 16, height: 16, marginRight: 8 }} />
                     应用模板
                   </>
                 )}
@@ -374,7 +380,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <Button variant="outlined" onClick={() => onOpenChange(false)}>
                 取消
               </Button>
               <Button disabled={!selectedTemplate} onClick={handleApply}>
@@ -382,7 +388,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               </Button>
             </>
           )}
-        </DialogFooter>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );

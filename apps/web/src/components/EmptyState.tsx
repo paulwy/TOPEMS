@@ -1,6 +1,6 @@
 import React from "react";
-import { FileText, Inbox, Search, Folder } from "lucide-react";
-import { Button } from "./ui/button";
+import { FileText, Inbox, Search, Folder, AlertTriangle } from "lucide-react";
+import { Button, Box, Typography } from "@mui/material";
 
 interface EmptyStateProps {
   icon?: "file" | "folder" | "search" | "inbox";
@@ -18,7 +18,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   action,
-  className = "",
 }) => {
   const icons = {
     file: FileText,
@@ -30,22 +29,41 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   const Icon = icons[icon];
 
   return (
-    <div
-      className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        py: 6,
+        px: 2,
+        textAlign: "center",
+      }}
     >
-      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-        <Icon className="w-8 h-8 text-gray-400" />
-      </div>
-      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+      <Box
+        sx={{
+          width: 64,
+          height: 64,
+          backgroundColor: "grey.100",
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 2,
+        }}
+      >
+        <Icon style={{ width: 32, height: 32, color: "#9ca3af" }} />
+      </Box>
+      <Typography variant="h6" sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}>
         {title}
-      </h3>
+      </Typography>
       {description && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}>
           {description}
-        </p>
+        </Typography>
       )}
       {action && <Button onClick={action.onClick}>{action.label}</Button>}
-    </div>
+    </Box>
   );
 };
 
@@ -60,39 +78,45 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   title = "出错了",
   message = "加载数据时出现错误，请稍后重试",
   onRetry,
-  className = "",
 }) => {
   return (
-    <div
-      className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        py: 6,
+        px: 2,
+        textAlign: "center",
+      }}
     >
-      <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-        <svg
-          className="w-8 h-8 text-red-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
-      </div>
-      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+      <Box
+        sx={{
+          width: 64,
+          height: 64,
+          backgroundColor: "error.light",
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 2,
+        }}
+      >
+        <AlertTriangle style={{ width: 32, height: 32, color: "#dc2626" }} />
+      </Box>
+      <Typography variant="h6" sx={{ fontWeight: 500, color: "text.primary", mb: 1 }}>
         {title}
-      </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+      </Typography>
+      <Typography variant="body2" sx={{ color: "text.secondary", mb: 3, maxWidth: 280 }}>
         {message}
-      </p>
+      </Typography>
       {onRetry && (
-        <Button variant="outline" onClick={onRetry}>
+        <Button variant="outlined" onClick={onRetry}>
           重新加载
         </Button>
       )}
-    </div>
+    </Box>
   );
 };
 

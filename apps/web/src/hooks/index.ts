@@ -14,6 +14,9 @@ export { useNotificationWebSocket } from "./useNotificationWebSocket";
 export { useNotificationSettings } from "./useNotificationSettings";
 
 export { useAIHelper } from "./useAIHelper";
+export { useAIContext } from "./useAIContext";
+export type { AIRecommendation, AIContextState, QuickCommand } from "./useAIContext";
+export { useTopNav } from "./useTopNav";
 export { useBatchSelection } from "./useBatchSelection";
 export { useDataTable, useExportData } from "./useDataTable";
 export type { UseDataTableOptions, UseDataTableResult } from "./useDataTable";

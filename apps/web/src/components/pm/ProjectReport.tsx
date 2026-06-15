@@ -7,10 +7,21 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Progress } from "../ui/progress";
+import { Button } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Badge,
+  LinearProgress,
+  Box,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@mui/material";
 import {
   BarChart,
   Bar,
@@ -79,93 +90,94 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">项目报表</h2>
-          <p className="text-gray-500 mt-1">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: "bold", color: "grey.900" }}>
+            项目报表
+          </Typography>
+          <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
             生成时间: {new Date().toLocaleString("zh-CN")}
-          </p>
-        </div>
-        <Button onClick={handleExport} className="gap-2">
-          <Download className="w-4 h-4" />
+          </Typography>
+        </Box>
+        <Button onClick={handleExport} startIcon={<Box component={Download} sx={{ width: 16, height: 16 }} />}>
           导出报表
         </Button>
-      </div>
+      </Box>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2 }}>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-blue-100">
-                <Calendar className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">项目总数</p>
-                <p className="text-xl font-bold text-gray-900">
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "blue.100" }}>
+                <Box component={Calendar} sx={{ width: 20, height: 20, color: "blue.600" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>项目总数</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", color: "grey.900" }}>
                   {stats.total_projects}
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-green-100">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">已完成</p>
-                <p className="text-xl font-bold text-green-600">
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "green.100" }}>
+                <Box component={CheckCircle} sx={{ width: 20, height: 20, color: "green.600" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>已完成</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", color: "green.600" }}>
                   {stats.completed_projects}
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-amber-100">
-                <DollarSign className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">预算使用</p>
-                <p className="text-xl font-bold text-amber-600">
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "orange.100" }}>
+                <Box component={DollarSign} sx={{ width: 20, height: 20, color: "orange.600" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>预算使用</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", color: "orange.600" }}>
                   {stats.budget_usage_rate}%
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-red-100">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">高风险</p>
-                <p className="text-xl font-bold text-red-600">
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ p: 1, borderRadius: "50%", bgcolor: "red.100" }}>
+                <Box component={AlertTriangle} sx={{ width: 20, height: 20, color: "red.600" }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>高风险</Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold", color: "red.600" }}>
                   {stats.high_risk_projects}
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" }, gap: 3 }}>
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg">项目状态分布</CardTitle>
+            <Typography variant="h6">项目状态分布</Typography>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <Box sx={{ height: 256 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -187,16 +199,16 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+            </Box>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">风险分布</CardTitle>
+            <Typography variant="h6">风险分布</Typography>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <Box sx={{ height: 256 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -220,17 +232,17 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
+            </Box>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">CPI/SPI 趋势分析</CardTitle>
+          <Typography variant="h6">CPI/SPI 趋势分析</Typography>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
+          <Box sx={{ height: 256 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={
@@ -260,51 +272,51 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                 />
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </Box>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">预算执行情况</CardTitle>
+          <Typography variant="h6">预算执行情况</Typography>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">预算利用率</span>
-            <span className="text-sm font-medium text-gray-900">
+        <CardContent sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography variant="body2" sx={{ color: "grey.600" }}>预算利用率</Typography>
+            <Typography variant="body2" sx={{ fontWeight: "medium", color: "grey.900" }}>
               {budgetUtilization.toFixed(1)}%
-            </span>
-          </div>
-          <Progress value={budgetUtilization} className="h-4" />
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-600">总预算</p>
-              <p className="text-lg font-bold text-blue-800">
+            </Typography>
+          </Box>
+          <LinearProgress variant="determinate" value={budgetUtilization} sx={{ height: 16 }} />
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2, mt: 1 }}>
+            <Box sx={{ textAlign: "center", p: 2, bgcolor: "blue.50", borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ color: "blue.600" }}>总预算</Typography>
+              <Typography variant="h6" sx={{ fontWeight: "bold", color: "blue.800" }}>
                 {stats.total_budget.toLocaleString()}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-600">已使用</p>
-              <p className="text-lg font-bold text-green-800">
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center", p: 2, bgcolor: "green.50", borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ color: "green.600" }}>已使用</Typography>
+              <Typography variant="h6" sx={{ fontWeight: "bold", color: "green.800" }}>
                 {stats.spent_budget.toLocaleString()}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">剩余</p>
-              <p className="text-lg font-bold text-gray-800">
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: "center", p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ color: "grey.600" }}>剩余</Typography>
+              <Typography variant="h6" sx={{ fontWeight: "bold", color: "grey.800" }}>
                 {(stats.total_budget - stats.spent_budget).toLocaleString()}
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">项目进度统计</CardTitle>
+          <Typography variant="h6">项目进度统计</Typography>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
+          <Box sx={{ height: 256 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
@@ -322,95 +334,80 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Box>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">效益指标汇总</CardTitle>
+          <Typography variant="h6">效益指标汇总</Typography>
         </CardHeader>
         <CardContent>
           {benefits.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium text-gray-600">
-                      期间
-                    </th>
-                    <th className="text-right p-3 font-medium text-gray-600">
-                      CPI
-                    </th>
-                    <th className="text-right p-3 font-medium text-gray-600">
-                      SPI
-                    </th>
-                    <th className="text-right p-3 font-medium text-gray-600">
-                      CV
-                    </th>
-                    <th className="text-right p-3 font-medium text-gray-600">
-                      SV
-                    </th>
-                    <th className="text-right p-3 font-medium text-gray-600">
-                      ROI
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Box sx={{ overflowX: "auto" }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: "medium", color: "grey.600" }}>期间</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>CPI</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>SPI</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>CV</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>SV</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: "medium", color: "grey.600" }}>ROI</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {benefits.map((benefit, index) => (
-                    <tr key={benefit.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 text-gray-900">第{index + 1}期</td>
-                      <td className="p-3 text-right">
+                    <TableRow key={benefit.id} hover>
+                      <TableCell sx={{ color: "grey.900" }}>第{index + 1}期</TableCell>
+                      <TableCell align="right">
                         <Badge
-                          className={
-                            benefit.cpi >= 1
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }
+                          sx={{
+                            bgcolor: benefit.cpi >= 1 ? "green.100" : "red.100",
+                            color: benefit.cpi >= 1 ? "green.800" : "red.800",
+                          }}
                         >
                           {benefit.cpi.toFixed(2)}
                         </Badge>
-                      </td>
-                      <td className="p-3 text-right">
+                      </TableCell>
+                      <TableCell align="right">
                         <Badge
-                          className={
-                            benefit.spi >= 1
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }
+                          sx={{
+                            bgcolor: benefit.spi >= 1 ? "green.100" : "red.100",
+                            color: benefit.spi >= 1 ? "green.800" : "red.800",
+                          }}
                         >
                           {benefit.spi.toFixed(2)}
                         </Badge>
-                      </td>
-                      <td className="p-3 text-right text-gray-600">
+                      </TableCell>
+                      <TableCell align="right" sx={{ color: "grey.600" }}>
                         {benefit.cv.toLocaleString()}
-                      </td>
-                      <td className="p-3 text-right text-gray-600">
+                      </TableCell>
+                      <TableCell align="right" sx={{ color: "grey.600" }}>
                         {benefit.sv.toLocaleString()}
-                      </td>
-                      <td className="p-3 text-right">
-                        <span
-                          className={
-                            benefit.roi >= 0 ? "text-green-600" : "text-red-600"
-                          }
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography
+                          component="span"
+                          sx={{ color: benefit.roi >= 0 ? "green.600" : "red.600" }}
                         >
                           {(benefit.roi * 100).toFixed(2)}%
-                        </span>
-                      </td>
-                    </tr>
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </Box>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>暂无效益数据</p>
-            </div>
+            <Box sx={{ textAlign: "center", py: 4, color: "grey.500" }}>
+              <Box component={TrendingUp} sx={{ width: 48, height: 48, mx: "auto", mb: 2, color: "grey.300" }} />
+              <Typography>暂无效益数据</Typography>
+            </Box>
           )}
         </CardContent>
       </Card>
-    </div>
+    </Box>
   );
 };
 

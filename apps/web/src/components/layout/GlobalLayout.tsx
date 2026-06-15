@@ -12,6 +12,7 @@ import {
   Tooltip,
   useTheme,
   useMediaQuery,
+  Fade,
 } from "@mui/material";
 import {
   Home,
@@ -56,7 +57,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("lg"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
@@ -114,10 +116,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         <Box
           sx={{
             display: "flex",
-            minWidth: 600,
-            maxWidth: 800,
+            flexWrap: "wrap",
+            minWidth: 500,
+            maxWidth: { lg: 800, md: 600, sm: 450 },
             p: 2,
             gap: 2,
+            maxHeight: isMobile ? "70vh" : "80vh",
+            overflowY: "auto",
           }}
           onMouseEnter={() => {
             if (anchorEl) setAnchorEl(anchorEl);
@@ -125,7 +130,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           onMouseLeave={handleCloseMenu}
         >
           {groups.map((group, idx) => (
-            <Box key={idx} sx={{ minWidth: 160, flex: 1 }}>
+            <Box key={idx} sx={{ minWidth: 140, flex: 1 }}>
               <Typography
                 variant="caption"
                 sx={{
@@ -157,8 +162,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 >
                   <Box
                     sx={{
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       borderRadius: 1,
                       backgroundColor: "primary.light",
                       display: "flex",
@@ -192,9 +197,11 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     return (
       <Box
         sx={{
-          display: "flex",
           minWidth: 200,
+          maxWidth: 320,
           p: 1,
+          maxHeight: isMobile ? "60vh" : "70vh",
+          overflowY: "auto",
         }}
         onMouseEnter={() => {
           if (anchorEl) setAnchorEl(anchorEl);
@@ -219,8 +226,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           >
             <Box
               sx={{
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 borderRadius: 1,
                 backgroundColor: "primary.light",
                 display: "flex",
@@ -444,11 +451,16 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                 borderRadius: 2,
                 mt: 0.5,
                 overflow: "hidden",
+                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.15)",
               },
             },
           }}
         >
-          {openMenu && renderDropdownContent(openMenu)}
+          {openMenu && (
+            <Fade in={isMenuOpen}>
+              {renderDropdownContent(openMenu) || <Box />}
+            </Fade>
+          )}
         </Popover>
       </Box>
 
@@ -461,7 +473,10 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         sx={{
           flex: 1,
           backgroundColor: "grey.50",
-          p: 3,
+          p: { xs: 2, sm: 3, lg: 4 },
+          maxWidth: 1600,
+          mx: "auto",
+          width: "100%",
         }}
       >
         {children}
@@ -475,10 +490,12 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           borderTop: 1,
           borderColor: "divider",
           py: 2,
-          px: 3,
+          px: { xs: 2, sm: 3, lg: 4 },
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1,
         }}
       >
         <Typography
@@ -488,7 +505,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         >
           © 2024 TOPEMS 化工新材料数字化平台
         </Typography>
-        <Box sx={{ display: "flex", gap: 3 }}>
+        <Box sx={{ display: "flex", gap: 2 }}>
           <Button size="small" variant="text" sx={{ fontSize: 12 }}>
             帮助中心
           </Button>

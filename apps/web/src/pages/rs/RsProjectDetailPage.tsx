@@ -39,19 +39,19 @@ import {
 } from "@mui/lab";
 import {
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  Science as ScienceIcon,
-  Description as DescriptionIcon,
-  People as PeopleIcon,
-  Schedule as ScheduleIcon,
-  AttachMoney as MoneyIcon,
+  Trash2 as DeleteIcon,
+  FlaskConical as FlaskConical,
+  FileText as DescriptionIcon,
+  Users as PeopleIcon,
+  Clock as Clock,
+  DollarSign as MoneyIcon,
   TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
+  AlertTriangle as AlertTriangle,
+  XCircle as ErrorIcon,
   Folder as FolderIcon,
-  Assignment as AssignmentIcon,
-} from "@mui/icons-material";
+  ClipboardList as AssignmentIcon,
+} from "lucide-react";
 
 interface ProjectDetail {
   id: string;
@@ -326,7 +326,7 @@ const RsProjectDetailPage: React.FC = () => {
             </Button>
             <Button
               variant="contained"
-              startIcon={<ScienceIcon />}
+              startIcon={<FlaskConical />}
               component={Link}
               to="/rs/experiments/create"
             >
@@ -358,7 +358,7 @@ const RsProjectDetailPage: React.FC = () => {
                       gap: 4,
                     }}
                   >
-                    <ScheduleIcon color="action" />
+                    <Clock color="action" />
                     <Typography variant="body2">
                       开始日期: {project.start_date}
                     </Typography>
@@ -373,7 +373,7 @@ const RsProjectDetailPage: React.FC = () => {
                       gap: 4,
                     }}
                   >
-                    <ScheduleIcon color="action" />
+                    <Clock color="action" />
                     <Typography variant="body2">
                       结束日期: {project.end_date || "未设定"}
                     </Typography>
@@ -481,9 +481,9 @@ const RsProjectDetailPage: React.FC = () => {
       {/* 详细信息标签页 */}
       <Paper sx={{ mb: 3 }}>
         <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-          <Tab label="项目阶段" icon={<ScheduleIcon />} iconPosition="start" />
+          <Tab label="项目阶段" icon={<Clock />} iconPosition="start" />
           <Tab label="里程碑" icon={<CheckCircleIcon />} iconPosition="start" />
-          <Tab label="试验记录" icon={<ScienceIcon />} iconPosition="start" />
+          <Tab label="试验记录" icon={<FlaskConical />} iconPosition="start" />
           <Tab label="团队成员" icon={<PeopleIcon />} iconPosition="start" />
           <Tab
             label="文档资料"
@@ -558,7 +558,7 @@ const RsProjectDetailPage: React.FC = () => {
                       {milestone.status === "已完成" ? (
                         <CheckCircleIcon />
                       ) : (
-                        <WarningIcon />
+                        <AlertTriangle />
                       )}
                     </TimelineDot>
                     <TimelineConnector />

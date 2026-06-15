@@ -18,11 +18,7 @@ import {
   TableRow,
   Stack,
 } from "@mui/material";
-import {
-  Edit as EditIcon,
-  Description as DescriptionIcon,
-  History as HistoryIcon,
-} from "@mui/icons-material";
+import { Edit, History } from "lucide-react";
 
 const RsFormulaDetailPage: React.FC = () => {
   const formula = {
@@ -73,10 +69,10 @@ const RsFormulaDetailPage: React.FC = () => {
             </Typography>
           </div>
           <Stack direction="row" spacing={2}>
-            <Button variant="outlined" startIcon={<HistoryIcon />}>
+            <Button variant="outlined" startIcon={<History />}>
               版本历史
             </Button>
-            <Button variant="contained" startIcon={<EditIcon />}>
+            <Button variant="contained" startIcon={<Edit />}>
               编辑
             </Button>
           </Stack>

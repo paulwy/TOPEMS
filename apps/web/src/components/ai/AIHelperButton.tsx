@@ -1,5 +1,6 @@
 import { Sparkles, Loader2 } from "lucide-react";
-import { Button } from "../ui/button";
+import Button from "@mui/material/Button";
+import type { ButtonProps } from "@mui/material/Button";
 
 export interface AIHelperButtonProps {
   type: "generate" | "optimize" | "validate" | "complete";
@@ -7,8 +8,8 @@ export interface AIHelperButtonProps {
   disabled?: boolean;
   loading?: boolean;
   label?: string;
-  size?: "default" | "sm" | "lg" | "icon";
-  variant?: "default" | "secondary" | "outline" | "ghost";
+  size?: ButtonProps["size"];
+  variant?: ButtonProps["variant"];
 }
 
 const typeLabels = {
@@ -24,8 +25,8 @@ export function AIHelperButton({
   disabled = false,
   loading = false,
   label,
-  size = "default",
-  variant = "default",
+  size = "medium",
+  variant = "contained",
 }: AIHelperButtonProps) {
   const buttonLabel = label || typeLabels[type];
 
@@ -38,12 +39,12 @@ export function AIHelperButton({
     >
       {loading ? (
         <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <Loader2 style={{ width: 16, height: 16, marginRight: 8 }} className="animate-spin" />
           处理中...
         </>
       ) : (
         <>
-          <Sparkles className="w-4 h-4 mr-2" />
+          <Sparkles style={{ width: 16, height: 16, marginRight: 8 }} />
           {buttonLabel}
         </>
       )}

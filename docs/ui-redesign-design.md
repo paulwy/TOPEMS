@@ -168,6 +168,66 @@ src/
 - Dialog → MUI Dialog
 - Table → MUI Table
 
+### 4.3 图标规范
+
+**统一使用 lucide-react 作为标准图标库**
+
+| 库 | 文件数 | 状态 |
+|---|--------|------|
+| lucide-react | 100 | 标准 ✓ |
+| @mui/icons-material | 0 | 已移除 ✓ |
+
+**迁移规则**：
+- 所有新组件使用 lucide-react
+- 保留 lucide-react 作为唯一图标库
+- 图标使用统一的 `style={{ width: 16, height: 16 }}` 尺寸规范
+
+**常用图标映射参考**：
+```
+@mui/icons-material    →  lucide-react
+Save as SaveIcon      →  Save
+Cancel as CancelIcon  →  X
+```
+
+### 4.4 样式规范（移除 Tailwind CSS）
+
+**目标**：统一使用 MUI 样式系统，移除 Tailwind CSS 和 shadcn/ui
+
+**现状**：
+| 依赖 | 用途 | 状态 |
+|------|------|------|
+| tailwindcss | 样式框架 | 待移除 |
+| tailwind-merge | 类名合并 | 待移除 |
+| clsx | 条件类名 | 可保留（非Tailwind专属） |
+| shadcn/ui | 组件库 | 待迁移到 MUI |
+
+**迁移规则**：
+- 删除 `@import "tailwindcss";` 指令
+- 移除 `@theme` 和 `@layer` 指令
+- 使用 MUI sx prop 替代 Tailwind 类名
+- shadcn/ui 组件 → MUI 对应组件
+- 自定义工具类 → MUI Theme 或 sx prop
+
+**组件映射**：
+| shadcn/ui | MUI |
+|-----------|-----|
+| Button | Button |
+| Input | TextField |
+| Card | Card |
+| Badge | Chip |
+| Dialog | Dialog |
+| Skeleton | Skeleton |
+| Tabs | Tabs |
+
+**样式映射示例**：
+```
+/* Tailwind */
+className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700"
+
+/* MUI sx */
+sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 4, py: 2, bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+```
+
 ---
 
 ## 五、实施计划

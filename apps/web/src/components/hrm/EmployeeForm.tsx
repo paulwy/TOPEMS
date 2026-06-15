@@ -189,19 +189,19 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
             <AIHelperButton
               type="generate"
               onClick={() => setShowAICodeGenerator(true)}
-              variant="secondary"
+              variant="outlined"
               label="生成工号"
             />
             <AIHelperButton
               type="complete"
               onClick={() => setShowAIDataCompleter(true)}
-              variant="secondary"
+              variant="outlined"
               label="智能补全"
             />
             <AIHelperButton
               type="validate"
               onClick={() => setShowAIFormValidator(true)}
-              variant="secondary"
+              variant="outlined"
               label="AI 校验"
             />
             <Button type="submit" variant="contained">

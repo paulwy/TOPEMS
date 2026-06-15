@@ -26,9 +26,7 @@ import {
   LineChart as RechartsLineChart,
   Line,
 } from "recharts";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { Skeleton } from "../components/ui/skeleton";
+import { Button, Card, CardContent, Skeleton } from "@mui/material";
 import { MetricCard } from "../components/MetricCard";
 import { ChartCard } from "../components/ChartCard";
 import { BIChartColors } from "../components/charts/chartTheme";

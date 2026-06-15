@@ -16,16 +16,10 @@ import {
   Grid3X3,
   List,
 } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Badge } from "../components/ui/badge";
+import { Button, Card, CardContent, TextField, Badge, Skeleton, Box, Typography } from "@mui/material";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { EmptyState } from "../components/EmptyState";
-import { Skeleton } from "../components/ui/skeleton";
 import { BIChartColors } from "../components/charts/chartTheme";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 
 interface Visualization {
   id: string;

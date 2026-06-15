@@ -1,15 +1,18 @@
 import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import FormLabel from "@mui/material/FormLabel";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
 import {
   Sparkles,
   Wand2,
   Lightbulb,
   TrendingUp,
   Send,
-  Loader2,
 } from "lucide-react";
 
 interface TemplateAIHelperProps {
@@ -243,94 +246,81 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   };
 
   return (
-    <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-amber-800">
-          <Sparkles className="w-5 h-5" />
+    <Card sx={{ background: 'linear-gradient(to bottom right, #fffbeb, #ffedd5)', border: '1px solid #fcd34d' }}>
+      <CardHeader sx={{ pb: 1.5 }}>
+        <Typography variant="h6" component="h3" sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#92400e' }}>
+          <Sparkles style={{ width: 20, height: 20 }} />
           AI 辅助助手
-        </CardTitle>
-        <p className="text-sm text-amber-600">智能生成和优化模板内容</p>
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#d97706', mt: 0.5 }}>
+          智能生成和优化模板内容
+        </Typography>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <div>
-          <Label className="text-sm font-medium text-amber-700">
+          <FormLabel sx={{ fontSize: 14, fontWeight: 500, color: '#b45309' }}>
             描述模板用途
-          </Label>
-          <Input
+          </FormLabel>
+          <TextField
             placeholder="例如：生成一份项目周报模板"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="mt-1"
+            size="small"
+            fullWidth
+            sx={{ mt: 1 }}
           />
           <Button
-            className="w-full mt-2 bg-amber-500 hover:bg-amber-600 text-white"
+            variant="contained"
             onClick={handleGenerate}
             disabled={isGenerating || !description.trim()}
+            sx={{ width: '100%', mt: 1, backgroundColor: '#f59e0b', color: 'white', '&:hover': { backgroundColor: '#d97706' } }}
+            startIcon={isGenerating ? <CircularProgress size={16} color="inherit" /> : <Wand2 style={{ width: 16, height: 16 }} />}
           >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Wand2 className="w-4 h-4 mr-2" />
-                AI 生成模板
-              </>
-            )}
+            {isGenerating ? "生成中..." : "AI 生成模板"}
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <Button
-            variant="outline"
-            className="border-amber-300 text-amber-700 hover:bg-amber-100"
+            variant="outlined"
             onClick={handleSuggestVariables}
             disabled={isAnalyzing || !content.trim()}
+            sx={{ borderColor: '#fcd34d', color: '#b45309', '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' } }}
+            startIcon={<Lightbulb style={{ width: 16, height: 16 }} />}
           >
-            <Lightbulb className="w-4 h-4 mr-2" />
             建议变量
           </Button>
           <Button
-            variant="outline"
-            className="border-amber-300 text-amber-700 hover:bg-amber-100"
+            variant="outlined"
             onClick={handleOptimize}
             disabled={isGenerating || !content.trim()}
+            sx={{ borderColor: '#fcd34d', color: '#b45309', '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' } }}
+            startIcon={<TrendingUp style={{ width: 16, height: 16 }} />}
           >
-            <TrendingUp className="w-4 h-4 mr-2" />
             优化内容
           </Button>
         </div>
 
         <Button
-          variant="outline"
-          className="w-full border-amber-300 text-amber-700 hover:bg-amber-100"
+          variant="outlined"
           onClick={handleAnalyze}
           disabled={isAnalyzing}
+          sx={{ width: '100%', borderColor: '#fcd34d', color: '#b45309', '&:hover': { backgroundColor: '#fef3c7', borderColor: '#fcd34d' } }}
+          startIcon={isAnalyzing ? <CircularProgress size={16} color="inherit" /> : <Send style={{ width: 16, height: 16 }} />}
         >
-          {isAnalyzing ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              分析中...
-            </>
-          ) : (
-            <>
-              <Send className="w-4 h-4 mr-2" />
-              分析变量使用
-            </>
-          )}
+          {isAnalyzing ? "分析中..." : "分析变量使用"}
         </Button>
 
         {suggestions.length > 0 && (
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-amber-700">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: '#b45309' }}>
               AI 建议
-            </Label>
-            <div className="space-y-1">
+            </FormLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
-                  className="text-sm text-amber-800 bg-amber-100 rounded-lg px-3 py-2"
+                  style={{ fontSize: 14, color: '#92400e', backgroundColor: '#fef3c7', borderRadius: 8, padding: '8px 12px' }}
                 >
                   {suggestion}
                 </div>
@@ -340,20 +330,21 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
         )}
 
         {analysisResult && analysisResult.suggestions.length > 0 && (
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-amber-700">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: '#b45309' }}>
               分析结果
-            </Label>
-            <div className="space-y-1">
+            </FormLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {analysisResult.suggestions.map((suggestion, index) => (
                 <div
                   key={index}
-                  className={`text-sm rounded-lg px-3 py-2 ${
-                    suggestion.includes("未使用") ||
-                    suggestion.includes("未定义")
-                      ? "bg-red-50 text-red-700"
-                      : "bg-green-50 text-green-700"
-                  }`}
+                  style={{
+                    fontSize: 14,
+                    borderRadius: 8,
+                    padding: '8px 12px',
+                    backgroundColor: suggestion.includes("未使用") || suggestion.includes("未定义") ? '#fef2f2' : '#f0fdf4',
+                    color: suggestion.includes("未使用") || suggestion.includes("未定义") ? '#b91c1c' : '#15803d',
+                  }}
                 >
                   {suggestion}
                 </div>

@@ -10,15 +10,9 @@ import {
   RefreshCw,
   Calendar,
   TrendingUp,
+  AlertCircle,
 } from "lucide-react";
-import { Button } from "./ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Skeleton } from "./ui/skeleton";
+import { Card, CardHeader, CardContent, Button, Menu, MenuItem, Skeleton, Typography, Chip } from "@mui/material";
 
 type ChartType = "bar" | "line" | "area" | "pie";
 
@@ -61,10 +55,10 @@ interface ChartCardProps {
 }
 
 const ChartCardIcon: Record<ChartType, React.ReactNode> = {
-  bar: <BarChart3 className="w-4 h-4" />,
-  line: <LineChart className="w-4 h-4" />,
-  area: <AreaChart className="w-4 h-4" />,
-  pie: <PieChart className="w-4 h-4" />,
+  bar: <BarChart3 style={{ width: 16, height: 16 }} />,
+  line: <LineChart style={{ width: 16, height: 16 }} />,
+  area: <AreaChart style={{ width: 16, height: 16 }} />,
+  pie: <PieChart style={{ width: 16, height: 16 }} />,
 };
 
 export const ChartCard: React.FC<ChartCardProps> = ({
@@ -91,63 +85,44 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   trend,
   trendValue,
 }) => {
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(null);
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
 
   const getTrendIcon = () => {
     if (!trend || trend === "stable") return null;
     return trend === "up" ? (
-      <TrendingUp className="w-4 h-4 text-emerald-500" />
+      <TrendingUp style={{ width: 16, height: 16, color: "#10B981" }} />
     ) : (
-      <TrendingUp className="w-4 h-4 text-rose-500 rotate-180" />
+      <TrendingUp style={{ width: 16, height: 16, color: "#EF4444", transform: "rotate(180deg)" }} />
     );
   };
 
   const getTrendColor = () => {
-    if (!trend || trend === "stable") return "text-slate-500";
-    return trend === "up" ? "text-emerald-500" : "text-rose-500";
+    if (!trend || trend === "stable") return "text.secondary";
+    return trend === "up" ? "#10B981" : "#EF4444";
   };
 
   return (
-    <div
-      className={`
-        bg-white rounded-2xl shadow-sm border border-slate-200/60 
-        overflow-hidden transition-all duration-300
-        hover:shadow-md hover:border-slate-300/60
-        ${className}
-      `}
-    >
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-100">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-slate-900">
-                {title}
-              </h3>
-              {trend && trendValue && (
-                <div className={`flex items-center gap-1 ${getTrendColor()}`}>
-                  {getTrendIcon()}
-                  <span className="text-xs font-medium">{trendValue}</span>
-                </div>
-              )}
-            </div>
-            {subtitle && (
-              <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Chart Type Selector */}
+    <Card sx={{ overflow: "hidden", transition: "all 0.3s", "&:hover": { boxShadow: 2 } }} className={className}>
+      <CardHeader
+        sx={{ padding: "16px 24px", borderBottom: "1px solid rgba(0,0,0,0.05)" }}
+        action={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {showChartType && chartTypes.length > 1 && (
-              <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#F1F5F9", borderRadius: 8, padding: 2 }}>
                 {chartTypes.map((type) => (
                   <button
                     key={type}
                     onClick={() => onChartTypeChange?.(type)}
-                    className={`
-                      p-1.5 rounded-md transition-all duration-200
-                      ${activeChartType === type ? "bg-white shadow-sm text-blue-600" : "text-slate-500 hover:text-slate-700"}
-                    `}
+                    style={{
+                      padding: 6,
+                      borderRadius: 6,
+                      border: "none",
+                      backgroundColor: activeChartType === type ? "white" : "transparent",
+                      color: activeChartType === type ? "#1D4ED8" : "text.secondary",
+                      cursor: "pointer",
+                      boxShadow: activeChartType === type ? "0 1px 2px rgba(0,0,0,0.1)" : "none",
+                    }}
                     title={type}
                   >
                     {ChartCardIcon[type]}
@@ -156,110 +131,61 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               </div>
             )}
 
-            {/* Time Range Selector */}
             {showTimeRange && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowTimePicker(!showTimePicker)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    {timeRanges.find((r) => r.value === timeRange)?.label ||
-                      "本月"}
-                  </span>
-                </button>
-                {showTimePicker && (
-                  <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20 min-w-[100px]">
-                    {timeRanges.map((range) => (
-                      <button
-                        key={range.value}
-                        onClick={() => {
-                          onTimeRangeChange?.(range.value);
-                          setShowTimePicker(false);
-                        }}
-                        className={`
-                          w-full px-3 py-1.5 text-sm text-left hover:bg-slate-50
-                          ${timeRange === range.value ? "text-blue-600 font-medium" : "text-slate-600"}
-                        `}
-                      >
-                        {range.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <Button
+                variant="text"
+                size="small"
+                onClick={(e) => setTimeMenuAnchor(e.currentTarget)}
+                sx={{ textTransform: "none", padding: "6px 12px" }}
+              >
+                <Calendar style={{ width: 16, height: 16, marginRight: 4 }} />
+                <span>{timeRanges.find((r) => r.value === timeRange)?.label || "本月"}</span>
+              </Button>
             )}
 
-            {/* Actions Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                {showRefresh && (
-                  <DropdownMenuItem
-                    onClick={onRefresh}
-                    className="cursor-pointer"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    刷新数据
-                  </DropdownMenuItem>
-                )}
-                {showExport && (
-                  <DropdownMenuItem
-                    onClick={onExport}
-                    className="cursor-pointer"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    导出数据
-                  </DropdownMenuItem>
-                )}
-                {showFullscreen && (
-                  <DropdownMenuItem
-                    onClick={onFullscreen}
-                    className="cursor-pointer"
-                  >
-                    <Maximize2 className="w-4 h-4 mr-2" />
-                    全屏查看
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="text"
+              size="small"
+              onClick={(e) => setActionMenuAnchor(e.currentTarget)}
+            >
+              <MoreVertical style={{ width: 16, height: 16 }} />
+            </Button>
           </div>
+        }
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
+            {title}
+          </Typography>
+          {trend && trendValue && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, color: getTrendColor() }}>
+              {getTrendIcon()}
+              <span style={{ fontSize: 12, fontWeight: 500 }}>{trendValue}</span>
+            </div>
+          )}
         </div>
-      </div>
+        {subtitle && (
+          <Typography variant="body2" color="text.secondary" sx={{ marginTop: 2 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </CardHeader>
 
-      {/* Content */}
-      <div className="p-6">
+      <CardContent sx={{ padding: 24 }}>
         {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-[200px] w-full rounded-lg" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Skeleton sx={{ width: "33%", height: 16 }} />
+            <Skeleton sx={{ width: "100%", height: 200, borderRadius: 8 }} />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-3">
-              <svg
-                className="w-6 h-6 text-red-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
+            <div style={{ width: 48, height: 48, backgroundColor: "#FEF2F2", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+              <AlertCircle style={{ width: 24, height: 24, color: "#EF4444" }} />
             </div>
-            <p className="text-sm text-slate-600 mb-2">{error}</p>
+            <Typography variant="body1" color="text.secondary" sx={{ marginBottom: 8 }}>{error}</Typography>
             {onRefresh && (
-              <Button variant="outline" size="sm" onClick={onRefresh}>
-                <RefreshCw className="w-4 h-4 mr-1" />
+              <Button variant="outlined" size="small" onClick={onRefresh}>
+                <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
                 重试
               </Button>
             )}
@@ -267,9 +193,43 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         ) : (
           <div style={{ height }}>{children}</div>
         )}
-      </div>
-    </div>
+      </CardContent>
+
+      <Menu anchorEl={timeMenuAnchor} open={Boolean(timeMenuAnchor)} onClose={() => setTimeMenuAnchor(null)}>
+        {timeRanges.map((range) => (
+          <MenuItem
+            key={range.value}
+            onClick={() => {
+              onTimeRangeChange?.(range.value);
+              setTimeMenuAnchor(null);
+            }}
+            selected={timeRange === range.value}
+          >
+            {range.label}
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <Menu anchorEl={actionMenuAnchor} open={Boolean(actionMenuAnchor)} onClose={() => setActionMenuAnchor(null)}>
+        {showRefresh && (
+          <MenuItem onClick={() => { onRefresh?.(); setActionMenuAnchor(null); }}>
+            <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
+            刷新数据
+          </MenuItem>
+        )}
+        {showExport && (
+          <MenuItem onClick={() => { onExport?.(); setActionMenuAnchor(null); }}>
+            <Download style={{ width: 16, height: 16, marginRight: 8 }} />
+            导出数据
+          </MenuItem>
+        )}
+        {showFullscreen && (
+          <MenuItem onClick={() => { onFullscreen?.(); setActionMenuAnchor(null); }}>
+            <Maximize2 style={{ width: 16, height: 16, marginRight: 8 }} />
+            全屏查看
+          </MenuItem>
+        )}
+      </Menu>
+    </Card>
   );
 };
-
-export default ChartCard;

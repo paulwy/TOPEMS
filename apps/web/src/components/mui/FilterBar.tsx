@@ -64,8 +64,13 @@ const FilterControl: React.FC<{
     [filter, onChange],
   );
 
-  const commonProps = {
-    size: dense ? "small" : "small",
+  const textFieldProps = {
+    size: "small" as const,
+    variant: variant as any,
+    fullWidth: true,
+  };
+  
+  const formControlProps = {
     variant: variant as any,
     fullWidth: true,
   };
@@ -73,9 +78,10 @@ const FilterControl: React.FC<{
   switch (filter.type) {
     case "select":
       return (
-        <FormControl {...commonProps} sx={{ minWidth: filter.width || 150 }}>
+        <FormControl {...formControlProps} sx={{ minWidth: filter.width || 150 }}>
           <InputLabel>{filter.label}</InputLabel>
           <Select
+            size="small"
             value={filter.value ?? filter.defaultValue ?? ""}
             label={filter.label}
             onChange={handleChange}
@@ -92,9 +98,10 @@ const FilterControl: React.FC<{
 
     case "multiselect":
       return (
-        <FormControl {...commonProps} sx={{ minWidth: filter.width || 200 }}>
+        <FormControl {...formControlProps} sx={{ minWidth: filter.width || 200 }}>
           <InputLabel>{filter.label}</InputLabel>
           <Select
+            size="small"
             multiple
             value={filter.value ?? filter.defaultValue ?? []}
             label={filter.label}
@@ -118,12 +125,11 @@ const FilterControl: React.FC<{
     case "date":
       return (
         <TextField
-          {...commonProps}
+          {...textFieldProps}
           type="date"
           label={filter.label}
           value={filter.value ?? filter.defaultValue ?? ""}
           onChange={handleChange}
-          InputLabelProps={{ shrink: true }}
           sx={{ width: filter.width || 180 }}
         />
       );
@@ -132,26 +138,24 @@ const FilterControl: React.FC<{
       return (
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
           <TextField
-            {...commonProps}
+            {...textFieldProps}
             type="date"
             label="开始日期"
             value={filter.value?.start ?? ""}
             onChange={(e) =>
               handleChange({ ...filter.value, start: e.target.value })
             }
-            InputLabelProps={{ shrink: true }}
             sx={{ width: filter.width || 140 }}
           />
           <Typography color="text.secondary">至</Typography>
           <TextField
-            {...commonProps}
+            {...textFieldProps}
             type="date"
             label="结束日期"
             value={filter.value?.end ?? ""}
             onChange={(e) =>
               handleChange({ ...filter.value, end: e.target.value })
             }
-            InputLabelProps={{ shrink: true }}
             sx={{ width: filter.width || 140 }}
           />
         </Box>
@@ -160,7 +164,7 @@ const FilterControl: React.FC<{
     case "number":
       return (
         <TextField
-          {...commonProps}
+          {...textFieldProps}
           type="number"
           label={filter.label}
           placeholder={filter.placeholder}
@@ -173,7 +177,7 @@ const FilterControl: React.FC<{
     default:
       return (
         <TextField
-          {...commonProps}
+          {...textFieldProps}
           label={filter.label}
           placeholder={filter.placeholder}
           value={filter.value ?? filter.defaultValue ?? ""}

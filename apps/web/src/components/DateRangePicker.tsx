@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
-import { Button } from "../components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover";
+import { Button, Menu, MenuItem, TextField, Paper } from "@mui/material";
 import { getDateRange } from "../utils/export";
 
 interface DateRangePickerProps {
@@ -23,71 +18,78 @@ const presets = [
 ];
 
 export const DateRangePicker = ({ value, onChange }: DateRangePickerProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [customStart, setCustomStart] = useState(value.start);
   const [customEnd, setCustomEnd] = useState(value.end);
 
   const handlePresetClick = (presetId: string) => {
     const range = getDateRange(presetId);
     onChange(range);
-    setIsOpen(false);
+    setAnchorEl(null);
   };
 
   const handleCustomApply = () => {
     if (customStart && customEnd) {
       onChange({ start: customStart, end: customEnd });
-      setIsOpen(false);
+      setAnchorEl(null);
     }
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Calendar className="w-4 h-4" />
-          <span className="hidden sm:inline">
-            {value.start === value.end
-              ? value.start
-              : `${value.start} - ${value.end}`}
-          </span>
-          <ChevronDown className="w-4 h-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
-        <div className="p-4 space-y-4">
-          <div className="grid grid-cols-3 gap-2">
+    <>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={{ textTransform: "none" }}
+      >
+        <Calendar sx={{ width: 16, height: 16, marginRight: 8 }} />
+        <span className="hidden sm:inline">
+          {value.start === value.end
+            ? value.start
+            : `${value.start} - ${value.end}`}
+        </span>
+        <ChevronDown sx={{ width: 16, height: 16, marginLeft: 4 }} />
+      </Button>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+        <Paper sx={{ padding: 2, minWidth: 300 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {presets.map((preset) => (
-              <button
+              <Button
                 key={preset.id}
+                variant="text"
+                size="small"
                 onClick={() => handlePresetClick(preset.id)}
-                className="px-3 py-2 text-sm rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                sx={{ justifyContent: "flex-start" }}
               >
                 {preset.label}
-              </button>
+              </Button>
             ))}
           </div>
-          <div className="border-t border-gray-200 pt-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <input
+          <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", marginTop: 16, paddingTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <TextField
                 type="date"
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                size="small"
+                sx={{ flex: 1 }}
               />
-              <span className="text-gray-400">至</span>
-              <input
+              <span style={{ color: "text.secondary" }}>至</span>
+              <TextField
                 type="date"
                 value={customEnd}
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                size="small"
+                sx={{ flex: 1 }}
               />
             </div>
-            <Button onClick={handleCustomApply} className="w-full">
+            <Button onClick={handleCustomApply} fullWidth>
               应用自定义范围
             </Button>
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </Paper>
+      </Menu>
+    </>
   );
 };

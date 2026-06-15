@@ -1,12 +1,9 @@
 import { Sparkles } from "lucide-react";
-import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../ui/dialog";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogActions from "@mui/material/DialogActions";
 
 export interface AIGenerateModalProps {
   isOpen: boolean;
@@ -38,32 +35,57 @@ export function AIGenerateModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100">
-              <Sparkles className="w-4 h-4 text-purple-600" />
-            </div>
-            <DialogTitle>{title}</DialogTitle>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogContent sx={{ padding: 3 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              backgroundColor: "#f3e8ff",
+            }}
+          >
+            <Sparkles style={{ width: 16, height: 16, color: "#9333ea" }} />
           </div>
-          <DialogDescription>{description || " "}</DialogDescription>
-        </DialogHeader>
+          <DialogTitle sx={{ padding: 0, margin: 0 }}>{title}</DialogTitle>
+        </div>
+        {description && (
+          <p style={{ marginTop: 8, color: "rgba(0,0,0,0.6)" }}>{description}</p>
+        )}
 
-        <div className="py-4">{children}</div>
+        <div style={{ paddingTop: 16, paddingBottom: 16 }}>{children}</div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">{extraActions}</div>
-          <div className="flex items-center gap-3">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {extraActions}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Button
-              variant="secondary"
+              variant="contained"
               onClick={handleClose}
               disabled={isLoading}
+              sx={{ textTransform: "none" }}
             >
               {cancelText}
             </Button>
             {onConfirm && (
-              <Button onClick={(e) => onConfirm(e)} disabled={isLoading}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={(e) => onConfirm(e)}
+                disabled={isLoading}
+                sx={{ textTransform: "none" }}
+              >
                 {confirmText}
               </Button>
             )}

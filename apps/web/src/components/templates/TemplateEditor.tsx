@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Switch } from "../ui/switch";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import Switch from "@mui/material/Switch";
+import FormLabel from "@mui/material/FormLabel";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import {
   Plus,
   Trash2,
@@ -185,287 +177,291 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{template ? "编辑模板" : "创建模板"}</DialogTitle>
-        </DialogHeader>
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="md"
+      fullWidth
+      sx={{ "& .MuiDialog-paper": { maxHeight: "90vh" } }}
+    >
+      <DialogContent sx={{ overflowY: "auto" }}>
+        <Typography variant="h6" sx={{ mb: 3 }}>
+          {template ? "编辑模板" : "创建模板"}
+        </Typography>
 
-        <div className="space-y-6 mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="name">模板名称 *</Label>
-              <Input
-                id="name"
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(2, 1fr)" }, gap: 2 }}>
+            <Box>
+              <FormLabel component="legend">模板名称 *</FormLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="输入模板名称"
-                className="mt-1"
+                sx={{ mt: 1 }}
               />
-            </div>
-            <div>
-              <Label htmlFor="code">模板编码 *</Label>
-              <Input
-                id="code"
+            </Box>
+            <Box>
+              <FormLabel component="legend">模板编码 *</FormLabel>
+              <TextField
+                fullWidth
+                size="small"
                 value={formData.code}
                 onChange={(e) =>
                   setFormData({ ...formData, code: e.target.value })
                 }
                 placeholder="输入模板编码"
                 disabled={!!template}
-                className="mt-1"
+                sx={{ mt: 1 }}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="type">模板类型</Label>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(2, 1fr)" }, gap: 2 }}>
+            <Box>
+              <FormLabel component="legend">模板类型</FormLabel>
               <Select
-                value={formData.template_type}
-                onValueChange={(value) =>
+                fullWidth
+                size="small"
+                value={formData.template_type || ""}
+                onChange={(e) =>
                   setFormData({
                     ...formData,
-                    template_type: value as TemplateType,
+                    template_type: e.target.value as TemplateType,
                   })
                 }
+                sx={{ mt: 1 }}
               >
-                <SelectTrigger id="type" className="mt-1">
-                  <SelectValue placeholder="选择模板类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TEMPLATE_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                {TEMPLATE_TYPES.map((type) => (
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
+                  </MenuItem>
+                ))}
               </Select>
-            </div>
-            <div>
-              <Label htmlFor="category">分类</Label>
+            </Box>
+            <Box>
+              <FormLabel component="legend">分类</FormLabel>
               <Select
-                value={formData.category_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, category_id: value || undefined })
+                fullWidth
+                size="small"
+                value={formData.category_id || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, category_id: e.target.value || undefined })
                 }
+                sx={{ mt: 1 }}
               >
-                <SelectTrigger id="category" className="mt-1">
-                  <SelectValue placeholder="选择分类" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                {categories.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
               </Select>
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div>
-            <Label htmlFor="description">描述</Label>
-            <Textarea
-              id="description"
+          <Box>
+            <FormLabel component="legend">描述</FormLabel>
+            <TextField
+              fullWidth
+              size="small"
+              multiline
+              rows={2}
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               placeholder="输入模板描述"
-              className="mt-1"
+              sx={{ mt: 1 }}
             />
-          </div>
+          </Box>
 
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold flex items-center gap-2">
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Typography sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
               <span>模板变量</span>
               <Button
-                type="button"
-                size="sm"
+                size="small"
                 onClick={handleVariableAdd}
-                className="h-8"
+                startIcon={<Plus size={16} />}
               >
-                <Plus className="w-4 h-4 mr-1" />
                 添加变量
               </Button>
-            </h3>
+            </Typography>
             <Button
-              type="button"
-              variant="outline"
-              size="sm"
+              size="small"
+              variant="outlined"
               onClick={() => setIsPreview(!isPreview)}
-              className="h-8"
+              startIcon={isPreview ? <EyeOff size={16} /> : <Eye size={16} />}
             >
-              {isPreview ? (
-                <EyeOff className="w-4 h-4 mr-1" />
-              ) : (
-                <Eye className="w-4 h-4 mr-1" />
-              )}
               {isPreview ? "编辑模式" : "预览模式"}
             </Button>
-          </div>
+          </Box>
 
           {formData.variables && formData.variables.length > 0 && (
-            <div className="space-y-3">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {formData.variables.map((variable, index) => (
-                <div
+                <Box
                   key={index}
-                  className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg group"
+                  sx={{ display: "flex", alignItems: "flex-start", gap: 1, p: 2, backgroundColor: "#f9fafb", borderRadius: 1 }}
                 >
-                  <GripVertical className="w-4 h-4 text-gray-400 mt-2 cursor-move flex-shrink-0" />
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
-                      <Label className="text-xs">变量标识</Label>
-                      <Input
+                  <GripVertical size={16} style={{ color: "#9ca3af", marginTop: 8, cursor: "move", flexShrink: 0 }} />
+                  <Box sx={{ flex: 1, display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(4, 1fr)" }, gap: 2 }}>
+                    <Box>
+                      <FormLabel component="legend" sx={{ fontSize: "0.75rem" }}>变量标识</FormLabel>
+                      <TextField
+                        fullWidth
+                        size="small"
                         value={variable.key}
                         onChange={(e) =>
                           handleVariableChange(index, "key", e.target.value)
                         }
-                        className="mt-1 text-sm"
+                        sx={{ mt: 0.5 }}
                       />
-                    </div>
-                    <div>
-                      <Label className="text-xs">显示名称</Label>
-                      <Input
+                    </Box>
+                    <Box>
+                      <FormLabel component="legend" sx={{ fontSize: "0.75rem" }}>显示名称</FormLabel>
+                      <TextField
+                        fullWidth
+                        size="small"
                         value={variable.label}
                         onChange={(e) =>
                           handleVariableChange(index, "label", e.target.value)
                         }
-                        className="mt-1 text-sm"
+                        sx={{ mt: 0.5 }}
                       />
-                    </div>
-                    <div>
-                      <Label className="text-xs">类型</Label>
+                    </Box>
+                    <Box>
+                      <FormLabel component="legend" sx={{ fontSize: "0.75rem" }}>类型</FormLabel>
                       <Select
-                        value={variable.type}
-                        onValueChange={(value) =>
-                          handleVariableChange(index, "type", value)
+                        fullWidth
+                        size="small"
+                        value={variable.type || ""}
+                        onChange={(e) =>
+                          handleVariableChange(index, "type", e.target.value)
                         }
+                        sx={{ mt: 0.5 }}
                       >
-                        <SelectTrigger className="mt-1 h-8">
-                          <SelectValue placeholder="选择类型" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {VARIABLE_TYPES.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
+                        {VARIABLE_TYPES.map((type) => (
+                          <MenuItem key={type.value} value={type.value}>
+                            {type.label}
+                          </MenuItem>
+                        ))}
                       </Select>
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <div className="flex items-center gap-2">
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Switch
+                          size="small"
                           checked={variable.required || false}
-                          onCheckedChange={(checked) =>
-                            handleVariableChange(index, "required", checked)
+                          onChange={(e) =>
+                            handleVariableChange(index, "required", e.target.checked)
                           }
                         />
-                        <span className="text-xs text-gray-600">必填</span>
-                      </div>
+                        <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>必填</Typography>
+                      </Box>
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-red-500 hover:text-red-600"
+                        size="small"
+                        color="error"
                         onClick={() => handleVariableRemove(index)}
+                        sx={{ minWidth: "auto", p: 0.5 }}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 size={16} />
                       </Button>
-                    </div>
-                  </div>
-                </div>
+                    </Box>
+                  </Box>
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label htmlFor="content">模板内容</Label>
-              <div className="flex gap-2">
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+              <FormLabel component="legend">模板内容</FormLabel>
+              <Box sx={{ display: "flex", gap: 1 }}>
                 {(formData.variables || []).map((v) => (
                   <Button
                     key={v.key}
-                    type="button"
-                    variant="outline"
-                    size="sm"
+                    size="small"
+                    variant="outlined"
                     onClick={() => insertVariable(v.key)}
-                    className="h-7"
                   >
                     {`{{${v.key}}}`}
                   </Button>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
             {isPreview ? (
-              <div className="mt-1 p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[200px] whitespace-pre-wrap">
+              <Box sx={{ p: 2, backgroundColor: "#f9fafb", borderRadius: 1, border: "1px solid #e5e7eb", minHeight: 200, whiteSpace: "pre-wrap" }}>
                 {previewContent()}
-              </div>
+              </Box>
             ) : (
-              <Textarea
-                id="content"
+              <TextField
+                fullWidth
+                multiline
+                rows={8}
                 value={formData.content}
                 onChange={(e) =>
                   setFormData({ ...formData, content: e.target.value })
                 }
                 placeholder="输入模板内容，使用 {{变量名}} 引用变量"
-                className="mt-1 min-h-[200px] font-mono text-sm"
+                sx={{ mt: 1, "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.875rem" } }}
               />
             )}
-          </div>
+          </Box>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: 1, md: "repeat(3, 1fr)" }, gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Switch
+                  size="small"
                   checked={formData.is_active || false}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_active: checked })
+                  onChange={(e) =>
+                    setFormData({ ...formData, is_active: e.target.checked })
                   }
                 />
-                <Label>启用状态</Label>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+                <FormLabel component="legend">启用状态</FormLabel>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Switch
+                  size="small"
                   checked={formData.is_public || false}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_public: checked })
+                  onChange={(e) =>
+                    setFormData({ ...formData, is_public: e.target.checked })
                   }
                 />
-                <Label>公开模板</Label>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+                <FormLabel component="legend">公开模板</FormLabel>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Switch
+                  size="small"
                   checked={formData.ai_enabled || false}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, ai_enabled: checked })
+                  onChange={(e) =>
+                    setFormData({ ...formData, ai_enabled: e.target.checked })
                   }
                 />
-                <Label className="flex items-center gap-1">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                <FormLabel component="legend" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <Sparkles size={16} style={{ color: "#f59e0b" }} />
                   AI 辅助
-                </Label>
-              </div>
-            </div>
-          </div>
-        </div>
+                </FormLabel>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogActions sx={{ px: 0, pb: 2 }}>
+          <Button variant="outlined" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={handleSubmit}>
+          <Button variant="contained" onClick={handleSubmit}>
             {template ? "更新模板" : "创建模板"}
           </Button>
-        </DialogFooter>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );

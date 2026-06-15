@@ -27,7 +27,7 @@ import {
   Info,
   AlertCircle,
 } from "lucide-react";
-import { useForm, Controller, FormProvider } from "react-hook-form";
+import { useForm, Controller, FormProvider, type FieldValues } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import type { BreadcrumbItem } from "./PageHeader";
@@ -77,7 +77,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
 
   // 表单配置
   sections: FormSection[];
-  schema?: z.ZodType<any>;
+  schema?: z.ZodType;
   defaultValues?: Record<string, any>;
 
   // 状态
@@ -139,7 +139,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
   // 表单初始化
   const methods = useForm({
-    resolver: schema ? zodResolver(schema) : undefined,
+    resolver: schema ? (zodResolver(schema as z.ZodType) as any) : undefined,
     defaultValues: defaultValues || {},
     mode: "onBlur",
   });
@@ -245,7 +245,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   {...commonProps}
                   {...controllerField}
                   type="date"
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
               );
 

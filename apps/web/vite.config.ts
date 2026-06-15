@@ -67,8 +67,7 @@ export default defineConfig({
           if (/^@mui\/system$/.test(scopedPackage)) return 'vendor-mui';
           if (/^@heroui\/(react|styles)$/.test(scopedPackage)) return 'vendor-heroui';
           if (/^@nextui-org\/react$/.test(scopedPackage)) return 'vendor-nextui';
-          if (/^@radix-ui\//.test(scopedPackage)) return 'vendor-radix';
-          
+
           // 图表
           if (/^recharts$/.test(packageName)) return 'vendor-charts';
           if (/^victory$/.test(packageName)) return 'vendor-charts';

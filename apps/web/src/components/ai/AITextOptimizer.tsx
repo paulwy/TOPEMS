@@ -8,19 +8,14 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Badge } from "../ui/badge";
-import { Card, CardContent } from "../ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import InputLabel from "@mui/material/InputLabel";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type { TextOptimizeContext } from "../../types/ai";
@@ -190,38 +185,39 @@ export function AITextOptimizer({
       onConfirm={optimizedText ? handleConfirm : undefined}
       confirmText="使用此文本"
     >
-      <div className="space-y-4">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {/* 原始文本 */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-600">原始文本</Label>
-          <Textarea
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}>原始文本</InputLabel>
+          <TextField
             value={originalText}
-            readOnly
             placeholder="暂无原始文本"
-            className="resize-none bg-gray-50"
+            disabled
+            sx={{ bgcolor: "#f9fafb" }}
+            multiline
             rows={3}
           />
-        </div>
+        </Box>
 
         {/* 关键词输入 */}
-        <div className="space-y-2">
-          <div
-            className="flex items-center justify-between cursor-pointer"
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
             onClick={() => setShowKeywords(!showKeywords)}
           >
-            <Label className="text-sm font-medium text-gray-600">
+            <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}>
               关键词（可选）
-            </Label>
+            </InputLabel>
             {showKeywords ? (
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp style={{ width: 16, height: 16 }} />
             ) : (
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown style={{ width: 16, height: 16 }} />
             )}
-          </div>
+          </Box>
           {showKeywords && (
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -230,71 +226,74 @@ export function AITextOptimizer({
                     }
                   }}
                   placeholder="输入关键词后按 Enter 添加"
-                  className="flex-1"
+                  size="small"
+                  sx={{ flex: 1 }}
                 />
                 <Button
-                  variant="secondary"
-                  size="sm"
+                  variant="outlined"
+                  size="small"
                   onClick={handleAddKeyword}
                 >
                   添加
                 </Button>
-              </div>
+              </Box>
               {keywords.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                   {keywords.map((keyword, idx) => (
-                    <Badge
+                    <Box
                       key={idx}
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-red-100 hover:text-red-600"
+                      sx={{
+                        cursor: "pointer",
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                        bgcolor: "#f3f4f6",
+                        "&:hover": { bgcolor: "#fef2f2", color: "#b91c1c" },
+                      }}
                       onClick={() => handleRemoveKeyword(keyword)}
                     >
                       {keyword} ×
-                    </Badge>
+                    </Box>
                   ))}
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
           )}
-        </div>
+        </Box>
 
         {/* 优化风格选择 */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-600">优化风格</Label>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#4b5563" }}>优化风格</InputLabel>
           <Select
             value={optimizationStyle}
-            onValueChange={setOptimizationStyle}
+            onChange={(e) => setOptimizationStyle(e.target.value)}
+            size="small"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="选择优化风格" />
-            </SelectTrigger>
-            <SelectContent>
-              {optimizationStyles.map((style) => (
-                <SelectItem key={style.value} value={style.value}>
-                  <div>
-                    <span className="font-medium">{style.label}</span>
-                    <span className="text-gray-500 text-xs ml-2">
-                      {style.description}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
+            {optimizationStyles.map((style) => (
+              <MenuItem key={style.value} value={style.value}>
+                <Box>
+                  <Box component="span" sx={{ fontWeight: 500 }}>{style.label}</Box>
+                  <Box component="span" sx={{ fontSize: "0.75rem", color: "#6b7280", ml: 1 }}>
+                    {style.description}
+                  </Box>
+                </Box>
+              </MenuItem>
+            ))}
           </Select>
-        </div>
+        </Box>
 
         {/* 错误提示 */}
         {error && (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-3 flex items-center gap-2 text-red-700">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm">{error.message}</span>
+          <Card sx={{ borderColor: "#fecaca", bgcolor: "#fef2f2" }}>
+            <CardContent sx={{ p: 2, display: "flex", alignItems: "center", gap: 1, color: "#b91c1c" }}>
+              <AlertCircle style={{ width: 16, height: 16 }} />
+              <Box component="span" sx={{ fontSize: "0.875rem" }}>{error.message}</Box>
               {retryCount < 2 && (
                 <Button
-                  variant="secondary"
-                  size="sm"
+                  variant="outlined"
+                  size="small"
                   onClick={retry}
-                  className="ml-auto"
+                  sx={{ ml: "auto" }}
                 >
                   重试
                 </Button>
@@ -304,81 +303,74 @@ export function AITextOptimizer({
         )}
 
         {/* 生成按钮 */}
-        <div className="flex justify-center gap-2">
+        <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
           <Button
-            onClick={optimizedText ? handleGenerate : handleGenerate}
+            onClick={handleGenerate}
             disabled={isLoading}
-            className="gap-2"
+            startIcon={isLoading ? <RefreshCw style={{ animation: "spin 1s linear infinite" }} /> : <Wand2 style={{ width: 16, height: 16 }} />}
           >
-            {isLoading ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Wand2 className="w-4 h-4" />
-                {optimizedText ? "重新生成" : "AI 优化"}
-              </>
-            )}
+            {isLoading ? "生成中..." : optimizedText ? "重新生成" : "AI 优化"}
           </Button>
-        </div>
+        </Box>
 
         {/* 优化结果 */}
         {optimizedText && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-purple-700">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <InputLabel sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#7c3aed" }}>
                 优化后的文本
-              </Label>
-              <div className="flex items-center gap-2">
+              </InputLabel>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {history.length > 1 && (
-                  <div className="flex items-center gap-1">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={handlePreviousVersion}
                       disabled={historyIndex <= 0}
                     >
                       ←
                     </Button>
-                    <span className="text-xs text-gray-500">
+                    <Box component="span" sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
                       {historyIndex + 1}/{history.length}
-                    </span>
+                    </Box>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="text"
+                      size="small"
                       onClick={handleNextVersion}
                       disabled={historyIndex >= history.length - 1}
                     >
                       →
                     </Button>
-                  </div>
+                  </Box>
                 )}
                 <Button
-                  variant="secondary"
-                  size="sm"
+                  variant="outlined"
+                  size="small"
                   onClick={handleCopy}
-                  className="gap-1"
+                  startIcon={copied ? <Check style={{ width: 12, height: 12 }} /> : <Copy style={{ width: 12, height: 12 }} />}
                 >
-                  {copied ? (
-                    <Check className="w-3 h-3" />
-                  ) : (
-                    <Copy className="w-3 h-3" />
-                  )}
                   {copied ? "已复制" : "复制"}
                 </Button>
-              </div>
-            </div>
-            <Textarea
+              </Box>
+            </Box>
+            <TextField
               value={optimizedText}
               onChange={(e) => setOptimizedText(e.target.value)}
-              className="resize-none border-purple-200 focus:border-purple-400"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#ddd6fe" },
+                  "&:hover fieldset": { borderColor: "#c4b5fd" },
+                  "&.Mui-focused fieldset": { borderColor: "#c4b5fd" },
+                },
+                "& .MuiInputBase-input": { resize: "none" },
+              }}
+              multiline
               rows={6}
             />
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     </AIGenerateModal>
   );
 }

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Image, Download, FileImage, Copy, Check } from "lucide-react";
-import { Button } from "./ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Button, Menu, MenuItem } from "@mui/material";
 
 interface ChartExportProps {
   chartRef: React.RefObject<HTMLDivElement | null>;
@@ -18,6 +17,7 @@ export const ChartExport = ({
   chartRef,
   filename = "chart",
 }: ChartExportProps) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [copied, setCopied] = useState(false);
 
   const handleExport = async (format: string, mimeType: string) => {
@@ -48,6 +48,7 @@ export const ChartExport = ({
       console.error("Failed to export chart:", error);
       alert("导出失败，请重试");
     }
+    setAnchorEl(null);
   };
 
   const handleCopy = async () => {
@@ -72,50 +73,47 @@ export const ChartExport = ({
       console.error("Failed to copy chart:", error);
       alert("复制失败，请重试");
     }
+    setAnchorEl(null);
   };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="gap-1" title="导出图表">
-          <Image className="w-4 h-4" />
-          <Download className="w-4 h-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-2">
-        <div className="space-y-1">
-          <div className="px-2 py-1 text-xs text-gray-500 font-medium">
-            导出格式
-          </div>
-          {exportFormats.map((format) => (
-            <button
-              key={format.id}
-              onClick={() => handleExport(format.id, format.mimeType)}
-              className="w-full px-3 py-2 text-sm text-left hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <FileImage className="w-4 h-4" />
-              导出为 {format.label}
-            </button>
-          ))}
-          <div className="border-t my-2" />
-          <button
-            onClick={handleCopy}
-            className="w-full px-3 py-2 text-sm text-left hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors flex items-center gap-2"
+    <>
+      <Button
+        variant="text"
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        title="导出图表"
+      >
+        <Image sx={{ width: 16, height: 16, marginRight: 4 }} />
+        <Download sx={{ width: 16, height: 16 }} />
+      </Button>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+        <MenuItem disabled>
+          <span style={{ fontSize: 12, fontWeight: 500, color: "text.secondary" }}>导出格式</span>
+        </MenuItem>
+        {exportFormats.map((format) => (
+          <MenuItem
+            key={format.id}
+            onClick={() => handleExport(format.id, format.mimeType)}
           >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-green-500" />
-                已复制
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                复制到剪贴板
-              </>
-            )}
-          </button>
-        </div>
-      </PopoverContent>
-    </Popover>
+            <FileImage sx={{ width: 16, height: 16, marginRight: 8 }} />
+            导出为 {format.label}
+          </MenuItem>
+        ))}
+        <MenuItem onClick={handleCopy}>
+          {copied ? (
+            <>
+              <Check sx={{ width: 16, height: 16, marginRight: 8, color: "#10B981" }} />
+              已复制
+            </>
+          ) : (
+            <>
+              <Copy sx={{ width: 16, height: 16, marginRight: 8 }} />
+              复制到剪贴板
+            </>
+          )}
+        </MenuItem>
+      </Menu>
+    </>
   );
 };

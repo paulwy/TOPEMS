@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check, Quote } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Label } from "../ui/label";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import FormLabel from "@mui/material/FormLabel";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type { SummarizeRequest, SummarizeResponse } from "../../types/ai";
@@ -105,80 +103,83 @@ export function AISummarizer({
       extraActions={
         hasSummary ? (
           <Button
-            variant="secondary"
-            size="sm"
+            variant="outlined"
+            size="small"
             onClick={handleCopy}
-            className="flex items-center gap-1"
+            sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
           >
             {copied ? (
-              <Check className="w-4 h-4" />
+              <Check style={{ width: 16, height: 16 }} />
             ) : (
-              <Copy className="w-4 h-4" />
+              <Copy style={{ width: 16, height: 16 }} />
             )}
             {copied ? "已复制" : "复制"}
           </Button>
         ) : null
       }
     >
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label>摘要类型</Label>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <FormLabel>摘要类型</FormLabel>
           <Select
             value={summaryType}
-            onValueChange={(value) => handleTypeChange(value as any)}
+            onChange={(e) => handleTypeChange(e.target.value as any)}
+            size="small"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="选择摘要类型" />
-            </SelectTrigger>
-            <SelectContent>
-              {(
-                Object.entries(summaryTypeConfig) as [
-                  keyof typeof summaryTypeConfig,
-                  typeof summaryTypeConfig.short,
-                ][]
-              ).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  {config.label} - {config.description}
-                </SelectItem>
-              ))}
-            </SelectContent>
+            {(
+              Object.entries(summaryTypeConfig) as [
+                keyof typeof summaryTypeConfig,
+                typeof summaryTypeConfig.short,
+              ][]
+            ).map(([key, config]) => (
+              <MenuItem key={key} value={key}>
+                {config.label} - {config.description}
+              </MenuItem>
+            ))}
           </Select>
-        </div>
+        </Box>
 
         {hasSummary ? (
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Quote className="w-5 h-5 text-purple-600" />
-                <Label className="text-purple-700 font-medium">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                <Quote style={{ width: 20, height: 20, color: "#9333ea" }} />
+                <FormLabel sx={{ color: "#7c3aed", fontWeight: 500 }}>
                   生成的摘要
-                </Label>
-              </div>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                </FormLabel>
+              </Box>
+              <Box
+                sx={{
+                  bgcolor: "#faf5ff",
+                  border: "1px solid #e9d5ff",
+                  borderRadius: 1,
+                  p: 2,
+                }}
+              >
+                <Typography sx={{ color: "#374151", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
                   {result.summary}
-                </p>
-              </div>
+                </Typography>
+              </Box>
               <Button
-                variant="secondary"
-                size="sm"
-                className="mt-3 w-full"
+                variant="outlined"
+                size="small"
+                sx={{ mt: 1.5, width: "100%" }}
                 onClick={handleSummarize}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
                 重新生成
               </Button>
             </CardContent>
           </Card>
         ) : (
           <Card>
-            <CardContent className="p-6 text-center text-gray-500">
-              <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-50" />
-              <p>正在生成摘要...</p>
+            <CardContent sx={{ p: 3, textAlign: "center", color: "#6b7280" }}>
+              <Sparkles style={{ width: 40, height: 40, margin: "0 auto 12px", opacity: 0.5 }} />
+              <Typography>正在生成摘要...</Typography>
             </CardContent>
           </Card>
         )}
-      </div>
+      </Box>
     </AIGenerateModal>
   );
 }
