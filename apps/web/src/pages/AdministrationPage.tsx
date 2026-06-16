@@ -424,7 +424,7 @@ const AdministrationPage: React.FC = () => {
                   >
                     {stat.label}
                   </Typography>
-                  <Typography variant="h5" fontWeight="bold">
+                  <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
                     {stat.value}
                   </Typography>
                 </Box>
@@ -456,7 +456,7 @@ const AdministrationPage: React.FC = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant="h6" fontWeight="bold">
+                <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
                   近期公告
                 </Typography>
                 <Button
@@ -490,8 +490,8 @@ const AdministrationPage: React.FC = () => {
                       <Box sx={{ flex: 1 }}>
                         <Typography
                           variant="subtitle2"
-                          fontWeight="medium"
-                          sx={{ mb: 0.5 }}
+                          component="div"
+                          sx={{ mb: 0.5, fontWeight: "medium" }}
                         >
                           {announcement.title}
                         </Typography>
@@ -509,10 +509,10 @@ const AdministrationPage: React.FC = () => {
                           {announcement.content}
                         </Typography>
                         <Stack
+                          component="div"
                           direction="row"
                           spacing={1}
-                          alignItems="center"
-                          sx={{ mt: 1 }}
+                          sx={{ alignItems: "center", mt: 1 }}
                         >
                           <UserCheck
                             sx={{ fontSize: 12, color: "text.secondary" }}
@@ -548,7 +548,7 @@ const AdministrationPage: React.FC = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant="h6" fontWeight="bold">
+                <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
                   今日会议
                 </Typography>
                 <Button
@@ -588,8 +588,8 @@ const AdministrationPage: React.FC = () => {
                         <Box sx={{ flex: 1 }}>
                           <Typography
                             variant="subtitle2"
-                            fontWeight="medium"
-                            sx={{ mb: 0.5 }}
+                            component="div"
+                            sx={{ mb: 0.5, fontWeight: "medium" }}
                           >
                             {booking.title}
                           </Typography>
@@ -598,7 +598,7 @@ const AdministrationPage: React.FC = () => {
                           </Typography>
                         </Box>
                         <Box sx={{ textAlign: "right" }}>
-                          <Typography variant="body2" fontWeight="medium">
+                          <Typography variant="body2" component="div" sx={{ fontWeight: "medium" }}>
                             {booking.start_time.split(" ")[1]}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -638,8 +638,8 @@ const AdministrationPage: React.FC = () => {
             gap: 2,
           }}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Typography variant="h5" fontWeight="bold">
+          <Stack direction="row" spacing={2} component="div" sx={{ alignItems: "center" }}>
+            <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
               办公用品管理
             </Typography>
             <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -727,13 +727,13 @@ const AdministrationPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} component="div" sx={{ alignItems: "center" }}>
                       <Checkbox
                         checked={selectedIds.includes(supply.id)}
                         onChange={() => handleSelectItem(supply.id)}
                         size="small"
                       />
-                      <Typography variant="h6" fontWeight="bold">
+                      <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
                         {supply.name}
                       </Typography>
                     </Stack>
@@ -746,7 +746,7 @@ const AdministrationPage: React.FC = () => {
                       <Typography variant="body2" color="text.secondary">
                         分类:
                       </Typography>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" component="div" sx={{ fontWeight: "medium" }}>
                         {supply.category}
                       </Typography>
                     </Box>
@@ -758,8 +758,9 @@ const AdministrationPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant="body2"
-                        fontWeight="bold"
+                        component="div"
                         sx={{
+                          fontWeight: "bold",
                           color:
                             supply.status === "low_stock"
                               ? "warning.main"
@@ -895,8 +896,8 @@ const AdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="h5" fontWeight="bold">
+        <Stack direction="row" spacing={1.5} component="div" sx={{ alignItems: "center" }}>
+          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
             会议室管理
           </Typography>
           <IconButton size="small" sx={{ color: "text.secondary" }}>
@@ -932,7 +933,7 @@ const AdministrationPage: React.FC = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant="h6" fontWeight="bold">
+                <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
                   {room.name}
                 </Typography>
                 <StatusBadge status={room.status} />
@@ -942,7 +943,7 @@ const AdministrationPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     容量:
                   </Typography>
-                  <Typography variant="body2" fontWeight="medium">
+                  <Typography variant="body2" component="div" sx={{ fontWeight: "medium" }}>
                     {room.capacity}人
                   </Typography>
                 </Box>
@@ -989,7 +990,7 @@ const AdministrationPage: React.FC = () => {
               mb: 2,
             }}
           >
-            <Typography variant="h6" fontWeight="bold">
+            <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
               今日会议预约
             </Typography>
             <Button
@@ -1025,7 +1026,7 @@ const AdministrationPage: React.FC = () => {
                     }}
                   >
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" fontWeight="medium">
+                      <Typography variant="subtitle2" component="div" sx={{ fontWeight: "medium" }}>
                         {booking.title}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -1033,7 +1034,7 @@ const AdministrationPage: React.FC = () => {
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: "right", mr: 2 }}>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" component="div" sx={{ fontWeight: "medium" }}>
                         {booking.start_time.split(" ")[1]}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
@@ -1061,8 +1062,8 @@ const AdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="h5" fontWeight="bold">
+        <Stack direction="row" spacing={1.5} component="div" sx={{ alignItems: "center" }}>
+          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
             车辆管理
           </Typography>
           <IconButton size="small" sx={{ color: "text.secondary" }}>
@@ -1097,7 +1098,7 @@ const AdministrationPage: React.FC = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant="h6" fontWeight="bold">
+                <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
                   {vehicle.plate_number}
                 </Typography>
                 <StatusBadge status={vehicle.status} />
@@ -1107,7 +1108,7 @@ const AdministrationPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     品牌型号:
                   </Typography>
-                  <Typography variant="body2" fontWeight="medium">
+                  <Typography variant="body2" component="div" sx={{ fontWeight: "medium" }}>
                     {vehicle.brand} {vehicle.model}
                   </Typography>
                 </Box>
@@ -1115,7 +1116,7 @@ const AdministrationPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     类型:
                   </Typography>
-                  <Typography variant="body2" fontWeight="medium">
+                  <Typography variant="body2" component="div" sx={{ fontWeight: "medium" }}>
                     {vehicle.vehicle_type}
                   </Typography>
                 </Box>
@@ -1123,7 +1124,7 @@ const AdministrationPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     驾驶员:
                   </Typography>
-                  <Typography variant="body2" fontWeight="medium">
+                  <Typography variant="body2" component="div" sx={{ fontWeight: "medium" }}>
                     {vehicle.driver}
                   </Typography>
                 </Box>
@@ -1171,8 +1172,8 @@ const AdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="h5" fontWeight="bold">
+        <Stack component="div" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
             考勤管理
           </Typography>
           <IconButton size="small" sx={{ color: "text.secondary" }}>
@@ -1266,7 +1267,7 @@ const AdministrationPage: React.FC = () => {
         <Grid item xs={12} lg={4}>
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="h6" component="div" sx={{ fontWeight: "bold", mb: 2 }}>
                 今日统计
               </Typography>
               <Stack spacing={2}>
@@ -1278,7 +1279,7 @@ const AdministrationPage: React.FC = () => {
                   }}
                 >
                   <Typography color="text.secondary">应到人数</Typography>
-                  <Typography variant="h5" fontWeight="bold">
+                  <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
                     {employees.length}
                   </Typography>
                 </Box>
@@ -1292,7 +1293,8 @@ const AdministrationPage: React.FC = () => {
                   <Typography color="text.secondary">已签到</Typography>
                   <Typography
                     variant="h5"
-                    fontWeight="bold"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
                     color="success.main"
                   >
                     {stats.todayAttendance}
@@ -1308,7 +1310,8 @@ const AdministrationPage: React.FC = () => {
                   <Typography color="text.secondary">出勤率</Typography>
                   <Typography
                     variant="h5"
-                    fontWeight="bold"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
                     color="primary.main"
                   >
                     {employees.length > 0
@@ -1322,7 +1325,7 @@ const AdministrationPage: React.FC = () => {
               </Stack>
             </Card>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="h6" component="div" sx={{ fontWeight: "bold", mb: 2 }}>
                 本月考勤趋势
               </Typography>
               <Box
@@ -1375,8 +1378,8 @@ const AdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="h5" fontWeight="bold">
+        <Stack direction="row" spacing={1.5} component="div" sx={{ alignItems: "center" }}>
+          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
             请假管理
           </Typography>
           <IconButton size="small" sx={{ color: "text.secondary" }}>
@@ -1500,7 +1503,7 @@ const AdministrationPage: React.FC = () => {
         <Grid item xs={12} lg={4}>
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="h6" component="div" sx={{ fontWeight: "bold", mb: 2 }}>
                 统计概览
               </Typography>
               <Stack spacing={1.5}>
@@ -1514,7 +1517,8 @@ const AdministrationPage: React.FC = () => {
                   <Typography color="text.secondary">待审批</Typography>
                   <Typography
                     variant="h5"
-                    fontWeight="bold"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
                     color="warning.main"
                   >
                     {leaveRequests.filter((l) => l.status === "pending").length}
@@ -1530,7 +1534,8 @@ const AdministrationPage: React.FC = () => {
                   <Typography color="text.secondary">已批准</Typography>
                   <Typography
                     variant="h5"
-                    fontWeight="bold"
+                    component="div"
+                    sx={{ fontWeight: "bold" }}
                     color="success.main"
                   >
                     {
@@ -1547,7 +1552,7 @@ const AdministrationPage: React.FC = () => {
                   }}
                 >
                   <Typography color="text.secondary">已拒绝</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="error.main">
+                  <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }} color="error.main">
                     {
                       leaveRequests.filter((l) => l.status === "rejected")
                         .length
@@ -1557,7 +1562,7 @@ const AdministrationPage: React.FC = () => {
               </Stack>
             </Card>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="h6" component="div" sx={{ fontWeight: "bold", mb: 2 }}>
                 请假类型分布
               </Typography>
               <Stack spacing={1.5}>
@@ -1573,7 +1578,7 @@ const AdministrationPage: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       {type}
                     </Typography>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} component="div" sx={{ alignItems: "center" }}>
                       <Box
                         sx={{
                           width: 96,
@@ -1625,8 +1630,8 @@ const AdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="h5" fontWeight="bold">
+        <Stack component="div" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Typography variant="h5" component="div" sx={{ fontWeight: "bold" }}>
             公告管理
           </Typography>
           <IconButton size="small" sx={{ color: "text.secondary" }}>
@@ -1663,8 +1668,9 @@ const AdministrationPage: React.FC = () => {
               >
                 <Typography
                   variant="h6"
-                  fontWeight="bold"
+                  component="div"
                   sx={{
+                    fontWeight: "bold",
                     transition: "color 0.2s",
                     "&:hover": { color: "primary.main" },
                   }}
@@ -1695,7 +1701,7 @@ const AdministrationPage: React.FC = () => {
                   justifyContent: "space-between",
                 }}
               >
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack component="div" direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   <UserCheck sx={{ fontSize: 16, color: "text.secondary" }} />
                   <Typography variant="body2" color="text.secondary">
                     {announcement.author}
@@ -1749,8 +1755,8 @@ const AdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="h5" fontWeight="bold">
+        <Stack component="div" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <Typography component="div" variant="h5" sx={{ fontWeight: "bold" }}>
             费用报销
           </Typography>
           <IconButton size="small" sx={{ color: "text.secondary" }}>
@@ -1797,14 +1803,14 @@ const AdministrationPage: React.FC = () => {
                   {expenseClaims.map((claim) => (
                     <TableRow key={claim.id} hover>
                       <TableCell>
-                        <Typography fontWeight="medium">
+                        <Typography component="div" sx={{ fontWeight: "medium" }}>
                           {claim.title}
                         </Typography>
                       </TableCell>
                       <TableCell>{claim.employee}</TableCell>
                       <TableCell>{claim.category}</TableCell>
                       <TableCell>
-                        <Typography fontWeight="medium">
+                        <Typography>
                           ¥{claim.amount.toLocaleString()}
                         </Typography>
                       </TableCell>
@@ -1851,7 +1857,7 @@ const AdministrationPage: React.FC = () => {
         <Grid item xs={12} lg={4}>
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="h6" component="div" sx={{ fontWeight: "bold", mb: 2 }}>
                 报销统计
               </Typography>
               <Stack spacing={1.5}>
@@ -1875,7 +1881,8 @@ const AdministrationPage: React.FC = () => {
                     <Typography color="text.secondary">{item.label}</Typography>
                     <Typography
                       variant="h5"
-                      fontWeight="bold"
+                      component="div"
+                      sx={{ fontWeight: "bold" }}
                       color={item.color}
                     >
                       ¥
@@ -1889,7 +1896,7 @@ const AdministrationPage: React.FC = () => {
               </Stack>
             </Card>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="h6" component="div" sx={{ fontWeight: "bold", mb: 2 }}>
                 类别分布
               </Typography>
               <Stack spacing={1.5}>
@@ -1905,7 +1912,7 @@ const AdministrationPage: React.FC = () => {
                     <Typography variant="body2" color="text.secondary">
                       {cat}
                     </Typography>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} component="div" sx={{ alignItems: "center" }}>
                       <Box
                         sx={{
                           width: 96,
@@ -2019,11 +2026,11 @@ const AdministrationPage: React.FC = () => {
 
       <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 3 }, py: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack component="div" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <IconButton onClick={() => navigate(-1)}>
               <ChevronLeft />
             </IconButton>
-            <Typography variant="h4" fontWeight="bold">
+            <Typography variant="h4" component="div" sx={{ fontWeight: "bold" }}>
               行政管理
             </Typography>
           </Stack>

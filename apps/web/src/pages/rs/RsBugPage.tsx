@@ -31,7 +31,6 @@ import {
   Plus,
   Search,
   Edit,
-  Trash2,
   Bug,
   User,
   Filter,
@@ -47,11 +46,11 @@ interface Bug {
   status: string;
   assignee: string;
   create_time: string;
+  description: string;
 }
 
 const RsBugPage: React.FC = () => {
   const [bugs, setBugs] = useState<Bug[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -222,7 +221,7 @@ const RsBugPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -237,6 +236,7 @@ const RsBugPage: React.FC = () => {
       status: "open",
       assignee: "未分配",
       create_time: new Date().toLocaleString(),
+      description: newBugForm.description,
     };
     setBugs([newBug, ...bugs]);
     setNewBugDialogOpen(false);
@@ -513,9 +513,16 @@ const RsBugPage: React.FC = () => {
                   </Typography>
                 </Box>
               </Stack>
-              <Paper sx={{ p: 2, mt: 3, bgcolor: "#f5f5f5" }}>
-                <Typography variant="body2">缺陷详细信息区域 - 待实现</Typography>
-              </Paper>
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="caption" color="text.secondary">
+                  缺陷描述
+                </Typography>
+                <Paper sx={{ p: 2, mt: 1, bgcolor: "#f5f5f5" }}>
+                  <Typography variant="body2">
+                    {selectedBug.description || "无描述"}
+                  </Typography>
+                </Paper>
+              </Box>
             </Box>
           )}
         </DialogContent>

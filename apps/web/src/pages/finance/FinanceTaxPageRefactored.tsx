@@ -82,70 +82,59 @@ const getStatusConfig = (status: string) => {
 };
 
 // ============ 列定义 ============
-const getTaxColumns = (
-  onDeclare: (tax: TaxEntry) => void,
-  onPay: (tax: TaxEntry) => void,
-  onAnalysis: (tax: TaxEntry) => void,
-): ColumnDef<TaxEntry>[] => [
+const getTaxColumns = (): ColumnDef<TaxEntry>[] => [
   {
     id: "tax_type",
-    header: "税种",
-    accessor: "tax_type",
-    render: (value) => <Chip label={value} size="small" color="primary" />,
+    label: "税种",
+    render: (row) => <Chip label={row.tax_type} size="small" color="primary" />,
   },
   {
     id: "declaration_period",
-    header: "申报期间",
-    accessor: "declaration_period",
-    render: (value) => <Box sx={{ fontWeight: 500 }}>{value}</Box>,
+    label: "申报期间",
+    render: (row) => <Box sx={{ fontWeight: 500 }}>{row.declaration_period}</Box>,
   },
   {
     id: "taxable_income",
-    header: "应税收入",
-    accessor: "taxable_income",
-    render: (value) => (
+    label: "应税收入",
+    render: (row) => (
       <Box sx={{ fontFamily: "monospace", color: "text.secondary" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.taxable_income)}
       </Box>
     ),
   },
   {
     id: "tax_rate",
-    header: "税率",
-    accessor: "tax_rate",
-    render: (value) => <Chip label={`${value}%`} size="small" variant="outlined" />,
+    label: "税率",
+    render: (row) => <Chip label={`${row.tax_rate}%`} size="small" variant="outlined" />,
   },
   {
     id: "tax_amount",
-    header: "应纳税额",
-    accessor: "tax_amount",
-    render: (value) => (
+    label: "应纳税额",
+    render: (row) => (
       <Box sx={{ fontWeight: 700, color: "primary.main", fontFamily: "monospace" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.tax_amount)}
       </Box>
     ),
   },
   {
     id: "paid_amount",
-    header: "已缴税额",
-    accessor: "paid_amount",
-    render: (value) => (
+    label: "已缴税额",
+    render: (row) => (
       <Box sx={{ color: "success.main", fontFamily: "monospace" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.paid_amount)}
       </Box>
     ),
   },
   {
     id: "owed_amount",
-    header: "欠税金额",
-    accessor: "owed_amount",
-    render: (value) => {
-      const owed = value;
+    label: "欠税金额",
+    render: (row) => {
+      const owed = row.owed_amount;
       return (
-        <Box sx={{ 
-          fontWeight: 600, 
-          color: owed > 0 ? "error.main" : "success.main", 
-          fontFamily: "monospace" 
+        <Box sx={{
+          fontWeight: 600,
+          color: owed > 0 ? "error.main" : "success.main",
+          fontFamily: "monospace"
         }}>
           {formatCurrency(owed)}
         </Box>
@@ -154,14 +143,13 @@ const getTaxColumns = (
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
-    render: (value) => {
-      const config = getStatusConfig(value);
+    label: "状态",
+    render: (row) => {
+      const config = getStatusConfig(row.status);
       return (
-        <Chip 
-          label={value} 
-          size="small" 
+        <Chip
+          label={row.status}
+          size="small"
           color={config.color}
           icon={config.icon as React.ReactElement}
         />
@@ -197,12 +185,6 @@ const getRowActions = (
 
 // ============ 筛选配置 ============
 const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "text",
-    placeholder: "搜索税种、申报期间...",
-  },
   {
     id: "tax_type",
     label: "税种",
@@ -266,10 +248,9 @@ const FinanceTaxPageRefactored: React.FC = () => {
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "tax_type") setFilterType(value);
-      if (filterId === "status") setFilterStatus(value);
+    (filters: Record<string, any>) => {
+      if (filters.tax_type !== undefined) setFilterType(filters.tax_type);
+      if (filters.status !== undefined) setFilterStatus(filters.status);
     },
     [],
   );
@@ -316,18 +297,16 @@ const FinanceTaxPageRefactored: React.FC = () => {
       <PageHeader
         title="税务管理"
         subtitle="管理税务申报、税款缴纳和税务分析"
-        showBack
-        onBack={() => navigate(-1)}
-        actions={
-          <Button
-            variant="outlined"
-            startIcon={<Download style={{ width: 18, height: 18 }} />}
-            onClick={handleExport}
-            sx={{ borderColor: "#22c55e", color: "#22c55e" }}
-          >
-            导出报表
-          </Button>
-        }
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[
+          {
+            label: "导出报表",
+            icon: <Download style={{ width: 18, height: 18 }} />,
+            onClick: handleExport,
+            variant: "outlined",
+            color: "success",
+          },
+        ]}
       />
 
       <Box sx={{ px: 3, pb: 3 }}>
@@ -364,12 +343,15 @@ const FinanceTaxPageRefactored: React.FC = () => {
         </Box>
 
         <ListPageTemplate
-          columns={getTaxColumns(handleDeclare, handlePay, handleAnalysis)}
+          title="税务列表"
+          columns={getTaxColumns()}
           data={filteredData}
           rowActions={getRowActions(handleDeclare, handlePay, handleAnalysis)}
           filters={filters}
           onFilterChange={handleFilterChange}
           searchable
+          searchValue={searchText}
+          onSearch={setSearchText}
           searchPlaceholder="搜索税种、申报期间..."
           emptyMessage="暂无税务数据"
         />

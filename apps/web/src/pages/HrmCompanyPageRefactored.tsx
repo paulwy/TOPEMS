@@ -27,15 +27,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Card,
-  CardContent,
 } from "@mui/material";
 import {
   Building,
   Phone,
   Mail,
   MapPin,
-  Globe,
   Plus,
   Eye,
   Edit,
@@ -58,12 +55,11 @@ import { PageHeader } from "../components/layout";
 
 // ============ 列定义 ============
 const getColumns = (
-  getStatusBadge: (status: string) => JSX.Element,
+  getStatusBadge: (status: string) => React.ReactElement,
 ): ColumnDef<Company>[] => [
   {
     id: "name",
-    header: "公司名称",
-    accessor: "name",
+    label: "公司名称",
     minWidth: 200,
     render: (row: Company) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -95,36 +91,33 @@ const getColumns = (
   },
   {
     id: "contact_phone",
-    header: "联系电话",
-    accessor: "contact_phone",
+    label: "联系电话",
     minWidth: 140,
-    render: (value: string) => (
+    render: (row: Company) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Phone sx={{ width: 16, height: 16, color: "text.secondary" }} />
-        <Typography variant="body2">{value || "-"}</Typography>
+        <Typography variant="body2">{row.contact_phone || "-"}</Typography>
       </Box>
     ),
   },
   {
     id: "email",
-    header: "邮箱",
-    accessor: "email",
+    label: "邮箱",
     minWidth: 180,
-    render: (value: string) => (
+    render: (row: Company) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Mail sx={{ width: 16, height: 16, color: "text.secondary" }} />
         <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
-          {value || "-"}
+          {row.email || "-"}
         </Typography>
       </Box>
     ),
   },
   {
     id: "address",
-    header: "地址",
-    accessor: "address",
+    label: "地址",
     minWidth: 200,
-    render: (value: string) => (
+    render: (row: Company) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <MapPin sx={{ width: 16, height: 16, color: "text.secondary" }} />
         <Typography
@@ -136,15 +129,14 @@ const getColumns = (
             whiteSpace: "nowrap",
           }}
         >
-          {value || "-"}
+          {row.address || "-"}
         </Typography>
       </Box>
     ),
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
+    label: "状态",
     width: 100,
     render: (row: Company) => getStatusBadge(row.status),
   },
@@ -414,7 +406,7 @@ const HrmCompanyPage: React.FC = () => {
         title: "禁用",
         value: stats.inactive,
         icon: <Building style={{ width: 24, height: 24 }} />,
-        color: "default" as const,
+        color: "secondary" as const,
       },
       {
         id: "archived",
@@ -445,18 +437,15 @@ const HrmCompanyPage: React.FC = () => {
       <PageHeader
         title="公司管理"
         subtitle={`共 ${data.total} 家公司`}
-        showBack
-        onBack={() => navigate(-1)}
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Plus style={{ width: 18, height: 18 }} />}
-            onClick={handleAdd}
-            sx={{ bgcolor: "#3b82f6" }}
-          >
-            新增公司
-          </Button>
-        }
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[
+          {
+            label: "新增公司",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleAdd,
+            variant: "contained",
+          },
+        ]}
       />
 
       {/* 统计概览 */}
@@ -475,6 +464,7 @@ const HrmCompanyPage: React.FC = () => {
       {/* 数据列表 */}
       <Paper sx={{ borderRadius: 2, mt: 3 }}>
         <ListPageTemplate
+          title="公司列表"
           columns={columns}
           data={data.items}
           loading={loading}

@@ -96,7 +96,9 @@ const columns: ColumnDef<Milestone>[] = [
     header: "进度",
     accessor: "progress",
     render: (value) => (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 150 }}>
+      <Box
+        sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 150 }}
+      >
         <LinearProgress
           variant="determinate"
           value={value as number}
@@ -123,12 +125,18 @@ const columns: ColumnDef<Milestone>[] = [
     accessor: "status",
     sortable: true,
     render: (value) => {
-      const statusConfig: Record<string, { label: string; color: "success" | "primary" | "warning" | "default" }> = {
+      const statusConfig: Record<
+        string,
+        { label: string; color: "success" | "primary" | "warning" | "default" }
+      > = {
         completed: { label: "已完成", color: "success" },
         active: { label: "进行中", color: "primary" },
         planning: { label: "规划中", color: "warning" },
       };
-      const config = statusConfig[value] || { label: value, color: "default" as const };
+      const config = statusConfig[value] || {
+        label: value,
+        color: "default" as const,
+      };
       return <Chip label={config.label} size="small" color={config.color} />;
     },
   },
@@ -166,7 +174,9 @@ const RsMilestonePageRefactored: React.FC = () => {
   // 模态框状态
   const [newMilestoneDialogOpen, setNewMilestoneDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(
+    null,
+  );
   const [newMilestoneForm, setNewMilestoneForm] = useState({
     name: "",
     start_date: "",
@@ -267,7 +277,12 @@ const RsMilestonePageRefactored: React.FC = () => {
     };
     setData((prev) => [newMs, ...prev]);
     setNewMilestoneDialogOpen(false);
-    setNewMilestoneForm({ name: "", start_date: "", end_date: "", related_project: "" });
+    setNewMilestoneForm({
+      name: "",
+      start_date: "",
+      end_date: "",
+      related_project: "",
+    });
   }, [newMilestoneForm]);
 
   // 处理查看详情
@@ -281,8 +296,11 @@ const RsMilestonePageRefactored: React.FC = () => {
     const matchesSearch =
       !filtersValue.search ||
       ms.name.toLowerCase().includes(filtersValue.search.toLowerCase()) ||
-      ms.related_project.toLowerCase().includes(filtersValue.search.toLowerCase());
-    const matchesStatus = !filtersValue.status || ms.status === filtersValue.status;
+      ms.related_project
+        .toLowerCase()
+        .includes(filtersValue.search.toLowerCase());
+    const matchesStatus =
+      !filtersValue.status || ms.status === filtersValue.status;
     return matchesSearch && matchesStatus;
   });
 
@@ -335,7 +353,9 @@ const RsMilestonePageRefactored: React.FC = () => {
             <IconButton onClick={fetchMilestones}>
               <RefreshCw
                 size={20}
-                style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+                style={{
+                  animation: loading ? "spin 1s linear infinite" : "none",
+                }}
               />
             </IconButton>
           </Tooltip>
@@ -376,14 +396,24 @@ const RsMilestonePageRefactored: React.FC = () => {
               label="里程碑名称"
               fullWidth
               value={newMilestoneForm.name}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, name: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  name: e.target.value,
+                })
+              }
             />
             <TextField
               label="开始日期"
               type="date"
               fullWidth
               value={newMilestoneForm.start_date}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, start_date: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  start_date: e.target.value,
+                })
+              }
               InputLabelProps={{ shrink: true }}
             />
             <TextField
@@ -391,20 +421,34 @@ const RsMilestonePageRefactored: React.FC = () => {
               type="date"
               fullWidth
               value={newMilestoneForm.end_date}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, end_date: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  end_date: e.target.value,
+                })
+              }
               InputLabelProps={{ shrink: true }}
             />
             <TextField
               label="关联项目"
               fullWidth
               value={newMilestoneForm.related_project}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, related_project: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  related_project: e.target.value,
+                })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewMilestoneDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateMilestone}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateMilestone}
+          >
             创建
           </Button>
         </DialogActions>
@@ -426,16 +470,30 @@ const RsMilestonePageRefactored: React.FC = () => {
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
                 <Chip
-                  label={selectedMilestone.status === "completed" ? "已完成" : selectedMilestone.status === "active" ? "进行中" : "规划中"}
+                  label={
+                    selectedMilestone.status === "completed"
+                      ? "已完成"
+                      : selectedMilestone.status === "active"
+                        ? "进行中"
+                        : "规划中"
+                  }
                   size="small"
-                  color={selectedMilestone.status === "completed" ? "success" : selectedMilestone.status === "active" ? "primary" : "warning"}
+                  color={
+                    selectedMilestone.status === "completed"
+                      ? "success"
+                      : selectedMilestone.status === "active"
+                        ? "primary"
+                        : "warning"
+                  }
                 />
               </Stack>
               <Box sx={{ mt: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   进度
                 </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}
+                >
                   <LinearProgress
                     variant="determinate"
                     value={selectedMilestone.progress}

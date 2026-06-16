@@ -25,7 +25,6 @@ import {
   TextField,
 } from "@mui/material";
 import {
-  Plus,
   Play,
   FileText,
   Edit,
@@ -36,9 +35,8 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-import { ListPageTemplate, type ColumnDef } from "../../components/templates";
+import { ListPageTemplate, type ColumnDef, type FilterConfig } from "../../components/templates";
 import { PageHeader } from "../../components/layout";
-import { FilterBar, type FilterConfig } from "../../components/mui";
 
 // ============ 类型定义 ============
 interface TestCase {
@@ -62,26 +60,23 @@ interface FilterValues {
 const columns: ColumnDef<TestCase>[] = [
   {
     id: "case_no",
-    header: "用例编号",
-    accessor: "case_no",
+    label: "用例编号",
     sortable: true,
-    render: (value) => (
+    render: (row) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <ClipboardList size={16} color="#3b82f6" />
-        {value}
+        {row.case_no}
       </Box>
     ),
   },
   {
     id: "case_name",
-    header: "用例名称",
-    accessor: "case_name",
+    label: "用例名称",
   },
   {
     id: "case_type",
-    header: "用例类型",
-    accessor: "case_type",
-    render: (value) => {
+    label: "用例类型",
+    render: (row) => {
       const typeMap: Record<string, string> = {
         功能测试: "功能测试",
         性能测试: "性能测试",
@@ -89,40 +84,38 @@ const columns: ColumnDef<TestCase>[] = [
         UI测试: "UI测试",
         安全测试: "安全测试",
       };
-      return <Chip label={typeMap[value] || value} size="small" variant="outlined" />;
+      return <Chip label={typeMap[row.case_type] || row.case_type} size="small" variant="outlined" />;
     },
   },
   {
     id: "priority",
-    header: "优先级",
-    accessor: "priority",
-    render: (value) => {
+    label: "优先级",
+    render: (row) => {
       const priorityConfig: Record<string, { label: string; color: "error" | "warning" | "default" }> = {
         high: { label: "高", color: "error" },
         medium: { label: "中", color: "warning" },
         low: { label: "低", color: "default" },
       };
-      const config = priorityConfig[value] || priorityConfig.medium;
+      const config = priorityConfig[row.priority] || priorityConfig.medium;
       return <Chip label={config.label} size="small" color={config.color} />;
     },
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
+    label: "状态",
     sortable: true,
-    render: (value) => {
+    render: (row) => {
       const statusConfig: Record<string, { label: string; color: "success" | "error" | "warning" | "default" }> = {
         passed: { label: "已通过", color: "success" },
         failed: { label: "未通过", color: "error" },
         pending: { label: "待执行", color: "warning" },
       };
-      const config = statusConfig[value] || statusConfig.pending;
+      const config = statusConfig[row.status] || statusConfig.pending;
       return (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          {value === "passed" ? (
+          {row.status === "passed" ? (
             <CheckCircle size={14} color="green" />
-          ) : value === "failed" ? (
+          ) : row.status === "failed" ? (
             <XCircle size={14} color="red" />
           ) : (
             <Clock size={14} color="orange" />
@@ -134,8 +127,7 @@ const columns: ColumnDef<TestCase>[] = [
   },
   {
     id: "related_requirement",
-    header: "关联需求",
-    accessor: "related_requirement",
+    label: "关联需求",
   },
 ];
 
@@ -170,7 +162,6 @@ const RsTestPageRefactored: React.FC = () => {
   const [data, setData] = useState<TestCase[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
 
   // 筛选状态
   const [filtersValue, setFiltersValue] = useState<FilterValues>({
@@ -252,7 +243,6 @@ const RsTestPageRefactored: React.FC = () => {
 
     setTimeout(() => {
       setData(mockTestCases);
-      setTotal(mockTestCases.length);
       setLoading(false);
     }, 500);
   }, []);
@@ -266,8 +256,8 @@ const RsTestPageRefactored: React.FC = () => {
   }, []);
 
   // 处理筛选变化
-  const handleFilterChange = useCallback((filterId: string, value: any) => {
-    setFiltersValue((prev) => ({ ...prev, [filterId]: value }));
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    setFiltersValue((prev) => ({ ...prev, ...filters }));
   }, []);
 
   // 处理分页变化
@@ -303,8 +293,8 @@ const RsTestPageRefactored: React.FC = () => {
   }, []);
 
   // 处理执行测试
-  const handleExecuteTest = useCallback((tcId: string) => {
-    setData((prev) => prev.map((tc) => (tc.id === tcId ? { ...tc, status: "passed" } : tc)));
+  const handleExecuteTest = useCallback((tc: TestCase) => {
+    setData((prev) => prev.map((item) => (item.id === tc.id ? { ...tc, status: "passed" } : item)));
   }, []);
 
   // 过滤数据
@@ -377,6 +367,7 @@ const RsTestPageRefactored: React.FC = () => {
       />
 
       <ListPageTemplate
+        title=""
         columns={columns}
         data={filteredData}
         loading={loading}
@@ -451,8 +442,8 @@ const RsTestPageRefactored: React.FC = () => {
         <DialogContent>
           {selectedCase && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
-                {selectedCase.case_no} - {selectedCase.case_name}
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                {`${selectedCase.case_no} - ${selectedCase.case_name}`}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
                 <Chip label={selectedCase.case_type} size="small" variant="outlined" />

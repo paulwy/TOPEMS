@@ -9,10 +9,10 @@ import {
   Eye,
 } from "lucide-react";
 import { Box, Chip } from "@mui/material";
-import { ListPageTemplate } from "../components/templates/ListPageTemplate";
+import { ListPageTemplate, type ColumnDef } from "../components/templates/ListPageTemplate";
 import { PageHeader } from "../components/templates/PageHeader";
-import { FilterBar, FilterConfig } from "../components/mui/FilterBar";
-import ExportButton from "../components/ExportButton";
+import { FilterBar } from "../components/mui/FilterBar";
+import type { FilterConfig } from "../components/mui/FilterBar";
 
 interface ComparisonRow {
   id: string;
@@ -78,7 +78,7 @@ const BIComparisonPageRefactored = () => {
     },
   ];
 
-  const columns = [
+  const columns: ColumnDef<ComparisonRow>[] = [
     {
       id: "comparisonItem",
       label: "对比项",

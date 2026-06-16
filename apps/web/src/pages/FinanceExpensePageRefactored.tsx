@@ -56,82 +56,14 @@ import {
   ListPageTemplate,
   type ColumnDef,
   type RowAction,
+  type FilterConfig,
 } from "../components/templates";
-import { PageHeader } from "../components/layout";
-import { FilterBar, type FilterConfig } from "../components/mui";
+import { PageHeader, type PageHeaderAction } from "../components/layout";
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from "../components/ui/OrganizationFilter";
 import { MetricCard } from "../components/MetricCard";
 import { StatsChart } from "../components/StatsChart";
-
-// ============ 列定义 ============
-const columns: ColumnDef<Expense>[] = [
-  {
-    id: "expense_number",
-    header: "报销编号",
-    accessor: "expense_number",
-    render: (value) => (
-      <Box sx={{ fontWeight: 500, color: "primary.main" }}>{value}</Box>
-    ),
-  },
-  {
-    id: "applicant_name",
-    header: "申请人",
-    accessor: "applicant_name",
-    render: (value) => (
-      <Box sx={{ display: "flex", alignItems: "center" }}>
-        <User sx={{ width: 16, height: 16, mr: 1, color: "primary.main" }} />
-        {value || "-"}
-      </Box>
-    ),
-  },
-  {
-    id: "department_id",
-    header: "部门",
-    accessor: "department_id",
-    render: (value, row) => getDepartmentName(value, row._data?.departments || []),
-  },
-  {
-    id: "expense_type",
-    header: "费用类型",
-    accessor: "expense_type",
-    render: (value) => getExpenseTypeName(value || ""),
-  },
-  {
-    id: "amount",
-    header: "金额",
-    accessor: "amount",
-    render: (value) => (
-      <Box sx={{ fontWeight: 700, color: "success.main" }}>
-        ¥{value.toLocaleString()}
-      </Box>
-    ),
-  },
-  {
-    id: "expense_date",
-    header: "日期",
-    accessor: "expense_date",
-    render: (value) => (
-      <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary", fontSize: "0.875rem" }}>
-        <Calendar sx={{ width: 12, height: 12, mr: 0.5 }} />
-        {value?.split("T")[0] || "-"}
-      </Box>
-    ),
-  },
-  {
-    id: "receipt_count",
-    header: "票据数",
-    accessor: "receipt_count",
-    render: (value) => `${value || 0} 张`,
-  },
-  {
-    id: "status",
-    header: "状态",
-    accessor: "status",
-    render: (value) => getStatusChip(value),
-  },
-];
 
 // ============ 辅助函数 ============
 const getStatusChip = (status: string) => {
@@ -294,18 +226,18 @@ const FinanceExpensePageRefactored: React.FC = () => {
 
   // 带部门数据的行操作
   const getRowActions = useCallback(
-    (): RowAction<Expense>[] => [
+    (): RowAction<Record<string, any>>[] => [
       {
         label: "审批",
         icon: <Check style={{ width: 16, height: 16 }} />,
-        onClick: (expense) => handleApprove(expense),
+        onClick: (expense) => handleApprove(expense as Expense),
         show: (expense) => expense.status === "pending",
         color: "success",
       },
       {
         label: "编辑",
         icon: <Edit style={{ width: 16, height: 16 }} />,
-        onClick: (expense) => setEditingExpense(expense),
+        onClick: (expense) => setEditingExpense(expense as Expense),
       },
       {
         label: "删除",
@@ -315,6 +247,69 @@ const FinanceExpensePageRefactored: React.FC = () => {
       },
     ],
     [],
+  );
+
+  // 表格列定义
+  const columns: ColumnDef<Record<string, any>>[] = useMemo(
+    () => [
+      {
+        id: "expense_number",
+        label: "报销编号",
+        render: (row) => (
+          <Box sx={{ fontWeight: 500, color: "primary.main" }}>{row.expense_number}</Box>
+        ),
+      },
+      {
+        id: "applicant_name",
+        label: "申请人",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <User sx={{ width: 16, height: 16, mr: 1, color: "primary.main" }} />
+            {row.applicant_name || "-"}
+          </Box>
+        ),
+      },
+      {
+        id: "department_id",
+        label: "部门",
+        render: (row) => getDepartmentName(row.department_id, departments),
+      },
+      {
+        id: "expense_type",
+        label: "费用类型",
+        render: (row) => getExpenseTypeName(row.expense_type || ""),
+      },
+      {
+        id: "amount",
+        label: "金额",
+        render: (row) => (
+          <Box sx={{ fontWeight: 700, color: "success.main" }}>
+            ¥{(row.amount as number).toLocaleString()}
+          </Box>
+        ),
+      },
+      {
+        id: "expense_date",
+        label: "日期",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary", fontSize: "0.875rem" }}>
+            <Calendar sx={{ width: 12, height: 12, mr: 0.5 }} />
+            {(row.expense_date as string)?.split("T")[0] || "-"}
+          </Box>
+        ),
+      },
+      {
+        id: "receipt_count",
+        label: "票据数",
+        render: (row) => `${row.receipt_count || 0} 张`,
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusChip(row.status),
+      },
+    ],
+    [departments],
   );
 
   // 过滤后的数据
