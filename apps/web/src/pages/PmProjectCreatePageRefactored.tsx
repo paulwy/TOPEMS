@@ -15,23 +15,10 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
   TextField,
   Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  useTheme,
 } from "@mui/material";
-import {
-  ArrowLeft,
-  Save,
-  Calendar,
-  Users,
-  DollarSign,
-  Tag,
-  FileText,
-  Plus,
-} from "lucide-react";
+import { Save } from "lucide-react";
 import { pmApi } from "../api/pm";
 import {
   AIHelperButton,
@@ -43,7 +30,12 @@ import {
 import type { CompletionItem } from "../types/ai";
 import { PageHeader } from "../components/layout";
 
-type ProjectType = "RESEARCH" | "PRODUCTION" | "CONSTRUCTION" | "DESIGN" | "SERVICE";
+type ProjectType =
+  | "RESEARCH"
+  | "PRODUCTION"
+  | "CONSTRUCTION"
+  | "DESIGN"
+  | "SERVICE";
 
 const PROJECT_TYPES: {
   value: ProjectType;
@@ -51,16 +43,40 @@ const PROJECT_TYPES: {
   description: string;
   icon: string;
 }[] = [
-  { value: "RESEARCH", label: "科研项目", description: "实验驱动、创新研究、专利申请", icon: "🔬" },
-  { value: "PRODUCTION", label: "生产项目", description: "标准化生产、质量控制、量产", icon: "🏭" },
-  { value: "CONSTRUCTION", label: "施工项目", description: "资源密集、周期长、工程建设", icon: "🏗️" },
-  { value: "DESIGN", label: "设计项目", description: "迭代设计、版本管理、产品设计", icon: "🎨" },
-  { value: "SERVICE", label: "服务项目", description: "客户导向、灵活交付、咨询服务", icon: "💼" },
+  {
+    value: "RESEARCH",
+    label: "科研项目",
+    description: "实验驱动、创新研究、专利申请",
+    icon: "🔬",
+  },
+  {
+    value: "PRODUCTION",
+    label: "生产项目",
+    description: "标准化生产、质量控制、量产",
+    icon: "🏭",
+  },
+  {
+    value: "CONSTRUCTION",
+    label: "施工项目",
+    description: "资源密集、周期长、工程建设",
+    icon: "🏗️",
+  },
+  {
+    value: "DESIGN",
+    label: "设计项目",
+    description: "迭代设计、版本管理、产品设计",
+    icon: "🎨",
+  },
+  {
+    value: "SERVICE",
+    label: "服务项目",
+    description: "客户导向、灵活交付、咨询服务",
+    icon: "💼",
+  },
 ];
 
 const PmProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -89,6 +105,13 @@ const PmProjectCreatePage: React.FC = () => {
       newErrors.budget = "请输入有效预算金额";
     if (!formData.start_date) newErrors.start_date = "请选择开始日期";
     if (!formData.end_date) newErrors.end_date = "请选择结束日期";
+    if (
+      formData.start_date &&
+      formData.end_date &&
+      formData.end_date < formData.start_date
+    ) {
+      newErrors.end_date = "结束日期不能早于开始日期";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -109,7 +132,7 @@ const PmProjectCreatePage: React.FC = () => {
         start_date: formData.start_date,
         end_date: formData.end_date,
         tags: formData.tags.trim()
-          ? formData.tags.split(",").map((t) => t.trim())
+          ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
           : undefined,
       });
 
@@ -139,7 +162,9 @@ const PmProjectCreatePage: React.FC = () => {
     setShowAITextOptimizer(false);
   };
 
-  const handleApplyCompletion = (completions: Record<string, CompletionItem>) => {
+  const handleApplyCompletion = (
+    completions: Record<string, CompletionItem>,
+  ) => {
     const updates: Record<string, any> = {};
     Object.entries(completions).forEach(([field, item]) => {
       updates[field] = item.value;
@@ -162,8 +187,7 @@ const PmProjectCreatePage: React.FC = () => {
       <PageHeader
         title="创建项目"
         subtitle="填写项目基本信息"
-        showBack
-        onBack={() => navigate("/pm/projects")}
+        backButton={{ onClick: () => navigate("/pm/projects") }}
       />
 
       <Box sx={{ p: 3, maxWidth: 960, mx: "auto" }}>
@@ -171,10 +195,20 @@ const PmProjectCreatePage: React.FC = () => {
           <CardContent sx={{ p: 3 }}>
             <form onSubmit={handleSubmit}>
               {/* 项目名称和编号 */}
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3, mb: 3 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 3,
+                  mb: 3,
+                }}
+              >
                 <Box>
                   <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                    项目名称 <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    项目名称{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     fullWidth
@@ -188,7 +222,10 @@ const PmProjectCreatePage: React.FC = () => {
 
                 <Box>
                   <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                    项目编号 <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    项目编号{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <Box sx={{ display: "flex", gap: 1 }}>
                     <TextField
@@ -213,9 +250,18 @@ const PmProjectCreatePage: React.FC = () => {
               {/* 项目类型 */}
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                  项目类型 <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                  项目类型{" "}
+                  <Box component="span" sx={{ color: "error.main" }}>
+                    *
+                  </Box>
                 </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 2 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+                    gap: 2,
+                  }}
+                >
                   {PROJECT_TYPES.map((type) => (
                     <Box
                       key={type.value}
@@ -223,28 +269,52 @@ const PmProjectCreatePage: React.FC = () => {
                       sx={{
                         p: 2,
                         border: "1px solid",
-                        borderColor: formData.project_type === type.value ? "primary.main" : "grey.300",
+                        borderColor:
+                          formData.project_type === type.value
+                            ? "primary.main"
+                            : "grey.300",
                         borderRadius: 2,
                         cursor: "pointer",
-                        bgcolor: formData.project_type === type.value ? "primary.light" : "background.paper",
+                        bgcolor:
+                          formData.project_type === type.value
+                            ? "primary.light"
+                            : "background.paper",
                         "&:hover": { borderColor: "primary.main" },
                         transition: "all 0.2s",
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                        <Typography variant="body1" sx={{ fontSize: "1.25rem" }}>{type.icon}</Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 0.5,
+                        }}
+                      >
+                        <Typography
+                          variant="body1"
+                          sx={{ fontSize: "1.25rem" }}
+                        >
+                          {type.icon}
+                        </Typography>
                         <Typography sx={{ fontWeight: 500, color: "grey.900" }}>
                           {type.label}
                         </Typography>
                       </Box>
-                      <Typography variant="body2" sx={{ color: "grey.500", fontSize: "0.75rem" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "grey.500", fontSize: "0.75rem" }}
+                      >
                         {type.description}
                       </Typography>
                     </Box>
                   ))}
                 </Box>
                 {errors.project_type && (
-                  <Typography variant="caption" sx={{ color: "error.main", mt: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "error.main", mt: 1 }}
+                  >
                     {errors.project_type}
                   </Typography>
                 )}
@@ -252,7 +322,14 @@ const PmProjectCreatePage: React.FC = () => {
 
               {/* 项目描述 */}
               <Box sx={{ mb: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     项目描述
                   </Typography>
@@ -275,10 +352,20 @@ const PmProjectCreatePage: React.FC = () => {
               </Box>
 
               {/* 预算和负责人 */}
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3, mb: 3 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 3,
+                  mb: 3,
+                }}
+              >
                 <Box>
                   <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                    项目预算 <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    项目预算{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     fullWidth
@@ -288,8 +375,14 @@ const PmProjectCreatePage: React.FC = () => {
                     placeholder="请输入预算金额"
                     error={!!errors.budget}
                     helperText={errors.budget}
-                    InputProps={{
-                      startAdornment: <Typography sx={{ color: "grey.500", mr: 1 }}>¥</Typography>,
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <Typography component="span" sx={{ color: "grey.500", mr: 1 }}>
+                            ¥
+                          </Typography>
+                        ),
+                      },
                     }}
                   />
                 </Box>
@@ -308,10 +401,20 @@ const PmProjectCreatePage: React.FC = () => {
               </Box>
 
               {/* 开始和结束日期 */}
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3, mb: 3 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 3,
+                  mb: 3,
+                }}
+              >
                 <Box>
                   <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                    开始日期 <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    开始日期{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     fullWidth
@@ -325,7 +428,10 @@ const PmProjectCreatePage: React.FC = () => {
 
                 <Box>
                   <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                    结束日期 <Box component="span" sx={{ color: "error.main" }}>*</Box>
+                    结束日期{" "}
+                    <Box component="span" sx={{ color: "error.main" }}>
+                      *
+                    </Box>
                   </Typography>
                   <TextField
                     fullWidth
@@ -352,7 +458,16 @@ const PmProjectCreatePage: React.FC = () => {
               </Box>
 
               {/* 操作按钮 */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pt: 3, borderTop: "1px solid", borderColor: "grey.200" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  pt: 3,
+                  borderTop: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
                 <Box sx={{ display: "flex", gap: 1 }}>
                   <AIHelperButton
                     type="complete"
@@ -380,7 +495,7 @@ const PmProjectCreatePage: React.FC = () => {
                     type="submit"
                     variant="contained"
                     disabled={submitting}
-                    startIcon={<Save style={{ width: 16, height: 16 }} />}
+                    startIcon={<Save sx={{ width: 16, height: 16 }} />}
                   >
                     {submitting ? "提交中..." : "保存项目"}
                   </Button>
@@ -417,7 +532,11 @@ const PmProjectCreatePage: React.FC = () => {
         isOpen={showAIDataCompleter}
         onClose={() => setShowAIDataCompleter(false)}
         completeRequest={{
-          partialData: formData,
+          partialData: Object.fromEntries(
+            Object.entries(formData).filter(
+              ([, v]) => v !== "" && v !== null && v !== undefined,
+            ),
+          ),
           context: {
             module: "pm",
             entityType: "project",
@@ -437,7 +556,11 @@ const PmProjectCreatePage: React.FC = () => {
           },
         }}
         onApplySuggestions={handleApplyValidationSuggestions}
-        onFixIssue={() => {}}
+        onFixIssue={(issue) => {
+          if (issue.fix !== undefined) {
+            setFormData((prev) => ({ ...prev, [issue.field]: issue.fix }));
+          }
+        }}
       />
     </>
   );

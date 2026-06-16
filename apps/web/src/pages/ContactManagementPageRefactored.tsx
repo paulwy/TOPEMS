@@ -19,7 +19,7 @@ import {
   TextField,
   Chip,
 } from "@mui/material";
-import { Plus, Edit, Trash2, Eye, Download } from "lucide-react";
+import { Plus, Edit, Trash2, Eye } from "lucide-react";
 import type {
   Contact,
   CreateContactRequest,
@@ -31,46 +31,41 @@ import {
   ListPageTemplate,
   type ColumnDef,
   type RowAction,
+  type FilterConfig,
 } from "@/components/templates";
 import { PageHeader } from "@/components/layout";
-import { FilterBar, type FilterConfig } from "@/components/mui";
 
 // ============ 列定义 ============
 const columns: ColumnDef<Contact>[] = [
   {
     id: "name",
-    header: "姓名",
-    accessor: "first_name",
+    label: "姓名",
     sortable: true,
     width: 150,
-    render: (_, row) => `${row.first_name} ${row.last_name || ""}`.trim() || "-",
+    render: (row: Contact) => `${row.first_name} ${row.last_name || ""}`.trim() || "-",
   },
   {
     id: "email",
-    header: "邮箱",
-    accessor: "email",
-    render: (value) => value || "-",
+    label: "邮箱",
+    render: (row: Contact) => row.email || "-",
   },
   {
     id: "phone",
-    header: "电话",
-    accessor: "phone",
-    render: (value) => value || "-",
+    label: "电话",
+    render: (row: Contact) => row.phone || "-",
   },
   {
     id: "position",
-    header: "职位",
-    accessor: "position",
-    render: (value) => value || "-",
+    label: "职位",
+    render: (row: Contact) => row.position || "-",
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
-    render: (value) => (
+    label: "状态",
+    render: (row: Contact) => (
       <Chip
-        label={value === "active" ? "活跃" : "非活跃"}
-        color={value === "active" ? "success" : "default"}
+        label={row.status === "active" ? "活跃" : "非活跃"}
+        color={row.status === "active" ? "success" : "default"}
         size="small"
       />
     ),
@@ -106,8 +101,7 @@ const filters: FilterConfig[] = [
   {
     id: "search",
     label: "搜索",
-    type: "search",
-    placeholder: "搜索联系人姓名或邮箱...",
+    type: "text",
   },
   {
     id: "status",
@@ -121,19 +115,6 @@ const filters: FilterConfig[] = [
   },
 ];
 
-// ============ 批量操作 ============
-const batchActions = [
-  {
-    label: "批量删除",
-    icon: <Trash2 style={{ width: 16, height: 16 }} />,
-    color: "error" as const,
-  },
-  {
-    label: "批量导出",
-    icon: <Download style={{ width: 16, height: 16 }} />,
-  },
-];
-
 // ============ 组件 ============
 const ContactManagementPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -144,12 +125,12 @@ const ContactManagementPage: React.FC = () => {
     items: Contact[];
     total: number;
     page: number;
-    page_size: number;
+    pageSize: number;
   }>({
     items: [],
     total: 0,
     page: 1,
-    page_size: 10,
+    pageSize: 10,
   });
 
   // 筛选状态
@@ -182,7 +163,7 @@ const ContactManagementPage: React.FC = () => {
     try {
       const params: any = {
         page: data.page,
-        pageSize: data.page_size,
+        pageSize: data.pageSize,
       };
       if (searchText) params.search = searchText;
       if (statusFilter !== "all") params.status = statusFilter;
@@ -193,7 +174,7 @@ const ContactManagementPage: React.FC = () => {
           items: response.data.items || [],
           total: response.data.total || 0,
           page: response.data.page || 1,
-          page_size: response.data.page_size || 10,
+          pageSize: response.data.pageSize || 10,
         });
       }
     } catch (error: any) {
@@ -205,16 +186,7 @@ const ContactManagementPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [data.page, data.page_size, searchText, statusFilter, addNotification]);
-
-  // 处理筛选变化
-  const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "status") setStatusFilter(value);
-    },
-    [],
-  );
+  }, [data.page, data.pageSize, searchText, statusFilter, addNotification]);
 
   // 处理分页变化
   const handlePageChange = useCallback((page: number) => {
@@ -271,7 +243,7 @@ const ContactManagementPage: React.FC = () => {
   );
 
   // 处理表单提交
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     try {
       if (selectedContact) {
@@ -304,28 +276,6 @@ const ContactManagementPage: React.FC = () => {
     }
   };
 
-  // 处理批量删除
-  const handleBatchDelete = useCallback(async () => {
-    if (selectedIds.length === 0) return;
-    if (!window.confirm(`确定要删除选中的 ${selectedIds.length} 个联系人吗?`)) return;
-    try {
-      await crmApi.contacts.batchDelete(selectedIds);
-      addNotification({
-        type: "success",
-        title: "删除成功",
-        message: `已删除 ${selectedIds.length} 个联系人`,
-      });
-      setSelectedIds([]);
-      fetchContacts();
-    } catch (error: any) {
-      addNotification({
-        type: "error",
-        title: "删除失败",
-        message: error.message || "批量删除失败",
-      });
-    }
-  }, [selectedIds, addNotification, fetchContacts]);
-
   // 重置表单
   const resetForm = () => {
     setSelectedContact(null);
@@ -349,42 +299,40 @@ const ContactManagementPage: React.FC = () => {
       <PageHeader
         title="联系人管理"
         subtitle={`共 ${data.total} 个联系人`}
-        actions={
-          <>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-            >
-              新增联系人
-            </Button>
-          </>
-        }
+        actions={[{
+          label: "新增联系人",
+          icon: <Plus style={{ width: 18, height: 18 }} />,
+          onClick: () => {
+            resetForm();
+            setShowDialog(true);
+          },
+          variant: "contained",
+        }]}
       />
 
       <ListPageTemplate
-        columns={columns}
+        title="联系人列表"
+        columns={columns as any}
         data={data.items}
         loading={loading}
-        rowActions={getRowActions(handleView, handleEdit, handleDelete)}
-        filters={filters}
-        onFilterChange={handleFilterChange}
+        rowActions={getRowActions(handleView, handleEdit, handleDelete) as any}
+        filters={filters as any}
+        onFilterChange={(filters: Record<string, any>) => {
+          if (filters.search !== undefined) setSearchText(filters.search);
+          if (filters.status !== undefined) setStatusFilter(filters.status);
+        }}
         pagination={{
           page: data.page,
-          pageSize: data.page_size,
+          pageSize: data.pageSize,
           total: data.total,
           onPageChange: handlePageChange,
+          onPageSizeChange: (pageSize: number) => setData((prev) => ({ ...prev, pageSize })),
         }}
-        onRowClick={handleView}
+        onRowClick={handleView as any}
         emptyMessage="暂无联系人数据"
-        selection={{
-          selected: selectedIds,
-          onChange: handleSelectionChange,
-        }}
-        batchActions={batchActions}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={handleSelectionChange as (ids: (string | number)[]) => void}
       />
 
       {/* 新增/编辑对话框 */}

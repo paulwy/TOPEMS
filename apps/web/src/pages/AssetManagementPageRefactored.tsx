@@ -109,13 +109,12 @@ const mockEmployees = [
 
 // ============ 列定义 ============
 const getColumns = (
-  getStatusBadge: (status: string) => JSX.Element,
+  getStatusBadge: (status: string) => React.ReactNode,
   getEmployeeName: (id: string) => string,
 ): ColumnDef<Asset>[] => [
   {
     id: "asset_number",
-    header: "资产编号",
-    accessor: "asset_number",
+    label: "资产编号",
     minWidth: 140,
     render: (row: Asset) => (
       <Typography variant="body2" sx={{ fontWeight: 500, color: "text.primary" }}>
@@ -125,8 +124,7 @@ const getColumns = (
   },
   {
     id: "name",
-    header: "资产名称",
-    accessor: "name",
+    label: "资产名称",
     minWidth: 180,
     render: (row: Asset) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -137,8 +135,7 @@ const getColumns = (
   },
   {
     id: "category",
-    header: "资产类别",
-    accessor: "category",
+    label: "资产类别",
     minWidth: 100,
     render: (row: Asset) => (
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -148,8 +145,7 @@ const getColumns = (
   },
   {
     id: "department",
-    header: "使用部门",
-    accessor: "department",
+    label: "使用部门",
     minWidth: 100,
     render: (row: Asset) => (
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -159,8 +155,7 @@ const getColumns = (
   },
   {
     id: "responsible_id",
-    header: "使用人",
-    accessor: "responsible_id",
+    label: "使用人",
     minWidth: 100,
     render: (row: Asset) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -171,8 +166,7 @@ const getColumns = (
   },
   {
     id: "purchase_amount",
-    header: "采购金额",
-    accessor: "purchase_amount",
+    label: "采购金额",
     minWidth: 120,
     render: (row: Asset) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -185,8 +179,7 @@ const getColumns = (
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
+    label: "状态",
     width: 100,
     render: (row: Asset) => getStatusBadge(row.status),
   },
@@ -520,18 +513,13 @@ const AssetManagementPageRefactored: React.FC = () => {
       <PageHeader
         title="资产管理"
         subtitle={`共 ${data.total} 项资产`}
-        showBack
-        onBack={() => navigate(-1)}
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Plus style={{ width: 18, height: 18 }} />}
-            onClick={handleAdd}
-            sx={{ bgcolor: "#3b82f6" }}
-          >
-            新增资产
-          </Button>
-        }
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[{
+          label: "新增资产",
+          icon: <Plus style={{ width: 18, height: 18 }} />,
+          onClick: handleAdd,
+          variant: "contained",
+        }]}
       />
 
       {/* 统计概览 */}
@@ -553,6 +541,7 @@ const AssetManagementPageRefactored: React.FC = () => {
       {/* 列表 */}
       <Paper sx={{ borderRadius: 2 }}>
         <ListPageTemplate
+          title="资产列表"
           columns={columns}
           data={data.items}
           loading={loading}

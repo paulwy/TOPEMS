@@ -41,7 +41,7 @@ import { FilterBar, type FilterConfig } from "../components/mui/FilterBar";
 import { PageHeader } from "../components/layout";
 
 // ============ Mock 数据 ============
-const mockAuditLogs = [
+const mockAuditLogs: AuditLog[] = [
   {
     id: "1",
     createdAt: "2024-01-15 10:30:00",
@@ -50,7 +50,7 @@ const mockAuditLogs = [
     module: "系统",
     ipAddress: "192.168.1.100",
     description: "用户登录系统",
-    status: "success",
+    status: "success" as const,
   },
   {
     id: "2",
@@ -60,7 +60,7 @@ const mockAuditLogs = [
     module: "用户管理",
     ipAddress: "192.168.1.101",
     description: "创建新用户李四",
-    status: "success",
+    status: "success" as const,
   },
   {
     id: "3",
@@ -70,7 +70,7 @@ const mockAuditLogs = [
     module: "角色管理",
     ipAddress: "192.168.1.102",
     description: "修改角色权限",
-    status: "success",
+    status: "success" as const,
   },
   {
     id: "4",
@@ -80,7 +80,7 @@ const mockAuditLogs = [
     module: "字典管理",
     ipAddress: "192.168.1.103",
     description: "删除字典项",
-    status: "failed",
+    status: "failed" as const,
   },
   {
     id: "5",
@@ -90,7 +90,7 @@ const mockAuditLogs = [
     module: "报表",
     ipAddress: "192.168.1.104",
     description: "导出财务报表",
-    status: "success",
+    status: "success" as const,
   },
   {
     id: "6",
@@ -100,7 +100,7 @@ const mockAuditLogs = [
     module: "系统配置",
     ipAddress: "192.168.1.100",
     description: "修改系统参数",
-    status: "success",
+    status: "success" as const,
   },
   {
     id: "7",
@@ -110,7 +110,7 @@ const mockAuditLogs = [
     module: "数据管理",
     ipAddress: "192.168.1.101",
     description: "批量导入数据",
-    status: "success",
+    status: "success" as const,
   },
 ];
 
@@ -166,7 +166,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 const ActionBadge: React.FC<{ action: string }> = ({ action }) => {
   const colorMap: Record<string, "primary" | "secondary" | "warning" | "error" | "info"> = {
     登录: "info",
-    创建: "success",
+    创建: "primary",
     编辑: "primary",
     删除: "error",
     导出: "warning",
@@ -347,12 +347,6 @@ export default function AuditLogPageRefactored() {
           subtitle="查看系统操作审计记录"
           backButton={{
             href: "/dashboard",
-            tooltip: "返回首页",
-          }}
-          searchBox={{
-            value: searchValue,
-            onChange: setSearchValue,
-            placeholder: "搜索操作人、描述、IP...",
           }}
           actions={[
             {

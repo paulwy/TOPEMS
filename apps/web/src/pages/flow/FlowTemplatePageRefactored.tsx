@@ -3,15 +3,13 @@
  *
  * 重构要点：
  * 1. 使用 PageHeader 统一页面头部
- * 2. 使用 FilterBar 定义筛选器
- * 3. 使用 ListPageTemplate 替代 Card + Table 布局
- * 4. 使用 ColumnDef 定义表格列
+ * 2. 使用 ListPageTemplate 替代 Card + Table 布局
+ * 3. 使用 ColumnDef 定义表格列
  */
 
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
@@ -19,6 +17,7 @@ import {
   DialogTitle,
   IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
@@ -27,12 +26,14 @@ import {
   Copy,
   Trash2,
   Plus,
-  FileText,
-  Loader2,
+  RefreshCw,
 } from "lucide-react";
-import { ListPageTemplate, type ColumnDef } from "../../components/templates";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from "../../components/templates";
 import { PageHeader } from "../../components/layout";
-import { FilterBar, type FilterConfig } from "../../components/mui";
 
 // ============ 类型定义 ============
 interface FlowTemplate {
@@ -141,58 +142,30 @@ const getTypeText = (type: string) => {
 const columns: ColumnDef<FlowTemplate>[] = [
   {
     id: "name",
-    header: "模板名称",
-    accessor: "name",
+    label: "模板名称",
     sortable: true,
-  },
-  {
-    id: "type",
-    header: "模板类型",
-    accessor: "type",
-    render: (value) => getTypeText(value as string),
-  },
-  {
-    id: "scope",
-    header: "适用范围",
-    accessor: "scope",
-  },
-  {
-    id: "usageCount",
-    header: "使用次数",
-    accessor: "usageCount",
-    sortable: true,
-  },
-  {
-    id: "creator",
-    header: "创建人",
-    accessor: "creator",
-  },
-  {
-    id: "createdAt",
-    header: "创建时间",
-    accessor: "createdAt",
-  },
-];
-
-// ============ 筛选配置 ============
-const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "search",
-    placeholder: "搜索模板名称...",
   },
   {
     id: "type",
     label: "模板类型",
-    type: "select",
-    options: [
-      { value: "all", label: "全部" },
-      { value: "approval", label: "审批流程" },
-      { value: "reimbursement", label: "报销流程" },
-      { value: "purchase", label: "采购流程" },
-      { value: "contract", label: "合同流程" },
-    ],
+    render: (row) => getTypeText(row.type),
+  },
+  {
+    id: "scope",
+    label: "适用范围",
+  },
+  {
+    id: "usageCount",
+    label: "使用次数",
+    sortable: true,
+  },
+  {
+    id: "creator",
+    label: "创建人",
+  },
+  {
+    id: "createdAt",
+    label: "创建时间",
   },
 ];
 
@@ -206,7 +179,7 @@ const FlowTemplatePageRefactored: React.FC = () => {
 
   // 分页状态
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
 
   // 筛选状态
   const [filtersValue, setFiltersValue] = useState<FilterValues>({
@@ -220,24 +193,42 @@ const FlowTemplatePageRefactored: React.FC = () => {
 
   // 筛选后的数据
   const filteredData = data.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(filtersValue.search.toLowerCase());
-    const matchesType = filtersValue.type === "all" || item.type === filtersValue.type;
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(filtersValue.search.toLowerCase());
+    const matchesType =
+      filtersValue.type === "all" || item.type === filtersValue.type;
     return matchesSearch && matchesType;
   });
 
   // 分页数据
-  const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedData = filteredData.slice(
+    (page - 1) * pageSize,
+    page * pageSize,
+  );
   const totalCount = filteredData.length;
 
+  // 处理搜索
+  const handleSearch = useCallback((value: string) => {
+    setFiltersValue((prev) => ({ ...prev, search: value }));
+    setPage(1);
+  }, []);
+
   // 处理筛选变化
-  const handleFilterChange = useCallback((filterId: string, value: any) => {
-    setFiltersValue((prev) => ({ ...prev, [filterId]: value }));
+  const handleFilterChange = useCallback((newFilters: Record<string, any>) => {
+    setFiltersValue((prev) => ({ ...prev, ...newFilters }));
     setPage(1);
   }, []);
 
   // 处理分页变化
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
+  }, []);
+
+  // 处理每页数量变化
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
   }, []);
 
   // 处理查看
@@ -291,33 +282,67 @@ const FlowTemplatePageRefactored: React.FC = () => {
     setTimeout(() => setLoading(false), 500);
   }, []);
 
+  // 行操作
+  const rowActions: RowAction<FlowTemplate>[] = [
+    { label: "查看", icon: <Eye size={18} />, onClick: handleView },
+    { label: "编辑", icon: <Edit size={18} />, onClick: handleEdit },
+    { label: "复制", icon: <Copy size={18} />, onClick: handleCopy },
+    {
+      label: "删除",
+      icon: <Trash2 size={18} />,
+      onClick: handleDelete,
+      color: "error",
+    },
+  ];
+
   return (
     <>
       <PageHeader
         title="流程模板"
         subtitle="管理和使用流程模板"
-        icon={<FileText size={24} />}
-        showBack
-        onBack={() => navigate(-1)}
+        backButton={{ onClick: () => navigate(-1) }}
       />
 
-      <ListPageTemplate
+      <ListPageTemplate<FlowTemplate>
+        title="流程模板列表"
         columns={columns}
         data={paginatedData}
         loading={loading}
-        filters={filters}
-        filtersValue={filtersValue}
+        searchable
+        searchPlaceholder="搜索模板名称..."
+        searchValue={filtersValue.search}
+        onSearch={handleSearch}
+        filters={[
+          {
+            id: "type",
+            label: "模板类型",
+            type: "select",
+            options: [
+              { value: "all", label: "全部" },
+              { value: "approval", label: "审批流程" },
+              { value: "reimbursement", label: "报销流程" },
+              { value: "purchase", label: "采购流程" },
+              { value: "contract", label: "合同流程" },
+            ],
+          },
+        ]}
         onFilterChange={handleFilterChange}
         pagination={{
           page,
           pageSize,
           total: totalCount,
           onPageChange: handlePageChange,
+          onPageSizeChange: handlePageSizeChange,
         }}
         onRowClick={handleView}
         emptyMessage="暂无流程模板"
-        customActions={
-          <>
+        rowActions={rowActions}
+        headerContent={
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ mb: 2, justifyContent: "flex-end" }}
+          >
             <Button
               variant="contained"
               startIcon={<Plus size={16} />}
@@ -326,32 +351,18 @@ const FlowTemplatePageRefactored: React.FC = () => {
             >
               新建模板
             </Button>
-            <IconButton onClick={handleRefresh} title="刷新">
-              <Loader2 size={20} sx={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
-            </IconButton>
-          </>
-        }
-        renderRowActions={(template) => (
-          <Stack direction="row" spacing={1}>
-            <IconButton size="small" onClick={() => handleView(template)} title="查看">
-              <Eye size={18} />
-            </IconButton>
-            <IconButton size="small" onClick={() => handleEdit(template)} title="编辑">
-              <Edit size={18} />
-            </IconButton>
-            <IconButton size="small" onClick={() => handleCopy(template)} title="复制">
-              <Copy size={18} />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleDelete(template)}
-              title="删除"
-              sx={{ color: "error.main" }}
-            >
-              <Trash2 size={18} />
-            </IconButton>
+            <Tooltip title="刷新">
+              <IconButton onClick={handleRefresh}>
+                <RefreshCw
+                  size={20}
+                  style={{
+                    animation: loading ? "spin 1s linear infinite" : "none",
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
           </Stack>
-        )}
+        }
       />
 
       {/* 删除确认对话框 */}

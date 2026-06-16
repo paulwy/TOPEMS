@@ -25,7 +25,6 @@ import {
   TextField,
 } from "@mui/material";
 import {
-  Plus,
   Eye,
   RotateCcw,
   Download,
@@ -34,9 +33,13 @@ import {
   User,
   Tag,
 } from "lucide-react";
-import { ListPageTemplate, type ColumnDef } from "../../components/templates";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type FilterConfig,
+  type RowAction,
+} from "../../components/templates";
 import { PageHeader } from "../../components/layout";
-import { FilterBar, type FilterConfig } from "../../components/mui";
 
 // ============ 类型定义 ============
 interface Release {
@@ -59,76 +62,89 @@ interface FilterValues {
 const columns: ColumnDef<Release>[] = [
   {
     id: "version",
-    header: "版本号",
-    accessor: "version",
+    label: "版本号",
     sortable: true,
-    render: (value) => (
+    render: (row) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Tag size={16} color="#3b82f6" />
-        {value}
+        {row.version}
       </Box>
     ),
   },
   {
     id: "release_time",
-    header: "发布时间",
-    accessor: "release_time",
-    render: (value) => (
+    label: "发布时间",
+    render: (row) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
         <Calendar size={14} />
-        {value}
+        {row.release_time}
       </Box>
     ),
   },
   {
     id: "release_note",
-    header: "发布说明",
-    accessor: "release_note",
-    render: (value) => (
-      <Tooltip title={value}>
-        <Box sx={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {value}
+    label: "发布说明",
+    render: (row) => (
+      <Tooltip title={row.release_note}>
+        <Box
+          sx={{
+            maxWidth: 250,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {row.release_note}
         </Box>
       </Tooltip>
     ),
   },
   {
     id: "environment",
-    header: "发布环境",
-    accessor: "environment",
-    render: (value) => {
-      const envConfig: Record<string, { label: string; color: "error" | "warning" | "success" }> = {
+    label: "发布环境",
+    render: (row) => {
+      const envConfig: Record<
+        string,
+        { label: string; color: "error" | "warning" | "success" }
+      > = {
         production: { label: "生产环境", color: "error" },
         staging: { label: "预发布环境", color: "warning" },
         development: { label: "开发环境", color: "success" },
       };
-      const config = envConfig[value] || { label: value, color: "success" as const };
+      const config = envConfig[row.environment] || {
+        label: row.environment,
+        color: "success" as const,
+      };
       return <Chip label={config.label} size="small" color={config.color} />;
     },
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
+    label: "状态",
     sortable: true,
-    render: (value) => {
-      const statusConfig: Record<string, { label: string; color: "success" | "warning" | "error" | "default" }> = {
+    render: (row) => {
+      const statusConfig: Record<
+        string,
+        { label: string; color: "success" | "warning" | "error" | "default" }
+      > = {
         released: { label: "已发布", color: "success" },
         planning: { label: "规划中", color: "warning" },
         rolled_back: { label: "已回滚", color: "error" },
       };
-      const config = statusConfig[value] || { label: value, color: "default" as const };
+      const config = statusConfig[row.status] || {
+        label: row.status,
+        color: "default" as const,
+      };
       return <Chip label={config.label} size="small" color={config.color} />;
     },
   },
   {
     id: "release_by",
-    header: "发布人",
-    accessor: "release_by",
-    render: (value) => (
+    label: "发布人",
+    render: (row) => (
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
         <User size={14} />
-        {value}
+        {row.release_by}
       </Box>
     ),
   },
@@ -160,7 +176,6 @@ const RsReleasePageRefactored: React.FC = () => {
   const [data, setData] = useState<Release[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
 
   // 筛选状态
   const [filtersValue, setFiltersValue] = useState<FilterValues>({
@@ -181,6 +196,7 @@ const RsReleasePageRefactored: React.FC = () => {
 
   // 模拟数据
   useEffect(() => {
+    setLoading(true);
     const mockReleases: Release[] = [
       {
         id: "1",
@@ -231,7 +247,6 @@ const RsReleasePageRefactored: React.FC = () => {
 
     setTimeout(() => {
       setData(mockReleases);
-      setTotal(mockReleases.length);
       setLoading(false);
     }, 500);
   }, []);
@@ -245,8 +260,8 @@ const RsReleasePageRefactored: React.FC = () => {
   }, []);
 
   // 处理筛选变化
-  const handleFilterChange = useCallback((filterId: string, value: any) => {
-    setFiltersValue((prev) => ({ ...prev, [filterId]: value }));
+  const handleFilterChange = useCallback((filters: Partial<FilterValues>) => {
+    setFiltersValue((prev) => ({ ...prev, ...filters }));
   }, []);
 
   // 处理分页变化
@@ -266,18 +281,18 @@ const RsReleasePageRefactored: React.FC = () => {
   }, []);
 
   // 处理回滚
-  const handleRollback = useCallback((releaseId: string) => {
+  const handleRollback = useCallback((release: Release) => {
     const newRollback: Release = {
       id: String(Date.now()),
       version: "上一版本",
       release_time: new Date().toLocaleString(),
       release_note: "回滚操作",
-      environment: data.find((r) => r.id === releaseId)?.environment || "staging",
+      environment: release.environment,
       status: "planning",
       release_by: "当前用户",
     };
     setData((prev) => [newRollback, ...prev]);
-  }, [data]);
+  }, []);
 
   // 处理创建发布
   const handleCreateRelease = useCallback(() => {
@@ -292,18 +307,30 @@ const RsReleasePageRefactored: React.FC = () => {
     };
     setData((prev) => [newRelease, ...prev]);
     setNewReleaseDialogOpen(false);
-    setNewReleaseForm({ version: "", environment: "staging", release_note: "" });
+    setNewReleaseForm({
+      version: "",
+      environment: "staging",
+      release_note: "",
+    });
   }, [newReleaseForm]);
 
   // 过滤数据
   const filteredData = data.filter((release) => {
     const matchesSearch =
       !filtersValue.search ||
-      release.version.toLowerCase().includes(filtersValue.search.toLowerCase()) ||
-      release.release_note.toLowerCase().includes(filtersValue.search.toLowerCase()) ||
-      release.release_by.toLowerCase().includes(filtersValue.search.toLowerCase());
-    const matchesEnv = !filtersValue.env || release.environment === filtersValue.env;
-    const matchesStatus = !filtersValue.status || release.status === filtersValue.status;
+      release.version
+        .toLowerCase()
+        .includes(filtersValue.search.toLowerCase()) ||
+      release.release_note
+        .toLowerCase()
+        .includes(filtersValue.search.toLowerCase()) ||
+      release.release_by
+        .toLowerCase()
+        .includes(filtersValue.search.toLowerCase());
+    const matchesEnv =
+      !filtersValue.env || release.environment === filtersValue.env;
+    const matchesStatus =
+      !filtersValue.status || release.status === filtersValue.status;
     return matchesSearch && matchesEnv && matchesStatus;
   });
 
@@ -313,7 +340,7 @@ const RsReleasePageRefactored: React.FC = () => {
   }, []);
 
   // 行操作
-  const rowActions = [
+  const rowActions: RowAction<Release>[] = [
     {
       label: "查看详情",
       icon: <Eye size={16} />,
@@ -350,7 +377,9 @@ const RsReleasePageRefactored: React.FC = () => {
             <IconButton onClick={fetchReleases}>
               <RefreshCw
                 size={20}
-                style={{ animation: loading ? "spin 1s linear infinite" : "none" }}
+                style={{
+                  animation: loading ? "spin 1s linear infinite" : "none",
+                }}
               />
             </IconButton>
           </Tooltip>
@@ -358,6 +387,7 @@ const RsReleasePageRefactored: React.FC = () => {
       />
 
       <ListPageTemplate
+        title="发布列表"
         columns={columns}
         data={filteredData}
         loading={loading}
@@ -388,17 +418,41 @@ const RsReleasePageRefactored: React.FC = () => {
         <DialogContent>
           {selectedRelease && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {selectedRelease.version}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
                 <Chip
-                  label={selectedRelease.environment === "production" ? "生产环境" : selectedRelease.environment === "staging" ? "预发布环境" : "开发环境"}
-                  color={selectedRelease.environment === "production" ? "error" : selectedRelease.environment === "staging" ? "warning" : "success"}
+                  label={
+                    selectedRelease.environment === "production"
+                      ? "生产环境"
+                      : selectedRelease.environment === "staging"
+                        ? "预发布环境"
+                        : "开发环境"
+                  }
+                  color={
+                    selectedRelease.environment === "production"
+                      ? "error"
+                      : selectedRelease.environment === "staging"
+                        ? "warning"
+                        : "success"
+                  }
                 />
                 <Chip
-                  label={selectedRelease.status === "released" ? "已发布" : selectedRelease.status === "planning" ? "规划中" : "已回滚"}
-                  color={selectedRelease.status === "released" ? "success" : selectedRelease.status === "planning" ? "warning" : "error"}
+                  label={
+                    selectedRelease.status === "released"
+                      ? "已发布"
+                      : selectedRelease.status === "planning"
+                        ? "规划中"
+                        : "已回滚"
+                  }
+                  color={
+                    selectedRelease.status === "released"
+                      ? "success"
+                      : selectedRelease.status === "planning"
+                        ? "warning"
+                        : "error"
+                  }
                 />
               </Stack>
               <Box sx={{ mt: 3 }}>
@@ -406,7 +460,9 @@ const RsReleasePageRefactored: React.FC = () => {
                   发布说明
                 </Typography>
                 <Box sx={{ p: 2, mt: 1, bgcolor: "#f5f5f5" }}>
-                  <Typography variant="body2">{selectedRelease.release_note}</Typography>
+                  <Typography variant="body2">
+                    {selectedRelease.release_note}
+                  </Typography>
                 </Box>
               </Box>
               <Stack direction="row" spacing={4} sx={{ mt: 3 }}>
@@ -414,7 +470,7 @@ const RsReleasePageRefactored: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     发布时间
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                     {selectedRelease.release_time}
                   </Typography>
                 </Box>
@@ -422,7 +478,7 @@ const RsReleasePageRefactored: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     发布人
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                     {selectedRelease.release_by}
                   </Typography>
                 </Box>
@@ -449,13 +505,23 @@ const RsReleasePageRefactored: React.FC = () => {
               label="版本号"
               fullWidth
               value={newReleaseForm.version}
-              onChange={(e) => setNewReleaseForm({ ...newReleaseForm, version: e.target.value })}
+              onChange={(e) =>
+                setNewReleaseForm({
+                  ...newReleaseForm,
+                  version: e.target.value,
+                })
+              }
             />
             <TextField
               label="发布环境"
               fullWidth
               value={newReleaseForm.environment}
-              onChange={(e) => setNewReleaseForm({ ...newReleaseForm, environment: e.target.value })}
+              onChange={(e) =>
+                setNewReleaseForm({
+                  ...newReleaseForm,
+                  environment: e.target.value,
+                })
+              }
             />
             <TextField
               label="发布说明"
@@ -463,13 +529,22 @@ const RsReleasePageRefactored: React.FC = () => {
               multiline
               rows={4}
               value={newReleaseForm.release_note}
-              onChange={(e) => setNewReleaseForm({ ...newReleaseForm, release_note: e.target.value })}
+              onChange={(e) =>
+                setNewReleaseForm({
+                  ...newReleaseForm,
+                  release_note: e.target.value,
+                })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewReleaseDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateRelease}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateRelease}
+          >
             创建
           </Button>
         </DialogActions>

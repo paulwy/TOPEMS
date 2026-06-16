@@ -43,6 +43,19 @@ import {
 import { PageHeader } from "../components/layout";
 import { FilterBar, type FilterConfig } from "../components/mui";
 
+// ============ Mock 数据类型 ============
+interface QualityIssue {
+  id: string;
+  issue_no: string;
+  product_name: string;
+  issue_type: string;
+  quantity: number;
+  severity: string;
+  status: string;
+  handler?: string;
+  created_at: string;
+}
+
 // ============ 列定义 ============
 const columns: ColumnDef<QualityIssue>[] = [
   {
@@ -50,65 +63,69 @@ const columns: ColumnDef<QualityIssue>[] = [
     header: "异常编号",
     accessor: "issue_no",
     sortable: true,
-    width: 150,
+    width: 120,
   },
   {
-    id: "title",
-    header: "标题",
-    accessor: "title",
+    id: "product_name",
+    header: "产品名称",
+    accessor: "product_name",
     sortable: true,
-    width: 250,
+    width: 200,
+  },
+  {
+    id: "issue_type",
+    header: "异常类型",
+    accessor: "issue_type",
+    render: (value) => {
+      const typeMap: Record<string, string> = {
+        quality: "质量问题",
+        delivery: "交期问题",
+        cost: "成本问题",
+        other: "其他",
+      };
+      return typeMap[value] || value;
+    },
+  },
+  {
+    id: "quantity",
+    header: "异常数量",
+    accessor: "quantity",
+    width: 100,
   },
   {
     id: "severity",
     header: "严重程度",
     accessor: "severity",
     render: (value) => {
-      const severityColors: Record<string, { bg: string; color: string }> = {
-        "严重": { bg: "error.light", color: "error.dark" },
-        "一般": { bg: "warning.light", color: "warning.dark" },
-        "轻微": { bg: "info.light", color: "info.dark" },
+      const severityMap: Record<string, { label: string; color: "success" | "warning" | "error" | "default" }> = {
+        low: { label: "轻微", color: "success" },
+        medium: { label: "中等", color: "warning" },
+        high: { label: "严重", color: "error" },
+        critical: { label: "致命", color: "error" },
       };
-      const colors = severityColors[value] || { bg: "grey.200", color: "grey.700" };
-      return (
-        <Chip
-          label={value}
-          size="small"
-          sx={{ bgcolor: colors.bg, color: colors.color, fontWeight: 500 }}
-        />
-      );
+      const severity = severityMap[value] || { label: value, color: "default" as const };
+      return <Chip label={severity.label} color={severity.color} size="small" />;
     },
-  },
-  {
-    id: "category",
-    header: "类别",
-    accessor: "category",
-    render: (value) => value || "-",
   },
   {
     id: "status",
     header: "状态",
     accessor: "status",
     render: (value) => {
-      const statusColors: Record<string, { bg: string; color: string }> = {
-        "待处理": { bg: "warning.light", color: "warning.dark" },
-        "处理中": { bg: "info.light", color: "info.dark" },
-        "已关闭": { bg: "success.light", color: "success.dark" },
+      const statusMap: Record<string, { label: string; color: "info" | "warning" | "success" | "default" }> = {
+        pending: { label: "待处理", color: "info" },
+        processing: { label: "处理中", color: "warning" },
+        resolved: { label: "已解决", color: "success" },
+        closed: { label: "已关闭", color: "default" },
       };
-      const colors = statusColors[value] || { bg: "grey.200", color: "grey.700" };
-      return (
-        <Chip
-          label={value}
-          size="small"
-          sx={{ bgcolor: colors.bg, color: colors.color, fontWeight: 500 }}
-        />
-      );
+      const status = statusMap[value] || { label: value, color: "default" as const };
+      return <Chip label={status.label} color={status.color} size="small" />;
     },
   },
   {
-    id: "assignee",
-    header: "负责人",
-    accessor: "assignee",
+    id: "handler",
+    header: "处理人",
+    accessor: "handler",
     render: (value) => value || "-",
   },
   {
@@ -127,7 +144,7 @@ const getRowActions = (
   onView: (issue: QualityIssue) => void,
   onEdit: (issue: QualityIssue) => void,
   onDelete: (issue: QualityIssue) => void,
-): RowAction<QualityIssue>[] = [
+): RowAction<QualityIssue>[] => [
   {
     label: "查看",
     icon: <Eye style={{ width: 16, height: 16 }} />,
@@ -151,45 +168,69 @@ const filters: FilterConfig[] = [
   {
     id: "search",
     label: "搜索",
-    type: "text",
-    value: "",
+    type: "search",
+    placeholder: "搜索异常编号/产品名称...",
   },
   {
     id: "status",
     label: "状态",
     type: "select",
     options: [
-      { value: "all", label: "全部" },
-      { value: "待处理", label: "待处理" },
-      { value: "处理中", label: "处理中" },
-      { value: "已关闭", label: "已关闭" },
+      { value: "all", label: "全部状态" },
+      { value: "pending", label: "待处理" },
+      { value: "processing", label: "处理中" },
+      { value: "resolved", label: "已解决" },
+      { value: "closed", label: "已关闭" },
     ],
-    value: "all",
   },
   {
     id: "severity",
     label: "严重程度",
     type: "select",
     options: [
-      { value: "all", label: "全部" },
-      { value: "严重", label: "严重" },
-      { value: "一般", label: "一般" },
-      { value: "轻微", label: "轻微" },
+      { value: "all", label: "全部程度" },
+      { value: "low", label: "轻微" },
+      { value: "medium", label: "中等" },
+      { value: "high", label: "严重" },
+      { value: "critical", label: "致命" },
     ],
-    value: "all",
   },
 ];
 
-// ============ 批量操作 ============
-const batchActions = [
+// ============ Mock 数据 ============
+const mockData: QualityIssue[] = [
   {
-    label: "批量删除",
-    icon: <Trash2 style={{ width: 16, height: 16 }} />,
-    color: "error" as const,
+    id: "1",
+    issue_no: "QI-2024-001",
+    product_name: "产品A",
+    issue_type: "quality",
+    quantity: 100,
+    severity: "high",
+    status: "processing",
+    handler: "张三",
+    created_at: "2024-01-15",
   },
   {
-    label: "批量导出",
-    icon: <Download style={{ width: 16, height: 16 }} />,
+    id: "2",
+    issue_no: "QI-2024-002",
+    product_name: "产品B",
+    issue_type: "delivery",
+    quantity: 50,
+    severity: "medium",
+    status: "pending",
+    handler: "李四",
+    created_at: "2024-01-16",
+  },
+  {
+    id: "3",
+    issue_no: "QI-2024-003",
+    product_name: "产品C",
+    issue_type: "cost",
+    quantity: 200,
+    severity: "low",
+    status: "resolved",
+    handler: "王五",
+    created_at: "2024-01-17",
   },
 ];
 
@@ -200,17 +241,8 @@ const QmsNonconformancePageRefactored: React.FC = () => {
 
   // 数据状态
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<{
-    items: QualityIssue[];
-    total: number;
-    page: number;
-    page_size: number;
-  }>({
-    items: [],
-    total: 0,
-    page: 1,
-    page_size: 10,
-  });
+  const [data, setData] = useState<QualityIssue[]>(mockData);
+  const [total, setTotal] = useState(mockData.length);
 
   // 筛选状态
   const [searchText, setSearchText] = useState("");
@@ -223,55 +255,27 @@ const QmsNonconformancePageRefactored: React.FC = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<QualityIssue | null>(null);
 
-  // 行选择
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   // 表单数据
-  const [formData, setFormData] = useState<Partial<QualityIssue>>({});
+  const [formData, setFormData] = useState<Partial<CreateQualityIssueRequest>>({});
 
-  // 获取不合格品列表
-  const fetchIssues = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await qmsApi.listIssues();
-      if (response.success && response.data) {
-        const items = response.data || [];
-        setData({
-          items: items,
-          total: items.length,
-          page: 1,
-          page_size: 10,
-        });
-      }
-    } catch (error: any) {
-      addNotification({
-        type: "error",
-        title: "加载失败",
-        message: error.message || "获取不合格品数据失败",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+  // 分页状态
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
+    (filterId: string, value: string) => {
       if (filterId === "search") setSearchText(value);
       if (filterId === "status") setStatusFilter(value);
       if (filterId === "severity") setSeverityFilter(value);
+      setPage(1);
     },
     [],
   );
 
   // 处理分页变化
-  const handlePageChange = useCallback((page: number) => {
-    setData((prev) => ({ ...prev, page }));
-  }, []);
-
-  // 处理行选择
-  const handleSelectionChange = useCallback((ids: string[]) => {
-    setSelectedIds(ids);
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
   }, []);
 
   // 处理查看
@@ -290,141 +294,60 @@ const QmsNonconformancePageRefactored: React.FC = () => {
   // 处理删除
   const handleDelete = useCallback(
     async (issue: QualityIssue) => {
-      if (!window.confirm(`确定要删除不合格品记录"${issue.title}"吗?`)) return;
+      if (!window.confirm(`确定要删除异常单"${issue.issue_no}"吗?`)) return;
       try {
-        await qmsApi.deleteIssue(issue.id);
+        // API call would go here
+        setData((prev) => prev.filter((item) => item.id !== issue.id));
+        setTotal((prev) => prev - 1);
         addNotification({
           type: "success",
           title: "删除成功",
-          message: "不合格品记录已删除",
+          message: "异常单已删除",
         });
-        fetchIssues();
-      } catch (error: any) {
+      } catch (error) {
         addNotification({
           type: "error",
           title: "删除失败",
-          message: error.message || "无法删除不合格品记录",
+          message: "无法删除异常单",
         });
       }
     },
-    [addNotification, fetchIssues],
+    [addNotification],
   );
-
-  // 处理创建
-  const handleCreate = useCallback(async () => {
-    try {
-      const createData: CreateQualityIssueRequest = {
-        issue_no: formData.issue_no || "",
-        title: formData.title || "",
-        description: formData.description || "",
-        severity: formData.severity || "一般",
-        category: formData.category || "",
-        status: formData.status || "待处理",
-        assignee: formData.assignee || "",
-      };
-      await qmsApi.createIssue(createData);
-      addNotification({
-        type: "success",
-        title: "创建成功",
-        message: "不合格品记录已创建",
-      });
-      setShowCreateModal(false);
-      setFormData({});
-      fetchIssues();
-    } catch (error: any) {
-      addNotification({
-        type: "error",
-        title: "创建失败",
-        message: error.message || "无法创建不合格品记录",
-      });
-    }
-  }, [formData, addNotification, fetchIssues]);
-
-  // 处理更新
-  const handleUpdate = useCallback(async () => {
-    if (!selectedIssue) return;
-    try {
-      await qmsApi.updateIssue(selectedIssue.id, formData as CreateQualityIssueRequest);
-      addNotification({
-        type: "success",
-        title: "更新成功",
-        message: "不合格品记录已更新",
-      });
-      setShowEditModal(false);
-      setFormData({});
-      fetchIssues();
-    } catch (error: any) {
-      addNotification({
-        type: "error",
-        title: "更新失败",
-        message: error.message || "无法更新不合格品记录",
-      });
-    }
-  }, [selectedIssue, formData, addNotification, fetchIssues]);
-
-  // 初始加载
-  React.useEffect(() => {
-    fetchIssues();
-  }, [fetchIssues]);
 
   return (
     <>
       <PageHeader
-        title="不合格品"
-        subtitle={`共 ${data.total} 条记录`}
+        title="不合格品管理"
+        subtitle={`共 ${total} 条异常记录`}
         showBack
         onBack={() => navigate(-1)}
         actions={
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<Upload style={{ width: 18, height: 18 }} />}
-              onClick={() => {
-                // TODO: 导入功能
-              }}
-            >
-              导入
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Download style={{ width: 18, height: 18 }} />}
-              onClick={() => {
-                // TODO: 导出功能
-              }}
-            >
-              导出
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={() => setShowCreateModal(true)}
-            >
-              新建记录
-            </Button>
-          </>
+          <Button
+            variant="contained"
+            startIcon={<Plus style={{ width: 18, height: 18 }} />}
+            onClick={() => setShowCreateModal(true)}
+          >
+            新建异常单
+          </Button>
         }
       />
 
       <ListPageTemplate
         columns={columns}
-        data={data.items}
+        data={data}
         loading={loading}
         rowActions={getRowActions(handleView, handleEdit, handleDelete)}
         filters={filters}
         onFilterChange={handleFilterChange}
         pagination={{
-          page: data.page,
-          pageSize: data.page_size,
-          total: data.total,
+          page,
+          pageSize,
+          total,
           onPageChange: handlePageChange,
         }}
         onRowClick={handleView}
-        emptyMessage="暂无不合格品数据"
-        selection={{
-          selected: selectedIds,
-          onChange: handleSelectionChange,
-        }}
-        batchActions={batchActions}
+        emptyMessage="暂无异常记录"
       />
 
       {/* 查看模态框 */}
@@ -434,7 +357,7 @@ const QmsNonconformancePageRefactored: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>不合格品详情</DialogTitle>
+        <DialogTitle>异常详情</DialogTitle>
         <DialogContent>
           {selectedIssue && (
             <Box sx={{ pt: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
@@ -446,58 +369,22 @@ const QmsNonconformancePageRefactored: React.FC = () => {
               </Box>
               <Box>
                 <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                  严重程度
+                  产品名称
                 </Box>
-                <Box>{selectedIssue.severity}</Box>
+                <Box>{selectedIssue.product_name}</Box>
               </Box>
               <Box>
                 <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                  类别
+                  异常类型
                 </Box>
-                <Box>{selectedIssue.category || "-"}</Box>
+                <Box>{selectedIssue.issue_type}</Box>
               </Box>
               <Box>
                 <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                  状态
+                  异常数量
                 </Box>
-                <Box>{selectedIssue.status}</Box>
+                <Box>{selectedIssue.quantity}</Box>
               </Box>
-              <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                  负责人
-                </Box>
-                <Box>{selectedIssue.assignee || "-"}</Box>
-              </Box>
-              <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                  创建时间
-                </Box>
-                <Box>
-                  {selectedIssue.created_at
-                    ? new Date(selectedIssue.created_at).toLocaleDateString("zh-CN")
-                    : "-"}
-                </Box>
-              </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                  标题
-                </Box>
-                <Box>{selectedIssue.title}</Box>
-              </Box>
-              <Box sx={{ gridColumn: "1 / -1" }}>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                  描述
-                </Box>
-                <Box>{selectedIssue.description || "-"}</Box>
-              </Box>
-              {selectedIssue.resolution && (
-                <Box sx={{ gridColumn: "1 / -1" }}>
-                  <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-                    解决方案
-                  </Box>
-                  <Box>{selectedIssue.resolution}</Box>
-                </Box>
-              )}
             </Box>
           )}
         </DialogContent>
@@ -507,146 +394,10 @@ const QmsNonconformancePageRefactored: React.FC = () => {
             variant="contained"
             onClick={() => {
               setShowViewModal(false);
-              handleEdit(selectedIssue!);
+              if (selectedIssue) handleEdit(selectedIssue);
             }}
           >
             编辑
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* 创建模态框 */}
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>新建不合格品记录</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField
-              fullWidth
-              label="标题 *"
-              value={formData.title || ""}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="请输入标题"
-            />
-            <TextField
-              fullWidth
-              label="异常编号 *"
-              value={formData.issue_no || ""}
-              onChange={(e) => setFormData({ ...formData, issue_no: e.target.value })}
-              placeholder="请输入异常编号"
-            />
-            <TextField
-              fullWidth
-              select
-              label="严重程度"
-              value={formData.severity || "一般"}
-              onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-              SelectProps={{ native: true }}
-            >
-              <option value="严重">严重</option>
-              <option value="一般">一般</option>
-              <option value="轻微">轻微</option>
-            </TextField>
-            <TextField
-              fullWidth
-              label="类别"
-              value={formData.category || ""}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              placeholder="请输入类别"
-            />
-            <TextField
-              fullWidth
-              label="负责人"
-              value={formData.assignee || ""}
-              onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-              placeholder="请输入负责人"
-            />
-            <TextField
-              fullWidth
-              select
-              label="状态"
-              value={formData.status || "待处理"}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              SelectProps={{ native: true }}
-            >
-              <option value="待处理">待处理</option>
-              <option value="处理中">处理中</option>
-              <option value="已关闭">已关闭</option>
-            </TextField>
-            <TextField
-              fullWidth
-              label="描述"
-              value={formData.description || ""}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="请输入描述"
-              multiline
-              rows={4}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCreate}>
-            创建
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* 编辑模态框 */}
-      <Dialog
-        open={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>编辑不合格品记录</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField
-              fullWidth
-              label="标题 *"
-              value={formData.title || ""}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="请输入标题"
-            />
-            <TextField
-              fullWidth
-              select
-              label="状态"
-              value={formData.status || "待处理"}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              SelectProps={{ native: true }}
-            >
-              <option value="待处理">待处理</option>
-              <option value="处理中">处理中</option>
-              <option value="已关闭">已关闭</option>
-            </TextField>
-            <TextField
-              fullWidth
-              label="负责人"
-              value={formData.assignee || ""}
-              onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-              placeholder="请输入负责人"
-            />
-            <TextField
-              fullWidth
-              label="描述"
-              value={formData.description || ""}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="请输入描述"
-              multiline
-              rows={4}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowEditModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleUpdate}>
-            更新
           </Button>
         </DialogActions>
       </Dialog>

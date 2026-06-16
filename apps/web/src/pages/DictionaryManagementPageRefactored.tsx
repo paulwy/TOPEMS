@@ -52,7 +52,7 @@ const mockDictionaries = [
     name: "系统状态",
     type: "system",
     itemCount: 5,
-    status: "active",
+    status: "active" as const,
   },
   {
     id: "2",
@@ -60,7 +60,7 @@ const mockDictionaries = [
     name: "性别",
     type: "business",
     itemCount: 3,
-    status: "active",
+    status: "active" as const,
   },
   {
     id: "3",
@@ -68,7 +68,7 @@ const mockDictionaries = [
     name: "订单状态",
     type: "business",
     itemCount: 8,
-    status: "active",
+    status: "active" as const,
   },
   {
     id: "4",
@@ -76,7 +76,7 @@ const mockDictionaries = [
     name: "优先级",
     type: "basic",
     itemCount: 4,
-    status: "active",
+    status: "active" as const,
   },
   {
     id: "5",
@@ -84,7 +84,7 @@ const mockDictionaries = [
     name: "请假类型",
     type: "business",
     itemCount: 6,
-    status: "inactive",
+    status: "inactive" as const,
   },
   {
     id: "6",
@@ -92,7 +92,7 @@ const mockDictionaries = [
     name: "支付方式",
     type: "business",
     itemCount: 5,
-    status: "active",
+    status: "active" as const,
   },
 ];
 

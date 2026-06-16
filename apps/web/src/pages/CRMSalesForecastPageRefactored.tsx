@@ -42,9 +42,8 @@ import {
 import dayjs from "dayjs";
 import { PageHeader } from "@/components/layout";
 
-const RefreshIcon = ({ sx }: { sx?: object }) => (
+const RefreshIcon = ({ style }: { style?: React.CSSProperties }) => (
   <svg
-    sx={sx}
     xmlns="http://www.w3.org/2000/svg"
     width="24"
     height="24"
@@ -54,6 +53,7 @@ const RefreshIcon = ({ sx }: { sx?: object }) => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    style={style}
   >
     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
     <path d="M21 3v5h-5" />
@@ -278,7 +278,7 @@ const CRMSalesForecastPage: React.FC = () => {
                   </Select>
                 </FormControl>
                 <Button onClick={loadForecastData}>
-                  <RefreshIcon sx={{ width: 16, height: 16, mr: 1 }} />
+                  <RefreshIcon style={{ width: 16, height: 16, marginRight: 8 }} />
                   刷新预测
                 </Button>
               </Box>

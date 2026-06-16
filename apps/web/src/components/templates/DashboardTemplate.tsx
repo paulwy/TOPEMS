@@ -246,7 +246,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((stat) => (
-          <Grid key={stat.id} xs={12} sm={6} md={3}>
+          <Grid key={stat.id} size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCardComponent {...stat} loading={loading} />
           </Grid>
         ))}
@@ -261,7 +261,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {charts.map((chart) => (
-          <Grid key={chart.id} xs={12} md={charts.length === 1 ? 12 : 6}>
+          <Grid key={chart.id} size={{ xs: 12, md: charts.length === 1 ? 12 : 6 }}>
             <Paper sx={{ borderRadius: 2, height: chart.height || 400 }}>
               <Box
                 sx={{
@@ -496,12 +496,12 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       {(recentItems || quickActions) && (
         <Grid container spacing={2}>
           {recentItems && (
-            <Grid xs={12} md={quickActions ? 8 : 12}>
+            <Grid size={{ xs: 12, md: quickActions ? 8 : 12 }}>
               {renderRecentItems()}
             </Grid>
           )}
           {quickActions && (
-            <Grid xs={12} md={recentItems ? 4 : 12}>
+            <Grid size={{ xs: 12, md: recentItems ? 4 : 12 }}>
               {renderQuickActions()}
             </Grid>
           )}

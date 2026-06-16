@@ -144,7 +144,8 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
   // 表单初始化
   const methods = useForm({
-    resolver: schema ? (zodResolver(schema as z.ZodType) as any) : undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: schema ? (zodResolver(schema as any) as any) : undefined,
     defaultValues: defaultValues || {},
     mode: "onBlur",
   });
@@ -250,7 +251,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   {...commonProps}
                   {...controllerField}
                   type="date"
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                  }}
                 />
               );
 
@@ -333,9 +336,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
-                    xs={12}
-                    sm={6}
-                    md={Math.floor(12 / columns) * (field.span || 1)}
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                      md: Math.floor(12 / columns) * (field.span || 1),
+                    }}
                   >
                     <Skeleton
                       variant="rectangular"
@@ -350,9 +355,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
-                    xs={12}
-                    sm={6}
-                    md={Math.floor(12 / columns) * (field.span || 1)}
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                      md: Math.floor(12 / columns) * (field.span || 1),
+                    }}
                   >
                     {renderField(field)}
                   </Grid>

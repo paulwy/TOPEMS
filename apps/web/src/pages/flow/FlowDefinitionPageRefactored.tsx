@@ -12,12 +12,10 @@ import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Button,
   Chip,
   Dialog,
   DialogContent,
   DialogTitle,
-  IconButton,
   Stack,
   Typography,
 } from "@mui/material";
@@ -27,12 +25,10 @@ import {
   Edit,
   Send,
   Ban,
-  GitBranch,
   Loader2,
 } from "lucide-react";
 import { ListPageTemplate, type ColumnDef } from "../../components/templates";
 import { PageHeader } from "../../components/layout";
-import { FilterBar, type FilterConfig } from "../../components/mui";
 
 // ============ 类型定义 ============
 interface FlowDefinition {
@@ -152,73 +148,37 @@ const getTypeText = (type: string) => {
 const columns: ColumnDef<FlowDefinition>[] = [
   {
     id: "name",
-    header: "流程名称",
-    accessor: "name",
+    label: "流程名称",
     sortable: true,
+    render: (row) => row.name,
   },
   {
     id: "type",
-    header: "流程类型",
-    accessor: "type",
-    render: (value) => getTypeText(value as string),
+    label: "流程类型",
+    render: (row) => getTypeText(row.type),
   },
   {
     id: "version",
-    header: "版本",
-    accessor: "version",
+    label: "版本",
+    render: (row) => row.version,
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
-    render: (value) => {
-      const config = getStatusConfig(value as FlowDefinition["status"]);
+    label: "状态",
+    render: (row) => {
+      const config = getStatusConfig(row.status);
       return <Chip size="small" label={config.label} color={config.color} />;
     },
   },
   {
     id: "creator",
-    header: "创建人",
-    accessor: "creator",
+    label: "创建人",
+    render: (row) => row.creator,
   },
   {
     id: "createdAt",
-    header: "创建时间",
-    accessor: "createdAt",
-  },
-];
-
-// ============ 筛选配置 ============
-const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "search",
-    placeholder: "搜索流程名称...",
-  },
-  {
-    id: "type",
-    label: "流程类型",
-    type: "select",
-    options: [
-      { value: "all", label: "全部" },
-      { value: "approval", label: "审批流程" },
-      { value: "reimbursement", label: "报销流程" },
-      { value: "contract", label: "合同流程" },
-      { value: "purchase", label: "采购流程" },
-      { value: "travel", label: "差旅流程" },
-    ],
-  },
-  {
-    id: "status",
-    label: "状态",
-    type: "select",
-    options: [
-      { value: "all", label: "全部" },
-      { value: "active", label: "已发布" },
-      { value: "draft", label: "草稿" },
-      { value: "inactive", label: "已禁用" },
-    ],
+    label: "创建时间",
+    render: (row) => row.createdAt,
   },
 ];
 
@@ -307,60 +267,63 @@ const FlowDefinitionPageRefactored: React.FC = () => {
       <PageHeader
         title="流程定义"
         subtitle="管理所有流程的定义和配置"
-        icon={<GitBranch size={24} />}
-        showBack
-        onBack={() => navigate(-1)}
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[
+          {
+            label: "新建流程",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: () => {},
+            variant: "contained",
+            color: "primary",
+          },
+          {
+            label: "刷新",
+            icon: <Loader2 style={{ width: 18, height: 18 }} />,
+            onClick: handleRefresh,
+            variant: "outlined",
+          },
+        ]}
       />
 
       <ListPageTemplate
-        columns={columns}
+        title="流程列表"
+        columns={columns as any}
         data={paginatedData}
         loading={loading}
-        filters={filters}
-        filtersValue={filtersValue}
-        onFilterChange={handleFilterChange}
         pagination={{
           page,
           pageSize,
           total: totalCount,
           onPageChange: handlePageChange,
+          onPageSizeChange: () => {},
         }}
-        onRowClick={handleView}
+        onRowClick={handleView as any}
         emptyMessage="暂无流程定义"
-        customActions={
-          <>
-            <Button
-              variant="contained"
-              startIcon={<Plus size={16} />}
-              sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" } }}
-            >
-              新建流程
-            </Button>
-            <IconButton onClick={handleRefresh} title="刷新">
-              <Loader2 size={20} sx={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
-            </IconButton>
-          </>
-        }
-        renderRowActions={(flow) => (
-          <Stack direction="row" spacing={1}>
-            <IconButton size="small" onClick={() => handleView(flow)} title="查看">
-              <Eye size={18} />
-            </IconButton>
-            <IconButton size="small" onClick={() => handleEdit(flow)} title="编辑">
-              <Edit size={18} />
-            </IconButton>
-            {flow.status !== "active" && (
-              <IconButton size="small" onClick={() => handlePublish(flow)} title="发布">
-                <Send size={18} />
-              </IconButton>
-            )}
-            {flow.status === "active" && (
-              <IconButton size="small" onClick={() => handleDisable(flow)} title="禁用">
-                <Ban size={18} />
-              </IconButton>
-            )}
-          </Stack>
-        )}
+        rowActions={[
+          {
+            label: "查看",
+            icon: <Eye style={{ width: 16, height: 16 }} />,
+            onClick: (flow) => handleView(flow as unknown as FlowDefinition),
+          },
+          {
+            label: "编辑",
+            icon: <Edit style={{ width: 16, height: 16 }} />,
+            onClick: (flow) => handleEdit(flow as unknown as FlowDefinition),
+            color: "primary",
+          },
+          {
+            label: "发布",
+            icon: <Send style={{ width: 16, height: 16 }} />,
+            onClick: (flow) => handlePublish(flow as unknown as FlowDefinition),
+            show: (row) => (row as unknown as FlowDefinition).status !== "active",
+          },
+          {
+            label: "禁用",
+            icon: <Ban style={{ width: 16, height: 16 }} />,
+            onClick: (flow) => handleDisable(flow as unknown as FlowDefinition),
+            show: (row) => (row as unknown as FlowDefinition).status === "active",
+          },
+        ]}
       />
 
       {/* 详情对话框 */}

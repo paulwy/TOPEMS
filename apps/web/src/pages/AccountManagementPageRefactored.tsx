@@ -164,9 +164,9 @@ const TypeBadge: React.FC<{ type: string }> = ({ type }) => {
     equity: { color: "success", label: "权益" },
     revenue: { color: "info", label: "收入" },
     expense: { color: "warning", label: "费用" },
-    cost: { color: "default", label: "成本" },
+    cost: { color: "primary", label: "成本" },
   };
-  const { color, label } = config[type] || { color: "default", label: type };
+  const { color, label } = config[type] || { color: "primary", label: type };
   return <Chip size="small" label={label} color={color} variant="outlined" />;
 };
 
@@ -187,7 +187,7 @@ export default function AccountManagementPageRefactored() {
   const navigate = useNavigate();
 
   // 状态
-  const [accounts] = useState<Account[]>(mockAccounts);
+  const [accounts] = useState<Account[]>(mockAccounts as Account[]);
   const [loading, setLoading] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [filterType, setFilterType] = useState("all");
