@@ -124,7 +124,7 @@ const CreateFolderModal: React.FC<{
       <DialogContent>
         <DialogTitle>创建文件夹</DialogTitle>
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
+          <Box sx={{ mb: 4 }}>
             <Typography variant="body2" sx={{ mb: 1 }}>
               文件夹名称
             </Typography>
@@ -139,8 +139,15 @@ const CreateFolderModal: React.FC<{
               fullWidth
               size="small"
             />
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-          </div>
+            {error && (
+              <Typography
+                variant="body2"
+                sx={{ color: "error.main", fontSize: "0.875rem", mt: 2 }}
+              >
+                {error}
+              </Typography>
+            )}
+          </Box>
           <DialogActions>
             <Button
               type="button"
@@ -715,7 +722,7 @@ const DocumentsPage: React.FC = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                className="hidden"
+                style={{ display: "none" }}
                 onChange={handleFileUpload}
                 accept="*/*"
               />
@@ -1256,8 +1263,7 @@ const DocumentsPage: React.FC = () => {
                             <tr
                               key={item.id}
                               onClick={() => handleFolderSelect(item.id)}
-                              sx={{
-                                "&:hover": { bgcolor: "grey.50" },
+                              style={{
                                 cursor: "pointer",
                               }}
                             >
@@ -1342,7 +1348,6 @@ const DocumentsPage: React.FC = () => {
                           ) : (
                             <tr
                               key={item.id}
-                              sx={{ "&:hover": { bgcolor: "grey.50" } }}
                             >
                               <td
                                 style={{

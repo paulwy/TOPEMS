@@ -22,7 +22,15 @@ export interface AmountDisplayProps {
   /** 小数位数，默认 2 */
   decimalPlaces?: number;
   /** 金额颜色 */
-  color?: "inherit" | "primary" | "secondary" | "success" | "warning" | "error" | "textPrimary" | "textSecondary";
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning"
+    | "error"
+    | "textPrimary"
+    | "textSecondary";
   /** 字体大小 */
   fontSize?: "small" | "medium" | "large" | number;
   /** 是否加粗 */
@@ -144,7 +152,8 @@ export const AmountDisplay: React.FC<AmountDisplayProps> = ({
           fontWeight: bold ? 600 : 400,
           color,
           fontFamily:
-            fontSize === "large" || (typeof fontSize === "number" && fontSize >= 20)
+            fontSize === "large" ||
+            (typeof fontSize === "number" && fontSize >= 20)
               ? "'Roboto Mono', monospace"
               : "inherit",
         }}

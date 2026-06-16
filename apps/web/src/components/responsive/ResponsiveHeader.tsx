@@ -419,7 +419,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({
               display: "flex",
               alignItems: "center",
               gap: 1.5,
-              mr: { xs: 1, sm: 3 },
+              marginRight: { xs: 1, sm: 3 },
               cursor: "pointer",
             }}
             onClick={() => navigate("/dashboard")}

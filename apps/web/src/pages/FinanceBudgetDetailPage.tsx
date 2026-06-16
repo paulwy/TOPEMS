@@ -205,7 +205,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         <CardHeader title="预算基本信息" />
         <CardContent>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <DollarSign sx={{ width: 32, height: 32, color: "primary.main", mb: 1 }} />
                 <Typography variant="h4" sx={{ fontWeight: "bold", color: "primary.main" }}>
@@ -214,7 +214,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">总预算</Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <TrendingUp sx={{ width: 32, height: 32, color: "warning.main", mb: 1 }} />
                 <Typography variant="h4" sx={{ fontWeight: "bold", color: "warning.main" }}>
@@ -223,7 +223,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">已使用</Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <CheckCircle2 sx={{ width: 32, height: 32, color: "success.main", mb: 1 }} />
                 <Typography variant="h4" sx={{ fontWeight: "bold", color: "success.main" }}>
@@ -232,7 +232,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">剩余预算</Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} md={3}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <Chip
                   label={getStatusConfig(budget.status).label}
@@ -342,7 +342,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         <CardHeader title="执行进度分析" />
         <CardContent>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
                   <Typography variant="body2" color="text.secondary">时间进度</Typography>
@@ -354,7 +354,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
                   <Typography variant="body2" color="text.secondary">预算执行</Typography>
@@ -371,7 +371,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid item xs={12} md={4}>
               <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
                   <Typography variant="body2" color="text.secondary">预测年底剩余</Typography>
@@ -397,7 +397,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Box sx={{ p: 2, bgcolor: "blue.50", borderRadius: 1 }}>
                 <AlertCircle sx={{ width: 24, height: 24, color: "blue.600", mb: 1 }} />
                 <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>执行提醒</Typography>
@@ -406,7 +406,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid item xs={12} md={6}>
               <Box sx={{ p: 2, bgcolor: "green.50", borderRadius: 1 }}>
                 <CheckCircle2 sx={{ width: 24, height: 24, color: "green.600", mb: 1 }} />
                 <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>正向指标</Typography>

@@ -212,7 +212,7 @@ export default function OpeningBalancePage() {
               gap: 1,
             }}
           >
-            <Calculator className="w-6 h-6 text-blue-600" />
+            <Calculator sx={{ width: 24, height: 24, color: "#2563eb" }} />
             期初余额管理
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -224,15 +224,15 @@ export default function OpeningBalancePage() {
             variant="outlined"
             onClick={() => setShowCarryForwardModal(true)}
           >
-            <Calendar className="w-4 h-4 mr-2" />
+            <Calendar sx={{ width: 16, height: 16, marginRight: 8 }} />
             结转余额
           </Button>
           <Button variant="outlined">
-            <Upload className="w-4 h-4 mr-2" />
+            <Upload sx={{ width: 16, height: 16, marginRight: 8 }} />
             导入
           </Button>
           <Button variant="outlined">
-            <Download className="w-4 h-4 mr-2" />
+            <Download sx={{ width: 16, height: 16, mr: 1 }} />
             导出
           </Button>
         </Box>
@@ -254,7 +254,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              LabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
             />
             <FormControl size="small" fullWidth>
               <InputLabel>科目类别</InputLabel>
@@ -283,14 +283,14 @@ export default function OpeningBalancePage() {
                 input: {
                   startAdornment: (
                     <Box sx={{ mr: 1, display: "flex" }}>
-                      <Search className="w-4 h-4 text-gray-400" />
+                      <Search sx={{ width: 16, height: 16, color: "#9ca3af" }} />
                     </Box>
                   ),
                 },
               }}
             />
             <Button variant="outlined" onClick={() => refetch()}>
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw sx={{ width: 16, height: 16, marginRight: 8 }} />
               刷新
             </Button>
           </Box>
@@ -336,7 +336,7 @@ export default function OpeningBalancePage() {
                   bgcolor: "rgba(255,255,255,0.2)",
                 }}
               >
-                <DollarSign className="w-6 h-6" />
+                <DollarSign sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
@@ -371,7 +371,7 @@ export default function OpeningBalancePage() {
                   bgcolor: "rgba(255,255,255,0.2)",
                 }}
               >
-                <DollarSign className="w-6 h-6" />
+                <DollarSign sx={{ width: 24, height: 24 }} />
               </Box>
             </Box>
           </CardContent>
@@ -415,9 +415,9 @@ export default function OpeningBalancePage() {
                 }}
               >
                 {totals.totalDebit - totals.totalCredit === 0 ? (
-                  <CheckCircle className="w-6 h-6" />
+                  <CheckCircle sx={{ width: 24, height: 24 }} />
                 ) : (
-                  <AlertCircle className="w-6 h-6" />
+                  <AlertCircle sx={{ width: 24, height: 24 }} />
                 )}
               </Box>
             </Box>
@@ -429,7 +429,7 @@ export default function OpeningBalancePage() {
       <Card>
         <CardHeader>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText sx={{ width: 20, height: 20, color: "#2563eb" }} />
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               科目期初余额
             </Typography>
@@ -454,7 +454,7 @@ export default function OpeningBalancePage() {
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
-                        <BookOpen className="w-4 h-4 text-gray-400" />
+                        <BookOpen sx={{ width: 16, height: 16, color: "#9ca3af" }} />
                         <Typography
                           sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
                         >
@@ -546,7 +546,7 @@ export default function OpeningBalancePage() {
                             placeholder="贷方"
                           />
                           <Button size="small" onClick={handleSaveBalance}>
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle sx={{ width: 16, height: 16 }} />
                           </Button>
                           <Button
                             size="small"
@@ -584,7 +584,7 @@ export default function OpeningBalancePage() {
                             variant="text"
                             onClick={() => handleEditBalance(account)}
                           >
-                            <Calculator className="w-4 h-4" />
+                            <Calculator sx={{ width: 16, height: 16 }} />
                           </Button>
                         </Box>
                       )}
@@ -613,7 +613,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={carryForwardFrom}
               onChange={(e) => setCarryForwardFrom(e.target.value)}
-              LabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
             />
             <TextField
               label="到期间"
@@ -621,7 +621,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={carryForwardTo}
               onChange={(e) => setCarryForwardTo(e.target.value)}
-              LabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
             />
             <Box
               sx={{
@@ -633,7 +633,7 @@ export default function OpeningBalancePage() {
               }}
             >
               <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                <AlertCircle className="w-5 h-5 text-warning.main mt-0.5" />
+                <AlertCircle sx={{ width: 20, height: 20, color: "warning.main", marginTop: 2 }} />
                 <Box>
                   <Typography
                     variant="body2"

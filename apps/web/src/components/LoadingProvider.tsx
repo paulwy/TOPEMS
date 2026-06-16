@@ -60,10 +60,10 @@ const GlobalLoadingOverlay: React.FC<GlobalLoadingOverlayProps> = ({
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mb-4"></div>
-        <p className="text-gray-700 text-lg">{message}</p>
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", padding: "32px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ width: "64px", height: "64px", border: "4px solid #2563eb", borderTop: "4px solid transparent", borderRadius: "9999px", animation: "spin 1s linear infinite", marginBottom: "16px" }}></div>
+        <p style={{ color: "#374151", fontSize: "18px" }}>{message}</p>
       </div>
     </div>
   );

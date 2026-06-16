@@ -6,11 +6,14 @@ use topems_shared::AuthState;
 use topems_shared::SystemMetrics;
 
 pub mod audit;
+pub mod billing;
 pub mod contact;
 pub mod customer;
+pub mod customer_scoring;
 pub mod interaction;
 pub mod openapi;
 pub mod opportunity;
+pub mod sales_forecast;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -39,4 +42,7 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(opportunity::create_routes())
         .merge(interaction::create_routes())
         .merge(audit::create_routes())
+        .merge(customer_scoring::create_routes())
+        .merge(sales_forecast::create_routes())
+        .merge(billing::create_routes())
 }

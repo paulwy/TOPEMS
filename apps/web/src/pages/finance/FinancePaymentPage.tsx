@@ -296,9 +296,9 @@ const FinancePaymentPage: React.FC = () => {
               </IconButton>
               <MuiBox>
                 <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <Box component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
+                  <MuiBox component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
                     <CreditCard size={28} />
-                  </Box>
+                  </MuiBox>
                   付款管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

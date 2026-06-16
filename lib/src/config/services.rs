@@ -42,10 +42,10 @@ impl ServiceRegistry {
                 api_prefix: "/api/v1".to_string(),
             },
             ServiceConfig {
-                name: "topems-flow".to_string(),
-                display_name: "工作流服务".to_string(),
-                description: "工作流引擎与审批流程".to_string(),
-                port: 8006,
+                name: "topems-pm".to_string(),
+                display_name: "项目管理服务".to_string(),
+                description: "项目管理与预算管理".to_string(),
+                port: 8002,
                 health_endpoint: "/health".to_string(),
                 api_prefix: "/api/v1".to_string(),
             },
@@ -74,6 +74,14 @@ impl ServiceRegistry {
                 api_prefix: "/api/v1".to_string(),
             },
             ServiceConfig {
+                name: "topems-flow".to_string(),
+                display_name: "工作流服务".to_string(),
+                description: "工作流引擎与审批流程".to_string(),
+                port: 8006,
+                health_endpoint: "/health".to_string(),
+                api_prefix: "/api/v1".to_string(),
+            },
+            ServiceConfig {
                 name: "topems-erp".to_string(),
                 display_name: "企业资源计划".to_string(),
                 description: "企业资源规划管理".to_string(),
@@ -98,6 +106,14 @@ impl ServiceRegistry {
                 api_prefix: "/api/v1".to_string(),
             },
             ServiceConfig {
+                name: "topems-ai".to_string(),
+                display_name: "AI知识库".to_string(),
+                description: "AI智能知识库".to_string(),
+                port: 8013,
+                health_endpoint: "/health".to_string(),
+                api_prefix: "/api/v1".to_string(),
+            },
+            ServiceConfig {
                 name: "topems-rs".to_string(),
                 display_name: "研发管理系统".to_string(),
                 description: "科研配方与实验管理".to_string(),
@@ -114,6 +130,7 @@ impl ServiceRegistry {
                 api_prefix: "/api/v1".to_string(),
             },
             ServiceConfig {
+<<<<<<< Updated upstream:lib/src/config/services.rs
                 name: "topems-ai".to_string(),
                 display_name: "AI知识库".to_string(),
                 description: "AI智能知识库".to_string(),
@@ -122,6 +139,8 @@ impl ServiceRegistry {
                 api_prefix: "/api/v1".to_string(),
             },
             ServiceConfig {
+=======
+>>>>>>> Stashed changes:shared/lib/src/config/services.rs
                 name: "topems-pdm".to_string(),
                 display_name: "产品数据管理".to_string(),
                 description: "产品数据管理".to_string(),
@@ -248,6 +267,20 @@ impl ServiceRegistry {
             .map(|s| (s.name.clone(), s.clone()))
             .collect()
     }
+
+    pub fn get_all_ports(&self) -> Vec<u16> {
+        self.services.iter().map(|s| s.port).collect()
+    }
+
+    pub fn get_port_ranges(&self) -> Vec<(u16, u16)> {
+        vec![
+            (8000, 8009),
+            (8010, 8029),
+            (8030, 8039),
+            (8040, 8049),
+            (8050, 8059),
+        ]
+    }
 }
 
 impl Default for ServiceRegistry {
@@ -260,10 +293,11 @@ pub fn get_default_port(service_name: &str) -> u16 {
     match service_name {
         "topems-iam" => 8000,
         "topems-doc" => 8001,
-        "topems-flow" => 8006,
+        "topems-pm" => 8002,
         "notification-service" => 8003,
         "topems-integration" => 8004,
         "topems-portal" => 8005,
+        "topems-flow" => 8006,
         "topems-erp" => 8010,
         "topems-hrm" => 8011,
         "topems-crm" => 8012,
@@ -286,3 +320,38 @@ pub fn get_default_port(service_name: &str) -> u16 {
         _ => 8080,
     }
 }
+<<<<<<< Updated upstream:lib/src/config/services.rs
+=======
+
+pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
+    match port {
+        8000 => Some("topems-iam"),
+        8001 => Some("topems-doc"),
+        8002 => Some("topems-pm"),
+        8003 => Some("notification-service"),
+        8004 => Some("topems-integration"),
+        8005 => Some("topems-portal"),
+        8006 => Some("topems-flow"),
+        8010 => Some("topems-erp"),
+        8011 => Some("topems-hrm"),
+        8012 => Some("topems-crm"),
+        8013 => Some("topems-ai"),
+        8020 => Some("topems-rs"),
+        8022 => Some("topems-lims"),
+        8023 => Some("topems-pdm"),
+        8030 => Some("topems-mes"),
+        8031 => Some("topems-qms"),
+        8032 => Some("topems-ehs"),
+        8040 => Some("topems-scm"),
+        8041 => Some("topems-srm"),
+        8042 => Some("topems-wms"),
+        8050 => Some("topems-gis"),
+        8051 => Some("topems-im"),
+        8052 => Some("topems-bi"),
+        8053 => Some("topems-report"),
+        8054 => Some("topems-mail"),
+        8055 => Some("topems-mobile"),
+        _ => None,
+    }
+}
+>>>>>>> Stashed changes:shared/lib/src/config/services.rs

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@mui/material";
 import type { Project } from "../api/pm";
 import { pmApi } from "../api/pm";
 import {
@@ -105,33 +106,33 @@ const PmContractCreatePage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <button
+    <div style={{ padding: "1.5rem", backgroundColor: "#f9fafb", minHeight: "100vh" }}>
+      <div style={{ maxWidth: "56rem", marginLeft: "auto", marginRight: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
+          <Button
             onClick={() => navigate("/pm/contracts")}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            sx={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#4b5563", "&:hover": { color: "#111827" }, transition: "color 0.15s" }}
           >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+            <ArrowLeft sx={{ width: "1.25rem", height: "1.25rem" }} />
+          </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">创建合同</h1>
-            <p className="text-gray-500">填写合同基本信息</p>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "#111827" }}>创建合同</h1>
+            <p style={{ color: "#6b7280" }}>填写合同基本信息</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "0.5rem", boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)", padding: "1.5rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: "600", color: "#111827" }}>
                   基本信息
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(1, minmax(0, 1fr))", gap: "1rem" }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     关联项目
                   </label>
                   <select
@@ -142,7 +143,7 @@ const PmContractCreatePage: React.FC = () => {
                         project_id: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   >
                     <option value="">请选择项目</option>
                     {projects.map((project) => (
@@ -154,14 +155,14 @@ const PmContractCreatePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-gray-700">
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+                    <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151" }}>
                       合同编号
                     </label>
                     <button
                       type="button"
                       onClick={() => setShowCodeGenerator(true)}
-                      className="text-blue-600 text-sm hover:text-blue-800"
+                      style={{ color: "#2563eb", fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >
                       AI 生成
                     </button>
@@ -176,14 +177,14 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     placeholder="请输入合同编号"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(1, minmax(0, 1fr))", gap: "1rem" }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     合同名称
                   </label>
                   <input
@@ -196,12 +197,12 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     placeholder="请输入合同名称"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     合同类型
                   </label>
                   <select
@@ -212,7 +213,7 @@ const PmContractCreatePage: React.FC = () => {
                         contract_type: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   >
                     {CONTRACT_TYPES.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -224,7 +225,7 @@ const PmContractCreatePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                   合同类别
                 </label>
                 <select
@@ -235,7 +236,7 @@ const PmContractCreatePage: React.FC = () => {
                       contract_category: e.target.value,
                     }))
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                 >
                   {CONTRACT_CATEGORIES.map((category) => (
                     <option key={category.value} value={category.value}>
@@ -246,16 +247,16 @@ const PmContractCreatePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1rem", marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: "600", color: "#111827" }}>
                   合同双方
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(1, minmax(0, 1fr))", gap: "1rem" }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     甲方
                   </label>
                   <input
@@ -268,12 +269,12 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     placeholder="请输入甲方名称"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     乙方
                   </label>
                   <input
@@ -286,22 +287,22 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     placeholder="请输入乙方名称"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1rem", marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: "600", color: "#111827" }}>
                   金额与时间
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(1, minmax(0, 1fr))", gap: "1rem" }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     合同金额
                   </label>
                   <input
@@ -314,12 +315,12 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     placeholder="请输入合同金额"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     税率 (%)
                   </label>
                   <input
@@ -332,12 +333,12 @@ const PmContractCreatePage: React.FC = () => {
                       }))
                     }
                     placeholder="请输入税率"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     货币
                   </label>
                   <select
@@ -348,7 +349,7 @@ const PmContractCreatePage: React.FC = () => {
                         currency: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   >
                     <option value="CNY">人民币</option>
                     <option value="USD">美元</option>
@@ -357,9 +358,9 @@ const PmContractCreatePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(1, minmax(0, 1fr))", gap: "1rem", marginTop: "1rem" }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     签约日期
                   </label>
                   <input
@@ -371,12 +372,12 @@ const PmContractCreatePage: React.FC = () => {
                         signing_date: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     生效日期
                   </label>
                   <input
@@ -388,12 +389,12 @@ const PmContractCreatePage: React.FC = () => {
                         effective_date: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label style={{ display: "block", fontSize: "0.875rem", fontWeight: "500", color: "#374151", marginBottom: "0.25rem" }}>
                     结束日期
                   </label>
                   <input
@@ -405,36 +406,36 @@ const PmContractCreatePage: React.FC = () => {
                         end_date: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1rem", marginTop: "1.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: "600", color: "#111827" }}>
                   合同描述
                 </h2>
-                <div className="flex items-center gap-2">
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <button
                     type="button"
                     onClick={() => setShowTextOptimizer(true)}
-                    className="text-blue-600 text-sm hover:text-blue-800"
+                    style={{ color: "#2563eb", fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                   >
                     AI 优化
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowDataCompleter(true)}
-                    className="text-blue-600 text-sm hover:text-blue-800"
+                    style={{ color: "#2563eb", fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                   >
                     AI 补全
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowValidator(true)}
-                    className="text-blue-600 text-sm hover:text-blue-800"
+                    style={{ color: "#2563eb", fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                   >
                     AI 校验
                   </button>
@@ -451,24 +452,24 @@ const PmContractCreatePage: React.FC = () => {
                 }
                 placeholder="请输入合同描述..."
                 rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ width: "100%", padding: "0.5rem 0.75rem", border: "1px solid #d1d5db", borderRadius: "0.5rem", outline: "none", boxShadow: "0 0 0 2px #3b82f6" }}
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.75rem 1.5rem", backgroundColor: "#2563eb", color: "#ffffff", borderRadius: "0.5rem", border: "none", cursor: "pointer", opacity: loading ? 0.5 : 1, transition: "background-color 0.15s" }}
             >
-              <Save className="w-4 h-4" />
+              <Save style={{ width: "1rem", height: "1rem" }} />
               {loading ? "创建中..." : "创建合同"}
             </button>
             <button
               type="button"
               onClick={() => navigate("/pm/contracts")}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              style={{ padding: "0.75rem 1.5rem", border: "1px solid #d1d5db", color: "#374151", borderRadius: "0.5rem", backgroundColor: "transparent", cursor: "pointer", transition: "background-color 0.15s" }}
             >
               取消
             </button>

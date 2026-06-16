@@ -159,7 +159,7 @@ export default function ServiceMonitor({
           const IconComponent = config.icon;
 
           return (
-            <Grid size={{ xs: 12, sm: 6, md: 3, lg: 1.5 }} key={service.key}>
+            <Grid xs={12} sm={6} md={3} lg={1.5}  key={service.key}>
               <Card
                 elevation={0}
                 sx={{

@@ -341,7 +341,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               display: "flex",
               alignItems: "center",
               gap: 1.5,
-              mr: 3,
+              marginRight: 3,
               cursor: "pointer",
             }}
             onClick={() => navigate("/dashboard")}

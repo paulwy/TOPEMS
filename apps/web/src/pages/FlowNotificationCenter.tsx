@@ -4,14 +4,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertCircle,
-  Loader2,
-  Eye,
   Check,
-  Mail,
-  MessageSquare,
-  FileText,
-  Users,
   Play,
   CheckCircle2,
 } from "lucide-react";
@@ -19,6 +12,14 @@ import { useNavigate } from "react-router-dom";
 import type { Notification } from "../api/flow";
 import { flowApi } from "../api/flow";
 import { useAppStore } from "../store";
+import {
+  Box,
+  Button,
+  Typography,
+  Tabs,
+  Tab,
+  CircularProgress,
+} from "@mui/material";
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
@@ -102,19 +103,20 @@ const FlowNotificationCenter: React.FC = () => {
   };
 
   const getNotificationIcon = (type: string) => {
+    const iconProps = { sx: { width: 20, height: 20 } };
     switch (type) {
       case "approval_created":
-        return <CheckCircle className="w-5 h-5 text-blue-600" />;
+        return <CheckCircle sx={{ width: 20, height: 20, color: "blue.600" }} />;
       case "approval_completed":
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
+        return <CheckCircle2 sx={{ width: 20, height: 20, color: "green.600" }} />;
       case "workflow_started":
-        return <Play className="w-5 h-5 text-indigo-600" />;
+        return <Play sx={{ width: 20, height: 20, color: "indigo.600" }} />;
       case "workflow_completed":
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle sx={{ width: 20, height: 20, color: "green.600" }} />;
       case "workflow_rejected":
-        return <XCircle className="w-5 h-5 text-red-600" />;
+        return <XCircle sx={{ width: 20, height: 20, color: "red.600" }} />;
       default:
-        return <Bell className="w-5 h-5 text-gray-600" />;
+        return <Bell sx={{ width: 20, height: 20, color: "grey.600" }} />;
     }
   };
 
@@ -135,157 +137,258 @@ const FlowNotificationCenter: React.FC = () => {
       : notifications;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <Bell className="w-6 h-6 text-yellow-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">通知中心</h1>
-              <p className="text-sm text-gray-500">
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 1, p: 3, mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: "warning.100",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Bell sx={{ width: 24, height: 24, color: "warning.main" }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                通知中心
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
                 {unreadCount > 0 ? (
-                  <span className="text-yellow-600 font-medium">
+                  <Typography
+                    component="span"
+                    sx={{ color: "warning.main", fontWeight: 500 }}
+                  >
                     {unreadCount} 条未读通知
-                  </span>
+                  </Typography>
                 ) : (
                   "暂无未读通知"
                 )}
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
           {unreadCount > 0 && (
-            <button
+            <Button
+              variant="contained"
               onClick={handleMarkAsRead}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              startIcon={<Check sx={{ width: 20, height: 20 }} />}
+              sx={{ textTransform: "none" }}
             >
-              <Check className="w-5 h-5 mr-2" />
               全部标记为已读
-            </button>
+            </Button>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm mb-6">
-        <div className="border-b border-gray-200">
-          <div className="flex space-x-8 px-6">
-            <button
-              onClick={() => setFilter("all")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                filter === "all"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              全部通知 ({notifications.length})
-            </button>
-            <button
-              onClick={() => setFilter("unread")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                filter === "unread"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              未读 ({unreadCount})
-            </button>
-          </div>
-        </div>
-      </div>
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 1, mb: 3 }}>
+        <Tabs
+          value={filter}
+          onChange={(_, newValue) => setFilter(newValue)}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
+        >
+          <Tab
+            label={`全部通知 (${notifications.length})`}
+            value="all"
+            sx={{
+              textTransform: "none",
+              fontWeight: filter === "all" ? 600 : 400,
+              color: filter === "all" ? "primary.main" : "text.secondary",
+              borderBottom: filter === "all" ? 2 : 0,
+              borderColor: "primary.main",
+            }}
+          />
+          <Tab
+            label={`未读 (${unreadCount})`}
+            value="unread"
+            sx={{
+              textTransform: "none",
+              fontWeight: filter === "unread" ? 600 : 400,
+              color: filter === "unread" ? "primary.main" : "text.secondary",
+              borderBottom: filter === "unread" ? 2 : 0,
+              borderColor: "primary.main",
+            }}
+          />
+        </Tabs>
+      </Box>
 
       {/* Notification List */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <Box sx={{ bgcolor: "background.paper", borderRadius: 1, p: 3 }}>
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              py: 6,
+            }}
+          >
+            <CircularProgress sx={{ color: "primary.main" }} />
+          </Box>
         ) : filteredNotifications.length === 0 ? (
-          <div className="text-center py-12">
-            <Bell className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <Bell sx={{ width: 64, height: 64, color: "grey.300", mb: 2 }} />
+            <Typography color="text.secondary">
               {filter === "unread" ? "暂无未读通知" : "暂无通知"}
-            </p>
-          </div>
+            </Typography>
+          </Box>
         ) : (
-          <div className="space-y-3">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {filteredNotifications.map((notification) => (
-              <div
+              <Box
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
-                  notification.is_read
-                    ? "border-gray-200 bg-white"
-                    : "border-blue-200 bg-blue-50"
-                }`}
+                sx={{
+                  border: 1,
+                  borderColor: notification.is_read
+                    ? "grey.200"
+                    : "primary.200",
+                  bgcolor: notification.is_read
+                    ? "background.paper"
+                    : "primary.50",
+                  borderRadius: 1,
+                  p: 2,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    boxShadow: 2,
+                  },
+                }}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        notification.is_read ? "bg-gray-100" : "bg-blue-100"
-                      }`}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, flex: 1 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: notification.is_read ? "grey.100" : "primary.100",
+                      }}
                     >
                       {getNotificationIcon(notification.notification_type)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3
-                          className={`font-medium ${notification.is_read ? "text-gray-700" : "text-gray-900"}`}
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                        <Typography
+                          sx={{
+                            fontWeight: notification.is_read ? 400 : 500,
+                            color: notification.is_read ? "grey.700" : "grey.900",
+                          }}
                         >
                           {notification.title}
-                        </h3>
+                        </Typography>
                         {!notification.is_read && (
-                          <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              bgcolor: "primary.600",
+                              borderRadius: "50%",
+                            }}
+                          />
                         )}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                         {notification.content}
-                      </p>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span className="flex items-center">
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          color: "text.disabled",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                           {getNotificationIcon(notification.notification_type)}
-                          <span className="ml-1">
-                            {getNotificationText(
-                              notification.notification_type,
-                            )}
-                          </span>
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {new Date(notification.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
+                          <Typography variant="caption" color="text.secondary">
+                            {getNotificationText(notification.notification_type)}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                          <Clock sx={{ width: 12, height: 12 }} />
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(notification.created_at).toLocaleString()}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     {notification.workflow_instance_id && (
-                      <span className="text-xs text-gray-400 flex items-center">
-                        <FileText className="w-3 h-3 mr-1" />
-                        实例
-                      </span>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          fontSize: "0.75rem",
+                          color: "grey.400",
+                        }}
+                      >
+                        <Typography variant="caption" color="text.disabled">
+                          实例
+                        </Typography>
+                      </Box>
                     )}
                     {notification.approval_id && (
-                      <span className="text-xs text-gray-400 flex items-center">
-                        <Users className="w-3 h-3 mr-1" />
-                        审批
-                      </span>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          fontSize: "0.75rem",
+                          color: "grey.400",
+                        }}
+                      >
+                        <Typography variant="caption" color="text.disabled">
+                          审批
+                        </Typography>
+                      </Box>
                     )}
                     {!notification.is_read && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                        未读
-                      </span>
+                      <Box
+                        sx={{
+                          px: 1,
+                          py: 0.5,
+                          bgcolor: "primary.100",
+                          color: "primary.700",
+                          borderRadius: 1,
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ color: "primary.700" }}>
+                          未读
+                        </Typography>
+                      </Box>
                     )}
-                  </div>
-                </div>
-              </div>
+                  </Box>
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

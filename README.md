@@ -65,8 +65,10 @@ topems/
 │   │   ├── pages/               # 页面组件
 │   │   ├── hooks/               # 自定义 hooks
 │   │   ├── api/                 # API 客户端
+│   │   ├── config/              # 配置文件
 │   │   └── store/               # 状态管理
 │   └── vite.config.ts           # Vite 配置
+<<<<<<< Updated upstream
 ├── apps/                          # 应用目录
 │   └── web/                     # Web 应用
 ├── svc/                          # 后端服务
@@ -108,10 +110,46 @@ topems/
 ├── templates/                    # 数据模板
 ├── Cargo.toml                   # Cargo Workspace 配置
 └── .env                         # 环境变量配置
+=======
+├── platform/                      # 核心平台服务
+│   ├── topems-iam/              # 身份认证服务 (8000)
+│   ├── topems-doc/              # 文档管理服务 (8001)
+│   └── topems-flow/             # 工作流服务 (8006)
+├── services/                      # 业务应用服务
+│   ├── topems-pm/               # 项目管理服务 (8002)
+│   ├── notification-service/     # 通知服务 (8003)
+│   ├── topems-integration/      # 集成服务 (8004)
+│   ├── topems-portal/           # 企业门户 (8005)
+│   ├── topems-erp/              # 企业资源计划 (8010)
+│   ├── topems-hrm/              # 人力资源管理 (8011)
+│   ├── topems-crm/              # 客户关系管理 (8012)
+│   ├── topems-ai/               # AI 知识库 (8013)
+│   ├── topems-rs/               # 研发管理系统 (8020)
+│   ├── topems-lims/             # 实验室系统 (8022)
+│   ├── topems-pdm/              # 产品数据管理 (8023)
+│   ├── topems-mes/              # 制造执行系统 (8030)
+│   ├── topems-qms/              # 质量管理系统 (8031)
+│   ├── topems-ehs/              # 安全管理系统 (8032)
+│   ├── topems-scm/              # 供应链系统 (8040)
+│   ├── topems-srm/              # 供应商管理 (8041)
+│   ├── topems-wms/              # 仓库管理系统 (8042)
+│   ├── topems-gis/              # 地理信息系统 (8050)
+│   ├── topems-im/               # 即时通讯 (8051)
+│   ├── topems-bi/               # 商业智能 (8052)
+│   ├── report-service/           # 报表服务 (8053)
+│   ├── topems-mail/             # 邮件服务 (8054)
+│   └── topems-mobile/           # 移动端服务 (8055)
+├── shared/                        # 共享库
+│   └── lib/                     # topems-shared 库
+├── scripts/                       # 管理脚本
+├── docker/                        # Docker 配置
+└── .env.example                  # 环境变量示例
+>>>>>>> Stashed changes
 ```
 
 ## 🚀 快速开始
 
+<<<<<<< Updated upstream
 > **推荐使用 Python CLI 工具进行服务管理**。详见 [Python CLI 文档](./cli/README.md)
 
 ### Python CLI（推荐）
@@ -154,6 +192,34 @@ bash scripts/topems.sh start-docker
 
 # 访问应用
 open http://localhost:3000
+=======
+### 系统要求
+
+- **前端**: Node.js 18+, npm 9+
+- **后端**: Rust 1.70+, Cargo
+- **数据库**: PostgreSQL 14+, Redis 7+
+- **工具**: Docker, Docker Compose
+
+### 环境配置
+
+```bash
+# 复制环境变量示例文件
+cp .env.example .env
+
+# 配置 JWT 密钥（必须配置！）
+# 生成安全密钥
+openssl rand -base64 32
+```
+
+编辑 `.env` 文件，设置必要的配置项。
+
+### 启动数据库
+
+```bash
+cd docker
+cp .env.example .env
+docker-compose up -d
+>>>>>>> Stashed changes
 ```
 
 ### 前端开发
@@ -168,6 +234,7 @@ npm run dev
 
 ### 后端开发
 
+<<<<<<< Updated upstream
 项目采用 Cargo Workspace 架构，所有服务共享依赖。
 
 ```bash
@@ -216,7 +283,67 @@ DATABASE_URL=postgres://topems:topems@host.docker.internal:5432/topems
 
 # 远程 PostgreSQL
 DATABASE_URL=postgres://user:password@remote-host:5432/topems
+=======
+```bash
+# 使用服务管理脚本（推荐）
+./scripts/manage-services.sh start iam
+
+# 或者手动启动
+cd platform/topems-iam/backend
+cargo run
 ```
+
+### 一键启动所有服务
+
+```bash
+# 一键启动所有服务（包括前端）
+./scripts/start-all.sh
+>>>>>>> Stashed changes
+```
+
+## 🔌 端口配置规范
+
+### 端口分配原则
+
+| 端口范围 | 服务类型 | 说明 |
+|---------|---------|------|
+| 8000-8009 | 平台核心服务 | IAM, DOC, PM, Notification, Integration, Portal, Flow |
+| 8010-8029 | 业务服务 | ERP, HRM, CRM, AI, RS, LIMS, PDM |
+| 8030-8039 | 制造与质量服务 | MES, QMS, EHS |
+| 8040-8049 | 供应链服务 | SCM, SRM, WMS |
+| 8050-8059 | 辅助服务 | GIS, IM, BI, Report, Mail, Mobile |
+| 3000 | 前端 | React 开发服务器 |
+
+### 服务端口清单
+
+| 服务名 | 端口 | 服务路径 | 说明 |
+|-------|------|---------|------|
+| iam | 8000 | platform/topems-iam/backend | 身份认证服务 |
+| doc | 8001 | platform/topems-doc/backend | 文档管理服务 |
+| pm | 8002 | services/topems-pm/backend | 项目管理服务 |
+| notification | 8003 | services/notification-service | 通知服务 |
+| integration | 8004 | services/topems-integration/backend | 集成服务 |
+| portal | 8005 | services/topems-portal/backend | 企业门户 |
+| flow | 8006 | platform/topems-flow/backend | 工作流服务 |
+| erp | 8010 | services/topems-erp/backend | 企业资源计划 |
+| hrm | 8011 | services/topems-hrm/backend | 人力资源管理 |
+| crm | 8012 | services/topems-crm/backend | 客户关系管理 |
+| ai | 8013 | services/topems-ai/backend | AI 知识库 |
+| rs | 8020 | services/topems-rs/backend | 研发管理系统 |
+| lims | 8022 | services/topems-lims/backend | 实验室系统 |
+| pdm | 8023 | services/topems-pdm/backend | 产品数据管理 |
+| mes | 8030 | services/topems-mes/backend | 制造执行系统 |
+| qms | 8031 | services/topems-qms/backend | 质量管理系统 |
+| ehs | 8032 | services/topems-ehs/backend | 安全管理系统 |
+| scm | 8040 | services/topems-scm/backend | 供应链系统 |
+| srm | 8041 | services/topems-srm/backend | 供应商管理 |
+| wms | 8042 | services/topems-wms/backend | 仓库管理系统 |
+| gis | 8050 | services/topems-gis/backend | 地理信息系统 |
+| im | 8051 | services/topems-im/backend | 即时通讯 |
+| bi | 8052 | services/topems-bi/backend | 商业智能 |
+| report | 8053 | services/report-service | 报表服务 |
+| mail | 8054 | services/topems-mail/backend | 邮件服务 |
+| mobile | 8055 | services/topems-mobile/backend | 移动端服务 |
 
 ## 🔒 安全配置
 
@@ -229,7 +356,7 @@ DATABASE_URL=postgres://user:password@remote-host:5432/topems
 JWT_SECRET=your-jwt-secret-key-here
 
 # JWT 刷新令牌密钥
-REFRESH_SECRET=your-refresh-secret-key-here
+JWT_REFRESH_SECRET=your-refresh-secret-key-here
 ```
 
 ### ⚠️ 安全要求
@@ -260,10 +387,18 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```env
 # JWT 配置
 JWT_SECRET=<生成的32字符以上随机密钥>
-REFRESH_SECRET=<生成的32字符以上随机密钥>
+JWT_REFRESH_SECRET=<生成的32字符以上随机密钥>
 
-# 其他配置
-DATABASE_URL=postgresql://user:password@localhost:5432/topems
+# 数据库配置
+DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DB_HOST=localhost
+DB_PORT=5432
+
+# Redis 配置
+REDIS_URL=redis://localhost:6379
+
+# CORS 配置
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
 **注意**：`.env` 文件已添加到 `.gitignore`，不会被提交到代码仓库。
@@ -330,11 +465,55 @@ python -m topems_cli db migrate
 3. 初始化 70+ 个默认权限
 4. 创建 5 个默认角色并分配权限
 
+## 🛠️ 脚本工具
+
+| 脚本 | 说明 | 使用方法 |
+|------|------|---------|
+| `scripts/init-database.sh` | 初始化数据库 | `./scripts/init-database.sh` |
+| `scripts/manage-services.sh` | 管理单个服务 | `./scripts/manage-services.sh start iam` |
+| `scripts/start-all.sh` | 一键启动所有服务（推荐） | `./scripts/start-all.sh` |
+| `scripts/stop-all.sh` | 一键停止所有服务 | `./scripts/stop-all.sh` |
+| `scripts/cleanup.sh` | 全面清理（端口、进程、缓存） | `./scripts/cleanup.sh` |
+| `scripts/deploy.sh` | 离线部署脚本 | `./scripts/deploy.sh` |
+| `scripts/download-images.sh` | 下载 Docker 镜像 | `./scripts/download-images.sh` |
+| `scripts/build-all-services.sh` | 构建所有服务镜像 | `./scripts/build-all-services.sh build` |
+| `scripts/run-clippy.sh` | 运行 Clippy 代码检查 | `./scripts/run-clippy.sh` |
+| `scripts/run_ci_tests.sh` | 运行 CI 测试 | `./scripts/run_ci_tests.sh` |
+
+### 服务管理脚本使用
+
+```bash
+# 查看服务状态
+./scripts/manage-services.sh status
+
+# 启动单个服务
+./scripts/manage-services.sh start iam
+
+# 停止单个服务
+./scripts/manage-services.sh stop iam
+
+# 重启单个服务
+./scripts/manage-services.sh restart iam
+
+# 查看服务日志
+./scripts/manage-services.sh logs iam 100
+
+# 列出所有服务
+./scripts/manage-services.sh list
+
+# 验证环境变量
+./scripts/manage-services.sh validate-env
+
+# 启动核心服务
+./scripts/manage-services.sh start-core
+```
+
 ## 📖 文档
 
 - [Python CLI](./cli/README.md) - 服务管理命令行工具
 - [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览
 - [架构设计](./docs/architecture/overview.md) - 系统架构设计
+<<<<<<< Updated upstream
 - [部署指南](./docs/deployment/README.md) - 部署指南
 - [Windows部署](./docs/deployment/windows-deployment.md) - Windows 部署指南
 - [用户手册](./docs/user/UserManual.md) - 用户使用手册
@@ -438,6 +617,56 @@ TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管�
 | `collect-test-data.sh` | 收集测试数据 |
 
 详细说明请参考 [脚本工具文档](./scripts/README.md)。
+=======
+- [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
+- [离线部署指南](./docs/deployment/DEPLOYMENT_OFFLINE.md) - 离线部署指南
+- [用户手册](./docs/user/UserManual.md) - 用户使用手册
+- [服务文档](./docs/services/) - 各个服务详细文档
+- [环境配置指南](./docs/guides/ENVIRONMENT_CONFIG.md) - 环境配置指南
+
+## 📦 配置文件
+
+### 前端配置
+
+- `frontend/vite.config.ts` - Vite 构建配置，包含端口代理配置
+- `frontend/src/config/runtime.ts` - 运行时配置，包含所有服务 URL
+- `frontend/src/config/types.ts` - TypeScript 类型定义
+
+### 后端配置
+
+- `shared/lib/src/config/services.rs` - 服务注册中心，统一端口配置
+- `docker/docker-compose.yml` - Docker Compose 数据库配置
+
+### 环境变量
+
+- `.env.example` - 环境变量示例（项目根目录）
+- `docker/.env.example` - Docker 环境变量示例
+
+## 🔧 开发命令
+
+### 前端
+
+```bash
+npm run dev          # 启动开发服务器
+npm run build        # 构建生产版本
+npm run preview      # 预览生产版本
+npm run lint         # 代码检查
+npm run test         # 运行单元测试
+npm run e2e          # 运行端到端测试
+npm run format       # 代码格式化
+```
+
+### 后端（Rust）
+
+```bash
+cargo run            # 运行服务
+cargo build          # 构建开发版本
+cargo build --release # 构建生产版本
+cargo test           # 运行测试
+cargo clippy         # 代码检查
+cargo fmt            # 代码格式化
+```
+>>>>>>> Stashed changes
 
 ## 📄 许可证
 
@@ -452,5 +681,10 @@ MIT License
 
 ---
 
+<<<<<<< Updated upstream
 **最后更新**: 2026-06-12
 **版本**: v2.4.2
+=======
+**最后更新**: 2026-06-08
+**版本**: v2.0.0
+>>>>>>> Stashed changes

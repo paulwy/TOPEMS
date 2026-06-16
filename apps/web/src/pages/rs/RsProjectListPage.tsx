@@ -203,14 +203,14 @@ const RsProjectListPage: React.FC = () => {
           <Stack direction="row" spacing={2}>
             <Button
               variant="outlined"
-              startIcon={<DownloadIcon />}
+              startIcon={<Download />}
               onClick={handleExport}
             >
               导出
             </Button>
             <Button
               variant="contained"
-              startIcon={<AddIcon />}
+              startIcon={<Plus />}
               component={Link}
               to="/rs/projects/create"
             >
@@ -232,7 +232,7 @@ const RsProjectListPage: React.FC = () => {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <Search />
                   </InputAdornment>
                 ),
               },
@@ -381,7 +381,7 @@ const RsProjectListPage: React.FC = () => {
                             navigate(`/rs/projects/${project.id}/edit`)
                           }
                         >
-                          <EditIcon />
+                          <Edit />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="删除">

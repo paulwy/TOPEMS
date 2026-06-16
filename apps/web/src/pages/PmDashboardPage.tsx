@@ -19,6 +19,7 @@ import type { Project, Contract, PmStatistics } from "../api/pm";
 import { pmApi } from "../api/pm";
 import { MetricCard } from "../components/MetricCard";
 import { StatsChart } from "../components/StatsChart";
+import { PageHeader } from "../components/templates";
 
 const PmDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -153,14 +154,15 @@ const PmDashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3, bgcolor: "grey.100", minHeight: "100vh" }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
-          项目管理中心
-        </Typography>
-        <Typography sx={{ color: "grey.500", mt: 0.5 }}>
-          统一管理所有项目、合同和相关资源
-        </Typography>
-      </Box>
+      <PageHeader
+        title="项目管理中心"
+        subtitle="统一管理所有项目、合同和相关资源"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "项目管理" },
+        ]}
+        backButton={{ onClick: () => navigate("/dashboard") }}
+      />
 
       {/* 统计卡片区域 */}
       <Box

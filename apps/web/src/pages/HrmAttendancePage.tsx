@@ -412,36 +412,60 @@ const HrmAttendancePage: React.FC = () => {
           }}
         >
           <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Button
-                onClick={() => navigate("/dashboard")}
-                sx={{ minWidth: "auto", p: 1 }}
-              >
-                <ChevronLeft />
-              </Button>
-              <Box>
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Button
+              onClick={() => navigate("/dashboard")}
+              sx={{ minWidth: "auto", p: 1 }}
+            >
+              <ChevronLeft />
+            </Button>
+            <Box>
+              {/* 面包屑导航 */}
+              <Box sx={{ mb: 1 }}>
                 <Typography
-                  variant="h5"
-                  component="h1"
+                  component="a"
+                  href="/hrm"
                   sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    color: "text.primary",
+                    color: "text.secondary",
+                    textDecoration: "none",
+                    fontSize: "0.875rem",
+                    "&:hover": { color: "primary.main", textDecoration: "underline" },
                   }}
                 >
-                  <Box sx={{ color: "#14b8a6", display: "flex" }}>
-                    <Clock size={28} />
-                  </Box>
+                  人力资源
+                </Typography>
+                <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+                  /
+                </Typography>
+                <Typography
+                  component="span"
+                  sx={{ color: "text.primary", fontSize: "0.875rem" }}
+                >
                   考勤管理
                 </Typography>
+              </Box>
+              <Typography
+                variant="h5"
+                component="h1"
+                sx={{
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  color: "text.primary",
+                }}
+              >
+                <Box sx={{ color: "#14b8a6", display: "flex" }}>
+                  <Clock size={28} />
+                </Box>
+                考勤管理
+              </Typography>
                 <Typography
                   variant="body2"
                   sx={{ color: "text.secondary", mt: 0.5 }}

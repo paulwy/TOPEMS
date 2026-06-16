@@ -23,6 +23,26 @@ import {
 } from "../api/template";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
+import {
+  Box,
+  Button,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Card,
+  CardContent,
+  IconButton,
+  Tabs,
+  Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
+} from "@mui/material";
 
 const TemplateManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -153,281 +173,383 @@ const TemplateManagementPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <FileText className="w-7 h-7 mr-3 text-blue-600" />
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ maxWidth: "xl", mx: "auto", px: 3, py: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <IconButton onClick={() => navigate("/dashboard")}>
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
+              </IconButton>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}
+                >
+                  <FileText sx={{ width: 28, height: 28, mr: 1, color: "blue.600" }} />
                   模板管理
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                   管理和配置系统中的各类模板
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Button
+                variant="contained"
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus sx={{ width: 20, height: 20, mr: 1 }} />
                 新增模板
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
+      <Box sx={{ maxWidth: "xl", mx: "auto", px: 3, py: 3 }}>
+        <Card sx={{ p: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ position: "relative", flex: 1 }}>
+              <Search
+                sx={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 20,
+                  height: 20,
+                  color: "grey.400",
+                }}
+              />
+              <TextField
                 placeholder="搜索模板名称、编码..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                sx={{ pl: 5, width: "100%" }}
+                size="small"
               />
-            </div>
+            </Box>
 
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">全部分类</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.code}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>全部分类</InputLabel>
+              <Select
+                value={selectedCategory}
+                label="全部分类"
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <MenuItem value="">全部分类</MenuItem>
+                {categories.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.code}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-              <button
+            <Box sx={{ display: "flex", border: 1, borderColor: "divider" }}>
+              <Button
+                variant={viewMode === "grid" ? "contained" : "text"}
                 onClick={() => setViewMode("grid")}
-                className={`p-2 ${viewMode === "grid" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                sx={{ borderRadius: 0 }}
               >
-                <Grid className="w-5 h-5" />
-              </button>
-              <button
+                <Grid sx={{ width: 20, height: 20 }} />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "contained" : "text"}
                 onClick={() => setViewMode("list")}
-                className={`p-2 ${viewMode === "list" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                sx={{ borderRadius: 0 }}
               >
-                <List className="w-5 h-5" />
-              </button>
-            </div>
+                <List sx={{ width: 20, height: 20 }} />
+              </Button>
+            </Box>
 
-            <button
-              onClick={loadData}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
+            <Button variant="outlined" onClick={loadData}>
               刷新
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Box>
+        </Card>
 
         {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <Card>
           {loading ? (
-            <div className="p-8 text-center">
-              <Loader2 className="w-12 h-12 text-blue-600 mx-auto animate-spin" />
-              <p className="mt-2 text-gray-500">加载中...</p>
-            </div>
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Loader2
+                sx={{
+                  width: 48,
+                  height: 48,
+                  color: "primary.main",
+                  animation: "spin 1s linear infinite",
+                  "@keyframes spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "100%": { transform: "rotate(360deg)" },
+                  },
+                }}
+              />
+              <Typography color="text.secondary" sx={{ mt: 2 }}>
+                加载中...
+              </Typography>
+            </Box>
           ) : filteredTemplates.length === 0 ? (
-            <div className="p-8 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500">暂无模板数据</p>
-            </div>
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <FileText sx={{ width: 48, height: 48, color: "grey.400", mb: 1.5 }} />
+              <Typography color="text.secondary">暂无模板数据</Typography>
+            </Box>
           ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                },
+                gap: 3,
+                p: 3,
+              }}
+            >
               {filteredTemplates.map((template) => (
-                <div
+                <Card
                   key={template.id}
-                  className="bg-gray-50 rounded-lg p-6 border border-gray-200 hover:shadow-md transition-shadow"
+                  sx={{
+                    bgcolor: "grey.50",
+                    "&:hover": { boxShadow: 3 },
+                  }}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <button
-                      onClick={() => handleToggleStatus(template.id)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        template.is_active
-                          ? "text-green-600 hover:bg-green-100"
-                          : "text-gray-400 hover:bg-gray-200"
-                      }`}
-                      title={template.is_active ? "已启用" : "已禁用"}
-                    >
-                      {template.is_active ? (
-                        <ToggleRight className="w-5 h-5" />
-                      ) : (
-                        <ToggleLeft className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {template.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-2">{template.code}</p>
-
-                  <div className="space-y-1 text-sm text-gray-500 mb-4">
-                    <div>
-                      分类：
-                      {categories.find((c) => c.id === template.category_id)
-                        ?.name ||
-                        template.category_name ||
-                        "未分类"}
-                    </div>
-                    <div>模块：{template.module}</div>
-                    <div>变量数：{template.variables?.length || 0}</div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-200 flex justify-end space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedTemplate(template);
-                        setShowPreviewModal(true);
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        mb: 2,
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                      title="预览"
                     >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDuplicateTemplate(template.id)}
-                      className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
-                      title="复制"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedTemplate(template);
-                        setShowEditModal(true);
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: "primary.100",
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <FileText sx={{ width: 24, height: 24, color: "primary.main" }} />
+                      </Box>
+                      <IconButton
+                        onClick={() => handleToggleStatus(template.id)}
+                        sx={{
+                          color: template.is_active ? "success.main" : "grey.400",
+                          "&:hover": {
+                            bgcolor: template.is_active ? "success.light" : "grey.200",
+                          },
+                        }}
+                        title={template.is_active ? "已启用" : "已禁用"}
+                      >
+                        {template.is_active ? (
+                          <ToggleRight sx={{ width: 20, height: 20 }} />
+                        ) : (
+                          <ToggleLeft sx={{ width: 20, height: 20 }} />
+                        )}
+                      </IconButton>
+                    </Box>
+
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      {template.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {template.code}
+                    </Typography>
+
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        分类：
+                        {categories.find((c) => c.id === template.category_id)
+                          ?.name ||
+                          template.category_name ||
+                          "未分类"}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        模块：{template.module}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        变量数：{template.variables?.length || 0}
+                      </Typography>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: 0.5,
+                        pt: 2,
+                        borderTop: 1,
+                        borderColor: "divider",
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                      title="编辑"
                     >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTemplate(template.id)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                      title="删除"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                      <IconButton
+                        onClick={() => {
+                          setSelectedTemplate(template);
+                          setShowPreviewModal(true);
+                        }}
+                        sx={{ color: "primary.main" }}
+                        title="预览"
+                      >
+                        <Eye sx={{ width: 16, height: 16 }} />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleDuplicateTemplate(template.id)}
+                        sx={{ color: "success.main" }}
+                        title="复制"
+                      >
+                        <Copy sx={{ width: 16, height: 16 }} />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => {
+                          setSelectedTemplate(template);
+                          setShowEditModal(true);
+                        }}
+                        sx={{ color: "primary.main" }}
+                        title="编辑"
+                      >
+                        <Edit sx={{ width: 16, height: 16 }} />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleDeleteTemplate(template.id)}
+                        sx={{ color: "error.main" }}
+                        title="删除"
+                      >
+                        <Trash2 sx={{ width: 16, height: 16 }} />
+                      </IconButton>
+                    </Box>
+                  </CardContent>
+                </Card>
               ))}
-            </div>
+            </Box>
           ) : (
-            <div className="divide-y divide-gray-200">
-              {filteredTemplates.map((template) => (
-                <div
+            <Box>
+              {filteredTemplates.map((template, index) => (
+                <Box
                   key={template.id}
-                  className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 2,
+                    borderBottom:
+                      index < filteredTemplates.length - 1 ? 1 : 0,
+                    borderColor: "divider",
+                    "&:hover": { bgcolor: "grey.50" },
+                  }}
                 >
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium text-gray-900">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: "primary.100",
+                        borderRadius: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <FileText sx={{ width: 20, height: 20, color: "primary.main" }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography sx={{ fontWeight: 500 }}>
                           {template.name}
-                        </h4>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs ${
-                            template.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {template.is_active ? "已启用" : "已禁用"}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500">
+                        </Typography>
+                        <Chip
+                          label={template.is_active ? "已启用" : "已禁用"}
+                          size="small"
+                          sx={{
+                            bgcolor: template.is_active ? "success.100" : "grey.100",
+                            color: template.is_active ? "success.700" : "grey.700",
+                          }}
+                        />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
                         {template.code} ·{" "}
                         {categories.find((c) => c.id === template.category_id)
                           ?.name ||
                           template.category_name ||
                           "未分类"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <IconButton
                       onClick={() => handleToggleStatus(template.id)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        template.is_active
-                          ? "text-green-600 hover:bg-green-100"
-                          : "text-gray-400 hover:bg-gray-200"
-                      }`}
+                      sx={{
+                        color: template.is_active ? "success.main" : "grey.400",
+                      }}
                     >
                       {template.is_active ? (
-                        <ToggleRight className="w-5 h-5" />
+                        <ToggleRight sx={{ width: 20, height: 20 }} />
                       ) : (
-                        <ToggleLeft className="w-5 h-5" />
+                        <ToggleLeft sx={{ width: 20, height: 20 }} />
                       )}
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
                       onClick={() => {
                         setSelectedTemplate(template);
                         setShowPreviewModal(true);
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
+                      sx={{ color: "primary.main" }}
                     >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
+                      <Eye sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                    <IconButton
                       onClick={() => handleDuplicateTemplate(template.id)}
-                      className="p-2 text-green-600 hover:bg-green-100 rounded-lg"
+                      sx={{ color: "success.main" }}
                     >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button
+                      <Copy sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                    <IconButton
                       onClick={() => {
                         setSelectedTemplate(template);
                         setShowEditModal(true);
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
+                      sx={{ color: "primary.main" }}
                     >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
+                      <Edit sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                    <IconButton
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                      sx={{ color: "error.main" }}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+                      <Trash2 sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                  </Box>
+                </Box>
               ))}
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
+        </Card>
+      </Box>
 
       {/* Create/Edit Modal */}
       {showCreateModal && (
@@ -460,7 +582,7 @@ const TemplateManagementPage: React.FC = () => {
           }}
         />
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -495,146 +617,122 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {template ? "编辑模板" : "新增模板"}
-          </h3>
-        </div>
+    <Dialog
+      open
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { maxHeight: "90vh" },
+      }}
+    >
+      <DialogTitle>{template ? "编辑模板" : "新增模板"}</DialogTitle>
+      <DialogContent sx={{ overflowY: "auto" }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+        >
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <TextField
+              label="模板名称 *"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
+              placeholder="请输入模板名称"
+              size="small"
+            />
+            <TextField
+              label="模板编码 *"
+              value={formData.code}
+              onChange={(e) =>
+                setFormData({ ...formData, code: e.target.value })
+              }
+              required
+              placeholder="请输入模板编码"
+              size="small"
+            />
+          </Box>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  模板名称 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="请输入模板名称"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  模板编码 *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="请输入模板编码"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  分类 *
-                </label>
-                <select
-                  required
-                  value={formData.category_id || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category_id: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">请选择分类</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  所属模块 *
-                </label>
-                <select
-                  required
-                  value={formData.module}
-                  onChange={(e) =>
-                    setFormData({ ...formData, module: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">请选择模块</option>
-                  <option value="ERP">ERP</option>
-                  <option value="HRM">HRM</option>
-                  <option value="CRM">CRM</option>
-                  <option value="QMS">QMS</option>
-                  <option value="LIMS">LIMS</option>
-                  <option value="其他">其他</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                描述
-              </label>
-              <textarea
-                value={formData.description || ""}
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <FormControl size="small" required>
+              <InputLabel>分类 *</InputLabel>
+              <Select
+                value={formData.category_id || ""}
+                label="分类 *"
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, category_id: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                rows={2}
-                placeholder="请输入模板描述"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                模板内容 *
-              </label>
-              <textarea
-                required
-                value={formData.content}
+              >
+                <MenuItem value="">请选择分类</MenuItem>
+                {categories.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" required>
+              <InputLabel>所属模块 *</InputLabel>
+              <Select
+                value={formData.module}
+                label="所属模块 *"
                 onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
+                  setFormData({ ...formData, module: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
-                rows={10}
-                placeholder="请输入模板内容，使用 {{variable_name}} 格式定义变量"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                使用 {"{{variable_name}}"} 格式定义变量
-              </p>
-            </div>
-          </div>
-        </form>
+              >
+                <MenuItem value="">请选择模块</MenuItem>
+                <MenuItem value="ERP">ERP</MenuItem>
+                <MenuItem value="HRM">HRM</MenuItem>
+                <MenuItem value="CRM">CRM</MenuItem>
+                <MenuItem value="QMS">QMS</MenuItem>
+                <MenuItem value="LIMS">LIMS</MenuItem>
+                <MenuItem value="其他">其他</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-          >
-            取消
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            {template ? "保存" : "创建"}
-          </button>
-        </div>
-      </div>
-    </div>
+          <TextField
+            label="描述"
+            value={formData.description || ""}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            multiline
+            rows={2}
+            placeholder="请输入模板描述"
+            size="small"
+          />
+
+          <TextField
+            label="模板内容 *"
+            value={formData.content}
+            onChange={(e) =>
+              setFormData({ ...formData, content: e.target.value })
+            }
+            required
+            multiline
+            rows={10}
+            placeholder="请输入模板内容，使用 {{variable_name}} 格式定义变量"
+            size="small"
+            sx={{ fontFamily: "monospace" }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            使用 {"{{variable_name}}"} 格式定义变量
+          </Typography>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button variant="outlined" onClick={onClose}>
+          取消
+        </Button>
+        <Button variant="contained" onClick={handleSubmit}>
+          {template ? "保存" : "创建"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
@@ -649,72 +747,95 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   onClose,
 }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">模板预览</h3>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="mb-6">
-            <h4 className="text-xl font-bold text-gray-900 mb-2">
-              {template.name}
-            </h4>
-            <div className="flex items-center space-x-4 text-sm text-gray-500">
-              <span>编码：{template.code}</span>
-              <span>分类：{template.category_name || "未分类"}</span>
-              <span>模块：{template.module}</span>
-            </div>
-            {template.description && (
-              <p className="mt-2 text-gray-600">{template.description}</p>
-            )}
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <h5 className="font-semibold text-gray-900 mb-4">模板内容：</h5>
-            <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
-              {template.content}
-            </pre>
-          </div>
-
-          {template.variables && template.variables.length > 0 && (
-            <div className="mt-6">
-              <h5 className="font-semibold text-gray-900 mb-4">变量定义：</h5>
-              <div className="space-y-2">
-                {template.variables.map((variable, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg"
-                  >
-                    <span className="font-mono text-blue-600">
-                      {"{{"}
-                      {variable.key}
-                      {"}"}
-                    </span>
-                    <span className="text-gray-600">{variable.label}</span>
-                    <span className="text-xs px-2 py-1 bg-gray-200 rounded">
-                      {variable.type}
-                    </span>
-                    {variable.required && (
-                      <span className="text-xs text-red-600">必填</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+    <Dialog
+      open
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      PaperProps={{
+        sx: { maxHeight: "90vh" },
+      }}
+    >
+      <DialogTitle>模板预览</DialogTitle>
+      <DialogContent sx={{ overflowY: "auto" }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+            {template.name}
+          </Typography>
+          <Box sx={{ display: "flex", gap: 3, color: "text.secondary", fontSize: "0.875rem" }}>
+            <Typography variant="body2">编码：{template.code}</Typography>
+            <Typography variant="body2">分类：{template.category_name || "未分类"}</Typography>
+            <Typography variant="body2">模块：{template.module}</Typography>
+          </Box>
+          {template.description && (
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              {template.description}
+            </Typography>
           )}
-        </div>
+        </Box>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+        <Card sx={{ bgcolor: "grey.50", p: 2, mb: 3 }}>
+          <Typography sx={{ fontWeight: "semibold", mb: 1 }}>模板内容：</Typography>
+          <Box
+            component="pre"
+            sx={{
+              whiteSpace: "pre-wrap",
+              fontFamily: "monospace",
+              fontSize: "0.875rem",
+              color: "text.secondary",
+            }}
           >
-            关闭
-          </button>
-        </div>
-      </div>
-    </div>
+            {template.content}
+          </Box>
+        </Card>
+
+        {template.variables && template.variables.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography sx={{ fontWeight: "semibold", mb: 1 }}>变量定义：</Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {template.variables.map((variable, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 1.5,
+                    bgcolor: "grey.50",
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontFamily: "monospace",
+                      color: "primary.main",
+                    }}
+                  >
+                    {"{{"}
+                    {variable.key}
+                    {"}}"}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    {variable.label}
+                  </Typography>
+                  <Chip label={variable.type} size="small" sx={{ fontSize: "0.75rem" }} />
+                  {variable.required && (
+                    <Typography sx={{ color: "error.main", fontSize: "0.75rem" }}>
+                      必填
+                    </Typography>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button variant="outlined" onClick={onClose}>
+          关闭
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

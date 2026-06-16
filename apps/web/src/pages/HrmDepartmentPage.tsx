@@ -368,7 +368,7 @@ const HrmDepartmentPage: React.FC = () => {
     setFormData((prev) => ({ ...prev, code }));
   }, []);
 
-  const handleOpenAITextOptimizer = useCallback((mode: "create" | "edit") => {
+  const handleOpenAITextOptimizer = useCallback(() => {
     setShowAITextOptimizer(true);
   }, []);
 
@@ -376,7 +376,7 @@ const HrmDepartmentPage: React.FC = () => {
     setFormData((prev) => ({ ...prev, description: text }));
   }, []);
 
-  const handleOpenAIFormValidator = useCallback((mode: "create" | "edit") => {
+  const handleOpenAIFormValidator = useCallback(() => {
     setShowAIFormValidator(true);
   }, []);
 
@@ -530,6 +530,31 @@ const HrmDepartmentPage: React.FC = () => {
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* 面包屑导航 */}
+      <Box sx={{ mb: 2 }}>
+        <Typography
+          component="a"
+          href="/hrm"
+          sx={{
+            color: "text.secondary",
+            textDecoration: "none",
+            fontSize: "0.875rem",
+            "&:hover": { color: "primary.main", textDecoration: "underline" },
+          }}
+        >
+          人力资源
+        </Typography>
+        <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+          /
+        </Typography>
+        <Typography
+          component="span"
+          sx={{ color: "text.primary", fontSize: "0.875rem" }}
+        >
+          部门管理
+        </Typography>
+      </Box>
+
       {/* 页面标题 */}
       <Box
         sx={{
@@ -1232,7 +1257,7 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
             <AIHelperButton
               type="generate"
               onClick={() => onOpenAICodeGenerator(mode)}
-              size="sm"
+              size="small"
               label="AI生成"
             />
           </Box>
@@ -1300,8 +1325,8 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
             </InputLabel>
             <AIHelperButton
               type="optimize"
-              onClick={onOpenAITextOptimizer}
-              size="sm"
+              onClick={() => onOpenAITextOptimizer()}
+              size="small"
               label="AI优化"
             />
           </Box>
@@ -1329,8 +1354,8 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
         <DialogActions sx={{ p: 0, pt: 2, justifyContent: "space-between" }}>
           <AIHelperButton
             type="validate"
-            onClick={onOpenAIFormValidator}
-            size="sm"
+            onClick={() => onOpenAIFormValidator()}
+            size="small"
             label="AI校验"
           />
           <Box sx={{ display: "flex", gap: 1 }}>

@@ -13,9 +13,9 @@ const getNotificationIcon = (type: string) => {
   switch (type) {
     case "system":
       return (
-        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+        <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            className="w-5 h-5 text-blue-600"
+            style={{ width: 20, height: 20, color: "#2563eb" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -37,9 +37,9 @@ const getNotificationIcon = (type: string) => {
       );
     case "workflow":
       return (
-        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+        <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#f3e8ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            className="w-5 h-5 text-purple-600"
+            style={{ width: 20, height: 20, color: "#9333ea" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -55,9 +55,9 @@ const getNotificationIcon = (type: string) => {
       );
     case "alert":
       return (
-        <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+        <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#fee2e2", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            className="w-5 h-5 text-red-600"
+            style={{ width: 20, height: 20, color: "#dc2626" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -73,9 +73,9 @@ const getNotificationIcon = (type: string) => {
       );
     case "reminder":
       return (
-        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+        <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#fef9c3", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            className="w-5 h-5 text-yellow-600"
+            style={{ width: 20, height: 20, color: "#ca8a04" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -91,9 +91,9 @@ const getNotificationIcon = (type: string) => {
       );
     case "message":
       return (
-        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+        <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            className="w-5 h-5 text-green-600"
+            style={{ width: 20, height: 20, color: "#16a34a" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -109,9 +109,9 @@ const getNotificationIcon = (type: string) => {
       );
     default:
       return (
-        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+        <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            className="w-5 h-5 text-gray-600"
+            style={{ width: 20, height: 20, color: "#4b5563" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -129,10 +129,10 @@ const getNotificationIcon = (type: string) => {
 };
 
 const getPriorityColor = (priority: number) => {
-  if (priority >= 4) return "text-red-600";
-  if (priority >= 3) return "text-orange-600";
-  if (priority >= 2) return "text-yellow-600";
-  return "text-gray-600";
+  if (priority >= 4) return { color: "#dc2626" };
+  if (priority >= 3) return { color: "#ea580c" };
+  if (priority >= 2) return { color: "#ca8a04" };
+  return { color: "#4b5563" };
 };
 
 const getPriorityLabel = (priority: number) => {
@@ -206,38 +206,50 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
   return (
     <div
-      className={`relative p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-        !notification.is_read ? "bg-blue-50/50" : ""
-      } ${isDeleting ? "opacity-50" : ""}`}
+      style={{
+        position: "relative",
+        padding: 16,
+        backgroundColor: !notification.is_read ? "rgba(59, 130, 246, 0.05)" : undefined,
+        opacity: isDeleting ? 0.5 : 1,
+        cursor: "pointer",
+        transition: "background-color 0.15s",
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
-      <div className="flex gap-3">
+      <div style={{ display: "flex", gap: 12 }}>
         {getNotificationIcon(notification.notification_type)}
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
             <h4
-              className={`text-sm font-medium truncate ${!notification.is_read ? "text-gray-900" : "text-gray-700"}`}
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                color: !notification.is_read ? "#111827" : "#374151",
+              }}
             >
               {notification.title}
             </h4>
             {!notification.is_read && (
-              <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />
+              <span style={{ width: 8, height: 8, backgroundColor: "#3b82f6", borderRadius: "9999px", flexShrink: 0, marginTop: 6 }} />
             )}
           </div>
 
-          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+          <p style={{ fontSize: 14, color: "#4b5563", marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
             {notification.content}
           </p>
 
-          <div className="flex items-center gap-3 text-xs">
-            <span className="text-gray-500">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12, color: "#6b7280" }}>
+            <span>
               {formatTime(notification.created_at)}
             </span>
             <span
-              className={`font-medium ${getPriorityColor(notification.priority)}`}
+              style={{ fontWeight: 500, ...getPriorityColor(notification.priority) }}
             >
               {getPriorityLabel(notification.priority)}
             </span>
@@ -246,22 +258,22 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       </div>
 
       {isHovered && (
-        <div className="absolute top-2 right-2 flex gap-1">
+        <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
           {!notification.is_read && (
             <button
               onClick={handleMarkAsRead}
-              className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
               title="标记已读"
             >
-              <Check className="w-4 h-4" />
+              <Check style={{ width: 16, height: 16 }} />
             </button>
           )}
           <button
             onClick={handleDelete}
-            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
             title="删除"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 style={{ width: 16, height: 16 }} />
           </button>
           {getLink(notification) && (
             <button
@@ -269,10 +281,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 e.stopPropagation();
                 window.location.href = getLink(notification)!;
               }}
-              className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
               title="查看详情"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink style={{ width: 16, height: 16 }} />
             </button>
           )}
         </div>

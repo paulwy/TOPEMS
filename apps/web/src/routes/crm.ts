@@ -1,10 +1,10 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
 import type { RouteConfig } from "./utils";
 import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const CRMPage = lazy(() => import("../pages/CRMPage"));
 const CRMDashboardPage = lazy(() => import("../pages/CRMDashboardPage"));
 const CustomerManagementPage = lazy(
   () => import("../pages/CustomerManagementPage"),
@@ -24,12 +24,13 @@ const CRMCustomerScoringPage = lazy(
 const CRMSalesForecastPage = lazy(
   () => import("../pages/CRMSalesForecastPage"),
 );
+const CRMBillingPage = lazy(() => import("../pages/CRMBillingPage"));
 const CustomerDetailPage = lazy(() => import("../pages/CustomerDetailPage"));
 
 export const crmRoutes: RouteConfig[] = [
   {
     path: "/crm",
-    element: CRMPage,
+    element: React.createElement(Navigate, { to: "/crm/dashboard", replace: true }),
     requiredPermissions: ["crm:read"],
     module: "crm",
     action: "read",
@@ -79,6 +80,13 @@ export const crmRoutes: RouteConfig[] = [
   {
     path: "/crm/forecast",
     element: CRMSalesForecastPage,
+    requiredPermissions: ["crm:read"],
+    module: "crm",
+    action: "read",
+  },
+  {
+    path: "/crm/billing",
+    element: CRMBillingPage,
     requiredPermissions: ["crm:read"],
     module: "crm",
     action: "read",

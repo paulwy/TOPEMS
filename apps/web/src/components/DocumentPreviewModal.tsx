@@ -47,7 +47,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           const imgUrl = await docApi.preview(fileId);
           const img = document.createElement("img");
           img.src = imgUrl;
-          img.className = "max-w-full max-h-[80vh] mx-auto";
+          img.style.maxWidth = "100%";
+          img.style.maxHeight = "80vh";
+          img.style.margin = "auto";
           img.alt = fileName;
           container.appendChild(img);
         } else if (contentType.includes("application/pdf")) {
@@ -58,7 +60,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           blobUrlRef.current = blobUrl;
           const iframe = document.createElement("iframe");
           iframe.src = blobUrl;
-          iframe.className = "w-full h-[80vh] border-0";
+          iframe.style.width = "100%";
+          iframe.style.height = "80vh";
+          iframe.style.border = "0";
           iframe.onload = () => {
             console.log("PDF iframe loaded");
           };
@@ -110,8 +114,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           console.log("获取到文本内容，长度:", text.length);
           const pre = document.createElement("pre");
           pre.textContent = text;
-          pre.className =
-            "whitespace-pre-wrap p-4 bg-gray-50 rounded overflow-auto max-h-[80vh] font-mono text-sm";
+          pre.style.whiteSpace = "pre-wrap";
+          pre.style.padding = "16px";
+          pre.style.backgroundColor = "#f9fafb";
+          pre.style.borderRadius = "8px";
+          pre.style.overflow = "auto";
+          pre.style.maxHeight = "80vh";
+          pre.style.fontFamily = "monospace";
+          pre.style.fontSize = "14px";
           container.appendChild(pre);
         } else {
           console.log("不支持的文件类型");
@@ -153,41 +163,41 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}>
+      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", width: "100%", maxWidth: "1024px", maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <FileText className="w-6 h-6 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900 truncate">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <FileText sx={{ width: 24, height: 24, color: "#2563eb" }} />
+            <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {fileName}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            style={{ padding: "8px", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X sx={{ width: 20, height: 20, color: "#6b7280" }} />
           </button>
         </div>
 
         {/* 内容区域 */}
-        <div className="flex-1 overflow-auto bg-gray-50 relative">
+        <div style={{ flex: 1, overflow: "auto", backgroundColor: "#f9fafb", position: "relative" }}>
           {/* 加载和错误状态使用绝对定位 */}
           {loading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10">
-              <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
-              <p className="text-gray-600">正在加载文档...</p>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.8)", zIndex: 10 }}>
+              <Loader2 sx={{ width: 40, height: 40, color: "#2563eb", animation: "spin 1s linear infinite", marginBottom: "12px" }} />
+              <p style={{ color: "#6b7280" }}>正在加载文档...</p>
             </div>
           )}
 
           {error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-80 z-10">
-              <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
-              <p className="text-red-600 mb-4">{error}</p>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.8)", zIndex: 10 }}>
+              <AlertCircle sx={{ width: 40, height: 40, color: "#ef4444", marginBottom: "12px" }} />
+              <p style={{ color: "#dc2626", marginBottom: "16px" }}>{error}</p>
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                style={{ padding: "8px 16px", backgroundColor: "#e5e7eb", color: "#374151", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.2s" }}
               >
                 关闭
               </button>
@@ -195,14 +205,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           )}
 
           {/* 容器始终渲染和显示 */}
-          <div ref={containerRef} className="p-4 min-h-[80vh]" />
+          <div ref={containerRef} style={{ padding: "16px", minHeight: "80vh" }} />
         </div>
 
         {/* 底部操作栏 */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div style={{ padding: "16px", borderTop: "1px solid #e5e7eb", backgroundColor: "#f9fafb" }}>
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            style={{ width: "100%", padding: "8px 16px", backgroundColor: "#e5e7eb", color: "#374151", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.2s" }}
           >
             关闭
           </button>

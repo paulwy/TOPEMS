@@ -217,6 +217,31 @@ const LeaveManagementPage: React.FC = () => {
         onClose={hideNotification}
       />
       <Box sx={{ p: 3 }}>
+        {/* 面包屑导航 */}
+        <Box sx={{ mb: 2 }}>
+          <Typography
+            component="a"
+            href="/hrm"
+            sx={{
+              color: "text.secondary",
+              textDecoration: "none",
+              fontSize: "0.875rem",
+              "&:hover": { color: "primary.main", textDecoration: "underline" },
+            }}
+          >
+            人力资源
+          </Typography>
+          <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+            /
+          </Typography>
+          <Typography
+            component="span"
+            sx={{ color: "text.primary", fontSize: "0.875rem" }}
+          >
+            休假管理
+          </Typography>
+        </Box>
+
         <Box
           sx={{
             display: "flex",
@@ -541,7 +566,7 @@ const LeaveManagementPage: React.FC = () => {
                     handleInputChange("start_date", e.target.value)
                   }
                   fullWidth
-                  LabelProps={{ shrink: true }}
+                  InputLabelProps={{ shrink: true }}
                 />
                 <TextField
                   type="date"
@@ -551,7 +576,7 @@ const LeaveManagementPage: React.FC = () => {
                     handleInputChange("end_date", e.target.value)
                   }
                   fullWidth
-                  LabelProps={{ shrink: true }}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Box>
               <TextField

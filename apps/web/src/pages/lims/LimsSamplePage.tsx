@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
+import { PageHeader } from "../../components/templates";
 
 interface Sample {
   id: string;
@@ -268,78 +269,34 @@ const LimsSamplePage: React.FC = () => {
         background: "linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)",
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background: "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FlaskConical sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 700, color: "slate.900", fontSize: "1.25rem" }}
-                >
-                  样品管理
-                </Typography>
-                <Typography variant="caption" sx={{ color: "slate.500", fontSize: "0.75rem" }}>
-                  Sample Management
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                variant="outlined"
-                startIcon={<Upload style={{ width: 18, height: 18 }} />}
-              >
-                导入
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Download style={{ width: 18, height: 18 }} />}
-              >
-                导出
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<Plus style={{ width: 18, height: 18 }} />}
-                onClick={handleCreate}
-                sx={{ bgcolor: "#06b6d4", "&:hover": { bgcolor: "#0891b2" } }}
-              >
-                样品登记
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+      <PageHeader
+        title="样品管理"
+        subtitle="Sample Management"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "LIMS" },
+          { label: "样品管理" },
+        ]}
+        backButton={{ onClick: () => navigate("/dashboard") }}
+        actions={[
+          {
+            label: "导入",
+            icon: <Upload style={{ width: 18, height: 18 }} />,
+            variant: "outlined",
+          },
+          {
+            label: "导出",
+            icon: <Download style={{ width: 18, height: 18 }} />,
+            variant: "outlined",
+          },
+          {
+            label: "样品登记",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+      />
 
       <Box
         component="main"

@@ -87,30 +87,30 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       : notifications;
 
   return (
-    <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-50">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">通知中心</h3>
-        <div className="flex items-center gap-2">
+    <div style={{ position: "absolute", right: 0, top: "100%", marginTop: 8, width: 384, backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", border: "1px solid #e5e7eb", zIndex: 50 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottom: "1px solid #e5e7eb" }}>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: "#111827" }}>通知中心</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
             title="通知设置"
           >
-            <Settings className="w-5 h-5" />
+            <Settings style={{ width: 20, height: 20 }} />
           </button>
           <button
             onClick={fetchNotifications}
-            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
             title="刷新"
           >
-            <RefreshCw className="w-5 h-5" />
+            <RefreshCw style={{ width: 20, height: 20 }} />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
           >
             <svg
-              className="w-5 h-5"
+              style={{ width: 20, height: 20 }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -128,28 +128,43 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
       {showSettings && <NotificationSettings />}
 
-      <div className="flex border-b border-gray-200">
+      <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
         <button
           onClick={() => setActiveTab("all")}
-          className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
-            activeTab === "all"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
+          style={{
+            flex: 1,
+            padding: "10px 16px",
+            fontSize: 14,
+            fontWeight: 500,
+            transition: "all 0.15s",
+            backgroundColor: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: activeTab === "all" ? "#2563eb" : "#4b5563",
+            borderBottom: activeTab === "all" ? "2px solid #2563eb" : "2px solid transparent",
+          }}
         >
           全部通知
         </button>
         <button
           onClick={() => setActiveTab("unread")}
-          className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors relative ${
-            activeTab === "unread"
-              ? "text-blue-600 border-b-2 border-blue-600"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
+          style={{
+            flex: 1,
+            padding: "10px 16px",
+            fontSize: 14,
+            fontWeight: 500,
+            transition: "all 0.15s",
+            backgroundColor: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: activeTab === "unread" ? "#2563eb" : "#4b5563",
+            borderBottom: activeTab === "unread" ? "2px solid #2563eb" : "2px solid transparent",
+            position: "relative",
+          }}
         >
           未读通知
           {totalUnread > 0 && (
-            <span className="ml-1.5 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
+            <span style={{ marginLeft: 6, backgroundColor: "#ef4444", color: "#ffffff", fontSize: 12, borderRadius: 9999, padding: "2px 6px" }}>
               {totalUnread}
             </span>
           )}
@@ -157,26 +172,26 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       </div>
 
       {totalUnread > 0 && !showSettings && (
-        <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
+        <div style={{ padding: "8px 16px", backgroundColor: "#eff6ff", borderBottom: "1px solid #dbeafe" }}>
           <button
             onClick={handleMarkAllAsRead}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#2563eb", fontWeight: 500, backgroundColor: "transparent", border: "none", cursor: "pointer" }}
           >
-            <Check className="w-4 h-4" />
+            <Check style={{ width: 16, height: 16 }} />
             全部标记为已读
           </button>
         </div>
       )}
 
-      <div className="max-h-[400px] overflow-y-auto">
+      <div style={{ maxHeight: 400, overflowY: "auto" }}>
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 48 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "9999px", border: "2px solid #e5e7eb", borderTopColor: "#2563eb", animation: "spin 1s linear infinite" }} />
           </div>
         ) : displayedNotifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, color: "#6b7280" }}>
             <svg
-              className="w-16 h-16 mb-4 text-gray-300"
+              style={{ width: 64, height: 64, marginBottom: 16, color: "#d1d5db" }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -188,12 +203,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
               />
             </svg>
-            <p className="text-sm">
+            <p style={{ fontSize: 14 }}>
               {activeTab === "unread" ? "暂无未读通知" : "暂无通知"}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div style={{ borderTop: "1px solid #f3f4f6" }}>
             {displayedNotifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
@@ -207,10 +222,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       </div>
 
       {displayedNotifications.length > 0 && (
-        <div className="p-3 border-t border-gray-200 bg-gray-50">
+        <div style={{ padding: 12, borderTop: "1px solid #e5e7eb", backgroundColor: "#f9fafb" }}>
           <a
             href="/notifications"
-            className="block text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+            style={{ display: "block", textAlign: "center", fontSize: 14, color: "#2563eb", fontWeight: 500 }}
           >
             查看全部通知
           </a>

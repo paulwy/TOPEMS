@@ -222,38 +222,38 @@ const PerformanceMonitor: React.FC = () => {
   return (
     <>
       {isVisible && (
-        <div className="fixed bottom-4 right-4 z-50 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-slate-900">性能监控</h3>
+        <div style={{ position: "fixed", bottom: "16px", right: "16px", zIndex: 50, width: "384px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", border: "1px solid #e2e8f0", padding: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Activity sx={{ width: 20, height: 20, color: "#2563eb" }} />
+              <h3 style={{ fontWeight: 600, color: "#0f172a" }}>性能监控</h3>
             </div>
             <button
               onClick={() => setIsVisible(false)}
-              className="text-slate-400 hover:text-slate-600"
+              style={{ color: "#94a3b8", "&:hover": { color: "#475569" } }}
             >
-              <X className="w-5 h-5" />
+              <X sx={{ width: 20, height: 20 }} />
             </button>
           </div>
 
-          <div className="flex items-center justify-center mb-4 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
-            <div className="text-center">
-              <div className={`text-4xl font-bold ${getScoreColor()}`}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", padding: "16px", background: "linear-gradient(to bottom right, #eff6ff, #faf5ff)", borderRadius: "12px" }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "36px", fontWeight: 700, ...(getScoreColor() === "text-green-500" ? { color: "#22c55e" } : getScoreColor() === "text-yellow-500" ? { color: "#eab308" } : { color: "#ef4444" }) }}>
                 {getPerformanceScore()}
               </div>
-              <div className="text-sm text-slate-500 mt-1">性能评分</div>
+              <div style={{ fontSize: "14px", color: "#64748b", marginTop: "4px" }}>性能评分</div>
             </div>
           </div>
 
           {performanceIssues.length > 0 && (
-            <div className="mb-4 p-3 bg-red-50 rounded-lg">
-              <div className="flex items-center gap-2 text-red-600 text-sm">
-                <AlertTriangle className="w-4 h-4" />
+            <div style={{ marginBottom: "16px", padding: "12px", backgroundColor: "#fef2f2", borderRadius: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#dc2626", fontSize: "14px" }}>
+                <AlertTriangle sx={{ width: 16, height: 16 }} />
                 <span>检测到 {performanceIssues.length} 个性能问题</span>
               </div>
-              <ul className="mt-2 space-y-1 max-h-24 overflow-y-auto">
+              <ul style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px", maxHeight: "96px", overflowY: "auto" }}>
                 {performanceIssues.map((issue, index) => (
-                  <li key={index} className="text-xs text-red-500 ml-6">
+                  <li key={index} style={{ fontSize: "12px", color: "#ef4444", marginLeft: "24px" }}>
                     • {issue}
                   </li>
                 ))}
@@ -261,133 +261,93 @@ const PerformanceMonitor: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="flex items-center gap-2">
-              <Zap
-                className={`w-4 h-4 ${getStatusColor(metrics.fps, [45, 55])}`}
-              />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Zap sx={{ width: 16, height: 16, color: getStatusColor(metrics.fps, [45, 55]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.fps, [45, 55]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
               <div>
-                <div className="text-xs text-slate-500">帧率</div>
-                <div
-                  className={`text-sm font-medium ${getStatusColor(
-                    metrics.fps,
-                    [45, 55],
-                  )}`}
-                >
+                <div style={{ fontSize: "12px", color: "#64748b" }}>帧率</div>
+                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.fps, [45, 55]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.fps, [45, 55]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
                   {metrics.fps} FPS
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Activity
-                className={`w-4 h-4 ${getStatusColor(metrics.cpu, [20, 50])}`}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Activity sx={{ width: 16, height: 16, color: getStatusColor(metrics.cpu, [20, 50]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.cpu, [20, 50]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
               <div>
-                <div className="text-xs text-slate-500">CPU</div>
-                <div
-                  className={`text-sm font-medium ${getStatusColor(
-                    metrics.cpu,
-                    [20, 50],
-                  )}`}
-                >
+                <div style={{ fontSize: "12px", color: "#64748b" }}>CPU</div>
+                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.cpu, [20, 50]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.cpu, [20, 50]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
                   {metrics.cpu}%
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock
-                className={`w-4 h-4 ${getStatusColor(
-                  metrics.networkLatency,
-                  [200, 500],
-                )}`}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Clock sx={{ width: 16, height: 16, color: getStatusColor(metrics.networkLatency, [200, 500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.networkLatency, [200, 500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
               <div>
-                <div className="text-xs text-slate-500">网络延迟</div>
-                <div
-                  className={`text-sm font-medium ${getStatusColor(
-                    metrics.networkLatency,
-                    [200, 500],
-                  )}`}
-                >
+                <div style={{ fontSize: "12px", color: "#64748b" }}>网络延迟</div>
+                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.networkLatency, [200, 500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.networkLatency, [200, 500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
                   {metrics.networkLatency}ms
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <TrendingUp
-                className={`w-4 h-4 ${getStatusColor(metrics.lcp, [1200, 2500])}`}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <TrendingUp sx={{ width: 16, height: 16, color: getStatusColor(metrics.lcp, [1200, 2500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.lcp, [1200, 2500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
               <div>
-                <div className="text-xs text-slate-500">LCP</div>
-                <div
-                  className={`text-sm font-medium ${getStatusColor(
-                    metrics.lcp,
-                    [1200, 2500],
-                  )}`}
-                >
+                <div style={{ fontSize: "12px", color: "#64748b" }}>LCP</div>
+                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.lcp, [1200, 2500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.lcp, [1200, 2500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
                   {metrics.lcp}ms
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-3 mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <History className="w-4 h-4 text-slate-500" />
-              <span className="text-xs text-slate-500">实时趋势</span>
+          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "12px", marginBottom: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <History sx={{ width: 16, height: 16, color: "#64748b" }} />
+              <span style={{ fontSize: "12px", color: "#64748b" }}>实时趋势</span>
             </div>
-            <div className="flex items-end gap-1 h-8">
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "32px" }}>
               {history.map((item, index) => (
                 <div
                   key={index}
-                  className="flex-1 rounded-t transition-all"
-                  style={{
-                    height: `${(item.metrics.fps / 60) * 100}%`,
-                    backgroundColor:
-                      item.metrics.fps >= 45
-                        ? "#22c55e"
-                        : item.metrics.fps >= 30
-                          ? "#eab308"
-                          : "#ef4444",
-                  }}
+                  style={{ flex: 1, borderRadius: "4px 4px 0 0", transition: "all 0.2s", height: `${(item.metrics.fps / 60) * 100}%`, backgroundColor: item.metrics.fps >= 45 ? "#22c55e" : item.metrics.fps >= 30 ? "#eab308" : "#ef4444" }}
                   title={`${item.metrics.fps} FPS`}
                 />
               ))}
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div style={{ display: "flex", gap: "8px" }}>
             <Button
               onClick={handleManualReport}
               disabled={isReporting}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm"
+              sx={{ flex: 1, backgroundColor: "#2563eb", color: "#ffffff", fontSize: "14px", "&:hover": { backgroundColor: "#1d4ed8" } }}
             >
-              <Send className="w-4 h-4 mr-2" />
+              <Send sx={{ width: 16, height: 16, marginRight: "8px" }} />
               {isReporting ? "上报中..." : "上报数据"}
             </Button>
             {reportStatus === "success" && (
-              <CheckCircle className="w-5 h-5 text-green-500 self-center" />
+              <CheckCircle sx={{ width: 20, height: 20, color: "#22c55e", alignSelf: "center" }} />
             )}
             {reportStatus === "error" && (
-              <AlertTriangle className="w-5 h-5 text-red-500 self-center" />
+              <AlertTriangle sx={{ width: 20, height: 20, color: "#ef4444", alignSelf: "center" }} />
             )}
           </div>
 
-          <div className="mt-3 pt-3 border-t border-slate-100">
-            <div className="grid grid-cols-3 gap-2 text-xs text-slate-500">
+          <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", fontSize: "12px", color: "#64748b" }}>
               <div>
                 <div>FCP</div>
-                <div className="font-medium text-slate-700">
+                <div style={{ fontWeight: 500, color: "#475569" }}>
                   {metrics.fcp}ms
                 </div>
               </div>
               <div>
                 <div>CLS</div>
-                <div className="font-medium text-slate-700">{metrics.cls}</div>
+                <div style={{ fontWeight: 500, color: "#475569" }}>{metrics.cls}</div>
               </div>
               <div>
                 <div>FID</div>
-                <div className="font-medium text-slate-700">
+                <div style={{ fontWeight: 500, color: "#475569" }}>
                   {metrics.fid}ms
                 </div>
               </div>
@@ -398,20 +358,28 @@ const PerformanceMonitor: React.FC = () => {
 
       <button
         onClick={() => setIsVisible(!isVisible)}
-        className={`fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
-          isVisible
-            ? "bg-blue-600 text-white"
-            : performanceIssues.length > 0
-              ? "bg-red-500 text-white animate-pulse"
-              : "bg-slate-700 text-white hover:bg-slate-600"
-        }`}
-        title={
-          performanceIssues.length > 0
-            ? `检测到 ${performanceIssues.length} 个性能问题`
-            : "打开性能监控"
-        }
+        style={{
+          position: "fixed",
+          bottom: "16px",
+          right: "16px",
+          zIndex: 40,
+          width: "56px",
+          height: "56px",
+          borderRadius: "9999px",
+          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "all 0.2s",
+          backgroundColor: isVisible ? "#2563eb" : performanceIssues.length > 0 ? "#ef4444" : "#334155",
+          color: "#ffffff",
+          animation: performanceIssues.length > 0 && !isVisible ? "pulse 2s infinite" : "none",
+          cursor: "pointer",
+          border: "none"
+        }}
+        title={performanceIssues.length > 0 ? `检测到 ${performanceIssues.length} 个性能问题` : "打开性能监控"}
       >
-        <Activity className="w-6 h-6" />
+        <Activity sx={{ width: 24, height: 24 }} />
       </button>
     </>
   );

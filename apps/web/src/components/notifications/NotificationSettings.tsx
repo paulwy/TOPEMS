@@ -13,82 +13,127 @@ const NotificationSettings: React.FC = () => {
   } = useNotificationSettings();
 
   return (
-    <div className="p-4 bg-white border-b border-gray-200">
-      <h4 className="text-sm font-medium text-gray-900 mb-4">通知设置</h4>
+    <div style={{ padding: 16, backgroundColor: "#ffffff", borderBottom: "1px solid #e5e7eb" }}>
+      <h4 style={{ fontSize: 14, fontWeight: 500, color: "#111827", marginBottom: 16 }}>通知设置</h4>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Monitor className="w-4 h-4 text-gray-600" />
-            <span className="text-sm text-gray-700">桌面通知</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Monitor style={{ width: 16, height: 16, color: "#4b5563" }} />
+            <span style={{ fontSize: 14, color: "#374151" }}>桌面通知</span>
           </div>
           <button
             onClick={() => toggleSetting("enableDesktop")}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.enableDesktop ? "bg-blue-600" : "bg-gray-200"
-            }`}
+            style={{
+              position: "relative",
+              display: "inline-flex",
+              height: 24,
+              width: 44,
+              alignItems: "center",
+              borderRadius: 9999,
+              transition: "background-color 0.15s",
+              backgroundColor: settings.enableDesktop ? "#2563eb" : "#e5e7eb",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                settings.enableDesktop ? "translate-x-6" : "translate-x-1"
-              }`}
+              style={{
+                display: "inline-block",
+                height: 16,
+                width: 16,
+                borderRadius: "9999px",
+                backgroundColor: "#ffffff",
+                transition: "transform 0.15s",
+                transform: settings.enableDesktop ? "translateX(20px)" : "translateX(4px)",
+              }}
             />
           </button>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {settings.enableSound ? (
-              <Volume2 className="w-4 h-4 text-gray-600" />
+              <Volume2 style={{ width: 16, height: 16, color: "#4b5563" }} />
             ) : (
-              <VolumeX className="w-4 h-4 text-gray-600" />
+              <VolumeX style={{ width: 16, height: 16, color: "#4b5563" }} />
             )}
-            <span className="text-sm text-gray-700">声音提示</span>
+            <span style={{ fontSize: 14, color: "#374151" }}>声音提示</span>
           </div>
           <button
             onClick={() => toggleSetting("enableSound")}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.enableSound ? "bg-blue-600" : "bg-gray-200"
-            }`}
+            style={{
+              position: "relative",
+              display: "inline-flex",
+              height: 24,
+              width: 44,
+              alignItems: "center",
+              borderRadius: 9999,
+              transition: "background-color 0.15s",
+              backgroundColor: settings.enableSound ? "#2563eb" : "#e5e7eb",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                settings.enableSound ? "translate-x-6" : "translate-x-1"
-              }`}
+              style={{
+                display: "inline-block",
+                height: 16,
+                width: 16,
+                borderRadius: "9999px",
+                backgroundColor: "#ffffff",
+                transition: "transform 0.15s",
+                transform: settings.enableSound ? "translateX(20px)" : "translateX(4px)",
+              }}
             />
           </button>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-gray-600" />
-            <span className="text-sm text-gray-700">移动推送</span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "spaceBetween" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Smartphone style={{ width: 16, height: 16, color: "#4b5563" }} />
+            <span style={{ fontSize: 14, color: "#374151" }}>移动推送</span>
           </div>
           <button
             onClick={() => toggleSetting("enableMobilePush")}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.enableMobilePush ? "bg-blue-600" : "bg-gray-200"
-            }`}
+            style={{
+              position: "relative",
+              display: "inline-flex",
+              height: 24,
+              width: 44,
+              alignItems: "center",
+              borderRadius: 9999,
+              transition: "background-color 0.15s",
+              backgroundColor: settings.enableMobilePush ? "#2563eb" : "#e5e7eb",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                settings.enableMobilePush ? "translate-x-6" : "translate-x-1"
-              }`}
+              style={{
+                display: "inline-block",
+                height: 16,
+                width: 16,
+                borderRadius: "9999px",
+                backgroundColor: "#ffffff",
+                transition: "transform 0.15s",
+                transform: settings.enableMobilePush ? "translateX(20px)" : "translateX(4px)",
+              }}
             />
           </button>
         </div>
 
-        <div className="pt-3 border-t border-gray-200">
-          <h5 className="text-xs font-medium text-gray-700 mb-3">通知类型</h5>
-          <div className="space-y-2">
+        <div style={{ paddingTop: 12, borderTop: "1px solid #e5e7eb" }}>
+          <h5 style={{ fontSize: 12, fontWeight: 500, color: "#374151", marginBottom: 12 }}>通知类型</h5>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {(
               Object.entries(settings.types) as [
                 keyof NotificationSettingsData["types"],
                 boolean,
               ][]
             ).map(([type, enabled]) => (
-              <div key={type} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">
+              <div key={type} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 14, color: "#4b5563" }}>
                   {type === "system" && "系统通知"}
                   {type === "workflow" && "审批通知"}
                   {type === "reminder" && "提醒通知"}
@@ -97,14 +142,29 @@ const NotificationSettings: React.FC = () => {
                 </span>
                 <button
                   onClick={() => toggleNotificationType(type)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                    enabled ? "bg-blue-600" : "bg-gray-200"
-                  }`}
+                  style={{
+                    position: "relative",
+                    display: "inline-flex",
+                    height: 20,
+                    width: 36,
+                    alignItems: "center",
+                    borderRadius: 9999,
+                    transition: "background-color 0.15s",
+                    backgroundColor: enabled ? "#2563eb" : "#e5e7eb",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
                 >
                   <span
-                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                      enabled ? "translate-x-5" : "translate-x-1"
-                    }`}
+                    style={{
+                      display: "inline-block",
+                      height: 12,
+                      width: 12,
+                      borderRadius: "9999px",
+                      backgroundColor: "#ffffff",
+                      transition: "transform 0.15s",
+                      transform: enabled ? "translateX(16px)" : "translateX(4px)",
+                    }}
                   />
                 </button>
               </div>
@@ -112,41 +172,56 @@ const NotificationSettings: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-3 border-t border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-gray-700">
+        <div style={{ paddingTop: 12, borderTop: "1px solid #e5e7eb" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <span style={{ fontSize: 12, fontWeight: 500, color: "#374151" }}>
               免打扰时段
             </span>
             <button
               onClick={toggleQuietHours}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                settings.quietHours.enabled ? "bg-blue-600" : "bg-gray-200"
-              }`}
+              style={{
+                position: "relative",
+                display: "inline-flex",
+                height: 20,
+                width: 36,
+                alignItems: "center",
+                borderRadius: 9999,
+                transition: "background-color 0.15s",
+                backgroundColor: settings.quietHours.enabled ? "#2563eb" : "#e5e7eb",
+                border: "none",
+                cursor: "pointer",
+              }}
             >
               <span
-                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                  settings.quietHours.enabled
-                    ? "translate-x-5"
-                    : "translate-x-1"
-                }`}
+                style={{
+                  display: "inline-block",
+                  height: 12,
+                  width: 12,
+                  borderRadius: "9999px",
+                  backgroundColor: "#ffffff",
+                  transition: "transform 0.15s",
+                  transform: settings.quietHours.enabled
+                    ? "translateX(16px)"
+                    : "translateX(4px)",
+                }}
               />
             </button>
           </div>
 
           {settings.quietHours.enabled && (
-            <div className="flex items-center gap-2">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
                 type="time"
                 value={settings.quietHours.start}
                 onChange={(e) => updateQuietHours("start", e.target.value)}
-                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ flex: 1, padding: "4px 8px", fontSize: 12, border: "1px solid #d1d5db", borderRadius: 4, outline: "none" }}
               />
-              <span className="text-xs text-gray-500">至</span>
+              <span style={{ fontSize: 12, color: "#6b7280" }}>至</span>
               <input
                 type="time"
                 value={settings.quietHours.end}
                 onChange={(e) => updateQuietHours("end", e.target.value)}
-                className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                style={{ flex: 1, padding: "4px 8px", fontSize: 12, border: "1px solid #d1d5db", borderRadius: 4, outline: "none" }}
               />
             </div>
           )}

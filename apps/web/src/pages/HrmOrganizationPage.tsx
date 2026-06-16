@@ -16,6 +16,7 @@ import {
   MenuItem,
   Tooltip,
   Box,
+  Stack,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -40,7 +41,6 @@ import {
   type Employee,
 } from "../api/hrm";
 import { useAppStore } from "../store";
-import { HrmLayout } from "../components/HrmLayout";
 import { AIHelperButton, AICodeGenerator } from "../components/ai";
 
 interface OrganizationNode {
@@ -537,8 +537,63 @@ const HrmOrganizationPage: React.FC = () => {
   }, [selectedNode, departments, deptFormData.id]);
 
   return (
-    <HrmLayout>
-      <Box sx={{ display: "flex", height: "calc(100vh - 72px)" }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      {/* 页面头部 */}
+      <Box
+        sx={{
+          bgcolor: "white",
+          borderBottom: 1,
+          borderColor: "divider",
+          boxShadow: 1,
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+          {/* 面包屑导航 */}
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              component="a"
+              href="/hrm"
+              sx={{
+                color: "text.secondary",
+                textDecoration: "none",
+                fontSize: "0.875rem",
+                "&:hover": { color: "primary.main", textDecoration: "underline" },
+              }}
+            >
+              人力资源
+            </Typography>
+            <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+              /
+            </Typography>
+            <Typography
+              component="span"
+              sx={{ color: "text.primary", fontSize: "0.875rem" }}
+            >
+              组织架构
+            </Typography>
+          </Box>
+
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "grey.900" }}
+              >
+                组织架构
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+                管理企业组织架构和部门信息
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* 内容区域 */}
+      <Box sx={{ display: "flex", height: "calc(100vh - 120px)" }}>
         <Box
           sx={{
             width: 320,
@@ -1046,9 +1101,9 @@ const HrmOrganizationPage: React.FC = () => {
                 <AIHelperButton
                   type="generate"
                   onClick={() => setShowAICodeGenerator(true)}
-                  size="sm"
+                  size="small"
                   label="AI生成"
-                  variant="default"
+                  variant="text"
                 />
               </Box>
             </Box>
@@ -1152,7 +1207,7 @@ const HrmOrganizationPage: React.FC = () => {
           departments.map((d) => d.code).filter(Boolean) as string[]
         }
       />
-    </HrmLayout>
+    </Box>
   );
 };
 

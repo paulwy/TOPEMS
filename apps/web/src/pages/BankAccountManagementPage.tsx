@@ -148,7 +148,7 @@ export default function BankAccountManagementPage() {
       accessorKey: "account_number",
       cell: ({ row }: { row: BankAccount }) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <CreditCard className="w-4 h-4 text-gray-400" />
+          <CreditCard sx={{ width: 16, height: 16, color: "grey.400" }} />
           <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
             {row.account_number}
           </Typography>
@@ -232,21 +232,21 @@ export default function BankAccountManagementPage() {
       cell: ({ row }: { row: BankAccount }) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <IconButton
-            size="small"
-            onClick={() => {
-              setSelectedAccount(row);
-              setIsEditing(true);
-            }}
-          >
-            <Edit className="w-4 h-4" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => setDeletingId(row.id)}
-          >
-            <Trash2 className="w-4 h-4" />
-          </IconButton>
+              size="small"
+              onClick={() => {
+                setSelectedAccount(row);
+                setIsEditing(true);
+              }}
+            >
+              <Edit sx={{ width: 16, height: 16 }} />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => setDeletingId(row.id)}
+            >
+              <Trash2 sx={{ width: 16, height: 16 }} />
+            </IconButton>
         </Box>
       ),
     },
@@ -304,7 +304,7 @@ export default function BankAccountManagementPage() {
                 justifyContent: "center",
               }}
             >
-              <Building2 className="w-6 h-6 text-white" />
+              <Building2 sx={{ width: 24, height: 24, color: "white" }} />
             </Box>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: "bold" }}>
@@ -318,7 +318,7 @@ export default function BankAccountManagementPage() {
           <Button
             variant="contained"
             size="small"
-            startIcon={<Plus className="w-4 h-4" />}
+            startIcon={<Plus sx={{ width: 16, height: 16 }} />}
             onClick={() => {
               setSelectedAccount(null);
               setIsCreating(true);
@@ -408,7 +408,7 @@ export default function BankAccountManagementPage() {
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <Search className="w-4 h-4 text-gray-400" />
+                        <Search sx={{ width: 16, height: 16, color: "grey.400" }} />
                       </InputAdornment>
                     ),
                   },

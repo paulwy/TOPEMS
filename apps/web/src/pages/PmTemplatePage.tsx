@@ -1,14 +1,7 @@
 import React, { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Input } from "../components/ui/input";
+import { Button, Card, CardContent, CardHeader, TextField, InputAdornment, Typography, Box } from "@mui/material";
 import type { ProjectTemplate } from "../components/pm/ProjectTemplateCard";
 import ProjectTemplateCard from "../components/pm/ProjectTemplateCard";
 import ProjectTemplateModal from "../components/pm/ProjectTemplateModal";
@@ -127,37 +120,43 @@ const PmTemplatePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">项目模板</h1>
-            <p className="text-gray-500 mt-1">
+    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f1f5f9" }}>
+      <Box sx={{ flex: 1, p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#111827" }}>项目模板</Typography>
+            <Typography sx={{ color: "#6b7280", mt: 0.5 }}>
               选择模板快速创建项目，提高工作效率
-            </p>
-          </div>
+            </Typography>
+          </Box>
           <Button onClick={() => navigate("/pm/projects/create")}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
             新建项目
           </Button>
-        </div>
+        </Box>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="搜索模板名称、类型或标签..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+          <CardContent sx={{ p: 2 }}>
+            <TextField
+              type="text"
+              placeholder="搜索模板名称、类型或标签..."
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              sx={{ width: 400 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
           {filteredTemplates.map((template) => (
             <ProjectTemplateCard
               key={template.id}
@@ -165,12 +164,12 @@ const PmTemplatePage: React.FC = () => {
               onSelect={handleSelectTemplate}
             />
           ))}
-        </div>
+        </Box>
 
         {filteredTemplates.length === 0 && (
           <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-gray-500">未找到匹配的模板</p>
+            <CardContent sx={{ p: 6, textAlign: "center" }}>
+              <Typography sx={{ color: "#6b7280" }}>未找到匹配的模板</Typography>
             </CardContent>
           </Card>
         )}
@@ -181,8 +180,8 @@ const PmTemplatePage: React.FC = () => {
           template={selectedTemplate}
           onConfirm={handleCreateProject}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

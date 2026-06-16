@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   HelpCircle,
   Search,
@@ -9,14 +9,12 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronLeft,
-  ExternalLink,
   Download,
-  Star,
-  Clock,
   Eye,
   ThumbsUp,
+  Clock,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Box, Typography, Button, Tabs, Tab, Chip } from "@mui/material";
 import { useNotification } from "../hooks/useNotification";
 import { NotificationContainer } from "../components/NotificationContainer";
 
@@ -52,8 +50,7 @@ interface VideoTutorial {
 }
 
 const HelpCenterPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { success, error, notifications, hideNotification } = useNotification();
+  const { success, notifications, hideNotification } = useNotification();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"articles" | "videos" | "faq">(
@@ -64,7 +61,6 @@ const HelpCenterPage: React.FC = () => {
     null,
   );
   const [showArticleDetail, setShowArticleDetail] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const [categories] = useState<HelpCategory[]>([
     {
@@ -311,270 +307,485 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
     setShowArticleDetail(true);
   };
 
-  const handleLikeArticle = (articleId: string) => {
+  const handleLikeArticle = () => {
     success("感谢您的反馈！");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <HelpCircle className="w-16 h-16 mx-auto mb-4 opacity-90" />
-            <h1 className="text-4xl font-bold mb-4">帮助中心</h1>
-            <p className="text-xl text-blue-100 mb-8">
+      <Box
+        sx={{
+          background: "linear-gradient(to right, #2563eb, #9333ea)",
+          color: "white",
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            px: 4,
+            py: 16,
+          }}
+        >
+          <Box sx={{ textAlign: "center" }}>
+            <HelpCircle
+              sx={{ width: 64, height: 64, mx: "auto", mb: 2, opacity: 0.9 }}
+            />
+            <Typography
+              variant="h3"
+              sx={{ fontWeight: 700, mb: 2, color: "inherit" }}
+            >
+              帮助中心
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{ color: "#93c5fd", mb: 4 }}
+            >
               找到您需要的答案，了解如何使用 TOPEMS 系统
-            </p>
+            </Typography>
 
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Box sx={{ maxWidth: 768, mx: "auto" }}>
+              <Box sx={{ position: "relative" }}>
+                <Search
+                  sx={{
+                    position: "absolute",
+                    left: 4,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 20,
+                    height: 20,
+                    color: "grey.400",
+                  }}
+                />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索帮助文章、视频教程..."
-                  className="w-full pl-12 pr-4 py-4 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-300 shadow-lg"
+                  style={{
+                    width: "100%",
+                    paddingLeft: 48,
+                    paddingRight: 16,
+                    paddingTop: 16,
+                    paddingBottom: 16,
+                    borderRadius: 12,
+                    border: "none",
+                    fontSize: "1rem",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    outline: "none",
+                  }}
                 />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Quick Links */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <button className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Book className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="text-left">
-              <div className="font-semibold text-gray-900">使用文档</div>
-              <div className="text-sm text-gray-500">详细的功能说明</div>
-            </div>
-          </button>
-
-          <button className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Video className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="text-left">
-              <div className="font-semibold text-gray-900">视频教程</div>
-              <div className="text-sm text-gray-500">直观的学习方式</div>
-            </div>
-          </button>
-
-          <button className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-3">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <MessageCircle className="w-6 h-6 text-purple-600" />
-            </div>
-            <div className="text-left">
-              <div className="font-semibold text-gray-900">在线客服</div>
-              <div className="text-sm text-gray-500">7x24 小时支持</div>
-            </div>
-          </button>
-        </div>
-      </div>
+      <Box
+        sx={{
+          maxWidth: 1280,
+          mx: "auto",
+          px: 4,
+          mt: -8,
+          mb: 4,
+        }}
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 3 },
+            gap: 2,
+          }}
+        >
+          {[
+            {
+              icon: Book,
+              iconColor: "#2563eb",
+              iconBg: "#dbeafe",
+              title: "使用文档",
+              desc: "详细的功能说明",
+            },
+            {
+              icon: Video,
+              iconColor: "#16a34a",
+              iconBg: "#dcfce7",
+              title: "视频教程",
+              desc: "直观的学习方式",
+            },
+            {
+              icon: MessageCircle,
+              iconColor: "#9333ea",
+              iconBg: "#f3e8ff",
+              title: "在线客服",
+              desc: "7x24 小时支持",
+            },
+          ].map((item, idx) => (
+            <Button
+              key={idx}
+              variant="contained"
+              sx={{
+                bgcolor: "background.paper",
+                borderRadius: 2,
+                p: 2,
+                boxShadow: 3,
+                "&:hover": { boxShadow: 6 },
+                transition: "box-shadow 0.2s",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+              }}
+            >
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  bgcolor: item.iconBg,
+                  borderRadius: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <item.icon sx={{ width: 24, height: 24, color: item.iconColor }} />
+              </Box>
+              <Box sx={{ textAlign: "left" }}>
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 600, color: "grey.900" }}
+                >
+                  {item.title}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "grey.500" }}>
+                  {item.desc}
+                </Typography>
+              </Box>
+            </Button>
+          ))}
+        </Box>
+      </Box>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Box
+        sx={{
+          maxWidth: 1280,
+          mx: "auto",
+          px: 4,
+          py: 4,
+        }}
+      >
         {/* Tabs */}
-        <div className="flex space-x-4 mb-8 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab("articles")}
-            className={`pb-4 px-2 font-medium transition-colors ${
-              activeTab === "articles"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <Book className="w-5 h-5 inline mr-2" />
-            帮助文章
-          </button>
-          <button
-            onClick={() => setActiveTab("videos")}
-            className={`pb-4 px-2 font-medium transition-colors ${
-              activeTab === "videos"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <Video className="w-5 h-5 inline mr-2" />
-            视频教程
-          </button>
-          <button
-            onClick={() => setActiveTab("faq")}
-            className={`pb-4 px-2 font-medium transition-colors ${
-              activeTab === "faq"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <FileText className="w-5 h-5 inline mr-2" />
-            常见问题
-          </button>
-        </div>
+        <Box sx={{ display: "flex", gap: 4, mb: 4, borderBottom: 1, borderColor: "divider" }}>
+          {[
+            { value: "articles", label: "帮助文章", icon: Book },
+            { value: "videos", label: "视频教程", icon: Video },
+            { value: "faq", label: "常见问题", icon: FileText },
+          ].map((tab) => (
+            <Box
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value as typeof activeTab)}
+              sx={{
+                pb: 2,
+                px: 1,
+                fontWeight: 500,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                color: activeTab === tab.value ? "primary.main" : "grey.500",
+                borderBottom: activeTab === tab.value ? 2 : 0,
+                borderColor: "primary.main",
+                "&:hover": {
+                  color: activeTab === tab.value ? "primary.main" : "grey.700",
+                },
+                transition: "color 0.2s",
+              }}
+            >
+              <tab.icon sx={{ width: 20, height: 20 }} />
+              {tab.label}
+            </Box>
+          ))}
+        </Box>
 
         {/* Tab Content */}
         {activeTab === "articles" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, lg: 3 },
+              gap: 3,
+            }}
+          >
             {/* Categories */}
-            <div className="lg:col-span-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <Box sx={{ lg: { gridColumn: 1 } }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
                 分类浏览
-              </h3>
-              <div className="space-y-2">
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {categories.map((category) => (
-                  <div key={category.id}>
-                    <button
+                  <Box key={category.id}>
+                    <Button
+                      fullWidth
                       onClick={() =>
                         setExpandedCategory(
                           expandedCategory === category.id ? null : category.id,
                         )
                       }
-                      className="w-full flex items-center justify-between p-4 bg-white rounded-lg hover:bg-gray-50 transition-colors"
+                      sx={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        p: 2,
+                        bgcolor: "background.paper",
+                        borderRadius: 2,
+                        "&:hover": { bgcolor: "grey.50" },
+                        transition: "background-color 0.2s",
+                      }}
                     >
-                      <div className="flex items-center space-x-3">
-                        <span className="text-2xl">{category.icon}</span>
-                        <div className="text-left">
-                          <div className="font-medium text-gray-900">
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Typography variant="body1" sx={{ fontSize: "1.5rem" }}>
+                          {category.icon}
+                        </Typography>
+                        <Box sx={{ textAlign: "left" }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ fontWeight: 500, color: "grey.900" }}
+                          >
                             {category.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: "grey.500" }}>
                             {category.article_count} 篇文章
-                          </div>
-                        </div>
-                      </div>
+                          </Typography>
+                        </Box>
+                      </Box>
                       {expandedCategory === category.id ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown sx={{ width: 20, height: 20, color: "grey.400" }} />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                        <ChevronRight sx={{ width: 20, height: 20, color: "grey.400" }} />
                       )}
-                    </button>
+                    </Button>
                     {expandedCategory === category.id && (
-                      <div className="ml-6 mt-2 space-y-2">
+                      <Box sx={{ ml: 3, mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
                         {articles
                           .filter((a) => a.category === category.name)
                           .map((article) => (
-                            <button
+                            <Button
                               key={article.id}
+                              fullWidth
                               onClick={() => handleArticleClick(article)}
-                              className="w-full text-left p-3 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              sx={{
+                                textAlign: "left",
+                                p: 1.5,
+                                color: "grey.600",
+                                fontSize: "0.875rem",
+                                borderRadius: 1,
+                                "&:hover": {
+                                  color: "primary.main",
+                                  bgcolor: "primary.50",
+                                },
+                                transition: "all 0.2s",
+                              }}
                             >
                               {article.title}
-                            </button>
+                            </Button>
                           ))}
-                      </div>
+                      </Box>
                     )}
-                  </div>
+                  </Box>
                 ))}
-              </div>
-            </div>
+              </Box>
+            </Box>
 
             {/* Articles List */}
-            <div className="lg:col-span-2">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <Box sx={{ lg: { gridColumn: "span 2" } }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}>
                 {searchQuery ? `搜索结果: "${searchQuery}"` : "热门文章"}
-              </h3>
-              <div className="space-y-4">
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {filteredArticles.map((article) => (
-                  <div
+                  <Box
                     key={article.id}
                     onClick={() => handleArticleClick(article)}
-                    className="bg-white rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 2,
+                      p: 3,
+                      cursor: "pointer",
+                      "&:hover": { boxShadow: 3 },
+                      transition: "box-shadow 0.2s",
+                    }}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                            {article.category}
-                          </span>
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                            {article.module}
-                          </span>
-                        </div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                          <Chip
+                            label={article.category}
+                            size="small"
+                            sx={{
+                              bgcolor: "primary.100",
+                              color: "primary.700",
+                              fontSize: "0.75rem",
+                            }}
+                          />
+                          <Chip
+                            label={article.module}
+                            size="small"
+                            sx={{
+                              bgcolor: "grey.100",
+                              color: "grey.600",
+                              fontSize: "0.75rem",
+                            }}
+                          />
+                        </Box>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}
+                        >
                           {article.title}
-                        </h4>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="flex items-center">
-                            <Eye className="w-4 h-4 mr-1" />
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 2,
+                            fontSize: "0.875rem",
+                            color: "grey.500",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <Eye sx={{ width: 16, height: 16 }} />
                             {article.views} 次浏览
-                          </span>
-                          <span className="flex items-center">
-                            <ThumbsUp className="w-4 h-4 mr-1" />
+                          </Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <ThumbsUp sx={{ width: 16, height: 16 }} />
                             {article.likes} 次点赞
-                          </span>
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
+                          </Box>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <Clock sx={{ width: 16, height: 16 }} />
                             {article.updated_at}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </div>
-                  </div>
+                          </Box>
+                        </Box>
+                      </Box>
+                      <ChevronRight sx={{ width: 20, height: 20, color: "grey.400" }} />
+                    </Box>
+                  </Box>
                 ))}
 
                 {filteredArticles.length === 0 && (
-                  <div className="text-center py-12">
-                    <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">未找到相关文章</p>
-                  </div>
+                  <Box sx={{ textAlign: "center", py: 6 }}>
+                    <Search sx={{ width: 48, height: 48, color: "grey.400", mx: "auto", mb: 2 }} />
+                    <Typography sx={{ color: "grey.500" }}>未找到相关文章</Typography>
+                  </Box>
                 )}
-              </div>
-            </div>
-          </div>
+              </Box>
+            </Box>
+          </Box>
         )}
 
         {activeTab === "videos" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+              gap: 3,
+            }}
+          >
             {videos.map((video) => (
-              <div
+              <Box
                 key={video.id}
-                className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                sx={{
+                  bgcolor: "background.paper",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  "&:hover": { boxShadow: 4 },
+                  transition: "box-shadow 0.2s",
+                }}
               >
-                <div className="relative">
-                  <div className="bg-gray-200 aspect-video flex items-center justify-center">
-                    <Video className="w-12 h-12 text-gray-400" />
-                  </div>
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
+                <Box sx={{ position: "relative" }}>
+                  <Box
+                    sx={{
+                      bgcolor: "grey.200",
+                      aspectRatio: "16/9",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Video sx={{ width: 48, height: 48, color: "grey.400" }} />
+                  </Box>
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      bottom: 1,
+                      right: 1,
+                      bgcolor: "rgba(0,0,0,0.75)",
+                      color: "white",
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: 1,
+                      fontSize: "0.75rem",
+                    }}
+                  >
                     {video.duration}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
-                      {video.module}
-                    </span>
-                  </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">
+                  </Box>
+                </Box>
+                <Box sx={{ p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Chip
+                      label={video.module}
+                      size="small"
+                      sx={{
+                        bgcolor: "secondary.100",
+                        color: "secondary.700",
+                        fontSize: "0.75rem",
+                      }}
+                    />
+                  </Box>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: "grey.900", mb: 1 }}>
                     {video.title}
-                  </h4>
-                  <p className="text-sm text-gray-500 mb-4">
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "grey.500", mb: 2 }}>
                     {video.description}
-                  </p>
-                  <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <Video className="w-4 h-4" />
+                  </Typography>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
+                      bgcolor: "primary.main",
+                      "&:hover": { bgcolor: "primary.dark" },
+                    }}
+                  >
+                    <Video sx={{ width: 16, height: 16 }} />
                     <span>观看视频</span>
-                  </button>
-                </div>
-              </div>
+                  </Button>
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Box>
         )}
 
         {activeTab === "faq" && (
-          <div className="max-w-3xl mx-auto">
-            <div className="space-y-4">
+          <Box sx={{ maxWidth: 768, mx: "auto" }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {[
                 {
                   q: "如何重置密码？",
@@ -593,103 +804,213 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
                   a: "推荐使用 Chrome、Firefox、Edge、Safari 的最新版本。IE 浏览器不再支持。",
                 },
               ].map((faq, idx) => (
-                <div
+                <Box
                   key={idx}
-                  className="bg-white rounded-lg p-6 hover:shadow-md transition-shadow"
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    p: 3,
+                    "&:hover": { boxShadow: 2 },
+                    transition: "box-shadow 0.2s",
+                  }}
                 >
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                    <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm mr-3">
+                  <Typography
+                    variant="body1"
+                    sx={{ fontWeight: 600, color: "grey.900", mb: 1, display: "flex", alignItems: "center" }}
+                  >
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        bgcolor: "primary.100",
+                        color: "primary.main",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.875rem",
+                        mr: 1.5,
+                      }}
+                    >
                       Q
-                    </span>
+                    </Box>
                     {faq.q}
-                  </h4>
-                  <p className="text-gray-600 ml-9">{faq.a}</p>
-                </div>
+                  </Typography>
+                  <Typography sx={{ color: "grey.600", ml: 5 }}>
+                    {faq.a}
+                  </Typography>
+                </Box>
               ))}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
-      </div>
+      </Box>
 
       {/* Article Detail Modal */}
       {showArticleDetail && selectedArticle && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+        <Box
+          sx={{
+            position: "fixed",
+            inset: 0,
+            bgcolor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50,
+            p: 2,
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              boxShadow: 6,
+              width: "100%",
+              maxWidth: 1024,
+              maxHeight: "90vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box
+              sx={{
+                p: 3,
+                borderBottom: 1,
+                borderColor: "divider",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900" }}>
                   {selectedArticle.title}
-                </h2>
-                <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    mt: 1,
+                    fontSize: "0.875rem",
+                    color: "grey.500",
+                  }}
+                >
                   <span>{selectedArticle.category}</span>
                   <span>·</span>
                   <span>{selectedArticle.updated_at}</span>
                   <span>·</span>
                   <span>{selectedArticle.views} 次浏览</span>
-                </div>
-              </div>
-              <button
+                </Box>
+              </Box>
+              <Button
                 onClick={() => {
                   setShowArticleDetail(false);
                   setSelectedArticle(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                sx={{ p: 1, "&:hover": { bgcolor: "grey.100" }, borderRadius: 1 }}
               >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-            </div>
+                <ChevronLeft sx={{ width: 24, height: 24 }} />
+              </Button>
+            </Box>
 
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="prose max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700">
+            <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+              <Box sx={{ maxWidth: "none" }}>
+                <pre
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    fontSize: "0.875rem",
+                    color: "grey.700",
+                    fontFamily: "inherit",
+                  }}
+                >
                   {selectedArticle.content}
                 </pre>
-              </div>
+              </Box>
 
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+              <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: "divider" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     {selectedArticle.tags?.map((tag, idx) => (
-                      <span
+                      <Chip
                         key={idx}
-                        className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full"
-                      >
-                        #{tag}
-                      </span>
+                        label={`#${tag}`}
+                        size="small"
+                        sx={{
+                          bgcolor: "grey.100",
+                          color: "grey.600",
+                          fontSize: "0.875rem",
+                        }}
+                      />
                     ))}
-                  </div>
-                  <button
-                    onClick={() => handleLikeArticle(selectedArticle.id)}
-                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  </Box>
+                  <Button
+                    onClick={() => handleLikeArticle()}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      color: "grey.600",
+                      "&:hover": { bgcolor: "grey.100" },
+                      borderRadius: 1,
+                    }}
                   >
-                    <ThumbsUp className="w-4 h-4" />
+                    <ThumbsUp sx={{ width: 16, height: 16 }} />
                     <span>有帮助 ({selectedArticle.likes})</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
 
-            <div className="p-6 border-t border-gray-200 flex justify-between">
-              <button className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                <Download className="w-4 h-4" />
+            <Box
+              sx={{
+                p: 3,
+                borderTop: 1,
+                borderColor: "divider",
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Button
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  color: "primary.main",
+                  "&:hover": { bgcolor: "primary.50" },
+                  borderRadius: 1,
+                }}
+              >
+                <Download sx={{ width: 16, height: 16 }} />
                 <span>下载 PDF</span>
-              </button>
-              <div className="flex space-x-3">
-                <button
+              </Button>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <Button
                   onClick={() => {
                     setShowArticleDetail(false);
                     setSelectedArticle(null);
                   }}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  sx={{
+                    bgcolor: "grey.100",
+                    color: "grey.700",
+                    "&:hover": { bgcolor: "grey.200" },
+                  }}
                 >
                   关闭
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 

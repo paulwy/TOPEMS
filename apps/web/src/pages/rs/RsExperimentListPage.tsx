@@ -31,7 +31,7 @@ import {
   Tab,
   Stack,
 } from "@mui/material";
-import { Plus, Search, Edit, Trash2, Eye, Filter, Flask } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, Filter, FlaskConical as Flask } from "lucide-react";
 
 interface Experiment {
   id: string;
@@ -273,7 +273,7 @@ const RsExperimentListPage: React.FC = () => {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <Search />
                   </InputAdornment>
                 ),
               },
@@ -282,7 +282,7 @@ const RsExperimentListPage: React.FC = () => {
           />
           <Button
             variant="outlined"
-            startIcon={<FilterIcon />}
+            startIcon={<Filter />}
             onClick={(e) => setFilterMenuOpen(true)}
           >
             状态筛选
@@ -389,7 +389,7 @@ const RsExperimentListPage: React.FC = () => {
                           size="small"
                           onClick={() => navigate(`/rs/experiments/${exp.id}`)}
                         >
-                          <ViewIcon />
+                          <Eye />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="编辑">
@@ -399,7 +399,7 @@ const RsExperimentListPage: React.FC = () => {
                             navigate(`/rs/experiments/${exp.id}/edit`)
                           }
                         >
-                          <EditIcon />
+                          <Edit />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="删除">

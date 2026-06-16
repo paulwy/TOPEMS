@@ -165,7 +165,7 @@ const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
               }
               size="small"
               fullWidth
-              LabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
             />
             <TextField
               id="edit_hire_date"
@@ -180,7 +180,7 @@ const EditEmployeeForm: React.FC<EditEmployeeFormProps> = ({
               }
               size="small"
               fullWidth
-              LabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
             />
           </Box>
 

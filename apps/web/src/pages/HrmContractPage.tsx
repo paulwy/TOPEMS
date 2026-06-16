@@ -507,6 +507,31 @@ export default function ContractManagementPage() {
         }}
       >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+          {/* 面包屑导航 */}
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              component="a"
+              href="/hrm"
+              sx={{
+                color: "text.secondary",
+                textDecoration: "none",
+                fontSize: "0.875rem",
+                "&:hover": { color: "primary.main", textDecoration: "underline" },
+              }}
+            >
+              人力资源
+            </Typography>
+            <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+              /
+            </Typography>
+            <Typography
+              component="span"
+              sx={{ color: "text.primary", fontSize: "0.875rem" }}
+            >
+              合同管理
+            </Typography>
+          </Box>
+
           <Stack
             direction="row"
             sx={{ alignItems: "center", justifyContent: "space-between" }}
@@ -988,7 +1013,7 @@ export default function ContractManagementPage() {
                       start_date: e.target.value,
                     }))
                   }
-                  LabelProps={{ shrink: true }}
+                  InputLabelProps={{ shrink: true }}
                 />
                 <TextField
                   label="结束日期"
@@ -1003,7 +1028,7 @@ export default function ContractManagementPage() {
                     }))
                   }
                   placeholder="无固定期限"
-                  LabelProps={{ shrink: true }}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Stack>
 
@@ -1446,7 +1471,7 @@ export default function ContractManagementPage() {
                     new_start_date: e.target.value,
                   }))
                 }
-                LabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: true }}
               />
               <TextField
                 label="新合同结束日期"
@@ -1461,7 +1486,7 @@ export default function ContractManagementPage() {
                   }))
                 }
                 placeholder="无固定期限"
-                LabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: true }}
               />
             </Stack>
 

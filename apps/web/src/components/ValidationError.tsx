@@ -13,8 +13,8 @@ export const FieldError: React.FC<FieldErrorProps> = ({
   if (!error) return null;
 
   return (
-    <div className="flex items-center space-x-1 text-red-600 text-sm mt-1">
-      {showIcon && <AlertCircle className="w-4 h-4" />}
+    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "14px", marginTop: "4px" }}>
+      {showIcon && <AlertCircle sx={{ width: 16, height: 16 }} />}
       <span>{error}</span>
     </div>
   );
@@ -37,17 +37,17 @@ export const FormError: React.FC<FormErrorProps> = ({
   if (errorList.length === 0) return null;
 
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-      <div className="flex items-start space-x-3">
-        <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-        <div className="flex-1">
-          <h4 className="text-sm font-medium text-red-800 mb-1">
+    <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "16px", marginBottom: "16px" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+        <AlertCircle sx={{ width: 20, height: 20, color: "#dc2626", marginTop: "2px" }} />
+        <div style={{ flex: 1 }}>
+          <h4 style={{ fontSize: "14px", fontWeight: 500, color: "#991b1b", marginBottom: "4px" }}>
             请修正以下错误：
           </h4>
-          <ul className="text-sm text-red-700 space-y-1">
+          <ul style={{ fontSize: "14px", color: "#b91c1c", display: "flex", flexDirection: "column", gap: "4px" }}>
             {errorList.map((error, index) => (
-              <li key={index} className="flex items-start space-x-2">
-                <span className="w-1 h-1 bg-red-600 rounded-full mt-2"></span>
+              <li key={index} style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                <span style={{ width: "4px", height: "4px", backgroundColor: "#dc2626", borderRadius: "9999px", marginTop: "8px", flexShrink: 0 }}></span>
                 <span>{error}</span>
               </li>
             ))}
@@ -68,12 +68,12 @@ export const ValidationHint: React.FC<ValidationHintProps> = ({
   rules,
 }) => {
   return (
-    <div className="text-xs text-slate-500 mt-1">
-      <span className="font-medium">{field}要求：</span>
-      <ul className="mt-1 space-y-0.5">
+    <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
+      <span style={{ fontWeight: 500 }}>{field}要求：</span>
+      <ul style={{ marginTop: "4px", display: "flex", flexDirection: "column", gap: "2px" }}>
         {rules.map((rule, index) => (
-          <li key={index} className="flex items-center space-x-1">
-            <span className="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <li key={index} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ width: "4px", height: "4px", backgroundColor: "#94a3b8", borderRadius: "9999px" }}></span>
             <span>{rule}</span>
           </li>
         ))}
@@ -148,8 +148,8 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
   if (!error) return null;
 
   return (
-    <div className="flex items-center space-x-1 text-red-600 text-sm mt-1">
-      <AlertCircle className="w-4 h-4" />
+    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "14px", marginTop: "4px" }}>
+      <AlertCircle sx={{ width: 16, height: 16 }} />
       <span>{error}</span>
     </div>
   );
@@ -165,11 +165,11 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({
   onClose,
 }) => {
   return (
-    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between">
-      <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+    <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ width: "32px", height: "32px", backgroundColor: "#dcfce7", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            className="w-5 h-5 text-green-600"
+            sx={{ width: 20, height: 20, color: "#22c55e" }}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -182,14 +182,14 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({
             />
           </svg>
         </div>
-        <span className="text-green-800 font-medium">{message}</span>
+        <span style={{ color: "#166534", fontWeight: 500 }}>{message}</span>
       </div>
       {onClose && (
         <button
           onClick={onClose}
-          className="text-green-600 hover:text-green-700"
+          sx={{ color: "#22c55e", "&:hover": { color: "#16a34a" } }}
         >
-          <X className="w-5 h-5" />
+          <X sx={{ width: 20, height: 20 }} />
         </button>
       )}
     </div>

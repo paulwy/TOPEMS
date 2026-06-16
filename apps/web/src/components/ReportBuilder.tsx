@@ -200,14 +200,26 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
 
   const getModuleColor = (module: string) => {
     const colors: Record<string, string> = {
-      RS: "bg-orange-500",
-      LIMS: "bg-blue-500",
-      QMS: "bg-green-500",
-      EHS: "bg-red-500",
-      SRM: "bg-purple-500",
-      PDM: "bg-indigo-500",
+      RS: "#f97316",
+      LIMS: "#3b82f6",
+      QMS: "#22c55e",
+      EHS: "#ef4444",
+      SRM: "#a855f7",
+      PDM: "#6366f1",
     };
-    return colors[module] || "bg-gray-500";
+    return colors[module] || "#6b7280";
+  };
+
+  const getModuleTextColor = (module: string) => {
+    const colors: Record<string, string> = {
+      RS: "#c2410c",
+      LIMS: "#1d4ed8",
+      QMS: "#15803d",
+      EHS: "#b91c1c",
+      SRM: "#7e22ce",
+      PDM: "#4338ca",
+    };
+    return colors[module] || "#374151";
   };
 
   const groupedTypes = reportTypes.reduce(
@@ -221,112 +233,104 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50">
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+      <div style={{ backgroundColor: "#ffffff", borderRadius: 12, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", width: "100%", maxWidth: 1024, maxHeight: "90vh", overflow: "hidden" }}>
+        <div style={{ padding: 24, borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(to right, #eff6ff, #e0e7ff)" }}>
           <div>
-            <h3 className="text-xl font-semibold text-slate-900">报表生成器</h3>
-            <p className="text-sm text-slate-600 mt-1">创建自定义报表</p>
+            <h3 style={{ fontSize: 20, fontWeight: 600, color: "#0f172a" }}>报表生成器</h3>
+            <p style={{ fontSize: 14, color: "#475569", marginTop: 4 }}>创建自定义报表</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+            style={{ padding: 8, color: "#64748b", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer" }}
           >
-            <X className="w-5 h-5" />
+            <X style={{ width: 20, height: 20 }} />
           </button>
         </div>
 
-        {/* Progress */}
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
-          <div className="flex items-center space-x-4">
-            <div
-              className={`flex items-center ${step >= 1 ? "text-blue-600" : "text-slate-400"}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  step >= 1 ? "bg-blue-600 text-white" : "bg-slate-300"
-                }`}
-              >
-                {step > 1 ? <CheckCircle className="w-5 h-5" /> : "1"}
+        <div style={{ padding: 16, backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: step >= 1 ? "#2563eb" : "#94a3b8" }}>
+              <div style={{ width: 32, height: 32, borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: step >= 1 ? "#2563eb" : "#cbd5e1", color: "#ffffff", fontSize: 14, fontWeight: 500 }}>
+                {step > 1 ? <CheckCircle style={{ width: 20, height: 20 }} /> : "1"}
               </div>
-              <span className="ml-2 font-medium">选择类型</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>选择类型</span>
             </div>
-            <div className="flex-1 h-0.5 bg-slate-300">
-              <div
-                className={`h-full bg-blue-600 transition-all ${step >= 2 ? "w-full" : "w-0"}`}
-              />
+            <div style={{ flex: 1, height: 2, backgroundColor: "#cbd5e1" }}>
+              <div style={{ height: "100%", backgroundColor: "#2563eb", transition: "all 0.3s", width: step >= 2 ? "100%" : "0%" }} />
             </div>
-            <div
-              className={`flex items-center ${step >= 2 ? "text-blue-600" : "text-slate-400"}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  step >= 2 ? "bg-blue-600 text-white" : "bg-slate-300"
-                }`}
-              >
-                {step > 2 ? <CheckCircle className="w-5 h-5" /> : "2"}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: step >= 2 ? "#2563eb" : "#94a3b8" }}>
+              <div style={{ width: 32, height: 32, borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: step >= 2 ? "#2563eb" : "#cbd5e1", color: "#ffffff", fontSize: 14, fontWeight: 500 }}>
+                {step > 2 ? <CheckCircle style={{ width: 20, height: 20 }} /> : "2"}
               </div>
-              <span className="ml-2 font-medium">配置选项</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>配置选项</span>
             </div>
-            <div className="flex-1 h-0.5 bg-slate-300">
-              <div
-                className={`h-full bg-blue-600 transition-all ${step >= 3 ? "w-full" : "w-0"}`}
-              />
+            <div style={{ flex: 1, height: 2, backgroundColor: "#cbd5e1" }}>
+              <div style={{ height: "100%", backgroundColor: "#2563eb", transition: "all 0.3s", width: step >= 3 ? "100%" : "0%" }} />
             </div>
-            <div
-              className={`flex items-center ${step >= 3 ? "text-blue-600" : "text-slate-400"}`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  step >= 3 ? "bg-blue-600 text-white" : "bg-slate-300"
-                }`}
-              >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: step >= 3 ? "#2563eb" : "#94a3b8" }}>
+              <div style={{ width: 32, height: 32, borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: step >= 3 ? "#2563eb" : "#cbd5e1", color: "#ffffff", fontSize: 14, fontWeight: 500 }}>
                 3
               </div>
-              <span className="ml-2 font-medium">生成报表</span>
+              <span style={{ marginLeft: 8, fontWeight: 500 }}>生成报表</span>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div style={{ padding: 24, overflowY: "auto", maxHeight: "calc(90vh - 200px)" }}>
           {step === 1 && (
-            <div className="space-y-6">
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               <div>
-                <h4 className="text-lg font-semibold text-slate-900 mb-4">
+                <h4 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", marginBottom: 16 }}>
                   选择报表类型
                 </h4>
-                <div className="space-y-4">
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {Object.entries(groupedTypes).map(([module, types]) => (
                     <div key={module}>
                       <h5
-                        className={`text-sm font-semibold mb-3 ${getModuleColor(module).replace("bg-", "text-").replace("-500", "-700")}`}
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          marginBottom: 12,
+                          color: getModuleTextColor(module),
+                        }}
                       >
                         {module} 模块
                       </h5>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
                         {types.map((type) => (
                           <button
                             key={type.type}
                             onClick={() => handleReportTypeChange(type.type)}
-                            className={`p-4 rounded-lg border-2 transition-all text-left ${
-                              reportType === type.type
-                                ? "border-blue-600 bg-blue-50"
-                                : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
-                            }`}
+                            style={{
+                              padding: 16,
+                              borderRadius: 8,
+                              border: `2px solid ${reportType === type.type ? "#2563eb" : "#e2e8f0"}`,
+                              backgroundColor: reportType === type.type ? "#eff6ff" : "transparent",
+                              transition: "all 0.2s",
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
                           >
-                            <div className="flex items-start space-x-3">
+                            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                               <div
-                                className={`w-10 h-10 rounded-lg ${getModuleColor(module)} flex items-center justify-center`}
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 8,
+                                  backgroundColor: getModuleColor(module),
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
                               >
-                                <FileText className="w-5 h-5 text-white" />
+                                <FileText style={{ width: 20, height: 20, color: "#ffffff" }} />
                               </div>
                               <div>
-                                <p className="font-medium text-slate-900">
+                                <p style={{ fontWeight: 500, color: "#0f172a" }}>
                                   {type.name}
                                 </p>
-                                <p className="text-sm text-slate-500 mt-1">
+                                <p style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>
                                   {type.module} 报表
                                 </p>
                               </div>
@@ -342,15 +346,15 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               <div>
-                <h4 className="text-lg font-semibold text-slate-900 mb-4">
+                <h4 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", marginBottom: 16 }}>
                   配置报表选项
                 </h4>
 
-                <div className="space-y-4">
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label style={{ display: "block", fontSize: 14, fontWeight: 500, color: "#334155", marginBottom: 8 }}>
                       报表标题
                     </label>
                     <input
@@ -358,12 +362,12 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="输入报表标题"
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none" }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label style={{ display: "block", fontSize: 14, fontWeight: 500, color: "#334155", marginBottom: 8 }}>
                       报表描述（可选）
                     </label>
                     <textarea
@@ -371,69 +375,69 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="输入报表描述"
                       rows={3}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", resize: "vertical" }}
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label style={{ display: "block", fontSize: 14, fontWeight: 500, color: "#334155", marginBottom: 8 }}>
                         开始日期
                       </label>
                       <input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none" }}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label style={{ display: "block", fontSize: 14, fontWeight: 500, color: "#334155", marginBottom: 8 }}>
                         结束日期
                       </label>
                       <input
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none" }}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="text-sm font-medium text-slate-700">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                      <label style={{ fontSize: 14, fontWeight: 500, color: "#334155" }}>
                         选择列（{selectedColumns.length} 已选择）
                       </label>
-                      <div className="space-x-2">
+                      <div style={{ display: "flex", gap: 8 }}>
                         <button
                           onClick={handleSelectAll}
-                          className="text-sm text-blue-600 hover:text-blue-700"
+                          style={{ fontSize: 14, color: "#2563eb", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                         >
                           全选
                         </button>
                         <button
                           onClick={handleDeselectAll}
-                          className="text-sm text-slate-600 hover:text-slate-700"
+                          style={{ fontSize: 14, color: "#475569", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                         >
                           取消全选
                         </button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-3">
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, maxHeight: 240, overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: 8, padding: 12 }}>
                       {reportType &&
                         defaultColumns[reportType]?.map((column) => (
                           <label
                             key={column}
-                            className="flex items-center space-x-2 p-2 hover:bg-slate-50 rounded cursor-pointer"
+                            style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, borderRadius: 4, cursor: "pointer" }}
                           >
                             <input
                               type="checkbox"
                               checked={selectedColumns.includes(column)}
                               onChange={() => handleColumnToggle(column)}
-                              className="w-4 h-4 text-blue-600 rounded"
+                              style={{ width: 16, height: 16, color: "#2563eb", borderRadius: 4 }}
                             />
-                            <span className="text-sm text-slate-700">
+                            <span style={{ fontSize: 14, color: "#334155" }}>
                               {column}
                             </span>
                           </label>
@@ -446,35 +450,35 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           )}
 
           {step === 3 && (
-            <div className="space-y-6">
-              <h4 className="text-lg font-semibold text-slate-900">
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <h4 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a" }}>
                 确认报表配置
               </h4>
 
-              <div className="bg-slate-50 rounded-lg p-6 space-y-4">
+              <div style={{ backgroundColor: "#f8fafc", borderRadius: 8, padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <p className="text-sm text-slate-600">报表类型</p>
-                  <p className="font-medium text-slate-900">
+                  <p style={{ fontSize: 14, color: "#64748b" }}>报表类型</p>
+                  <p style={{ fontWeight: 500, color: "#0f172a" }}>
                     {reportTypes.find((t) => t.type === reportType)?.name}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">报表标题</p>
-                  <p className="font-medium text-slate-900">{title}</p>
+                  <p style={{ fontSize: 14, color: "#64748b" }}>报表标题</p>
+                  <p style={{ fontWeight: 500, color: "#0f172a" }}>{title}</p>
                 </div>
                 {description && (
                   <div>
-                    <p className="text-sm text-slate-600">报表描述</p>
-                    <p className="font-medium text-slate-900">{description}</p>
+                    <p style={{ fontSize: 14, color: "#64748b" }}>报表描述</p>
+                    <p style={{ fontWeight: 500, color: "#0f172a" }}>{description}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-slate-600">选择的列</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <p style={{ fontSize: 14, color: "#64748b" }}>选择的列</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
                     {selectedColumns.map((col) => (
                       <span
                         key={col}
-                        className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm"
+                        style={{ padding: "4px 8px", backgroundColor: "#dbeafe", color: "#1d4ed8", borderRadius: 4, fontSize: 14 }}
                       >
                         {col}
                       </span>
@@ -483,8 +487,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 </div>
                 {startDate && endDate && (
                   <div>
-                    <p className="text-sm text-slate-600">日期范围</p>
-                    <p className="font-medium text-slate-900">
+                    <p style={{ fontSize: 14, color: "#64748b" }}>日期范围</p>
+                    <p style={{ fontWeight: 500, color: "#0f172a" }}>
                       {startDate} 至 {endDate}
                     </p>
                   </div>
@@ -494,22 +498,21 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-slate-200 flex justify-between">
+        <div style={{ padding: 24, borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between" }}>
           <button
             onClick={() => (step > 1 ? setStep(step - 1) : onClose())}
-            className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
+            style={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 8, border: "none", cursor: "pointer" }}
           >
             {step === 1 ? "取消" : "上一步"}
           </button>
           <button
             onClick={step === 3 ? handleCreate : () => setStep(step + 1)}
             disabled={creating || (step === 2 && selectedColumns.length === 0)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
+            style={{ padding: "8px 24px", backgroundColor: "#2563eb", color: "#ffffff", borderRadius: 8, border: "none", cursor: "pointer", opacity: (creating || (step === 2 && selectedColumns.length === 0)) ? 0.5 : 1, display: "flex", alignItems: "center" }}
           >
             {creating ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <Loader2 style={{ width: 16, height: 16, marginRight: 8, animation: "spin 1s linear infinite" }} />
                 生成中...
               </>
             ) : step === 3 ? (

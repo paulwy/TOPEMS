@@ -9,15 +9,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  InputLabel,
   LinearProgress,
   Paper,
-  Slider,
-  TextField,
   Typography,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import type { Customer } from "@/api/crm";
+import type { CustomerScore, ScoreFactor } from "@/api/crm";
 import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -27,40 +24,15 @@ import {
   TrendingDown,
   Minus,
   Award,
-  Target,
-  DollarSign,
-  Users,
+  RefreshCw,
+  Calculator,
 } from "lucide-react";
-
-export interface CustomerScore {
-  customerId: string;
-  customerName: string;
-  score: number;
-  grade: "A" | "B" | "C" | "D";
-  factors: ScoreFactor[];
-}
-
-export interface ScoreFactor {
-  name: string;
-  weight: number;
-  score: number;
-  maxScore: number;
-  description: string;
-}
 
 const CRMCustomerScoringPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [customers, setCustomers] = useState<CustomerScore[]>([]);
-  const [selectedCustomer, setSelectedCustomer] =
-    useState<CustomerScore | null>(null);
+  const [scores, setScores] = useState<CustomerScore[]>([]);
+  const [selectedScore, setSelectedScore] = useState<CustomerScore | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [weights, setWeights] = useState({
-    revenue: 30,
-    frequency: 25,
-    recency: 20,
-    growth: 15,
-    engagement: 10,
-  });
 
   const { addNotification } = useAppStore();
 
@@ -68,159 +40,11 @@ const CRMCustomerScoringPage: React.FC = () => {
     loadCustomerScores();
   }, []);
 
-  const calculateScore = (
-    customer: Customer,
-    opportunities: any[],
-    interactions: any[],
-  ): CustomerScore => {
-    const now = new Date();
-    const totalRevenue = opportunities
-      .filter(
-        (o: any) => o.customer_id === customer.id && o.stage === "closed_won",
-      )
-      .reduce((sum, o) => sum + (o.value || 0), 0);
-
-    const customerInteractions = interactions.filter(
-      (i: any) => i.customer_id === customer.id,
-    );
-    const interactionFrequency = customerInteractions.length;
-
-    const lastInteractionDate =
-      customerInteractions.length > 0
-        ? new Date(
-            Math.max(
-              ...customerInteractions.map((i: any) =>
-                new Date(i.created_at).getTime(),
-              ),
-            ),
-          )
-        : new Date(0);
-    const daysSinceLastInteraction = Math.floor(
-      (now.getTime() - lastInteractionDate.getTime()) / (1000 * 60 * 60 * 24),
-    );
-
-    const recencyScore = Math.max(0, 100 - daysSinceLastInteraction);
-
-    const growthScore =
-      totalRevenue > 100000
-        ? 100
-        : totalRevenue > 50000
-          ? 75
-          : totalRevenue > 10000
-            ? 50
-            : 25;
-
-    const engagementScore =
-      interactionFrequency > 10
-        ? 100
-        : interactionFrequency > 5
-          ? 75
-          : interactionFrequency > 2
-            ? 50
-            : 25;
-
-    const revenueScore =
-      totalRevenue > 100000
-        ? 100
-        : totalRevenue > 50000
-          ? 75
-          : totalRevenue > 10000
-            ? 50
-            : totalRevenue > 1000
-              ? 25
-              : 0;
-    const frequencyScore =
-      interactionFrequency > 10
-        ? 100
-        : interactionFrequency > 5
-          ? 75
-          : interactionFrequency > 2
-            ? 50
-            : 10;
-
-    const totalScore = Math.round(
-      (revenueScore * weights.revenue +
-        frequencyScore * weights.frequency +
-        recencyScore * weights.recency +
-        growthScore * weights.growth +
-        engagementScore * weights.engagement) /
-        100,
-    );
-
-    const grade =
-      totalScore >= 80
-        ? "A"
-        : totalScore >= 60
-          ? "B"
-          : totalScore >= 40
-            ? "C"
-            : "D";
-
-    const factors: ScoreFactor[] = [
-      {
-        name: "收入贡献",
-        weight: weights.revenue,
-        score: revenueScore,
-        maxScore: 100,
-        description: "客户带来的收入总额",
-      },
-      {
-        name: "互动频率",
-        weight: weights.frequency,
-        score: frequencyScore,
-        maxScore: 100,
-        description: "与客户的互动次数",
-      },
-      {
-        name: "最近互动",
-        weight: weights.recency,
-        score: Math.round(recencyScore),
-        maxScore: 100,
-        description: "距离上次互动的天数",
-      },
-      {
-        name: "增长潜力",
-        weight: weights.growth,
-        score: growthScore,
-        maxScore: 100,
-        description: "客户业务增长潜力",
-      },
-      {
-        name: "参与度",
-        weight: weights.engagement,
-        score: engagementScore,
-        maxScore: 100,
-        description: "客户参与度评分",
-      },
-    ];
-
-    return {
-      customerId: customer.id,
-      customerName: customer.name,
-      score: totalScore,
-      grade,
-      factors,
-    };
-  };
-
   const loadCustomerScores = async () => {
     try {
       setLoading(true);
-      const [customerRes, opportunityRes, interactionRes] = await Promise.all([
-        crmApi.customers.list({ page: 1, pageSize: 1000 }),
-        crmApi.opportunities.list({ page: 1, pageSize: 1000 }),
-        crmApi.interactions.list({ page: 1, pageSize: 1000 }),
-      ]);
-
-      const customerList = customerRes.data?.items || [];
-      const opportunities: any[] = opportunityRes.data?.items || [];
-      const interactions: any[] = interactionRes.data?.items || [];
-
-      const scores = customerList.map((customer) =>
-        calculateScore(customer, opportunities, interactions),
-      );
-
-      setCustomers(scores.sort((a, b) => b.score - a.score));
+      const response = await crmApi.customerScoring.list();
+      setScores(response.data?.items || []);
     } catch (error) {
       console.error("加载客户评分失败:", error);
       addNotification({
@@ -233,21 +57,54 @@ const CRMCustomerScoringPage: React.FC = () => {
     }
   };
 
-  const getGradeBadge = (grade: string) => {
+  const handleBatchCalculate = async () => {
+    try {
+      const customerResponse = await crmApi.customers.list({ page: 1, pageSize: 100 });
+      const customerIds = customerResponse.data?.items?.map((c) => c.id) || [];
+      
+      if (customerIds.length === 0) {
+        addNotification({
+          type: "warning",
+          title: "提示",
+          message: "请先添加客户",
+        });
+        return;
+      }
+
+      setLoading(true);
+      await crmApi.customerScoring.calculateBatch(customerIds);
+      addNotification({
+        type: "success",
+        title: "成功",
+        message: "已批量计算客户评分",
+      });
+      loadCustomerScores();
+    } catch (error) {
+      console.error("批量计算评分失败:", error);
+      addNotification({
+        type: "error",
+        title: "计算失败",
+        message: "批量计算客户评分失败",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getGradeBadge = (scoreLevel: string) => {
     const gradeConfig: Record<
       string,
       {
         label: string;
-        variant: "default" | "secondary" | "destructive" | "outline";
         color: string;
       }
     > = {
-      A: { label: "A", variant: "default", color: "bg-green-500" },
-      B: { label: "B", variant: "default", color: "bg-blue-500" },
-      C: { label: "C", variant: "outline", color: "bg-amber-500" },
-      D: { label: "D", variant: "destructive", color: "bg-red-500" },
+      A: { label: "A", color: "success.main" },
+      B: { label: "B", color: "primary.main" },
+      C: { label: "C", color: "warning.main" },
+      D: { label: "D", color: "error.main" },
     };
-    const config = gradeConfig[grade];
+    const config = gradeConfig[scoreLevel] || { label: scoreLevel, color: "grey.500" };
     return (
       <Chip
         size="small"
@@ -270,21 +127,22 @@ const CRMCustomerScoringPage: React.FC = () => {
     return "error.main";
   };
 
-  const getScoreTrend = (score: number) => {
-    if (score >= 80)
-      return (
-        <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />
-      );
-    if (score >= 60)
-      return <Minus sx={{ width: 16, height: 16, color: "primary.main" }} />;
-    return <TrendingDown sx={{ width: 16, height: 16, color: "error.main" }} />;
+  const getScoreTrendIcon = (trend: string) => {
+    switch (trend) {
+      case "up":
+        return <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />;
+      case "down":
+        return <TrendingDown sx={{ width: 16, height: 16, color: "error.main" }} />;
+      default:
+        return <Minus sx={{ width: 16, height: 16, color: "grey.500" }} />;
+    }
   };
 
   const gradeDistribution = {
-    A: customers.filter((c) => c.grade === "A").length,
-    B: customers.filter((c) => c.grade === "B").length,
-    C: customers.filter((c) => c.grade === "C").length,
-    D: customers.filter((c) => c.grade === "D").length,
+    A: scores.filter((s) => s.score_level === "A").length,
+    B: scores.filter((s) => s.score_level === "B").length,
+    C: scores.filter((s) => s.score_level === "C").length,
+    D: scores.filter((s) => s.score_level === "D").length,
   };
 
   if (loading) return <LoadingSpinner />;
@@ -310,6 +168,16 @@ const CRMCustomerScoringPage: React.FC = () => {
           </Typography>
         </CardHeader>
         <CardContent>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 4 }}>
+            <Button
+              variant="contained"
+              startIcon={<Calculator />}
+              onClick={handleBatchCalculate}
+            >
+              批量计算评分
+            </Button>
+          </Box>
+
           <Box
             sx={{
               display: "grid",
@@ -490,159 +358,11 @@ const CRMCustomerScoringPage: React.FC = () => {
             </Box>
           </Box>
 
-          <Box sx={{ bgcolor: "grey.100", borderRadius: 2, p: 3, mb: 4 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
-              评分权重设置
-            </Typography>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <DollarSign sx={{ width: 16, height: 16 }} />
-                    <Typography variant="body2">收入贡献</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {weights.revenue}%
-                  </Typography>
-                </Box>
-                <Slider
-                  value={weights.revenue}
-                  onChange={(_, value) =>
-                    setWeights({ ...weights, revenue: value as number })
-                  }
-                  max={50}
-                  step={5}
-                />
-              </Box>
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Users sx={{ width: 16, height: 16 }} />
-                    <Typography variant="body2">互动频率</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {weights.frequency}%
-                  </Typography>
-                </Box>
-                <Slider
-                  value={weights.frequency}
-                  onChange={(_, value) =>
-                    setWeights({ ...weights, frequency: value as number })
-                  }
-                  max={50}
-                  step={5}
-                />
-              </Box>
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Target sx={{ width: 16, height: 16 }} />
-                    <Typography variant="body2">最近互动</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {weights.recency}%
-                  </Typography>
-                </Box>
-                <Slider
-                  value={weights.recency}
-                  onChange={(_, value) =>
-                    setWeights({ ...weights, recency: value as number })
-                  }
-                  max={30}
-                  step={5}
-                />
-              </Box>
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <TrendingUp sx={{ width: 16, height: 16 }} />
-                    <Typography variant="body2">增长潜力</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {weights.growth}%
-                  </Typography>
-                </Box>
-                <Slider
-                  value={weights.growth}
-                  onChange={(_, value) =>
-                    setWeights({ ...weights, growth: value as number })
-                  }
-                  max={30}
-                  step={5}
-                />
-              </Box>
-              <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Award sx={{ width: 16, height: 16 }} />
-                    <Typography variant="body2">参与度</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {weights.engagement}%
-                  </Typography>
-                </Box>
-                <Slider
-                  value={weights.engagement}
-                  onChange={(_, value) =>
-                    setWeights({ ...weights, engagement: value as number })
-                  }
-                  max={20}
-                  step={5}
-                />
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "flex-end" }}>
-                <Button variant="outlined" onClick={loadCustomerScores}>
-                  应用权重并刷新
-                </Button>
-              </Box>
-            </Box>
-          </Box>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {customers.length > 0 ? (
-              customers.map((customer) => (
+            {scores.length > 0 ? (
+              scores.map((score) => (
                 <Box
-                  key={customer.customerId}
+                  key={score.id}
                   sx={{
                     bgcolor: "background.paper",
                     borderRadius: 2,
@@ -653,7 +373,7 @@ const CRMCustomerScoringPage: React.FC = () => {
                     cursor: "pointer",
                   }}
                   onClick={() => {
-                    setSelectedCustomer(customer);
+                    setSelectedScore(score);
                     setShowDetailDialog(true);
                   }}
                 >
@@ -677,18 +397,18 @@ const CRMCustomerScoringPage: React.FC = () => {
                         }}
                       >
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                          {customer.customerName.charAt(0)}
+                          {score.customer_name.charAt(0)}
                         </Typography>
                       </Box>
                       <Box>
                         <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                          {customer.customerName}
+                          {score.customer_name}
                         </Typography>
                         <Typography
                           variant="body2"
                           sx={{ color: "text.secondary" }}
                         >
-                          点击查看详细评分
+                          评分日期: {new Date(score.scoring_date).toLocaleDateString()}
                         </Typography>
                       </Box>
                     </Box>
@@ -698,10 +418,10 @@ const CRMCustomerScoringPage: React.FC = () => {
                           variant="h5"
                           sx={{
                             fontWeight: "bold",
-                            color: getScoreColor(customer.score),
+                            color: getScoreColor(score.score),
                           }}
                         >
-                          {customer.score}
+                          {score.score}
                         </Typography>
                         <Typography
                           variant="caption"
@@ -713,8 +433,8 @@ const CRMCustomerScoringPage: React.FC = () => {
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
-                        {getGradeBadge(customer.grade)}
-                        {getScoreTrend(customer.score)}
+                        {getGradeBadge(score.score_level)}
+                        {getScoreTrendIcon(score.trend)}
                       </Box>
                     </Box>
                   </Box>
@@ -732,6 +452,7 @@ const CRMCustomerScoringPage: React.FC = () => {
                   }}
                 />
                 <Typography>暂无客户评分数据</Typography>
+                <Typography variant="body2">点击上方按钮批量计算客户评分</Typography>
               </Box>
             )}
           </Box>
@@ -744,10 +465,10 @@ const CRMCustomerScoringPage: React.FC = () => {
       >
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Award sx={{ width: 20, height: 20 }} />
-          {selectedCustomer?.customerName} - 评分详情
+          {selectedScore?.customer_name} - 评分详情
         </DialogTitle>
         <DialogContent sx={{ maxWidth: 550 }}>
-          {selectedCustomer && (
+          {selectedScore && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <Box
                 sx={{
@@ -762,10 +483,10 @@ const CRMCustomerScoringPage: React.FC = () => {
                     variant="h3"
                     sx={{
                       fontWeight: "bold",
-                      color: getScoreColor(selectedCustomer.score),
+                      color: getScoreColor(selectedScore.score),
                     }}
                   >
-                    {selectedCustomer.score}
+                    {selectedScore.score}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -773,9 +494,17 @@ const CRMCustomerScoringPage: React.FC = () => {
                   >
                     综合评分
                   </Typography>
+                  {selectedScore.last_score !== undefined && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: selectedScore.score > selectedScore.last_score ? "success.main" : selectedScore.score < selectedScore.last_score ? "error.main" : "text.secondary", mt: 0.5, display: "block" }}
+                    >
+                      上次评分: {selectedScore.last_score}
+                    </Typography>
+                  )}
                 </Box>
                 <Box sx={{ textAlign: "center" }}>
-                  {getGradeBadge(selectedCustomer.grade)}
+                  {getGradeBadge(selectedScore.score_level)}
                   <Typography
                     variant="body2"
                     sx={{ color: "text.secondary", mt: 0.5 }}
@@ -786,7 +515,7 @@ const CRMCustomerScoringPage: React.FC = () => {
               </Box>
 
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {selectedCustomer.factors.map((factor, index) => (
+                {(selectedScore.factors as ScoreFactor[]).map((factor, index) => (
                   <Paper key={index} sx={{ p: 2, bgcolor: "grey.100" }}>
                     <Box
                       sx={{
@@ -809,7 +538,7 @@ const CRMCustomerScoringPage: React.FC = () => {
                       <Box sx={{ flex: 1 }}>
                         <LinearProgress
                           variant="determinate"
-                          value={factor.score}
+                          value={(factor.score / factor.max_score) * 100}
                           sx={{
                             height: 8,
                             borderRadius: 1,
@@ -819,21 +548,11 @@ const CRMCustomerScoringPage: React.FC = () => {
                       </Box>
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 500, width: 48, textAlign: "right" }}
+                        sx={{ fontWeight: 500, width: 60, textAlign: "right" }}
                       >
-                        {factor.score}/{factor.maxScore}
+                        {factor.score}/{factor.max_score}
                       </Typography>
                     </Box>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "text.secondary",
-                        mt: 0.5,
-                        display: "block",
-                      }}
-                    >
-                      {factor.description}
-                    </Typography>
                   </Paper>
                 ))}
               </Box>

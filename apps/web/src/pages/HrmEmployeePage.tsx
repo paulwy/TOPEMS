@@ -37,6 +37,7 @@ import {
   LayoutGrid,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Plus,
 } from "lucide-react";
 import {
@@ -680,6 +681,31 @@ const HrmEmployeePage: React.FC = () => {
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
+      {/* 面包屑导航 */}
+      <Box sx={{ mb: 2 }}>
+        <Typography
+          component="a"
+          href="/hrm"
+          sx={{
+            color: "text.secondary",
+            textDecoration: "none",
+            fontSize: "0.875rem",
+            "&:hover": { color: "primary.main", textDecoration: "underline" },
+          }}
+        >
+          人力资源
+        </Typography>
+        <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+          /
+        </Typography>
+        <Typography
+          component="span"
+          sx={{ color: "text.primary", fontSize: "0.875rem" }}
+        >
+          员工管理
+        </Typography>
+      </Box>
+
       {/* 页面标题 */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
@@ -1157,19 +1183,19 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             <AIHelperButton
               type="generate"
               onClick={() => onOpenAICodeGenerator(mode)}
-              size="sm"
+              size="small"
               label="生成工号"
             />
             <AIHelperButton
               type="complete"
               onClick={onOpenAIDataCompleter}
-              size="sm"
+              size="small"
               label="智能补全"
             />
             <AIHelperButton
               type="validate"
               onClick={onOpenAIFormValidator}
-              size="sm"
+              size="small"
               label="AI校验"
             />
           </Box>

@@ -357,14 +357,14 @@ const BIModuleDetailPage = () => {
       </Box>
 
       <Grid container spacing={3}>
-        <Grid size={12}>
+        <Grid item xs={12}>
           <Card>
             <CardHeader title="模块基本信息" />
             <CardContent>
               <Grid container spacing={2}>
                 {moduleData?.summary &&
                   Object.entries(moduleData.summary).map(([key, value]) => (
-                    <Grid key={key} size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Grid key={key} item xs={12} sm={6} md={3}>
                       <Box
                         sx={{
                           p: 2,
@@ -402,7 +402,7 @@ const BIModuleDetailPage = () => {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <Card sx={{ height: "100%" }}>
             <CardHeader
               title="月度趋势"
@@ -453,7 +453,7 @@ const BIModuleDetailPage = () => {
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid item xs={12} md={6}>
           <Card sx={{ height: "100%" }}>
             <CardHeader
               title="分布占比"
@@ -498,7 +498,7 @@ const BIModuleDetailPage = () => {
           </Card>
         </Grid>
 
-        <Grid size={12}>
+        <Grid item xs={12}>
           <Card>
             <CardHeader
               title="数据明细表"

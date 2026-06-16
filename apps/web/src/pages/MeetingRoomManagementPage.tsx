@@ -16,6 +16,7 @@ import {
   Tooltip,
   Box,
   TextField,
+  Stack,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -260,38 +261,38 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         accessorKey: "name",
         header: "会议室名称",
         cell: ({ row }) => (
-          <div className="font-medium text-slate-900 dark:text-slate-100">
+          <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
             {row.original.name}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "capacity",
         header: "容量",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-900 dark:text-slate-100">
-            <Users className="w-3 h-3 mr-1 text-blue-600" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "grey.900" }}>
+            <Users sx={{ width: 12, height: 12, mr: 0.5, color: "primary.main" }} />
             {row.original.capacity} 人
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "location",
         header: "位置",
         cell: ({ row }) => (
-          <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-            <MapPin className="w-3 h-3 mr-1 text-blue-600" />
+          <Box sx={{ display: "flex", alignItems: "center", fontSize: "0.875rem", color: "grey.500" }}>
+            <MapPin sx={{ width: 12, height: 12, mr: 0.5, color: "primary.main" }} />
             {row.original.location || "-"}
-          </div>
+          </Box>
         ),
       },
       {
         accessorKey: "facilities",
         header: "设施",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem", color: "grey.500" }}>
             {row.original.facilities?.join(", ") || "-"}
-          </span>
+          </Typography>
         ),
       },
       {
@@ -319,7 +320,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                     setShowBookingModal(true);
                   }}
                 >
-                  <Calendar className="w-4 h-4" />
+                  <Calendar sx={{ width: 16, height: 16 }} />
                 </Button>
               </Tooltip>
 
@@ -332,7 +333,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                     setShowEditModal(true);
                   }}
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit sx={{ width: 16, height: 16 }} />
                 </Button>
               </Tooltip>
 
@@ -343,7 +344,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
                   sx={{ color: "error.main" }}
                   onClick={() => handleDeleteRoom(room.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 sx={{ width: 16, height: 16 }} />
                 </Button>
               </Tooltip>
             </Box>
@@ -360,45 +361,45 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
         accessorKey: "room_name",
         header: "会议室",
         cell: ({ row }) => (
-          <div className="font-medium text-slate-900 dark:text-slate-100">
+          <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
             {row.original.room_name}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "title",
         header: "会议主题",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem", color: "grey.500" }}>
             {row.original.title}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "organizer",
         header: "组织者",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem", color: "grey.500" }}>
             {row.original.organizer}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "start_time",
         header: "开始时间",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem", color: "grey.500" }}>
             {new Date(row.original.start_time).toLocaleString()}
-          </span>
+          </Typography>
         ),
       },
       {
         accessorKey: "end_time",
         header: "结束时间",
         cell: ({ row }) => (
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <Typography variant="body2" sx={{ fontSize: "0.875rem", color: "grey.500" }}>
             {new Date(row.original.end_time).toLocaleString()}
-          </span>
+          </Typography>
         ),
       },
       {
@@ -411,87 +412,114 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-                  <Calendar className="w-7 h-7 mr-3 text-purple-600" />
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center" }}
+                >
+                  <Calendar sx={{ width: 28, height: 28, mr: 1.5, color: "secondary.main" }} />
                   会议室管理
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   管理会议室信息和预约安排
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
               <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus sx={{ width: 20, height: 20, mr: 1 }} />
                 新增会议室
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <Card>
-          <CardHeader>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              会议室列表
-            </Typography>
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent" />
-                <p className="mt-2 text-slate-500 dark:text-slate-400">
-                  加载中...
-                </p>
-              </div>
-            ) : error ? (
-              <div className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <p className="text-red-600 dark:text-red-400">{error}</p>
-                <Button className="mt-4" onClick={loadData}>
-                  重试
-                </Button>
-              </div>
-            ) : (
-              <DataTable
-                columns={roomsColumns}
-                data={rooms}
-                searchPlaceholder="搜索会议室名称、位置..."
-                searchKey="name"
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        {bookings.length > 0 && (
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 4 }}>
+        <Stack spacing={4}>
           <Card>
             <CardHeader>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                预约记录
+                会议室列表
               </Typography>
             </CardHeader>
-            <CardContent className="p-0">
-              <DataTable
-                columns={bookingsColumns}
-                data={bookings}
-                searchPlaceholder="搜索预约记录..."
-                searchKey="title"
-              />
+            <CardContent sx={{ p: 0 }}>
+              {loading ? (
+                <Box sx={{ p: 4, textAlign: "center" }}>
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      width: 32,
+                      height: 32,
+                      border: 4,
+                      borderColor: "secondary.main",
+                      borderTopColor: "transparent",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                      "@keyframes spin": {
+                        "0%": { transform: "rotate(0deg)" },
+                        "100%": { transform: "rotate(360deg)" },
+                      },
+                    }}
+                  />
+                  <Typography sx={{ mt: 1, color: "grey.500" }}>
+                    加载中...
+                  </Typography>
+                </Box>
+              ) : error ? (
+                <Box sx={{ p: 4, textAlign: "center" }}>
+                  <AlertCircle sx={{ width: 48, height: 48, color: "error.main", mx: "auto", mb: 1.5 }} />
+                  <Typography sx={{ color: "error.main" }}>{error}</Typography>
+                  <Button sx={{ mt: 2 }} onClick={loadData}>
+                    重试
+                  </Button>
+                </Box>
+              ) : (
+                <DataTable
+                  columns={roomsColumns}
+                  data={rooms}
+                  searchPlaceholder="搜索会议室名称、位置..."
+                  searchKey="name"
+                />
+              )}
             </CardContent>
           </Card>
-        )}
-      </div>
+
+          {bookings.length > 0 && (
+            <Card>
+              <CardHeader>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  预约记录
+                </Typography>
+              </CardHeader>
+              <CardContent sx={{ p: 0 }}>
+                <DataTable
+                  columns={bookingsColumns}
+                  data={bookings}
+                  searchPlaceholder="搜索预约记录..."
+                  searchKey="title"
+                />
+              </CardContent>
+            </Card>
+          )}
+        </Stack>
+      </Box>
 
       <Dialog
         open={showCreateModal}
@@ -802,7 +830,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

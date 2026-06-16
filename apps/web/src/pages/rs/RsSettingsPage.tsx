@@ -20,6 +20,7 @@ import {
   DialogActions,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   ListItemSecondaryAction,
@@ -417,9 +418,8 @@ const RsSettingsPage: React.FC = () => {
           <Paper sx={{ width: 240, p: 2 }}>
             <List>
               {tabs.map((tab) => (
-                <ListItem
+                <ListItemButton
                   key={tab.id}
-                  button
                   selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   sx={{
@@ -437,7 +437,7 @@ const RsSettingsPage: React.FC = () => {
                   <ListItemIcon sx={{ minWidth: 36 }}>{tab.icon}</ListItemIcon>
                   <ListItemText primary={tab.label} />
                   {activeTab === tab.id && <ArrowRight size={16} />}
-                </ListItem>
+                </ListItemButton>
               ))}
             </List>
           </Paper>

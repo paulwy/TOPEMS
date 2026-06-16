@@ -1,11 +1,6 @@
 import React from "react";
 import type { BoxProps } from "@mui/material";
-import {
-  Box,
-  Typography,
-  Button,
-  Stack,
-} from "@mui/material";
+import { Box, Typography, Button, Stack } from "@mui/material";
 import {
   FileX,
   Inbox,
@@ -79,7 +74,10 @@ export interface EmptyStateProps extends Omit<BoxProps, "children"> {
  * 根据空状态类型获取默认配置
  */
 const getDefaultConfig = (type: EmptyStateType, title?: string) => {
-  const configs: Record<EmptyStateType, { icon: React.ReactNode; defaultTitle: string; defaultDescription: string }> = {
+  const configs: Record<
+    EmptyStateType,
+    { icon: React.ReactNode; defaultTitle: string; defaultDescription: string }
+  > = {
     default: {
       icon: <Inbox size={64} />,
       defaultTitle: title || "暂无数据",
@@ -135,15 +133,15 @@ const getDefaultConfig = (type: EmptyStateType, title?: string) => {
 /**
  * 空状态组件
  * 用于显示列表、搜索、筛选等场景的空状态提示
- * 
+ *
  * @example
  * ```tsx
  * // 默认空状态
  * <EmptyState />
- * 
+ *
  * // 搜索结果为空
  * <EmptyState type="search-empty" title="没有找到用户" />
- * 
+ *
  * // 带操作按钮
  * <EmptyState
  *   type="no-data"
@@ -152,7 +150,7 @@ const getDefaultConfig = (type: EmptyStateType, title?: string) => {
  *     { label: "创建项目", onClick: handleCreate, variant: "contained" },
  *   ]}
  * />
- * 
+ *
  * // 自定义图标和内容
  * <EmptyState type="custom" icon={<MyIcon />}>
  *   <div>自定义内容</div>
@@ -263,36 +261,36 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 /**
  * 无数据空状态
  */
-export const NoDataEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (props) => (
-  <EmptyState type="no-data" {...props} />
-);
+export const NoDataEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
+  props,
+) => <EmptyState type="no-data" {...props} />;
 
 /**
  * 搜索结果为空
  */
-export const SearchEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (props) => (
-  <EmptyState type="search-empty" {...props} />
-);
+export const SearchEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
+  props,
+) => <EmptyState type="search-empty" {...props} />;
 
 /**
  * 筛选结果为空
  */
-export const FilterEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (props) => (
-  <EmptyState type="filter-empty" {...props} />
-);
+export const FilterEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
+  props,
+) => <EmptyState type="filter-empty" {...props} />;
 
 /**
  * 文件夹为空
  */
-export const FolderEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (props) => (
-  <EmptyState type="folder-empty" {...props} />
-);
+export const FolderEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
+  props,
+) => <EmptyState type="folder-empty" {...props} />;
 
 /**
  * 错误状态
  */
-export const ErrorEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (props) => (
-  <EmptyState type="error" {...props} />
-);
+export const ErrorEmptyState: React.FC<Omit<EmptyStateProps, "type">> = (
+  props,
+) => <EmptyState type="error" {...props} />;
 
 export default EmptyState;

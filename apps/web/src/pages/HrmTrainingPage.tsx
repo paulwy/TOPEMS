@@ -17,6 +17,7 @@ import {
   FileText,
   Search,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   trainingPlanApi,
   trainingCourseApi,
@@ -28,6 +29,7 @@ import {
   type Employee,
 } from "../api/hrm";
 import { useNotification } from "../hooks/useNotification";
+import { PageHeader } from "../components/templates";
 
 import {
   Button,
@@ -55,6 +57,7 @@ import {
 
 const HrmTrainingPage: React.FC = () => {
   const { success, error } = useNotification();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<"plans" | "courses" | "records">(
     "plans",
@@ -290,52 +293,29 @@ const HrmTrainingPage: React.FC = () => {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <Box
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Box
-          sx={{
-            maxWidth: 1536,
-            mx: "auto",
-            px: { xs: 2, sm: 3, md: 4 },
-            py: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "grey.900" }}
-              >
-                培训管理
-              </Typography>
-              <Typography variant="body2" sx={{ color: "grey.500" }}>
-                管理培训计划、课程和培训记录
-              </Typography>
-            </Box>
-            {activeTab !== "records" && (
-              <Button variant="contained" onClick={() => handleOpenModal()}>
-                <Plus sx={{ width: 16, height: 16, mr: 1 }} />
-                新增
-              </Button>
-            )}
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
         sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, md: 4 }, py: 3 }}
       >
+        <PageHeader
+          title="培训管理"
+          subtitle="管理培训计划、课程和培训记录"
+          breadcrumbs={[
+            { label: "人力资源", href: "/hrm" },
+            { label: "培训管理" },
+          ]}
+          backButton={{ onClick: () => navigate(-1) }}
+          actions={
+            activeTab !== "records"
+              ? [
+                  {
+                    label: "新增",
+                    icon: <Plus sx={{ width: 16, height: 16, mr: 1 }} />,
+                    onClick: () => handleOpenModal(),
+                    variant: "contained",
+                  },
+                ]
+              : []
+          }
+        />
         <Box sx={{ mb: 3 }}>
           <Tabs
             value={activeTab}
@@ -495,11 +475,13 @@ const HrmTrainingPage: React.FC = () => {
                         <tr>
                           <td
                             colSpan={6}
-                            sx={{
-                              px: 6,
-                              py: 8,
+                            style={{
+                              paddingLeft: 24,
+                              paddingRight: 24,
+                              paddingTop: 32,
+                              paddingBottom: 32,
                               textAlign: "center",
-                              color: "grey.500",
+                              color: "#6b7280",
                             }}
                           >
                             <Typography
@@ -565,11 +547,11 @@ const HrmTrainingPage: React.FC = () => {
                                       />
                                     )}
                                   </Box>
-                                  <span
+                                  <Typography
                                     sx={{ fontWeight: 500, color: "grey.900" }}
                                   >
                                     {plan.name}
-                                  </span>
+                                  </Typography>
                                 </Box>
                               </td>
                               <td

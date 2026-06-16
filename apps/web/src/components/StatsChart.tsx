@@ -56,9 +56,9 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   const chartHeight = height || CHART_HEIGHT;
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
-        <div className="flex items-center justify-center h-40 text-slate-400">
+      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)", padding: "24px" }}>
+        <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#0f172a", marginBottom: "16px" }}>{title}</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "160px", color: "#94a3b8" }}>
           <p>暂无数据</p>
         </div>
       </div>
@@ -74,9 +74,9 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-slate-200">
-          <p className="font-medium text-slate-900">{payload[0].name}</p>
-          <p className="text-sm text-slate-600">{payload[0].value}</p>
+        <div style={{ backgroundColor: "#ffffff", padding: "12px", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0" }}>
+          <p style={{ fontWeight: 500, color: "#0f172a" }}>{payload[0].name}</p>
+          <p style={{ fontSize: "14px", color: "#64748b" }}>{payload[0].value}</p>
         </div>
       );
     }
@@ -84,8 +84,8 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
+    <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)", padding: "24px" }}>
+      <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#0f172a", marginBottom: "16px" }}>{title}</h3>
       <div style={{ width: CHART_WIDTH, height: chartHeight }}>
         {type === "pie" ? (
           <PieChart width={CHART_WIDTH} height={chartHeight}>

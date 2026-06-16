@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import {
-  Box,
   ChevronLeft,
   Plus,
   Edit,
@@ -211,9 +210,9 @@ const FinanceCostPage: React.FC = () => {
               </IconButton>
               <MuiBox>
                 <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <Box component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
+                  <MuiBox component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
                     <TrendingUp size={28} />
-                  </Box>
+                  </MuiBox>
                   成本管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

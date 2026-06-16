@@ -52,11 +52,11 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
   const getRoomIcon = () => {
     switch (chatRoom.room_type) {
       case "direct":
-        return <User className="w-5 h-5" />;
+        return <User style={{ width: 20, height: 20 }} />;
       case "group":
-        return <Users className="w-5 h-5" />;
+        return <Users style={{ width: 20, height: 20 }} />;
       default:
-        return <MessageSquare className="w-5 h-5" />;
+        return <MessageSquare style={{ width: 20, height: 20 }} />;
     }
   };
 
@@ -105,61 +105,69 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`p-3 rounded-lg cursor-pointer transition-colors relative ${
-        isActive
-          ? "bg-indigo-50 border-l-4 border-indigo-600"
-          : "hover:bg-gray-50"
-      } ${chatRoom.is_pinned ? "bg-amber-50/50" : ""}`}
+      style={{
+        padding: 12,
+        borderRadius: 8,
+        cursor: "pointer",
+        transition: "background-color 0.15s",
+        backgroundColor: chatRoom.is_pinned ? "rgba(251, 191, 36, 0.1)" : undefined,
+        borderLeft: isActive ? "4px solid #4f46e5" : "4px solid transparent",
+        backgroundColor: isActive ? "#eef2ff" : chatRoom.is_pinned ? "rgba(251, 191, 36, 0.1)" : undefined,
+      }}
     >
-      {/* Pinned & Muted Indicators */}
-      <div className="absolute top-2 right-2 flex gap-1">
-        {chatRoom.is_pinned && <Pin className="w-3 h-3 text-amber-500" />}
-        {chatRoom.is_muted && <BellOff className="w-3 h-3 text-gray-400" />}
+      <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
+        {chatRoom.is_pinned && <Pin style={{ width: 12, height: 12, color: "#f59e0b" }} />}
+        {chatRoom.is_muted && <BellOff style={{ width: 12, height: 12, color: "#9ca3af" }} />}
       </div>
 
-      <div className="flex items-start gap-3">
-        <div className="relative">
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+        <div style={{ position: "relative" }}>
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              isActive
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-200 text-gray-600"
-            }`}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "9999px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: isActive ? "#4f46e5" : "#e5e7eb",
+              color: isActive ? "#ffffff" : "#4b5563",
+            }}
           >
             {getRoomIcon()}
           </div>
           {isOnline && (
-            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
+            <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, backgroundColor: "#22c55e", borderRadius: "9999px", border: "2px solid #ffffff" }} />
           )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900 truncate pr-8">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <h3 style={{ fontWeight: 500, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 32 }}>
               {chatRoom.name || "未命名会话"}
             </h3>
             {chatRoom.last_message_time && (
-              <span className="text-xs text-gray-500 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
+              <span style={{ fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
+                <Clock style={{ width: 12, height: 12 }} />
                 {formatTime(chatRoom.last_message_time)}
               </span>
             )}
           </div>
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-sm text-gray-500 truncate flex-1">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+            <p style={{ fontSize: 14, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
               {chatRoom.last_message || "暂无消息"}
             </p>
-            <div className="flex items-center gap-2">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {chatRoom.room_type !== "direct" && (
-                <span className="text-xs text-gray-400 flex items-center gap-1">
+                <span style={{ fontSize: 12, color: "#9ca3af", display: "flex", alignItems: "center", gap: 4 }}>
                   {getOnlineCount() > 0 && (
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                    <span style={{ width: 6, height: 6, backgroundColor: "#22c55e", borderRadius: "9999px" }} />
                   )}
                   {getMemberCount()}人
                 </span>
               )}
               {chatRoom.room_type === "direct" && (
                 <span
-                  className={`text-xs ${isOnline ? "text-green-600" : "text-gray-400"}`}
+                  style={{ fontSize: 12, color: isOnline ? "#16a34a" : "#9ca3af" }}
                 >
                   {isOnline ? "在线" : "离线"}
                 </span>
@@ -167,9 +175,9 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
               {onSettings && (
                 <button
                   onClick={onSettings}
-                  className="p-1 rounded hover:bg-gray-200 transition-colors"
+                  style={{ padding: 4, borderRadius: 4, backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                 >
-                  <MoreVertical className="w-4 h-4 text-gray-400" />
+                  <MoreVertical style={{ width: 16, height: 16, color: "#9ca3af" }} />
                 </button>
               )}
             </div>

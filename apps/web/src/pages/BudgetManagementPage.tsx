@@ -34,7 +34,9 @@ import {
   Checkbox,
   FormControlLabel,
   Box,
+  Typography,
   IconButton,
+  Stack,
 } from "@mui/material";
 import { ModeToggle } from "@/components/ModeToggle";
 import OrganizationFilter, {
@@ -186,9 +188,9 @@ const BudgetManagementPage: React.FC = () => {
   };
 
   const getProgressColor = (rate: number) => {
-    if (rate >= 90) return "bg-red-500";
-    if (rate >= 70) return "bg-yellow-500";
-    return "bg-blue-500";
+    if (rate >= 90) return "#ef4444";
+    if (rate >= 70) return "#eab308";
+    return "#3b82f6";
   };
 
   const handleCreate = async () => {
@@ -301,78 +303,95 @@ const BudgetManagementPage: React.FC = () => {
         accessorKey: "department_id",
         header: "部门",
         cell: ({ row }) => (
-          <div className="font-medium text-slate-900 dark:text-slate-100">
+          <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.900" }}>
             {getDepartmentName(row.original.department_id || "")}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "budget_type",
         header: "预算类型",
         cell: ({ row }) => (
-          <div className="text-slate-900 dark:text-slate-100">
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
             {getBudgetTypeName(row.original.budget_type || "")}
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "fiscal_year",
         header: "财年",
         cell: ({ row }) => (
-          <div className="text-slate-900 dark:text-slate-100">
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
             {row.original.fiscal_year}年
-          </div>
+          </Typography>
         ),
       },
       {
         accessorKey: "total_budget",
         header: "预算总额",
         cell: ({ row }) => (
-          <div className="font-bold text-blue-600">
+          <Typography variant="body2" sx={{ fontWeight: 700, color: "primary.main" }}>
             ¥{row.original.total_budget.toLocaleString()}
-          </div>
+          </Typography>
         ),
       },
       {
         id: "usage",
         header: "使用进度",
         cell: ({ row }) => (
-          <div className="w-full max-w-xs">
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-slate-600 dark:text-slate-400">
+          <Box sx={{ width: "100%", maxWidth: 320 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+              <Typography variant="body2" sx={{ fontSize: "0.75rem", color: "grey.600" }}>
                 已用: ¥{(row.original.used_amount ?? 0).toLocaleString()}
-              </span>
-              <span
-                className={`font-bold ${(row.original.usage_rate ?? 0) > 80 ? "text-red-600" : "text-blue-600"}`}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.75rem",
+                  color: (row.original.usage_rate ?? 0) > 80 ? "error.main" : "primary.main",
+                }}
               >
                 {(row.original.usage_rate ?? 0).toFixed(1)}%
-              </span>
-            </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all ${getProgressColor(row.original.usage_rate ?? 0)}`}
-                style={{
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                width: "100%",
+                bgcolor: "grey.200",
+                borderRadius: 1,
+                height: 8,
+              }}
+            >
+              <Box
+                sx={{
+                  height: 8,
+                  borderRadius: 1,
+                  transition: "width 0.3s",
                   width: `${Math.min(row.original.usage_rate ?? 0, 100)}%`,
+                  bgcolor: getProgressColor(row.original.usage_rate ?? 0),
                 }}
-              ></div>
-            </div>
-          </div>
+              />
+            </Box>
+          </Box>
         ),
       },
       {
         accessorKey: "remaining_amount",
         header: "剩余",
         cell: ({ row }) => (
-          <div
-            className={`font-bold ${
-              (row.original.remaining_amount ?? 0) <
-              row.original.total_budget * 0.2
-                ? "text-red-600"
-                : "text-green-600"
-            }`}
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 700,
+              color:
+                (row.original.remaining_amount ?? 0) < row.original.total_budget * 0.2
+                  ? "error.main"
+                  : "success.main",
+            }}
           >
             ¥{(row.original.remaining_amount ?? 0).toLocaleString()}
-          </div>
+          </Typography>
         ),
       },
       {
@@ -384,28 +403,26 @@ const BudgetManagementPage: React.FC = () => {
         id: "actions",
         header: "操作",
         cell: ({ row }) => (
-          <div className="flex items-center space-x-2">
+          <Stack direction="row" spacing={1}>
             <IconButton
               size="small"
               onClick={() => setEditingBudget(row.original)}
             >
-              <Edit className="w-4 h-4" />
+              <Edit sx={{ width: 16, height: 16 }} />
             </IconButton>
             <IconButton
               size="small"
               onClick={() => handleDelete(row.original.id)}
               sx={{ color: "error.main" }}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 sx={{ width: 16, height: 16 }} />
             </IconButton>
-          </div>
+          </Stack>
         ),
       },
     ],
     [departments],
   );
-
-  // 统计卡片数据
 
   const totalBudget = budgets.reduce((sum, b) => sum + b.total_budget, 0);
   const totalUsed = budgets.reduce((sum, b) => sum + (b.used_amount ?? 0), 0);
@@ -416,41 +433,51 @@ const BudgetManagementPage: React.FC = () => {
       : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </IconButton>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center">
-                  <TrendingUp className="w-7 h-7 mr-3 text-green-600" />
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "grey.900", display: "flex", alignItems: "center" }}
+                >
+                  <TrendingUp sx={{ width: 28, height: 28, mr: 1.5, color: "success.main" }} />
                   预算管理
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
                   管理各部门预算，追踪预算使用情况
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
               <Button
                 variant="contained"
                 onClick={() => setShowCreateModal(true)}
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus sx={{ width: 20, height: 20, mr: 1 }} />
                 新增预算
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
         {/* 组织筛选 */}
-        <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 mb-6">
+        <Box sx={{ bgcolor: "grey.200", borderRadius: 2, p: 2, mb: 3 }}>
           <OrganizationFilter
             value={organizationFilter}
             onChange={setOrganizationFilter}
@@ -458,115 +485,147 @@ const BudgetManagementPage: React.FC = () => {
             showDepartment={true}
             showEmployee={false}
           />
-        </div>
+        </Box>
 
         {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: 1, md: 3 },
+            gap: 3,
+            mb: 3,
+          }}
+        >
           <Card>
-            <CardContent sx={{ p: 3 }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.600" }}>
                     总预算
-                  </p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", mt: 1 }}>
                     ¥{totalBudget.toLocaleString()}
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-                  <DollarSign className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 1.5, bgcolor: "primary.100", borderRadius: "50%" }}>
+                  <DollarSign sx={{ width: 24, height: 24, color: "primary.main" }} />
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent sx={{ p: 3 }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.600" }}>
                     已使用
-                  </p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: "grey.900", mt: 1 }}>
                     ¥{totalUsed.toLocaleString()}
-                  </p>
-                </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 1.5, bgcolor: "success.100", borderRadius: "50%" }}>
+                  <TrendingUp sx={{ width: 24, height: 24, color: "success.main" }} />
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent sx={{ p: 3 }}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "grey.600" }}>
                     平均使用率
-                  </p>
-                  <p
-                    className={`text-2xl font-bold mt-2 ${
-                      avgUsageRate > 80
-                        ? "text-red-600"
-                        : "text-slate-900 dark:text-slate-100"
-                    }`}
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 700,
+                      mt: 1,
+                      color: avgUsageRate > 80 ? "error.main" : "grey.900",
+                    }}
                   >
                     {avgUsageRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
-                  <Calendar className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 1.5, bgcolor: "warning.100", borderRadius: "50%" }}>
+                  <Calendar sx={{ width: 24, height: 24, color: "warning.main" }} />
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
         {/* 预算列表 */}
         <Card>
           <CardContent sx={{ p: 0 }}>
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent" />
-                <p className="mt-2 text-slate-500 dark:text-slate-400">
+              <Box sx={{ p: 4, textAlign: "center" }}>
+                <Box
+                  sx={{
+                    display: "inline-block",
+                    width: 32,
+                    height: 32,
+                    border: 4,
+                    borderColor: "primary.main",
+                    borderTopColor: "transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                    "@keyframes spin": {
+                      "0%": { transform: "rotate(0deg)" },
+                      "100%": { transform: "rotate(360deg)" },
+                    },
+                  }}
+                />
+                <Typography sx={{ mt: 1, color: "grey.500" }}>
                   加载中...
-                </p>
-              </div>
+                </Typography>
+              </Box>
             ) : (
               <>
                 {selectedIds.length > 0 && (
-                  <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={selectedIds.length === budgets.length}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedIds(budgets.map((b) => b.id));
-                                } else {
-                                  setSelectedIds([]);
-                                }
-                              }}
-                            />
-                          }
-                          label={
-                            <span className="text-sm text-slate-600">
-                              已选择 {selectedIds.length} 项
-                            </span>
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
+                  <Box
+                    sx={{
+                      bgcolor: "grey.50",
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      px: 3,
+                      py: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={selectedIds.length === budgets.length}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds(budgets.map((b) => b.id));
+                              } else {
+                                setSelectedIds([]);
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          <Typography variant="body2" sx={{ color: "grey.600" }}>
+                            已选择 {selectedIds.length} 项
+                          </Typography>
+                        }
+                      />
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Button
                         variant="outlined"
                         size="small"
                         onClick={handleBatchUpdateStatus}
                       >
-                        <Settings className="w-4 h-4 mr-1" />
+                        <Settings sx={{ width: 16, height: 16, mr: 0.5 }} />
                         批量更新状态
                       </Button>
                       <Button
@@ -575,11 +634,11 @@ const BudgetManagementPage: React.FC = () => {
                         color="error"
                         onClick={handleBatchDelete}
                       >
-                        <Trash2 className="w-4 h-4 mr-1" />
+                        <Trash2 sx={{ width: 16, height: 16, mr: 0.5 }} />
                         批量删除
                       </Button>
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 )}
                 <EnhancedDataTable
                   columns={columns}
@@ -626,7 +685,7 @@ const BudgetManagementPage: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* 创建预算弹窗 */}
       <Dialog
@@ -637,8 +696,8 @@ const BudgetManagementPage: React.FC = () => {
       >
         <DialogTitle>新增预算</DialogTitle>
         <DialogContent>
-          <div className="space-y-4 py-4">
-            <div>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+            <Box>
               <FormLabel htmlFor="department">部门</FormLabel>
               <FormControl size="small" fullWidth>
                 <Select
@@ -661,9 +720,9 @@ const BudgetManagementPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-            </div>
+            </Box>
 
-            <div>
+            <Box>
               <FormLabel htmlFor="type">预算类型</FormLabel>
               <FormControl size="small" fullWidth>
                 <Select
@@ -684,9 +743,9 @@ const BudgetManagementPage: React.FC = () => {
                   <MenuItem value="other">其他</MenuItem>
                 </Select>
               </FormControl>
-            </div>
+            </Box>
 
-            <div>
+            <Box>
               <FormLabel htmlFor="year">财年</FormLabel>
               <TextField
                 id="year"
@@ -699,9 +758,9 @@ const BudgetManagementPage: React.FC = () => {
                 }
                 placeholder="例如: 2024"
               />
-            </div>
+            </Box>
 
-            <div>
+            <Box>
               <FormLabel htmlFor="amount">预算金额</FormLabel>
               <TextField
                 id="amount"
@@ -717,8 +776,8 @@ const BudgetManagementPage: React.FC = () => {
                 }
                 placeholder="输入预算金额"
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
@@ -740,8 +799,8 @@ const BudgetManagementPage: React.FC = () => {
         <DialogTitle>编辑预算</DialogTitle>
         <DialogContent>
           {editingBudget && (
-            <div className="space-y-4 py-4">
-              <div>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+              <Box>
                 <FormLabel htmlFor="edit-department">部门</FormLabel>
                 <FormControl size="small" fullWidth>
                   <Select
@@ -764,9 +823,9 @@ const BudgetManagementPage: React.FC = () => {
                     ))}
                   </Select>
                 </FormControl>
-              </div>
+              </Box>
 
-              <div>
+              <Box>
                 <FormLabel htmlFor="edit-type">预算类型</FormLabel>
                 <FormControl size="small" fullWidth>
                   <Select
@@ -790,9 +849,9 @@ const BudgetManagementPage: React.FC = () => {
                     <MenuItem value="other">其他</MenuItem>
                   </Select>
                 </FormControl>
-              </div>
+              </Box>
 
-              <div>
+              <Box>
                 <FormLabel htmlFor="edit-year">财年</FormLabel>
                 <TextField
                   id="edit-year"
@@ -807,9 +866,9 @@ const BudgetManagementPage: React.FC = () => {
                     })
                   }
                 />
-              </div>
+              </Box>
 
-              <div>
+              <Box>
                 <FormLabel htmlFor="edit-total">预算总额</FormLabel>
                 <TextField
                   id="edit-total"
@@ -824,9 +883,9 @@ const BudgetManagementPage: React.FC = () => {
                     })
                   }
                 />
-              </div>
+              </Box>
 
-              <div>
+              <Box>
                 <FormLabel htmlFor="edit-used">已使用金额</FormLabel>
                 <TextField
                   id="edit-used"
@@ -841,9 +900,9 @@ const BudgetManagementPage: React.FC = () => {
                     })
                   }
                 />
-              </div>
+              </Box>
 
-              <div>
+              <Box>
                 <FormLabel htmlFor="edit-status">状态</FormLabel>
                 <FormControl size="small" fullWidth>
                   <Select
@@ -860,8 +919,8 @@ const BudgetManagementPage: React.FC = () => {
                     <MenuItem value="exhausted">已耗尽</MenuItem>
                   </Select>
                 </FormControl>
-              </div>
-            </div>
+              </Box>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
@@ -882,8 +941,8 @@ const BudgetManagementPage: React.FC = () => {
       >
         <DialogTitle>批量更新状态</DialogTitle>
         <DialogContent>
-          <div className="space-y-4">
-            <div>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box>
               <FormLabel htmlFor="batch_status">选择新状态</FormLabel>
               <FormControl size="small" fullWidth>
                 <Select
@@ -899,13 +958,15 @@ const BudgetManagementPage: React.FC = () => {
                   <MenuItem value="exhausted">已耗尽</MenuItem>
                 </Select>
               </FormControl>
-            </div>
-            <p className="text-sm text-slate-500">
+            </Box>
+            <Typography variant="body2" sx={{ color: "grey.500" }}>
               将批量更新{" "}
-              <span className="font-semibold">{selectedIds.length}</span>{" "}
+              <Box component="span" sx={{ fontWeight: 600 }}>
+                {selectedIds.length}
+              </Box>{" "}
               条预算的状态
-            </p>
-          </div>
+            </Typography>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ mt: 2 }}>
           <Button
@@ -926,7 +987,7 @@ const BudgetManagementPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

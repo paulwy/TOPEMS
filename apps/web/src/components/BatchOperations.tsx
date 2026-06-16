@@ -1,4 +1,5 @@
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
+import { Box, Checkbox, Button, Typography } from "@mui/material";
 
 export interface BatchAction {
   id: string;
@@ -30,99 +31,52 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
   const hasSelection = selectedIds.length > 0;
   const isIndeterminate = !allItemsSelected && hasSelection;
 
-  const checkboxRef1 = useRef<HTMLInputElement>(null);
-  const checkboxRef2 = useRef<HTMLInputElement>(null);
+  const checkboxRef1 = useRef<HTMLButtonElement>(null);
+  const checkboxRef2 = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (checkboxRef1.current) {
-      checkboxRef1.current.indeterminate = isIndeterminate;
+    const input1 = checkboxRef1.current?.querySelector("input");
+    const input2 = checkboxRef2.current?.querySelector("input");
+    if (input1) {
+      input1.indeterminate = isIndeterminate;
     }
-    if (checkboxRef2.current) {
-      checkboxRef2.current.indeterminate = isIndeterminate;
+    if (input2) {
+      input2.indeterminate = isIndeterminate;
     }
   }, [isIndeterminate]);
 
-  const getButtonClass = (color: string) => {
+  const getButtonColor = (color: string) => {
     switch (color) {
       case "primary":
-        return "bg-blue-600 hover:bg-blue-700 text-white";
+        return "primary";
       case "danger":
-        return "bg-red-600 hover:bg-red-700 text-white";
+        return "error";
       case "success":
-        return "bg-green-600 hover:bg-green-700 text-white";
+        return "success";
       case "warning":
-        return "bg-yellow-600 hover:bg-yellow-700 text-white";
+        return "warning";
       default:
-        return "bg-gray-600 hover:bg-gray-700 text-white";
+        return "inherit";
     }
-  };
-
-  const getButtonIcon = (icon: React.ReactNode) => {
-    return icon;
   };
 
   return (
     <>
-      {/* Header Row with Select All */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="flex items-center">
-          <label className="flex items-center cursor-pointer select-none">
-            <input
-              ref={checkboxRef1}
-              type="checkbox"
-              checked={allItemsSelected}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  onSelectAll();
-                } else {
-                  onDeselectAll();
-                }
-              }}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-600">
-              {allItemsSelected ? "取消全选" : "全选"}
-            </span>
-          </label>
-          {hasSelection && (
-            <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
-              已选择 {selectedIds.length} 项
-            </span>
-          )}
-          {!hasSelection && (
-            <span className="ml-3 text-sm text-gray-400">
-              共 {totalItems} 项
-            </span>
-          )}
-        </div>
-
-        {/* Batch Actions */}
-        {hasSelection && (
-          <div className="flex items-center space-x-2">
-            {actions.map((action) => (
-              <button
-                key={action.id}
-                onClick={() => onAction(action.id)}
-                disabled={action.disabled}
-                className={`flex items-center px-3 py-1.5 rounded-lg text-sm transition-colors ${getButtonClass(action.color)} ${
-                  action.disabled ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-                title={action.label}
-              >
-                {getButtonIcon(action.icon)}
-                <span className="ml-1">{action.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Select Column Header Cell */}
-      <div className="select-column-header" style={{ width: "48px" }}>
-        <label className="flex items-center cursor-pointer select-none h-full">
-          <input
-            ref={checkboxRef2}
-            type="checkbox"
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          py: 1.5,
+          bgcolor: "grey.50",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Checkbox
+            ref={checkboxRef1}
             checked={allItemsSelected}
             onChange={(e) => {
               if (e.target.checked) {
@@ -131,22 +85,70 @@ const BatchOperations: React.FC<BatchOperationsProps> = ({
                 onDeselectAll();
               }
             }}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            size="small"
           />
-        </label>
-      </div>
+          <Typography variant="body2" color="text.secondary">
+            {allItemsSelected ? "取消全选" : "全选"}
+          </Typography>
+          {hasSelection && (
+            <Box
+              sx={{
+                px: 1.5,
+                py: 0.5,
+                bgcolor: "primary.light",
+                color: "primary.dark",
+                borderRadius: "9999px",
+                fontSize: "0.75rem",
+                fontWeight: 500,
+              }}
+            >
+              已选择 {selectedIds.length} 项
+            </Box>
+          )}
+          {!hasSelection && (
+            <Typography variant="body2" color="text.disabled">
+              共 {totalItems} 项
+            </Typography>
+          )}
+        </Box>
 
-      {/* Row Checkbox Cell (for use in table rows) */}
-      <div className="select-cell" style={{ width: "48px" }}>
-        <label className="flex items-center cursor-pointer select-none h-full">
-          <input
-            type="checkbox"
-            checked={false}
-            onChange={() => {}}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-        </label>
-      </div>
+        {hasSelection && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {actions.map((action) => (
+              <Button
+                key={action.id}
+                onClick={() => onAction(action.id)}
+                disabled={action.disabled}
+                variant="contained"
+                color={getButtonColor(action.color)}
+                size="small"
+                startIcon={action.icon}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </Box>
+        )}
+      </Box>
+
+      <Box sx={{ width: "48px" }}>
+        <Checkbox
+          ref={checkboxRef2}
+          checked={allItemsSelected}
+          onChange={(e) => {
+            if (e.target.checked) {
+              onSelectAll();
+            } else {
+              onDeselectAll();
+            }
+          }}
+          size="small"
+        />
+      </Box>
+
+      <Box sx={{ width: "48px" }}>
+        <Checkbox size="small" />
+      </Box>
     </>
   );
 };

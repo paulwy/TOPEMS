@@ -38,11 +38,11 @@ interface TemplateSelectorProps {
 }
 
 const TYPE_ICONS: Record<TemplateType, React.ReactNode> = {
-  document: <FileText className="w-5 h-5" />,
-  workflow: <Workflow className="w-5 h-5" />,
-  form: <FormInput className="w-5 h-5" />,
-  report: <BarChart3 className="w-5 h-5" />,
-  notification: <Bell className="w-5 h-5" />,
+  document: <FileText sx={{ width: 20, height: 20 }} />,
+  workflow: <Workflow sx={{ width: 20, height: 20 }} />,
+  form: <FormInput sx={{ width: 20, height: 20 }} />,
+  report: <BarChart3 sx={{ width: 20, height: 20 }} />,
+  notification: <Bell sx={{ width: 20, height: 20 }} />,
 };
 
 const TYPE_LABELS: Record<TemplateType, string> = {

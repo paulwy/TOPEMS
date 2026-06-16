@@ -69,29 +69,29 @@ const PmReportPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <div className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
+    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      <div style={{ flex: 1, padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">项目报表</h1>
-            <p className="text-gray-500 mt-1">
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827" }}>项目报表</h1>
+            <p style={{ color: "#6b7280", marginTop: 4 }}>
               {params.projectId ? "项目详情报表" : "全局项目统计报表"}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={handleRefresh} variant="outline">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <Button onClick={handleRefresh} variant="outlined">
               刷新数据
             </Button>
           </div>
         </div>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">时间范围:</span>
+          <CardContent sx={{ p: 2 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Filter sx={{ width: 16, height: 16, color: "#6b7280" }} />
+                  <span style={{ fontSize: "0.875rem", color: "#4b5563" }}>时间范围:</span>
                 </div>
                 <TextField
                   select
@@ -108,9 +108,9 @@ const PmReportPage: React.FC = () => {
                   <MenuItem value="custom">自定义</MenuItem>
                 </TextField>
                 {selectedPeriod === "custom" && (
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ position: "relative" }}>
+                      <Calendar sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
                       <TextField
                         type="date"
                         value={startDate}
@@ -118,9 +118,9 @@ const PmReportPage: React.FC = () => {
                         sx={{ width: 144 }}
                       />
                     </div>
-                    <span className="text-gray-400">至</span>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <span style={{ color: "#9ca3af" }}>至</span>
+                    <div style={{ position: "relative" }}>
+                      <Calendar sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
                       <TextField
                         type="date"
                         value={endDate}
@@ -133,7 +133,7 @@ const PmReportPage: React.FC = () => {
               </div>
               {params.projectId && (
                 <Button
-                  variant="outline"
+                  variant="outlined"
                   onClick={() => navigate("/pm/reports")}
                 >
                   返回全局报表
@@ -145,9 +145,9 @@ const PmReportPage: React.FC = () => {
 
         {loading ? (
           <Card>
-            <CardContent className="p-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-500">加载中...</p>
+            <CardContent sx={{ p: 6, textAlign: "center" }}>
+              <div style={{ animation: "spin 1s linear infinite", borderRadius: "50%", width: 32, height: 32, border: "2px solid #2563eb", borderBottom: "2px solid transparent", margin: "0 auto" }}></div>
+              <p style={{ marginTop: 16, color: "#6b7280" }}>加载中...</p>
             </CardContent>
           </Card>
         ) : (

@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertCircle, ArrowLeft } from "lucide-react";
+import { Box, Typography, Button } from "@mui/material";
 
 const ErrorPage: React.FC = () => {
   const handleGoBack = () => {
@@ -11,26 +12,72 @@ const ErrorPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center px-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-        <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <AlertCircle className="w-10 h-10 text-red-500" />
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          页面加载失败
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          抱歉，页面加载时出现错误，请返回重试
-        </p>
-        <button
-          onClick={handleGoBack}
-          className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "grey.100",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        px: 4,
+      }}
+    >
+      <Box
+        sx={{
+          bgcolor: "background.paper",
+          borderRadius: 3,
+          boxShadow: 6,
+          p: 8,
+          maxWidth: 448,
+          width: "100%",
+          textAlign: "center",
+        }}
+      >
+        <Box
+          sx={{
+            width: 80,
+            height: 80,
+            bgcolor: "error.100",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mx: "auto",
+            mb: 3,
+          }}
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <AlertCircle sx={{ width: 40, height: 40, color: "error.main" }} />
+        </Box>
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 700, color: "grey.900", mb: 1 }}
+        >
+          页面加载失败
+        </Typography>
+        <Typography variant="body1" sx={{ color: "grey.600", mb: 3 }}>
+          抱歉，页面加载时出现错误，请返回重试
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={handleGoBack}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            px: 3,
+            py: 1,
+            bgcolor: "primary.main",
+            color: "white",
+            borderRadius: 2,
+            "&:hover": { bgcolor: "primary.dark" },
+            transition: "background-color 0.2s",
+          }}
+          startIcon={<ArrowLeft sx={{ width: 16, height: 16, mr: 1 }} />}
+        >
           返回上一页
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 };
 

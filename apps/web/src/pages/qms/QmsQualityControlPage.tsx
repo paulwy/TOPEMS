@@ -34,6 +34,7 @@ import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "react-toastify";
 import * as z from "zod";
+import { PageHeader } from "../../components/templates/PageHeader";
 
 interface Nonconformance {
   id: string;
@@ -397,66 +398,32 @@ const QmsQualityControlPage: React.FC = () => {
         background: "linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%)",
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    background:
-                      "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Shield sx={{ width: 24, height: 24, color: "white" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 700,
-                      color: "slate.900",
-                      fontSize: "1.25rem",
-                    }}
-                  >
-                    质量管理
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                  >
-                    Quality Management System
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+      <PageHeader
+        title="质量管理"
+        subtitle="Quality Management System"
+        pageIcon={<Shield style={{ width: 20, height: 20 }} />}
+        pageColor="linear-gradient(135deg, #6366F1, #8B5CF6)"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "QMS" },
+          { label: "质量管理" },
+        ]}
+        tabs={[
+          { label: "不合格品管理", value: "nonconformance", active: activeTab === "nonconformance" },
+          { label: "审核管理", value: "audit", active: activeTab === "audit" },
+        ]}
+        onTabChange={(value) => setActiveTab(value as "nonconformance" | "audit")}
+        search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "搜索编号或标题..." }}
+        actions={[
+          {
+            label: activeTab === "nonconformance" ? "新增不合格品" : "新增审核",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            variant: "contained",
+            color: "primary",
+            onClick: () => setShowModal(true),
+          },
+        ]}
+      />
 
       <Box
         component="main"
@@ -678,103 +645,7 @@ const QmsQualityControlPage: React.FC = () => {
           </Card>
         </Box>
 
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 0.5,
-            mb: 3,
-            display: "flex",
-            gap: 0.5,
-          }}
-        >
-          <Box
-            onClick={() => setActiveTab("nonconformance")}
-            sx={{
-              flex: 1,
-              px: 2,
-              py: 1,
-              borderRadius: 2,
-              fontWeight: 500,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 1,
-              transition: "all 0.2s",
-              bgcolor:
-                activeTab === "nonconformance" ? "primary.main" : "transparent",
-              color: activeTab === "nonconformance" ? "white" : "slate.600",
-              "&:hover": {
-                bgcolor:
-                  activeTab === "nonconformance" ? "primary.main" : "#f1f5f9",
-              },
-            }}
-          >
-            <AlertCircle sx={{ width: 20, height: 20 }} />
-            <Typography>不合格品管理</Typography>
-          </Box>
-          <Box
-            onClick={() => setActiveTab("audit")}
-            sx={{
-              flex: 1,
-              px: 2,
-              py: 1,
-              borderRadius: 2,
-              fontWeight: 500,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 1,
-              transition: "all 0.2s",
-              bgcolor: activeTab === "audit" ? "primary.main" : "transparent",
-              color: activeTab === "audit" ? "white" : "slate.600",
-              "&:hover": {
-                bgcolor: activeTab === "audit" ? "primary.main" : "#f1f5f9",
-              },
-            }}
-          >
-            <FileText sx={{ width: 20, height: 20 }} />
-            <Typography>审核管理</Typography>
-          </Box>
-        </Box>
-
-        <Card sx={{ mb: 3 }}>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-              <Box sx={{ flex: "1 1 200px", position: "relative" }}>
-                <Search
-                  sx={{
-                    position: "absolute",
-                    left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: 20,
-                    height: 20,
-                    color: "grey.400",
-                  }}
-                />
-                <TextField
-                  size="small"
-                  fullWidth
-                  placeholder="搜索编号或标题..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ pl: 5 }}
-                />
-              </Box>
-              <Button
-                variant="contained"
-                onClick={() => setShowModal(true)}
-                startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-              >
-                {activeTab === "nonconformance" ? "新增不合格品" : "新增审核"}
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
+        
 
         <Card>
           <CardContent sx={{ p: 0 }}>

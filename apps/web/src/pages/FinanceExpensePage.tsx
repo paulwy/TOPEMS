@@ -1098,7 +1098,7 @@ const FinanceExpensePage: React.FC = () => {
                     expense_date: e.target.value,
                   })
                 }
-                LabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: true }}
               />
             </Stack>
 
@@ -1239,7 +1239,7 @@ const FinanceExpensePage: React.FC = () => {
                       expense_date: e.target.value || undefined,
                     })
                   }
-                  LabelProps={{ shrink: true }}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Stack>
 

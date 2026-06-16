@@ -370,7 +370,6 @@ const OpportunityManagementPage: React.FC = () => {
           >
             <Box sx={{ flex: 1, position: "relative" }}>
               <Search
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
                 style={{
                   position: "absolute",
                   left: 8,

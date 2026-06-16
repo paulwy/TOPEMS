@@ -17,7 +17,7 @@ describe("Stepper", () => {
 
   it("应该支持垂直方向", () => {
     const { container } = render(
-      <Stepper steps={mockSteps} activeStep={0} orientation="vertical" />
+      <Stepper steps={mockSteps} activeStep={0} orientation="vertical" />,
     );
     expect(container.firstChild).toBeTruthy();
   });
@@ -28,7 +28,7 @@ describe("Stepper", () => {
       { label: "当前", status: "active" },
     ];
     const { container } = render(
-      <Stepper steps={stepsWithStatus} activeStep={1} />
+      <Stepper steps={stepsWithStatus} activeStep={1} />,
     );
     expect(container.firstChild).toBeTruthy();
   });

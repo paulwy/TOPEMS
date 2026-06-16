@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import {
-  File,
+  File as FileIcon,
   FileText,
   FileImage,
   FileSpreadsheet,
@@ -91,7 +91,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         progress: 100,
         status: "completed" as const,
       };
-    })
+    }),
   );
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -107,9 +107,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
    */
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <FileImage size={24} />;
-    if (type.includes("spreadsheet") || type.includes("excel")) return <FileSpreadsheet size={24} />;
+    if (type.includes("spreadsheet") || type.includes("excel"))
+      return <FileSpreadsheet size={24} />;
     if (type.includes("pdf")) return <FileText size={24} />;
-    return <File size={24} />;
+    return <FileIcon size={24} />;
   };
 
   /**
@@ -131,8 +132,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     const ext = "." + file.name.split(".").pop()?.toLowerCase();
     const mimeType = file.type;
     return accept.some(
-      (type) =>
-        type.toLowerCase() === ext || type.toLowerCase() === mimeType
+      (type) => type.toLowerCase() === ext || type.toLowerCase() === mimeType,
     );
   };
 
@@ -191,7 +191,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       onChange?.(updatedFiles.filter((f) => f.url).map((f) => f.url!));
     },
-    [files, maxCount, maxSize, maxTotalSize, accept, onChange]
+    [files, maxCount, maxSize, maxTotalSize, accept, onChange],
   );
 
   /**
@@ -200,8 +200,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const simulateUpload = (fileId: string) => {
     setFiles((prev) =>
       prev.map((f) =>
-        f.id === fileId ? { ...f, status: "uploading" as const } : f
-      )
+        f.id === fileId ? { ...f, status: "uploading" as const } : f,
+      ),
     );
 
     let progress = 0;
@@ -220,17 +220,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   url: URL.createObjectURL(
                     prev.find((p) => p.id === fileId)?.status === "pending"
                       ? new File([], fileId)
-                      : new Blob([])
+                      : new Blob([]),
                   ),
                 }
-              : f
-          )
+              : f,
+          ),
         );
       } else {
         setFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId ? { ...f, progress } : f
-          )
+          prev.map((f) => (f.id === fileId ? { ...f, progress } : f)),
         );
       }
     }, 300);
@@ -256,8 +254,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
               ...f,
               status: f.status === "paused" ? "uploading" : "paused",
             }
-          : f
-      )
+          : f,
+      ),
     );
   };
 
@@ -343,7 +341,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
           {maxTotalSize}MB
         </Typography>
         {accept.length > 0 && (
-          <Box sx={{ mt: 1, display: "flex", gap: 0.5, flexWrap: "wrap", justifyContent: "center" }}>
+          <Box
+            sx={{
+              mt: 1,
+              display: "flex",
+              gap: 0.5,
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
             {accept.map((type) => (
               <Chip
                 key={type}
@@ -409,7 +415,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <Chip
                   size="small"
                   icon={getStatusIcon(file.status) || undefined}
-                  label={file.status === "uploading" ? `${Math.round(file.progress)}%` : file.status}
+                  label={
+                    file.status === "uploading"
+                      ? `${Math.round(file.progress)}%`
+                      : file.status
+                  }
                   color={getStatusColor(file.status)}
                   variant={file.status === "uploading" ? "outlined" : "filled"}
                 />
@@ -422,17 +432,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   </IconButton>
                 )}
                 {(file.status === "uploading" || file.status === "paused") && (
-                  <IconButton
-                    size="small"
-                    onClick={() => handlePause(file.id)}
-                  >
-                    {file.status === "paused" ? <Play size={16} /> : <Pause size={16} />}
+                  <IconButton size="small" onClick={() => handlePause(file.id)}>
+                    {file.status === "paused" ? (
+                      <Play size={16} />
+                    ) : (
+                      <Pause size={16} />
+                    )}
                   </IconButton>
                 )}
-                <IconButton
-                  size="small"
-                  onClick={() => handleDelete(file.id)}
-                >
+                <IconButton size="small" onClick={() => handleDelete(file.id)}>
                   <X size={16} />
                 </IconButton>
               </Box>
@@ -473,7 +481,9 @@ const UploadArea = styled(Box, {
   transition: "all 0.2s",
   color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
   "&:hover": {
-    borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
+    borderColor: isDisabled
+      ? theme.palette.grey[300]
+      : theme.palette.primary.main,
     backgroundColor: isDisabled
       ? "transparent"
       : theme.palette.primary.light + "10",

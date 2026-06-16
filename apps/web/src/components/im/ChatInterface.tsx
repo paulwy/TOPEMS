@@ -42,7 +42,6 @@ export const ChatInterface: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // WebSocket 回调函数
   const handleWsMessage = useCallback(
     (message: WsMessage) => {
       if (selectedRoom && message.chat_id === selectedRoom.id) {
@@ -78,14 +77,12 @@ export const ChatInterface: React.FC = () => {
     });
   }, [addNotification]);
 
-  // WebSocket 连接
   const { isConnected, connect, disconnect, send } = useWebSocket({
     onMessage: handleWsMessage,
     onOpen: handleWsOpen,
     onClose: handleWsClose,
   });
 
-  // 加载聊天室列表
   useEffect(() => {
     loadChatRooms();
     connect();
@@ -95,7 +92,6 @@ export const ChatInterface: React.FC = () => {
     };
   }, [connect, disconnect]);
 
-  // 加载选中聊天室的消息并标记为已读
   useEffect(() => {
     if (selectedRoom) {
       loadMessages(selectedRoom.id);
@@ -103,7 +99,6 @@ export const ChatInterface: React.FC = () => {
     }
   }, [selectedRoom]);
 
-  // 滚动到底部
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -388,7 +383,6 @@ export const ChatInterface: React.FC = () => {
     if (!selectedRoom) return;
 
     try {
-      // 通过 WebSocket 发送消息
       if (type === "text" && isConnected) {
         const wsMessage: WsMessage = {
           msg_type: "chat",
@@ -400,7 +394,6 @@ export const ChatInterface: React.FC = () => {
         };
         send(wsMessage);
       } else {
-        // 通过 API 发送消息（用于文件等）
         const response = await imApi.createChatMessage({
           chat_id: selectedRoom.id,
           sender_id: "current-user",
@@ -465,39 +458,41 @@ export const ChatInterface: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+    <div style={{ display: "flex", height: "100vh", backgroundColor: "#f9fafb" }}>
+      <div style={{ width: 320, backgroundColor: "#ffffff", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: 16, borderBottom: "1px solid #e5e7eb" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Button
                 variant="text"
                 size="small"
                 onClick={() => navigate("/dashboard")}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>
-              <h1 className="text-xl font-bold text-gray-900">消息</h1>
+              <h1 style={{ fontSize: 20, fontWeight: "bold", color: "#111827" }}>消息</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div
-                className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "9999px",
+                  backgroundColor: isConnected ? "#22c55e" : "#ef4444",
+                }}
               />
               <Button
                 variant="text"
                 size="small"
                 onClick={() => setIsCreateModalOpen(true)}
               >
-                <Plus className="w-5 h-5" />
+                <Plus style={{ width: 20, height: 20 }} />
               </Button>
             </div>
           </div>
 
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div style={{ position: "relative" }}>
+            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
             <TextField
               size="small"
               placeholder="搜索聊天..."
@@ -508,48 +503,56 @@ export const ChatInterface: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 flex items-center justify-center gap-1 border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? "border-indigo-600 text-indigo-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
-                }`}
+                style={{
+                  flex: 1,
+                  paddingTop: 12,
+                  paddingBottom: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                  borderBottom: `2px solid ${activeTab === tab.id ? "#4f46e5" : "transparent"}`,
+                  transition: "all 0.15s",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: activeTab === tab.id ? "#4f46e5" : "#6b7280",
+                }}
               >
-                <Icon className="w-4 h-4" />
-                <span className="text-xs font-medium">{tab.label}</span>
+                <Icon style={{ width: 16, height: 16 }} />
+                <span style={{ fontSize: 12, fontWeight: 500 }}>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Chat Rooms List, Contacts or Notifications */}
         {activeTab === "notifications" ? (
-          <div className="flex-1 overflow-y-auto">
+          <div style={{ flex: 1, overflowY: "auto" }}>
             <NotificationList />
           </div>
         ) : activeTab === "contacts" ? (
-          <div className="flex-1 overflow-y-auto">
+          <div style={{ flex: 1, overflowY: "auto" }}>
             <ContactList
               onSelectContact={(friend) => handleSelectContact(friend)}
             />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-2">
+          <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
             {loading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 32 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "9999px", border: "4px solid #4f46e5", borderTopColor: "transparent", animation: "spin 1s linear infinite" }} />
               </div>
             ) : filteredRooms.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">暂无聊天记录</p>
+              <div style={{ textAlign: "center", padding: 32 }}>
+                <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", mx: "auto", mb: 12 }} />
+                <p style={{ color: "#6b7280" }}>暂无聊天记录</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -570,28 +573,25 @@ export const ChatInterface: React.FC = () => {
         )}
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {selectedRoom &&
         activeTab !== "notifications" &&
         activeTab !== "contacts" ? (
           <>
-            {/* Chat Header */}
-            <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-3">
+            <div style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e5e7eb", padding: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <div>
-                  <h2 className="font-semibold text-gray-900">
+                  <h2 style={{ fontWeight: 600, color: "#111827" }}>
                     {selectedRoom.name || "未命名会话"}
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p style={{ fontSize: 14, color: "#6b7280" }}>
                     {selectedRoom.room_type === "direct" ? "私聊" : "群聊"}
                     {!isConnected && " · 连接断开"}
                   </p>
                 </div>
               </div>
-              {/* Message Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div style={{ position: "relative" }}>
+                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
                 <TextField
                   size="small"
                   placeholder="搜索消息..."
@@ -605,27 +605,26 @@ export const ChatInterface: React.FC = () => {
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <div style={{ flex: 1, overflowY: "auto", padding: 16, backgroundColor: "#f9fafb" }}>
               {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">暂无消息，开始聊天吧</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", mx: "auto", mb: 12 }} />
+                    <p style={{ color: "#6b7280" }}>暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">未找到匹配的消息</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <Search style={{ width: 48, height: 48, color: "#d1d5db", mx: "auto", mb: 12 }} />
+                    <p style={{ color: "#6b7280" }}>未找到匹配的消息</p>
                   </div>
                 </div>
               ) : (
                 <>
                   {messageSearchQuery.trim() && filteredMessages.length > 0 && (
-                    <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <span className="text-sm text-yellow-800">
+                    <div style={{ marginBottom: 16, padding: 8, backgroundColor: "#fef9c3", border: "1px solid #fde047", borderRadius: 8 }}>
+                      <span style={{ fontSize: 14, color: "#854d0e" }}>
                         找到 {filteredMessages.length} 条匹配消息
                       </span>
                     </div>
@@ -647,7 +646,6 @@ export const ChatInterface: React.FC = () => {
               )}
             </div>
 
-            {/* Chat Input */}
             <ChatInput
               onSendMessage={handleSendMessage}
               onUploadFile={handleUploadFile}
@@ -655,13 +653,13 @@ export const ChatInterface: React.FC = () => {
             />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9fafb" }}>
+            <div style={{ textAlign: "center" }}>
+              <MessageSquare style={{ width: 64, height: 64, color: "#d1d5db", mx: "auto", mb: 16 }} />
+              <h2 style={{ fontSize: 20, fontWeight: 600, color: "#111827", mb: 8 }}>
                 欢迎使用 TOPEMS IM
               </h2>
-              <p className="text-gray-500 mb-4">
+              <p style={{ color: "#6b7280", mb: 16 }}>
                 {activeTab === "notifications"
                   ? "查看通知中心"
                   : "选择一个聊天室开始聊天"}
@@ -679,14 +677,12 @@ export const ChatInterface: React.FC = () => {
         )}
       </div>
 
-      {/* Create Room Modal */}
       <CreateRoomModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreated={loadChatRooms}
       />
 
-      {/* Chat Settings Modal */}
       {selectedRoom && (
         <ChatSettingsModal
           isOpen={isSettingsModalOpen}

@@ -28,6 +28,7 @@ members = [
     "svc/bi",
     "svc/integration",
     "svc/mobile",
+    "svc/monitor",
 ]
 resolver = "2"
 

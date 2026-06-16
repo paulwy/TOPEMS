@@ -241,24 +241,24 @@ const LimsSampleDetailPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100"
+        style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}
       >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          style={{ textAlign: "center" }}
         >
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-4"
+            style={{ width: 48, height: 48, border: "4px solid #e9d5ff", borderTop: "4px solid #9333ea", borderRadius: "50%", margin: "0 auto 16px auto" }}
           ></motion.div>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-slate-600"
+            style={{ color: "#475569" }}
           >
             加载中...
           </motion.p>
@@ -269,11 +269,11 @@ const LimsSampleDetailPage: React.FC = () => {
 
   if (!sample) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-slate-600">样品不存在或已被删除</p>
-          <Button onClick={() => navigate("/lims")} className="mt-4">
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+        <div style={{ textAlign: "center" }}>
+          <AlertCircle sx={{ width: 64, height: 64, color: "#ef4444", margin: "0 auto 16px auto" }} />
+          <p style={{ color: "#475569" }}>样品不存在或已被删除</p>
+          <Button onClick={() => navigate("/lims")} sx={{ mt: 2 }}>
             返回列表
           </Button>
         </div>
@@ -288,126 +288,126 @@ const LimsSampleDetailPage: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100"
+      style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}
     >
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10"
+        style={{ backgroundColor: "background.paper", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)", borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate("/lims")}
-                className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+                style={{ height: 32, width: 32, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8 }}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft sx={{ width: 16, height: 16 }} />
               </motion.button>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">样品详情</h1>
-                <p className="text-xs text-slate-500">Sample Detail</p>
+                <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a" }}>样品详情</h1>
+                <p style={{ fontSize: "0.75rem", color: "#64748b" }}>Sample Detail</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
+                style={{ padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", gap: 8 }}
               >
-                <Edit3 className="w-4 h-4" />
+                <Edit3 sx={{ width: 16, height: 16 }} />
                 编辑
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleDelete}
-                className="px-4 py-2 border border-red-200 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-2"
+                style={{ padding: "8px 16px", border: "1px solid #fecaca", borderRadius: 8, backgroundColor: "#fef2f2", color: "#dc2626", display: "flex", alignItems: "center", gap: 8 }}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 sx={{ width: 16, height: 16 }} />
                 删除
               </motion.button>
             </div>
           </div>
-        </div>
+        </Box>
       </motion.header>
 
       <motion.main
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, gridColumn: { lg: "span 1" } }}>
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+              style={{ backgroundColor: "#ffffff", borderRadius: 12, boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0", overflow: "hidden" }}
             >
-              <div className="p-4 border-b border-slate-100">
-                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-purple-600" />
+              <div style={{ padding: 16, borderBottom: "1px solid #f1f5f9" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
+                  <Package sx={{ width: 20, height: 20, color: "#9333ea" }} />
                   基本信息
                 </h2>
               </div>
-              <div className="p-4 space-y-4">
-                <div className="flex justify-between items-start">
+              <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
-                    <p className="text-sm text-slate-500">样品编号</p>
-                    <p className="text-lg font-semibold text-slate-900 mt-1">
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>样品编号</p>
+                    <p style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", marginTop: 4 }}>
                       {sample.sample_no || sample.id}
                     </p>
                   </div>
                   {getStatusBadge(sample.status)}
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">样品名称</p>
-                  <p className="text-lg font-medium text-slate-900 mt-1">
+                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>样品名称</p>
+                  <p style={{ fontSize: "1.125rem", fontWeight: 500, color: "#0f172a", marginTop: 4 }}>
                     {sample.name}
                   </p>
                 </div>
                 {sample.description && (
                   <div>
-                    <p className="text-sm text-slate-500">描述</p>
-                    <p className="text-slate-700 mt-1">{sample.description}</p>
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>描述</p>
+                    <p style={{ fontSize: "0.875rem", color: "#334155", marginTop: 4 }}>{sample.description}</p>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-4">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <div>
-                    <p className="text-sm text-slate-500 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
+                    <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                      <Calendar sx={{ width: 12, height: 12 }} />
                       接收日期
                     </p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {sample.received_date
                         ? dayjs(sample.received_date).format("YYYY-MM-DD")
                         : "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 flex items-center gap-1">
-                      <User className="w-3 h-3" />
+                    <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                      <User sx={{ width: 12, height: 12 }} />
                       负责人
                     </p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {sample.responsible_person || "-"}
                     </p>
                   </div>
                 </div>
                 {sample.location && (
                   <div>
-                    <p className="text-sm text-slate-500 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
+                    <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                      <MapPin sx={{ width: 12, height: 12 }} />
                       存放位置
                     </p>
-                    <p className="text-slate-900 mt-1">{sample.location}</p>
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>{sample.location}</p>
                   </div>
                 )}
               </div>
@@ -417,17 +417,17 @@ const LimsSampleDetailPage: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+              style={{ backgroundColor: "#ffffff", borderRadius: 12, boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0", overflow: "hidden" }}
             >
-              <div className="p-4 border-b border-slate-100">
-                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
+              <div style={{ padding: 16, borderBottom: "1px solid #f1f5f9" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
+                  <FileText sx={{ width: 20, height: 20, color: "#2563eb" }} />
                   关联检验任务
                 </h2>
               </div>
-              <div className="p-4">
+              <div style={{ padding: 16 }}>
                 {tasks.length > 0 ? (
-                  <div className="space-y-3">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     {tasks.map((task, index) => (
                       <motion.div
                         key={task.id}
@@ -435,15 +435,15 @@ const LimsSampleDetailPage: React.FC = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
                         whileHover={{ scale: 1.01, backgroundColor: "#f8fafc" }}
-                        className="p-3 bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                        style={{ padding: 12, backgroundColor: "#f8fafc", borderRadius: 8, cursor: "pointer" }}
                         onClick={() => navigate(`/lims/task/${task.id}`)}
                       >
-                        <div className="flex justify-between items-start">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
-                            <p className="font-medium text-slate-900">
+                            <p style={{ fontWeight: 500, color: "#0f172a" }}>
                               {task.task_no}
                             </p>
-                            <p className="text-sm text-slate-500">
+                            <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
                               {task.sample_name || "样品检验"}
                             </p>
                           </div>
@@ -478,13 +478,13 @@ const LimsSampleDetailPage: React.FC = () => {
                             }}
                           />
                         </div>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
+                        <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 8, fontSize: "0.875rem", color: "#64748b" }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <User sx={{ width: 12, height: 12 }} />
                             {task.inspector || "-"}
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <Clock sx={{ width: 12, height: 12 }} />
                             {task.created_at
                               ? dayjs(task.created_at).format("YYYY-MM-DD")
                               : "-"}
@@ -494,39 +494,39 @@ const LimsSampleDetailPage: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-slate-500">
-                    <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <div style={{ textAlign: "center", padding: "32px 0", color: "#64748b" }}>
+                    <FileText sx={{ width: 48, height: 48, margin: "0 auto 8px auto", opacity: 0.5 }} />
                     <p>暂无检验任务</p>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => navigate("/lims")}
-                      className="mt-4 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 mx-auto"
+                      style={{ marginTop: 16, padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", gap: 8, margin: "16px auto 0" }}
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus sx={{ width: 12, height: 12 }} />
                       创建任务
                     </motion.button>
                   </div>
                 )}
               </div>
             </motion.div>
-          </div>
+          </Box>
 
-          <div className="lg:col-span-2 space-y-6">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, gridColumn: { lg: "span 2" } }}>
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+              style={{ backgroundColor: "#ffffff", borderRadius: 12, boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0", overflow: "hidden" }}
             >
-              <div className="p-4 border-b border-slate-100">
-                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-purple-600" />
+              <div style={{ padding: 16, borderBottom: "1px solid #f1f5f9" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
+                  <BarChart3 sx={{ width: 20, height: 20, color: "#9333ea" }} />
                   检验统计
                 </h2>
               </div>
-              <div className="p-4">
-                <div className="h-64">
+              <div style={{ padding: 16 }}>
+                <div style={{ height: 256 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" />
@@ -548,42 +548,42 @@ const LimsSampleDetailPage: React.FC = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="grid grid-cols-4 gap-4 mt-4">
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 16 }}>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
-                    className="text-center p-4 bg-slate-50 rounded-lg"
+                    style={{ textAlign: "center", padding: 16, backgroundColor: "#f8fafc", borderRadius: 8 }}
                   >
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "#0f172a" }}>
                       {stats.total}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">检验总数</p>
+                    <p style={{ fontSize: "0.75rem", color: "#64748b", marginTop: 4 }}>检验总数</p>
                   </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
-                    className="text-center p-4 bg-green-50 rounded-lg"
+                    style={{ textAlign: "center", padding: 16, backgroundColor: "#f0fdf4", borderRadius: 8 }}
                   >
-                    <p className="text-2xl font-bold text-green-600">
+                    <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "#16a34a" }}>
                       {stats.passed}
                     </p>
-                    <p className="text-xs text-green-600 mt-1">合格</p>
+                    <p style={{ fontSize: "0.75rem", color: "#16a34a", marginTop: 4 }}>合格</p>
                   </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
-                    className="text-center p-4 bg-red-50 rounded-lg"
+                    style={{ textAlign: "center", padding: 16, backgroundColor: "#fef2f2", borderRadius: 8 }}
                   >
-                    <p className="text-2xl font-bold text-red-600">
+                    <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "#dc2626" }}>
                       {stats.failed}
                     </p>
-                    <p className="text-xs text-red-600 mt-1">不合格</p>
+                    <p style={{ fontSize: "0.75rem", color: "#dc2626", marginTop: 4 }}>不合格</p>
                   </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
-                    className="text-center p-4 bg-yellow-50 rounded-lg"
+                    style={{ textAlign: "center", padding: 16, backgroundColor: "#fefce8", borderRadius: 8 }}
                   >
-                    <p className="text-2xl font-bold text-yellow-600">
+                    <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "#ca8a04" }}>
                       {stats.pending}
                     </p>
-                    <p className="text-xs text-yellow-600 mt-1">待定</p>
+                    <p style={{ fontSize: "0.75rem", color: "#ca8a04", marginTop: 4 }}>待定</p>
                   </motion.div>
                 </div>
               </div>
@@ -593,24 +593,24 @@ const LimsSampleDetailPage: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+              style={{ backgroundColor: "#ffffff", borderRadius: 12, boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0", overflow: "hidden" }}
             >
-              <div className="p-4 border-b border-slate-100 flex flex-row items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+              <div style={{ padding: 16, borderBottom: "1px solid #f1f5f9", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
+                  <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
                   检验记录
                 </h2>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowRecordModal(true)}
-                  className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
+                  style={{ padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", alignItems: "center", gap: 8 }}
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus sx={{ width: 12, height: 12 }} />
                   添加记录
                 </motion.button>
               </div>
-              <div className="p-4">
+              <div style={{ padding: 16 }}>
                 {records.length > 0 ? (
                   <DataTable
                     columns={recordColumns}
@@ -618,15 +618,15 @@ const LimsSampleDetailPage: React.FC = () => {
                     enablePagination={false}
                   />
                 ) : (
-                  <div className="text-center py-12 text-slate-500">
-                    <CheckCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <div style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
+                    <CheckCircle sx={{ width: 64, height: 64, margin: "0 auto 16px auto", opacity: 0.5 }} />
                     <p>暂无检验记录</p>
                   </div>
                 )}
               </div>
             </motion.div>
-          </div>
-        </div>
+          </Box>
+        </Box>
       </motion.main>
 
       <Dialog
@@ -637,7 +637,7 @@ const LimsSampleDetailPage: React.FC = () => {
       >
         <DialogTitle>编辑样品信息</DialogTitle>
         <DialogContent>
-          <Box className="space-y-4" sx={{ mt: 1 }}>
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
               <Box
                 component="label"
@@ -741,7 +741,7 @@ const LimsSampleDetailPage: React.FC = () => {
       >
         <DialogTitle>添加检验记录</DialogTitle>
         <DialogContent>
-          <Box className="space-y-4" sx={{ mt: 1 }}>
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
               <Box
                 component="label"

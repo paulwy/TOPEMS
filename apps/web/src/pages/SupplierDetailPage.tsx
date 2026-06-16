@@ -5,8 +5,6 @@ import {
   CardHeader,
   Chip,
   Typography,
-  Tabs,
-  Tab,
   Box,
   Table,
   TableBody,
@@ -21,7 +19,6 @@ import {
   Truck,
   Mail,
   Phone,
-  MapPin,
   AlertCircle,
   Edit2,
   FileText,
@@ -375,19 +372,6 @@ const SupplierDetailPage: React.FC = () => {
               </Box>
             </CardContent>
           </Card>
-        </Box>
-
-        {/* 标签页 */}
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-          <Tabs
-            value="basic"
-            sx={{ "& .MuiTab-root": { textTransform: "none" } }}
-          >
-            <Tab label="基本信息" value="basic" />
-            <Tab label="财务信息" value="finance" />
-            <Tab label="采购发票" value="invoices" />
-            <Tab label="付款记录" value="payments" />
-          </Tabs>
         </Box>
 
         {/* 基本信息 */}

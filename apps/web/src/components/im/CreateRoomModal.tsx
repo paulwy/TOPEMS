@@ -33,7 +33,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "group">("chat");
 
-  // Chat room form state
   const [chatRoomName, setChatRoomName] = useState("");
   const [chatRoomType, setChatRoomType] = useState<"direct" | "group">(
     "direct",
@@ -41,7 +40,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const [chatRoomMembers, setChatRoomMembers] = useState<string[]>([]);
   const [newMemberInput, setNewMemberInput] = useState("");
 
-  // Project group form state
   const [groupName, setGroupName] = useState("");
   const [groupDescription, setGroupDescription] = useState("");
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
@@ -195,7 +193,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         >
           <DialogTitle sx={{ m: 0, p: 0 }}>创建新会话</DialogTitle>
           <Button variant="text" size="small" onClick={handleClose}>
-            <X className="w-4 h-4" />
+            <X sx={{ width: 16, height: 16 }} />
           </Button>
         </Box>
 
@@ -206,13 +204,13 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         >
           <Tab
             value="chat"
-            icon={<MessageSquare className="w-4 h-4" />}
+            icon={<MessageSquare sx={{ width: 16, height: 16 }} />}
             iconPosition="start"
             label="聊天室"
           />
           <Tab
             value="group"
-            icon={<Users className="w-4 h-4" />}
+            icon={<Users sx={{ width: 16, height: 16 }} />}
             iconPosition="start"
             label="项目群组"
           />
@@ -221,7 +219,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         {activeTab === "chat" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label className="text-sm font-medium text-gray-700">
+              <label style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}>
                 聊天室类型
               </label>
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -229,7 +227,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   variant={chatRoomType === "direct" ? "contained" : "outlined"}
                   onClick={() => setChatRoomType("direct")}
                   size="small"
-                  startIcon={<User className="w-4 h-4" />}
+                  startIcon={<User sx={{ width: 16, height: 16 }} />}
                 >
                   私聊
                 </Button>
@@ -237,7 +235,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                   variant={chatRoomType === "group" ? "contained" : "outlined"}
                   onClick={() => setChatRoomType("group")}
                   size="small"
-                  startIcon={<Users className="w-4 h-4" />}
+                  startIcon={<Users sx={{ width: 16, height: 16 }} />}
                 >
                   群聊
                 </Button>
@@ -258,7 +256,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label className="text-sm font-medium text-gray-700">
+              <label style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}>
                 添加成员
               </label>
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -309,7 +307,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                         borderRadius: "full",
                       }}
                     >
-                      <span className="text-sm">{member}</span>
+                      <span style={{ fontSize: 14 }}>{member}</span>
                       <button
                         onClick={() =>
                           removeMember(
@@ -318,9 +316,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                             member,
                           )
                         }
-                        className="text-gray-500 hover:text-gray-700"
+                        style={{ color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                       >
-                        <X className="w-3 h-3" />
+                        <X sx={{ width: 12, height: 12 }} />
                       </button>
                     </Box>
                   ))}
@@ -333,7 +331,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 onClick={handleCreateChatRoom}
                 disabled={loading}
                 variant="contained"
-                startIcon={<Save className="w-4 h-4" />}
+                startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
                 {loading ? "创建中..." : "创建聊天室"}
               </Button>
@@ -362,7 +360,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label className="text-sm font-medium text-gray-700">
+              <label style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}>
                 添加成员
               </label>
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -413,14 +411,14 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                         borderRadius: "full",
                       }}
                     >
-                      <span className="text-sm">{member}</span>
+                      <span style={{ fontSize: 14 }}>{member}</span>
                       <button
                         onClick={() =>
                           removeMember(groupMembers, setGroupMembers, member)
                         }
-                        className="text-gray-500 hover:text-gray-700"
+                        style={{ color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                       >
-                        <X className="w-3 h-3" />
+                        <X sx={{ width: 12, height: 12 }} />
                       </button>
                     </Box>
                   ))}
@@ -433,7 +431,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 onClick={handleCreateProjectGroup}
                 disabled={loading}
                 variant="contained"
-                startIcon={<Save className="w-4 h-4" />}
+                startIcon={<Save sx={{ width: 16, height: 16 }} />}
               >
                 {loading ? "创建中..." : "创建群组"}
               </Button>

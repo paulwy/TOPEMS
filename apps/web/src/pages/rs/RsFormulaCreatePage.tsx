@@ -257,7 +257,7 @@ const RsFormulaCreatePage: React.FC = () => {
                           color="error"
                           onClick={() => handleRemoveComponent(index)}
                         >
-                          <DeleteIcon />
+                          <Trash2 />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -266,7 +266,7 @@ const RsFormulaCreatePage: React.FC = () => {
               </Table>
             </TableContainer>
             <Button
-              startIcon={<AddIcon />}
+              startIcon={<Plus />}
               onClick={handleAddComponent}
               sx={{ mt: 2 }}
             >
@@ -283,7 +283,7 @@ const RsFormulaCreatePage: React.FC = () => {
             >
               <Button
                 variant="outlined"
-                startIcon={<CancelIcon />}
+                startIcon={<X />}
                 onClick={handleCancel}
               >
                 取消

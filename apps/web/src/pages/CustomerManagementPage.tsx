@@ -301,7 +301,7 @@ const CustomerManagementPage: React.FC = () => {
             sx={{ mb: 3 }}
           >
             <Box sx={{ flex: 1, position: "relative" }}>
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "gray" }} />
               <TextField
                 size="small"
                 placeholder="搜索客户名称或代码..."
@@ -335,14 +335,14 @@ const CustomerManagementPage: React.FC = () => {
                 resetForm();
                 setShowDialog(true);
               }}
-              startIcon={<Plus className="w-4 h-4" />}
+              startIcon={<Plus sx={{ width: 16, height: 16 }} />}
             >
               新增客户
             </Button>
             <Button
               variant="outlined"
               onClick={() => setShowImportExport(true)}
-              startIcon={<Download className="w-4 h-4" />}
+              startIcon={<Download sx={{ width: 16, height: 16 }} />}
             >
               导入导出
             </Button>
@@ -362,7 +362,7 @@ const CustomerManagementPage: React.FC = () => {
                   color="error"
                   size="small"
                   onClick={handleBatchDelete}
-                  startIcon={<Trash2 className="w-4 h-4" />}
+                  startIcon={<Trash2 sx={{ width: 16, height: 16 }} />}
                 >
                   批量删除
                 </Button>
@@ -429,20 +429,20 @@ const CustomerManagementPage: React.FC = () => {
                             size="small"
                             onClick={() => handleViewDetail(customer)}
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye sx={{ width: 16, height: 16 }} />
                           </Button>
                           <Button
                             size="small"
                             onClick={() => handleEdit(customer)}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit sx={{ width: 16, height: 16 }} />
                           </Button>
                           <Button
                             size="small"
                             color="error"
                             onClick={() => handleDelete(customer.id)}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 sx={{ width: 16, height: 16 }} />
                           </Button>
                         </Stack>
                       </TableCell>

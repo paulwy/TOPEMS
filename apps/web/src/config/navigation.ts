@@ -17,11 +17,13 @@ export {
   getModuleFromPath,
 } from "./navigation-v2";
 
+import type { NavGroup as NavigationNavGroup } from "@/types/navigation";
+
 // 兼容旧版本的 NavItem 类型（已更名为 NavGroup）
-export type NavItem = import("@/types/navigation").NavGroup;
+export type NavItem = NavigationNavGroup;
 
 // 兼容旧版本的 NavGroup 类型（带 title 和 items）
 export interface LegacyNavGroup {
   title?: string;
-  items: import("@/types/navigation").NavGroup[];
+  items: NavigationNavGroup[];
 }

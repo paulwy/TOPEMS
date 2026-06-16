@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import type { BoxProps } from "@mui/material";
 import {
   Box,
@@ -37,7 +43,10 @@ import {
   FormControl,
   InputLabel,
   FormControlLabel,
+  Breadcrumbs,
+  Link,
 } from "@mui/material";
+import { EmptyState, ErrorEmptyState } from "../mui/EmptyState";
 import {
   Search,
   Filter,
@@ -52,7 +61,9 @@ import {
   ChevronRight,
   Settings2,
   Columns3,
+  ArrowLeft,
 } from "lucide-react";
+import { Link as RouterLink } from "react-router-dom";
 
 // 从 FilterBar 导入 FilterConfig 类型以确保类型一致
 import type { FilterConfig } from "../mui/FilterBar";
@@ -145,9 +156,14 @@ export interface ColumnConfig {
 
 export interface ListPageTemplateProps<T = any> extends BoxProps {
   // 页面信息
-  title: string;
+  title?: string;
   subtitle?: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
+  /** 返回按钮配置 */
+  backButton?: {
+    href?: string;
+    onClick?: () => void;
+  };
 
   // 数据
   columns: ColumnDef<T>[];
@@ -163,6 +179,11 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
   selectable?: boolean;
   selectedIds?: (string | number)[];
   onSelectionChange?: (ids: (string | number)[]) => void;
+  /** 批量选择配置 */
+  selection?: {
+    selected?: (string | number)[];
+    onChange?: (ids: (string | number)[]) => void;
+  };
 
   // 排序
   sortable?: boolean;
@@ -209,6 +230,13 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
    */
   customActions?: React.ReactNode;
   onRefresh?: () => void;
+  /** 批量操作按钮 */
+  batchActions?: Array<{
+    label: string;
+    icon?: React.ReactNode;
+    color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
+    onClick?: () => void;
+  }>;
 
   // 空状态
   emptyMessage?: string;
@@ -246,7 +274,7 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
 /**
  * 列表页模板组件
  * 提供完整的列表页面布局，包括搜索、筛选、排序、分页、行操作等功能
- * 
+ *
  * @example
  * ```tsx
  * <ListPageTemplate
@@ -264,9 +292,11 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
  * />
  * ```
  */
-export const ListPageTemplate = <T extends Record<string, any>>({
+export function ListPageTemplate<T>({
   title,
   subtitle,
+  breadcrumbs,
+  backButton,
   columns,
   data,
   loading,
@@ -276,6 +306,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   selectable,
   selectedIds = [],
   onSelectionChange,
+  selection,
   sortable,
   defaultSortBy,
   defaultSortOrder = "asc",
@@ -290,6 +321,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   actions,
   rowActions,
   onRefresh,
+  batchActions,
   emptyMessage = "暂无数据",
   emptyIcon,
   headerContent,
@@ -302,7 +334,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   defaultColumnConfig = [],
   onColumnConfigChange,
   ...props
-}: ListPageTemplateProps<T>) => {
+}: ListPageTemplateProps<T>) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -313,7 +345,8 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   const [selectedRow, setSelectedRow] = useState<T | null>(null);
 
   // 行展开状态
-  const [expandedIds, setExpandedIds] = useState<(string | number)[]>(defaultExpandedIds);
+  const [expandedIds, setExpandedIds] =
+    useState<(string | number)[]>(defaultExpandedIds);
 
   // 列配置状态
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
@@ -327,7 +360,8 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   });
 
   // 列配置 Popover 状态
-  const [columnConfigAnchor, setColumnConfigAnchor] = useState<HTMLElement | null>(null);
+  const [columnConfigAnchor, setColumnConfigAnchor] =
+    useState<HTMLElement | null>(null);
 
   // 获取可见的列
   const visibleColumns = useMemo(() => {
@@ -350,28 +384,31 @@ export const ListPageTemplate = <T extends Record<string, any>>({
     [sortBy, sortOrder, onSort],
   );
 
+  const effectiveSelectedIds = selection?.selected ?? selectedIds;
+  const effectiveOnSelectionChange = selection?.onChange ?? onSelectionChange;
+
   // 处理选择
   const handleSelectAll = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.checked) {
-        const allIds = data.map((row) => getRowId?.(row) ?? row.id);
-        onSelectionChange?.(allIds);
+        const allIds = data.map((row) => getRowId?.(row) ?? (row as any).id);
+        effectiveOnSelectionChange?.(allIds);
       } else {
-        onSelectionChange?.([]);
+        effectiveOnSelectionChange?.([]);
       }
     },
-    [data, getRowId, onSelectionChange],
+    [data, getRowId, effectiveOnSelectionChange],
   );
 
   const handleSelectRow = useCallback(
     (row: T) => {
-      const rowId = getRowId?.(row) ?? row.id;
-      const newSelected = selectedIds.includes(rowId)
-        ? selectedIds.filter((id) => id !== rowId)
-        : [...selectedIds, rowId];
-      onSelectionChange?.(newSelected);
+      const rowId = getRowId?.(row) ?? (row as any).id;
+      const newSelected = effectiveSelectedIds.includes(rowId)
+        ? effectiveSelectedIds.filter((id) => id !== rowId)
+        : [...effectiveSelectedIds, rowId];
+      effectiveOnSelectionChange?.(newSelected);
     },
-    [selectedIds, getRowId, onSelectionChange],
+    [effectiveSelectedIds, getRowId, effectiveOnSelectionChange],
   );
 
   // 处理搜索
@@ -412,7 +449,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   // 处理行展开
   const handleExpandRow = useCallback(
     (row: T) => {
-      const rowId = getRowId?.(row) ?? row.id;
+      const rowId = getRowId?.(row) ?? (row as any).id;
       const newExpanded = expandedIds.includes(rowId)
         ? expandedIds.filter((id) => id !== rowId)
         : [...expandedIds, rowId];
@@ -442,9 +479,9 @@ export const ListPageTemplate = <T extends Record<string, any>>({
           <TableCell padding="checkbox" sx={{ width: 48 }}>
             <Checkbox
               indeterminate={
-                selectedIds.length > 0 && selectedIds.length < data.length
+                effectiveSelectedIds.length > 0 && effectiveSelectedIds.length < data.length
               }
-              checked={data.length > 0 && selectedIds.length === data.length}
+              checked={data.length > 0 && effectiveSelectedIds.length === data.length}
               onChange={handleSelectAll}
             />
           </TableCell>
@@ -549,7 +586,10 @@ export const ListPageTemplate = <T extends Record<string, any>>({
             align="center"
             sx={{ py: 8 }}
           >
-            <Typography color="error">{error}</Typography>
+            <ErrorEmptyState
+              error={error}
+              onRetry={onRefresh}
+            />
           </TableCell>
         </TableRow>
       );
@@ -569,29 +609,19 @@ export const ListPageTemplate = <T extends Record<string, any>>({
             align="center"
             sx={{ py: 8 }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 2,
-              }}
-            >
-              {emptyIcon || (
-                <Typography variant="h6" color="text.secondary">
-                  📋
-                </Typography>
-              )}
-              <Typography color="text.secondary">{emptyMessage}</Typography>
-            </Box>
+            <EmptyState
+              icon={emptyIcon}
+              title={emptyMessage}
+              description="暂无数据，点击添加按钮创建新记录"
+            />
           </TableCell>
         </TableRow>
       );
     }
 
     return data.map((row, index) => {
-      const rowId = getRowId?.(row) ?? row.id;
-      const isSelected = selectedIds.includes(rowId);
+      const rowId = getRowId?.(row) ?? (row as any).id;
+      const isSelected = effectiveSelectedIds.includes(rowId);
       const isExpanded = expandedIds.includes(rowId);
 
       return (
@@ -631,9 +661,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
                     style={{
                       width: 18,
                       height: 18,
-                      transform: isExpanded
-                        ? "rotate(90deg)"
-                        : "rotate(0deg)",
+                      transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
                       transition: "transform 0.2s",
                     }}
                   />
@@ -642,7 +670,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
             )}
             {visibleColumns.map((column) => (
               <TableCell key={column.id} align={column.align || "left"}>
-                {column.render ? column.render(row, index) : row[column.id]}
+                {column.render ? column.render(row, index) : String((row as Record<string, unknown>)[column.id])}
               </TableCell>
             ))}
             {rowActions && rowActions.length > 0 && (
@@ -656,7 +684,11 @@ export const ListPageTemplate = <T extends Record<string, any>>({
                   </IconButton>
                 ) : (
                   <Box
-                    sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      gap: 0.5,
+                    }}
                   >
                     {rowActions.slice(0, 3).map((action, actionIndex) => {
                       if (action.show && !action.show(row)) return null;
@@ -671,7 +703,9 @@ export const ListPageTemplate = <T extends Record<string, any>>({
                             color={action.color}
                           >
                             {action.icon || (
-                              <MoreHorizontal style={{ width: 16, height: 16 }} />
+                              <MoreHorizontal
+                                style={{ width: 16, height: 16 }}
+                              />
                             )}
                           </IconButton>
                         </Tooltip>
@@ -796,7 +830,9 @@ export const ListPageTemplate = <T extends Record<string, any>>({
               )}
               {filter.options?.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
-                  <Checkbox checked={commonProps.value.includes(option.value)} />
+                  <Checkbox
+                    checked={commonProps.value.includes(option.value)}
+                  />
                   <ListItemText primary={option.label} />
                 </MenuItem>
               ))}
@@ -836,11 +872,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
 
       default:
         return (
-          <TextField
-            key={filter.id}
-            {...commonProps}
-            select
-          >
+          <TextField key={filter.id} {...commonProps} select>
             <MenuItem value="">全部</MenuItem>
             {filter.options?.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -932,7 +964,10 @@ export const ListPageTemplate = <T extends Record<string, any>>({
                       <Switch
                         checked={isVisible}
                         onChange={(e) =>
-                          handleColumnVisibilityChange(column.id, e.target.checked)
+                          handleColumnVisibilityChange(
+                            column.id,
+                            e.target.checked,
+                          )
                         }
                         size="small"
                       />
@@ -950,6 +985,126 @@ export const ListPageTemplate = <T extends Record<string, any>>({
 
   return (
     <Box {...props}>
+      {/* 页面头部：面包屑、标题、操作按钮 */}
+      {(breadcrumbs || title) && (
+        <Box
+          sx={{
+            px: { xs: 2, sm: 3 },
+            py: 2,
+            borderBottom: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          {/* 面包屑导航 */}
+          {breadcrumbs && breadcrumbs.length > 0 && (
+            <Breadcrumbs
+              separator={<ChevronRight size={14} />}
+              sx={{ mb: 1 }}
+            >
+              {breadcrumbs.map((crumb, index) =>
+                crumb.href ? (
+                  <Link
+                    key={index}
+                    component={RouterLink}
+                    to={crumb.href}
+                    color="inherit"
+                    underline="hover"
+                    sx={{ fontSize: "0.875rem" }}
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <Typography
+                    key={index}
+                    color="text.primary"
+                    sx={{ fontSize: "0.875rem" }}
+                  >
+                    {crumb.label}
+                  </Typography>
+                ),
+              )}
+            </Breadcrumbs>
+          )}
+
+          {/* 标题栏 */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 2,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              {/* 返回按钮 */}
+              {backButton && (
+                <Tooltip title="返回">
+                  <IconButton
+                    onClick={backButton.onClick}
+                    component={backButton.href ? RouterLink : "button"}
+                    to={backButton.href}
+                    size="small"
+                    sx={{ bgcolor: "action.hover" }}
+                  >
+                    <ArrowLeft size={18} />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {/* 标题和副标题 */}
+              <Box>
+                {title && (
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 600, color: "text.primary" }}
+                  >
+                    {title}
+                  </Typography>
+                )}
+                {subtitle && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.25 }}
+                  >
+                    {subtitle}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            {/* 操作按钮 */}
+            {actions && actions.length > 0 && (
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                {/* 刷新按钮 */}
+                {onRefresh && (
+                  <Tooltip title="刷新">
+                    <IconButton onClick={onRefresh} size="small">
+                      <RefreshCw size={18} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+                {/* 自定义操作按钮 */}
+                {actions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant={action.variant || "contained"}
+                    size="small"
+                    startIcon={action.icon}
+                    onClick={action.onClick}
+                    sx={{ whiteSpace: "nowrap" }}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </Box>
+            )}
+          </Box>
+        </Box>
+      )}
+
       {/* 搜索和筛选 */}
       {renderSearchAndFilters()}
 

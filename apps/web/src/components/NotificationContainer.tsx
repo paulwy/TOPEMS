@@ -26,23 +26,36 @@ export const NotificationContainer: React.FC<NotificationContainerProps> = ({
   onClose,
 }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col space-y-3">
+    <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", flexDirection: "column", gap: "12px" }}>
       {notifications.map((notification) => {
         const Icon = iconMap[notification.type];
         return (
           <div
             key={notification.id}
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg shadow-lg border-l-4 min-w-[300px] max-w-md transform transition-all duration-300 ${
-              colorMap[notification.type]
-            }`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px 16px",
+              borderRadius: "8px",
+              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+              borderLeft: "4px solid",
+              minWidth: "300px",
+              maxWidth: "448px",
+              transition: "all 0.3s ease",
+              ...(notification.type === "success" ? { backgroundColor: "#22c55e", borderColor: "#16a34a", color: "#ffffff" } : {}),
+              ...(notification.type === "error" ? { backgroundColor: "#ef4444", borderColor: "#dc2626", color: "#ffffff" } : {}),
+              ...(notification.type === "info" ? { backgroundColor: "#3b82f6", borderColor: "#2563eb", color: "#ffffff" } : {}),
+              ...(notification.type === "warning" ? { backgroundColor: "#eab308", borderColor: "#ca8a04", color: "#ffffff" } : {}),
+            }}
           >
-            <Icon className="w-5 h-5 flex-shrink-0" />
-            <p className="flex-1 text-sm font-medium">{notification.message}</p>
+            <Icon sx={{ width: 20, height: 20, flexShrink: 0 }} />
+            <p style={{ flex: 1, fontSize: "14px", fontWeight: 500 }}>{notification.message}</p>
             <button
               onClick={() => onClose(notification.id)}
-              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+              style={{ padding: "4px", borderRadius: "9999px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}
             >
-              <X className="w-4 h-4" />
+              <X sx={{ width: 16, height: 16 }} />
             </button>
           </div>
         );

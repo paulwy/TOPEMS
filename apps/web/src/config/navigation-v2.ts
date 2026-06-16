@@ -70,6 +70,7 @@ export const topNavItems: NavGroup[] = [
         children: [
           { label: "客户评分", path: "/crm/scoring" },
           { label: "销售预测", path: "/crm/forecast" },
+          { label: "计费管理", path: "/crm/billing" },
         ],
       },
     ],
@@ -211,6 +212,14 @@ export const topNavItems: NavGroup[] = [
         children: [{ label: "SRM", path: "/srm" }],
       },
       {
+        label: "生产",
+        children: [
+          { label: "MES", path: "/mes" },
+          { label: "SCM", path: "/scm" },
+          { label: "WMS", path: "/wms" },
+        ],
+      },
+      {
         label: "地理信息",
         children: [{ label: "GIS", path: "/gis" }],
       },
@@ -229,7 +238,6 @@ export const topNavItems: NavGroup[] = [
         label: "帮助",
         children: [
           { label: "帮助中心", path: "/help" },
-          { label: "使用文档", path: "/docs/guide" },
         ],
       },
     ],
@@ -259,13 +267,14 @@ export const moduleTabsConfig: ModuleTabsConfig[] = [
   {
     module: "crm",
     tabs: [
-      { label: "概览", path: "/crm", pinned: true },
+      { label: "概览", path: "/crm/dashboard", pinned: true },
       { label: "客户", path: "/crm/customers" },
       { label: "商机", path: "/crm/opportunities" },
       { label: "联系人", path: "/crm/contacts" },
       { label: "交互", path: "/crm/interactions" },
       { label: "评分", path: "/crm/scoring" },
       { label: "预测", path: "/crm/forecast" },
+      { label: "计费", path: "/crm/billing" },
     ],
   },
   {
@@ -328,8 +337,8 @@ export const moduleTabsConfig: ModuleTabsConfig[] = [
     tabs: [
       { label: "概览", path: "/lims", pinned: true },
       { label: "样品", path: "/lims/samples" },
-      { label: "检测", path: "/lims/tests" },
-      { label: "试剂", path: "/lims/reagents" },
+      { label: "检测任务", path: "/lims/tasks" },
+      { label: "流程管理", path: "/lims/processes" },
       { label: "仪器", path: "/lims/instruments" },
     ],
   },
@@ -346,25 +355,31 @@ export const moduleTabsConfig: ModuleTabsConfig[] = [
     module: "pdm",
     tabs: [
       { label: "概览", path: "/pdm", pinned: true },
-      { label: "产品", path: "/pdm/products" },
+      { label: "工艺管理", path: "/pdm/processes" },
+      { label: "工序管理", path: "/pdm/steps" },
+      { label: "配方管理", path: "/pdm/formulas" },
+      { label: "批次管理", path: "/pdm/batches" },
     ],
   },
   {
     module: "qms",
     tabs: [
       { label: "概览", path: "/qms", pinned: true },
-      { label: "质量审核", path: "/qms/audits" },
+      { label: "质量审核", path: "/qms/audit" },
       { label: "质量标准", path: "/qms/standards" },
-      { label: "不合格品", path: "/qms/nonconformances" },
+      { label: "质量检查", path: "/qms/checks" },
+      { label: "不合格品", path: "/qms/issues" },
+      { label: "持续改进", path: "/qms/improvements" },
     ],
   },
   {
     module: "ehs",
     tabs: [
       { label: "概览", path: "/ehs", pinned: true },
-      { label: "风险评估", path: "/ehs/risks" },
-      { label: "应急预案", path: "/ehs/emergencies" },
-      { label: "安全培训", path: "/ehs/training" },
+      { label: "风险评估", path: "/ehs/hazards" },
+      { label: "应急预案", path: "/ehs/plans" },
+      { label: "安全演练", path: "/ehs/drills" },
+      { label: "安全检查", path: "/ehs/checks" },
     ],
   },
   {
@@ -376,13 +391,39 @@ export const moduleTabsConfig: ModuleTabsConfig[] = [
     ],
   },
   {
+    module: "mes",
+    tabs: [
+      { label: "概览", path: "/mes", pinned: true },
+      { label: "生产订单", path: "/mes/orders" },
+      { label: "工序", path: "/mes/processes" },
+      { label: "工作站", path: "/mes/workstations" },
+      { label: "生产记录", path: "/mes/records" },
+    ],
+  },
+  {
+    module: "scm",
+    tabs: [
+      { label: "概览", path: "/scm", pinned: true },
+      { label: "供应商", path: "/scm/suppliers" },
+      { label: "采购订单", path: "/scm/purchase-orders" },
+      { label: "采购明细", path: "/scm/purchase-items" },
+      { label: "评估", path: "/scm/evaluations" },
+    ],
+  },
+  {
+    module: "wms",
+    tabs: [
+      { label: "概览", path: "/wms", pinned: true },
+      { label: "仓库", path: "/wms/warehouses" },
+      { label: "库存", path: "/wms/inventory" },
+      { label: "入库", path: "/wms/inbound-orders" },
+      { label: "出库", path: "/wms/outbound-orders" },
+    ],
+  },
+  {
     module: "gis",
     tabs: [
       { label: "概览", path: "/gis", pinned: true },
-      { label: "地图监控", path: "/gis/map" },
-      { label: "设备点位", path: "/gis/devices" },
-      { label: "管线", path: "/gis/pipelines" },
-      { label: "区域", path: "/gis/areas" },
     ],
   },
   {
@@ -439,9 +480,12 @@ export function getModuleFromPath(path: string): string | null {
     vehicles: "assets",
     flow: "flow",
     "workflow-designer": "flow",
+    workflows: "flow",
     im: "im",
     mail: "im",
     docs: "im",
+    documents: "im",
+    "document-center": "im",
     "knowledge-base": "im",
     ai: "ai",
     lims: "lims",
@@ -450,11 +494,29 @@ export function getModuleFromPath(path: string): string | null {
     qms: "qms",
     ehs: "ehs",
     srm: "srm",
+    mes: "mes",
+    scm: "scm",
+    wms: "wms",
     gis: "gis",
     iam: "iam",
+    users: "iam",
+    roles: "iam",
+    permissions: "iam",
+    audit: "iam",
+    system: "iam",
+    dictionaries: "iam",
+    database: "iam",
+    migration: "iam",
+    debug: "iam",
     notifications: "iam",
-    integration: "iam",
     help: "help",
+    templates: "docs",
+    profile: "dashboard",
+    addressbook: "dashboard",
+    announcements: "erp",
+    budget: "erp",
+    performance: "performance",
+    "mobile-workstation": "mobile",
   };
 
   const firstSegment = pathSegments[0];

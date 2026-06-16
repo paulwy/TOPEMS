@@ -134,7 +134,7 @@ const RsFormulaListPage: React.FC = () => {
           </div>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            startIcon={<Plus />}
             component={Link}
             to="/rs/formulas/create"
           >
@@ -153,7 +153,7 @@ const RsFormulaListPage: React.FC = () => {
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon />
+                  <Search />
                 </InputAdornment>
               ),
             },

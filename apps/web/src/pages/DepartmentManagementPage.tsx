@@ -294,7 +294,6 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           </Box>
 
           <Box
-            className="action-buttons"
             sx={{ opacity: 0, transition: "opacity 0.2s" }}
           >
             <Tooltip title="编辑">
@@ -306,7 +305,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                   setShowEditModal(true);
                 }}
               >
-                <Edit className="w-4 h-4" />
+                <Edit sx={{ width: 16, height: 16 }} />
               </Button>
             </Tooltip>
 
@@ -317,7 +316,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                 color="error"
                 onClick={() => handleDeleteDepartment(dept.id)}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 sx={{ width: 16, height: 16 }} />
               </Button>
             </Tooltip>
           </Box>
@@ -396,7 +395,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                   setShowEditModal(true);
                 }}
               >
-                <Edit className="w-4 h-4" />
+                <Edit sx={{ width: 16, height: 16 }} />
               </Button>
               <Button
                 variant="text"
@@ -404,7 +403,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                 color="error"
                 onClick={() => handleDeleteDepartment(dept.id)}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 sx={{ width: 16, height: 16 }} />
               </Button>
             </Box>
           );
@@ -433,7 +432,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
               <Box>
                 <Typography
@@ -444,7 +443,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                     alignItems: "center",
                   }}
                 >
-                  <Building2 className="w-7 h-7 mr-2" />
+                  <Building2 sx={{ width: 28, height: 28, mr: 1 }} />
                   部门管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -458,7 +457,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
                 variant="contained"
                 onClick={() => setShowCreateModal(true)}
               >
-                <Plus className="w-5 h-5 mr-1" />
+                <Plus sx={{ width: 20, height: 20, mr: 0.5 }} />
                 新增部门
               </Button>
             </Box>
@@ -476,7 +475,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
             sx={{ flex: 1 }}
             slotProps={{
               input: {
-                startAdornment: <Search className="w-5 h-5 mr-1" />,
+                startAdornment: <Search sx={{ width: 20, height: 20, mr: 0.5 }} />,
               },
             }}
           />

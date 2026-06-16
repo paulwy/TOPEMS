@@ -94,7 +94,7 @@ const DataExport: React.FC<DataExportProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedFields, setSelectedFields] = useState<ExportField[]>(
-    fields.map((f) => ({ ...f, selected: f.selected ?? true }))
+    fields.map((f) => ({ ...f, selected: f.selected ?? true })),
   );
   const [fileName, setFileName] = useState(defaultFileName);
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("xlsx");
@@ -137,7 +137,7 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const handleFieldToggle = (key: string) => {
     setSelectedFields((prev) =>
-      prev.map((f) => (f.key === key ? { ...f, selected: !f.selected } : f))
+      prev.map((f) => (f.key === key ? { ...f, selected: !f.selected } : f)),
     );
   };
 
@@ -145,9 +145,7 @@ const DataExport: React.FC<DataExportProps> = ({
    * 全选/取消全选
    */
   const handleSelectAll = (selected: boolean) => {
-    setSelectedFields((prev) =>
-      prev.map((f) => ({ ...f, selected }))
-    );
+    setSelectedFields((prev) => prev.map((f) => ({ ...f, selected })));
   };
 
   /**
@@ -155,7 +153,9 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const exportToExcel = useCallback(
     (exportData: Record<string, unknown>[], name: string) => {
-      const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
+      const selectedKeys = selectedFields
+        .filter((f) => f.selected)
+        .map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
         selectedKeys.forEach((key) => {
@@ -176,7 +176,7 @@ const DataExport: React.FC<DataExportProps> = ({
 
       XLSX.writeFile(workbook, `${name}.xlsx`);
     },
-    [selectedFields]
+    [selectedFields],
   );
 
   /**
@@ -184,7 +184,9 @@ const DataExport: React.FC<DataExportProps> = ({
    */
   const exportToCsv = useCallback(
     (exportData: Record<string, unknown>[], name: string) => {
-      const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
+      const selectedKeys = selectedFields
+        .filter((f) => f.selected)
+        .map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
         selectedKeys.forEach((key) => {
@@ -196,14 +198,16 @@ const DataExport: React.FC<DataExportProps> = ({
       const worksheet = XLSX.utils.json_to_sheet(filteredData);
       const csv = XLSX.utils.sheet_to_csv(worksheet);
 
-      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob(["\ufeff" + csv], {
+        type: "text/csv;charset=utf-8;",
+      });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `${name}.csv`;
       link.click();
       URL.revokeObjectURL(link.href);
     },
-    [selectedFields]
+    [selectedFields],
   );
 
   /**
@@ -246,7 +250,7 @@ const DataExport: React.FC<DataExportProps> = ({
                     (row) =>
                       `<tr>${selectedFieldsFiltered
                         .map((f) => `<td>${row[f.key] ?? ""}</td>`)
-                        .join("")}</tr>`
+                        .join("")}</tr>`,
                   )
                   .join("")}
               </tbody>
@@ -261,7 +265,7 @@ const DataExport: React.FC<DataExportProps> = ({
       printWindow.document.write(tableHtml);
       printWindow.document.close();
     },
-    [selectedFields]
+    [selectedFields],
   );
 
   /**
@@ -431,7 +435,12 @@ const DataExport: React.FC<DataExportProps> = ({
           {/* 字段选择 */}
           <Box>
             <Box
-              sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
+              }}
             >
               <Typography variant="subtitle2">选择导出字段</Typography>
               <Box>
@@ -463,7 +472,8 @@ const DataExport: React.FC<DataExportProps> = ({
           {/* 数据预览 */}
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" color="text.secondary">
-              共 {data.length} 条数据，已选择 {selectedFields.filter((f) => f.selected).length} 个字段
+              共 {data.length} 条数据，已选择{" "}
+              {selectedFields.filter((f) => f.selected).length} 个字段
             </Typography>
           </Box>
         </DialogContent>

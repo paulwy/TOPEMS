@@ -26,6 +26,10 @@ import {
   docsRoutes,
   aiRoutes,
   professionalRoutes,
+  monitorRoutes,
+  mesRoutes,
+  scmRoutes,
+  wmsRoutes,
   type RouteConfig,
 } from "./routes";
 
@@ -155,6 +159,10 @@ const AppContent: React.FC = () => {
         {renderRoutes(docsRoutes)}
         {renderRoutes(aiRoutes)}
         {renderRoutes(professionalRoutes)}
+        {renderRoutes(monitorRoutes)}
+        {renderRoutes(mesRoutes)}
+        {renderRoutes(scmRoutes)}
+        {renderRoutes(wmsRoutes)}
 
         <Route
           path="/departments"

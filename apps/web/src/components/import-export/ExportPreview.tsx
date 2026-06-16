@@ -30,53 +30,54 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+      <div style={{ backgroundColor: "white", borderRadius: 12, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", width: "100%", maxWidth: 896, maxHeight: "90vh", overflow: "hidden" }}>
+        <div style={{ padding: 24, borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: 0 }}>{title}</h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600"
+            style={{ color: "#94a3b8" }}
+            sx={{ "&:hover": { color: "#475569" } }}
           >
-            <X className="w-5 h-5" />
+            <X style={{ width: 20, height: 20 }} sx={{ "&:hover": { color: "#475569" } }} />
           </button>
         </div>
 
-        <div className="p-6 max-h-[calc(90vh-180px)] overflow-auto">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center mb-2">
-              <FileText className="w-5 h-5 text-green-600 mr-2" />
-              <span className="font-medium text-green-800">
+        <div style={{ padding: 24, maxHeight: "calc(90vh - 180px)", overflow: "auto" }}>
+          <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+              <FileText style={{ width: 20, height: 20, color: "#16a34a", marginRight: 8 }} />
+              <span style={{ fontWeight: 500, color: "#166534" }}>
                 {fileName || `export.${format}`}
               </span>
             </div>
-            <p className="text-sm text-green-700">
+            <p style={{ fontSize: 14, color: "#15803d", margin: 0 }}>
               共 {data.length} 条数据，{columns.length} 列
             </p>
           </div>
 
-          <div className="border border-slate-200 rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
+          <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
+                <thead style={{ backgroundColor: "#f8fafc" }}>
                   <tr>
                     {columns.map((col) => (
                       <th
                         key={col}
-                        className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase"
+                        style={{ padding: "8px 16px", textAlign: "left", fontSize: 12, fontWeight: 500, color: "#64748b", textTransform: "uppercase" }}
                       >
                         {getColumnLabel(col)}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-slate-200">
+                <tbody style={{ backgroundColor: "white" }}>
                   {previewData.map((row, idx) => (
                     <tr key={idx}>
                       {columns.map((col) => (
                         <td
                           key={col}
-                          className="px-4 py-2 text-sm text-slate-900"
+                          style={{ padding: "8px 16px", fontSize: 14, color: "#0f172a" }}
                         >
                           {String(row[col] || "")}
                         </td>
@@ -87,26 +88,28 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
               </table>
             </div>
             {data.length > 10 && (
-              <div className="px-4 py-2 bg-slate-50 text-sm text-slate-600 text-center">
+              <div style={{ padding: "8px 16px", backgroundColor: "#f8fafc", fontSize: 14, color: "#475569", textAlign: "center" }}>
                 ... 还有 {data.length - 10} 行数据
               </div>
             )}
           </div>
         </div>
 
-        <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+        <div style={{ padding: 24, borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: 12 }}>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+            style={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 8 }}
+            sx={{ "&:hover": { backgroundColor: "#e2e8f0" }, transition: "colors 0.2s" }}
           >
             取消
           </button>
           <button
             onClick={onDownload}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            style={{ padding: "8px 16px", backgroundColor: "#16a34a", color: "white", borderRadius: 8 }}
+            sx={{ "&:hover": { backgroundColor: "#15803d" }, transition: "colors 0.2s" }}
           >
-            <span className="flex items-center">
-              <Download className="w-4 h-4 mr-2" />
+            <span style={{ display: "flex", alignItems: "center" }}>
+              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
               下载文件
             </span>
           </button>

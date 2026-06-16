@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import {
-  Box,
   ChevronLeft,
   Plus,
   Edit,
@@ -16,6 +15,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
 import {
+  Box,
   Button,
   TextField,
   FormControl,
@@ -297,9 +297,9 @@ const FinanceAssetPage: React.FC = () => {
               </IconButton>
               <MuiBox>
                 <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <Box component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
+                  <MuiBox component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
                     <Calculator size={28} />
-                  </Box>
+                  </MuiBox>
                   资产管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
