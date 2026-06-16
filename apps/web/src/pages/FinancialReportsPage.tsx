@@ -207,7 +207,7 @@ export default function FinancialReportsPage() {
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
                 size="small"
-                LabelProps={{ shrink: true }}
+                InputLabelProps={{ shrink: true }}
               />
             </Box>
             <Button

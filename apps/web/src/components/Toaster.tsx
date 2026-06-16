@@ -38,28 +38,28 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
   const getIcon = () => {
     switch (type) {
       case "success":
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        return <CheckCircle2 sx={{ height: 20, width: 20, color: "#22c55e" }} />;
       case "error":
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
+        return <AlertCircle sx={{ height: 20, width: 20, color: "#ef4444" }} />;
       case "warning":
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+        return <AlertTriangle sx={{ height: 20, width: 20, color: "#eab308" }} />;
       case "info":
       default:
-        return <Info className="h-5 w-5 text-blue-500" />;
+        return <Info sx={{ height: 20, width: 20, color: "#3b82f6" }} />;
     }
   };
 
   const getBgColor = () => {
     switch (type) {
       case "success":
-        return "bg-green-50 border-green-200";
+        return { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" };
       case "error":
-        return "bg-red-50 border-red-200";
+        return { backgroundColor: "#fef2f2", borderColor: "#fecaca" };
       case "warning":
-        return "bg-yellow-50 border-yellow-200";
+        return { backgroundColor: "#fefce8", borderColor: "#fef08a" };
       case "info":
       default:
-        return "bg-blue-50 border-blue-200";
+        return { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" };
     }
   };
 
@@ -69,25 +69,32 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
 
   return (
     <div
-      className={cn(
-        "flex items-start gap-3 px-4 py-3 rounded-lg border shadow-lg transform transition-all duration-300",
-        getBgColor(),
-        "animate-in slide-in-from-top-2 fade-in",
-      )}
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "12px",
+        padding: "12px 16px",
+        borderRadius: "8px",
+        border: "1px solid",
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+        transition: "all 0.3s ease",
+        animation: "slideIn 0.3s ease",
+        ...getBgColor()
+      }}
     >
       {getIcon()}
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900">{title}</p>
-        {message && <p className="text-sm text-gray-600 mt-1">{message}</p>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontWeight: 500, color: "#111827" }}>{title}</p>
+        {message && <p style={{ fontSize: "14px", color: "#374151", marginTop: "4px" }}>{message}</p>}
       </div>
       <button
         onClick={() => {
           setIsVisible(false);
           setTimeout(onClose, 300);
         }}
-        className="text-gray-400 hover:text-gray-600 transition-colors"
+        style={{ color: "#9ca3af", border: "none", background: "transparent", cursor: "pointer", transition: "color 0.2s" }}
       >
-        <X className="h-4 w-4" />
+        <X sx={{ height: 16, width: 16 }} />
       </button>
     </div>
   );
@@ -102,7 +109,7 @@ export function Toaster() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full">
+    <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", flexDirection: "column", gap: "8px", maxWidth: "384px", width: "100%" }}>
       {notifications.map((notification) => (
         <Toast
           key={notification.id}

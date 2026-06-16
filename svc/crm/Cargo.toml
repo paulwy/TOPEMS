@@ -25,6 +25,7 @@ utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 rust_decimal = { version = "1.35", features = ["serde"] }
+rand = "0.8"
 
 [dev-dependencies]
 tokio-test.workspace = true

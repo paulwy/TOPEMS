@@ -46,6 +46,20 @@ import type {
   ConsolidationCompany,
 } from "@/types/consolidation";
 
+// Helper to convert tailwind color class to sx
+const getChipSx = (colorClass: string): object => {
+  const colorMap: Record<string, { backgroundColor: string; color: string }> = {
+    "bg-green-100 text-green-800": { backgroundColor: "#dcfce7", color: "#166534" },
+    "bg-gray-100 text-gray-800": { backgroundColor: "#f3f4f6", color: "#374151" },
+    "bg-yellow-100 text-yellow-800": { backgroundColor: "#fef9c3", color: "#854d0e" },
+    "bg-blue-100 text-blue-800": { backgroundColor: "#dbeafe", color: "#1e40af" },
+    "bg-purple-100 text-purple-800": { backgroundColor: "#ede9fe", color: "#6b21a8" },
+    "bg-teal-100 text-teal-800": { backgroundColor: "#ccfbf1", color: "#115e59" },
+    "bg-orange-100 text-orange-800": { backgroundColor: "#ffedd5", color: "#9a3412" },
+  };
+  return colorMap[colorClass] || { backgroundColor: "#f3f4f6", color: "#374151" };
+};
+
 // 状态配置
 const STATUS_CONFIG = {
   active: {
@@ -128,9 +142,9 @@ export default function ConsolidationScopePage() {
       header: "合并范围编码",
       accessorKey: "code",
       cell: ({ row }: { row: ConsolidationScope }) => (
-        <div className="flex items-center gap-2">
-          <Network className="w-4 h-4 text-blue-600" />
-          <span className="font-mono text-sm">{row.code}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Network sx={{ width: 16, height: 16, color: "#2563eb" }} />
+          <span style={{ fontFamily: "monospace", fontSize: 14 }}>{row.code}</span>
         </div>
       ),
     },
@@ -139,7 +153,7 @@ export default function ConsolidationScopePage() {
       header: "合并范围名称",
       accessorKey: "name",
       cell: ({ row }: { row: ConsolidationScope }) => (
-        <div className="font-medium">{row.name}</div>
+        <div style={{ fontWeight: 500 }}>{row.name}</div>
       ),
     },
     {
@@ -152,7 +166,7 @@ export default function ConsolidationScopePage() {
           color: "bg-gray-100 text-gray-800",
         };
         return (
-          <Chip size="small" className={config.color} label={config.label} />
+          <Chip size="small" sx={getChipSx(config.color)} label={config.label} />
         );
       },
     },
@@ -161,7 +175,7 @@ export default function ConsolidationScopePage() {
       header: "说明",
       accessorKey: "description",
       cell: ({ row }: { row: ConsolidationScope }) => (
-        <span className="text-gray-500 text-sm">{row.description || "-"}</span>
+        <span style={{ color: "#6b7280", fontSize: 14 }}>{row.description || "-"}</span>
       ),
     },
     {
@@ -176,8 +190,8 @@ export default function ConsolidationScopePage() {
         };
         const Icon = config.icon;
         return (
-          <div className="flex items-center gap-2">
-            <Chip size="small" className={config.color} label={config.label} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Chip size="small" sx={{ backgroundColor: "#f3f4f6", color: "#374151" }} label={config.label} />
           </div>
         );
       },
@@ -186,13 +200,13 @@ export default function ConsolidationScopePage() {
       id: "actions",
       header: "操作",
       cell: ({ row }: { row: ConsolidationScope }) => (
-        <div className="flex items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Button
             variant="text"
             size="small"
             onClick={() => navigate(`/finance/consolidation/${row.id}/rules`)}
+            startIcon={<Settings sx={{ width: 16, height: 16 }} />}
           >
-            <Settings className="w-4 h-4" />
             规则
           </Button>
           <Button
@@ -200,7 +214,7 @@ export default function ConsolidationScopePage() {
             size="small"
             onClick={() => handleDeleteScope(row.id)}
           >
-            <Trash2 className="w-4 h-4 text-red-500" />
+            <Trash2 sx={{ width: 16, height: 16, color: "#ef4444" }} />
           </Button>
         </div>
       ),
@@ -214,9 +228,9 @@ export default function ConsolidationScopePage() {
       header: "公司编码",
       accessorKey: "company_code",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-gray-400" />
-          <span className="font-mono text-sm">
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Building2 sx={{ width: 16, height: 16, color: "#9ca3af" }} />
+          <span style={{ fontFamily: "monospace", fontSize: 14 }}>
             {row.getValue("company_code")}
           </span>
         </div>
@@ -227,14 +241,10 @@ export default function ConsolidationScopePage() {
       header: "公司名称",
       accessorKey: "company_name",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{row.getValue("company_name")}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontWeight: 500 }}>{row.getValue("company_name")}</span>
           {row.original.is_parent && (
-            <Chip
-              size="small"
-              className="bg-blue-100 text-blue-800"
-              label="母公司"
-            />
+            <Chip size="small" sx={{ backgroundColor: "#dbeafe", color: "#1e40af" }} label="母公司" />
           )}
         </div>
       ),
@@ -252,7 +262,7 @@ export default function ConsolidationScopePage() {
           color: "bg-gray-100 text-gray-800",
         };
         return (
-          <Chip size="small" className={config.color} label={config.label} />
+          <Chip size="small" sx={getChipSx(config.color)} label={config.label} />
         );
       },
     },
@@ -261,7 +271,7 @@ export default function ConsolidationScopePage() {
       header: "持股比例",
       accessorKey: "ownership_percentage",
       cell: ({ row }) => (
-        <span className="font-mono">
+        <span style={{ fontFamily: "monospace" }}>
           {row.getValue("ownership_percentage")}%
         </span>
       ),
@@ -271,7 +281,7 @@ export default function ConsolidationScopePage() {
       header: "合并比例",
       accessorKey: "consolidation_percentage",
       cell: ({ row }) => (
-        <span className="font-mono">
+        <span style={{ fontFamily: "monospace" }}>
           {row.getValue("consolidation_percentage")}%
         </span>
       ),
@@ -281,7 +291,7 @@ export default function ConsolidationScopePage() {
       header: "少数股东权益",
       accessorKey: "minority_interest",
       cell: ({ row }) => (
-        <span className="font-mono text-right">
+        <span style={{ fontFamily: "monospace", textAlign: "right" }}>
           ¥
           {row.original.minority_interest.toLocaleString("zh-CN", {
             minimumFractionDigits: 2,
@@ -300,14 +310,14 @@ export default function ConsolidationScopePage() {
           onClick={() => removeCompany.mutate(row.original.id)}
           disabled={row.original.is_parent}
         >
-          <Trash2 className="w-4 h-4 text-red-500" />
+          <Trash2 sx={{ width: 16, height: 16, color: "#ef4444" }} />
         </Button>
       ),
     },
   ];
 
   return (
-    <Box sx={{ p: 3 }} className="container mx-auto">
+    <Box sx={{ p: 3 }}>
       {/* 页面标题 */}
       <Box
         sx={{
@@ -327,7 +337,7 @@ export default function ConsolidationScopePage() {
               gap: 1,
             }}
           >
-            <GitMerge className="w-6 h-6 text-blue-600" />
+            <GitMerge sx={{ width: 24, height: 24, color: "#2563eb" }} />
             合并范围管理
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
@@ -337,7 +347,7 @@ export default function ConsolidationScopePage() {
         <Button
           variant="contained"
           onClick={() => navigate("/finance/consolidation/scopes/create")}
-          startIcon={<Plus className="w-4 h-4" />}
+          startIcon={<Plus sx={{ width: 16, height: 16 }} />}
         >
           新建合并范围
         </Button>
@@ -348,7 +358,7 @@ export default function ConsolidationScopePage() {
         <CardContent sx={{ pt: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ position: "relative", flex: 1, maxWidth: 400 }}>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
               <TextField
                 placeholder="搜索合并范围名称或编码..."
                 value={searchKeyword}
@@ -384,7 +394,7 @@ export default function ConsolidationScopePage() {
                   gap: 1,
                 }}
               >
-                <Network className="w-5 h-5 text-blue-600" />
+                <Network sx={{ width: 20, height: 20, color: "#2563eb" }} />
                 合并范围列表
               </Typography>
             </CardHeader>
@@ -472,7 +482,7 @@ export default function ConsolidationScopePage() {
                               scope.consolidation_method}
                           </Typography>
                         </Box>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                        <ChevronRight sx={{ width: 20, height: 20, color: "#9ca3af" }} />
                       </Box>
                     </Box>
                   ))}
@@ -504,7 +514,7 @@ export default function ConsolidationScopePage() {
                       gap: 1,
                     }}
                   >
-                    <Users className="w-5 h-5 text-blue-600" />
+                    <Users sx={{ width: 20, height: 20, color: "#2563eb" }} />
                     {selectedScope.name}
                   </Typography>
                   <Button
@@ -515,7 +525,7 @@ export default function ConsolidationScopePage() {
                         `/finance/consolidation/scopes/${selectedScope.id}/edit`,
                       )
                     }
-                    startIcon={<Edit2 className="w-4 h-4" />}
+                    startIcon={<Edit2 sx={{ width: 16, height: 16 }} />}
                   >
                     编辑
                   </Button>
@@ -558,7 +568,7 @@ export default function ConsolidationScopePage() {
                             `/finance/consolidation/scopes/${selectedScope.id}/add-company`,
                           )
                         }
-                        startIcon={<Plus className="w-4 h-4" />}
+                        startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         添加公司
                       </Button>
@@ -611,7 +621,7 @@ export default function ConsolidationScopePage() {
                             `/finance/consolidation/scopes/${selectedScope.id}/rules/create`,
                           )
                         }
-                        startIcon={<Plus className="w-4 h-4" />}
+                        startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         新建规则
                       </Button>
@@ -647,7 +657,7 @@ export default function ConsolidationScopePage() {
               }}
             >
               <Box sx={{ textAlign: "center", color: "text.secondary" }}>
-                <Network className="w-12 h-12 mx-auto mb: 2, text-gray-300" />
+                <Network sx={{ width: 48, height: 48, margin: "auto", marginBottom: 8, color: "#d1d5db" }} />
                 <Typography>请从左侧选择一个合并范围</Typography>
               </Box>
             </Card>

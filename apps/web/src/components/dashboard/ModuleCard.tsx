@@ -23,7 +23,6 @@ interface ModuleCardProps {
   item: ModuleItem;
   onClick: () => void;
   size?: "large" | "medium" | "small";
-  isDarkMode?: boolean;
 }
 
 const colorToGradient: Record<string, string> = {
@@ -45,19 +44,37 @@ const colorToGradient: Record<string, string> = {
   "bg-pink-500": "linear-gradient(135deg, #ec4899, #db2777)",
 };
 
+const colorToBgLight: Record<string, string> = {
+  "bg-blue-500": "#eff6ff",
+  "bg-purple-500": "#faf5ff",
+  "bg-green-500": "#f0fdf4",
+  "bg-emerald-500": "#ecfdf5",
+  "bg-rose-500": "#fff1f2",
+  "bg-slate-600": "#f8fafc",
+  "bg-violet-500": "#f5f3ff",
+  "bg-amber-500": "#fffbeb",
+  "bg-teal-500": "#f0fdfa",
+  "bg-yellow-500": "#fefce8",
+  "bg-indigo-500": "#eef2ff",
+  "bg-cyan-500": "#ecfeff",
+  "bg-orange-500": "#fff7ed",
+  "bg-red-500": "#fef2f2",
+  "bg-sky-500": "#f0f9ff",
+  "bg-pink-500": "#fdf2f8",
+};
+
 export const ModuleCard: React.FC<ModuleCardProps> = ({
   item,
   onClick,
   size = "medium",
-  isDarkMode = true,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const Icon = item.icon;
 
   const sizeStyles = {
-    large: { padding: "20px", iconSize: 56, titleSize: 18, descSize: 14 },
-    medium: { padding: "16px", iconSize: 48, titleSize: 16, descSize: 12 },
-    small: { padding: "12px", iconSize: 40, titleSize: 14, descSize: 11 },
+    large: { padding: "24px", iconSize: 60, titleSize: 18, descSize: 14 },
+    medium: { padding: "20px", iconSize: 52, titleSize: 16, descSize: 13 },
+    small: { padding: "16px", iconSize: 44, titleSize: 14, descSize: 12 },
   };
 
   const currentSize = sizeStyles[size];
@@ -68,22 +85,16 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        background: isDarkMode ? "#1e293b" : "#ffffff",
-        borderRadius: "12px",
+        background: "#ffffff",
+        borderRadius: "16px",
         padding: currentSize.padding,
         cursor: "pointer",
         transition: "all 0.3s ease",
         transform: isHovered ? "translateY(-4px)" : "translateY(0)",
         boxShadow: isHovered
-          ? isDarkMode
-            ? "0 20px 40px rgba(0, 0, 0, 0.4)"
-            : "0 20px 40px rgba(0, 0, 0, 0.1)"
-          : isDarkMode
-            ? "0 4px 6px rgba(0, 0, 0, 0.3)"
-            : "0 4px 6px rgba(0, 0, 0, 0.1)",
-        border: isDarkMode
-          ? "1px solid rgba(255,255,255,0.1)"
-          : "1px solid rgba(0,0,0,0.1)",
+          ? "0 20px 40px rgba(0, 0, 0, 0.12)"
+          : "0 4px 6px rgba(0, 0, 0, 0.05)",
+        border: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
@@ -91,7 +102,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
           style={{
             width: currentSize.iconSize,
             height: currentSize.iconSize,
-            borderRadius: "14px",
+            borderRadius: "16px",
             background:
               colorToGradient[item.color] || colorToGradient["bg-blue-500"],
             display: "flex",
@@ -100,6 +111,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
             flexShrink: 0,
             transition: "transform 0.3s ease",
             transform: isHovered ? "scale(1.1)" : "scale(1)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           }}
         >
           <Icon
@@ -116,14 +128,14 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              marginBottom: "4px",
+              marginBottom: "6px",
             }}
           >
             <h3
               style={{
                 fontSize: currentSize.titleSize,
                 fontWeight: 600,
-                color: isDarkMode ? "#f1f5f9" : "#1e293b",
+                color: "#1e293b",
                 margin: 0,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -137,7 +149,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
           <p
             style={{
               fontSize: currentSize.descSize,
-              color: isDarkMode ? "#94a3b8" : "#64748b",
+              color: "#64748b",
               margin: 0,
               whiteSpace: "nowrap",
               overflow: "hidden",

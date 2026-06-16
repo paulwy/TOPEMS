@@ -93,7 +93,7 @@ const PerformanceMonitorPage: React.FC = () => {
         accessorKey: "timestamp",
         header: "时间",
         cell: ({ row }) => (
-          <div className="text-sm text-gray-900 dark:text-gray-100">
+          <div style={{ fontSize: 14, color: "#111827" }}>
             {new Date(row.original.timestamp).toLocaleTimeString()}
           </div>
         ),
@@ -102,7 +102,7 @@ const PerformanceMonitorPage: React.FC = () => {
         accessorKey: "endpoint",
         header: "API 端点",
         cell: ({ row }) => (
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <div style={{ fontSize: 14, fontWeight: 500, color: "#111827" }}>
             {row.original.endpoint}
           </div>
         ),
@@ -117,7 +117,7 @@ const PerformanceMonitorPage: React.FC = () => {
           else if (duration >= 500) colorClass = "text-yellow-600";
 
           return (
-            <span className={`text-sm font-medium ${colorClass}`}>
+            <span style={{ fontSize: 14, fontWeight: 500 }}>
               {duration.toFixed(0)}ms
             </span>
           );
@@ -155,7 +155,7 @@ const PerformanceMonitorPage: React.FC = () => {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Button variant="text" onClick={() => navigate("/dashboard")}>
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft sx={{ width: 20, height: 20 }} />
             </Button>
             <Box
               sx={{
@@ -182,17 +182,11 @@ const PerformanceMonitorPage: React.FC = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <ModeToggle />
             <Button variant="outlined" onClick={handleExport}>
-              <Download
-                className="w-5 h-5"
-                style={{ width: 20, height: 20, marginRight: 8 }}
-              />
+              <Download sx={{ width: 20, height: 20, marginRight: 8 }} />
               导出报告
             </Button>
             <Button variant="contained" onClick={handleClear}>
-              <Trash2
-                className="w-5 h-5"
-                style={{ width: 20, height: 20, marginRight: 8 }}
-              />
+              <Trash2 sx={{ width: 20, height: 20, marginRight: 8 }} />
               清除数据
             </Button>
           </Box>

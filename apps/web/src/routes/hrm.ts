@@ -1,4 +1,5 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
 import type { RouteConfig } from "./utils";
 import { lazyWithRetry } from "./utils";
 
@@ -22,6 +23,13 @@ const HrmTrainingPage = lazy(() => import("../pages/HrmTrainingPage"));
 const HrmReportsPage = lazy(() => import("../pages/HrmReportsPage"));
 
 export const hrmRoutes: RouteConfig[] = [
+  {
+    path: "/hrm",
+    element: React.createElement(Navigate, { to: "/hrm/employees", replace: true }),
+    requiredPermissions: ["hrm:read"],
+    module: "hrm",
+    action: "read",
+  },
   {
     path: "/hrm/companies",
     element: HrmCompanyPage,
@@ -74,8 +82,8 @@ export const hrmRoutes: RouteConfig[] = [
   {
     path: "/hrm/contracts",
     element: HrmContractPage,
-    requiredPermissions: ["contract:read"],
-    module: "contract",
+    requiredPermissions: ["hrm:read"],
+    module: "hrm",
     action: "read",
   },
   {

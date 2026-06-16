@@ -41,7 +41,6 @@ import {
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "../components/DataTable";
-import { HrmLayout } from "../components/HrmLayout";
 
 import { ModeToggle } from "@/components/ModeToggle";
 
@@ -373,35 +372,73 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
   );
 
   return (
-    <HrmLayout title="岗位管理" subtitle="管理企业岗位信息、薪资范围">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      {/* 页面头部 */}
       <Box
         sx={{
-          bgcolor: "background.paper",
-          borderRadius: 2,
+          bgcolor: "white",
+          borderBottom: 1,
+          borderColor: "divider",
           boxShadow: 1,
-          p: 3,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            mb: 3,
-          }}
-        >
-          <Box></Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ModeToggle />
-            <Button
-              onClick={handleAdd}
-              startIcon={<Plus sx={{ width: 20, height: 20 }} />}
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+          {/* 面包屑导航 */}
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              component="a"
+              href="/hrm"
+              sx={{
+                color: "text.secondary",
+                textDecoration: "none",
+                fontSize: "0.875rem",
+                "&:hover": { color: "primary.main", textDecoration: "underline" },
+              }}
             >
-              新增岗位
-            </Button>
+              人力资源
+            </Typography>
+            <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+              /
+            </Typography>
+            <Typography
+              component="span"
+              sx={{ color: "text.primary", fontSize: "0.875rem" }}
+            >
+              岗位管理
+            </Typography>
           </Box>
-        </Box>
 
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "grey.900" }}
+              >
+                岗位管理
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+                管理企业岗位信息、薪资范围
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <ModeToggle />
+              <Button
+                variant="contained"
+                onClick={handleAdd}
+                startIcon={<Plus size={18} />}
+              >
+                新增岗位
+              </Button>
+            </Box>
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* 内容区域 */}
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card sx={{ mb: 0 }}>
             <CardContent sx={{ p: 2 }}>
@@ -1089,7 +1126,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
           </DialogContent>
         </Dialog>
       </Box>
-    </HrmLayout>
+    </Box>
   );
 };
 

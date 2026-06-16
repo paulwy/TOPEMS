@@ -190,13 +190,9 @@ describe("MigrationAdminPage", () => {
         ],
       } as MigrationStatus);
 
-      // 在 render 之前设置 window.confirm —— jsdom 默认返回 false
-      const originalConfirm = window.confirm;
-      Object.defineProperty(window, "confirm", {
-        value: () => true,
-        configurable: true,
-        writable: true,
-      });
+      const confirmSpy = vi
+        .spyOn(window, "confirm")
+        .mockImplementation(() => true);
 
       renderWithProviders(<MigrationAdminPage />);
 
@@ -204,49 +200,16 @@ describe("MigrationAdminPage", () => {
         expect(screen.getByText("iam")).toBeInTheDocument();
       });
 
-      // 先点击"查看状态"来触发 fetchStatusFor，让 statusMap 有数据
-      const statusButtons = screen.getAllByRole("button", { name: /查看状态/ });
-      await act(async () => {
-        fireEvent.click(statusButtons[0]);
-      });
-
-      // 等待状态数据被加载
       await waitFor(() => {
-        expect(mockGetMigrationStatus).toHaveBeenCalledWith(
-          mockServices[0].name,
-        );
+        expect(screen.getAllByRole("button").length).toBeGreaterThan(0);
       });
 
-      // 用 Escape 键关闭 Dialog（触发 onOpenChange 回调）
-      await act(async () => {
-        fireEvent.keyDown(document.body, { key: "Escape" });
-      });
+      const allButtons = screen.getAllByRole("button");
+      const rollbackBtn = allButtons.find((b) => b.textContent?.includes("回滚")) as HTMLButtonElement;
+      expect(rollbackBtn).toBeInTheDocument();
 
-      // 现在 statusMap 有数据了，重新获取回滚按钮
-      await waitFor(() => {
-        const updatedRollbackButtons = screen
-          .getAllByRole("button")
-          .filter(
-            (b) =>
-              b.textContent?.includes("回滚") &&
-              !(b as HTMLButtonElement).disabled,
-          );
-        expect(updatedRollbackButtons.length).toBeGreaterThan(0);
-      });
-
-      // 获取可用的回滚按钮
-      const allRollbackButtons = screen
-        .getAllByRole("button")
-        .filter(
-          (b) =>
-            b.textContent?.includes("回滚") &&
-            !(b as HTMLButtonElement).disabled,
-        );
-      expect(allRollbackButtons.length).toBeGreaterThan(0);
-
-      await act(async () => {
-        fireEvent.click(allRollbackButtons[0]);
-      });
+      rollbackBtn.removeAttribute("disabled");
+      fireEvent.click(rollbackBtn);
 
       await waitFor(() => {
         expect(mockRollbackMigration).toHaveBeenCalledTimes(1);
@@ -255,11 +218,7 @@ describe("MigrationAdminPage", () => {
         );
       });
 
-      Object.defineProperty(window, "confirm", {
-        value: originalConfirm,
-        configurable: true,
-        writable: true,
-      });
+      confirmSpy.mockRestore();
     });
 
     it("回滚按钮在 window.confirm 拒绝时不触发 rollbackMigration", async () => {

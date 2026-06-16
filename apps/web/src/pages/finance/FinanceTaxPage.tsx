@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import {
-  Box,
   ChevronLeft,
   Plus,
   Download,
@@ -292,9 +291,9 @@ const FinanceTaxPage: React.FC = () => {
               </IconButton>
               <MuiBox>
                 <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <Box component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
+                  <MuiBox component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
                     <Receipt size={28} />
-                  </Box>
+                  </MuiBox>
                   税务管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

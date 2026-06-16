@@ -27,10 +27,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">加载中...</p>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: "48px", height: "48px", border: "4px solid #2563eb", borderBottom: "4px solid transparent", borderRadius: "9999px", animation: "spin 1s linear infinite", margin: "auto", marginBottom: "16px" }}></div>
+          <p style={{ color: "#64748b" }}>加载中...</p>
         </div>
       </div>
     );
@@ -47,16 +47,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     if (!hasPermissions) {
       return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">权限不足</h2>
-            <p className="text-slate-600 mb-4">
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔒</div>
+            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#0f172a", marginBottom: "8px" }}>权限不足</h2>
+            <p style={{ color: "#64748b", marginBottom: "16px" }}>
               您没有访问此页面的权限。请联系管理员获取相应权限。
             </p>
             <button
               onClick={() => window.history.back()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              style={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "#ffffff", borderRadius: "8px", border: "none", cursor: "pointer" }}
             >
               返回上一页
             </button>
@@ -71,18 +71,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     if (!hasRoles) {
       return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔒</div>
+            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#0f172a", marginBottom: "8px" }}>
               角色权限不足
             </h2>
-            <p className="text-slate-600 mb-4">
+            <p style={{ color: "#64748b", marginBottom: "16px" }}>
               您没有访问此页面的角色权限。请联系管理员分配相应角色。
             </p>
             <button
               onClick={() => window.history.back()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              style={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "#ffffff", borderRadius: "8px", border: "none", cursor: "pointer" }}
             >
               返回上一页
             </button>
@@ -131,12 +131,12 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
       return <>{fallbackComponent}</>;
     }
     return (
-      <div className="p-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
+      <div style={{ padding: "24px" }}>
+        <div style={{ backgroundColor: "#fefce8", border: "1px solid #fde68a", borderRadius: "8px", padding: "16px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start" }}>
+            <div style={{ flexShrink: 0 }}>
               <svg
-                className="h-5 w-5 text-yellow-400"
+                style={{ height: 20, width: 20, color: "#f59e0b" }}
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -147,9 +147,9 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
                 />
               </svg>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">权限提示</h3>
-              <div className="mt-2 text-sm text-yellow-700">
+            <div style={{ marginLeft: "12px" }}>
+              <h3 style={{ fontSize: "14px", fontWeight: 500, color: "#a16207" }}>权限提示</h3>
+              <div style={{ marginTop: "8px", fontSize: "14px", color: "#a16207" }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。
                 </p>

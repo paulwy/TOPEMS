@@ -170,7 +170,7 @@ const OperationDashboardPage: React.FC = () => {
       {/* 主要内容区域 */}
       <Grid container spacing={3}>
         {/* 最近资产动态 */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid xs={12} md={6}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -248,7 +248,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 设备状态 */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid xs={12} md={6}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -320,7 +320,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 车辆使用情况 */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid xs={12} md={6}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -398,7 +398,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 会议室使用情况 */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid xs={12} md={6}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -475,7 +475,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 库存预警 */}
-        <Grid size={{ xs: 12 }}>
+        <Grid xs={12}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -491,7 +491,7 @@ const OperationDashboardPage: React.FC = () => {
             </Box>
             <Grid container spacing={2}>
               {mockLowStockSupplies.map((supply) => (
-                <Grid size={{ xs: 12, sm: 4 }} key={supply.id}>
+                <Grid xs={12} sm={4} key={supply.id}>
                   <Box
                     sx={{
                       p: 2,

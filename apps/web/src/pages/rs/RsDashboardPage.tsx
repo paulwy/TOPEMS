@@ -23,9 +23,10 @@ import {
   TrendingUp,
   CheckCircle,
   AlertTriangle,
-  Flask,
+  Beaker as Flask,
   BarChart3,
 } from "lucide-react";
+import { PageHeader } from "../../components/templates/PageHeader";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -116,38 +117,79 @@ const RsDashboardPage: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <div style={{ marginBottom: 16 }}>
-        <Typography variant="h4" sx={{ fontWeight: "bold" }} gutterBottom>
-          研发管理平台
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          科研项目管理、试验数据追踪、配方版本控制
-        </Typography>
-      </div>
+      <PageHeader
+        title="研发管理平台"
+        subtitle="Research & Development Platform"
+        description="科研项目管理、试验数据追踪、配方版本控制"
+        pageIcon={<Flask style={{ width: 20, height: 20 }} />}
+        pageColor="linear-gradient(135deg, #8B5CF6, #EC4899)"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "RS" },
+          { label: "研发管理" },
+        ]}
+        actions={[
+          {
+            label: "新建项目",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            variant: "contained",
+            color: "primary",
+            onClick: () => {},
+          },
+        ]}
+      />
 
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 16,
+          marginBottom: 24,
+        }}
       >
         <motion.div
           variants={cardVariants}
           whileHover="hover"
-          className="bg-white rounded-xl shadow-sm border border-slate-200 p-5"
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+            border: "1px solid #e2e8f0",
+            padding: 20,
+          }}
         >
-          <div className="flex justify-between items-start">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
             <div>
-              <p className="text-sm text-slate-500">研发项目</p>
+              <p style={{ fontSize: "0.875rem", color: "#64748b" }}>研发项目</p>
               <motion.p
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring" }}
-                className="text-3xl font-bold text-slate-900 mt-1"
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  marginTop: 4,
+                }}
               >
                 {stats.totalProjects}
               </motion.p>
-              <p className="text-sm text-blue-600 mt-1">
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#2563eb",
+                  marginTop: 4,
+                }}
+              >
                 {stats.activeProjects} 个进行中
               </p>
             </div>
@@ -155,9 +197,13 @@ const RsDashboardPage: React.FC = () => {
               initial={{ rotate: -180 }}
               animate={{ rotate: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="p-3 bg-blue-50 rounded-xl"
+              style={{
+                padding: 12,
+                backgroundColor: "#eff6ff",
+                borderRadius: 12,
+              }}
             >
-              <FolderIcon style={{ color: "#2563eb" }} />
+              <Folder style={{ color: "#2563eb" }} />
             </motion.div>
           </div>
         </motion.div>
@@ -165,20 +211,43 @@ const RsDashboardPage: React.FC = () => {
         <motion.div
           variants={cardVariants}
           whileHover="hover"
-          className="bg-white rounded-xl shadow-sm border border-slate-200 p-5"
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+            border: "1px solid #e2e8f0",
+            padding: 20,
+          }}
         >
-          <div className="flex justify-between items-start">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
             <div>
-              <p className="text-sm text-slate-500">试验记录</p>
+              <p style={{ fontSize: "0.875rem", color: "#64748b" }}>试验记录</p>
               <motion.p
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.3, type: "spring" }}
-                className="text-3xl font-bold text-slate-900 mt-1"
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  marginTop: 4,
+                }}
               >
                 {stats.totalExperiments}
               </motion.p>
-              <p className="text-sm text-orange-600 mt-1">
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#ea580c",
+                  marginTop: 4,
+                }}
+              >
                 {stats.pendingExperiments} 个待处理
               </p>
             </div>
@@ -186,9 +255,13 @@ const RsDashboardPage: React.FC = () => {
               initial={{ rotate: 180 }}
               animate={{ rotate: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="p-3 bg-orange-50 rounded-xl"
+              style={{
+                padding: 12,
+                backgroundColor: "#fff7ed",
+                borderRadius: 12,
+              }}
             >
-              <ScienceIcon style={{ color: "#ea580c" }} />
+              <Flask style={{ color: "#ea580c" }} />
             </motion.div>
           </div>
         </motion.div>
@@ -196,26 +269,55 @@ const RsDashboardPage: React.FC = () => {
         <motion.div
           variants={cardVariants}
           whileHover="hover"
-          className="bg-white rounded-xl shadow-sm border border-slate-200 p-5"
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+            border: "1px solid #e2e8f0",
+            padding: 20,
+          }}
         >
-          <div className="flex justify-between items-start">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
             <div>
-              <p className="text-sm text-slate-500">配方库</p>
+              <p style={{ fontSize: "0.875rem", color: "#64748b" }}>配方库</p>
               <motion.p
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.4, type: "spring" }}
-                className="text-3xl font-bold text-slate-900 mt-1"
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  marginTop: 4,
+                }}
               >
                 {stats.totalFormulas}
               </motion.p>
-              <p className="text-sm text-green-600 mt-1">本月新增 5 个</p>
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#16a34a",
+                  marginTop: 4,
+                }}
+              >
+                本月新增 5 个
+              </p>
             </div>
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="p-3 bg-green-50 rounded-xl"
+              style={{
+                padding: 12,
+                backgroundColor: "#f0fdf4",
+                borderRadius: 12,
+              }}
             >
               <FileText style={{ color: "#16a34a" }} />
             </motion.div>
@@ -225,31 +327,61 @@ const RsDashboardPage: React.FC = () => {
         <motion.div
           variants={cardVariants}
           whileHover="hover"
-          className="bg-white rounded-xl shadow-sm border border-slate-200 p-5"
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+            border: "1px solid #e2e8f0",
+            padding: 20,
+          }}
         >
-          <div className="flex justify-between items-start">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
             <div>
-              <p className="text-sm text-slate-500">试验成功率</p>
+              <p style={{ fontSize: "0.875rem", color: "#64748b" }}>试验成功率</p>
               <motion.p
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5, type: "spring" }}
-                className="text-3xl font-bold text-slate-900 mt-1"
+                style={{
+                  fontSize: "1.875rem",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  marginTop: 4,
+                }}
               >
                 {stats.successRate}%
               </motion.p>
-              <div className="flex items-center gap-1 mt-1">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginTop: 4,
+                }}
+              >
                 <TrendingUp style={{ color: "#16a34a", fontSize: 14 }} />
-                <span className="text-sm text-green-600">较上月 +2.3%</span>
+                <span style={{ fontSize: "0.875rem", color: "#16a34a" }}>
+                  较上月 +2.3%
+                </span>
               </div>
             </div>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="p-3 bg-cyan-50 rounded-xl"
+              style={{
+                padding: 12,
+                backgroundColor: "#ecfeff",
+                borderRadius: 12,
+              }}
             >
-              <AnalyticsIcon style={{ color: "#0891b2" }} />
+              <BarChart3 style={{ color: "#0891b2" }} />
             </motion.div>
           </div>
         </motion.div>
@@ -259,16 +391,44 @@ const RsDashboardPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6"
+        style={{
+          backgroundColor: "#fff",
+          borderRadius: 12,
+          boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+          border: "1px solid #e2e8f0",
+          padding: 20,
+          marginBottom: 24,
+        }}
       >
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">快捷操作</h3>
-        <div className="flex flex-wrap gap-3">
+        <h3
+          style={{
+            fontSize: "1.125rem",
+            fontWeight: 600,
+            color: "#0f172a",
+            marginBottom: 16,
+          }}
+        >
+          快捷操作
+        </h3>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
           <motion.button
             whileHover="hover"
             whileTap="tap"
             variants={buttonVariants}
             onClick={() => (window.location.href = "/rs/projects/create")}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition-colors"
+            style={{
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              backgroundColor: "#2563eb",
+              color: "#ffffff",
+              borderRadius: 8,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
           >
             <Plus style={{ fontSize: 18 }} />
             新建项目
@@ -278,9 +438,21 @@ const RsDashboardPage: React.FC = () => {
             whileTap="tap"
             variants={buttonVariants}
             onClick={() => (window.location.href = "/rs/experiments/create")}
-            className="px-5 py-2.5 border border-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors"
+            style={{
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              border: "1px solid #e2e8f0",
+              color: "#334155",
+              borderRadius: 8,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
           >
-            <ScienceIcon style={{ fontSize: 18 }} />
+            <Flask style={{ fontSize: 18 }} />
             创建试验
           </motion.button>
           <motion.button
@@ -288,7 +460,19 @@ const RsDashboardPage: React.FC = () => {
             whileTap="tap"
             variants={buttonVariants}
             onClick={() => (window.location.href = "/rs/formulas/create")}
-            className="px-5 py-2.5 border border-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors"
+            style={{
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              border: "1px solid #e2e8f0",
+              color: "#334155",
+              borderRadius: 8,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
           >
             <FileText style={{ fontSize: 18 }} />
             新增配方
@@ -298,33 +482,83 @@ const RsDashboardPage: React.FC = () => {
             whileTap="tap"
             variants={buttonVariants}
             onClick={() => (window.location.href = "/rs/reports")}
-            className="px-5 py-2.5 border border-slate-200 text-slate-700 rounded-lg font-medium flex items-center gap-2 hover:bg-slate-50 transition-colors"
+            style={{
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              border: "1px solid #e2e8f0",
+              color: "#334155",
+              borderRadius: 8,
+              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
           >
-            <AnalyticsIcon style={{ fontSize: 18 }} />
+            <BarChart3 style={{ fontSize: 18 }} />
             查看报表
           </motion.button>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: 24,
+        }}
+      >
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+            border: "1px solid #e2e8f0",
+            overflow: "hidden",
+          }}
         >
-          <div className="p-5 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-slate-900">最近项目</h3>
+          <div
+            style={{
+              padding: 20,
+              borderBottom: "1px solid #f1f5f9",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.125rem",
+                fontWeight: 600,
+                color: "#0f172a",
+              }}
+            >
+              最近项目
+            </h3>
             <motion.button
               whileHover={{ scale: 1.02 }}
               onClick={() => (window.location.href = "/rs/projects")}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              style={{
+                fontSize: "0.875rem",
+                color: "#2563eb",
+                fontWeight: 500,
+              }}
             >
               查看全部
             </motion.button>
           </div>
-          <div className="p-4">
-            <div className="space-y-3">
+          <div style={{ padding: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}
+            >
               {recentProjects.map((project, index) => (
                 <motion.div
                   key={project.id}
@@ -335,32 +569,78 @@ const RsDashboardPage: React.FC = () => {
                   onClick={() =>
                     (window.location.href = `/rs/projects/${project.id}`)
                   }
-                  className="p-4 border border-slate-200 rounded-lg cursor-pointer transition-colors"
+                  style={{
+                    padding: 16,
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                  }}
                 >
-                  <div className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <p className="font-medium text-slate-900">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontWeight: 500, color: "#0f172a" }}>
                         {project.name}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginTop: 4,
+                        }}
+                      >
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            project.status === "进行中"
-                              ? "bg-blue-100 text-blue-700"
-                              : project.status === "已完成"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-yellow-100 text-yellow-700"
-                          }`}
+                          style={{
+                            paddingLeft: 8,
+                            paddingRight: 8,
+                            paddingTop: 2,
+                            paddingBottom: 2,
+                            borderRadius: 9999,
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            backgroundColor:
+                              project.status === "进行中"
+                                ? "#dbeafe"
+                                : project.status === "已完成"
+                                  ? "#dcfce7"
+                                  : "#fef9c3",
+                            color:
+                              project.status === "进行中"
+                                ? "#1d4ed8"
+                                : project.status === "已完成"
+                                  ? "#15803d"
+                                  : "#a16207",
+                          }}
                         >
                           {project.status}
                         </span>
                       </div>
                     </div>
-                    <div className="w-28 ml-4">
-                      <p className="text-xs text-slate-500 text-right">
+                    <div style={{ width: 112, marginLeft: 16 }}>
+                      <p
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "#64748b",
+                          textAlign: "right",
+                        }}
+                      >
                         {project.progress}%
                       </p>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5 mt-0.5">
+                      <div
+                        style={{
+                          width: "100%",
+                          backgroundColor: "#e2e8f0",
+                          borderRadius: 9999,
+                          height: 6,
+                          marginTop: 2,
+                        }}
+                      >
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${project.progress}%` }}
@@ -368,7 +648,11 @@ const RsDashboardPage: React.FC = () => {
                             delay: 0.8 + index * 0.1,
                             duration: 0.5,
                           }}
-                          className="h-full rounded-full bg-blue-600"
+                          style={{
+                            height: "100%",
+                            borderRadius: 9999,
+                            backgroundColor: "#2563eb",
+                          }}
                         />
                       </div>
                     </div>
@@ -383,20 +667,52 @@ const RsDashboardPage: React.FC = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+          style={{
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+            border: "1px solid #e2e8f0",
+            overflow: "hidden",
+          }}
         >
-          <div className="p-5 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-slate-900">最近试验</h3>
+          <div
+            style={{
+              padding: 20,
+              borderBottom: "1px solid #f1f5f9",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.125rem",
+                fontWeight: 600,
+                color: "#0f172a",
+              }}
+            >
+              最近试验
+            </h3>
             <motion.button
               whileHover={{ scale: 1.02 }}
               onClick={() => (window.location.href = "/rs/experiments")}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              style={{
+                fontSize: "0.875rem",
+                color: "#2563eb",
+                fontWeight: 500,
+              }}
             >
               查看全部
             </motion.button>
           </div>
-          <div className="p-4">
-            <div className="space-y-3">
+          <div style={{ padding: 16 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}
+            >
               {recentExperiments.map((exp, index) => (
                 <motion.div
                   key={exp.id}
@@ -407,37 +723,94 @@ const RsDashboardPage: React.FC = () => {
                   onClick={() =>
                     (window.location.href = `/rs/experiments/${exp.id}`)
                   }
-                  className="p-4 border border-slate-200 rounded-lg cursor-pointer transition-colors"
+                  style={{
+                    padding: 16,
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                  }}
                 >
-                  <div className="flex justify-between items-center">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
                     <div>
-                      <p className="font-medium text-slate-900">{exp.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <p style={{ fontWeight: 500, color: "#0f172a" }}>
+                        {exp.name}
+                      </p>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginTop: 4,
+                        }}
+                      >
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            exp.phase === "小试"
-                              ? "bg-cyan-100 text-cyan-700"
-                              : exp.phase === "中试"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
-                          }`}
+                          style={{
+                            paddingLeft: 8,
+                            paddingRight: 8,
+                            paddingTop: 2,
+                            paddingBottom: 2,
+                            borderRadius: 9999,
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            backgroundColor:
+                              exp.phase === "小试"
+                                ? "#cffafe"
+                                : exp.phase === "中试"
+                                  ? "#fef9c3"
+                                  : "#fee2e2",
+                            color:
+                              exp.phase === "小试"
+                                ? "#0e7490"
+                                : exp.phase === "中试"
+                                  ? "#a16207"
+                                  : "#b91c1c",
+                          }}
                         >
                           {exp.phase}
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                            exp.status === "已完成"
-                              ? "border-green-300 text-green-700 bg-green-50"
-                              : "border-orange-300 text-orange-700 bg-orange-50"
-                          }`}
+                          style={{
+                            paddingLeft: 8,
+                            paddingRight: 8,
+                            paddingTop: 2,
+                            paddingBottom: 2,
+                            borderRadius: 9999,
+                            fontSize: "0.75rem",
+                            fontWeight: 500,
+                            border: "1px solid",
+                            borderColor:
+                              exp.status === "已完成" ? "#86efac" : "#fdba74",
+                            color:
+                              exp.status === "已完成" ? "#15803d" : "#c2410c",
+                            backgroundColor:
+                              exp.status === "已完成" ? "#f0fdf4" : "#fff7ed",
+                          }}
                         >
                           {exp.status === "已完成" ? (
-                            <span className="flex items-center gap-1">
+                            <span
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
                               <CheckCircle style={{ fontSize: 12 }} />
                               {exp.status}
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1">
+                            <span
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
                               <AlertTriangle style={{ fontSize: 12 }} />
                               {exp.status}
                             </span>
@@ -448,9 +821,13 @@ const RsDashboardPage: React.FC = () => {
                     <motion.div
                       whileHover={{ rotate: 180 }}
                       transition={{ duration: 0.3 }}
-                      className="p-2 bg-purple-50 rounded-lg"
+                      style={{
+                        padding: 8,
+                        backgroundColor: "#faf5ff",
+                        borderRadius: 8,
+                      }}
                     >
-                      <ScienceIcon style={{ color: "#9333ea", fontSize: 18 }} />
+                      <Flask style={{ color: "#9333ea", fontSize: 18 }} />
                     </motion.div>
                   </div>
                 </motion.div>

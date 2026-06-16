@@ -343,14 +343,14 @@ export default function AccountManagementPage() {
               setIsEditing(true);
             }}
           >
-            <Edit className="w-4 h-4" />
+            <Edit sx={{ width: 16, height: 16 }} />
           </IconButton>
           <IconButton
             size="small"
             onClick={() => setDeletingId(row.original.id)}
             sx={{ color: "error.main" }}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 sx={{ width: 16, height: 16 }} />
           </IconButton>
         </Box>
       ),
@@ -392,13 +392,13 @@ export default function AccountManagementPage() {
             {hasChildren ? (
               <IconButton
                 size="small"
-                className="h-6 w-6"
+                sx={{ width: 24, height: 24 }}
                 onClick={() => toggleExpand(account.id)}
               >
                 {isExpanded ? (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown sx={{ width: 16, height: 16 }} />
                 ) : (
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight sx={{ width: 16, height: 16 }} />
                 )}
               </IconButton>
             ) : (
@@ -484,21 +484,20 @@ export default function AccountManagementPage() {
           <Box sx={{ width: 96, flexShrink: 0, display: "flex", gap: 0.5 }}>
             <IconButton
               size="small"
-              className="h-8 w-8"
+              sx={{ width: 32, height: 32 }}
               onClick={() => {
                 setSelectedAccount(account);
                 setIsEditing(true);
               }}
             >
-              <Edit className="w-4 h-4" />
+              <Edit sx={{ width: 16, height: 16 }} />
             </IconButton>
             <IconButton
               size="small"
-              className="h-8 w-8"
-              sx={{ color: "error.main" }}
+              sx={{ width: 32, height: 32, color: "error.main" }}
               onClick={() => setDeletingId(account.id)}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 sx={{ width: 16, height: 16 }} />
             </IconButton>
           </Box>
         </Box>
@@ -539,7 +538,7 @@ export default function AccountManagementPage() {
                 justifyContent: "center",
               }}
             >
-              <Building2 className="w-6 h-6 text-white" />
+              <Building2 sx={{ width: 24, height: 24, color: "#ffffff" }} />
             </Box>
             <Box>
               <Typography variant="h4" sx={{ fontWeight: "bold" }}>
@@ -552,7 +551,7 @@ export default function AccountManagementPage() {
           </Box>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button variant="outlined" size="small" onClick={() => refetch()}>
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw sx={{ width: 16, height: 16, marginRight: 8 }} />
               刷新
             </Button>
             <Button
@@ -572,7 +571,7 @@ export default function AccountManagementPage() {
                 setIsCreating(true);
               }}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
               新增科目
             </Button>
           </Box>
@@ -665,7 +664,7 @@ export default function AccountManagementPage() {
                     input: {
                       startAdornment: (
                         <Box sx={{ mr: 1, display: "flex" }}>
-                          <Search className="w-4 h-4 text-gray-400" />
+                          <Search sx={{ width: 16, height: 16, color: "#6b7280" }} />
                         </Box>
                       ),
                     },
@@ -748,7 +747,7 @@ export default function AccountManagementPage() {
                   py: 6,
                 }}
               >
-                <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+                <RefreshCw sx={{ width: 32, height: 32, animation: "spin 1s linear infinite", color: "#6b7280" }} />
               </Box>
             ) : viewMode === "tree" ? (
               // 树形视图
@@ -799,7 +798,7 @@ export default function AccountManagementPage() {
                       color: "text.secondary",
                     }}
                   >
-                    <Building2 className="w-12 h-12 mb-4 text-gray-300" />
+                    <Building2 sx={{ width: 48, height: 48, marginBottom: 16, color: "#d1d5db" }} />
                     <Typography>暂无科目数据</Typography>
                     <Typography
                       variant="body2"

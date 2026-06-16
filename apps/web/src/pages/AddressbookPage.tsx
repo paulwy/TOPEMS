@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Box } from "@mui/material";
 import { AddressbookSidebar } from "../components/addressbook/AddressbookSidebar";
 import { AddressbookHeader } from "../components/addressbook/AddressbookHeader";
 import { AddressbookFilters } from "../components/addressbook/AddressbookFilters";
@@ -120,7 +121,7 @@ const AddressbookPage: React.FC = () => {
   }, [selectedType]);
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <Box sx={{ display: "flex", height: "100vh", backgroundColor: "grey.100" }}>
       <AddressbookSidebar
         departments={departments}
         selectedType={selectedType}
@@ -128,7 +129,7 @@ const AddressbookPage: React.FC = () => {
         selectedDepartment={selectedDepartment}
         onDepartmentSelect={setSelectedDepartment}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <AddressbookHeader
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -138,19 +139,19 @@ const AddressbookPage: React.FC = () => {
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
         />
-        <div className="flex-1 overflow-y-auto">
+        <Box sx={{ flex: 1, overflowY: "auto" }}>
           <AddressbookList
             contacts={contacts}
             loading={loading}
             onContactClick={handleContactClick}
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
       <ContactDetailModal
         contact={selectedContact}
         onClose={() => setSelectedContact(null)}
       />
-    </div>
+    </Box>
   );
 };
 

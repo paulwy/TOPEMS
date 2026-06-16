@@ -51,7 +51,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setUploading(true);
     try {
       if (type === "image") {
-        // 对于图片，创建本地预览
         const reader = new FileReader();
         reader.onload = () => {
           onSendMessage(
@@ -63,7 +62,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         };
         reader.readAsDataURL(file);
       } else if (onUploadFile) {
-        // 对于文件，上传到服务器
         const result = await onUploadFile(file);
         if (result) {
           onSendMessage(file.name, "file", result.url, result.name);
@@ -80,9 +78,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white p-4">
-      <div className="flex items-end gap-3">
-        <div className="relative">
+    <div style={{ borderTop: "1px solid #e5e7eb", backgroundColor: "#ffffff", padding: 16 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
+        <div style={{ position: "relative" }}>
           <Button
             variant="text"
             size="small"
@@ -90,14 +88,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             disabled={disabled || uploading}
             sx={{ p: 1 }}
           >
-            <Paperclip className="w-5 h-5 text-gray-500" />
+            <Paperclip sx={{ width: 20, height: 20, color: "#6b7280" }} />
           </Button>
 
           {showFileMenu && (
-            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-10">
-              <label className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                <Image className="w-4 h-4 mr-2 text-gray-500" />
-                <span className="text-sm text-gray-700">图片</span>
+            <div style={{ position: "absolute", bottom: "100%", left: 0, marginBottom: 8, width: 192, backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", border: "1px solid #e5e7eb", padding: 4, zIndex: 10 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, cursor: "pointer" }}>
+                <Image style={{ width: 16, height: 16, color: "#6b7280" }} />
+                <span style={{ fontSize: 14, color: "#374151" }}>图片</span>
                 <input
                   ref={imageInputRef}
                   type="file"
@@ -107,9 +105,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   disabled={uploading}
                 />
               </label>
-              <label className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                <FileText className="w-4 h-4 mr-2 text-gray-500" />
-                <span className="text-sm text-gray-700">文件</span>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, cursor: "pointer" }}>
+                <FileText style={{ width: 16, height: 16, color: "#6b7280" }} />
+                <span style={{ fontSize: 14, color: "#374151" }}>文件</span>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -122,7 +120,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           )}
         </div>
 
-        <div className="flex-1">
+        <div style={{ flex: 1 }}>
           <TextField
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -143,13 +141,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           size="small"
           sx={{ p: 1 }}
         >
-          <Send className="w-5 h-5" />
+          <Send sx={{ width: 20, height: 20 }} />
         </Button>
       </div>
 
       {uploading && (
-        <div className="mt-2 text-sm text-gray-500 flex items-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-indigo-600"></div>
+        <div style={{ marginTop: 8, fontSize: 14, color: "#6b7280", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 16, height: 16, borderRadius: "9999px", border: "2px solid #e5e7eb", borderTopColor: "#6366f1", animation: "spin 1s linear infinite" }} />
           上传中...
         </div>
       )}

@@ -2,6 +2,8 @@ import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
 
 export default [
   {
@@ -25,6 +27,8 @@ export default [
     plugins: {
       '@typescript-eslint': tsPlugin,
       prettier: prettierPlugin,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
     },
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',
@@ -38,6 +42,8 @@ export default [
       'prettier/prettier': 'error',
       'no-console': 'off',
       'no-unused-vars': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
   {
@@ -65,6 +71,7 @@ export default [
       'playwright.config.ts',
       'tsconfig.json',
       'tsconfig.node.json',
+      'scripts/**/*',
     ],
   },
 ];

@@ -6,7 +6,6 @@ import {
   Target,
   Search,
   Plus,
-  ChevronLeft,
   BarChart3,
   CheckCircle,
   Clock,
@@ -17,6 +16,7 @@ import { NotificationContainer } from "../components/NotificationContainer";
 import { MetricCard } from "../components/MetricCard";
 import { StatsChart } from "../components/StatsChart";
 import { StatusBadge } from "../components/hrm/StatusBadge";
+import { PageHeader } from "../components/templates";
 import {
   performanceReviewApi,
   performanceGoalApi,
@@ -329,68 +329,6 @@ const HrmPerformancePage: React.FC = () => {
         onClose={hideNotification}
       />
 
-      {/* Header */}
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "grey.200",
-        }}
-      >
-        <Box
-          sx={{
-            maxWidth: 1536,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                component="button"
-                onClick={() => navigate("/dashboard")}
-                sx={{
-                  p: 1,
-                  borderRadius: 1,
-                  "&:hover": { bgcolor: "grey.100" },
-                  transition: "background-color 0.2s",
-                }}
-              >
-                <ChevronLeft
-                  style={{ width: 20, height: 20, color: "#9ca3af" }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 700,
-                    color: "grey.900",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <TrendingUp size={28} color="#ea580c" />
-                  绩效管理
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 0.5, color: "grey.500" }}>
-                  管理员工绩效评估、目标设定和绩效考核
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Tabs */}
       <Box
         sx={{
           maxWidth: 1536,
@@ -399,6 +337,17 @@ const HrmPerformancePage: React.FC = () => {
           py: 3,
         }}
       >
+        <PageHeader
+          title="绩效管理"
+          subtitle="管理员工绩效评估、目标设定和绩效考核"
+          breadcrumbs={[
+            { label: "人力资源", href: "/hrm" },
+            { label: "绩效管理" },
+          ]}
+          backButton={{ onClick: () => navigate("/dashboard") }}
+        />
+
+        {/* Tabs */}
         <Box
           sx={{
             display: "flex",

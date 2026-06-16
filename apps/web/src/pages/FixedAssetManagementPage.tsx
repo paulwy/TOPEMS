@@ -890,7 +890,7 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
             required
             fullWidth
             size="small"
-            LabelProps={{ shrink: true }}
+            InputLabelProps={{ shrink: true }}
           />
           <TextField
             label="使用寿命（年）"

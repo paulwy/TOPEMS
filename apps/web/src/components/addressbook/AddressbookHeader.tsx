@@ -12,26 +12,89 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
   onExport,
 }) => {
   return (
-    <div className="bg-white border-b border-slate-200 p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+    <div
+      style={{
+        backgroundColor: "white",
+        borderBottom: "1px solid #e2e8f0",
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ flex: 1, maxWidth: 448 }}>
+          <div style={{ position: "relative" }}>
+            <Search
+              sx={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 20,
+                height: 20,
+                color: "#94a3b8",
+              }}
+            />
             <input
               type="text"
               placeholder="搜索联系人、部门或公司..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              style={{
+                width: "100%",
+                paddingLeft: 40,
+                paddingRight: 16,
+                paddingTop: 8,
+                paddingBottom: 8,
+                border: "1px solid #cbd5e1",
+                borderRadius: 8,
+                outline: "none",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#3b82f6";
+                e.target.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.2)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#cbd5e1";
+                e.target.style.boxShadow = "none";
+              }}
             />
           </div>
         </div>
-        <div className="flex items-center space-x-3 ml-4">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginLeft: 16,
+          }}
+        >
           <button
             onClick={onExport}
-            className="flex items-center space-x-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 16px",
+              border: "1px solid #cbd5e1",
+              borderRadius: 8,
+              color: "#334155",
+              backgroundColor: "white",
+              cursor: "pointer",
+              transition: "colors 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#f8fafc";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "white";
+            }}
           >
-            <Download className="w-4 h-4" />
+            <Download sx={{ width: 16, height: 16 }} />
             <span>导出</span>
           </button>
         </div>

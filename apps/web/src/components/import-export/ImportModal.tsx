@@ -100,29 +100,31 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+      <div style={{ backgroundColor: "white", borderRadius: 12, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", width: "100%", maxWidth: 576, maxHeight: "90vh", overflow: "hidden" }}>
+        <div style={{ padding: 24, borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: 0 }}>{title}</h3>
           <button
             onClick={handleClose}
-            className="text-slate-400 hover:text-slate-600"
+            style={{ color: "#94a3b8" }}
+            sx={{ "&:hover": { color: "#475569" } }}
           >
-            <X className="w-5 h-5" />
+            <X style={{ width: 20, height: 20 }} sx={{ "&:hover": { color: "#475569" } }} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4 max-h-[calc(90vh-180px)] overflow-y-auto">
+        <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16, maxHeight: "calc(90vh - 180px)", overflowY: "auto" }}>
           {!importResult ? (
             <>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label style={{ display: "block", fontSize: 14, fontWeight: 500, color: "#334155", marginBottom: 8 }}>
                   导入类型 *
                 </label>
                 <select
                   value={entityType}
                   onChange={(e) => setEntityType(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, outline: "none" }}
+                  sx={{ "&:focus": { ring: 2, ringColor: "primary.main" } }}
                 >
                   <option value="">请选择导入类型</option>
                   {entityTypes.map((type) => (
@@ -134,13 +136,14 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label style={{ display: "block", fontSize: 14, fontWeight: 500, color: "#334155", marginBottom: 8 }}>
                   导入模式
                 </label>
                 <select
                   value={importMode}
                   onChange={(e) => setImportMode(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, outline: "none" }}
+                  sx={{ "&:focus": { ring: 2, ringColor: "primary.main" } }}
                 >
                   <option value="create">仅创建（跳过已存在）</option>
                   <option value="update">仅更新</option>
@@ -149,34 +152,35 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label style={{ display: "block", fontSize: 14, fontWeight: 500, color: "#334155", marginBottom: 8 }}>
                   选择文件 *
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                  style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: 32, textAlign: "center", cursor: "pointer" }}
+                  sx={{ "&:hover": { borderColor: "primary.main" }, transition: "colors 0.2s" }}
                 >
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept=".csv,.xlsx"
                     onChange={handleFileSelect}
-                    className="hidden"
+                    style={{ display: "none" }}
                   />
                   {selectedFile ? (
-                    <div className="flex items-center justify-center">
-                      <FileSpreadsheet className="w-8 h-8 text-green-600 mr-2" />
-                      <span className="text-slate-700">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <FileSpreadsheet style={{ width: 32, height: 32, color: "#16a34a", marginRight: 8 }} />
+                      <span style={{ color: "#334155" }}>
                         {selectedFile.name}
                       </span>
                     </div>
                   ) : (
                     <>
-                      <Upload className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                      <p className="text-slate-600">
+                      <Upload style={{ width: 48, height: 48, color: "#94a3b8", margin: "0 auto 8px" }} />
+                      <p style={{ color: "#475569", margin: "8px 0 0" }}>
                         点击选择文件 或 拖拽文件到此处
                       </p>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <p style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>
                         支持 .xlsx, .csv 格式
                       </p>
                     </>
@@ -185,20 +189,20 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               </div>
 
               {error && (
-                <div className="flex items-center text-red-600 text-sm">
-                  <AlertCircle className="w-4 h-4 mr-2" />
+                <div style={{ display: "flex", alignItems: "center", color: "#dc2626", fontSize: 14 }}>
+                  <AlertCircle style={{ width: 16, height: 16, marginRight: 8 }} />
                   {error}
                 </div>
               )}
             </>
           ) : (
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center mb-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                  <span className="font-medium text-green-800">导入完成</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+                  <CheckCircle style={{ width: 20, height: 20, color: "#16a34a", marginRight: 8 }} />
+                  <span style={{ fontWeight: 500, color: "#166534" }}>导入完成</span>
                 </div>
-                <div className="text-sm text-green-700 space-y-1">
+                <div style={{ fontSize: 14, color: "#15803d", display: "flex", flexDirection: "column", gap: 4 }}>
                   <p>总行数: {importResult.total_rows}</p>
                   <p>成功: {importResult.success_rows}</p>
                   <p>失败: {importResult.failed_rows.length}</p>
@@ -207,20 +211,21 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
               {importResult.failed_rows.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-slate-700 mb-2">错误详情:</h4>
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-h-60 overflow-y-auto">
+                  <h4 style={{ fontWeight: 500, color: "#334155", marginBottom: 8 }}>错误详情:</h4>
+                  <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: 16, maxHeight: 240, overflowY: "auto" }}>
                     {importResult.failed_rows.slice(0, 10).map((error, idx) => (
                       <div
                         key={idx}
-                        className="text-sm text-red-700 mb-2 last:mb-0"
+                        style={{ fontSize: 14, color: "#b91c1c", marginBottom: 8 }}
+                        sx={{ "&:last-child": { mb: 0 } }}
                       >
-                        <span className="font-medium">第{error.row}行:</span>{" "}
+                        <span style={{ fontWeight: 500 }}>第{error.row}行:</span>{" "}
                         {error.message}
                         {error.field && ` (字段: ${error.field})`}
                       </div>
                     ))}
                     {importResult.failed_rows.length > 10 && (
-                      <p className="text-sm text-red-600 mt-2">
+                      <p style={{ fontSize: 14, color: "#dc2626", marginTop: 8 }}>
                         ... 还有 {importResult.failed_rows.length - 10} 个错误
                       </p>
                     )}
@@ -231,10 +236,11 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           )}
         </div>
 
-        <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+        <div style={{ padding: 24, borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: 12 }}>
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+            style={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 8 }}
+            sx={{ "&:hover": { backgroundColor: "#e2e8f0" }, transition: "colors 0.2s" }}
           >
             {importResult ? "关闭" : "取消"}
           </button>
@@ -242,11 +248,12 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             <button
               onClick={handleImport}
               disabled={!selectedFile || !entityType || isImporting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 8 }}
+              sx={{ "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
             >
               {isImporting ? (
-                <span className="flex items-center">
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite", marginRight: 8 }} />
                   导入中...
                 </span>
               ) : (

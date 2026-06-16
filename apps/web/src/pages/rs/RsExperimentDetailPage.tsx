@@ -31,7 +31,7 @@ import {
 } from "@mui/lab";
 import {
   Edit as EditIcon,
-  Flask as ScienceIcon,
+  FlaskConical as ScienceIcon,
   FileText as DescriptionIcon,
   CheckCircle as CheckCircleIcon,
   TrendingUp as TrendingUpIcon,

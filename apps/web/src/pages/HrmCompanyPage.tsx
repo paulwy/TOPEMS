@@ -47,7 +47,6 @@ import {
   type ListParams,
 } from "../api/hrm";
 import { useAppStore } from "../store";
-import { HrmLayout } from "../components/HrmLayout";
 import type { TreeNode } from "../components/TreeView";
 import TreeView from "../components/TreeView";
 
@@ -379,12 +378,64 @@ const HrmCompanyPage: React.FC = () => {
   };
 
   return (
-    <HrmLayout
-      title="公司管理"
-      subtitle="管理企业基本信息和组织架构"
-      showSidebar={false}
-    >
-      {showDetailView && currentCompany ? (
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      {/* 页面头部 */}
+      <Box
+        sx={{
+          bgcolor: "white",
+          borderBottom: 1,
+          borderColor: "divider",
+          boxShadow: 1,
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+          {/* 面包屑导航 */}
+          <Box sx={{ mb: 2 }}>
+            <Typography
+              component="a"
+              href="/hrm"
+              sx={{
+                color: "text.secondary",
+                textDecoration: "none",
+                fontSize: "0.875rem",
+                "&:hover": { color: "primary.main", textDecoration: "underline" },
+              }}
+            >
+              人力资源
+            </Typography>
+            <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+              /
+            </Typography>
+            <Typography
+              component="span"
+              sx={{ color: "text.primary", fontSize: "0.875rem" }}
+            >
+              公司管理
+            </Typography>
+          </Box>
+
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "space-between" }}
+          >
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "grey.900" }}
+              >
+                公司管理
+              </Typography>
+              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
+                管理企业基本信息和组织架构
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
+      </Box>
+
+      {/* 内容区域 */}
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 3 }}>
+        {showDetailView && currentCompany ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <Card>
             <CardHeader
@@ -1624,7 +1675,8 @@ const HrmCompanyPage: React.FC = () => {
           </Box>
         </DialogContent>
       </Dialog>
-    </HrmLayout>
+      </Box>
+    </Box>
   );
 };
 

@@ -47,13 +47,31 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
     const isSelected = selectedDepartment === node.id;
 
     return (
-      <div key={node.id} className="select-none">
+      <div key={node.id} style={{ userSelect: "none" }}>
         <div
-          className={`flex items-center space-x-2 px-3 py-2 text-sm cursor-pointer hover:bg-slate-100 rounded ${
-            isSelected ? "bg-blue-50 text-blue-700" : "text-slate-700"
-          }`}
-          style={{ paddingLeft: `${level * 16 + 12}px` }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            paddingLeft: level * 16 + 12,
+            fontSize: 14,
+            cursor: "pointer",
+            borderRadius: 4,
+            backgroundColor: isSelected ? "#eff6ff" : "transparent",
+            color: isSelected ? "#1d4ed8" : "#334155",
+          }}
           onClick={() => onDepartmentSelect(isSelected ? null : node.id)}
+          onMouseEnter={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.backgroundColor = "#f1f5f9";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }
+          }}
         >
           {hasChildren ? (
             <button
@@ -61,26 +79,42 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
                 e.stopPropagation();
                 toggleDepartment(node.id);
               }}
-              className="p-1 hover:bg-slate-200 rounded"
+              style={{
+                padding: 4,
+                borderRadius: 4,
+                backgroundColor: "transparent",
+                border: "none",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e2e8f0";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
             >
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown sx={{ width: 16, height: 16 }} />
               ) : (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight sx={{ width: 16, height: 16 }} />
               )}
             </button>
           ) : (
-            <div className="w-6" />
+            <div style={{ width: 24 }} />
           )}
-          <Folder className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">{node.name}</span>
+          <Folder sx={{ width: 16, height: 16, flexShrink: 0 }} />
+          <span
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {node.name}
+          </span>
         </div>
         {hasChildren && isExpanded && (
-          <div>
-            {node.children.map((child) =>
-              renderDepartmentNode(child, level + 1),
-            )}
-          </div>
+          <div>{node.children.map((child) => renderDepartmentNode(child, level + 1))}</div>
         )}
       </div>
     );
@@ -94,26 +128,59 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-slate-200 h-full flex flex-col">
-      <div className="p-4 border-b border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900">通讯录</h2>
+    <div
+      style={{
+        width: 256,
+        backgroundColor: "white",
+        borderRight: "1px solid #e2e8f0",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div style={{ padding: 16, borderBottom: "1px solid #e2e8f0" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: 0 }}>
+          通讯录
+        </h2>
       </div>
 
       {/* 类型筛选 */}
-      <div className="p-4 border-b border-slate-200">
-        <h3 className="text-sm font-medium text-slate-500 mb-3">分类</h3>
-        <div className="space-y-1">
+      <div style={{ padding: 16, borderBottom: "1px solid #e2e8f0" }}>
+        <h3 style={{ fontSize: 14, fontWeight: 500, color: "#64748b", marginBottom: 12 }}>
+          分类
+        </h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {typeFilters.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => onTypeSelect(id as any)}
-              className={`w-full flex items-center space-x-2 px-3 py-2 text-sm rounded transition-colors ${
-                selectedType === id
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-slate-700 hover:bg-slate-100"
-              }`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                fontSize: 14,
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+                backgroundColor: selectedType === id ? "#eff6ff" : "transparent",
+                color: selectedType === id ? "#1d4ed8" : "#334155",
+                transition: "colors 0.2s",
+                width: "100%",
+                textAlign: "left",
+              }}
+              onMouseEnter={(e) => {
+                if (selectedType !== id) {
+                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedType !== id) {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }
+              }}
             >
-              <Icon className="w-4 h-4" />
+              <Icon sx={{ width: 16, height: 16 }} />
               <span>{label}</span>
             </button>
           ))}
@@ -121,18 +188,40 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
       </div>
 
       {/* 部门树 */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-sm font-medium text-slate-500 mb-3">组织架构</h3>
-        <div className="space-y-1">
+      <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 500, color: "#64748b", marginBottom: 12 }}>
+          组织架构
+        </h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <button
             onClick={() => onDepartmentSelect(null)}
-            className={`w-full flex items-center space-x-2 px-3 py-2 text-sm rounded transition-colors ${
-              selectedDepartment === null
-                ? "bg-blue-50 text-blue-700"
-                : "text-slate-700 hover:bg-slate-100"
-            }`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              fontSize: 14,
+              borderRadius: 6,
+              border: "none",
+              cursor: "pointer",
+              backgroundColor: selectedDepartment === null ? "#eff6ff" : "transparent",
+              color: selectedDepartment === null ? "#1d4ed8" : "#334155",
+              transition: "colors 0.2s",
+              width: "100%",
+              textAlign: "left",
+            }}
+            onMouseEnter={(e) => {
+              if (selectedDepartment !== null) {
+                e.currentTarget.style.backgroundColor = "#f1f5f9";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedDepartment !== null) {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }
+            }}
           >
-            <Building className="w-4 h-4" />
+            <Building sx={{ width: 16, height: 16 }} />
             <span>全部部门</span>
           </button>
           {departments.map((dept) => renderDepartmentNode(dept))}

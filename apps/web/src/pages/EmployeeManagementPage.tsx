@@ -1,38 +1,27 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Button,
-  TextField,
-  Avatar,
-  Tooltip,
-  Box,
-  Stack,
-} from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  User,
-  Search,
+  Box,
+  Chip,
+  Typography,
+  Avatar,
+} from "@mui/material";
+import {
   Plus,
   Edit,
   Trash2,
-  ChevronLeft,
-  AlertCircle,
   Mail,
   Phone,
-  Link,
+  AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { employeeApi, type Employee } from "../api/hrm";
 import { useAppStore } from "../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/DataTable";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from "../components/templates";
 
-import { ModeToggle } from "@/components/ModeToggle";
-
-// 懒加载 Dialog 相关组件
 const CreateEmployeeForm = React.lazy(
   () => import("./forms/CreateEmployeeForm"),
 );
@@ -84,10 +73,10 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
     }
   };
 
-  const handleDeleteEmployee = async (id: string) => {
+  const handleDeleteEmployee = async (employee: Employee) => {
     if (!confirm("确定要删除这个员工吗？")) return;
     try {
-      const res = await employeeApi.delete(id);
+      const res = await employeeApi.delete(employee.id);
       if (res.success) {
         addNotification({
           title: "成功",
@@ -111,14 +100,16 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
     }
   };
 
+  const handleEditEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setShowEditModal(true);
+  };
+
   const getStatusBadge = (status: string) => {
-    const colors: Record<
-      string,
-      "default" | "secondary" | "destructive" | "outline"
-    > = {
-      active: "default",
-      inactive: "secondary",
-      archived: "outline",
+    const colors: Record<string, "success" | "default" | "primary"> = {
+      active: "success",
+      inactive: "default",
+      archived: "primary",
     };
     const labels: Record<string, string> = {
       active: "在职",
@@ -128,7 +119,7 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
     return (
       <Chip
         size="small"
-        variant={(colors[status] || "outlined") as "filled" | "outlined"}
+        color={colors[status] || "primary"}
         label={labels[status] || status}
       />
     );
@@ -137,134 +128,100 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
   const columns = useMemo<ColumnDef<Employee>[]>(
     () => [
       {
-        accessorKey: "name",
-        header: "员工信息",
-        cell: ({ row }) => {
-          const emp = row.original;
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>
-                {emp.name.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {emp.name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {emp.employee_no}
-                </Typography>
-              </Box>
-            </Box>
-          );
-        },
-      },
-      {
-        accessorKey: "user_id",
-        header: "系统账号",
-        cell: ({ row }) => {
-          const emp = row.original;
-          return emp.user_id ? (
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Link className="w-3 h-3 text-blue-500 mr-1" />
-              <Typography variant="body2" color="primary.main">
-                已关联
+        id: "name",
+        label: "员工信息",
+        render: (emp) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>
+              {emp.name.charAt(0).toUpperCase()}
+            </Avatar>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {emp.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {emp.employee_no}
               </Typography>
             </Box>
+          </Box>
+        ),
+      },
+      {
+        id: "user_id",
+        label: "系统账号",
+        render: (emp) =>
+          emp.user_id ? (
+            <Typography variant="body2" color="primary.main">
+              已关联
+            </Typography>
           ) : (
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <AlertCircle className="w-3 h-3 mr-1" />
+              <AlertCircle sx={{ width: 12, height: 12, mr: 0.25 }} />
               <Typography variant="body2" color="text.disabled">
                 未关联
               </Typography>
             </Box>
-          );
-        },
+          ),
       },
       {
-        accessorKey: "position",
-        header: "职位",
-        cell: ({ row }) => {
-          return (
-            <Typography variant="body2">
-              {row.original.position || "-"}
-            </Typography>
-          );
-        },
+        id: "position",
+        label: "职位",
+        render: (emp) => (
+          <Typography variant="body2">{emp.position || "-"}</Typography>
+        ),
       },
       {
-        accessorKey: "contact",
-        header: "联系方式",
-        cell: ({ row }) => {
-          const emp = row.original;
-          return (
-            <Box>
-              {emp.email && (
-                <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-                  <Mail className="w-3 h-3 mr-1" />
-                  <Typography variant="caption">{emp.email}</Typography>
-                </Box>
-              )}
-              {emp.phone && (
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Phone className="w-3 h-3 mr-1" />
-                  <Typography variant="caption">{emp.phone}</Typography>
-                </Box>
-              )}
-            </Box>
-          );
-        },
+        id: "contact",
+        label: "联系方式",
+        render: (emp) => (
+          <Box>
+            {emp.email && (
+              <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+                <Mail sx={{ width: 12, height: 12, mr: 0.25 }} />
+                <Typography variant="caption">{emp.email}</Typography>
+              </Box>
+            )}
+            {emp.phone && (
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Phone sx={{ width: 12, height: 12, mr: 0.25 }} />
+                <Typography variant="caption">{emp.phone}</Typography>
+              </Box>
+            )}
+          </Box>
+        ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
+        id: "status",
+        label: "状态",
+        render: (emp) => getStatusBadge(emp.status),
       },
       {
-        accessorKey: "hire_date",
-        header: "入职日期",
-        cell: ({ row }) => {
-          return (
-            <Typography variant="body2" color="text.secondary">
-              {row.original.hire_date
-                ? new Date(row.original.hire_date).toLocaleDateString("zh-CN")
-                : "-"}
-            </Typography>
-          );
-        },
+        id: "hire_date",
+        label: "入职日期",
+        render: (emp) => (
+          <Typography variant="body2" color="text.secondary">
+            {emp.hire_date
+              ? new Date(emp.hire_date).toLocaleDateString("zh-CN")
+              : "-"}
+          </Typography>
+        ),
       },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const emp = row.original;
-          return (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-              <Tooltip title="编辑">
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => {
-                    setSelectedEmployee(emp);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              </Tooltip>
+    ],
+    [],
+  );
 
-              <Tooltip title="删除">
-                <Button
-                  variant="text"
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteEmployee(emp.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </Tooltip>
-            </Box>
-          );
-        },
+  const rowActions = useMemo<RowAction<Employee>[]>(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit sx={{ width: 16, height: 16 }} />,
+        onClick: handleEditEmployee,
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        onClick: handleDeleteEmployee,
+        color: "error",
       },
     ],
     [],
@@ -272,102 +229,33 @@ const EmployeeManagementPage: React.FC<EmployeeManagementPageProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <User className="w-7 h-7 mr-2" />
-                  员工管理
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  管理员工信息、任职信息
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ModeToggle />
-              <Button
-                variant="contained"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus className="w-5 h-5 mr-1" />
-                新增员工
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: "80rem", mx: "auto", px: 3, py: 4 }}>
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "primary.main",
-                    borderTopColor: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                  }}
-                />
-                <Typography sx={{ mt: 2 }} color="text.secondary">
-                  加载中...
-                </Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <AlertCircle
-                  style={{
-                    fontSize: 48,
-                    color: "var(--mui-palette-error-main)",
-                    marginBottom: 8,
-                  }}
-                />
-                <Typography color="error.main">{error}</Typography>
-                <Button sx={{ mt: 2 }} onClick={loadEmployees}>
-                  重试
-                </Button>
-              </Box>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={employees}
-                searchPlaceholder="搜索员工姓名、工号、邮箱、电话、职位..."
-                searchKey="name"
-              />
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+      <ListPageTemplate<Employee>
+        title="员工管理"
+        subtitle="管理员工信息、任职信息"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "人力资源", href: "/hrm" },
+          { label: "员工管理" },
+        ]}
+        backButton={{ href: "/hrm", onClick: () => navigate("/hrm") }}
+        columns={columns}
+        data={employees}
+        loading={loading}
+        error={error || undefined}
+        searchable
+        searchPlaceholder="搜索员工姓名、工号、邮箱、电话、职位..."
+        actions={[
+          {
+            label: "新增员工",
+            icon: <Plus sx={{ width: 18, height: 18 }} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ]}
+        rowActions={rowActions}
+        emptyMessage="暂无员工数据"
+        onRefresh={loadEmployees}
+      />
 
       {showCreateModal && (
         <React.Suspense

@@ -601,7 +601,20 @@ export const formulaApi = {
     return apiClient.rs.get(`/api/v1/formulas/${formulaId}/versions`);
   },
 
+  listFormulaVersions: async (
+    formulaId: string,
+  ): Promise<ApiResponse<FormulaVersion[]>> => {
+    return apiClient.rs.get(`/api/v1/formulas/${formulaId}/versions`);
+  },
+
   createVersion: async (
+    formulaId: string,
+    data: CreateFormulaVersionRequest,
+  ): Promise<ApiResponse<FormulaVersion>> => {
+    return apiClient.rs.post(`/api/v1/formulas/${formulaId}/versions`, data);
+  },
+
+  createFormulaVersion: async (
     formulaId: string,
     data: CreateFormulaVersionRequest,
   ): Promise<ApiResponse<FormulaVersion>> => {
@@ -687,6 +700,127 @@ export const auditRsApi = {
 export const rsStatisticsApi = {
   getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
     return apiClient.rs.get("/api/v1/statistics");
+  },
+};
+
+// ==================== Material API ====================
+
+export interface Material {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  unit: string;
+  specification?: string;
+  supplier?: string;
+  stock_quantity?: number;
+  min_stock?: number;
+  max_stock?: number;
+  status: string;
+  description?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateMaterialRequest {
+  name: string;
+  code: string;
+  category: string;
+  unit: string;
+  specification?: string;
+  supplier?: string;
+  min_stock?: number;
+  max_stock?: number;
+  description?: string;
+}
+
+export interface UpdateMaterialRequest {
+  name?: string;
+  category?: string;
+  unit?: string;
+  specification?: string;
+  supplier?: string;
+  min_stock?: number;
+  max_stock?: number;
+  status?: string;
+  description?: string;
+}
+
+export interface MaterialQueryParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  category?: string;
+  status?: string;
+}
+
+export const materialApi = {
+  listMaterials: async (
+    params?: MaterialQueryParams,
+  ): Promise<
+    ApiResponse<{
+      materials: Material[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>
+  > => {
+    const queryParams = params
+      ? new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v !== undefined && v !== null)
+            .map(([k, v]) => [k, String(v)]),
+        )
+      : "";
+    const url = queryParams
+      ? `/api/v1/materials?${queryParams}`
+      : "/api/v1/materials";
+    return apiClient.rs.get(url);
+  },
+
+  getMaterial: async (id: string): Promise<ApiResponse<Material>> => {
+    return apiClient.rs.get(`/api/v1/materials/${id}`);
+  },
+
+  createMaterial: async (
+    data: CreateMaterialRequest,
+  ): Promise<ApiResponse<Material>> => {
+    return apiClient.rs.post("/api/v1/materials", data);
+  },
+
+  updateMaterial: async (
+    id: string,
+    data: UpdateMaterialRequest,
+  ): Promise<ApiResponse<Material>> => {
+    return apiClient.rs.put(`/api/v1/materials/${id}`, data);
+  },
+
+  deleteMaterial: async (id: string): Promise<ApiResponse<string>> => {
+    return apiClient.rs.delete(`/api/v1/materials/${id}`);
+  },
+
+  batchDeleteMaterials: async (
+    ids: string[],
+  ): Promise<ApiResponse<BatchOperationResult>> => {
+    return apiClient.rs.delete("/api/v1/materials/batch", { data: { ids } });
+  },
+
+  importMaterials: async (
+    file: File,
+  ): Promise<ApiResponse<BatchOperationResult>> => {
+    const content = await file.text();
+    return apiClient.rs.post("/api/v1/materials/import", content, {
+      headers: {
+        "Content-Type": "text/csv",
+      },
+    });
+  },
+
+  exportMaterials: async (): Promise<Blob> => {
+    const baseURL =
+      (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    return downloadBlob(baseURL, "/api/v1/materials/export");
   },
 };
 

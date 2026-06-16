@@ -48,4 +48,20 @@ export { default as DataExport } from "./DataExport";
 export type { DataExportProps, ExportField, ExportFormat } from "./DataExport";
 
 export { default as QuickSearch } from "./QuickSearch";
-export type { QuickSearchProps, SearchSuggestion, SearchHistoryItem } from "./QuickSearch";
+export type {
+  QuickSearchProps,
+  SearchSuggestion,
+  SearchHistoryItem,
+} from "./QuickSearch";
+
+export { default as StatusTimeline } from "./StatusTimeline";
+export type { StatusTimelineProps, TimelineItem } from "./StatusTimeline";
+
+export { default as CommentList } from "./CommentList";
+export type { CommentListProps, Comment } from "./CommentList";
+
+export { default as UserSelect } from "./UserSelect";
+export type { UserSelectProps, User } from "./UserSelect";
+
+export { default as DepartmentSelect } from "./DepartmentSelect";
+export type { DepartmentSelectProps, Department } from "./DepartmentSelect";

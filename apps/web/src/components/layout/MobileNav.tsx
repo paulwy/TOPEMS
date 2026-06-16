@@ -222,36 +222,37 @@ export const MobileNav: React.FC<MobileNavProps> = ({
                   {group.label}
                 </Typography>
                 <List component="div" disablePadding>
-                  {group.children && (group.children as NavItem[]).map((child) => (
-                    <ListItem key={child.label} disablePadding>
-                      <ListItemButton
-                        onClick={() => {
-                          if (child.path) {
-                            navigate(child.path);
-                            onClose();
-                          }
-                        }}
-                        sx={{
-                          pl: 4,
-                          py: 1,
-                          backgroundColor:
-                            child.path === location.pathname
-                              ? "primary.light"
-                              : "transparent",
-                        }}
-                      >
-                        <Typography
+                  {group.children &&
+                    (group.children as NavItem[]).map((child) => (
+                      <ListItem key={child.label} disablePadding>
+                        <ListItemButton
+                          onClick={() => {
+                            if (child.path) {
+                              navigate(child.path);
+                              onClose();
+                            }
+                          }}
                           sx={{
-                            fontWeight:
-                              child.path === location.pathname ? 600 : 400,
-                            fontSize: "0.9rem",
+                            pl: 4,
+                            py: 1,
+                            backgroundColor:
+                              child.path === location.pathname
+                                ? "primary.light"
+                                : "transparent",
                           }}
                         >
-                          {child.label}
-                        </Typography>
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
+                          <Typography
+                            sx={{
+                              fontWeight:
+                                child.path === location.pathname ? 600 : 400,
+                              fontSize: "0.9rem",
+                            }}
+                          >
+                            {child.label}
+                          </Typography>
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
                 </List>
               </Box>
             ))}

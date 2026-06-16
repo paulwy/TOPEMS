@@ -49,42 +49,51 @@ const TreeView: React.FC<TreeViewProps> = ({
 
     const getIcon = () => {
       if (node.type === "employee") {
-        return <User className="w-4 h-4 text-blue-500" />;
+        return <User sx={{ width: 16, height: 16, color: "#3b82f6" }} />;
       }
       if (hasChildren && isExpanded) {
-        return <FolderOpen className="w-4 h-4 text-amber-500" />;
+        return <FolderOpen sx={{ width: 16, height: 16, color: "#f59e0b" }} />;
       }
-      return <Folder className="w-4 h-4 text-amber-500" />;
+      return <Folder sx={{ width: 16, height: 16, color: "#f59e0b" }} />;
     };
 
     return (
       <div key={node.id}>
         <div
-          className={`flex items-center gap-2 py-2 px-3 cursor-pointer transition-colors hover:bg-slate-100 ${
-            isSelected
-              ? "bg-blue-50 text-blue-700 font-medium"
-              : "text-slate-700"
-          }`}
-          style={{ paddingLeft }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            paddingTop: "8px",
+            paddingBottom: "8px",
+            paddingLeft: undefined,
+            paddingRight: "12px",
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+            backgroundColor: isSelected ? "#eff6ff" : "transparent",
+            color: isSelected ? "#1d4ed8" : "#334155",
+            fontWeight: isSelected ? 500 : 400,
+            ...(paddingLeft ? { paddingLeft } : {}),
+          }}
           onClick={() => {
             toggleExpand(node.id);
             onSelect?.(node);
           }}
         >
           {hasChildren && (
-            <span className="w-5 h-5 flex items-center justify-center">
+            <span style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-slate-400" />
+                <ChevronDown sx={{ width: 16, height: 16, color: "#94a3b8" }} />
               ) : (
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight sx={{ width: 16, height: 16, color: "#94a3b8" }} />
               )}
             </span>
           )}
-          {!hasChildren && <span className="w-5" />}
-          <span className="flex-shrink-0">{getIcon()}</span>
-          <span className="flex-1 truncate">{node.name}</span>
+          {!hasChildren && <span style={{ width: "20px" }} />}
+          <span style={{ flexShrink: 0 }}>{getIcon()}</span>
+          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.name}</span>
           {showEmployeeCount && node.type !== "employee" && node.children && (
-            <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+            <span style={{ fontSize: "12px", color: "#94a3b8", backgroundColor: "#f1f5f9", paddingLeft: "8px", paddingRight: "8px", paddingTop: "2px", paddingBottom: "2px", borderRadius: "9999px" }}>
               {node.children.length}
             </span>
           )}
@@ -99,7 +108,7 @@ const TreeView: React.FC<TreeViewProps> = ({
   };
 
   return (
-    <div className="space-y-1">{data.map((node) => renderNode(node))}</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>{data.map((node) => renderNode(node))}</div>
   );
 };
 

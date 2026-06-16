@@ -12,9 +12,8 @@ import { Bell, ChevronDown } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { topNavItems, type NavItem } from "../../config/navigation";
 import { ModeToggle } from "../ModeToggle";
-import { NavDropdown, useDropdown } from "./NavDropdown";
+import { NavDropdown } from "./NavDropdown";
 import { MobileNav } from "./MobileNav";
-import { useResponsive } from "../../hooks/useResponsive";
 
 interface TopNavProps {
   onNavHover?: (event: React.MouseEvent<HTMLElement>, item: NavItem) => void;
@@ -24,8 +23,8 @@ interface TopNavProps {
 export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isMobile, isTablet, isDesktop, breakpoint } = useResponsive();
-  const { setAnchorEl, setOpenMenu } = useDropdown();
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -41,23 +40,47 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
         onNavHover(event, item);
       }
     },
-    [navigate, onNavHover, setAnchorEl, setOpenMenu],
+    [navigate, onNavHover],
   );
 
   const handleNavLeave = useCallback(() => {
+    setAnchorEl(null);
+    setOpenMenu(null);
     if (onNavLeave) {
       onNavLeave();
     }
   }, [onNavLeave]);
 
-  const renderNavItem = (item: NavItem, index: number) => {
+  const handleCloseMenu = useCallback(() => {
+    setAnchorEl(null);
+    setOpenMenu(null);
+  }, []);
+
+  const handleNavClick = useCallback(
+    (item: NavItem) => {
+      if (item.children) {
+        if (openMenu?.label === item.label) {
+          setAnchorEl(null);
+          setOpenMenu(null);
+        } else {
+          setOpenMenu(item);
+        }
+      } else if (item.path) {
+        navigate(item.path);
+      }
+    },
+    [navigate, openMenu],
+  );
+
+  const renderNavItem = (item: NavItem) => {
     const isActive =
       item.path === location.pathname ||
-      location.pathname.startsWith(item.path + "/");
+      item.path && location.pathname.startsWith(item.path + "/");
+    const isMenuOpen = openMenu?.label === item.label;
 
     return (
       <Box
-        key={item.label + index}
+        key={item.label}
         onMouseEnter={(e) => handleNavHover(e, item)}
         onMouseLeave={handleNavLeave}
         sx={{
@@ -67,9 +90,17 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
         <Button
           endIcon={
             item.children ? (
-              <ChevronDown style={{ width: 14, height: 14 }} />
+              <ChevronDown
+                style={{
+                  width: 14,
+                  height: 14,
+                  transform: isMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}
+              />
             ) : null
           }
+          onClick={() => handleNavClick(item)}
           sx={{
             color: isActive ? "primary.main" : "text.primary",
             fontWeight: isActive ? 600 : 400,
@@ -119,7 +150,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
             display: "flex",
             alignItems: "center",
             gap: 1.5,
-            mr: 3,
+            marginRight: 3,
             cursor: "pointer",
           }}
           onClick={() => navigate("/dashboard")}
@@ -157,14 +188,14 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
         {/* 导航菜单 - 桌面端 */}
         <Box
           sx={{
-            display: { xs: "none", lg: "flex" },
+            display: { xs: "none", md: "flex" },
             alignItems: "center",
             gap: 0.5,
             flex: 1,
             overflow: "auto",
           }}
         >
-          {topNavItems.map((item, index) => renderNavItem(item, index))}
+          {topNavItems.map((item) => renderNavItem(item))}
         </Box>
 
         {/* 右侧工具 */}
@@ -208,7 +239,12 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
       </Box>
 
       {/* 下拉菜单 */}
-      <NavDropdown />
+      <NavDropdown
+        anchorEl={anchorEl}
+        openMenu={openMenu}
+        setAnchorEl={setAnchorEl}
+        setOpenMenu={setOpenMenu}
+      />
     </Box>
   );
 };

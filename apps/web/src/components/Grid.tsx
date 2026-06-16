@@ -75,13 +75,21 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
         flex: item ? `0 0 auto` : undefined,
         width: item ? getWidth(effectiveXs) : undefined,
         "@media (min-width:600px)":
-          effectiveSm !== undefined ? { width: getWidth(effectiveSm) } : undefined,
+          effectiveSm !== undefined
+            ? { width: getWidth(effectiveSm) }
+            : undefined,
         "@media (min-width:900px)":
-          effectiveMd !== undefined ? { width: getWidth(effectiveMd) } : undefined,
+          effectiveMd !== undefined
+            ? { width: getWidth(effectiveMd) }
+            : undefined,
         "@media (min-width:1200px)":
-          effectiveLg !== undefined ? { width: getWidth(effectiveLg) } : undefined,
+          effectiveLg !== undefined
+            ? { width: getWidth(effectiveLg) }
+            : undefined,
         "@media (min-width:1536px)":
-          effectiveXl !== undefined ? { width: getWidth(effectiveXl) } : undefined,
+          effectiveXl !== undefined
+            ? { width: getWidth(effectiveXl) }
+            : undefined,
         ...sx,
       }}
     >

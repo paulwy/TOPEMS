@@ -79,7 +79,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       id: `existing-${index}`,
       file: new File([], url),
       preview: url,
-    }))
+    })),
   );
   const [dragging, setDragging] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -92,7 +92,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   /**
    * 生成唯一ID
    */
-  const generateId = () => `img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const generateId = () =>
+    `img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
   /**
    * 处理文件选择
@@ -132,7 +133,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       setImages(updatedImages);
       onChange?.(updatedImages.map((img) => img.preview));
     },
-    [images, maxCount, maxSize, onChange]
+    [images, maxCount, maxSize, onChange],
   );
 
   /**
@@ -200,7 +201,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     const updatedImages = images.map((img) =>
       img.preview === cropImage
         ? { ...img, preview: cropImage + `?crop=${Date.now()}` }
-        : img
+        : img,
     );
 
     setImages(updatedImages);
@@ -340,10 +341,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         <DialogTitle>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             图片裁剪
-            <IconButton
-              onClick={() => setCropImage(null)}
-              sx={{ ml: "auto" }}
-            >
+            <IconButton onClick={() => setCropImage(null)} sx={{ ml: "auto" }}>
               <X size={20} />
             </IconButton>
           </Box>
@@ -387,9 +385,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               </IconButton>
               <TextField
                 value={cropRotation}
-                onChange={(e) =>
-                  setCropRotation(parseInt(e.target.value) || 0)
-                }
+                onChange={(e) => setCropRotation(parseInt(e.target.value) || 0)}
                 type="number"
                 size="small"
                 slotProps={{
@@ -449,11 +445,11 @@ const UploadArea = styled(Box, {
   transition: "all 0.2s",
   color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
   "&:hover": {
-    borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
+    borderColor: isDisabled
+      ? theme.palette.grey[300]
+      : theme.palette.primary.main,
     backgroundColor:
-      isDisabled || isFull
-        ? "transparent"
-        : theme.palette.primary.light + "10",
+      isDisabled || isFull ? "transparent" : theme.palette.primary.light + "10",
   },
 }));
 

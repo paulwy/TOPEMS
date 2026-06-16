@@ -224,7 +224,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
 /**
  * 表单页模板组件
  * 提供完整的表单页面布局，包括字段联动、文件上传、实时验证等功能
- * 
+ *
  * @example
  * ```tsx
  * <FormPageTemplate
@@ -291,7 +291,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   );
 
   // 字段可见性状态
-  const [fieldVisibility, setFieldVisibility] = useState<Record<string, boolean>>(() => {
+  const [fieldVisibility, setFieldVisibility] = useState<
+    Record<string, boolean>
+  >(() => {
     const visibility: Record<string, boolean> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -302,7 +304,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   });
 
   // 动态选项状态
-  const [dynamicOptions, setDynamicOptions] = useState<Record<string, Array<{ label: string; value: any }>>>(() => {
+  const [dynamicOptions, setDynamicOptions] = useState<
+    Record<string, Array<{ label: string; value: any }>>
+  >(() => {
     const options: Record<string, Array<{ label: string; value: any }>> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -315,7 +319,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   });
 
   // 动态必填状态
-  const [dynamicRequired, setDynamicRequired] = useState<Record<string, boolean>>(() => {
+  const [dynamicRequired, setDynamicRequired] = useState<
+    Record<string, boolean>
+  >(() => {
     const required: Record<string, boolean> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -328,12 +334,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   });
 
   // 验证提示状态
-  const [validationHint, setValidationHint] = useState<ValidationToast | null>(null);
+  const [validationHint, setValidationHint] = useState<ValidationToast | null>(
+    null,
+  );
   const [showHint, setShowHint] = useState(false);
 
   // 表单初始化
   const methods = useForm({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: schema ? (zodResolver(schema as any) as any) : undefined,
     defaultValues: defaultValues || {},
     mode: "onBlur",
@@ -371,10 +378,16 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             : String(sourceValue).includes(String(dep.condition.value));
           break;
         case "notEmpty":
-          conditionMet = sourceValue !== undefined && sourceValue !== null && sourceValue !== "";
+          conditionMet =
+            sourceValue !== undefined &&
+            sourceValue !== null &&
+            sourceValue !== "";
           break;
         case "empty":
-          conditionMet = sourceValue === undefined || sourceValue === null || sourceValue === "";
+          conditionMet =
+            sourceValue === undefined ||
+            sourceValue === null ||
+            sourceValue === "";
           break;
       }
 
@@ -419,16 +432,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   }, [formValues, dependencies, setValue, onDependencyChange, methods]);
 
   // 显示验证提示
-  const displayValidationHint = useCallback(
-    (toast: ValidationToast) => {
-      setValidationHint(toast);
-      setShowHint(true);
-      if (toast.type === "success" || toast.type === "info") {
-        setTimeout(() => setShowHint(false), 3000);
-      }
-    },
-    [],
-  );
+  const displayValidationHint = useCallback((toast: ValidationToast) => {
+    setValidationHint(toast);
+    setShowHint(true);
+    if (toast.type === "success" || toast.type === "info") {
+      setTimeout(() => setShowHint(false), 3000);
+    }
+  }, []);
 
   // 处理提交
   const handleFormSubmit = useCallback(
@@ -444,7 +454,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
         // 显示成功提示
         if (validationToasts.length > 0) {
-          const successToast = validationToasts.find((t) => t.type === "success");
+          const successToast = validationToasts.find(
+            (t) => t.type === "success",
+          );
           if (successToast) {
             displayValidationHint(successToast);
           }
@@ -627,14 +639,18 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                       render={({ field: switchField }) => (
                         <Switch
                           checked={switchField.value || false}
-                          onChange={(e) => switchField.onChange(e.target.checked)}
+                          onChange={(e) =>
+                            switchField.onChange(e.target.checked)
+                          }
                           disabled={field.disabled || submitting}
                         />
                       )}
                     />
                   </Box>
                   {(errorMessage || field.helperText) && (
-                    <FormHelperText>{errorMessage || field.helperText}</FormHelperText>
+                    <FormHelperText>
+                      {errorMessage || field.helperText}
+                    </FormHelperText>
                   )}
                 </FormControl>
               );
@@ -658,14 +674,18 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                       render={({ field: checkboxField }) => (
                         <Checkbox
                           checked={checkboxField.value || false}
-                          onChange={(e) => checkboxField.onChange(e.target.checked)}
+                          onChange={(e) =>
+                            checkboxField.onChange(e.target.checked)
+                          }
                           disabled={field.disabled || submitting}
                         />
                       )}
                     />
                   </Box>
                   {(errorMessage || field.helperText) && (
-                    <FormHelperText>{errorMessage || field.helperText}</FormHelperText>
+                    <FormHelperText>
+                      {errorMessage || field.helperText}
+                    </FormHelperText>
                   )}
                 </FormControl>
               );
@@ -792,7 +812,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               {section.title}
-              {section.fields.some((f) => (dynamicRequired[f.name] || f.required)) && (
+              {section.fields.some(
+                (f) => dynamicRequired[f.name] || f.required,
+              ) && (
                 <Typography component="span" color="error" sx={{ ml: 0.5 }}>
                   *
                 </Typography>
@@ -823,11 +845,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
-                    size={{
-                      xs: 12,
-                      sm: 6,
-                      md: Math.floor(12 / columns) * (field.span || 1),
-                    }}
+                    xs={12}
+                    sm={6}
+                    md={Math.floor(12 / columns) * (field.span || 1)}
                   >
                     <Skeleton
                       variant="rectangular"
@@ -842,11 +862,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 {section.fields.map((field) => (
                   <Grid
                     key={field.name}
-                    size={{
-                      xs: 12,
-                      sm: 6,
-                      md: Math.floor(12 / columns) * (field.span || 1),
-                    }}
+                    xs={12}
+                    sm={6}
+                    md={Math.floor(12 / columns) * (field.span || 1)}
                   >
                     {renderField(field)}
                   </Grid>
@@ -883,7 +901,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         )}
         {showValidationHints && Object.keys(errors).length > 0 && (
           <Tooltip title="表单存在验证错误">
-            <Box sx={{ display: "flex", alignItems: "center", color: "error.main" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                color: "error.main",
+              }}
+            >
               <AlertCircle style={{ width: 16, height: 16 }} />
               <Typography variant="caption" sx={{ ml: 0.5 }}>
                 {Object.keys(errors).length}个字段存在错误
@@ -989,7 +1013,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           open={showHint}
           autoHideDuration={3000}
           onClose={() => setShowHint(false)}
-          anchorOrigin={{ vertical: "top" as const, horizontal: "center" as const }}
+          anchorOrigin={{
+            vertical: "top" as const,
+            horizontal: "center" as const,
+          }}
         >
           <MuiAlert
             severity={validationHint?.type || "info"}

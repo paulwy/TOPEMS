@@ -39,6 +39,14 @@ import type {
   GanttPhase,
   GanttMilestone,
 } from "../api/pm";
+import {
+  CardTitle,
+  Progress,
+  TableHeader,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../components/ui/shadcn";
 
 const PmProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -238,7 +246,7 @@ const PmProjectDetailPage: React.FC = () => {
       <Box sx={{ flex: 1, p: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
           <Button
-            variant="outline"
+            variant="outlined"
             onClick={() => navigate("/pm/projects")}
             sx={{ gap: 1 }}
           >
@@ -292,11 +300,11 @@ const PmProjectDetailPage: React.FC = () => {
                 )}
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Badge variant="outline" sx={getRiskColor(project.risk_level)}>
+                <Badge variant="standard" sx={getRiskColor(project.risk_level)}>
                   {getRiskLabel(project.risk_level)}
                 </Badge>
                 {project.priority && (
-                  <Badge variant="outline">优先级: {project.priority}</Badge>
+                  <Badge variant="standard">优先级: {project.priority}</Badge>
                 )}
               </Box>
             </Box>
@@ -674,7 +682,7 @@ const PmProjectDetailPage: React.FC = () => {
                 }}
               >
                 <CardTitle sx={{ fontSize: "1.125rem" }}>阶段列表</CardTitle>
-                <Button variant="outline" size="sm">
+                <Button variant="outlined" size="small">
                   添加阶段
                 </Button>
               </CardHeader>
@@ -791,8 +799,8 @@ const PmProjectDetailPage: React.FC = () => {
                             </TableCell>
                             <TableCell>
                               <Button
-                                variant="ghost"
-                                size="sm"
+                                variant="text"
+                                size="small"
                                 sx={{ gap: 0.5 }}
                               >
                                 <Edit sx={{ width: 16, height: 16 }} />
@@ -821,7 +829,7 @@ const PmProjectDetailPage: React.FC = () => {
                 }}
               >
                 <CardTitle sx={{ fontSize: "1.125rem" }}>里程碑列表</CardTitle>
-                <Button variant="outline" size="sm">
+                <Button variant="outlined" size="small">
                   添加里程碑
                 </Button>
               </CardHeader>
@@ -912,8 +920,8 @@ const PmProjectDetailPage: React.FC = () => {
                             </TableCell>
                             <TableCell>
                               <Button
-                                variant="ghost"
-                                size="sm"
+                                variant="text"
+                                size="small"
                                 sx={{ gap: 0.5 }}
                               >
                                 <Edit sx={{ width: 16, height: 16 }} />
@@ -1158,7 +1166,7 @@ const PmProjectDetailPage: React.FC = () => {
                   <CardTitle sx={{ fontSize: "1.125rem" }}>
                     成本构成分析
                   </CardTitle>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outlined" size="small">
                     查看详情
                   </Button>
                 </CardHeader>
@@ -1332,21 +1340,21 @@ const PmProjectDetailPage: React.FC = () => {
                   sx={{ display: "flex", flexDirection: "column", gap: 1 }}
                 >
                   <Button
-                    variant="outline"
+                    variant="outlined"
                     sx={{ justifyContent: "flex-start" }}
                   >
                     <DollarSign sx={{ width: 16, height: 16, mr: 1 }} />
                     查看成本明细
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="outlined"
                     sx={{ justifyContent: "flex-start" }}
                   >
                     <FileText sx={{ width: 16, height: 16, mr: 1 }} />
                     查看项目发票
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="outlined"
                     sx={{ justifyContent: "flex-start" }}
                   >
                     <TrendingUp sx={{ width: 16, height: 16, mr: 1 }} />

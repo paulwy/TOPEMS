@@ -302,7 +302,7 @@ const RsExperimentCreatePage: React.FC = () => {
             >
               <Button
                 variant="outlined"
-                startIcon={<CancelIcon />}
+                startIcon={<X />}
                 onClick={handleCancel}
               >
                 取消

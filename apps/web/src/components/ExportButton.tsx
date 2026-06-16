@@ -125,31 +125,34 @@ const ExportButton: React.FC<ExportButtonProps> = ({
     <button
       onClick={handleExport}
       disabled={disabled || exporting}
-      className={`
-        px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2
-        ${
-          disabled
-            ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-            : exportComplete
-              ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-        }
-        ${buttonClassName}
-      `}
+      style={{
+        padding: "8px 16px",
+        borderRadius: "8px",
+        fontWeight: 500,
+        transition: "all 0.2s",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        backgroundColor: disabled ? "#cbd5e1" : exportComplete ? "#22c55e" : "#2563eb",
+        color: disabled ? "#64748b" : "#ffffff",
+        cursor: disabled || exporting ? "not-allowed" : "pointer",
+        border: "none",
+        ...(buttonClassName ? {} : {})
+      }}
     >
       {exporting ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 sx={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
           <span>导出中...</span>
         </>
       ) : exportComplete ? (
         <>
-          <CheckCircle className="w-4 h-4" />
+          <CheckCircle sx={{ width: 16, height: 16 }} />
           <span>导出成功</span>
         </>
       ) : (
         <>
-          <Download className="w-4 h-4" />
+          <Download sx={{ width: 16, height: 16 }} />
           <span>{buttonText}</span>
         </>
       )}

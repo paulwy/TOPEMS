@@ -4,7 +4,17 @@ import { Chip } from "@mui/material";
 // 默认状态配置
 const DEFAULT_STATUS_MAP: Record<
   string,
-  { label: string; color: "default" | "primary" | "secondary" | "success" | "warning" | "error" | "info" }
+  {
+    label: string;
+    color:
+      | "default"
+      | "primary"
+      | "secondary"
+      | "success"
+      | "warning"
+      | "error"
+      | "info";
+  }
 > = {
   active: { label: "启用", color: "success" },
   inactive: { label: "禁用", color: "default" },
@@ -22,7 +32,17 @@ export interface StatusBadgeProps {
   /** 状态映射配置，默认提供常用状态 */
   statusMap?: Record<
     string,
-    { label: string; color: "default" | "primary" | "secondary" | "success" | "warning" | "error" | "info" }
+    {
+      label: string;
+      color:
+        | "default"
+        | "primary"
+        | "secondary"
+        | "success"
+        | "warning"
+        | "error"
+        | "info";
+    }
   >;
   /** 显示标签，为空时使用 statusMap 中的 label */
   label?: string;
@@ -39,7 +59,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   useChip = true,
   size = "small",
 }) => {
-  const config = statusMap[status] || { label: label || status, color: "default" as const };
+  const config = statusMap[status] || {
+    label: label || status,
+    color: "default" as const,
+  };
 
   if (useChip) {
     return (

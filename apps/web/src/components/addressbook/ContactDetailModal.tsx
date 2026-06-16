@@ -15,26 +15,26 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
   const getIcon = () => {
     switch (contact.contact_type) {
       case "EMPLOYEE":
-        return <User className="w-12 h-12" />;
+        return <User sx={{ width: 48, height: 48 }} />;
       case "DEPARTMENT":
-        return <Users className="w-12 h-12" />;
+        return <Users sx={{ width: 48, height: 48 }} />;
       case "COMPANY":
-        return <Building className="w-12 h-12" />;
+        return <Building sx={{ width: 48, height: 48 }} />;
       default:
-        return <User className="w-12 h-12" />;
+        return <User sx={{ width: 48, height: 48 }} />;
     }
   };
 
   const getColor = () => {
     switch (contact.contact_type) {
       case "EMPLOYEE":
-        return "bg-blue-100 text-blue-600";
+        return { bg: "#dbeafe", color: "#2563eb" };
       case "DEPARTMENT":
-        return "bg-green-100 text-green-600";
+        return { bg: "#dcfce7", color: "#16a34a" };
       case "COMPANY":
-        return "bg-purple-100 text-purple-600";
+        return { bg: "#f3e8ff", color: "#9333ea" };
       default:
-        return "bg-gray-100 text-gray-600";
+        return { bg: "#f3f4f6", color: "#6b7280" };
     }
   };
 
@@ -51,69 +51,171 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
     }
   };
 
+  const color = getColor();
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center space-x-4">
-              <div className={`${getColor()} p-4 rounded-full`}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          borderRadius: 8,
+          width: "100%",
+          maxWidth: 576,
+          maxHeight: "90vh",
+          overflowY: "auto",
+        }}
+      >
+        <div style={{ padding: 24 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: 24,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div
+                style={{
+                  ...color,
+                  padding: 16,
+                  borderRadius: "50%",
+                }}
+              >
                 {getIcon()}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2
+                  style={{
+                    fontSize: 24,
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    margin: 0,
+                  }}
+                >
                   {contact.name}
                 </h2>
-                <p className="text-sm text-slate-500">{getTypeLabel()}</p>
+                <p style={{ fontSize: 14, color: "#64748b", margin: 0 }}>
+                  {getTypeLabel()}
+                </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              style={{
+                padding: 8,
+                borderRadius: "50%",
+                border: "none",
+                backgroundColor: "transparent",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#f1f5f9";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
             >
-              <X className="w-6 h-6 text-slate-500" />
+              <X sx={{ width: 24, height: 24, color: "#64748b" }} />
             </button>
           </div>
 
-          <div className="space-y-6">
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             {/* 基本信息 */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              <h3
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#0f172a",
+                  marginBottom: 12,
+                }}
+              >
                 基本信息
               </h3>
-              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+              <div
+                style={{
+                  backgroundColor: "#f8fafc",
+                  borderRadius: 8,
+                  padding: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
                 {contact.code && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">编号</span>
-                    <span className="text-sm text-slate-900">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ fontSize: 14, color: "#64748b" }}>编号</span>
+                    <span style={{ fontSize: 14, color: "#0f172a" }}>
                       {contact.code}
                     </span>
                   </div>
                 )}
                 {contact.position && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">职位</span>
-                    <span className="text-sm text-slate-900">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ fontSize: 14, color: "#64748b" }}>职位</span>
+                    <span style={{ fontSize: 14, color: "#0f172a" }}>
                       {contact.position}
                     </span>
                   </div>
                 )}
                 {contact.department_name && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">部门</span>
-                    <span className="text-sm text-slate-900">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span style={{ fontSize: 14, color: "#64748b" }}>部门</span>
+                    <span style={{ fontSize: 14, color: "#0f172a" }}>
                       {contact.department_name}
                     </span>
                   </div>
                 )}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-500">状态</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ fontSize: 14, color: "#64748b" }}>状态</span>
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      contact.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "0 8px",
+                      borderRadius: 9999,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      ...(contact.status === "active"
+                        ? { backgroundColor: "#dcfce7", color: "#15803d" }
+                        : { backgroundColor: "#fee2e2", color: "#b91c1c" }),
+                    }}
                   >
                     {contact.status === "active" ? "在职" : "离职"}
                   </span>
@@ -123,27 +225,63 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
 
             {/* 联系方式 */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              <h3
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#0f172a",
+                  marginBottom: 12,
+                }}
+              >
                 联系方式
               </h3>
-              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+              <div
+                style={{
+                  backgroundColor: "#f8fafc",
+                  borderRadius: 8,
+                  padding: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
                 {contact.email && (
-                  <div className="flex items-center space-x-3">
-                    <Mail className="w-5 h-5 text-slate-400" />
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <Mail sx={{ width: 20, height: 20, color: "#94a3b8" }} />
                     <a
                       href={`mailto:${contact.email}`}
-                      className="text-sm text-blue-600 hover:text-blue-700"
+                      style={{
+                        fontSize: 14,
+                        color: "#2563eb",
+                        textDecoration: "none",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "#1d4ed8";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "#2563eb";
+                      }}
                     >
                       {contact.email}
                     </a>
                   </div>
                 )}
                 {contact.phone && (
-                  <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5 text-slate-400" />
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <Phone sx={{ width: 20, height: 20, color: "#94a3b8" }} />
                     <a
                       href={`tel:${contact.phone}`}
-                      className="text-sm text-blue-600 hover:text-blue-700"
+                      style={{
+                        fontSize: 14,
+                        color: "#2563eb",
+                        textDecoration: "none",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "#1d4ed8";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "#2563eb";
+                      }}
                     >
                       {contact.phone}
                     </a>
@@ -155,15 +293,27 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
             {/* 其他信息 */}
             {contact.hire_date && (
               <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                <h3
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: "#0f172a",
+                    marginBottom: 12,
+                  }}
+                >
                   入职信息
                 </h3>
-                <div className="bg-slate-50 rounded-lg p-4">
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="w-5 h-5 text-slate-400" />
-                    <span className="text-sm text-slate-900">
-                      入职时间:{" "}
-                      {new Date(contact.hire_date).toLocaleDateString()}
+                <div
+                  style={{
+                    backgroundColor: "#f8fafc",
+                    borderRadius: 8,
+                    padding: 16,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <Calendar sx={{ width: 20, height: 20, color: "#94a3b8" }} />
+                    <span style={{ fontSize: 14, color: "#0f172a" }}>
+                      入职时间: {new Date(contact.hire_date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -172,15 +322,33 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
 
             {/* 系统信息 */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">
+              <h3
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#0f172a",
+                  marginBottom: 12,
+                }}
+              >
                 系统信息
               </h3>
-              <div className="bg-slate-50 rounded-lg p-4 space-y-3 text-sm text-slate-500">
-                <div className="flex justify-between">
+              <div
+                style={{
+                  backgroundColor: "#f8fafc",
+                  borderRadius: 8,
+                  padding: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  fontSize: 14,
+                  color: "#64748b",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>创建时间</span>
                   <span>{new Date(contact.created_at).toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>更新时间</span>
                   <span>{new Date(contact.updated_at).toLocaleString()}</span>
                 </div>
@@ -188,10 +356,24 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "#f1f5f9",
+                color: "#334155",
+                borderRadius: 8,
+                border: "none",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e2e8f0";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#f1f5f9";
+              }}
             >
               关闭
             </button>

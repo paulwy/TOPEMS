@@ -31,6 +31,7 @@ import { DataTable } from "../../components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { limsApi } from "../../api/lims";
 import type { Instrument, MaintenanceRecord } from "../../api/lims";
+import { PageHeader } from "../../components/templates/PageHeader";
 
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -231,7 +232,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       accessorKey: "cost",
       header: "费用 (元)",
       cell: ({ row }) => (
-        <span className="font-medium text-slate-900">
+        <span style={{ fontWeight: 500, color: "#0f172a" }}>
           {row.original.cost?.toFixed(2) || "0.00"}
         </span>
       ),
@@ -266,10 +267,10 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">加载中...</p>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 48, height: 48, border: "4px solid #99f6e4", borderTop: "4px solid #0d9488", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 16px auto" }}></div>
+          <p style={{ color: "#475569" }}>加载中...</p>
         </div>
       </div>
     );
@@ -277,11 +278,11 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
 
   if (!instrument) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-slate-600">仪器不存在或已被删除</p>
-          <Button onClick={() => navigate("/lims")} className="mt-4">
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+        <div style={{ textAlign: "center" }}>
+          <AlertCircle sx={{ width: 64, height: 64, color: "#ef4444", margin: "0 auto 16px auto" }} />
+          <p style={{ color: "#475569" }}>仪器不存在或已被删除</p>
+          <Button onClick={() => navigate("/lims")} sx={{ mt: 2 }}>
             返回列表
           </Button>
         </div>
@@ -290,39 +291,33 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="text"
-                onClick={() => navigate("/lims")}
-                sx={{ minWidth: 32, height: 32 }}
-              >
-                <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
-              </Button>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">
-                  仪器维护记录
-                </h1>
-                <p className="text-xs text-slate-500">Instrument Maintenance</p>
-              </div>
-            </div>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-teal-600 hover:bg-teal-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              添加维护记录
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+      <PageHeader
+        title="仪器维护记录"
+        subtitle="Instrument Maintenance"
+        pageIcon={<Wrench style={{ width: 20, height: 20 }} />}
+        pageColor="linear-gradient(135deg, #14B8A6, #0D9488)"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "LIMS" },
+          { label: "仪器管理" },
+          { label: "维护记录" },
+        ]}
+        backButton={{ onClick: () => navigate("/lims") }}
+        actions={[
+          {
+            label: "添加维护记录",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            variant: "contained",
+            color: "primary",
+            onClick: () => setShowAddModal(true),
+          },
+        ]}
+      />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
+      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, gridColumn: { lg: "span 1" } }}>
             <Card>
               <CardHeader sx={{ pb: 1 }}>
                 <Typography
@@ -336,57 +331,57 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   仪器信息
                 </Typography>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-start">
+              <CardContent sx={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
-                    <p className="text-sm text-slate-500">仪器编号</p>
-                    <p className="text-lg font-semibold text-slate-900 mt-1">
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>仪器编号</p>
+                    <p style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", marginTop: 4 }}>
                       {instrument.code || instrument.id}
                     </p>
                   </div>
                   {getStatusBadge(instrument.status)}
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">仪器名称</p>
-                  <p className="text-lg font-medium text-slate-900 mt-1">
+                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>仪器名称</p>
+                  <p style={{ fontSize: "1.125rem", fontWeight: 500, color: "#0f172a", marginTop: 4 }}>
                     {instrument.name}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <div>
-                    <p className="text-sm text-slate-500">型号</p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>型号</p>
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {instrument.model || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">分类</p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>分类</p>
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {instrument.category || "-"}
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <div>
-                    <p className="text-sm text-slate-500">位置</p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>位置</p>
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {instrument.location || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">负责人</p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>负责人</p>
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {instrument.responsible_person || "-"}
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                   <div>
-                    <p className="text-sm text-slate-500 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
+                    <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                      <Calendar sx={{ width: 12, height: 12 }} />
                       采购日期
                     </p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {instrument.purchase_date
                         ? new Date(instrument.purchase_date).toLocaleDateString(
                             "zh-CN",
@@ -395,11 +390,11 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                      <Clock sx={{ width: 12, height: 12 }} />
                       下次校准
                     </p>
-                    <p className="text-slate-900 mt-1">
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {instrument.next_calibration_date
                         ? new Date(
                             instrument.next_calibration_date,
@@ -424,25 +419,25 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   维护统计
                 </Typography>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-green-600">维护次数</p>
-                    <p className="text-2xl font-bold text-green-700">
+              <CardContent sx={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div style={{ textAlign: "center", padding: 12, backgroundColor: "#f0fdf4", borderRadius: 8 }}>
+                    <p style={{ fontSize: "0.875rem", color: "#16a34a" }}>维护次数</p>
+                    <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "#15803d" }}>
                       {maintenanceRecords.length}
                     </p>
                   </div>
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-600">累计费用</p>
-                    <p className="text-2xl font-bold text-blue-700">
+                  <div style={{ textAlign: "center", padding: 12, backgroundColor: "#dbeafe", borderRadius: 8 }}>
+                    <p style={{ fontSize: "0.875rem", color: "#2563eb" }}>累计费用</p>
+                    <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1d4ed8" }}>
                       ¥{totalMaintenanceCost.toFixed(2)}
                     </p>
                   </div>
                 </div>
                 {maintenanceRecords.length > 0 && (
-                  <div className="pt-4 border-t border-slate-200">
-                    <p className="text-sm text-slate-500">最近维护</p>
-                    <p className="text-slate-900 mt-1">
+                  <div style={{ paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>最近维护</p>
+                    <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {new Date(
                         maintenanceRecords[0].performed_at || Date.now(),
                       ).toLocaleDateString("zh-CN")}
@@ -451,9 +446,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
+          </Box>
 
-          <div className="lg:col-span-2">
+          <Box sx={{ gridColumn: { lg: "span 2" } }}>
             <Card>
               <CardHeader
                 sx={{
@@ -486,8 +481,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     enablePagination={false}
                   />
                 ) : (
-                  <div className="text-center py-12 text-slate-500">
-                    <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <div style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
+                    <FileText sx={{ width: 64, height: 64, margin: "0 auto 16px auto", opacity: 0.5 }} />
                     <p>暂无维护记录</p>
                     <Button
                       variant="outlined"
@@ -502,8 +497,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </Box>
+        </Box>
       </main>
 
       <Dialog
@@ -514,8 +509,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       >
         <DialogTitle>添加维护记录</DialogTitle>
         <DialogContent>
-          <Box className="space-y-4" sx={{ mt: 1 }}>
-            <Box className="grid grid-cols-2 gap-4">
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <Box>
                 <Box
                   component="label"
@@ -576,7 +571,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 />
               </Box>
             </Box>
-            <Box className="grid grid-cols-2 gap-4">
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <Box>
                 <Box
                   component="label"
@@ -730,8 +725,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       >
         <DialogTitle>编辑维护记录</DialogTitle>
         <DialogContent>
-          <Box className="space-y-4" sx={{ mt: 1 }}>
-            <Box className="grid grid-cols-2 gap-4">
+          <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <Box>
                 <Box
                   component="label"
@@ -792,7 +787,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 />
               </Box>
             </Box>
-            <Box className="grid grid-cols-2 gap-4">
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <Box>
                 <Box
                   component="label"

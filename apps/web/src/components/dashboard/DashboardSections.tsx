@@ -97,7 +97,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {headerRight && !isMobile && (
-            <Box sx={{ mr: collapsible ? 1 : 0 }}>{headerRight}</Box>
+            <Box sx={{ marginRight: collapsible ? 1 : 0 }}>{headerRight}</Box>
           )}
           {collapsible && (
             <IconButton

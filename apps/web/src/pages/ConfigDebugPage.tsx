@@ -12,27 +12,27 @@ import config from "../config/runtime";
 
 const ConfigDebugPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center space-x-3 mb-8">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-            <Settings className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+    <div style={{ minHeight: "100vh", backgroundColor: "#f9fafb", padding: 24 }}>
+      <div style={{ maxWidth: 896, margin: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
+          <div style={{ padding: 8, backgroundColor: "#dbeafe", borderRadius: 8 }}>
+            <Settings sx={{ width: 24, height: 24, color: "#2563eb" }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: "#111827" }}>
               配置诊断
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p style={{ fontSize: 14, color: "#6b7280" }}>
               系统配置信息和环境变量
             </p>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div style={{ gap: 24 }}>
           <Card>
             <CardHeader>
-              <div className="flex items-center space-x-3">
-                <Server className="w-5 h-5 text-indigo-600" />
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Server sx={{ width: 20, height: 20, color: "#4f46e5" }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   服务配置
                 </Typography>
@@ -42,7 +42,7 @@ const ConfigDebugPage: React.FC = () => {
               </Typography>
             </CardHeader>
             <CardContent>
-              <pre className="bg-gray-900 dark:bg-gray-800 text-gray-300 dark:text-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
+              <pre style={{ backgroundColor: "#111827", color: "#d1d5db", padding: 16, borderRadius: 8, overflow: "auto", fontSize: 14 }}>
                 {JSON.stringify(config.services, null, 2)}
               </pre>
             </CardContent>
@@ -50,8 +50,8 @@ const ConfigDebugPage: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <div className="flex items-center space-x-3">
-                <Database className="w-5 h-5 text-green-600" />
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Database sx={{ width: 20, height: 20, color: "#16a34a" }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   API 配置
                 </Typography>
@@ -61,7 +61,7 @@ const ConfigDebugPage: React.FC = () => {
               </Typography>
             </CardHeader>
             <CardContent>
-              <pre className="bg-gray-900 dark:bg-gray-800 text-gray-300 dark:text-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
+              <pre style={{ backgroundColor: "#111827", color: "#d1d5db", padding: 16, borderRadius: 8, overflow: "auto", fontSize: 14 }}>
                 {JSON.stringify(config.api, null, 2)}
               </pre>
             </CardContent>
@@ -69,8 +69,8 @@ const ConfigDebugPage: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <div className="flex items-center space-x-3">
-                <Code className="w-5 h-5 text-orange-600" />
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Code sx={{ width: 20, height: 20, color: "#ea580c" }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   环境变量
                 </Typography>
@@ -80,7 +80,7 @@ const ConfigDebugPage: React.FC = () => {
               </Typography>
             </CardHeader>
             <CardContent>
-              <pre className="bg-gray-900 dark:bg-gray-800 text-gray-300 dark:text-gray-200 p-4 rounded-lg overflow-x-auto text-sm font-mono">
+              <pre style={{ backgroundColor: "#111827", color: "#d1d5db", padding: 16, borderRadius: 8, overflow: "auto", fontSize: 14, fontFamily: "monospace" }}>
                 {Object.entries(import.meta.env)
                   .filter(([key]) => key.startsWith("VITE_"))
                   .map(([key, value]) => `${key}=${value}`)

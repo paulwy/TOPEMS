@@ -51,6 +51,7 @@ interface Bug {
 
 const RsBugPage: React.FC = () => {
   const [bugs, setBugs] = useState<Bug[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
@@ -79,6 +80,7 @@ const RsBugPage: React.FC = () => {
         status: "open",
         assignee: "张三",
         create_time: "2024-06-15 10:30:00",
+        description: "用户反馈登录成功后页面显示空白，需要刷新才能正常显示",
       },
       {
         id: "2",
@@ -89,6 +91,7 @@ const RsBugPage: React.FC = () => {
         status: "in_progress",
         assignee: "李四",
         create_time: "2024-06-14 14:20:00",
+        description: "Excel导出时遇到大数据量会抛出内存溢出错误",
       },
       {
         id: "3",
@@ -99,6 +102,7 @@ const RsBugPage: React.FC = () => {
         status: "resolved",
         assignee: "王五",
         create_time: "2024-06-13 09:15:00",
+        description: "邮箱格式验证提示信息不够友好",
       },
       {
         id: "4",
@@ -109,6 +113,7 @@ const RsBugPage: React.FC = () => {
         status: "open",
         assignee: "赵六",
         create_time: "2024-06-12 16:45:00",
+        description: "在移动端设备上列表页布局错乱",
       },
       {
         id: "5",
@@ -119,6 +124,7 @@ const RsBugPage: React.FC = () => {
         status: "closed",
         assignee: "孙七",
         create_time: "2024-06-11 11:00:00",
+        description: "搜索结果超过100条时分页按钮显示异常",
       },
       {
         id: "6",
@@ -129,6 +135,7 @@ const RsBugPage: React.FC = () => {
         status: "in_progress",
         assignee: "周八",
         create_time: "2024-06-10 15:30:00",
+        description: "上传大图片时进度条卡在50%不再更新",
       },
     ];
     setBugs(mockBugs);
@@ -221,7 +228,7 @@ const RsBugPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };

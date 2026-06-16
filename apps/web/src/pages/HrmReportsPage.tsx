@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useNotification } from "../hooks/useNotification";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { PageHeader } from "../components/templates";
 
 interface EmployeeSummary {
   total_employees: number;
@@ -172,65 +173,41 @@ const HrmReportsPage: React.FC = () => {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
       <Box
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Box
-          sx={{
-            maxWidth: 1536,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 2,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Box>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "grey.900" }}
-              >
-                HR数据分析报表
-              </Typography>
-              <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
-                实时查看人力资源数据统计与分析
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <FormControl size="small" sx={{ width: 120 }}>
-                <InputLabel>时间范围</InputLabel>
-                <Select
-                  value={timeRange}
-                  label="时间范围"
-                  onChange={(e) => setTimeRange(e.target.value)}
-                >
-                  <MenuItem value="week">本周</MenuItem>
-                  <MenuItem value="month">本月</MenuItem>
-                  <MenuItem value="quarter">本季度</MenuItem>
-                  <MenuItem value="year">本年</MenuItem>
-                </Select>
-              </FormControl>
-              <Button>
-                <BarChart3 sx={{ width: 16, height: 16, mr: 1 }} />
-                导出报表
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
         sx={{ maxWidth: 1536, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
       >
+        <PageHeader
+          title="HR数据分析报表"
+          subtitle="实时查看人力资源数据统计与分析"
+          breadcrumbs={[
+            { label: "人力资源", href: "/hrm" },
+            { label: "报表统计" },
+          ]}
+          backButton={{ onClick: () => window.history.back() }}
+          actions={[
+            {
+              label: "导出报表",
+              icon: <BarChart3 sx={{ width: 16, height: 16, mr: 1 }} />,
+              onClick: () => {},
+              variant: "outlined",
+            },
+          ]}
+        />
+
+        <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-end" }}>
+          <FormControl size="small" sx={{ width: 120 }}>
+            <InputLabel>时间范围</InputLabel>
+            <Select
+              value={timeRange}
+              label="时间范围"
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              <MenuItem value="week">本周</MenuItem>
+              <MenuItem value="month">本月</MenuItem>
+              <MenuItem value="quarter">本季度</MenuItem>
+              <MenuItem value="year">本年</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
         <Box
           sx={{
             display: "grid",
@@ -932,7 +909,7 @@ const HrmReportsPage: React.FC = () => {
                     <Box sx={{ width: 192, height: 192, position: "relative" }}>
                       <svg
                         viewBox="0 0 100 100"
-                        sx={{
+                        style={{
                           width: "100%",
                           height: "100%",
                           transform: "rotate(-90deg)",
@@ -1365,7 +1342,7 @@ const HrmReportsPage: React.FC = () => {
                           }}
                         />
                         <Typography
-                          variant="xs"
+                          variant="caption"
                           sx={{ color: "grey.500", mt: 1 }}
                         >
                           {
@@ -1459,13 +1436,13 @@ const HrmReportsPage: React.FC = () => {
                 <Box sx={{ display: "flex", justifyContent: "center" }}>
                   <Box sx={{ width: 256, height: 256, position: "relative" }}>
                     <svg
-                      viewBox="0 0 100 100"
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        transform: "rotate(-90deg)",
-                      }}
-                    >
+                        viewBox="0 0 100 100"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          transform: "rotate(-90deg)",
+                        }}
+                      >
                       <circle
                         cx="50"
                         cy="50"

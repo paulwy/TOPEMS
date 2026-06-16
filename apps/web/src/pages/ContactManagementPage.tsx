@@ -264,16 +264,7 @@ const ContactManagementPage: React.FC = () => {
           >
             <Box sx={{ flex: 1, position: "relative" }}>
               <Search
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
-                style={{
-                  position: "absolute",
-                  left: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 16,
-                  height: 16,
-                  color: "gray",
-                }}
+                sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "gray" }}
               />
               <TextField
                 size="small"

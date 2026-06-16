@@ -20,20 +20,21 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div style={{ position: "relative", display: "inline-block" }} className={className}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 8 }}
+        sx={{ "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
       >
-        <Download className="w-4 h-4 mr-2" />
+        <Download style={{ width: 16, height: 16, marginRight: 8 }} />
         导出
       </button>
 
       {isOpen && (
         <>
-          <div className="fixed inset-0" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10">
+          <div style={{ position: "fixed", inset: 0 }} onClick={() => setIsOpen(false)} />
+          <div style={{ position: "absolute", right: 0, marginTop: 8, width: 192, backgroundColor: "white", borderRadius: 8, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0", padding: 4, zIndex: 10 }}>
             {options.map((option) => (
               <button
                 key={option.value}
@@ -41,7 +42,8 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
                   onExport(option.value);
                   setIsOpen(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 transition-colors"
+                style={{ width: "100%", padding: "8px 16px", textAlign: "left", fontSize: 14, color: "#334155" }}
+                sx={{ "&:hover": { backgroundColor: "#f1f5f9" }, transition: "colors 0.2s" }}
               >
                 {option.label}
               </button>

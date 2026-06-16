@@ -43,6 +43,8 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { PageHeader } from "../components/templates";
 
 interface Resource {
   id: string;
@@ -103,6 +105,7 @@ const mockResources: Resource[] = [
 ];
 
 const PmResourcePage: React.FC = () => {
+  const navigate = useNavigate();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,7 +116,13 @@ const PmResourcePage: React.FC = () => {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    type: string;
+    project: string;
+    assignedTo: string;
+    status: "available" | "in_use" | "maintenance" | "retired";
+  }>({
     name: "",
     type: "",
     project: "",
@@ -222,21 +231,25 @@ const PmResourcePage: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-            资源管理
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            管理项目资源的分配与使用情况
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-          onClick={() => setShowCreateDialog(true)}
-        >
-          资源登记
-        </Button>
+        <PageHeader
+          title="资源管理"
+          subtitle="管理项目资源的分配与使用情况"
+          breadcrumbs={[
+            { label: "项目管理", href: "/pm" },
+            { label: "资源管理" },
+          ]}
+          backButton={{ onClick: () => navigate("/pm") }}
+          actions={[
+            {
+              label: "新增资源",
+              icon: <Plus sx={{ width: 18, height: 18 }} />,
+              onClick: () => setShowCreateDialog(true),
+              variant: "contained",
+            },
+          ]}
+        />
+
+
       </Box>
 
       <Card>
@@ -462,7 +475,7 @@ const PmResourcePage: React.FC = () => {
               <Select
                 value={formData.status}
                 label="初始状态"
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as "available" | "in_use" | "maintenance" | "retired" })}
               >
                 <MenuItem value="available">可用</MenuItem>
                 <MenuItem value="in_use">使用中</MenuItem>

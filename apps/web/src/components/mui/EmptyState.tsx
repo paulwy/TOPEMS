@@ -19,6 +19,12 @@ export interface EmptyStateProps {
     href?: string;
   };
 
+  // ======== 向后兼容属性 ========
+  /** @deprecated 请使用 action 对象 */
+  actionLabel?: string;
+  /** @deprecated 请使用 action.onClick */
+  onAction?: () => void;
+
   // 布局
   align?: "center" | "left";
   compact?: boolean;
@@ -35,10 +41,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   action,
+  actionLabel,
+  onAction,
   align = "center",
   compact = false,
   children,
 }) => {
+  const resolvedAction = action || (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
   const theme = useTheme();
 
   return (
@@ -90,7 +99,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           color="text.secondary"
           sx={{
             maxWidth: 400,
-            mb: action ? 2 : 0,
+            mb: resolvedAction ? 2 : 0,
           }}
         >
           {description}
@@ -98,15 +107,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       )}
 
       {/* 操作按钮 */}
-      {action && (
+      {resolvedAction && (
         <Button
           variant="contained"
           color="primary"
-          onClick={action.onClick}
-          href={action.href}
+          onClick={resolvedAction.onClick}
+          href={resolvedAction.href}
           sx={{ mt: 1 }}
         >
-          {action.label}
+          {resolvedAction.label}
         </Button>
       )}
 

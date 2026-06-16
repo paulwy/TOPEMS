@@ -41,6 +41,7 @@ import MetricCard from "../components/MetricCard";
 import { ChartCard } from "../components/ChartCard";
 import { BIChartColors } from "../components/charts/chartTheme";
 import { Button, Skeleton, Box, Typography } from "@mui/material";
+import { PageHeader } from "../components/templates/PageHeader";
 
 const MetricCardSkeleton = () => (
   <Box
@@ -411,58 +412,21 @@ const BIDashboardPage = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
+      <PageHeader
+        title="数据大屏"
+        subtitle="实时业务数据总览"
+        pageIcon={<BarChart3 style={{ width: 20, height: 20 }} />}
+        pageColor="linear-gradient(135deg, #10B981, #059669)"
+        breadcrumbs={[
+          { label: "首页", href: "/dashboard" },
+          { label: "BI" },
+          { label: "数据大屏" },
+        ]}
+        onRefresh={handleRefresh}
+        loading={loading}
+      />
+
       <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-        {/* Header */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 700, color: "grey.900" }}
-            >
-              数据大屏
-            </Typography>
-            <Typography variant="body2" sx={{ color: "grey.500", mt: 0.5 }}>
-              实时业务数据总览
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-                fontSize: 14,
-                color: "grey.500",
-              }}
-            >
-              <Clock sx={{ width: 16, height: 16 }} />
-              <Typography variant="body2" sx={{ color: "grey.500" }}>
-                最后更新: {new Date().toLocaleString("zh-CN")}
-              </Typography>
-            </Box>
-            <Button
-              variant="outlined"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-            >
-              <RefreshCw
-                sx={{
-                  width: 16,
-                  height: 16,
-                  animation: isRefreshing ? "spin 1s linear infinite" : "none",
-                }}
-              />
-              {isRefreshing ? "刷新中..." : "刷新数据"}
-            </Button>
-          </Box>
-        </Box>
 
         {/* Metrics Grid */}
         <Box

@@ -167,94 +167,114 @@ export const ContactList: React.FC<ContactListProps> = ({
   const acceptedFriends = friends.filter((f) => f.status === "accepted");
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Search */}
-      <div className="p-3 border-b border-gray-200">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: 12, borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ position: "relative" }}>
+          <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
           <input
             type="text"
             placeholder="搜索联系人..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            style={{ width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 8, paddingBottom: 8, backgroundColor: "#f3f4f6", border: "none", borderRadius: 8, fontSize: 14, outline: "none" }}
           />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200">
+      <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
         <button
           onClick={() => setActiveTab("all")}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-            activeTab === "all"
-              ? "text-indigo-600 border-b-2 border-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
+          style={{
+            flex: 1,
+            paddingTop: 8,
+            paddingBottom: 8,
+            fontSize: 14,
+            fontWeight: 500,
+            transition: "all 0.15s",
+            backgroundColor: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: activeTab === "all" ? "#4f46e5" : "#6b7280",
+            borderBottom: activeTab === "all" ? "2px solid #4f46e5" : "2px solid transparent",
+          }}
         >
           全部 ({friends.length})
         </button>
         <button
           onClick={() => setActiveTab("friends")}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-            activeTab === "friends"
-              ? "text-indigo-600 border-b-2 border-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
+          style={{
+            flex: 1,
+            paddingTop: 8,
+            paddingBottom: 8,
+            fontSize: 14,
+            fontWeight: 500,
+            transition: "all 0.15s",
+            backgroundColor: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: activeTab === "friends" ? "#4f46e5" : "#6b7280",
+            borderBottom: activeTab === "friends" ? "2px solid #4f46e5" : "2px solid transparent",
+          }}
         >
           好友 ({acceptedFriends.length})
         </button>
         <button
           onClick={() => setActiveTab("groups")}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-            activeTab === "groups"
-              ? "text-indigo-600 border-b-2 border-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
+          style={{
+            flex: 1,
+            paddingTop: 8,
+            paddingBottom: 8,
+            fontSize: 14,
+            fontWeight: 500,
+            transition: "all 0.15s",
+            backgroundColor: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: activeTab === "groups" ? "#4f46e5" : "#6b7280",
+            borderBottom: activeTab === "groups" ? "2px solid #4f46e5" : "2px solid transparent",
+          }}
         >
           分组 ({groups.length})
         </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Pending Requests */}
+      <div style={{ flex: 1, overflowY: "auto" }}>
         {activeTab !== "groups" && pendingRequests.length > 0 && (
-          <div className="p-2">
-            <div className="text-xs text-gray-500 px-2 py-1">待处理请求</div>
+          <div style={{ padding: 8 }}>
+            <div style={{ fontSize: 12, color: "#6b7280", padding: "4px 8px" }}>待处理请求</div>
             {pendingRequests.map((friend) => (
               <div
                 key={friend.id}
-                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg mx-1"
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, marginHorizontal: 4 }}
               >
                 <div
-                  className="flex items-center gap-3"
+                  style={{ display: "flex", alignItems: "center", gap: 12 }}
                   onClick={() => onSelectContact?.(friend)}
                 >
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <User className="w-5 h-5 text-indigo-600" />
+                  <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#e0e7ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <User style={{ width: 20, height: 20, color: "#4f46e5" }} />
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "#111827" }}>
                       {friend.friend_name}
                     </div>
-                    <div className="text-xs text-gray-500">等待通过</div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>等待通过</div>
                   </div>
                 </div>
-                <div className="flex gap-1">
+                <div style={{ display: "flex", gap: 4 }}>
                   <button
                     onClick={() => handleAcceptFriend(friend)}
-                    className="p-1.5 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                    style={{ padding: 6, borderRadius: "9999px", backgroundColor: "#dcfce7", color: "#16a34a", border: "none", cursor: "pointer" }}
                     title="接受"
                   >
-                    <Check className="w-4 h-4" />
+                    <Check style={{ width: 16, height: 16 }} />
                   </button>
                   <button
                     onClick={() => handleRejectFriend(friend)}
-                    className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                    style={{ padding: 6, borderRadius: "9999px", backgroundColor: "#fee2e2", color: "#dc2626", border: "none", cursor: "pointer" }}
                     title="拒绝"
                   >
-                    <X className="w-4 h-4" />
+                    <X style={{ width: 16, height: 16 }} />
                   </button>
                 </div>
               </div>
@@ -262,34 +282,33 @@ export const ContactList: React.FC<ContactListProps> = ({
           </div>
         )}
 
-        {/* Friends List */}
         {activeTab !== "groups" && filteredFriends.length > 0 && (
-          <div className="p-2">
-            <div className="text-xs text-gray-500 px-2 py-1">好友</div>
+          <div style={{ padding: 8 }}>
+            <div style={{ fontSize: 12, color: "#6b7280", padding: "4px 8px" }}>好友</div>
             {filteredFriends
               .filter((f) => f.status === "accepted")
               .map((friend) => (
                 <div
                   key={friend.id}
-                  className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg mx-1 cursor-pointer relative"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, marginHorizontal: 4, cursor: "pointer", position: "relative" }}
                 >
                   <div
-                    className="flex items-center gap-3"
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
                     onClick={() => onSelectContact?.(friend)}
                   >
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <User className="w-5 h-5 text-indigo-600" />
+                    <div style={{ position: "relative" }}>
+                      <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#e0e7ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <User style={{ width: 20, height: 20, color: "#4f46e5" }} />
                       </div>
                       {friend.is_online && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
+                        <span style={{ position: "absolute", bottom: 0, right: 0, width: 12, height: 12, backgroundColor: "#22c55e", borderRadius: "9999px", border: "2px solid #ffffff" }}></span>
                       )}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div style={{ fontSize: 14, fontWeight: 500, color: "#111827" }}>
                         {friend.friend_name}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div style={{ fontSize: 12, color: "#6b7280" }}>
                         {friend.is_online
                           ? "在线"
                           : friend.last_seen
@@ -304,15 +323,15 @@ export const ContactList: React.FC<ContactListProps> = ({
                       setSelectedFriend(friend);
                       setShowFriendMenu(!showFriendMenu);
                     }}
-                    className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                    style={{ padding: 6, borderRadius: "9999px", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                   >
-                    <MoreVertical className="w-4 h-4 text-gray-400" />
+                    <MoreVertical style={{ width: 16, height: 16, color: "#9ca3af" }} />
                   </button>
                   {showFriendMenu && selectedFriend?.id === friend.id && (
-                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-[120px]">
+                    <div style={{ position: "absolute", right: 0, top: "100%", marginTop: 4, backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", border: "1px solid #e5e7eb", padding: 4, zIndex: 10, minWidth: 120 }}>
                       <button
                         onClick={() => handleRemoveFriend(friend.friend_id)}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                        style={{ width: "100%", padding: "8px 16px", textAlign: "left", fontSize: 14, color: "#dc2626", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                       >
                         删除好友
                       </button>
@@ -323,16 +342,15 @@ export const ContactList: React.FC<ContactListProps> = ({
           </div>
         )}
 
-        {/* Contact Groups */}
         {activeTab === "groups" && (
-          <div className="p-2">
+          <div style={{ padding: 8 }}>
             {groups.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">暂无分组</p>
+              <div style={{ textAlign: "center", padding: 32, color: "#6b7280" }}>
+                <Users style={{ width: 48, height: 48, mx: "auto", mb: 8, color: "#d1d5db" }} />
+                <p style={{ fontSize: 14 }}>暂无分组</p>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="mt-2 text-indigo-600 text-sm hover:text-indigo-700"
+                  style={{ marginTop: 8, color: "#4f46e5", fontSize: 14, backgroundColor: "transparent", border: "none", cursor: "pointer" }}
                 >
                   创建分组
                 </button>
@@ -341,72 +359,69 @@ export const ContactList: React.FC<ContactListProps> = ({
               groups.map((group) => (
                 <div
                   key={group.id}
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg mx-1 cursor-pointer"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, borderRadius: 8, marginHorizontal: 4, cursor: "pointer" }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-gray-600" />
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Users style={{ width: 20, height: 20, color: "#4b5563" }} />
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div style={{ fontSize: 14, fontWeight: 500, color: "#111827" }}>
                         {group.name}
                       </div>
-                      <div className="text-xs text-gray-500">0 位联系人</div>
+                      <div style={{ fontSize: 12, color: "#6b7280" }}>0 位联系人</div>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight style={{ width: 16, height: 16, color: "#9ca3af" }} />
                 </div>
               ))
             )}
           </div>
         )}
 
-        {/* Empty State */}
         {activeTab !== "groups" &&
           filteredFriends.length === 0 &&
           pendingRequests.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <User className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-sm">暂无联系人</p>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#6b7280" }}>
+              <User style={{ width: 64, height: 64, color: "#d1d5db", mb: 16 }} />
+              <p style={{ fontSize: 14 }}>暂无联系人</p>
             </div>
           )}
       </div>
 
-      {/* Add Button */}
       {activeTab === "groups" && (
-        <div className="p-3 border-t border-gray-200">
+        <div style={{ padding: 12, borderTop: "1px solid #e5e7eb" }}>
           <button
             onClick={() => setShowAddModal(true)}
-            className="w-full flex items-center justify-center gap-2 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, paddingTop: 8, paddingBottom: 8, backgroundColor: "#4f46e5", color: "#ffffff", borderRadius: 8, border: "none", cursor: "pointer" }}
           >
-            <Plus className="w-4 h-4" />
-            <span className="text-sm font-medium">创建分组</span>
+            <Plus style={{ width: 16, height: 16 }} />
+            <span style={{ fontSize: 14, fontWeight: 500 }}>创建分组</span>
           </button>
         </div>
       )}
 
-      {/* Add Group Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-4 w-full max-w-sm mx-4">
-            <h3 className="font-medium text-gray-900 mb-4">创建分组</h3>
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: 8, padding: 16, width: "100%", maxWidth: 320, margin: "0 16px" }}>
+            <h3 style={{ fontWeight: 500, color: "#111827", marginBottom: 16 }}>创建分组</h3>
             <input
               type="text"
               placeholder="分组名称"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 4, fontSize: 14, outline: "none" }}
             />
-            <div className="flex gap-2 mt-4">
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+                style={{ flex: 1, paddingTop: 8, paddingBottom: 8, border: "1px solid #d1d5db", borderRadius: 4, fontSize: 14, backgroundColor: "transparent", cursor: "pointer" }}
               >
                 取消
               </button>
               <button
                 onClick={handleCreateGroup}
-                className="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+                style={{ flex: 1, paddingTop: 8, paddingBottom: 8, backgroundColor: "#4f46e5", color: "#ffffff", borderRadius: 4, fontSize: 14, border: "none", cursor: "pointer" }}
               >
                 创建
               </button>

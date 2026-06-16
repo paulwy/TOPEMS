@@ -210,7 +210,7 @@ const FlowWorkflowPage: React.FC = () => {
         header: "工作流名称",
         cell: ({ row }) => (
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <GitBranch className="w-4 h-4 mr-2 text-gray-400" />
+            <GitBranch sx={{ width: 16, height: 16, mr: 0.5, color: "grey.400" }} />
             <Typography sx={{ fontWeight: "medium" }}>
               {row.original.name}
             </Typography>
@@ -276,7 +276,7 @@ const FlowWorkflowPage: React.FC = () => {
                 size="small"
                 onClick={() => navigate(`/flow/history?id=${row.original.id}`)}
               >
-                <History className="w-4 h-4" />
+                <History sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
 
@@ -286,9 +286,9 @@ const FlowWorkflowPage: React.FC = () => {
                 onClick={() => handleToggleActive(row.original)}
               >
                 {row.original.is_active ? (
-                  <Pause className="w-4 h-4" />
+                  <Pause sx={{ width: 16, height: 16 }} />
                 ) : (
-                  <Play className="w-4 h-4" />
+                  <Play sx={{ width: 16, height: 16 }} />
                 )}
               </IconButton>
             </Tooltip>
@@ -299,7 +299,7 @@ const FlowWorkflowPage: React.FC = () => {
                 color="error"
                 onClick={() => handleDeleteWorkflow(row.original.id)}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
           </Box>
@@ -341,7 +341,7 @@ const FlowWorkflowPage: React.FC = () => {
                   justifyContent: "center",
                 }}
               >
-                <GitBranch className="w-6 h-6 text-primary.main" />
+                <GitBranch sx={{ width: 24, height: 24, color: "primary.main" }} />
               </Box>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: "bold" }}>
@@ -444,7 +444,7 @@ const FlowWorkflowPage: React.FC = () => {
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search className="w-5 h-5 text-gray-400" />
+                      <Search sx={{ width: 20, height: 20, color: "grey.400" }} />
                     </InputAdornment>
                   ),
                 },

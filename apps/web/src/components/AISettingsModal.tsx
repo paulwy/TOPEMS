@@ -124,39 +124,39 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", width: "100%", maxWidth: "1024px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Settings className="w-6 h-6" />
-              <h2 className="text-2xl font-bold">AI 设置</h2>
+        <div style={{ background: "linear-gradient(to right, #7c3aed, #2563eb)", color: "#ffffff", padding: "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <Settings sx={{ width: 24, height: 24 }} />
+              <h2 style={{ fontSize: "24px", fontWeight: 700 }}>AI 设置</h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              style={{ padding: "8px", borderRadius: "8px", border: "none", background: "rgba(255,255,255,0.2)", cursor: "pointer", transition: "background-color 0.2s" }}
             >
-              <X className="w-6 h-6" />
+              <X sx={{ width: 24, height: 24 }} />
             </button>
           </div>
-          <p className="text-purple-100 text-sm mt-2">
+          <p style={{ color: "#ddd6fe", fontSize: "14px", marginTop: "8px" }}>
             配置 AI 助手的行为和参数
           </p>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
           {/* Model Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Brain className="w-5 h-5 mr-2 text-purple-600" />
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
+              <Brain sx={{ width: 20, height: 20, marginRight: "8px", color: "#7c3aed" }} />
               模型配置
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
                   AI 模型
                 </label>
                 <select
@@ -164,7 +164,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                   onChange={(e) =>
                     setConfig((prev) => ({ ...prev, model: e.target.value }))
                   }
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  style={{ width: "100%", padding: "8px 16px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", outline: "none" }}
                 >
                   <option value="qwen2.5:7b-instruct">
                     Qwen 2.5 7B Instruct
@@ -178,13 +178,13 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                     Mistral 7B Instruct
                   </option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
                   选择用于生成回答的AI模型
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
                   响应长度
                 </label>
                 <select
@@ -195,30 +195,30 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                       responseLength: e.target.value as any,
                     }))
                   }
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  style={{ width: "100%", padding: "8px 16px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", outline: "none" }}
                 >
                   <option value="short">简短</option>
                   <option value="medium">中等</option>
                   <option value="long">详细</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">控制回答的详细程度</p>
+                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>控制回答的详细程度</p>
               </div>
             </div>
           </div>
 
           {/* Generation Parameters */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Sliders className="w-5 h-5 mr-2 text-blue-600" />
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
+              <Sliders sx={{ width: 20, height: 20, marginRight: "8px", color: "#2563eb" }} />
               生成参数
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Temperature (创造性) <span className="text-red-500">*</span>
+                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
+                  Temperature (创造性) <span style={{ color: "#dc2626" }}>*</span>
                 </label>
-                <div className="space-y-2">
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <input
                     type="range"
                     min="0"
@@ -231,28 +231,28 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                         temperature: parseFloat(e.target.value),
                       }))
                     }
-                    className="w-full"
+                    style={{ width: "100%" }}
                   />
-                  <div className="flex justify-between text-xs text-gray-500">
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#6b7280" }}>
                     <span>0 (精确)</span>
-                    <span className="font-medium text-purple-600">
+                    <span style={{ fontWeight: 500, color: "#7c3aed" }}>
                       {config.temperature}
                     </span>
                     <span>2 (创造性)</span>
                   </div>
                 </div>
                 {errors.temperature && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <AlertCircle className="w-3 h-3 mr-1" />
+                  <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
+                    <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
                     {errors.temperature}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
                   Max Tokens (最大令牌数){" "}
-                  <span className="text-red-500">*</span>
+                  <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <input
                   type="number"
@@ -266,17 +266,22 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                       maxTokens: parseInt(e.target.value),
                     }))
                   }
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    errors.maxTokens ? "border-red-500" : "border-gray-200"
-                  }`}
+                  style={{
+                    width: "100%",
+                    padding: "8px 16px",
+                    border: errors.maxTokens ? "1px solid #dc2626" : "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none"
+                  }}
                 />
                 {errors.maxTokens && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <AlertCircle className="w-3 h-3 mr-1" />
+                  <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
+                    <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
                     {errors.maxTokens}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
+                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
                   控制单次回答的最大长度
                 </p>
               </div>
@@ -284,10 +289,10 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
           </div>
 
           {/* System Prompt */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <MessageSquare className="w-5 h-5 mr-2 text-green-600" />
-              系统提示词 <span className="text-red-500">*</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
+              <MessageSquare sx={{ width: 20, height: 20, marginRight: "8px", color: "#16a34a" }} />
+              系统提示词 <span style={{ color: "#dc2626" }}>*</span>
             </h3>
 
             <div>
@@ -301,39 +306,45 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                   setErrors((prev) => ({ ...prev, systemPrompt: "" }));
                 }}
                 rows={4}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.systemPrompt ? "border-red-500" : "border-gray-200"
-                }`}
+                style={{
+                  width: "100%",
+                  padding: "8px 16px",
+                  border: errors.systemPrompt ? "1px solid #dc2626" : "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  outline: "none",
+                  resize: "vertical"
+                }}
                 placeholder="定义AI助手的角色和行为..."
               />
               {errors.systemPrompt && (
-                <p className="text-red-500 text-xs mt-1 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1" />
+                <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
+                  <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
                   {errors.systemPrompt}
                 </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">
+              <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
                 定义AI助手的基本角色、知识范围和回答风格
               </p>
             </div>
           </div>
 
           {/* Knowledge Base Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-orange-600" />
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
+              <BookOpen sx={{ width: 20, height: 20, marginRight: "8px", color: "#ea580c" }} />
               知识库配置
             </h3>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">启用知识库</div>
-                  <div className="text-sm text-gray-500">
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", backgroundColor: "#f9fafb", borderRadius: "8px" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500, color: "#111827" }}>启用知识库</div>
+                  <div style={{ fontSize: "14px", color: "#6b7280" }}>
                     基于企业知识库生成回答
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     checked={config.enableKnowledgeBase}
@@ -343,19 +354,21 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                         enableKnowledgeBase: e.target.checked,
                       }))
                     }
-                    className="sr-only peer"
+                    style={{ display: "none" }}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  <div style={{ width: "44px", height: "24px", backgroundColor: "#e5e7eb", borderRadius: "9999px", position: "relative", transition: "background-color 0.2s" }}>
+                    <div style={{ content: "''", position: "absolute", top: "2px", left: config.enableKnowledgeBase ? "22px" : "2px", width: "20px", height: "20px", backgroundColor: "#ffffff", borderRadius: "9999px", transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }} />
+                  </div>
                 </label>
               </div>
 
               {config.enableKnowledgeBase && (
-                <div className="grid grid-cols-2 gap-4">
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      相似度阈值 <span className="text-red-500">*</span>
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
+                      相似度阈值 <span style={{ color: "#dc2626" }}>*</span>
                     </label>
-                    <div className="space-y-2">
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       <input
                         type="range"
                         min="0"
@@ -368,29 +381,29 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                             similarityThreshold: parseFloat(e.target.value),
                           }))
                         }
-                        className="w-full"
+                        style={{ width: "100%" }}
                       />
-                      <div className="flex justify-between text-xs text-gray-500">
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#6b7280" }}>
                         <span>0 (宽松)</span>
-                        <span className="font-medium text-orange-600">
+                        <span style={{ fontWeight: 500, color: "#ea580c" }}>
                           {config.similarityThreshold.toFixed(2)}
                         </span>
                         <span>1 (严格)</span>
                       </div>
                     </div>
                     {errors.similarityThreshold && (
-                      <p className="text-red-500 text-xs mt-1 flex items-center">
-                        <AlertCircle className="w-3 h-3 mr-1" />
+                      <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
+                        <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
                         {errors.similarityThreshold}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
                       控制知识匹配的严格程度
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
                       最大上下文消息数
                     </label>
                     <input
@@ -404,9 +417,9 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                           maxContextMessages: parseInt(e.target.value),
                         }))
                       }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      style={{ width: "100%", padding: "8px 16px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", outline: "none" }}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
                       用于理解对话历史的最多消息数
                     </p>
                   </div>
@@ -417,39 +430,39 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <div style={{ backgroundColor: "#f9fafb", padding: "16px 24px", borderTop: "1px solid #e5e7eb" }}>
           {saved && (
-            <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center text-green-700 text-sm">
-              <CheckCircle className="w-4 h-4 mr-2" />
+            <div style={{ marginBottom: "12px", padding: "12px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", display: "flex", alignItems: "center", color: "#15803d", fontSize: "14px" }}>
+              <CheckCircle sx={{ width: 16, height: 16, marginRight: "8px" }} />
               设置已成功保存
             </div>
           )}
           {errors.save && (
-            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center text-red-700 text-sm">
-              <AlertCircle className="w-4 h-4 mr-2" />
+            <div style={{ marginBottom: "12px", padding: "12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", display: "flex", alignItems: "center", color: "#b91c1c", fontSize: "14px" }}>
+              <AlertCircle sx={{ width: 16, height: 16, marginRight: "8px" }} />
               {errors.save}
             </div>
           )}
-          <div className="flex items-center justify-between">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <button
               onClick={resetToDefaults}
-              className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-700 transition-colors"
+              style={{ display: "flex", alignItems: "center", padding: "8px 16px", color: "#4b5563", cursor: "pointer", border: "none", background: "transparent", transition: "color 0.2s" }}
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
+              <RotateCcw sx={{ width: 16, height: 16, marginRight: "8px" }} />
               恢复默认
             </button>
-            <div className="flex space-x-3">
+            <div style={{ display: "flex", gap: "12px" }}>
               <button
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                style={{ padding: "8px 24px", border: "1px solid #d1d5db", color: "#374151", borderRadius: "8px", cursor: "pointer", background: "#ffffff", transition: "background-color 0.2s" }}
               >
                 取消
               </button>
               <button
                 onClick={handleSave}
-                className="flex items-center px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                style={{ display: "flex", alignItems: "center", padding: "8px 24px", backgroundColor: "#7c3aed", color: "#ffffff", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.2s" }}
               >
-                <Save className="w-4 h-4 mr-2" />
+                <Save sx={{ width: 16, height: 16, marginRight: "8px" }} />
                 保存设置
               </button>
             </div>

@@ -7,23 +7,23 @@ import {
   FileSearch,
   RotateCcw,
 } from "lucide-react";
-import { Button } from "../components/ui/button";
 import {
+  Box,
+  Paper,
+  Typography,
+  Button,
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
-} from "../components/ui/table";
-import {
+  TableContainer,
+  TableHead,
+  TableRow,
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
-} from "../components/ui/dialog";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+  Chip,
+  CircularProgress,
+} from "@mui/material";
 import { useToast } from "../components/ToastProvider";
 import {
   migrationApi,
@@ -57,6 +57,20 @@ const MigrationAdminPage: React.FC = () => {
       const data = await migrationApi.listServices();
       setServices(data);
       showToast("success", `加载成功，共 ${data.length} 个服务`);
+
+      if (data.length > 0) {
+        const results = await Promise.all(
+          data.map((svc) =>
+            migrationApi.getMigrationStatus(svc.name).catch(() => null),
+          ),
+        );
+        const nextStatusMap: ServiceStatusMap = {};
+        data.forEach((svc, idx) => {
+          if (results[idx])
+            nextStatusMap[svc.name] = results[idx] as MigrationStatus;
+        });
+        setStatusMap((prev) => ({ ...prev, ...nextStatusMap }));
+      }
     } catch (err: any) {
       showToast("error", err.message || "加载服务列表失败");
     } finally {
@@ -180,274 +194,244 @@ const MigrationAdminPage: React.FC = () => {
     statusMap[serviceName]?.applied?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Database className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
+      <Paper sx={{ boxShadow: 1, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ maxWidth: "1200px", mx: "auto", px: 4, py: 6 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: { sm: "space-between" }, gap: 4 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              <Box sx={{ p: 2, bgcolor: "primary.light", borderRadius: 2 }}>
+                <Database sx={{ width: 24, height: 24, color: "primary.main" }} />
+              </Box>
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 700 }}>
                   数据库迁移管理
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
                   查看各服务迁移状态，生成并执行 schema / index / audit 迁移
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
               <Button
-                variant="outline"
+                variant="outlined"
                 onClick={fetchServices}
                 disabled={loading}
-                className="gap-2"
+                startIcon={loading ? <CircularProgress size={16} /> : <RefreshCw size={16} />}
               >
-                {loading ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
-                )}
                 刷新列表
               </Button>
               <Button
+                variant="contained"
                 onClick={handleBatchApply}
                 disabled={batchApplying || loading || services.length === 0}
-                className="gap-2"
+                startIcon={batchApplying ? <CircularProgress size={16} /> : <Play size={16} />}
               >
-                {batchApplying ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
                 批量生成全部服务迁移
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <Box sx={{ maxWidth: "1200px", mx: "auto", px: 4, py: 6 }}>
+        <Paper sx={{ borderRadius: 2 }}>
           {loading ? (
-            <div className="py-16 flex flex-col items-center justify-center">
-              <LoadingSpinner size="lg" />
-              <p className="mt-4 text-gray-500 text-sm">加载服务列表中...</p>
-            </div>
+            <Box sx={{ py: 16, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+              <CircularProgress size={48} />
+              <Typography variant="body2" sx={{ color: "text.secondary", mt: 4 }}>
+                加载服务列表中...
+              </Typography>
+            </Box>
           ) : services.length === 0 ? (
-            <div className="py-16 flex flex-col items-center justify-center text-gray-500">
-              <FileSearch className="w-12 h-12 text-gray-300 mb-3" />
-              <p>暂无可管理的迁移服务</p>
-            </div>
+            <Box sx={{ py: 16, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "text.secondary" }}>
+              <FileSearch sx={{ width: 48, height: 48, color: "text.disabled", mb: 3 }} />
+              <Typography variant="body1">暂无可管理的迁移服务</Typography>
+            </Box>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[180px]">服务名</TableHead>
-                  <TableHead>Schema</TableHead>
-                  <TableHead className="text-right">端口</TableHead>
-                  <TableHead className="text-right">表数</TableHead>
-                  <TableHead>描述</TableHead>
-                  <TableHead className="text-center">状态</TableHead>
-                  <TableHead className="text-right">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {services.map((svc) => {
-                  const isApplying = applyingService === svc.name;
-                  const isRolling = rollingBackService === svc.name;
-                  const isLoadingStatus = statusLoading === svc.name;
-                  const pending = getPendingCount(svc.name);
-                  const applied = getAppliedCount(svc.name);
-                  return (
-                    <TableRow key={svc.name}>
-                      <TableCell className="font-medium text-gray-900">
-                        {svc.name}
-                      </TableCell>
-                      <TableCell className="text-gray-700">
-                        {svc.schema}
-                      </TableCell>
-                      <TableCell className="text-right text-gray-700">
-                        {svc.port}
-                      </TableCell>
-                      <TableCell className="text-right text-gray-700">
-                        {svc.tables}
-                      </TableCell>
-                      <TableCell className="text-gray-600 max-w-xs truncate">
-                        {svc.description || "-"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {isLoadingStatus ? (
-                          <span className="inline-flex items-center gap-2 text-gray-500 text-xs">
-                            <LoadingSpinner size="sm" />
-                            加载中
-                          </span>
-                        ) : (
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700">
-                              待执行 {pending}
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">
-                              已执行 {applied}
-                            </span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleShowStatus(svc)}
-                            disabled={isLoadingStatus}
-                            className="gap-1"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            查看状态
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleRollback(svc)}
-                            disabled={
-                              isRolling ||
-                              isApplying ||
-                              getAppliedCount(svc.name) === 0
-                            }
-                            title={
-                              getAppliedCount(svc.name) === 0
-                                ? "暂无可回滚记录"
-                                : "回滚最近一次迁移"
-                            }
-                            className="gap-1 text-amber-700 hover:text-amber-800 hover:bg-amber-50"
-                          >
-                            {isRolling ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <RotateCcw className="w-3.5 h-3.5" />
-                            )}
-                            回滚
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleApply(svc)}
-                            disabled={isApplying || isRolling}
-                            className="gap-1"
-                          >
-                            {isApplying ? (
-                              <LoadingSpinner size="sm" />
-                            ) : (
-                              <Play className="w-3.5 h-3.5" />
-                            )}
-                            生成迁移
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ width: 180, fontWeight: 600 }}>服务名</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Schema</TableCell>
+                    <TableCell sx={{ textAlign: "right", fontWeight: 600 }}>端口</TableCell>
+                    <TableCell sx={{ textAlign: "right", fontWeight: 600 }}>表数</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>描述</TableCell>
+                    <TableCell sx={{ textAlign: "center", fontWeight: 600 }}>状态</TableCell>
+                    <TableCell sx={{ textAlign: "right", fontWeight: 600 }}>操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {services.map((svc) => {
+                    const isApplying = applyingService === svc.name;
+                    const isRolling = rollingBackService === svc.name;
+                    const isLoadingStatus = statusLoading === svc.name;
+                    const pending = getPendingCount(svc.name);
+                    const applied = getAppliedCount(svc.name);
+                    return (
+                      <TableRow key={svc.name}>
+                        <TableCell sx={{ fontWeight: 500 }}>{svc.name}</TableCell>
+                        <TableCell>{svc.schema}</TableCell>
+                        <TableCell sx={{ textAlign: "right" }}>{svc.port}</TableCell>
+                        <TableCell sx={{ textAlign: "right" }}>{svc.tables}</TableCell>
+                        <TableCell sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {svc.description || "-"}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: "center" }}>
+                          {isLoadingStatus ? (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "text.secondary" }}>
+                              <CircularProgress size={14} />
+                              <Typography variant="caption">加载中</Typography>
+                            </Box>
+                          ) : (
+                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5 }}>
+                              <Chip
+                                label={`待执行 ${pending}`}
+                                size="small"
+                                sx={{ bgcolor: "warning.light", color: "warning.main", fontSize: 11 }}
+                              />
+                              <Chip
+                                label={`已执行 ${applied}`}
+                                size="small"
+                                sx={{ bgcolor: "success.light", color: "success.main", fontSize: 11 }}
+                              />
+                            </Box>
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: "right" }}>
+                          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => handleShowStatus(svc)}
+                              disabled={isLoadingStatus}
+                              startIcon={<Eye size={14} />}
+                            >
+                              查看状态
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="text"
+                              onClick={() => handleRollback(svc)}
+                              disabled={
+                                isRolling ||
+                                isApplying ||
+                                getAppliedCount(svc.name) === 0
+                              }
+                              sx={{ color: "warning.main" }}
+                              title={
+                                getAppliedCount(svc.name) === 0
+                                  ? "暂无可回滚记录"
+                                  : "回滚最近一次迁移"
+                              }
+                              startIcon={isRolling ? <CircularProgress size={14} /> : <RotateCcw size={14} />}
+                            >
+                              回滚
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={() => handleApply(svc)}
+                              disabled={isApplying || isRolling}
+                              startIcon={isApplying ? <CircularProgress size={14} /> : <Play size={14} />}
+                            >
+                              生成迁移
+                            </Button>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
-        </div>
-      </div>
+        </Paper>
+      </Box>
 
-      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {activeService ? `${activeService.name} · 迁移状态` : "迁移状态"}
-            </DialogTitle>
-            <DialogDescription>
-              {activeService
-                ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}`
-                : ""}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={statusDialogOpen} onClose={() => setStatusDialogOpen(false)} maxWidth="lg">
+        <DialogContent>
+          <DialogTitle>
+            {activeService ? `${activeService.name} · 迁移状态` : "迁移状态"}
+          </DialogTitle>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 4 }}>
+            {activeService
+              ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}`
+              : ""}
+          </Typography>
 
           {activeService && statusLoading === activeService.name ? (
-            <div className="py-10 flex flex-col items-center justify-center text-gray-500">
-              <LoadingSpinner size="lg" />
-              <p className="mt-3 text-sm">加载迁移状态中...</p>
-            </div>
+            <Box sx={{ py: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "text.secondary" }}>
+              <CircularProgress size={40} />
+              <Typography variant="body2" sx={{ mt: 3 }}>加载迁移状态中...</Typography>
+            </Box>
           ) : activeService && statusMap[activeService.name] ? (
-            <div className="space-y-6 max-h-[60vh] overflow-y-auto">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-yellow-500" />
+            <Box sx={{ spaceY: 6, maxHeight: "60vh", overflowY: "auto" }}>
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, display: "flex", alignItems: "center", gap: 2 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "warning.main" }} />
                   待执行迁移 ({statusMap[activeService.name].pending.length})
-                </h3>
+                </Typography>
                 {statusMap[activeService.name].pending.length === 0 ? (
-                  <div className="text-sm text-gray-500 bg-gray-50 rounded-md px-3 py-4 text-center">
-                    暂无待执行的迁移文件
-                  </div>
+                  <Paper sx={{ p: 4, textAlign: "center", bgcolor: "grey.50" }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>暂无待执行的迁移文件</Typography>
+                  </Paper>
                 ) : (
-                  <ul className="space-y-1.5 text-sm font-mono bg-gray-50 rounded-md p-3">
+                  <Paper sx={{ p: 3, bgcolor: "grey.50", fontFamily: "monospace", fontSize: 12 }}>
                     {statusMap[activeService.name].pending.map((file) => (
-                      <li key={file} className="text-gray-800">
-                        {file}
-                      </li>
+                      <Typography key={file} variant="body2">{file}</Typography>
                     ))}
-                  </ul>
+                  </Paper>
                 )}
-              </div>
+              </Box>
 
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                  <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, display: "flex", alignItems: "center", gap: 2 }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "success.main" }} />
                   已执行迁移 ({statusMap[activeService.name].applied.length})
-                </h3>
+                </Typography>
                 {statusMap[activeService.name].applied.length === 0 ? (
-                  <div className="text-sm text-gray-500 bg-gray-50 rounded-md px-3 py-4 text-center">
-                    暂无已执行记录
-                  </div>
+                  <Paper sx={{ p: 4, textAlign: "center", bgcolor: "grey.50" }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>暂无已执行记录</Typography>
+                  </Paper>
                 ) : (
-                  <div className="border border-gray-200 rounded-md overflow-hidden">
+                  <Paper sx={{ overflow: "hidden" }}>
                     <Table>
-                      <TableHeader>
+                      <TableHead>
                         <TableRow>
-                          <TableHead className="w-[120px]">版本</TableHead>
-                          <TableHead>名称</TableHead>
-                          <TableHead className="w-[180px]">执行时间</TableHead>
-                          <TableHead className="text-right w-[100px]">
-                            耗时(ms)
-                          </TableHead>
+                          <TableCell sx={{ width: 120, fontWeight: 600 }}>版本</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>名称</TableCell>
+                          <TableCell sx={{ width: 180, fontWeight: 600 }}>执行时间</TableCell>
+                          <TableCell sx={{ width: 100, textAlign: "right", fontWeight: 600 }}>耗时(ms)</TableCell>
                         </TableRow>
-                      </TableHeader>
+                      </TableHead>
                       <TableBody>
                         {statusMap[activeService.name].applied.map((m) => (
                           <TableRow key={`${m.version}-${m.name}`}>
-                            <TableCell className="font-mono text-xs text-gray-800">
-                              {m.version}
+                            <TableCell sx={{ fontFamily: "monospace", fontSize: 12 }}>{m.version}</TableCell>
+                            <TableCell>{m.name}</TableCell>
+                            <TableCell sx={{ fontSize: 12, color: "text.secondary" }}>
+                              {m.applied_at ? new Date(m.applied_at).toLocaleString() : "-"}
                             </TableCell>
-                            <TableCell className="text-gray-700">
-                              {m.name}
-                            </TableCell>
-                            <TableCell className="text-gray-600 text-xs">
-                              {m.applied_at
-                                ? new Date(m.applied_at).toLocaleString()
-                                : "-"}
-                            </TableCell>
-                            <TableCell className="text-right text-gray-600 text-xs">
+                            <TableCell sx={{ textAlign: "right", fontSize: 12, color: "text.secondary" }}>
                               {m.duration_ms ?? "-"}
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                  </div>
+                  </Paper>
                 )}
-              </div>
-            </div>
+              </Box>
+            </Box>
           ) : (
-            <div className="py-10 text-center text-gray-500 text-sm">
-              未获取到状态信息
-            </div>
+            <Box sx={{ py: 10, textAlign: "center", color: "text.secondary" }}>
+              <Typography variant="body2">未获取到状态信息</Typography>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

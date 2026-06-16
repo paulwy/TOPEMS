@@ -1,12 +1,18 @@
 pub mod app_state;
 pub mod audit_log;
+pub mod billing;
 pub mod contact;
 pub mod customer;
+pub mod customer_scoring;
 pub mod interaction;
 pub mod opportunity;
+pub mod sales_forecast;
 
 pub use audit_log::AuditLog;
+pub use billing::{BillingQueryParams, BillingRecord, CreateBillingRequest};
 pub use contact::{Contact, CreateContactRequest, UpdateContactRequest};
 pub use customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
+pub use customer_scoring::{CreateCustomerScoreRequest, CustomerScore, CustomerScoringQueryParams, UpdateCustomerScoreRequest};
 pub use interaction::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
 pub use opportunity::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
+pub use sales_forecast::{CreateSalesForecastRequest, SalesForecast, SalesForecastQueryParams};

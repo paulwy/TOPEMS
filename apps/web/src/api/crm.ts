@@ -388,6 +388,278 @@ const interactionApi = {
   },
 };
 
+// ==================== Customer Scoring API ====================
+
+export interface CustomerScore {
+  id: string;
+  customer_id: string;
+  customer_name: string;
+  score: number;
+  score_level: string;
+  scoring_date: string;
+  factors: ScoreFactor[];
+  trend: "up" | "down" | "stable";
+  last_score?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScoreFactor {
+  name: string;
+  weight: number;
+  score: number;
+  max_score: number;
+}
+
+export interface CreateCustomerScoreRequest {
+  customer_id: string;
+  score?: number;
+  score_level?: string;
+}
+
+export interface CustomerScoringQueryParams extends PaginationParams {
+  customer_id?: string;
+  score_level?: string;
+}
+
+const customerScoringApi = {
+  /**
+   * 获取客户评分列表
+   */
+  list: async (
+    params?: CustomerScoringQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<CustomerScore>>> => {
+    return apiClient.crm.get("/api/v1/customer-scoring", { params });
+  },
+
+  /**
+   * 获取客户评分详情
+   */
+  get: async (id: string): Promise<ApiResponse<CustomerScore>> => {
+    return apiClient.crm.get(`/api/v1/customer-scoring/${id}`);
+  },
+
+  /**
+   * 创建客户评分
+   */
+  create: async (
+    data: CreateCustomerScoreRequest,
+  ): Promise<ApiResponse<CustomerScore>> => {
+    return apiClient.crm.post("/api/v1/customer-scoring", data);
+  },
+
+  /**
+   * 更新客户评分
+   */
+  update: async (
+    id: string,
+    data: Partial<CreateCustomerScoreRequest>,
+  ): Promise<ApiResponse<CustomerScore>> => {
+    return apiClient.crm.put(`/api/v1/customer-scoring/${id}`, data);
+  },
+
+  /**
+   * 删除客户评分
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/v1/customer-scoring/${id}`);
+  },
+
+  /**
+   * 批量计算客户评分
+   */
+  calculateBatch: async (
+    customerIds: string[],
+  ): Promise<ApiResponse<CustomerScore[]>> => {
+    return apiClient.crm.post("/api/v1/customer-scoring/calculate", {
+      customer_ids: customerIds,
+    });
+  },
+};
+
+// ==================== Sales Forecast API ====================
+
+export interface SalesForecast {
+  id: string;
+  period_type: "monthly" | "quarterly" | "yearly";
+  period: string;
+  predicted_amount: number;
+  actual_amount?: number;
+  accuracy?: number;
+  trend: "up" | "down" | "stable";
+  confidence_level: number;
+  factors: ForecastFactor[];
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ForecastFactor {
+  name: string;
+  impact: number;
+  description?: string;
+}
+
+export interface CreateSalesForecastRequest {
+  period_type: "monthly" | "quarterly" | "yearly";
+  period: string;
+}
+
+export interface SalesForecastQueryParams extends PaginationParams {
+  period_type?: string;
+  status?: string;
+}
+
+const salesForecastApi = {
+  /**
+   * 获取销售预测列表
+   */
+  list: async (
+    params?: SalesForecastQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<SalesForecast>>> => {
+    return apiClient.crm.get("/api/v1/sales-forecast", { params });
+  },
+
+  /**
+   * 获取销售预测详情
+   */
+  get: async (id: string): Promise<ApiResponse<SalesForecast>> => {
+    return apiClient.crm.get(`/api/v1/sales-forecast/${id}`);
+  },
+
+  /**
+   * 创建销售预测
+   */
+  create: async (
+    data: CreateSalesForecastRequest,
+  ): Promise<ApiResponse<SalesForecast>> => {
+    return apiClient.crm.post("/api/v1/sales-forecast", data);
+  },
+
+  /**
+   * 更新销售预测
+   */
+  update: async (
+    id: string,
+    data: Partial<SalesForecast>,
+  ): Promise<ApiResponse<SalesForecast>> => {
+    return apiClient.crm.put(`/api/v1/sales-forecast/${id}`, data);
+  },
+
+  /**
+   * 删除销售预测
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/v1/sales-forecast/${id}`);
+  },
+
+  /**
+   * 生成预测
+   */
+  generate: async (
+    data: CreateSalesForecastRequest,
+  ): Promise<ApiResponse<SalesForecast>> => {
+    return apiClient.crm.post("/api/v1/sales-forecast/generate", data);
+  },
+};
+
+// ==================== Billing API ====================
+
+export interface BillingRecord {
+  id: string;
+  customer_id: string;
+  customer_name: string;
+  invoice_no: string;
+  amount: number;
+  currency: string;
+  status: "pending" | "paid" | "overdue" | "cancelled";
+  due_date: string;
+  paid_at?: string;
+  items: BillingItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BillingItem {
+  id?: string;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+}
+
+export interface CreateBillingRequest {
+  customer_id: string;
+  invoice_no?: string;
+  amount: number;
+  currency?: string;
+  due_date: string;
+  items: BillingItem[];
+}
+
+export interface BillingQueryParams extends PaginationParams {
+  customer_id?: string;
+  status?: string;
+}
+
+const billingApi = {
+  /**
+   * 获取账单列表
+   */
+  list: async (
+    params?: BillingQueryParams,
+  ): Promise<ApiResponse<PaginatedResponse<BillingRecord>>> => {
+    return apiClient.crm.get("/api/v1/billing", { params });
+  },
+
+  /**
+   * 获取账单详情
+   */
+  get: async (id: string): Promise<ApiResponse<BillingRecord>> => {
+    return apiClient.crm.get(`/api/v1/billing/${id}`);
+  },
+
+  /**
+   * 创建账单
+   */
+  create: async (
+    data: CreateBillingRequest,
+  ): Promise<ApiResponse<BillingRecord>> => {
+    return apiClient.crm.post("/api/v1/billing", data);
+  },
+
+  /**
+   * 更新账单
+   */
+  update: async (
+    id: string,
+    data: Partial<BillingRecord>,
+  ): Promise<ApiResponse<BillingRecord>> => {
+    return apiClient.crm.put(`/api/v1/billing/${id}`, data);
+  },
+
+  /**
+   * 删除账单
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/v1/billing/${id}`);
+  },
+
+  /**
+   * 标记账单已支付
+   */
+  markPaid: async (id: string): Promise<ApiResponse<BillingRecord>> => {
+    return apiClient.crm.post(`/api/v1/billing/${id}/paid`);
+  },
+
+  /**
+   * 发送账单通知
+   */
+  sendNotification: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.post(`/api/v1/billing/${id}/notify`);
+  },
+};
+
 // ==================== CRM API Export ====================
 
 /**
@@ -398,6 +670,9 @@ export const crmApi = {
   contacts: contactApi,
   opportunities: opportunityApi,
   interactions: interactionApi,
+  customerScoring: customerScoringApi,
+  salesForecast: salesForecastApi,
+  billing: billingApi,
 
   /**
    * 健康检查
@@ -408,4 +683,12 @@ export const crmApi = {
 };
 
 // 导出独立的 API 对象供直接使用
-export { customerApi, contactApi, opportunityApi, interactionApi };
+export {
+  customerApi,
+  contactApi,
+  opportunityApi,
+  interactionApi,
+  customerScoringApi,
+  salesForecastApi,
+  billingApi,
+};

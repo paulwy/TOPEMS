@@ -48,12 +48,22 @@ export const DropdownProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const NavDropdown: React.FC = () => {
+interface NavDropdownProps {
+  anchorEl: HTMLElement | null;
+  openMenu: NavItem | null;
+  setAnchorEl: (el: HTMLElement | null) => void;
+  setOpenMenu: (menu: NavItem | null) => void;
+}
+
+export const NavDropdown: React.FC<NavDropdownProps> = ({
+  anchorEl,
+  openMenu,
+  setAnchorEl,
+  setOpenMenu,
+}) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
-  const { anchorEl, openMenu, setAnchorEl, setOpenMenu } = useDropdown();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

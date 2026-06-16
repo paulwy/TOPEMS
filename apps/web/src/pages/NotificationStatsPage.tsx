@@ -98,49 +98,53 @@ const NotificationStatsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 mx-auto animate-spin" />
-          <p className="mt-2 text-gray-500">加载中...</p>
-        </div>
+      <div style={{ minHeight: "100vh", backgroundColor: "#f9fafb", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <Loader2 sx={{ width: 48, height: 48, color: "#2563eb", margin: "0 auto", animation: "spin 1s linear infinite" }} />
+        <p style={{ marginTop: 8, color: "#6b7280" }}>加载中...</p>
       </div>
+    </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: "100vh", backgroundColor: "#f9fafb" }}>
       <NotificationContainer
         notifications={notifications}
         onClose={hideNotification}
       />
 
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+      <div style={{ backgroundColor: "#ffffff", boxShadow: "sm", borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <button
                 onClick={() => navigate("/notifications")}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                style={{ padding: 8, borderRadius: 8, transition: "all 0.2s" }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#f3f4f6"}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = "transparent"}
               >
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
+                <ChevronLeft sx={{ width: 20, height: 20, color: "#4b5563" }} />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                  <BarChart3 className="w-7 h-7 mr-3 text-blue-600" />
+                <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827", display: "flex", alignItems: "center" }}>
+                  <BarChart3 sx={{ width: 28, height: 28, marginRight: 12, color: "#2563eb" }} />
                   通知统计
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p style={{ marginTop: 4, fontSize: "0.875rem", color: "#6b7280" }}>
                   查看通知数据的统计分析
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <button
                 onClick={loadData}
-                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                style={{ display: "flex", alignItems: "center", padding: "8px 16px", color: "#374151", backgroundColor: "#f3f4f6", borderRadius: 8, transition: "all 0.2s" }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#e5e7eb"}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#f3f4f6"}
               >
-                <RefreshCw className="w-5 h-5 mr-2" />
+                <RefreshCw sx={{ width: 20, height: 20, marginRight: 8 }} />
                 刷新
               </button>
             </div>
@@ -148,25 +152,27 @@ const NotificationStatsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "24px" }}>
         {/* Service Status */}
         {serviceStatus && (
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
+          <div style={{ backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "sm", padding: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center" }}>
                 <div
-                  className={`w-3 h-3 rounded-full mr-3 ${
-                    serviceStatus.status === "healthy"
-                      ? "bg-green-500"
-                      : "bg-red-500"
-                  }`}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    marginRight: 12,
+                    backgroundColor: serviceStatus.status === "healthy" ? "#22c55e" : "#ef4444"
+                  }}
                 />
-                <span className="text-sm font-medium text-gray-900">
+                <span style={{ fontSize: "0.875rem", fontWeight: 500, color: "#111827" }}>
                   通知服务状态：
                   {serviceStatus.status === "healthy" ? "健康" : "异常"}
                 </span>
               </div>
-              <div className="flex items-center space-x-6 text-sm text-gray-500">
+              <div style={{ display: "flex", alignItems: "center", gap: 24, fontSize: "0.875rem", color: "#6b7280" }}>
                 <span>运行时长：{serviceStatus.uptime}</span>
                 {serviceStatus.dependencies.map((dep, idx) => (
                   <span key={idx}>
@@ -180,45 +186,45 @@ const NotificationStatsPage: React.FC = () => {
 
         {/* Summary Metrics */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
             <MetricCard
               title="总通知数"
               value={stats.total_notifications}
-              icon={<Bell className="w-6 h-6" />}
+              icon={<Bell sx={{ width: 24, height: 24 }} />}
               color="blue"
             />
             <MetricCard
               title="未读通知"
               value={stats.unread_notifications}
-              icon={<Bell className="w-6 h-6" />}
+              icon={<Bell sx={{ width: 24, height: 24 }} />}
               color="red"
             />
             <MetricCard
               title="已读通知"
               value={stats.read_notifications}
-              icon={<CheckCircle className="w-6 h-6" />}
+              icon={<CheckCircle sx={{ width: 24, height: 24 }} />}
               color="green"
             />
             <MetricCard
               title="归档通知"
               value={stats.archived_notifications}
-              icon={<Archive className="w-6 h-6" />}
+              icon={<Archive sx={{ width: 24, height: 24 }} />}
               color="orange"
             />
           </div>
         )}
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
           {/* Notification by Type */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center mb-4">
-              <TrendingUp className="w-5 h-5 text-blue-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">
+          <div style={{ backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "sm", padding: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+              <TrendingUp sx={{ width: 20, height: 20, color: "#2563eb", marginRight: 8 }} />
+              <h3 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#111827" }}>
                 通知类型分布
               </h3>
             </div>
-            <div className="h-64">
+            <div style={{ height: 256 }}>
               <StatsChart
                 type="bar"
                 title="通知类型分布"
@@ -231,12 +237,12 @@ const NotificationStatsPage: React.FC = () => {
           </div>
 
           {/* Daily Trend */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center mb-4">
-              <Calendar className="w-5 h-5 text-blue-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">近7天趋势</h3>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "sm", padding: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
+              <Calendar sx={{ width: 20, height: 20, color: "#2563eb", marginRight: 8 }} />
+              <h3 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#111827" }}>近7天趋势</h3>
             </div>
-            <div className="h-64">
+            <div style={{ height: 256 }}>
               <StatsChart
                 type="line"
                 title="近7天趋势"
@@ -250,32 +256,32 @@ const NotificationStatsPage: React.FC = () => {
         </div>
 
         {/* Detailed Breakdown */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">详细数据</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        <div style={{ backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "sm", padding: 24 }}>
+          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#111827", marginBottom: 16 }}>详细数据</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
+              <thead style={{ backgroundColor: "#f9fafb" }}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ padding: "12px 24px", textAlign: "left", fontSize: 12, fontWeight: 500, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     指标
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ padding: "12px 24px", textAlign: "left", fontSize: 12, fontWeight: 500, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     数量
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ padding: "12px 24px", textAlign: "left", fontSize: 12, fontWeight: 500, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     占比
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody style={{ backgroundColor: "#ffffff" }}>
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#111827" }}>
                     系统通知
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats?.notifications_by_type?.system || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats && stats.total_notifications > 0
                       ? (
                           ((stats.notifications_by_type?.system || 0) /
@@ -287,13 +293,13 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#111827" }}>
                     审批通知
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats?.notifications_by_type?.workflow || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats && stats.total_notifications > 0
                       ? (
                           ((stats.notifications_by_type?.workflow || 0) /
@@ -305,13 +311,13 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#111827" }}>
                     提醒通知
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats?.notifications_by_type?.reminder || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats && stats.total_notifications > 0
                       ? (
                           ((stats.notifications_by_type?.reminder || 0) /
@@ -323,13 +329,13 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#111827" }}>
                     告警通知
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats?.notifications_by_type?.alert || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats && stats.total_notifications > 0
                       ? (
                           ((stats.notifications_by_type?.alert || 0) /
@@ -341,13 +347,13 @@ const NotificationStatsPage: React.FC = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#111827" }}>
                     消息通知
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats?.notifications_by_type?.message || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td style={{ padding: "16px 24px", whiteSpace: "nowrap", fontSize: 14, color: "#374151" }}>
                     {stats && stats.total_notifications > 0
                       ? (
                           ((stats.notifications_by_type?.message || 0) /
@@ -362,7 +368,7 @@ const NotificationStatsPage: React.FC = () => {
             </table>
           </div>
 
-          <div className="mt-4 text-xs text-gray-500 text-right">
+          <div style={{ marginTop: 16, fontSize: 12, color: "#6b7280", textAlign: "right" }}>
             数据更新时间：
             {stats?.generated_at
               ? new Date(stats.generated_at).toLocaleString("zh-CN")

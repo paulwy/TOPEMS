@@ -1,20 +1,56 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
 import type { RouteConfig } from "./utils";
 import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const Rspage = lazy(() => import("../pages/Rspage"));
-const Limspage = lazy(() => import("../pages/Limspage"));
-const Qmspage = lazy(() => import("../pages/Qmspage"));
-const Ehspage = lazy(() => import("../pages/Ehspage"));
-const Srmpage = lazy(() => import("../pages/Srmpage"));
+
+const LimsSamplePage = lazy(() => import("../pages/LimsSamplePage"));
+const LimsProcessPage = lazy(() => import("../pages/LimsProcessPage"));
+const LimsTaskPage = lazy(() => import("../pages/LimsTaskPage"));
+const LimsInstrumentPage = lazy(() => import("../pages/LimsInstrumentPage"));
+const QmsStandardPage = lazy(() => import("../pages/qms/QmsQualityControlPage"));
+const QmsCheckPage = lazy(() => import("../pages/qms/QmsInspectionPage"));
+const QmsIssuePage = lazy(() => import("../pages/qms/QmsNonconformancePage"));
+const QmsAuditPage = lazy(() => import("../pages/qms/QmsAuditManagementPage"));
+const EhsHazardPage = lazy(() => import("../pages/ehs/EhsHazardPage"));
+const EhsCheckPage = lazy(() => import("../pages/ehs/EhsCheckPage"));
+const EhsPlanPage = lazy(() => import("../pages/ehs/EhsPlanPage"));
+const EhsDrillPage = lazy(() => import("../pages/ehs/EhsDrillPage"));
+const SrmDashboardPage = lazy(() => import("../pages/srm/SrmDashboardPage"));
+const SrmSupplierPage = lazy(() => import("../pages/srm/SrmSupplierPage"));
+const SrmEvaluationPage = lazy(() => import("../pages/srm/SrmEvaluationPage"));
+const SrmOrderPage = lazy(() => import("../pages/srm/SrmOrderPage"));
+const SrmContractPage = lazy(() => import("../pages/srm/SrmContractPage"));
+const SrmFinancePage = lazy(() => import("../pages/srm/SrmFinancePage"));
 const SupplierDetailPage = lazy(() => import("../pages/SupplierDetailPage"));
-const Pdmpage = lazy(() => import("../pages/Pdmpage"));
+const PdmProcessPage = lazy(() => import("../pages/pdm/PdmProcessPage"));
+const PdmStepPage = lazy(() => import("../pages/pdm/PdmStepPage"));
+const PdmFormulaPage = lazy(() => import("../pages/pdm/PdmFormulaPage"));
+const PdmBatchPage = lazy(() => import("../pages/pdm/PdmBatchPage"));
+const PdmStatsPage = lazy(() => import("../pages/pdm/PdmStatsPage"));
 const Gispage = lazy(() => import("../pages/Gispage"));
 const Impage = lazy(() => import("../pages/Impage"));
 const MailPage = lazy(() => import("../pages/MailPage"));
-const IntegrationPage = lazy(() => import("../pages/IntegrationPage"));
+const IntegrationDashboardPage = lazy(
+  () => import("../pages/IntegrationDashboardPage"),
+);
+const IntegrationLimsQmsPage = lazy(
+  () => import("../pages/IntegrationLimsQmsPage"),
+);
+const IntegrationMesErpPage = lazy(
+  () => import("../pages/IntegrationMesErpPage"),
+);
+const IntegrationWmsScmPage = lazy(
+  () => import("../pages/IntegrationWmsScmPage"),
+);
+const IntegrationEventsPage = lazy(
+  () => import("../pages/IntegrationEventsPage"),
+);
+const IntegrationExternalErpOverviewPage = lazy(
+  () => import("../pages/IntegrationExternalErpOverviewPage"),
+);
 const MobileWorkstationPage = lazy(
   () => import("../pages/MobileWorkstationPage"),
 );
@@ -54,15 +90,36 @@ const EhsIncidentReportPage = lazy(
 
 export const professionalRoutes: RouteConfig[] = [
   {
-    path: "/rs",
-    element: Rspage,
+    path: "/lims",
+    element: React.createElement(Navigate, { to: "/lims/samples", replace: true }),
     requiredPermissions: [],
-    module: "rs",
+    module: "lims",
     action: "read",
   },
   {
-    path: "/lims",
-    element: Limspage,
+    path: "/lims/samples",
+    element: LimsSamplePage,
+    requiredPermissions: [],
+    module: "lims",
+    action: "read",
+  },
+  {
+    path: "/lims/processes",
+    element: LimsProcessPage,
+    requiredPermissions: [],
+    module: "lims",
+    action: "read",
+  },
+  {
+    path: "/lims/tasks",
+    element: LimsTaskPage,
+    requiredPermissions: [],
+    module: "lims",
+    action: "read",
+  },
+  {
+    path: "/lims/instruments",
+    element: LimsInstrumentPage,
     requiredPermissions: [],
     module: "lims",
     action: "read",
@@ -90,7 +147,35 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/qms",
-    element: Qmspage,
+    element: React.createElement(Navigate, { to: "/qms/standards", replace: true }),
+    requiredPermissions: ["qms:read"],
+    module: "qms",
+    action: "read",
+  },
+  {
+    path: "/qms/standards",
+    element: QmsStandardPage,
+    requiredPermissions: ["qms:read"],
+    module: "qms",
+    action: "read",
+  },
+  {
+    path: "/qms/checks",
+    element: QmsCheckPage,
+    requiredPermissions: ["qms:read"],
+    module: "qms",
+    action: "read",
+  },
+  {
+    path: "/qms/issues",
+    element: QmsIssuePage,
+    requiredPermissions: ["qms:read"],
+    module: "qms",
+    action: "read",
+  },
+  {
+    path: "/qms/improvements",
+    element: QmsAuditPage,
     requiredPermissions: ["qms:read"],
     module: "qms",
     action: "read",
@@ -111,7 +196,35 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/ehs",
-    element: Ehspage,
+    element: React.createElement(Navigate, { to: "/ehs/hazards", replace: true }),
+    requiredPermissions: ["ehs:read"],
+    module: "ehs",
+    action: "read",
+  },
+  {
+    path: "/ehs/hazards",
+    element: EhsHazardPage,
+    requiredPermissions: ["ehs:read"],
+    module: "ehs",
+    action: "read",
+  },
+  {
+    path: "/ehs/checks",
+    element: EhsCheckPage,
+    requiredPermissions: ["ehs:read"],
+    module: "ehs",
+    action: "read",
+  },
+  {
+    path: "/ehs/plans",
+    element: EhsPlanPage,
+    requiredPermissions: ["ehs:read"],
+    module: "ehs",
+    action: "read",
+  },
+  {
+    path: "/ehs/drills",
+    element: EhsDrillPage,
     requiredPermissions: ["ehs:read"],
     module: "ehs",
     action: "read",
@@ -132,7 +245,21 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/srm",
-    element: Srmpage,
+    element: React.createElement(Navigate, { to: "/srm/dashboard", replace: true }),
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  {
+    path: "/srm/dashboard",
+    element: SrmDashboardPage,
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  {
+    path: "/srm/suppliers",
+    element: SrmSupplierPage,
     requiredPermissions: ["srm:read"],
     module: "srm",
     action: "read",
@@ -145,8 +272,71 @@ export const professionalRoutes: RouteConfig[] = [
     action: "read",
   },
   {
+    path: "/srm/evaluations",
+    element: SrmEvaluationPage,
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  {
+    path: "/srm/orders",
+    element: SrmOrderPage,
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  {
+    path: "/srm/contracts",
+    element: SrmContractPage,
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  {
+    path: "/srm/finance",
+    element: SrmFinancePage,
+    requiredPermissions: ["srm:read"],
+    module: "srm",
+    action: "read",
+  },
+  {
     path: "/pdm",
-    element: Pdmpage,
+    element: React.createElement(Navigate, { to: "/pdm/processes", replace: true }),
+    requiredPermissions: ["pdm:read"],
+    module: "pdm",
+    action: "read",
+  },
+  {
+    path: "/pdm/processes",
+    element: PdmProcessPage,
+    requiredPermissions: ["pdm:read"],
+    module: "pdm",
+    action: "read",
+  },
+  {
+    path: "/pdm/steps",
+    element: PdmStepPage,
+    requiredPermissions: ["pdm:read"],
+    module: "pdm",
+    action: "read",
+  },
+  {
+    path: "/pdm/formulas",
+    element: PdmFormulaPage,
+    requiredPermissions: ["pdm:read"],
+    module: "pdm",
+    action: "read",
+  },
+  {
+    path: "/pdm/batches",
+    element: PdmBatchPage,
+    requiredPermissions: ["pdm:read"],
+    module: "pdm",
+    action: "read",
+  },
+  {
+    path: "/pdm/stats",
+    element: PdmStatsPage,
     requiredPermissions: ["pdm:read"],
     module: "pdm",
     action: "read",
@@ -188,7 +378,49 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/integration",
-    element: IntegrationPage,
+    element: React.createElement(Navigate, { to: "/integration/dashboard", replace: true }),
+    requiredPermissions: [],
+    module: "integration",
+    action: "read",
+  },
+  {
+    path: "/integration/dashboard",
+    element: IntegrationDashboardPage,
+    requiredPermissions: [],
+    module: "integration",
+    action: "read",
+  },
+  {
+    path: "/integration/lims-qms",
+    element: IntegrationLimsQmsPage,
+    requiredPermissions: [],
+    module: "integration",
+    action: "read",
+  },
+  {
+    path: "/integration/mes-erp",
+    element: IntegrationMesErpPage,
+    requiredPermissions: [],
+    module: "integration",
+    action: "read",
+  },
+  {
+    path: "/integration/wms-scm",
+    element: IntegrationWmsScmPage,
+    requiredPermissions: [],
+    module: "integration",
+    action: "read",
+  },
+  {
+    path: "/integration/events",
+    element: IntegrationEventsPage,
+    requiredPermissions: [],
+    module: "integration",
+    action: "read",
+  },
+  {
+    path: "/integration/external-erp-overview",
+    element: IntegrationExternalErpOverviewPage,
     requiredPermissions: [],
     module: "integration",
     action: "read",

@@ -15,14 +15,7 @@ import {
   ClickAwayListener,
 } from "@mui/material";
 import { styled, alpha, useTheme } from "@mui/material/styles";
-import {
-  Search,
-  Clock,
-  X,
-  ArrowRight,
-  TrendingUp,
-  Star,
-} from "lucide-react";
+import { Search, Clock, X, ArrowRight, TrendingUp, Star } from "lucide-react";
 
 /**
  * 搜索建议项
@@ -44,6 +37,8 @@ export interface SearchHistoryItem {
   text: string;
   /** 时间戳 */
   timestamp: number;
+  /** 点击回调 */
+  onClick?: () => void;
 }
 
 /**
@@ -131,7 +126,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
         // 忽略错误
       }
     },
-    [history, maxHistoryCount]
+    [history, maxHistoryCount],
   );
 
   // 处理键盘快捷键
@@ -160,15 +155,16 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
 
   // 过滤建议和历史
   const filteredSuggestions = suggestions.filter((s) =>
-    s.text.toLowerCase().includes(query.toLowerCase())
+    s.text.toLowerCase().includes(query.toLowerCase()),
   );
 
   const filteredHistory = history.filter((h) =>
-    h.text.toLowerCase().includes(query.toLowerCase())
+    h.text.toLowerCase().includes(query.toLowerCase()),
   );
 
   const showHistory = query.length === 0 && history.length > 0;
-  const showFilteredSuggestions = query.length > 0 && filteredSuggestions.length > 0;
+  const showFilteredSuggestions =
+    query.length > 0 && filteredSuggestions.length > 0;
   const showFilteredHistory = query.length > 0 && filteredHistory.length > 0;
 
   // 处理输入变化
@@ -211,7 +207,9 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
   };
 
   // 根据索引获取项目
-  const getItemAtIndex = (index: number): SearchSuggestion | SearchHistoryItem | null => {
+  const getItemAtIndex = (
+    index: number,
+  ): SearchSuggestion | SearchHistoryItem | null => {
     let currentIndex = 0;
 
     if (showFilteredSuggestions) {
@@ -276,7 +274,10 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
     }
   };
 
-  const isOpen = open && showSuggestions && (showHistory || showFilteredSuggestions || showFilteredHistory);
+  const isOpen =
+    open &&
+    showSuggestions &&
+    (showHistory || showFilteredSuggestions || showFilteredHistory);
 
   return (
     <ClickAwayListener onClickAway={() => setOpen(false)}>
@@ -310,14 +311,24 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 setQuery("");
                 inputRef.current?.focus();
               }}
-              sx={{ mr: 0.5 }}
+              sx={{ marginRight: 0.5 }}
             >
               <X size={16} />
             </IconButton>
           )}
           {enableShortcut && !query && (
             <ShortcutHint>
-              <Box component="span" sx={{ fontSize: 14, fontWeight: "bold", fontFamily: "monospace" }}>⌘</Box>{shortcutKey.toUpperCase()}
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 14,
+                  fontWeight: "bold",
+                  fontFamily: "monospace",
+                }}
+              >
+                ⌘
+              </Box>
+              {shortcutKey.toUpperCase()}
             </ShortcutHint>
           )}
         </SearchWrapper>
@@ -361,26 +372,35 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
               </>
             )}
 
-            {showHistory && (showFilteredSuggestions || showFilteredHistory) && (
-              <Divider />
-            )}
+            {showHistory &&
+              (showFilteredSuggestions || showFilteredHistory) && <Divider />}
 
             {showFilteredSuggestions && (
               <>
                 <SectionTitle>建议</SectionTitle>
                 <List disablePadding>
                   {filteredSuggestions.map((suggestion, index) => {
-                    const itemIndex = showHistory ? history.length + index : index;
+                    const itemIndex = showHistory
+                      ? history.length + index
+                      : index;
                     return (
                       <SuggestionItem
                         key={suggestion.text}
-                        onClick={() => handleItemClick(suggestion.text, suggestion.onClick)}
+                        onClick={() =>
+                          handleItemClick(suggestion.text, suggestion.onClick)
+                        }
                         isHighlighted={highlightedIndex === itemIndex}
                       >
                         <ListItemIcon sx={{ minWidth: 36 }}>
                           {getIcon(suggestion.icon)}
                         </ListItemIcon>
-                        <Typography variant="body1" sx={{ fontWeight: highlightedIndex === itemIndex ? 600 : 400 }}>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontWeight:
+                              highlightedIndex === itemIndex ? 600 : 400,
+                          }}
+                        >
                           {suggestion.text}
                         </Typography>
                         <ArrowRight size={16} />
@@ -396,7 +416,9 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 <SectionTitle>历史记录</SectionTitle>
                 <List disablePadding>
                   {filteredHistory.map((item, index) => {
-                    const itemIndex = showHistory ? history.length + index : index;
+                    const itemIndex = showHistory
+                      ? history.length + index
+                      : index;
                     return (
                       <SuggestionItem
                         key={item.text}
@@ -449,13 +471,19 @@ const SearchWrapper = styled("div", {
 })<{ isFocused?: boolean }>(({ theme, isFocused }) => ({
   display: "flex",
   alignItems: "center",
-  backgroundColor: theme.palette.mode === "dark" ? alpha(theme.palette.common.white, 0.05) : theme.palette.grey[100],
+  backgroundColor:
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.05)
+      : theme.palette.grey[100],
   borderRadius: theme.shape.borderRadius,
   border: `1px solid ${isFocused ? theme.palette.primary.main : "transparent"}`,
   padding: "4px 12px",
   transition: "all 0.2s",
   "&:hover": {
-    backgroundColor: theme.palette.mode === "dark" ? alpha(theme.palette.common.white, 0.08) : theme.palette.grey[200],
+    backgroundColor:
+      theme.palette.mode === "dark"
+        ? alpha(theme.palette.common.white, 0.08)
+        : theme.palette.grey[200],
   },
 }));
 
@@ -481,7 +509,10 @@ const ShortcutHint = styled("div")(({ theme }) => ({
   alignItems: "center",
   gap: 2,
   padding: "2px 6px",
-  backgroundColor: theme.palette.mode === "dark" ? alpha(theme.palette.common.white, 0.1) : theme.palette.grey[200],
+  backgroundColor:
+    theme.palette.mode === "dark"
+      ? alpha(theme.palette.common.white, 0.1)
+      : theme.palette.grey[200],
   borderRadius: 4,
   fontSize: "0.75rem",
   color: theme.palette.text.secondary,
@@ -526,9 +557,10 @@ const SuggestionItem = styled(ListItem, {
       : theme.palette.primary.light + "40"
     : "transparent",
   "&:hover": {
-    backgroundColor: theme.palette.mode === "dark"
-      ? alpha(theme.palette.primary.main, 0.1)
-      : theme.palette.primary.light + "20",
+    backgroundColor:
+      theme.palette.mode === "dark"
+        ? alpha(theme.palette.primary.main, 0.1)
+        : theme.palette.primary.light + "20",
   },
   "& .MuiListItemIcon-root": {
     color: theme.palette.text.secondary,

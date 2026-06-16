@@ -8,6 +8,12 @@ const AssetManagementPage = lazy(() => import("../pages/AssetManagementPage"));
 const EquipmentManagementPage = lazy(
   () => import("../pages/EquipmentManagementPage"),
 );
+const EquipmentInspectionPage = lazy(
+  () => import("../pages/EquipmentInspectionPage"),
+);
+const EquipmentMaintenancePage = lazy(
+  () => import("../pages/EquipmentMaintenancePage"),
+);
 const FinanceExpensePage = lazy(() => import("../pages/FinanceExpensePage"));
 const FinanceVoucherPage = lazy(() => import("../pages/FinanceVoucherPage"));
 const FinanceReceivablePayablePage = lazy(
@@ -66,6 +72,20 @@ export const erpRoutes: RouteConfig[] = [
   {
     path: "/equipment",
     element: EquipmentManagementPage,
+    requiredPermissions: ["erp:admin"],
+    module: "erp",
+    action: "admin",
+  },
+  {
+    path: "/equipment/inspections",
+    element: EquipmentInspectionPage,
+    requiredPermissions: ["erp:admin"],
+    module: "erp",
+    action: "admin",
+  },
+  {
+    path: "/equipment/maintenances",
+    element: EquipmentMaintenancePage,
     requiredPermissions: ["erp:admin"],
     module: "erp",
     action: "admin",

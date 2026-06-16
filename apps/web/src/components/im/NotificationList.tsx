@@ -84,29 +84,29 @@ export const NotificationList: React.FC<NotificationListProps> = ({
     switch (type.toLowerCase()) {
       case "chat":
       case "message":
-        return <Bell className="w-5 h-5 text-blue-500" />;
+        return <Bell sx={{ width: 20, height: 20, color: "#3b82f6" }} />;
       case "warning":
-        return <Bell className="w-5 h-5 text-yellow-500" />;
+        return <Bell sx={{ width: 20, height: 20, color: "#eab308" }} />;
       case "error":
-        return <Bell className="w-5 h-5 text-red-500" />;
+        return <Bell sx={{ width: 20, height: 20, color: "#ef4444" }} />;
       case "success":
-        return <Bell className="w-5 h-5 text-green-500" />;
+        return <Bell sx={{ width: 20, height: 20, color: "#22c55e" }} />;
       default:
-        return <Bell className="w-5 h-5 text-gray-500" />;
+        return <Bell sx={{ width: 20, height: 20, color: "#6b7280" }} />;
     }
   };
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Bell className="w-5 h-5" />
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ padding: 16, borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+            <Bell sx={{ width: 20, height: 20 }} />
             通知
             {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+              <span style={{ backgroundColor: "#ef4444", color: "#ffffff", fontSize: 12, padding: "2px 8px", borderRadius: 9999 }}>
                 {unreadCount}
               </span>
             )}
@@ -118,42 +118,46 @@ export const NotificationList: React.FC<NotificationListProps> = ({
               onClick={handleMarkAllAsRead}
               sx={{ fontSize: 14 }}
             >
-              <CheckCheck className="w-4 h-4 mr-1" />
+              <CheckCheck sx={{ width: 16, height: 16, mr: 1 }} />
               全部已读
             </Button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div style={{ flex: 1, overflowY: "auto" }}>
         {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 32 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "9999px", border: "4px solid #6366f1", borderTopColor: "transparent", animation: "spin 1s linear infinite" }} />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <div style={{ textAlign: "center", padding: 48, color: "#6b7280" }}>
+            <Bell sx={{ width: 48, height: 48, mx: "auto", mb: 3, color: "#d1d5db" }} />
             <p>暂无通知</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div style={{ borderTop: "1px solid #f3f4f6" }}>
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 transition-colors ${!notification.is_read ? "bg-blue-50" : ""}`}
+                style={{
+                  padding: 16,
+                  transition: "background-color 0.15s",
+                  backgroundColor: !notification.is_read ? "#eff6ff" : undefined,
+                }}
               >
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 mt-1">
+                <div style={{ display: "flex", gap: 12 }}>
+                  <div style={{ flexShrink: 0, marginTop: 4 }}>
                     {getNotificationIcon(notification.notification_type)}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-medium text-gray-900">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                      <h3 style={{ fontWeight: 500, color: "#111827" }}>
                         {notification.title}
                       </h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
+                          <Clock sx={{ width: 12, height: 12 }} />
                           {formatTime(notification.created_at)}
                         </span>
                         {!notification.is_read && (
@@ -163,12 +167,12 @@ export const NotificationList: React.FC<NotificationListProps> = ({
                             sx={{ minWidth: 24, width: 24, height: 24, p: 0 }}
                             onClick={() => handleMarkAsRead(notification.id)}
                           >
-                            <Check className="w-3 h-3" />
+                            <Check sx={{ width: 12, height: 12 }} />
                           </Button>
                         )}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p style={{ fontSize: 14, color: "#4b5563", marginTop: 4 }}>
                       {notification.content}
                     </p>
                   </div>

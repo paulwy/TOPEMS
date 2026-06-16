@@ -425,6 +425,30 @@ const HrmRecruitmentPage: React.FC = () => {
                 />
               </Box>
               <Box>
+                {/* 面包屑导航 */}
+                <Box sx={{ mb: 1 }}>
+                  <Typography
+                    component="a"
+                    href="/hrm"
+                    sx={{
+                      color: "text.secondary",
+                      textDecoration: "none",
+                      fontSize: "0.875rem",
+                      "&:hover": { color: "primary.main", textDecoration: "underline" },
+                    }}
+                  >
+                    人力资源
+                  </Typography>
+                  <Typography component="span" sx={{ mx: 1, color: "text.disabled" }}>
+                    /
+                  </Typography>
+                  <Typography
+                    component="span"
+                    sx={{ color: "text.primary", fontSize: "0.875rem" }}
+                  >
+                    招聘管理
+                  </Typography>
+                </Box>
                 <Typography
                   variant="h5"
                   sx={{

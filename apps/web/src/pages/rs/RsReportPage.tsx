@@ -13,7 +13,7 @@ import {
 import {
   BarChart3 as AnalyticsIcon,
   TrendingUp as TrendingUpIcon,
-  Flask as ScienceIcon,
+  FlaskConical as ScienceIcon,
   Folder as FolderIcon,
 } from "lucide-react";
 

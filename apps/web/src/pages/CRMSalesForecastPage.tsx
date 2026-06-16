@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import type { SalesForecast, ForecastFactor } from "@/api/crm";
 import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -18,6 +19,8 @@ import {
   Calendar,
   Calculator,
   BarChart3,
+  RefreshCw,
+  Plus,
 } from "lucide-react";
 import {
   LineChart,
@@ -33,175 +36,23 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import dayjs from "dayjs";
 
 const CRMSalesForecastPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [forecastMonths, setForecastMonths] = useState(6);
-  const [historicalData, setHistoricalData] = useState<
-    { month: string; actual: number; target: number }[]
-  >([]);
-  const [forecastData, setForecastData] = useState<
-    { month: string; forecast: number; upper: number; lower: number }[]
-  >([]);
-  const [summary, setSummary] = useState({
-    totalRevenue: 0,
-    averageMonthly: 0,
-    growthRate: 0,
-    forecastTotal: 0,
-  });
+  const [forecasts, setForecasts] = useState<SalesForecast[]>([]);
+  const [periodType, setPeriodType] = useState<"monthly" | "quarterly" | "yearly">("monthly");
 
   const { addNotification } = useAppStore();
 
   useEffect(() => {
-    loadForecastData();
-  }, [forecastMonths]);
+    loadForecasts();
+  }, [periodType]);
 
-  const calculateForecast = (
-    data: { month: string; actual: number; target: number }[],
-  ) => {
-    const values = data.map((d) => d.actual);
-    const n = values.length;
-
-    if (n < 3) {
-      return data.slice(-forecastMonths).map((d) => ({
-        month: d.month,
-        forecast: d.actual,
-        upper: d.actual * 1.1,
-        lower: d.actual * 0.9,
-      }));
-    }
-
-    let sumX = 0,
-      sumY = 0,
-      sumXY = 0,
-      sumXX = 0;
-    for (let i = 0; i < n; i++) {
-      sumX += i;
-      sumY += values[i];
-      sumXY += i * values[i];
-      sumXX += i * i;
-    }
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    const months = [
-      "1月",
-      "2月",
-      "3月",
-      "4月",
-      "5月",
-      "6月",
-      "7月",
-      "8月",
-      "9月",
-      "10月",
-      "11月",
-      "12月",
-    ];
-    const currentMonth = new Date().getMonth();
-
-    const forecast: {
-      month: string;
-      forecast: number;
-      upper: number;
-      lower: number;
-    }[] = [];
-    for (let i = 0; i < forecastMonths; i++) {
-      const monthIndex = (currentMonth + 1 + i) % 12;
-      const forecastValue = Math.max(0, slope * (n + i) + intercept);
-      const variance =
-        values.reduce(
-          (acc, val, idx) => acc + Math.pow(val - (slope * idx + intercept), 2),
-          0,
-        ) /
-        (n - 2);
-      const stdDev = Math.sqrt(variance);
-
-      forecast.push({
-        month: months[monthIndex],
-        forecast: Math.round(forecastValue),
-        upper: Math.round(forecastValue + 1.96 * stdDev),
-        lower: Math.max(0, Math.round(forecastValue - 1.96 * stdDev)),
-      });
-    }
-
-    return forecast;
-  };
-
-  const loadForecastData = async () => {
+  const loadForecasts = async () => {
     try {
       setLoading(true);
-      const response = await crmApi.opportunities.list({
-        page: 1,
-        pageSize: 1000,
-      });
-      const opportunities = response.data?.items || [];
-
-      const months = [
-        "1月",
-        "2月",
-        "3月",
-        "4月",
-        "5月",
-        "6月",
-        "7月",
-        "8月",
-        "9月",
-        "10月",
-        "11月",
-        "12月",
-      ];
-      const currentMonth = new Date().getMonth();
-
-      const historical: { month: string; actual: number; target: number }[] =
-        [];
-      for (let i = 11; i >= 0; i--) {
-        const monthIndex = (currentMonth - i + 12) % 12;
-        const monthName = months[monthIndex];
-
-        const monthOpportunities = opportunities.filter((o: any) => {
-          const createdMonth = new Date(o.created_at).getMonth();
-          return createdMonth === monthIndex;
-        });
-
-        const actualRevenue = monthOpportunities
-          .filter((o) => o.stage === "closed_won")
-          .reduce((sum, o) => sum + (o.value || 0), 0);
-
-        const targetRevenue =
-          monthOpportunities.reduce((sum, o) => sum + (o.value || 0), 0) * 0.6;
-
-        historical.push({
-          month: monthName,
-          actual: actualRevenue,
-          target: targetRevenue,
-        });
-      }
-
-      setHistoricalData(historical);
-
-      const forecast = calculateForecast(historical);
-      setForecastData(forecast);
-
-      const last6Months = historical.slice(-6);
-      const totalRevenue = last6Months.reduce((sum, d) => sum + d.actual, 0);
-      const averageMonthly = Math.round(totalRevenue / 6);
-      const first3Months = historical.slice(-9, -6);
-      const prevTotal = first3Months.reduce((sum, d) => sum + d.actual, 0);
-      const growthRate =
-        prevTotal > 0
-          ? Math.round(((totalRevenue - prevTotal) / prevTotal) * 100)
-          : 0;
-      const forecastTotal = forecast.reduce((sum, d) => sum + d.forecast, 0);
-
-      setSummary({
-        totalRevenue,
-        averageMonthly,
-        growthRate,
-        forecastTotal,
-      });
+      const response = await crmApi.salesForecast.list({ period_type: periodType });
+      setForecasts(response.data?.items || []);
     } catch (error) {
       console.error("加载销售预测数据失败:", error);
       addNotification({
@@ -212,6 +63,62 @@ const CRMSalesForecastPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerateForecast = async () => {
+    try {
+      const now = new Date();
+      const period = periodType === "monthly" 
+        ? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+        : periodType === "quarterly"
+          ? `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`
+          : `${now.getFullYear()}`;
+
+      setLoading(true);
+      await crmApi.salesForecast.generate({ period_type: periodType, period });
+      addNotification({
+        type: "success",
+        title: "成功",
+        message: "销售预测生成成功",
+      });
+      loadForecasts();
+    } catch (error) {
+      console.error("生成销售预测失败:", error);
+      addNotification({
+        type: "error",
+        title: "生成失败",
+        message: "销售预测生成失败",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case "up":
+        return <TrendingUp sx={{ width: 16, height: 16, color: "success.main" }} />;
+      case "down":
+        return <TrendingUp sx={{ width: 16, height: 16, color: "error.main", transform: "rotate(180deg)" }} />;
+      default:
+        return <Target sx={{ width: 16, height: 16, color: "grey.500" }} />;
+    }
+  };
+
+  const chartData = forecasts.map(f => ({
+    period: f.period,
+    predicted: f.predicted_amount,
+    actual: f.actual_amount || 0,
+    confidence: Math.round(f.confidence_level * 100),
+  }));
+
+  const summary = {
+    totalPredicted: forecasts.reduce((sum, f) => sum + f.predicted_amount, 0),
+    totalActual: forecasts.reduce((sum, f) => sum + (f.actual_amount || 0), 0),
+    averageConfidence: forecasts.length > 0 
+      ? Math.round(forecasts.reduce((sum, f) => sum + f.confidence_level, 0) / forecasts.length * 100)
+      : 0,
+    completedCount: forecasts.filter(f => f.status === 'completed').length,
   };
 
   if (loading) return <LoadingSpinner />;
@@ -247,25 +154,27 @@ const CRMSalesForecastPage: React.FC = () => {
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <span style={{ fontSize: "0.875rem", fontWeight: 500 }}>
-                预测周期:
+                周期类型:
               </span>
-              <FormControl size="small" sx={{ width: 128 }}>
-                <InputLabel>周期</InputLabel>
+              <FormControl size="small" sx={{ width: 140 }}>
+                <InputLabel>周期类型</InputLabel>
                 <Select
-                  value={forecastMonths}
-                  label="周期"
-                  onChange={(e) => setForecastMonths(Number(e.target.value))}
+                  value={periodType}
+                  label="周期类型"
+                  onChange={(e) => setPeriodType(e.target.value as "monthly" | "quarterly" | "yearly")}
                 >
-                  <MenuItem value={3}>3个月</MenuItem>
-                  <MenuItem value={6}>6个月</MenuItem>
-                  <MenuItem value={12}>12个月</MenuItem>
+                  <MenuItem value="monthly">月度</MenuItem>
+                  <MenuItem value="quarterly">季度</MenuItem>
+                  <MenuItem value="yearly">年度</MenuItem>
                 </Select>
               </FormControl>
-              <Button onClick={loadForecastData}>
-                <RefreshIcon sx={{ width: 16, height: 16, mr: 1 }} />
-                刷新预测
+              <Button onClick={loadForecasts} startIcon={<RefreshCw sx={{ width: 16, height: 16 }}>刷新</RefreshCw>}>
+                刷新
               </Button>
             </Box>
+            <Button variant="contained" startIcon={<Plus />} onClick={handleGenerateForecast}>
+              生成预测
+            </Button>
           </Box>
 
           <Box
@@ -302,13 +211,48 @@ const CRMSalesForecastPage: React.FC = () => {
                       fontSize: "0.875rem",
                     }}
                   >
-                    过去6个月收入
+                    预测总收入
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                    ¥{summary.totalRevenue.toLocaleString()}
+                    ¥{summary.totalPredicted.toLocaleString()}
                   </Typography>
                 </Box>
                 <Target
+                  sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.5)" }}
+                />
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                borderRadius: 2,
+                p: 2,
+                color: "white",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "rgba(255,255,255,0.8)",
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    实际总收入
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
+                    ¥{summary.totalActual.toLocaleString()}
+                  </Typography>
+                </Box>
+                <Calculator
                   sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.5)" }}
                 />
               </Box>
@@ -337,53 +281,14 @@ const CRMSalesForecastPage: React.FC = () => {
                       fontSize: "0.875rem",
                     }}
                   >
-                    月均收入
+                    平均置信度
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                    ¥{summary.averageMonthly.toLocaleString()}
+                    {summary.averageConfidence}%
                   </Typography>
                 </Box>
-                <Calculator
+                <BarChart3
                   sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.5)" }}
-                />
-              </Box>
-            </Box>
-
-            <Box
-              sx={{
-                background:
-                  summary.growthRate >= 0
-                    ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                    : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-                borderRadius: 2,
-                p: 2,
-                color: "white",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "rgba(255,255,255,0.8)",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    增长率
-                  </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                    {summary.growthRate >= 0 ? "+" : ""}
-                    {summary.growthRate}%
-                  </Typography>
-                </Box>
-                <TrendingUp
-                  sx={{ width: 32, height: 32, color: "rgba(255,255,255,0.8)" }}
                 />
               </Box>
             </Box>
@@ -411,10 +316,10 @@ const CRMSalesForecastPage: React.FC = () => {
                       fontSize: "0.875rem",
                     }}
                   >
-                    预测总收入
+                    已完成预测
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: "bold", mt: 0.5 }}>
-                    ¥{summary.forecastTotal.toLocaleString()}
+                    {summary.completedCount} / {forecasts.length}
                   </Typography>
                 </Box>
                 <Calendar
@@ -443,10 +348,10 @@ const CRMSalesForecastPage: React.FC = () => {
                   }}
                 >
                   <BarChart3 sx={{ width: 20, height: 20 }} />
-                  历史销售趋势
+                  预测对比
                 </Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  过去12个月的实际收入与目标对比
+                  预测值与实际值对比
                 </Typography>
               </CardHeader>
               <CardContent>
@@ -457,9 +362,9 @@ const CRMSalesForecastPage: React.FC = () => {
                     minWidth={0}
                     minHeight={0}
                   >
-                    <BarChart data={historicalData}>
+                    <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
+                      <XAxis dataKey="period" />
                       <YAxis />
                       <Tooltip
                         formatter={(value: unknown) => [
@@ -468,8 +373,8 @@ const CRMSalesForecastPage: React.FC = () => {
                         ]}
                       />
                       <Legend />
-                      <Bar dataKey="actual" fill="#3b82f6" name="实际收入" />
-                      <Bar dataKey="target" fill="#8b5cf6" name="目标收入" />
+                      <Bar dataKey="predicted" fill="#3b82f6" name="预测值" />
+                      <Bar dataKey="actual" fill="#10b981" name="实际值" />
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
@@ -488,10 +393,10 @@ const CRMSalesForecastPage: React.FC = () => {
                   }}
                 >
                   <TrendingUp sx={{ width: 20, height: 20 }} />
-                  销售预测
+                  置信度趋势
                 </Typography>
                 <Typography variant="body2" sx={{ color: "grey.500" }}>
-                  未来{forecastMonths}个月的销售预测(95%置信区间)
+                  各周期预测置信度变化
                 </Typography>
               </CardHeader>
               <CardContent>
@@ -502,39 +407,16 @@ const CRMSalesForecastPage: React.FC = () => {
                     minWidth={0}
                     minHeight={0}
                   >
-                    <AreaChart data={forecastData}>
+                    <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
+                      <XAxis dataKey="period" />
                       <YAxis />
                       <Tooltip
-                        formatter={(value: unknown) => [
-                          `¥${Number(value).toLocaleString()}`,
-                          "",
-                        ]}
+                        formatter={(value: unknown) => [`${value}%`, "置信度"]}
                       />
                       <Legend />
-                      <Area
-                        type="monotone"
-                        dataKey="upper"
-                        stroke="#f59e0b"
-                        fill="rgba(245, 158, 11, 0.1)"
-                        name="上限"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="forecast"
-                        stroke="#3b82f6"
-                        fill="#3b82f6"
-                        name="预测值"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="lower"
-                        stroke="#10b981"
-                        fill="rgba(16, 185, 129, 0.1)"
-                        name="下限"
-                      />
-                    </AreaChart>
+                      <Line type="monotone" dataKey="confidence" stroke="#8b5cf6" name="置信度" />
+                    </LineChart>
                   </ResponsiveContainer>
                 </Box>
               </CardContent>
@@ -544,7 +426,7 @@ const CRMSalesForecastPage: React.FC = () => {
           <Card>
             <CardHeader>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                预测详情
+                预测列表
               </Typography>
             </CardHeader>
             <CardContent>
@@ -559,7 +441,7 @@ const CRMSalesForecastPage: React.FC = () => {
                           fontWeight: 500,
                         }}
                       >
-                        月份
+                        周期
                       </th>
                       <th
                         style={{
@@ -568,7 +450,8 @@ const CRMSalesForecastPage: React.FC = () => {
                           fontWeight: 500,
                         }}
                       >
-                        预测值
+                        {" "}
+                        预测金额
                       </th>
                       <th
                         style={{
@@ -577,7 +460,7 @@ const CRMSalesForecastPage: React.FC = () => {
                           fontWeight: 500,
                         }}
                       >
-                        置信区间
+                        实际金额
                       </th>
                       <th
                         style={{
@@ -586,70 +469,140 @@ const CRMSalesForecastPage: React.FC = () => {
                           fontWeight: 500,
                         }}
                       >
-                        概率
+                        置信度
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "center",
+                          padding: "12px 16px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        趋势
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "center",
+                          padding: "12px 16px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        状态
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {forecastData.map((item, index) => (
-                      <tr
-                        key={index}
-                        style={{
-                          borderBottom:
-                            index === forecastData.length - 1
-                              ? "none"
-                              : "1px solid",
-                        }}
-                      >
-                        <td style={{ padding: "12px 16px" }}>{item.month}</td>
-                        <td
+                    {forecasts.length > 0 ? (
+                      forecasts.map((forecast) => (
+                        <tr
+                          key={forecast.id}
                           style={{
-                            textAlign: "right",
-                            padding: "12px 16px",
-                            fontWeight: 500,
+                            borderBottom: "1px solid",
                           }}
                         >
-                          ¥{item.forecast.toLocaleString()}
-                        </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            {forecast.period}
+                          </td>
+                          <td
+                            style={{
+                              textAlign: "right",
+                              padding: "12px 16px",
+                              fontWeight: 500,
+                            }}
+                          >
+                            ¥{forecast.predicted_amount.toLocaleString()}
+                          </td>
+                          <td
+                            style={{ textAlign: "right", padding: "12px 16px" }}
+                          >
+                            {forecast.actual_amount
+                              ? `¥${forecast.actual_amount.toLocaleString()}`
+                              : "-"}
+                          </td>
+                          <td
+                            style={{ textAlign: "center", padding: "12px 16px" }}
+                          >
+                            <Chip
+                              size="small"
+                              variant="outlined"
+                              label={`${Math.round(forecast.confidence_level * 100)}%`}
+                              sx={{
+                                bgcolor:
+                                  forecast.confidence_level >= 0.8
+                                    ? "success.light"
+                                    : forecast.confidence_level >= 0.6
+                                    ? "warning.light"
+                                    : "error.light",
+                              }}
+                            />
+                          </td>
+                          <td
+                            style={{ textAlign: "center", padding: "12px 16px" }}
+                          >
+                            {getTrendIcon(forecast.trend)}
+                          </td>
+                          <td
+                            style={{ textAlign: "center", padding: "12px 16px" }}
+                          >
+                            <Chip
+                              size="small"
+                              label={
+                                forecast.status === "completed"
+                                  ? "已完成"
+                                  : forecast.status === "generated"
+                                  ? "已生成"
+                                  : forecast.status
+                              }
+                              sx={{
+                                bgcolor:
+                                  forecast.status === "completed"
+                                    ? "success.light"
+                                    : "info.light",
+                              }}
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
                         <td
-                          style={{ textAlign: "right", padding: "12px 16px" }}
+                          colSpan={6}
+                          style={{
+                            padding: "32px 16px",
+                            textAlign: "center",
+                            color: "text.disabled",
+                          }}
                         >
-                          ¥{item.lower.toLocaleString()} - ¥
-                          {item.upper.toLocaleString()}
-                        </td>
-                        <td
-                          style={{ textAlign: "center", padding: "12px 16px" }}
-                        >
-                          <Chip size="small" variant="outlined" label="95%" />
+                          暂无预测数据，点击上方按钮生成预测
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </Box>
 
-              <Box sx={{ mt: 3, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 1 }}>
-                  预测说明
-                </Typography>
-                <Box
-                  component="ul"
-                  sx={{
-                    fontSize: "0.875rem",
-                    color: "text.secondary",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0.5,
-                    pl: 2,
-                    mb: 0,
-                  }}
-                >
-                  <li>预测基于线性回归算法，使用过去12个月的数据进行训练</li>
-                  <li>置信区间表示有95%的概率实际值会落在该范围内</li>
-                  <li>预测结果仅供参考，实际销售可能受多种因素影响</li>
-                  <li>建议定期更新数据以提高预测准确性</li>
+              {forecasts.length > 0 && forecasts[0].factors && forecasts[0].factors.length > 0 && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+                    预测影响因素
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 2,
+                    }}
+                  >
+                    {(forecasts[0].factors as ForecastFactor[]).map((factor, index) => (
+                      <Chip
+                        key={index}
+                        label={`${factor.name} (${Math.round(factor.impact * 100)}%)`}
+                        variant="outlined"
+                      />
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
+              )}
             </CardContent>
           </Card>
         </CardContent>
@@ -657,25 +610,5 @@ const CRMSalesForecastPage: React.FC = () => {
     </Box>
   );
 };
-
-const RefreshIcon = ({ sx }: { sx?: object }) => (
-  <svg
-    sx={sx}
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-    <path d="M21 3v5h-5" />
-    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-    <path d="M8 16H3v5" />
-  </svg>
-);
 
 export default CRMSalesForecastPage;

@@ -9,12 +9,19 @@ import {
   InputAdornment,
   useTheme,
   useMediaQuery,
+  Link,
 } from "@mui/material";
-import { ArrowLeft, Search, Plus } from "lucide-react";
+import { ArrowLeft, Search, Plus, ChevronRight } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
 import { HelpButton } from "../common/HelpButton";
 
 // ============ 类型定义 ============
+
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+  icon?: React.ReactNode;
+}
 
 export interface PageHeaderAction {
   /** 按钮标签 */
@@ -42,6 +49,8 @@ export interface PageHeaderProps {
   title: string;
   /** 副标题 */
   subtitle?: string;
+  /** 面包屑导航 */
+  breadcrumbs?: BreadcrumbItem[];
   /**
    * 自定义图标（仅用于展示，兼容旧 API）
    * @deprecated 该字段当前未在头部渲染，如需图标请使用 actions 中的按钮
@@ -77,8 +86,8 @@ export interface PageHeaderProps {
     href?: string;
     disabled?: boolean;
   };
-  /** 操作按钮列表 */
-  actions?: PageHeaderAction[];
+  /** 操作按钮列表（支持配置对象数组或自定义 JSX） */
+  actions?: PageHeaderAction[] | React.ReactNode;
   /** 帮助内容 */
   helpContent?: React.ReactNode;
   /** 帮助标题 */
@@ -96,6 +105,7 @@ export interface PageHeaderProps {
 export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
+  breadcrumbs,
   icon: _icon,
   backButton: backButtonProp,
   showBack,
@@ -110,7 +120,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   sx,
 }) => {
   // 兼容旧 API：showBack + onBack → backButton
-  const backButton = backButtonProp || (showBack ? { onClick: onBack } : undefined);
+  const backButton =
+    backButtonProp || (showBack ? { onClick: onBack } : undefined);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -132,6 +143,47 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         ...sx,
       }}
     >
+      {/* 面包屑导航 */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <Box sx={{ width: "100%", mb: 1 }}>
+          {breadcrumbs.map((item, index) => {
+            const isLast = index === breadcrumbs.length - 1;
+            return (
+              <span key={index} style={{ display: "inline-flex", alignItems: "center" }}>
+                {item.href ? (
+                  <Link
+                    component={RouterLink}
+                    to={item.href}
+                    color="text.secondary"
+                    sx={{
+                      textDecoration: "none",
+                      "&:hover": { textDecoration: "underline" },
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    color={isLast ? "text.primary" : "text.secondary"}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Typography>
+                )}
+                {!isLast && (
+                  <ChevronRight
+                    style={{ width: 16, height: 16, color: "#9ca3af", marginLeft: 4, marginRight: 4 }}
+                  />
+                )}
+              </span>
+            );
+          })}
+        </Box>
+      )}
+
       {/* 左侧：返回按钮 + 标题 */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         {/* 返回按钮 */}
@@ -224,33 +276,37 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         )}
 
         {/* 其他操作按钮 */}
-        {actions?.map((action, index) => {
-          const buttonContent = (
-            <Button
-              key={index}
-              variant={action.variant || "outlined"}
-              color={action.color || "primary"}
-              startIcon={action.icon}
-              onClick={action.onClick}
-              disabled={action.disabled || action.loading}
-              component={action.href ? RouterLink : "button"}
-              to={action.href}
-              size={isMobile ? "small" : "medium"}
-            >
-              {!isMobile && action.label}
-            </Button>
-          );
-
-          if (action.tooltip) {
-            return (
-              <Tooltip key={index} title={action.tooltip}>
-                <span>{buttonContent}</span>
-              </Tooltip>
+        {Array.isArray(actions) ? (
+          actions.map((action, index) => {
+            const buttonContent = (
+              <Button
+                key={index}
+                variant={action.variant || "outlined"}
+                color={action.color || "primary"}
+                startIcon={action.icon}
+                onClick={action.onClick}
+                disabled={action.disabled || action.loading}
+                component={action.href ? RouterLink : "button"}
+                to={action.href}
+                size={isMobile ? "small" : "medium"}
+              >
+                {!isMobile && action.label}
+              </Button>
             );
-          }
 
-          return buttonContent;
-        })}
+            if (action.tooltip) {
+              return (
+                <Tooltip key={index} title={action.tooltip}>
+                  <span>{buttonContent}</span>
+                </Tooltip>
+              );
+            }
+
+            return buttonContent;
+          })
+        ) : (
+          actions
+        )}
 
         {/* 自定义右侧内容 */}
         {rightContent}

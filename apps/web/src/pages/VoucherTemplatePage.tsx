@@ -127,7 +127,7 @@ export default function VoucherTemplatePage() {
   };
 
   return (
-    <Box sx={{ py: 3 }} className="container mx-auto">
+    <Box sx={{ py: 3, maxWidth: "xl", mx: "auto" }}>
       {/* 页面标题 */}
       <Box
         sx={{
@@ -149,14 +149,14 @@ export default function VoucherTemplatePage() {
           <Button
             variant="outlined"
             onClick={() => refetch()}
-            startIcon={<RefreshCw className="w-4 h-4" />}
+            startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
           >
             刷新
           </Button>
           <Button
             variant="contained"
             onClick={() => setShowCreateModal(true)}
-            startIcon={<Plus className="w-4 h-4" />}
+            startIcon={<Plus sx={{ width: 16, height: 16 }} />}
           >
             新建模板
           </Button>
@@ -201,7 +201,7 @@ export default function VoucherTemplatePage() {
             py: 6,
           }}
         >
-          <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+          <RefreshCw sx={{ width: 32, height: 32, color: "grey.400", animation: "spin 1s linear infinite" }} />
         </Box>
       ) : filteredTemplates.length === 0 ? (
         <Card
@@ -220,7 +220,7 @@ export default function VoucherTemplatePage() {
               alignItems: "center",
             }}
           >
-            <FileText className="w-12 h-12 text-gray-400 mb: 2" />
+            <FileText sx={{ width: 48, height: 48, color: "grey.400", mb: 1 }} />
             <Typography sx={{ color: "text.secondary", mb: 2 }}>
               暂无凭证模板
             </Typography>
@@ -277,7 +277,7 @@ export default function VoucherTemplatePage() {
                           justifyContent: "center",
                         }}
                       >
-                        <FileText className="w-5 h-5 text-primary.main" />
+                        <FileText sx={{ width: 20, height: 20, color: "primary.main" }} />
                       </Box>
                       <Box>
                         <Typography
@@ -387,7 +387,7 @@ export default function VoucherTemplatePage() {
                         >
                           默认模板
                         </Typography>
-                        <Check className="w-4 h-4 text-green-600" />
+                        <Check sx={{ width: 16, height: 16, color: "green.600" }} />
                       </Box>
                     )}
                   </Box>
@@ -409,7 +409,7 @@ export default function VoucherTemplatePage() {
                       onClick={() => setEditingTemplate(template)}
                       sx={{ flex: 1 }}
                     >
-                      <Edit className="w-4 h-4 mr-1" />
+                      <Edit sx={{ width: 16, height: 16, mr: 0.5 }} />
                       编辑
                     </Button>
                     <Button
@@ -418,7 +418,7 @@ export default function VoucherTemplatePage() {
                       onClick={() => handleCopy(template)}
                       sx={{ flex: 1 }}
                     >
-                      <Copy className="w-4 h-4 mr-1" />
+                      <Copy sx={{ width: 16, height: 16, mr: 0.5 }} />
                       复制
                     </Button>
                     <Button
@@ -427,9 +427,9 @@ export default function VoucherTemplatePage() {
                       onClick={() => handleToggle(template)}
                     >
                       {template.is_active ? (
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X sx={{ width: 16, height: 16, color: "grey.500" }} />
                       ) : (
-                        <Check className="w-4 h-4 text-green-600" />
+                        <Check sx={{ width: 16, height: 16, color: "green.600" }} />
                       )}
                     </Button>
                     <Button
@@ -441,7 +441,7 @@ export default function VoucherTemplatePage() {
                         "&:hover": { bgcolor: "error.50" },
                       }}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 sx={{ width: 16, height: 16 }} />
                     </Button>
                   </Box>
 
@@ -456,7 +456,7 @@ export default function VoucherTemplatePage() {
                       })
                     }
                     sx={{ width: "100%", mt: 2 }}
-                    startIcon={<Play className="w-4 h-4" />}
+                    startIcon={<Play sx={{ width: 16, height: 16 }} />}
                   >
                     试算生成
                   </Button>
@@ -481,7 +481,7 @@ export default function VoucherTemplatePage() {
           <Button
             variant="outlined"
             onClick={() => navigate("/finance/voucher-rules")}
-            startIcon={<Settings className="w-4 h-4" />}
+            startIcon={<Settings sx={{ width: 16, height: 16 }} />}
           >
             管理生成规则
           </Button>

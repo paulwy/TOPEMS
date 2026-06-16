@@ -14,13 +14,15 @@ describe("ProgressBar", () => {
   });
 
   it("应该渲染分段进度条", () => {
-    const { container } = render(<ProgressBar value={60} variant="segmented" />);
+    const { container } = render(
+      <ProgressBar value={60} variant="segmented" />,
+    );
     expect(container.firstChild).toBeTruthy();
   });
 
   it("应该接受不同属性", () => {
     const { container } = render(
-      <ProgressBar value={50} label="测试" color="success" size="large" />
+      <ProgressBar value={50} label="测试" color="success" size="large" />,
     );
     expect(container.firstChild).toBeTruthy();
   });

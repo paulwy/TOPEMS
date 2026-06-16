@@ -9,7 +9,7 @@ import { isDevelopment } from "../config/runtime";
 import { useAppStore } from "../store";
 
 import Button from "@mui/material/Button";
-import { Card as MuiCard, CardContent, Box } from "@mui/material";
+import { Card as MuiCard, CardContent, Box, IconButton } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import { ModeToggle } from "@/components/ModeToggle";
@@ -219,10 +219,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </Box>
 
         <CardContent sx={{ padding: 4 }}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-          >
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <TextField
               label="用户名"
               placeholder="请输入用户名"
@@ -306,25 +304,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     </Box>
                   ),
                   endAdornment: (
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      sx={{
-                        color: "grey.400",
-                        "&:hover": { color: "grey.600" },
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        p: 0,
-                        minWidth: "auto",
-                      }}
-                    >
+                    <IconButton onClick={() => setShowPassword(!showPassword)} sx={{ color: "grey.400" }}>
                       {showPassword ? (
                         <EyeOff sx={{ width: 20, height: 20 }} />
                       ) : (
                         <Eye sx={{ width: 20, height: 20 }} />
                       )}
-                    </button>
+                    </IconButton>
                   ),
                 },
               }}
@@ -428,10 +414,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             >
               {loading ? "处理中..." : isRegister ? "注册" : "登录"}
             </Button>
+            </Box>
           </form>
 
           <Box sx={{ mt: 3, textAlign: "center" }}>
-            <button
+            <Button
               type="button"
               onClick={() => setIsRegister(!isRegister)}
               sx={{
@@ -439,13 +426,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 "&:hover": { color: "#5a6fd6" },
                 fontSize: "0.875rem",
                 background: "transparent",
-                border: "none",
-                cursor: "pointer",
                 fontWeight: 500,
               }}
             >
               {isRegister ? "已有账号？立即登录" : "没有账号？立即注册"}
-            </button>
+            </Button>
           </Box>
 
           {isDevelopment() && (

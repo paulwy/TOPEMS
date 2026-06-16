@@ -13,72 +13,155 @@ export const ContactCard: React.FC<ContactCardProps> = ({
   const getIcon = () => {
     switch (contact.contact_type) {
       case "EMPLOYEE":
-        return <User className="w-6 h-6" />;
+        return <User sx={{ width: 24, height: 24 }} />;
       case "DEPARTMENT":
-        return <Users className="w-6 h-6" />;
+        return <Users sx={{ width: 24, height: 24 }} />;
       case "COMPANY":
-        return <Building className="w-6 h-6" />;
+        return <Building sx={{ width: 24, height: 24 }} />;
       default:
-        return <User className="w-6 h-6" />;
+        return <User sx={{ width: 24, height: 24 }} />;
     }
   };
 
   const getColor = () => {
     switch (contact.contact_type) {
       case "EMPLOYEE":
-        return "bg-blue-100 text-blue-600";
+        return { bg: "#dbeafe", color: "#2563eb" };
       case "DEPARTMENT":
-        return "bg-green-100 text-green-600";
+        return { bg: "#dcfce7", color: "#16a34a" };
       case "COMPANY":
-        return "bg-purple-100 text-purple-600";
+        return { bg: "#f3e8ff", color: "#9333ea" };
       default:
-        return "bg-gray-100 text-gray-600";
+        return { bg: "#f3f4f6", color: "#6b7280" };
     }
   };
+
+  const color = getColor();
 
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+      style={{
+        backgroundColor: "white",
+        borderRadius: 8,
+        border: "1px solid #e2e8f0",
+        padding: 16,
+        cursor: "pointer",
+        transition: "box-shadow 0.2s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = "none";
+      }}
     >
-      <div className="flex items-start space-x-4">
-        <div className={`${getColor()} p-3 rounded-full`}>{getIcon()}</div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-slate-900 truncate">
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+        <div
+          style={{
+            ...color,
+            padding: 12,
+            borderRadius: "50%",
+          }}
+        >
+          {getIcon()}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3
+            style={{
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#0f172a",
+              margin: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
             {contact.name}
           </h3>
           {contact.position && (
-            <p className="text-sm text-slate-500 truncate">
+            <p
+              style={{
+                fontSize: 14,
+                color: "#64748b",
+                margin: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {contact.position}
             </p>
           )}
           {contact.department_name && (
-            <p className="text-sm text-slate-400 truncate">
+            <p
+              style={{
+                fontSize: 14,
+                color: "#94a3b8",
+                margin: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {contact.department_name}
             </p>
           )}
-          <div className="mt-2 space-y-1">
+          <div style={{ marginTop: 8 }}>
             {contact.email && (
-              <div className="flex items-center text-sm text-slate-500">
-                <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="truncate">{contact.email}</span>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: 14,
+                  color: "#64748b",
+                }}
+              >
+                <Mail
+                  sx={{ width: 16, height: 16, marginRight: 8, flexShrink: 0 }}
+                />
+                <span
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {contact.email}
+                </span>
               </div>
             )}
             {contact.phone && (
-              <div className="flex items-center text-sm text-slate-500">
-                <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: 14,
+                  color: "#64748b",
+                }}
+              >
+                <Phone
+                  sx={{ width: 16, height: 16, marginRight: 8, flexShrink: 0 }}
+                />
                 <span>{contact.phone}</span>
               </div>
             )}
           </div>
         </div>
-        <div className="text-right">
+        <div style={{ textAlign: "right" }}>
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              contact.status === "active"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "0 8px",
+              borderRadius: 9999,
+              fontSize: 12,
+              fontWeight: 500,
+              ...(contact.status === "active"
+                ? { backgroundColor: "#dcfce7", color: "#15803d" }
+                : { backgroundColor: "#fee2e2", color: "#b91c1c" }),
+            }}
           >
             {contact.status === "active" ? "在职" : "离职"}
           </span>

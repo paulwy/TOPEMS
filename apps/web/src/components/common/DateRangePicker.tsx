@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Box, Button, Menu, MenuItem, Paper, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Menu,
+  MenuItem,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Calendar, ChevronDown } from "lucide-react";
 
 // 预设日期范围
@@ -15,8 +23,7 @@ const PRESETS = [
 // 获取预设日期范围
 const getPresetRange = (presetId: string): { start: string; end: string } => {
   const today = new Date();
-  const formatDate = (date: Date) =>
-    date.toISOString().split("T")[0];
+  const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
   switch (presetId) {
     case "today":
@@ -84,7 +91,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const [customStart, setCustomStart] = useState(startDate);
   const [customEnd, setCustomEnd] = useState(endDate);
 
-  const presets = customPresets || PRESETS.map((p) => ({ id: p.id, label: p.label }));
+  const presets =
+    customPresets || PRESETS.map((p) => ({ id: p.id, label: p.label }));
 
   const handlePresetClick = (presetId: string) => {
     const range = getPresetRange(presetId);
@@ -101,9 +109,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   const displayText =
     placeholder ||
-    (startDate === endDate
-      ? startDate
-      : `${startDate} - ${endDate}`);
+    (startDate === endDate ? startDate : `${startDate} - ${endDate}`);
 
   return (
     <>
@@ -127,7 +133,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <Paper sx={{ p: 2, minWidth: 320 }}>
           {showPresets && (
             <>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
                 快速选择
               </Typography>
               <Box
@@ -153,7 +163,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             </>
           )}
           <Box sx={{ borderTop: 1, borderColor: "divider", pt: 2 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 1, display: "block" }}
+            >
               自定义范围
             </Typography>
             <Box

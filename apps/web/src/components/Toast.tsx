@@ -25,10 +25,10 @@ const colorMap = {
 };
 
 const iconColorMap = {
-  success: "text-green-500",
-  error: "text-red-500",
-  info: "text-blue-500",
-  warning: "text-yellow-500",
+  success: "#22c55e",
+  error: "#ef4444",
+  info: "#3b82f6",
+  warning: "#eab308",
 };
 
 export const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
@@ -58,23 +58,35 @@ export const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
 
   return (
     <div
-      className={`
-        flex items-center gap-3 px-4 py-3 rounded-lg border shadow-md min-w-[300px] max-w-md
-        transform transition-all duration-300 ease-in-out
-        ${colorMap[notification.type]}
-        ${isVisible && !isLeaving ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}
-      `}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        padding: "12px 16px",
+        borderRadius: "8px",
+        border: "1px solid",
+        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        minWidth: "300px",
+        maxWidth: "448px",
+        transition: "all 0.3s ease-in-out",
+        opacity: isVisible && !isLeaving ? 1 : 0,
+        transform: isVisible && !isLeaving ? "translateX(0)" : "translateX(16px)",
+        ...(notification.type === "success" ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" } : {}),
+        ...(notification.type === "error" ? { backgroundColor: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" } : {}),
+        ...(notification.type === "info" ? { backgroundColor: "#eff6ff", borderColor: "#bfdbfe", color: "#1e40af" } : {}),
+        ...(notification.type === "warning" ? { backgroundColor: "#fefce8", borderColor: "#fef08a", color: "#854d0e" } : {}),
+      }}
     >
-      <Icon
-        className={`w-5 h-5 flex-shrink-0 ${iconColorMap[notification.type]}`}
-      />
-      <p className="flex-1 text-sm font-medium">{notification.message}</p>
+      <div style={{ width: 20, height: 20, flexShrink: 0, color: iconColorMap[notification.type] }}>
+        <Icon />
+      </div>
+      <p style={{ flex: 1, fontSize: "14px", fontWeight: 500 }}>{notification.message}</p>
       <button
         onClick={handleClose}
-        className="p-1 hover:bg-black/5 rounded-full transition-colors"
+        style={{ padding: "4px", borderRadius: "9999px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}
         aria-label="关闭通知"
       >
-        <X className="w-4 h-4" />
+        <X sx={{ width: 16, height: 16 }} />
       </button>
     </div>
   );
@@ -90,7 +102,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   onClose,
 }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-3">
+    <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", flexDirection: "column", gap: "12px" }}>
       {notifications.map((notification) => (
         <Toast
           key={notification.id}

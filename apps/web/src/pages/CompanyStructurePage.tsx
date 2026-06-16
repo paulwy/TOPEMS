@@ -110,14 +110,14 @@ const TreeNodeComponent: React.FC<{
       >
         {hasChildren ? (
           isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown sx={{ width: 16, height: 16, color: "grey.400" }} />
           ) : (
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <ChevronRight sx={{ width: 16, height: 16, color: "grey.400" }} />
           )
         ) : (
           <Box sx={{ width: 16 }} />
         )}
-        <Building2 className="w-4 h-4 text-primary.main" />
+        <Building2 sx={{ width: 16, height: 16, color: "primary.main" }} />
         <Typography sx={{ fontWeight: "medium" }}>{node.name}</Typography>
         <Typography variant="caption" color="text.secondary">
           ({node.code})
@@ -211,7 +211,7 @@ export default function CompanyStructurePage() {
       accessorKey: "parent_company_name",
       cell: ({ row }) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Building2 className="w-4 h-4 text-primary.main" />
+          <Building2 sx={{ width: 16, height: 16, color: "primary.main" }} />
           <Typography sx={{ fontWeight: "medium" }}>
             {row.original.parent_company_name}
           </Typography>
@@ -242,7 +242,7 @@ export default function CompanyStructurePage() {
       accessorKey: "child_company_name",
       cell: ({ row }) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Building2 className="w-4 h-4 text-success.main" />
+          <Building2 sx={{ width: 16, height: 16, color: "success.main" }} />
           <Typography sx={{ fontWeight: "medium" }}>
             {row.original.child_company_name}
           </Typography>
@@ -305,7 +305,7 @@ export default function CompanyStructurePage() {
             color="error"
             onClick={() => handleDeleteRelation(row.original.id)}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 sx={{ width: 16, height: 16 }} />
           </Button>
         </Box>
       ),
@@ -333,7 +333,7 @@ export default function CompanyStructurePage() {
               gap: 1,
             }}
           >
-            <Network className="w-6 h-6 text-primary.main" />
+            <Network sx={{ width: 24, height: 24, color: "primary.main" }} />
             公司架构管理
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }}>
@@ -343,7 +343,7 @@ export default function CompanyStructurePage() {
         <Button
           variant="contained"
           onClick={() => navigate("/finance/company-structure/create")}
-          startIcon={<Plus className="w-4 h-4" />}
+          startIcon={<Plus sx={{ width: 16, height: 16 }} />}
         >
           添加公司关系
         </Button>
@@ -354,7 +354,7 @@ export default function CompanyStructurePage() {
         <CardContent>
           <Box sx={{ display: "flex", gap: 2 }}>
             <Box sx={{ position: "relative", flex: 1, maxWidth: 400 }}>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search sx={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "grey.400" }} />
               <TextField
                 size="small"
                 placeholder="搜索公司名称或编码..."
@@ -377,12 +377,12 @@ export default function CompanyStructurePage() {
           >
             <Tab
               label="架构视图"
-              icon={<Network className="w-4 h-4" />}
+              icon={<Network sx={{ width: 16, height: 16 }} />}
               iconPosition="start"
             />
             <Tab
               label="关系列表"
-              icon={<Users className="w-4 h-4" />}
+              icon={<Users sx={{ width: 16, height: 16 }} />}
               iconPosition="start"
             />
           </Tabs>
@@ -475,7 +475,7 @@ export default function CompanyStructurePage() {
                   <Box
                     sx={{ p: 1.5, borderRadius: "50%", bgcolor: "grey.100" }}
                   >
-                    <Building2 className="w-6 h-6" />
+                    <Building2 sx={{ width: 24, height: 24 }} />
                   </Box>
                 </Box>
               </CardContent>
@@ -488,7 +488,7 @@ export default function CompanyStructurePage() {
       <Card sx={{ mt: 3, bgcolor: "info.light", borderColor: "info.main" }}>
         <CardContent>
           <Box sx={{ display: "flex", gap: 1.5 }}>
-            <AlertCircle className="w-5 h-5 text-info.main" />
+            <AlertCircle sx={{ width: 20, height: 20, color: "info.main" }} />
             <Box>
               <Typography sx={{ fontWeight: "medium", color: "info.dark" }}>
                 使用提示

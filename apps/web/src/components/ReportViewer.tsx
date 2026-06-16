@@ -60,58 +60,58 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
+    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}>
+      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "1024px", maxHeight: "95vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex justify-between items-start">
+        <div style={{ padding: "24px", borderBottom: "1px solid #e2e8f0", background: "linear-gradient(to right, #eff6ff, #eef2ff)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <h3 className="text-xl font-semibold text-slate-900">
+              <h3 style={{ fontSize: "20px", fontWeight: 600, color: "#0f172a" }}>
                 {report.config.title}
               </h3>
               {report.config.description && (
-                <p className="text-sm text-slate-600 mt-1">
+                <p style={{ fontSize: "14px", color: "#475569", marginTop: "4px" }}>
                   {report.config.description}
                 </p>
               )}
-              <div className="flex items-center space-x-4 mt-3 text-sm text-slate-500">
-                <span className="flex items-center">
-                  <Rows3 className="w-4 h-4 mr-1" />共 {report.row_count} 条记录
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "12px", fontSize: "14px", color: "#64748b" }}>
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  <Rows3 sx={{ width: 16, height: 16, marginRight: "4px" }} />共 {report.row_count} 条记录
                 </span>
-                <span className="flex items-center">
-                  <Columns className="w-4 h-4 mr-1" />
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  <Columns sx={{ width: 16, height: 16, marginRight: "4px" }} />
                   {report.config.columns.length} 列
                 </span>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+              style={{ padding: "8px", color: "#94a3b8", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", transition: "all 0.2s" }}
             >
-              <X className="w-5 h-5" />
+              <X sx={{ width: 20, height: 20 }} />
             </button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="overflow-x-auto border border-slate-200 rounded-lg">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
+        <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+          <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead style={{ backgroundColor: "#f8fafc" }}>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: 500, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     #
                   </th>
                   {report.config.columns.map((column) => (
                     <th
                       key={column}
                       onClick={() => handleSort(column)}
-                      className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100"
+                      style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: 500, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "background-color 0.2s" }}
                     >
-                      <div className="flex items-center space-x-1">
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                         <span>{column}</span>
                         {sortColumn === column && (
-                          <span className="text-blue-600">
+                          <span style={{ color: "#2563eb" }}>
                             {sortDirection === "asc" ? "↑" : "↓"}
                           </span>
                         )}
@@ -120,27 +120,27 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
+              <tbody style={{ backgroundColor: "#ffffff" }}>
                 {currentData.length === 0 ? (
                   <tr>
                     <td
                       colSpan={report.config.columns.length + 1}
-                      className="px-4 py-12 text-center"
+                      style={{ padding: "48px 16px", textAlign: "center" }}
                     >
-                      <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                      <p className="text-slate-500">暂无数据</p>
+                      <FileText sx={{ width: 48, height: 48, color: "#cbd5e1", margin: "auto", marginBottom: "12px" }} />
+                      <p style={{ color: "#94a3b8" }}>暂无数据</p>
                     </td>
                   </tr>
                 ) : (
                   currentData.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 text-sm text-slate-500">
+                    <tr key={idx} style={{ transition: "background-color 0.2s" }}>
+                      <td style={{ padding: "12px 16px", fontSize: "14px", color: "#64748b" }}>
                         {startIndex + idx + 1}
                       </td>
                       {report.config.columns.map((column) => (
                         <td
                           key={column}
-                          className="px-4 py-3 text-sm text-slate-900"
+                          style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}
                         >
                           {getCellValue(row[column])}
                         </td>
@@ -154,47 +154,47 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         </div>
 
         {/* Pagination */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-slate-600">每页显示</span>
+        <div style={{ padding: "16px", borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "14px", color: "#475569" }}>每页显示</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="px-2 py-1 border border-slate-200 rounded text-sm"
+                style={{ padding: "4px 8px", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "14px" }}
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>
-              <span className="text-sm text-slate-600">条</span>
+              <span style={{ fontSize: "14px", color: "#475569" }}>条</span>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-slate-600">
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "14px", color: "#475569" }}>
                 显示 {startIndex + 1}-{Math.min(endIndex, report.row_count)} 共{" "}
                 {report.row_count}
               </span>
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="p-2 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ padding: "8px", color: "#475569", borderRadius: "6px", border: "none", background: "transparent", cursor: currentPage === 1 ? "not-allowed" : "pointer", opacity: currentPage === 1 ? 0.5 : 1 }}
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft sx={{ width: 16, height: 16 }} />
               </button>
-              <span className="text-sm text-slate-600">
+              <span style={{ fontSize: "14px", color: "#475569" }}>
                 第 {currentPage}/{totalPages} 页
               </span>
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="p-2 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ padding: "8px", color: "#475569", borderRadius: "6px", border: "none", background: "transparent", cursor: currentPage === totalPages ? "not-allowed" : "pointer", opacity: currentPage === totalPages ? 0.5 : 1 }}
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight sx={{ width: 16, height: 16 }} />
               </button>
             </div>
           </div>

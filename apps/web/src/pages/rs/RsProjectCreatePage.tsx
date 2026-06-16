@@ -228,7 +228,7 @@ const RsProjectCreatePage: React.FC = () => {
               onChange={(e) => handleInputChange("start_date", e.target.value)}
               error={Boolean(errors.start_date)}
               helperText={errors.start_date}
-              LabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
             />
           </Grid>
 
@@ -239,7 +239,7 @@ const RsProjectCreatePage: React.FC = () => {
               type="date"
               value={formData.end_date}
               onChange={(e) => handleInputChange("end_date", e.target.value)}
-              LabelProps={{ shrink: true }}
+              InputLabelProps={{ shrink: true }}
             />
           </Grid>
 
@@ -371,7 +371,7 @@ const RsProjectCreatePage: React.FC = () => {
               </Button>
               <Button
                 variant="contained"
-                startIcon={<SaveIcon />}
+                startIcon={<Save />}
                 onClick={handleSubmit}
               >
                 {isEdit ? "保存修改" : "创建项目"}

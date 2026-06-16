@@ -27,6 +27,14 @@ import {
   AIDataCompleter,
 } from "../components/ai";
 import type { CompletionItem } from "../types/ai";
+import {
+  CardTitle,
+  Label,
+  Input,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../components/ui/shadcn";
 
 type ProjectType =
   | "RESEARCH"
@@ -168,30 +176,30 @@ const PmProjectCreatePage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <div className="flex-1 p-6">
-        <div className="flex items-center gap-4 mb-6">
+    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      <div style={{ flex: 1, padding: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
           <Button
-            variant="outline"
+            variant="outlined"
             onClick={() => navigate("/pm/projects")}
-            className="gap-2"
+            sx={{ gap: 8 }}
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft sx={{ width: 16, height: 16 }} />
             返回列表
           </Button>
         </div>
 
-        <Card className="max-w-3xl mx-auto">
+        <Card sx={{ maxWidth: 768, margin: "0 auto" }}>
           <CardHeader>
-            <CardTitle className="text-xl">创建项目</CardTitle>
-            <p className="text-gray-500 mt-1">填写项目基本信息</p>
+            <CardTitle sx={{ fontSize: "1.25rem" }}>创建项目</CardTitle>
+            <p style={{ color: "#6b7280", marginTop: 4 }}>填写项目基本信息</p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+            <form style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <Label htmlFor="project-name">
-                    项目名称 <span className="text-red-500">*</span>
+                    项目名称 <span style={{ color: "#ef4444" }}>*</span>
                   </Label>
                   <Input
                     id="project-name"
@@ -203,13 +211,13 @@ const PmProjectCreatePage: React.FC = () => {
                     }
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm">{errors.name}</p>
+                    <p style={{ color: "#ef4444", fontSize: "0.875rem" }}>{errors.name}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <Label htmlFor="project-code">
-                    项目编号 <span className="text-red-500">*</span>
+                    项目编号 <span style={{ color: "#ef4444" }}>*</span>
                   </Label>
                   <Input
                     id="project-code"
@@ -221,45 +229,47 @@ const PmProjectCreatePage: React.FC = () => {
                     }
                   />
                   {errors.code && (
-                    <p className="text-red-500 text-sm">{errors.code}</p>
+                    <p style={{ color: "#ef4444", fontSize: "0.875rem" }}>{errors.code}</p>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <Label>
-                  项目类型 <span className="text-red-500">*</span>
+                  项目类型 <span style={{ color: "#ef4444" }}>*</span>
                 </Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                   {PROJECT_TYPES.map((type) => (
                     <button
                       key={type.value}
                       type="button"
                       onClick={() => handleChange("project_type", type.value)}
-                      className={`p-4 border rounded-lg text-left transition-all ${
-                        formData.project_type === type.value
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
+                      style={{
+                        padding: 16,
+                        border: `1px solid ${formData.project_type === type.value ? "#3b82f6" : "#d1d5db"}`,
+                        borderRadius: 8,
+                        textAlign: "left",
+                        backgroundColor: formData.project_type === type.value ? "#eff6ff" : "transparent",
+                      }}
                     >
-                      <div className="font-medium text-gray-900">
+                      <div style={{ fontWeight: 500, color: "#111827" }}>
                         {type.label}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: 4 }}>
                         {type.description}
                       </div>
                     </button>
                   ))}
                 </div>
                 {errors.project_type && (
-                  <p className="text-red-500 text-sm">{errors.project_type}</p>
+                  <p style={{ color: "#ef4444", fontSize: "0.875rem" }}>{errors.project_type}</p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-1">
-                    <FileText className="w-4 h-4" />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Label sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <FileText sx={{ width: 16, height: 16 }} />
                     项目描述
                   </Label>
                   <AIHelperButton
@@ -275,18 +285,18 @@ const PmProjectCreatePage: React.FC = () => {
                   onChange={(e) => handleChange("description", e.target.value)}
                   placeholder="请输入项目描述..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, outline: "none", resize: "none" }}
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1">
-                    <DollarSign className="w-4 h-4" />
-                    项目预算 <span className="text-red-500">*</span>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <Label sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <DollarSign sx={{ width: 16, height: 16 }} />
+                    项目预算 <span style={{ color: "#ef4444" }}>*</span>
                   </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6b7280" }}>
                       ¥
                     </span>
                     <Input
@@ -294,19 +304,20 @@ const PmProjectCreatePage: React.FC = () => {
                       value={formData.budget}
                       onChange={(e) => handleChange("budget", e.target.value)}
                       placeholder="请输入预算金额"
-                      className={`pl-8 ${
+                      style={{ paddingLeft: 32 }}
+                      className={
                         errors.budget ? "border-red-500 focus:ring-red-500" : ""
-                      }`}
+                      }
                     />
                   </div>
                   {errors.budget && (
-                    <p className="text-red-500 text-sm">{errors.budget}</p>
+                    <p style={{ color: "#ef4444", fontSize: "0.875rem" }}>{errors.budget}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <Label sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Users sx={{ width: 16, height: 16 }} />
                     项目负责人
                   </Label>
                   <Input
@@ -318,11 +329,11 @@ const PmProjectCreatePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    开始日期 <span className="text-red-500">*</span>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <Label sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Calendar sx={{ width: 16, height: 16 }} />
+                    开始日期 <span style={{ color: "#ef4444" }}>*</span>
                   </Label>
                   <Input
                     type="date"
@@ -335,14 +346,14 @@ const PmProjectCreatePage: React.FC = () => {
                     }
                   />
                   {errors.start_date && (
-                    <p className="text-red-500 text-sm">{errors.start_date}</p>
+                    <p style={{ color: "#ef4444", fontSize: "0.875rem" }}>{errors.start_date}</p>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    结束日期 <span className="text-red-500">*</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <Label sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Calendar sx={{ width: 16, height: 16 }} />
+                    结束日期 <span style={{ color: "#ef4444" }}>*</span>
                   </Label>
                   <Input
                     type="date"
@@ -353,14 +364,14 @@ const PmProjectCreatePage: React.FC = () => {
                     }
                   />
                   {errors.end_date && (
-                    <p className="text-red-500 text-sm">{errors.end_date}</p>
+                    <p style={{ color: "#ef4444", fontSize: "0.875rem" }}>{errors.end_date}</p>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1">
-                  <Tag className="w-4 h-4" />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Label sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <Tag sx={{ width: 16, height: 16 }} />
                   标签
                 </Label>
                 <Input
@@ -371,8 +382,8 @@ const PmProjectCreatePage: React.FC = () => {
                 />
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                <div className="flex gap-2">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 16, borderTop: "1px solid #e5e7eb" }}>
+                <div style={{ display: "flex", gap: 8 }}>
                   <AIHelperButton
                     type="generate"
                     onClick={() => setShowAICodeGenerator(true)}
@@ -395,15 +406,20 @@ const PmProjectCreatePage: React.FC = () => {
                     label="AI 校验"
                   />
                 </div>
-                <div className="flex gap-3">
+                <div style={{ display: "flex", gap: 12 }}>
                   <Button
-                    variant="outline"
+                    variant="outlined"
                     onClick={() => navigate("/pm/projects")}
                   >
                     取消
                   </Button>
-                  <Button type="submit" disabled={submitting} className="gap-2">
-                    <Save className="w-4 h-4" />
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    sx={{ gap: 8, padding: "8px 16px", backgroundColor: "#2563eb", color: "#fff",
+                      "&:hover": { backgroundColor: "#1d4ed8" } }}
+                  >
+                    <Save sx={{ width: 16, height: 16 }} />
                     {submitting ? "提交中..." : "保存项目"}
                   </Button>
                 </div>

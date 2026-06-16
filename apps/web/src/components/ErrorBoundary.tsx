@@ -43,22 +43,22 @@ export class ErrorBoundary extends Component<
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f3f4f6", padding: "16px" }}>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", padding: "32px", maxWidth: "448px", width: "100%", textAlign: "center" }}>
+            <div style={{ width: "64px", height: "64px", backgroundColor: "#fef2f2", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <AlertTriangle sx={{ width: 32, height: 32, color: "#ef4444" }} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
+            <h2 style={{ fontSize: "20px", fontWeight: 700, color: "#111827", marginBottom: "8px" }}>
               页面出现错误
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p style={{ color: "#6b7280", marginBottom: "24px" }}>
               {this.state.error?.message || "发生了未知错误，请重试"}
             </p>
             <button
               onClick={this.handleRetry}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              style={{ display: "inline-flex", alignItems: "center", padding: "12px 24px", backgroundColor: "#2563eb", color: "#ffffff", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.2s" }}
             >
-              <RefreshCw className="w-5 h-5 mr-2" />
+              <RefreshCw sx={{ width: 20, height: 20, marginRight: 8 }} />
               刷新页面
             </button>
           </div>

@@ -56,19 +56,19 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) {
-      return <FileImage className="w-8 h-8 text-green-500" />;
+      return <FileImage sx={{ width: 32, height: 32, color: "#22c55e" }} />;
     }
     if (type.includes("pdf")) {
-      return <FileText className="w-8 h-8 text-red-500" />;
+      return <FileText sx={{ width: 32, height: 32, color: "#ef4444" }} />;
     }
     if (
       type.includes("document") ||
       type.includes("spreadsheet") ||
       type.includes("presentation")
     ) {
-      return <FileText className="w-8 h-8 text-blue-500" />;
+      return <FileText sx={{ width: 32, height: 32, color: "#3b82f6" }} />;
     }
-    return <File className="w-8 h-8 text-gray-500" />;
+    return <File sx={{ width: 32, height: 32, color: "#6b7280" }} />;
   };
 
   const handleFileChange = useCallback(
@@ -199,7 +199,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -207,7 +207,7 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
         accept={accept}
         multiple={multiple}
         onChange={handleFileChange}
-        className="hidden"
+        style={{ display: "none" }}
         disabled={disabled}
       />
 
@@ -217,25 +217,34 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={triggerFileInput}
-        className={`
-          relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-          transition-all duration-200 ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-          ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"}
-        `}
+        style={{
+          position: "relative",
+          border: "2px dashed",
+          borderRadius: "8px",
+          padding: "32px",
+          textAlign: "center",
+          cursor: disabled ? "not-allowed" : "pointer",
+          transition: "all 0.2s",
+          opacity: disabled ? 0.5 : 1,
+          borderColor: isDragging ? "#3b82f6" : "#d1d5db",
+          backgroundColor: isDragging ? "#eff6ff" : "transparent",
+        }}
       >
-        <div className="flex flex-col items-center">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div
-            className={`p-4 rounded-full ${isDragging ? "bg-blue-100" : "bg-gray-100"}`}
+            style={{
+              padding: "16px",
+              borderRadius: "9999px",
+              backgroundColor: isDragging ? "#dbeafe" : "#f3f4f6"
+            }}
           >
-            <Upload
-              className={`w-8 h-8 ${isDragging ? "text-blue-600" : "text-gray-500"}`}
-            />
+            <Upload sx={{ width: 32, height: 32, color: isDragging ? "#2563eb" : "#6b7280" }} />
           </div>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">
+          <h3 style={{ marginTop: "16px", fontSize: "18px", fontWeight: 500, color: "#111827" }}>
             {isDragging ? "释放以上传文件" : "拖拽文件到此处"}
           </h3>
-          <p className="mt-1 text-sm text-gray-500">或点击选择文件</p>
-          <div className="mt-4 flex items-center justify-center space-x-4 text-xs text-gray-400">
+          <p style={{ marginTop: "4px", fontSize: "14px", color: "#6b7280" }}>或点击选择文件</p>
+          <div style={{ marginTop: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", fontSize: "12px", color: "#9ca3af" }}>
             <span>支持格式: {accept === "*" ? "所有格式" : accept}</span>
             <span>·</span>
             <span>最大 {formatFileSize(maxFileSize)}</span>
@@ -246,44 +255,44 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
       </div>
 
       {/* Quick Actions (Mobile Optimized) */}
-      <div className="flex space-x-3">
+      <div style={{ display: "flex", gap: "12px" }}>
         <button
           onClick={triggerCamera}
           disabled={disabled}
-          className="flex-1 flex items-center justify-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 16px", backgroundColor: "#f0fdf4", color: "#15803d", borderRadius: "8px", border: "none", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, transition: "background-color 0.2s" }}
         >
-          <Camera className="w-5 h-5 mr-2" />
+          <Camera sx={{ width: 20, height: 20, marginRight: "8px" }} />
           <span>拍照上传</span>
         </button>
         <button
           onClick={triggerFileInput}
           disabled={disabled}
-          className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 16px", backgroundColor: "#eff6ff", color: "#1d4ed8", borderRadius: "8px", border: "none", cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1, transition: "background-color 0.2s" }}
         >
-          <FileText className="w-5 h-5 mr-2" />
+          <FileText sx={{ width: 20, height: 20, marginRight: "8px" }} />
           <span>选择文件</span>
         </button>
       </div>
 
       {/* Uploaded Files List */}
       {uploadedFiles.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium text-gray-700">
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <h4 style={{ fontSize: "14px", fontWeight: 500, color: "#374151" }}>
             已选择 {uploadedFiles.length}/{maxFiles} 个文件
           </h4>
-          <div className="space-y-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {uploadedFiles.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center p-3 bg-gray-50 rounded-lg"
+                style={{ display: "flex", alignItems: "center", padding: "12px", backgroundColor: "#f9fafb", borderRadius: "8px" }}
               >
                 {/* Preview/Icon */}
-                <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div style={{ width: "48px", height: "48px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#ffffff", borderRadius: "8px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
                   {file.preview ? (
                     <img
                       src={file.preview}
                       alt={file.name}
-                      className="w-full h-full object-cover"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     />
                   ) : (
                     getFileIcon(file.type)
@@ -291,24 +300,23 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                 </div>
 
                 {/* File Info */}
-                <div className="flex-1 ml-3 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                <div style={{ flex: 1, marginLeft: "12px", minWidth: 0 }}>
+                  <p style={{ fontSize: "14px", fontWeight: 500, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {file.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p style={{ fontSize: "12px", color: "#6b7280" }}>
                     {formatFileSize(file.size)}
                   </p>
 
                   {/* Progress Bar */}
                   {file.status === "uploading" && (
-                    <div className="mt-1">
-                      <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div style={{ marginTop: "4px" }}>
+                      <div style={{ height: "6px", backgroundColor: "#e5e7eb", borderRadius: "9999px", overflow: "hidden" }}>
                         <div
-                          className="h-full bg-blue-600 rounded-full transition-all"
-                          style={{ width: `${file.progress}%` }}
+                          style={{ height: "100%", backgroundColor: "#2563eb", borderRadius: "9999px", transition: "all 0.2s", width: `${file.progress}%` }}
                         />
                       </div>
-                      <span className="text-xs text-gray-500 ml-1">
+                      <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "4px" }}>
                         {file.progress}%
                       </span>
                     </div>
@@ -316,31 +324,31 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
                 </div>
 
                 {/* Status Icon */}
-                <div className="flex-shrink-0 ml-3">
+                <div style={{ flexShrink: 0, marginLeft: "12px" }}>
                   {file.status === "pending" && (
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    <div style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Loader2 sx={{ width: 16, height: 16, color: "#9ca3af", animation: "spin 1s linear infinite" }} />
                     </div>
                   )}
                   {file.status === "uploading" && (
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                    <div style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Loader2 sx={{ width: 16, height: 16, color: "#2563eb", animation: "spin 1s linear infinite" }} />
                     </div>
                   )}
                   {file.status === "completed" && (
-                    <CheckCircle className="w-6 h-6 text-green-500" />
+                    <CheckCircle sx={{ width: 24, height: 24, color: "#22c55e" }} />
                   )}
                   {file.status === "error" && (
-                    <AlertCircle className="w-6 h-6 text-red-500" />
+                    <AlertCircle sx={{ width: 24, height: 24, color: "#ef4444" }} />
                   )}
                 </div>
 
                 {/* Remove Button */}
                 <button
                   onClick={() => removeFile(file.id)}
-                  className="flex-shrink-0 ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  style={{ flexShrink: 0, marginLeft: "8px", padding: "4px", color: "#9ca3af", border: "none", background: "transparent", cursor: "pointer", transition: "color 0.2s" }}
                 >
-                  <X className="w-5 h-5" />
+                  <X sx={{ width: 20, height: 20 }} />
                 </button>
               </div>
             ))}
@@ -350,9 +358,9 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({
 
       {/* Empty State */}
       {uploadedFiles.length === 0 && (
-        <div className="text-center py-6 text-gray-400">
-          <File className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">暂无上传文件</p>
+        <div style={{ textAlign: "center", paddingTop: "24px", paddingBottom: "24px", color: "#9ca3af" }}>
+          <File sx={{ width: 48, height: 48, margin: "auto", marginBottom: "12px", opacity: 0.5 }} />
+          <p style={{ fontSize: "14px" }}>暂无上传文件</p>
         </div>
       )}
     </div>

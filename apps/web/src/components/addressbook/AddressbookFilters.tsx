@@ -16,14 +16,34 @@ export const AddressbookFilters: React.FC<AddressbookFiltersProps> = ({
   ];
 
   return (
-    <div className="bg-white border-b border-slate-200 px-4 py-3">
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-slate-600">状态:</span>
+    <div
+      style={{
+        backgroundColor: "white",
+        borderBottom: "1px solid #e2e8f0",
+        padding: "12px 16px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 14, color: "#475569" }}>状态:</span>
           <select
             value={statusFilter}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="px-3 py-1 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            style={{
+              padding: "4px 12px",
+              fontSize: 14,
+              border: "1px solid #cbd5e1",
+              borderRadius: 6,
+              outline: "none",
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#3b82f6";
+              e.target.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.2)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "#cbd5e1";
+              e.target.style.boxShadow = "none";
+            }}
           >
             {statuses.map((status) => (
               <option key={status.value} value={status.value}>

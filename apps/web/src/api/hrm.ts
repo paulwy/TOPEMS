@@ -109,6 +109,7 @@ export interface Position {
   status: string;
   created_at: string;
   updated_at: string;
+  employee_count?: number;
 }
 
 export interface JobOpening {
@@ -279,6 +280,8 @@ export interface TrainingCourse {
   instructor_name?: string;
   location?: string;
   max_participants?: number;
+  enrolled_count?: number;
+  start_date?: string;
   status: string;
   created_at: string;
   updated_at: string;

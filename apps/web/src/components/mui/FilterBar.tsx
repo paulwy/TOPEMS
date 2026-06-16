@@ -28,7 +28,14 @@ export interface FilterOption {
 export interface FilterConfig {
   id: string;
   label: string;
-  type: "select" | "multiselect" | "date" | "dateRange" | "text" | "number" | "search";
+  type:
+    | "select"
+    | "multiselect"
+    | "date"
+    | "dateRange"
+    | "text"
+    | "number"
+    | "search";
   placeholder?: string;
   options?: FilterOption[];
   value?: any;

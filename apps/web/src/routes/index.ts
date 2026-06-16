@@ -12,4 +12,8 @@ export { notificationRoutes } from "./notifications";
 export { docsRoutes } from "./docs";
 export { aiRoutes } from "./ai";
 export { professionalRoutes } from "./professional";
+export { monitorRoutes } from "./monitor";
+export { mesRoutes } from "./mes";
+export { scmRoutes } from "./scm";
+export { wmsRoutes } from "./wms";
 export { type RouteConfig, lazyWithRetry } from "./utils";
