@@ -8,7 +8,7 @@ import {
   BarChart3,
   PieChart,
   LineChart,
-  Table,
+  Table as TableIcon,
   Clock,
 } from "lucide-react";
 import {
@@ -503,7 +503,7 @@ const BIModuleDetailPage = () => {
             <CardHeader
               title="数据明细表"
               subheader="详细业务数据"
-              avatar={<Table size={20} />}
+              avatar={<TableIcon size={20} />}
             />
             <CardContent>
               <Box sx={{ overflow: "auto" }}>

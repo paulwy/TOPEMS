@@ -316,9 +316,9 @@ const BIDashboardPageRefactored: React.FC = () => {
       chart: (
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <RechartsLineChart data={qualityTrendData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-            <XAxis dataKey="month" tick={{ fill: "#64748B", fontSize: 12 }} />
-            <YAxis domain={[90, 100]} tick={{ fill: "#64748B", fontSize: 12 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+            <XAxis dataKey="month" tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} />
+            <YAxis domain={[90, 100]} tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} />
             <Tooltip />
             <Line
               type="monotone"

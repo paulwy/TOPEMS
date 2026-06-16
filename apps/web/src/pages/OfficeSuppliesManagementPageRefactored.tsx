@@ -85,7 +85,7 @@ const mockSupplies: OfficeSupply[] = [
 
 // ============ 列定义 ============
 const getColumns = (
-  getStatusBadge: (status: string) => JSX.Element,
+  getStatusBadge: (status: string) => React.ReactNode,
 ): ColumnDef<OfficeSupply>[] => [
   {
     id: "supply_number",
@@ -150,7 +150,7 @@ const getColumns = (
           {row.stock}
         </Typography>
         {row.status !== "normal" && (
-          <AlertTriangle style={{ width: 14, height: 14, color: row.status === "out_of_stock" ? "#ef4444" : "#f59e0b" }} />
+          <AlertTriangle style={{ width: 14, height: 14, color: row.status === "out_of_stock" ? "error.main" : "warning.main" }} />
         )}
       </Box>
     ),
@@ -483,16 +483,10 @@ const OfficeSuppliesManagementPageRefactored: React.FC = () => {
         subtitle={`共 ${data.total} 种用品`}
         showBack
         onBack={() => navigate(-1)}
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Plus style={{ width: 18, height: 18 }} />}
-            onClick={handleAdd}
-            sx={{ bgcolor: "#3b82f6" }}
-          >
-            新增用品
-          </Button>
-        }
+        createButton={{
+          label: "新增用品",
+          onClick: handleAdd,
+        }}
       />
 
       {/* 统计概览 */}
@@ -514,6 +508,7 @@ const OfficeSuppliesManagementPageRefactored: React.FC = () => {
       {/* 列表 */}
       <Paper sx={{ borderRadius: 2 }}>
         <ListPageTemplate
+          title="办公用品列表"
           columns={columns}
           data={data.items}
           loading={loading}
@@ -602,7 +597,7 @@ const OfficeSuppliesManagementPageRefactored: React.FC = () => {
               setShowViewModal(false);
               handleEdit(selectedSupply!);
             }}
-            sx={{ bgcolor: "#3b82f6" }}
+            sx={{ bgcolor: "primary.main" }}
           >
             编辑
           </Button>
@@ -725,7 +720,7 @@ const SupplyFormDialog: React.FC<SupplyFormDialogProps> = ({
 
         <DialogActions sx={{ p: 0, pt: 2, justifyContent: "flex-end" }}>
           <Button onClick={onClose} variant="outlined">取消</Button>
-          <Button type="submit" variant="contained" sx={{ bgcolor: "#3b82f6" }}>
+          <Button type="submit" variant="contained" sx={{ bgcolor: "primary.main" }}>
             {mode === "create" ? "创建" : "保存"}
           </Button>
         </DialogActions>

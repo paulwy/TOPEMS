@@ -10,7 +10,7 @@
  * 6. 主题色使用蓝色 (#3b82f6)
  */
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, type ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -98,7 +98,7 @@ const mockBookings: MeetingBooking[] = [
 
 // ============ 列定义 ============
 const getRoomColumns = (
-  getStatusBadge: (status: string) => JSX.Element,
+  getStatusBadge: (status: string) => ReactElement,
 ): ColumnDef<MeetingRoom>[] => [
   {
     id: "name",

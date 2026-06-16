@@ -266,7 +266,11 @@ const FinanceCostPage: React.FC = () => {
               placeholder="搜索成本中心、项目..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment> }}
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment>,
+                },
+              }}
               sx={{ width: 280 }}
             />
           </Stack>

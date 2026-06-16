@@ -23,7 +23,6 @@ import {
   DollarSign,
   Calendar,
   User,
-  RefreshCw,
 } from "lucide-react";
 import {
   Button,
@@ -40,8 +39,6 @@ import {
   Box,
   Typography,
   Stack,
-  IconButton,
-  Tooltip,
 } from "@mui/material";
 import {
   expenseApi,
@@ -126,25 +123,6 @@ const filters: FilterConfig[] = [
       { value: "training", label: "培训费" },
       { value: "other", label: "其他" },
     ],
-  },
-];
-
-// ============ 批量操作 ============
-const batchActions = [
-  {
-    label: "批量审批",
-    icon: <Check style={{ width: 16, height: 16 }} />,
-    color: "success" as const,
-  },
-  {
-    label: "批量拒绝",
-    icon: <AlertCircle style={{ width: 16, height: 16 }} />,
-    color: "warning" as const,
-  },
-  {
-    label: "批量删除",
-    icon: <Trash2 style={{ width: 16, height: 16 }} />,
-    color: "error" as const,
   },
 ];
 
@@ -366,9 +344,9 @@ const FinanceExpensePageRefactored: React.FC = () => {
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "status") setFilterStatus(value);
-      if (filterId === "expense_type") setFilterType(value);
+    (filters: Record<string, any>) => {
+      if (filters.status !== undefined) setFilterStatus(filters.status);
+      if (filters.expense_type !== undefined) setFilterType(filters.expense_type);
     },
     [],
   );
@@ -564,17 +542,15 @@ const FinanceExpensePageRefactored: React.FC = () => {
       <PageHeader
         title="费用报销"
         subtitle="管理员工费用报销申请，审批报销流程"
-        showBack
-        onBack={() => navigate("/dashboard")}
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Plus style={{ width: 18, height: 18 }} />}
-            onClick={() => setShowCreateModal(true)}
-          >
-            新建报销
-          </Button>
-        }
+        backButton={{ onClick: () => navigate("/dashboard") }}
+        actions={[
+          {
+            label: "新建报销",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ] as PageHeaderAction[]}
       />
 
       {/* 组织筛选 */}
@@ -683,6 +659,7 @@ const FinanceExpensePageRefactored: React.FC = () => {
       </Box>
 
       <ListPageTemplate
+        title="费用报销列表"
         columns={columns}
         data={filteredData}
         loading={loading}
@@ -691,16 +668,55 @@ const FinanceExpensePageRefactored: React.FC = () => {
         onFilterChange={handleFilterChange}
         onRefresh={fetchData}
         emptyMessage="暂无费用报销数据"
-        selection={{
-          selected: selectedIds,
-          onChange: setSelectedIds,
-        }}
-        batchActions={batchActions}
-        onBatchAction={(action) => {
-          if (action.label === "批量审批") handleBatchApprove();
-          else if (action.label === "批量拒绝") handleBatchReject();
-          else if (action.label === "批量删除") handleBatchDelete();
-        }}
+        selectable
+        selectedIds={selectedIds as (string | number)[]}
+        onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
+        headerContent={
+          selectedIds.length > 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                mb: 2,
+                p: 1.5,
+                bgcolor: "action.selected",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                已选中 {selectedIds.length} 条
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                color="success"
+                startIcon={<Check style={{ width: 16, height: 16 }} />}
+                onClick={handleBatchApprove}
+              >
+                批量审批
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="warning"
+                startIcon={<AlertCircle style={{ width: 16, height: 16 }} />}
+                onClick={handleBatchReject}
+              >
+                批量拒绝
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
+                onClick={handleBatchDelete}
+              >
+                批量删除
+              </Button>
+            </Box>
+          ) : null
+        }
       />
 
       {/* 创建对话框 */}
@@ -783,7 +799,7 @@ const FinanceExpensePageRefactored: React.FC = () => {
                 fullWidth
                 value={formData.expense_date}
                 onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Stack>
 
@@ -830,7 +846,7 @@ const FinanceExpensePageRefactored: React.FC = () => {
                   label="报销编号"
                   fullWidth
                   value={editingExpense.expense_number}
-                  InputProps={{ readOnly: true }}
+                  slotProps={{ input: { readOnly: true } }}
                 />
                 <TextField
                   label="申请人"
@@ -890,7 +906,7 @@ const FinanceExpensePageRefactored: React.FC = () => {
                   fullWidth
                   value={editingExpense.expense_date?.split("T")[0] || ""}
                   onChange={(e) => setEditingExpense({ ...editingExpense, expense_date: e.target.value || undefined })}
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Stack>
 

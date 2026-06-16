@@ -217,6 +217,7 @@ const getFilters = (): FilterConfig[] => [
 // ============ 组件 ============
 const WarehouseManagementPageRefactored: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
 
   // 数据状态
@@ -447,7 +448,7 @@ const WarehouseManagementPageRefactored: React.FC = () => {
             variant="contained"
             startIcon={<Plus style={{ width: 18, height: 18 }} />}
             onClick={handleAdd}
-            sx={{ bgcolor: "#3b82f6" }}
+            sx={{ bgcolor: theme.palette.primary.main }}
           >
             新增仓库
           </Button>
@@ -557,7 +558,7 @@ const WarehouseManagementPageRefactored: React.FC = () => {
               setShowViewModal(false);
               handleEdit(selectedWarehouse!);
             }}
-            sx={{ bgcolor: "#3b82f6" }}
+            sx={{ bgcolor: theme.palette.primary.main }}
           >
             编辑
           </Button>
@@ -661,7 +662,7 @@ const WarehouseFormDialog: React.FC<WarehouseFormDialogProps> = ({
 
         <DialogActions sx={{ p: 0, pt: 2, justifyContent: "flex-end" }}>
           <Button onClick={onClose} variant="outlined">取消</Button>
-          <Button type="submit" variant="contained" sx={{ bgcolor: "#3b82f6" }}>
+          <Button type="submit" variant="contained" sx={{ bgcolor: theme.palette.primary.main }}>
             {mode === "create" ? "创建" : "保存"}
           </Button>
         </DialogActions>

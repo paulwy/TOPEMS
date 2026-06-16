@@ -327,7 +327,11 @@ const FinanceAssetPage: React.FC = () => {
               placeholder="搜索资产编号、名称..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment> }}
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment>,
+                },
+              }}
               sx={{ width: 280 }}
             />
           </Stack>
@@ -387,7 +391,7 @@ const FinanceAssetPage: React.FC = () => {
           {editingAsset && (
             <Stack spacing={3} sx={{ pt: 2 }}>
               <Stack direction="row" spacing={2}>
-                <TextField label="资产编号" fullWidth value={editingAsset.asset_code} InputProps={{ readOnly: true }} />
+                <TextField label="资产编号" fullWidth value={editingAsset.asset_code} slotProps={{ input: { readOnly: true } }} />
                 <TextField label="资产名称" fullWidth value={editingAsset.asset_name} onChange={(e) => setEditingAsset({ ...editingAsset, asset_name: e.target.value })} />
               </Stack>
               <Stack direction="row" spacing={2}>

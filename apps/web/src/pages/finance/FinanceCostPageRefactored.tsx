@@ -72,68 +72,62 @@ const getCostColumns = (
 ): ColumnDef<CostEntry>[] => [
   {
     id: "cost_center",
-    header: "成本中心",
-    accessor: "cost_center",
-    render: (value) => <Chip label={value} size="small" color="primary" />,
+    label: "成本中心",
+    render: (row) => <Chip label={row.cost_center} size="small" color="primary" />,
   },
   {
     id: "cost_item",
-    header: "成本项目",
-    accessor: "cost_item",
-    render: (value) => <Box sx={{ fontWeight: 500 }}>{value}</Box>,
+    label: "成本项目",
+    render: (row) => <Box sx={{ fontWeight: 500 }}>{row.cost_item}</Box>,
   },
   {
     id: "budget_amount",
-    header: "预算金额",
-    accessor: "budget_amount",
-    render: (value) => (
+    label: "预算金额",
+    render: (row) => (
       <Box sx={{ fontFamily: "monospace", color: "text.secondary" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.budget_amount)}
       </Box>
     ),
   },
   {
     id: "actual_cost",
-    header: "实际成本",
-    accessor: "actual_cost",
-    render: (value) => (
+    label: "实际成本",
+    render: (row) => (
       <Box sx={{ fontFamily: "monospace", fontWeight: 600 }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.actual_cost)}
       </Box>
     ),
   },
   {
     id: "variance",
-    header: "差异",
-    accessor: "variance",
-    render: (value) => {
-      const isPositive = value >= 0;
+    label: "差异",
+    render: (row) => {
+      const isPositive = row.variance >= 0;
       return (
-        <Box sx={{ 
-          display: "flex", 
+        <Box sx={{
+          display: "flex",
           alignItems: "center",
           color: isPositive ? "success.main" : "error.main",
           fontFamily: "monospace",
-          fontWeight: 600 
+          fontWeight: 600
         }}>
           {isPositive ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
-          {formatCurrency(Math.abs(value))}
+          {formatCurrency(Math.abs(row.variance))}
         </Box>
       );
     },
   },
   {
     id: "execution_rate",
-    header: "执行率",
-    accessor: "execution_rate",
-    render: (value) => {
-      const color = value <= 100 ? "success" : value <= 110 ? "warning" : "error";
+    label: "执行率",
+    render: (row) => {
+      const color = row.execution_rate <= 100 ? "success" : row.execution_rate <= 110 ? "warning" : "error";
       return (
-        <Chip 
-          label={`${value}%`} 
-          size="small" 
+        <Chip
+          label={`${row.execution_rate}%`}
+          size="small"
           color={color}
-          icon={value > 100 ? <AlertCircle size={12} /> : undefined}
+          icon={row.execution_rate > 100 ? <AlertCircle size={12} /> : undefined}
         />
       );
     },
@@ -154,12 +148,6 @@ const getRowActions = (
 
 // ============ 筛选配置 ============
 const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "text",
-    placeholder: "搜索成本中心、项目...",
-  },
   {
     id: "cost_center",
     label: "成本中心",
@@ -207,9 +195,8 @@ const FinanceCostPageRefactored: React.FC = () => {
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "cost_center") setFilterCenter(value);
+    (filters: Record<string, any>) => {
+      if (filters.cost_center !== undefined) setFilterCenter(filters.cost_center);
     },
     [],
   );
@@ -230,18 +217,16 @@ const FinanceCostPageRefactored: React.FC = () => {
       <PageHeader
         title="成本管理"
         subtitle="管理成本中心预算和实际成本，分析成本差异"
-        showBack
-        onBack={() => navigate(-1)}
-        actions={
-          <Button
-            variant="outlined"
-            startIcon={<Download style={{ width: 18, height: 18 }} />}
-            onClick={handleExport}
-            sx={{ borderColor: "#22c55e", color: "#22c55e" }}
-          >
-            导出报表
-          </Button>
-        }
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[
+          {
+            label: "导出报表",
+            icon: <Download style={{ width: 18, height: 18 }} />,
+            onClick: handleExport,
+            variant: "outlined",
+            color: "success",
+          },
+        ]}
       />
 
       <Box sx={{ px: 3, pb: 3 }}>
@@ -278,12 +263,15 @@ const FinanceCostPageRefactored: React.FC = () => {
         </Box>
 
         <ListPageTemplate
+          title="成本列表"
           columns={getCostColumns(handleAnalysis)}
           data={filteredData}
           rowActions={getRowActions(handleAnalysis)}
           filters={filters}
           onFilterChange={handleFilterChange}
           searchable
+          searchValue={searchText}
+          onSearch={setSearchText}
           searchPlaceholder="搜索成本中心、项目..."
           emptyMessage="暂无成本数据"
         />

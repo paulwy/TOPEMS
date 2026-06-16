@@ -213,8 +213,9 @@ const FinanceBudgetDetailPageRefactored: React.FC = () => {
       <PageHeader
         title={budget.name}
         subtitle={`预算编号: ${budget.code} | ${budget.department} | ${budget.fiscalYear}年度`}
-        showBack
-        onBack={() => navigate(-1)}
+        backButton={{
+          onClick: () => navigate(-1),
+        }}
         rightContent={
           <Stack direction="row" spacing={1}>
             <Button
@@ -449,7 +450,7 @@ const FinanceBudgetDetailPageRefactored: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
-            <Grid xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ p: 2, bgcolor: "blue.50", borderRadius: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                   <AlertCircle sx={{ width: 24, height: 24, color: "blue.600" }} />
@@ -460,7 +461,7 @@ const FinanceBudgetDetailPageRefactored: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ p: 2, bgcolor: "green.50", borderRadius: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                   <CheckCircle2 sx={{ width: 24, height: 24, color: "green.600" }} />

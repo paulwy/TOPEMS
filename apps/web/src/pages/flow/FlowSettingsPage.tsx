@@ -217,10 +217,7 @@ const FlowSettingsPage: React.FC = () => {
                   }}
                 >
                   <Box sx={{ mr: 1.5, color: "#8b5cf6" }}>{tab.icon}</Box>
-                  <ListItemText
-                    primary={tab.label}
-                    primaryTypographyProps={{ fontSize: 14 }}
-                  />
+                  <Typography variant="body2">{tab.label}</Typography>
                 </ListItem>
               ))}
             </List>
@@ -296,7 +293,7 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       归档设置
                     </Typography>
-                    <Stack direction="row" spacing={2} alignItems="center">
+                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                       <Switch
                         checked={basicSettings.autoArchive}
                         onChange={(e) =>
@@ -333,7 +330,7 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       撤回设置
                     </Typography>
-                    <Stack direction="row" spacing={2} alignItems="center">
+                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                       <Switch
                         checked={basicSettings.allowRecall}
                         onChange={(e) =>
@@ -370,7 +367,7 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       草稿设置
                     </Typography>
-                    <Stack direction="row" spacing={2} alignItems="center">
+                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                       <Switch
                         checked={basicSettings.enableDraft}
                         onChange={(e) =>
@@ -399,7 +396,7 @@ const FlowSettingsPage: React.FC = () => {
                   </Box>
                 </Stack>
 
-                <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
+                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>
@@ -461,7 +458,7 @@ const FlowSettingsPage: React.FC = () => {
                       超时设置
                     </Typography>
                     <Stack spacing={2}>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 100 }}>
                           默认超时时间
                         </Typography>
@@ -480,7 +477,7 @@ const FlowSettingsPage: React.FC = () => {
                         />
                         <Typography variant="body2">小时</Typography>
                       </Stack>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 100 }}>
                           超时操作
                         </Typography>
@@ -512,7 +509,7 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       催办设置
                     </Typography>
-                    <Stack direction="row" spacing={2} alignItems="center">
+                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                       <Switch
                         checked={approvalSettings.enableUrge}
                         onChange={(e) =>
@@ -543,7 +540,7 @@ const FlowSettingsPage: React.FC = () => {
                   <Divider />
 
                   <Box>
-                    <Stack direction="row" spacing={2} alignItems="center">
+                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                       <Switch
                         checked={approvalSettings.enableDelegation}
                         onChange={(e) =>
@@ -558,7 +555,7 @@ const FlowSettingsPage: React.FC = () => {
                   </Box>
                 </Stack>
 
-                <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
+                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>
@@ -632,7 +629,7 @@ const FlowSettingsPage: React.FC = () => {
                   </Stack>
                 </Box>
 
-                <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
+                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>
@@ -657,7 +654,7 @@ const FlowSettingsPage: React.FC = () => {
                       流程管理权限
                     </Typography>
                     <Stack spacing={2}>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           创建流程定义
                         </Typography>
@@ -668,7 +665,7 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           编辑流程定义
                         </Typography>
@@ -679,7 +676,7 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           删除流程定义
                         </Typography>
@@ -703,7 +700,7 @@ const FlowSettingsPage: React.FC = () => {
                       流程操作权限
                     </Typography>
                     <Stack spacing={2}>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           催办权限
                         </Typography>
@@ -714,7 +711,7 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           终止权限
                         </Typography>
@@ -725,7 +722,7 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           取回权限
                         </Typography>
@@ -740,7 +737,7 @@ const FlowSettingsPage: React.FC = () => {
                   </Box>
                 </Stack>
 
-                <Stack direction="row" justifyContent="flex-end" sx={{ mt: 3 }}>
+                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>

@@ -10,7 +10,7 @@
  * 6. 主题色使用蓝色 (#3b82f6)
  */
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, type JSX } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -91,7 +91,7 @@ const getColumns = (
           sx={{
             width: 40,
             height: 40,
-            bgcolor: "#3b82f6",
+            bgcolor: "primary.main",
             color: "white",
             fontSize: "0.875rem",
           }}
@@ -694,16 +694,15 @@ const HrmEmployeePage: React.FC = () => {
         subtitle={`共 ${data.total} 名员工`}
         showBack
         onBack={() => navigate(-1)}
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Plus style={{ width: 18, height: 18 }} />}
-            onClick={handleAdd}
-            sx={{ bgcolor: "#3b82f6" }}
-          >
-            新增员工
-          </Button>
-        }
+        actions={[
+          {
+            label: "新增员工",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleAdd,
+            variant: "contained",
+            color: "primary",
+          },
+        ]}
       />
 
       {/* 统计概览 */}
@@ -766,7 +765,7 @@ const HrmEmployeePage: React.FC = () => {
               variant={viewMode === "list" ? "contained" : "text"}
               onClick={() => setViewMode("list")}
               startIcon={<List style={{ width: 16, height: 16 }} />}
-              sx={viewMode === "list" ? { bgcolor: "#3b82f6" } : {}}
+              sx={viewMode === "list" ? { bgcolor: "primary.main" } : {}}
             >
               列表
             </Button>
@@ -775,7 +774,7 @@ const HrmEmployeePage: React.FC = () => {
               variant={viewMode === "tree" ? "contained" : "text"}
               onClick={() => setViewMode("tree")}
               startIcon={<LayoutGrid style={{ width: 16, height: 16 }} />}
-              sx={viewMode === "tree" ? { bgcolor: "#3b82f6" } : {}}
+              sx={viewMode === "tree" ? { bgcolor: "primary.main" } : {}}
             >
               树形
             </Button>
@@ -787,6 +786,7 @@ const HrmEmployeePage: React.FC = () => {
       {viewMode === "list" ? (
         <Paper sx={{ borderRadius: 2 }}>
           <ListPageTemplate
+            title="员工列表"
             columns={columns}
             data={data.items}
             loading={loading}
@@ -851,6 +851,7 @@ const HrmEmployeePage: React.FC = () => {
                   </Typography>
                 </Box>
                 <ListPageTemplate
+                  title={departments.find((d) => d.id === selectedDeptId)?.name || "部门员工"}
                   columns={columns}
                   data={filteredEmployees.filter((e) => e.department_id === selectedDeptId)}
                   rowActions={rowActions}
@@ -960,7 +961,7 @@ const HrmEmployeePage: React.FC = () => {
               setShowViewModal(false);
               handleEdit(selectedEmployee!);
             }}
-            sx={{ bgcolor: "#3b82f6" }}
+            sx={{ bgcolor: "primary.main" }}
           >
             编辑
           </Button>
@@ -1132,17 +1133,17 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             <AIHelperButton
               type="generate"
               onClick={() => onOpenAICodeGenerator(mode)}
-              size="sm"
+              size="small"
               label="生成工号"
             />
-            <AIHelperButton type="complete" onClick={onOpenAIDataCompleter} size="sm" label="智能补全" />
-            <AIHelperButton type="validate" onClick={onOpenAIFormValidator} size="sm" label="AI校验" />
+            <AIHelperButton type="complete" onClick={onOpenAIDataCompleter} size="small" label="智能补全" />
+            <AIHelperButton type="validate" onClick={onOpenAIFormValidator} size="small" label="AI校验" />
           </Box>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button onClick={onClose} variant="outlined">
               取消
             </Button>
-            <Button type="submit" variant="contained" sx={{ bgcolor: "#3b82f6" }}>
+            <Button type="submit" variant="contained" sx={{ bgcolor: "primary.main" }}>
               {mode === "create" ? "创建" : "保存"}
             </Button>
           </Box>
@@ -1187,10 +1188,10 @@ const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId,
             pl: level * 2 + 1,
             cursor: "pointer",
             borderRadius: 1,
-            bgcolor: isSelected ? "#3b82f6" : "transparent",
+            bgcolor: isSelected ? "primary.main" : "transparent",
             color: isSelected ? "white" : "text.primary",
             "&:hover": {
-              bgcolor: isSelected ? "#3b82f6" : "action.hover",
+              bgcolor: isSelected ? "primary.main" : "action.hover",
             },
           }}
           onClick={() => {

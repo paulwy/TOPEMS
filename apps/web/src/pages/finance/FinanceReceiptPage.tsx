@@ -293,9 +293,9 @@ const FinanceReceiptPage: React.FC = () => {
               </IconButton>
               <MuiBox>
                 <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <Box component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
+                  <MuiBox sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
                     <Banknote size={28} />
-                  </Box>
+                  </MuiBox>
                   收款管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -323,7 +323,7 @@ const FinanceReceiptPage: React.FC = () => {
               placeholder="搜索收款单号、客户..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment> }}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment> } }}
               sx={{ width: 280 }}
             />
           </Stack>

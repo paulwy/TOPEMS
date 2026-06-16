@@ -409,7 +409,7 @@ const FinanceAssetPageRefactored: React.FC = () => {
           {editingAsset && (
             <Stack spacing={3} sx={{ pt: 2 }}>
               <Stack direction="row" spacing={2}>
-                <TextField label="资产编号" fullWidth value={editingAsset.asset_code} InputProps={{ readOnly: true }} />
+                <TextField label="资产编号" fullWidth value={editingAsset.asset_code} slotProps={{ input: { readOnly: true } }} />
                 <TextField label="资产名称" fullWidth value={editingAsset.asset_name} onChange={(e) => setEditingAsset({ ...editingAsset, asset_name: e.target.value })} />
               </Stack>
               <Stack direction="row" spacing={2}>

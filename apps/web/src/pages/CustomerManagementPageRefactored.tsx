@@ -39,7 +39,7 @@ import {
   type ColumnDef,
   type RowAction,
 } from "../components/templates";
-import { PageHeader } from "../components/layout";
+import { PageHeader, type PageHeaderAction } from "../components/layout";
 import { FilterBar, type FilterConfig } from "../components/mui";
 
 // ============ 列定义 ============
@@ -67,22 +67,22 @@ const columns: ColumnDef<Customer>[] = [
     id: "contact",
     header: "联系人",
     accessor: "contact_name",
-    render: (value) => value || "-",
+    render: (row) => row.contact_name || "-",
   },
   {
     id: "phone",
     header: "联系电话",
     accessor: "phone",
-    render: (value) => value || "-",
+    render: (row) => row.phone || "-",
   },
   {
     id: "status",
     header: "状态",
     accessor: "status",
-    render: (value) => (
+    render: (row) => (
       <Chip
-        label={value === "active" ? "活跃" : "停用"}
-        color={value === "active" ? "success" : "default"}
+        label={row.status === "active" ? "活跃" : "停用"}
+        color={row.status === "active" ? "success" : "default"}
         size="small"
       />
     ),
@@ -169,12 +169,12 @@ const CustomerManagementPage: React.FC = () => {
     items: Customer[];
     total: number;
     page: number;
-    page_size: number;
+    pageSize: number;
   }>({
     items: [],
     total: 0,
     page: 1,
-    page_size: 10,
+    pageSize: 10,
   });
 
   // 筛选状态
@@ -213,7 +213,7 @@ const CustomerManagementPage: React.FC = () => {
           items: response.data.items || [],
           total: response.data.total || 0,
           page: response.data.page || 1,
-          page_size: response.data.page_size || 10,
+          pageSize: response.data.pageSize || 10,
         });
       }
     } catch (error: any) {
@@ -295,33 +295,28 @@ const CustomerManagementPage: React.FC = () => {
         subtitle={`共 ${data.total} 个客户`}
         showBack
         onBack={() => navigate(-1)}
-        actions={
-          <>
-            <Button
-              variant="outlined"
-              startIcon={<Upload style={{ width: 18, height: 18 }} />}
-              onClick={() => setShowImportExport(true)}
-            >
-              导入
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Download style={{ width: 18, height: 18 }} />}
-              onClick={() => {
-                // TODO: 导出功能
-              }}
-            >
-              导出
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={() => setShowCreateModal(true)}
-            >
-              新建客户
-            </Button>
-          </>
-        }
+        actions={[
+          {
+            label: "导入",
+            variant: "outlined",
+            icon: <Upload style={{ width: 18, height: 18 }} />,
+            onClick: () => setShowImportExport(true),
+          },
+          {
+            label: "导出",
+            variant: "outlined",
+            icon: <Download style={{ width: 18, height: 18 }} />,
+            onClick: () => {
+              // TODO: 导出功能
+            },
+          },
+          {
+            label: "新建客户",
+            variant: "contained",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: () => setShowCreateModal(true),
+          },
+        ]}
       />
 
       <ListPageTemplate

@@ -42,12 +42,27 @@ export interface PageHeaderProps {
   title: string;
   /** 副标题 */
   subtitle?: string;
+  /**
+   * 自定义图标（仅用于展示，兼容旧 API）
+   * @deprecated 该字段当前未在头部渲染，如需图标请使用 actions 中的按钮
+   */
+  icon?: React.ReactNode;
   /** 返回按钮配置 */
   backButton?: {
     href?: string;
     onClick?: () => void;
     tooltip?: string;
   };
+  /**
+   * 是否显示返回按钮（兼容旧 API，等价于 backButton）
+   * @deprecated 请使用 backButton
+   */
+  showBack?: boolean;
+  /**
+   * 返回按钮点击回调（兼容旧 API，等价于 backButton.onClick）
+   * @deprecated 请使用 backButton.onClick
+   */
+  onBack?: () => void;
   /** 搜索框配置 */
   searchBox?: {
     value?: string;
@@ -81,7 +96,10 @@ export interface PageHeaderProps {
 export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
-  backButton,
+  icon: _icon,
+  backButton: backButtonProp,
+  showBack,
+  onBack,
   searchBox,
   createButton,
   actions,
@@ -91,6 +109,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   loading = false,
   sx,
 }) => {
+  // 兼容旧 API：showBack + onBack → backButton
+  const backButton = backButtonProp || (showBack ? { onClick: onBack } : undefined);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 

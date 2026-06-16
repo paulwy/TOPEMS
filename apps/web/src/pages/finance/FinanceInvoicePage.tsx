@@ -289,9 +289,9 @@ const FinanceInvoicePage: React.FC = () => {
               </IconButton>
               <MuiBox>
                 <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <Box component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
+                  <MuiBox component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
                     <FileText size={28} />
-                  </Box>
+                  </MuiBox>
                   发票管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -319,7 +319,7 @@ const FinanceInvoicePage: React.FC = () => {
               placeholder="搜索发票号码、购买方、销售方..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment> }}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment> } }}
               sx={{ width: 320 }}
             />
           </Stack>

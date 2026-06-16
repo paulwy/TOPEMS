@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { BoxProps } from "@mui/material";
 import {
   Box,
@@ -25,8 +25,18 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Collapse,
   useTheme,
   useMediaQuery,
+  Popover,
+  Switch,
+  List,
+  ListItem,
+  OutlinedInput,
+  Select,
+  FormControl,
+  InputLabel,
+  FormControlLabel,
 } from "@mui/material";
 import {
   Search,
@@ -39,43 +49,98 @@ import {
   Trash2,
   Download,
   RefreshCw,
+  ChevronRight,
+  Settings2,
+  Columns3,
 } from "lucide-react";
+
+// 从 FilterBar 导入 FilterConfig 类型以确保类型一致
+import type { FilterConfig as FilterConfigType } from "../mui/FilterBar";
 
 // ============ 类型定义 ============
 
+/**
+ * 列定义接口
+ * @template T - 数据行类型
+ */
 export interface ColumnDef<T = any> {
+  /** 列唯一标识 */
   id: string;
-  label: string;
+  /** 列标题 */
+  label?: string;
+  /** @deprecated 请使用 label 字段 */
+  header?: string;
+  /** @deprecated 字段已通过 id 标识，无需额外配置 */
+  accessor?: string;
+  /** 列宽度 */
   width?: number | string;
+  /** 最小宽度 */
   minWidth?: number;
+  /** 文本对齐方式 */
   align?: "left" | "center" | "right";
+  /** 是否可排序 */
   sortable?: boolean;
+  /** 自定义单元格渲染 */
   render?: (row: T, index: number) => React.ReactNode;
+  /** 自定义表头渲染 */
   renderHeader?: (column: ColumnDef<T>) => React.ReactNode;
+  /** 是否可配置显示/隐藏 */
+  configurable?: boolean;
 }
 
+/**
+ * 筛选选项接口
+ */
 export interface FilterOption {
+  /** 显示标签 */
   label: string;
+  /** 选项值 */
   value: string | number;
 }
 
-export interface FilterConfig {
-  id: string;
+// 使用从 FilterBar 导入的 FilterConfigType
+// export interface FilterConfig 已删除，统一使用 FilterBar.FilterConfig
+
+/**
+ * 行操作接口
+ * @template T - 数据行类型
+ */
+export interface RowAction<T = any> {
+  /** 操作标签 */
   label: string;
-  type: "select" | "date" | "text";
-  options?: FilterOption[];
-  value?: any;
-  onChange?: (value: any) => void;
+  /** 操作图标 */
+  icon?: React.ReactNode;
+  /** 点击回调 */
+  onClick?: (row: T) => void;
+  /** 跳转链接 */
+  href?: string;
+  /** 按钮颜色 */
+  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
+  /** 条件显示 */
+  show?: (row: T) => boolean;
+  /** 是否显示分隔线 */
+  divider?: boolean;
 }
 
-export interface RowAction<T = any> {
-  label: string;
-  icon?: React.ReactNode;
-  onClick?: (row: T) => void;
-  href?: string;
-  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
-  show?: (row: T) => boolean;
-  divider?: boolean;
+/**
+ * 展开行渲染属性
+ * @template T - 数据行类型
+ */
+export interface ExpandedRowRenderProps<T = any> {
+  /** 当前行数据 */
+  row: T;
+  /** 行索引 */
+  index: number;
+}
+
+/**
+ * 列配置接口（用于列显示/隐藏配置）
+ */
+export interface ColumnConfig {
+  /** 列ID */
+  id: string;
+  /** 是否显示 */
+  visible: boolean;
 }
 
 export interface ListPageTemplateProps<T = any> extends BoxProps {
@@ -111,7 +176,7 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
     pageSize: number;
     total: number;
     onPageChange: (page: number) => void;
-    onPageSizeChange: (pageSize: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
   };
 
   // 搜索
@@ -121,7 +186,9 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
   onSearch?: (value: string) => void;
 
   // 筛选
-  filters?: FilterConfig[];
+  filters?: FilterConfigType[];
+  /** 受控的筛选值（与 onFilterChange 配合使用） */
+  filtersValue?: Record<string, any>;
   onFilterChange?: (filters: Record<string, any>) => void;
 
   // 操作
@@ -132,6 +199,15 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
     variant?: "contained" | "outlined" | "text";
   }>;
   rowActions?: RowAction<T>[];
+  /**
+   * 自定义行操作渲染函数（与 rowActions 二选一，优先级更高）
+   */
+  renderRowActions?: (row: T, index: number) => React.ReactNode;
+  /**
+   * 自定义操作按钮区域（渲染在筛选栏下方、表格上方）
+   * @deprecated 推荐使用 headerContent
+   */
+  customActions?: React.ReactNode;
   onRefresh?: () => void;
 
   // 空状态
@@ -141,10 +217,53 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
   // 自定义
   headerContent?: React.ReactNode;
   footerContent?: React.ReactNode;
+
+  // ============ 新增功能 ============
+
+  /**
+   * 行展开配置
+   * 设置为 true 启用行展开功能，或传入自定义渲染函数
+   */
+  expandable?: boolean | ((row: T, index: number) => React.ReactNode);
+  /** 默认展开的行ID数组 */
+  defaultExpandedIds?: (string | number)[];
+  /** 展开状态变化回调 */
+  onExpandedChange?: (expandedIds: (string | number)[]) => void;
+
+  /**
+   * 列配置功能
+   * 设置为 true 显示列配置按钮，允许用户显示/隐藏列
+   */
+  columnConfigurable?: boolean;
+  /** 默认列配置 */
+  defaultColumnConfig?: ColumnConfig[];
+  /** 列配置变化回调 */
+  onColumnConfigChange?: (config: ColumnConfig[]) => void;
 }
 
 // ============ 列表页模板组件 ============
 
+/**
+ * 列表页模板组件
+ * 提供完整的列表页面布局，包括搜索、筛选、排序、分页、行操作等功能
+ * 
+ * @example
+ * ```tsx
+ * <ListPageTemplate
+ *   title="用户列表"
+ *   columns={[
+ *     { id: 'name', label: '姓名', sortable: true },
+ *     { id: 'email', label: '邮箱' },
+ *   ]}
+ *   data={users}
+ *   expandable
+ *   columnConfigurable
+ *   filters={[
+ *     { id: 'status', label: '状态', type: 'multiselect', options: statusOptions },
+ *   ]}
+ * />
+ * ```
+ */
 export const ListPageTemplate = <T extends Record<string, any>>({
   title,
   subtitle,
@@ -175,6 +294,13 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   emptyIcon,
   headerContent,
   footerContent,
+  // 新增属性
+  expandable,
+  defaultExpandedIds = [],
+  onExpandedChange,
+  columnConfigurable,
+  defaultColumnConfig = [],
+  onColumnConfigChange,
   ...props
 }: ListPageTemplateProps<T>) => {
   const theme = useTheme();
@@ -185,6 +311,32 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   const [searchInput, setSearchInput] = useState(searchValue || "");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRow, setSelectedRow] = useState<T | null>(null);
+
+  // 行展开状态
+  const [expandedIds, setExpandedIds] = useState<(string | number)[]>(defaultExpandedIds);
+
+  // 列配置状态
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
+    if (defaultColumnConfig.length > 0) {
+      return defaultColumnConfig;
+    }
+    return columns.map((col) => ({
+      id: col.id,
+      visible: true,
+    }));
+  });
+
+  // 列配置 Popover 状态
+  const [columnConfigAnchor, setColumnConfigAnchor] = useState<HTMLElement | null>(null);
+
+  // 获取可见的列
+  const visibleColumns = useMemo(() => {
+    if (!columnConfigurable) return columns;
+    return columns.filter((col) => {
+      const config = columnConfig.find((c) => c.id === col.id);
+      return config ? config.visible : true;
+    });
+  }, [columns, columnConfig, columnConfigurable]);
 
   // 处理排序
   const handleSort = useCallback(
@@ -257,6 +409,31 @@ export const ListPageTemplate = <T extends Record<string, any>>({
     [selectedRow, handleRowActionClose],
   );
 
+  // 处理行展开
+  const handleExpandRow = useCallback(
+    (row: T) => {
+      const rowId = getRowId?.(row) ?? row.id;
+      const newExpanded = expandedIds.includes(rowId)
+        ? expandedIds.filter((id) => id !== rowId)
+        : [...expandedIds, rowId];
+      setExpandedIds(newExpanded);
+      onExpandedChange?.(newExpanded);
+    },
+    [expandedIds, getRowId, onExpandedChange],
+  );
+
+  // 处理列配置变化
+  const handleColumnVisibilityChange = useCallback(
+    (columnId: string, visible: boolean) => {
+      const newConfig = columnConfig.map((col) =>
+        col.id === columnId ? { ...col, visible } : col,
+      );
+      setColumnConfig(newConfig);
+      onColumnConfigChange?.(newConfig);
+    },
+    [columnConfig, onColumnConfigChange],
+  );
+
   // 渲染表格头部
   const renderTableHead = () => (
     <TableHead>
@@ -272,7 +449,8 @@ export const ListPageTemplate = <T extends Record<string, any>>({
             />
           </TableCell>
         )}
-        {columns.map((column) => (
+        {expandable && <TableCell padding="checkbox" sx={{ width: 48 }} />}
+        {visibleColumns.map((column) => (
           <TableCell
             key={column.id}
             align={column.align || "left"}
@@ -291,10 +469,10 @@ export const ListPageTemplate = <T extends Record<string, any>>({
                 direction={sortBy === column.id ? sortOrder : "asc"}
                 onClick={() => handleSort(column.id)}
               >
-                {column.label}
+                {column.label || column.header}
               </TableSortLabel>
             ) : (
-              column.label
+              column.label || column.header
             )}
           </TableCell>
         ))}
@@ -303,9 +481,29 @@ export const ListPageTemplate = <T extends Record<string, any>>({
             操作
           </TableCell>
         )}
+        {columnConfigurable && (
+          <TableCell align="right" sx={{ width: 48 }}>
+            <Tooltip title="配置列">
+              <IconButton
+                size="small"
+                onClick={(e) => setColumnConfigAnchor(e.currentTarget)}
+              >
+                <Columns3 style={{ width: 18, height: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </TableCell>
+        )}
       </TableRow>
     </TableHead>
   );
+
+  // 渲染展开行内容
+  const renderExpandedRow = (row: T, index: number) => {
+    if (typeof expandable === "function") {
+      return expandable(row, index);
+    }
+    return null;
+  };
 
   // 渲染表格内容
   const renderTableBody = () => {
@@ -317,7 +515,12 @@ export const ListPageTemplate = <T extends Record<string, any>>({
               <Skeleton variant="rectangular" width={20} height={20} />
             </TableCell>
           )}
-          {columns.map((column) => (
+          {expandable && (
+            <TableCell padding="checkbox">
+              <Skeleton variant="rectangular" width={20} height={20} />
+            </TableCell>
+          )}
+          {visibleColumns.map((column) => (
             <TableCell key={column.id}>
               <Skeleton variant="text" width="80%" />
             </TableCell>
@@ -327,6 +530,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
               <Skeleton variant="text" width={60} />
             </TableCell>
           )}
+          {columnConfigurable && <TableCell />}
         </TableRow>
       ));
     }
@@ -336,7 +540,11 @@ export const ListPageTemplate = <T extends Record<string, any>>({
         <TableRow>
           <TableCell
             colSpan={
-              columns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0)
+              visibleColumns.length +
+              (selectable ? 1 : 0) +
+              (expandable ? 1 : 0) +
+              (rowActions ? 1 : 0) +
+              (columnConfigurable ? 1 : 0)
             }
             align="center"
             sx={{ py: 8 }}
@@ -352,7 +560,11 @@ export const ListPageTemplate = <T extends Record<string, any>>({
         <TableRow>
           <TableCell
             colSpan={
-              columns.length + (selectable ? 1 : 0) + (rowActions ? 1 : 0)
+              visibleColumns.length +
+              (selectable ? 1 : 0) +
+              (expandable ? 1 : 0) +
+              (rowActions ? 1 : 0) +
+              (columnConfigurable ? 1 : 0)
             }
             align="center"
             sx={{ py: 8 }}
@@ -380,81 +592,126 @@ export const ListPageTemplate = <T extends Record<string, any>>({
     return data.map((row, index) => {
       const rowId = getRowId?.(row) ?? row.id;
       const isSelected = selectedIds.includes(rowId);
+      const isExpanded = expandedIds.includes(rowId);
 
       return (
-        <TableRow
-          key={rowId}
-          hover
-          selected={isSelected}
-          onClick={() => onRowClick?.(row)}
-          sx={{
-            cursor: onRowClick ? "pointer" : "default",
-            "&:hover": {
-              backgroundColor: "action.hover",
-            },
-          }}
-        >
-          {selectable && (
-            <TableCell padding="checkbox">
-              <Checkbox
-                checked={isSelected}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelectRow(row);
-                }}
-              />
-            </TableCell>
-          )}
-          {columns.map((column) => (
-            <TableCell key={column.id} align={column.align || "left"}>
-              {column.render ? column.render(row, index) : row[column.id]}
-            </TableCell>
-          ))}
-          {rowActions && rowActions.length > 0 && (
-            <TableCell align="right">
-              {isMobile ? (
+        <React.Fragment key={rowId}>
+          <TableRow
+            hover
+            selected={isSelected}
+            onClick={() => onRowClick?.(row)}
+            sx={{
+              cursor: onRowClick ? "pointer" : "default",
+              "&:hover": {
+                backgroundColor: "action.hover",
+              },
+            }}
+          >
+            {selectable && (
+              <TableCell padding="checkbox">
+                <Checkbox
+                  checked={isSelected}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectRow(row);
+                  }}
+                />
+              </TableCell>
+            )}
+            {expandable && (
+              <TableCell padding="checkbox">
                 <IconButton
                   size="small"
-                  onClick={(e) => handleRowActionClick(e, row)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExpandRow(row);
+                  }}
                 >
-                  <MoreHorizontal style={{ width: 18, height: 18 }} />
+                  <ChevronRight
+                    style={{
+                      width: 18,
+                      height: 18,
+                      transform: isExpanded
+                        ? "rotate(90deg)"
+                        : "rotate(0deg)",
+                      transition: "transform 0.2s",
+                    }}
+                  />
                 </IconButton>
-              ) : (
-                <Box
-                  sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}
-                >
-                  {rowActions.slice(0, 3).map((action, actionIndex) => {
-                    if (action.show && !action.show(row)) return null;
-                    return (
-                      <Tooltip key={actionIndex} title={action.label}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            action.onClick?.(row);
-                          }}
-                          color={action.color}
-                        >
-                          {action.icon || (
-                            <MoreHorizontal style={{ width: 16, height: 16 }} />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                    );
-                  })}
-                  {rowActions.length > 3 && (
-                    <IconButton
-                      size="small"
-                      onClick={(e) => handleRowActionClick(e, row)}
-                    >
-                      <MoreHorizontal style={{ width: 16, height: 16 }} />
-                    </IconButton>
-                  )}
-                </Box>
-              )}
-            </TableCell>
+              </TableCell>
+            )}
+            {visibleColumns.map((column) => (
+              <TableCell key={column.id} align={column.align || "left"}>
+                {column.render ? column.render(row, index) : row[column.id]}
+              </TableCell>
+            ))}
+            {rowActions && rowActions.length > 0 && (
+              <TableCell align="right">
+                {isMobile ? (
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleRowActionClick(e, row)}
+                  >
+                    <MoreHorizontal style={{ width: 18, height: 18 }} />
+                  </IconButton>
+                ) : (
+                  <Box
+                    sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}
+                  >
+                    {rowActions.slice(0, 3).map((action, actionIndex) => {
+                      if (action.show && !action.show(row)) return null;
+                      return (
+                        <Tooltip key={actionIndex} title={action.label}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              action.onClick?.(row);
+                            }}
+                            color={action.color}
+                          >
+                            {action.icon || (
+                              <MoreHorizontal style={{ width: 16, height: 16 }} />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      );
+                    })}
+                    {rowActions.length > 3 && (
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleRowActionClick(e, row)}
+                      >
+                        <MoreHorizontal style={{ width: 16, height: 16 }} />
+                      </IconButton>
+                    )}
+                  </Box>
+                )}
+              </TableCell>
+            )}
+            {columnConfigurable && <TableCell />}
+          </TableRow>
+          {expandable && isExpanded && (
+            <TableRow>
+              <TableCell
+                colSpan={
+                  visibleColumns.length +
+                  (selectable ? 1 : 0) +
+                  (expandable ? 1 : 0) +
+                  (rowActions ? 1 : 0) +
+                  (columnConfigurable ? 1 : 0)
+                }
+                sx={{ py: 0 }}
+              >
+                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                  <Box sx={{ py: 2, px: 1 }}>
+                    {renderExpandedRow(row, index)}
+                  </Box>
+                </Collapse>
+              </TableCell>
+            </TableRow>
           )}
-        </TableRow>
+        </React.Fragment>
       );
     });
   };
@@ -471,7 +728,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
         onPageChange={(_, page) => pagination.onPageChange(page)}
         rowsPerPage={pagination.pageSize}
         onRowsPerPageChange={(e) =>
-          pagination.onPageSizeChange(Number(e.target.value))
+          pagination.onPageSizeChange?.(Number(e.target.value))
         }
         rowsPerPageOptions={[10, 20, 50, 100]}
         labelRowsPerPage="每页行数"
@@ -480,6 +737,119 @@ export const ListPageTemplate = <T extends Record<string, any>>({
         }
       />
     );
+  };
+
+  // 渲染筛选器
+  const renderFilter = (filter: FilterConfigType) => {
+    const commonProps = {
+      size: "small" as const,
+      label: filter.label,
+      value: filter.value || (filter.type === "multiselect" ? [] : ""),
+      onChange: (e: any) => {
+        filter.onChange?.(e.target.value, filter);
+        onFilterChange?.({ [filter.id]: e.target.value });
+      },
+      sx: { minWidth: 150 },
+    };
+
+    switch (filter.type) {
+      case "multiselect":
+        return (
+          <FormControl key={filter.id} size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>{filter.label}</InputLabel>
+            <Select
+              {...commonProps}
+              multiple
+              input={<OutlinedInput label={filter.label} />}
+              renderValue={(selected) => (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                  {selected.map((value: any) => {
+                    const option = filter.options?.find(
+                      (opt) => opt.value === value,
+                    );
+                    return (
+                      <Chip
+                        key={value}
+                        label={option?.label || value}
+                        size="small"
+                      />
+                    );
+                  })}
+                </Box>
+              )}
+            >
+              {filter.searchable && (
+                <TextField
+                  size="small"
+                  placeholder="搜索..."
+                  sx={{ px: 1, my: 1, minWidth: 150 }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search style={{ width: 16, height: 16 }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+              )}
+              {filter.options?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  <Checkbox checked={commonProps.value.includes(option.value)} />
+                  <ListItemText primary={option.label} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        );
+
+      case "text":
+        return (
+          <TextField
+            key={filter.id}
+            {...commonProps}
+            placeholder="搜索..."
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search style={{ width: 18, height: 18 }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        );
+
+      case "date":
+        return (
+          <TextField
+            key={filter.id}
+            {...commonProps}
+            type="date"
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
+          />
+        );
+
+      default:
+        return (
+          <TextField
+            key={filter.id}
+            {...commonProps}
+            select
+          >
+            <MenuItem value="">全部</MenuItem>
+            {filter.options?.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        );
+    }
   };
 
   // 渲染搜索和筛选
@@ -515,27 +885,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
           />
         )}
 
-        {filters?.map((filter) => (
-          <TextField
-            key={filter.id}
-            size="small"
-            select
-            label={filter.label}
-            value={filter.value || ""}
-            onChange={(e) => {
-              filter.onChange?.(e.target.value);
-              onFilterChange?.({ [filter.id]: e.target.value });
-            }}
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="">全部</MenuItem>
-            {filter.options?.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        ))}
+        {filters?.map((filter) => renderFilter(filter))}
 
         {onRefresh && (
           <Tooltip title="刷新">
@@ -545,6 +895,56 @@ export const ListPageTemplate = <T extends Record<string, any>>({
           </Tooltip>
         )}
       </Box>
+    );
+  };
+
+  // 渲染列配置 Popover
+  const renderColumnConfig = () => {
+    if (!columnConfigurable) return null;
+
+    return (
+      <Popover
+        open={Boolean(columnConfigAnchor)}
+        anchorEl={columnConfigAnchor}
+        onClose={() => setColumnConfigAnchor(null)}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+      >
+        <Box sx={{ p: 2, minWidth: 200, maxWidth: 300 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            配置列显示
+          </Typography>
+          <List dense>
+            {columns.map((column) => {
+              const config = columnConfig.find((c) => c.id === column.id);
+              const isVisible = config ? config.visible : true;
+
+              return (
+                <ListItem key={column.id}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={isVisible}
+                        onChange={(e) =>
+                          handleColumnVisibilityChange(column.id, e.target.checked)
+                        }
+                        size="small"
+                      />
+                    }
+                    label={column.label || column.header || column.id}
+                  />
+                </ListItem>
+              );
+            })}
+          </List>
+        </Box>
+      </Popover>
     );
   };
 
@@ -567,6 +967,9 @@ export const ListPageTemplate = <T extends Record<string, any>>({
 
       {/* 自定义底部内容 */}
       {footerContent}
+
+      {/* 列配置 */}
+      {renderColumnConfig()}
 
       {/* 行操作菜单 */}
       <Menu

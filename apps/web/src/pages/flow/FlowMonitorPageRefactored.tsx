@@ -3,9 +3,8 @@
  *
  * 重构要点：
  * 1. 使用 PageHeader 统一页面头部
- * 2. 使用 FilterBar 定义筛选器
- * 3. 使用 ListPageTemplate 替代 Card + Table 布局
- * 4. 使用 ColumnDef 定义表格列
+ * 2. 使用 ListPageTemplate 替代 Card + Table 布局
+ * 3. 使用 ColumnDef 定义表格列
  */
 
 import React, { useState, useCallback } from "react";
@@ -20,6 +19,7 @@ import {
   DialogTitle,
   IconButton,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import {
@@ -27,12 +27,14 @@ import {
   Bell,
   Ban,
   RotateCcw,
-  Activity,
-  Loader2,
+  RefreshCw,
 } from "lucide-react";
-import { ListPageTemplate, type ColumnDef } from "../../components/templates";
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from "../../components/templates";
 import { PageHeader } from "../../components/layout";
-import { FilterBar, type FilterConfig } from "../../components/mui";
 
 // ============ 类型定义 ============
 interface FlowInstance {
@@ -144,81 +146,37 @@ const getStatusConfig = (
 const columns: ColumnDef<FlowInstance>[] = [
   {
     id: "id",
-    header: "实例ID",
-    accessor: "id",
+    label: "实例ID",
     sortable: true,
   },
   {
     id: "name",
-    header: "流程名称",
-    accessor: "name",
+    label: "流程名称",
     sortable: true,
   },
   {
     id: "applicant",
-    header: "发起人",
-    accessor: "applicant",
+    label: "发起人",
   },
   {
     id: "currentNode",
-    header: "当前节点",
-    accessor: "currentNode",
+    label: "当前节点",
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
-    render: (value) => {
-      const config = getStatusConfig(value as FlowInstance["status"]);
+    label: "状态",
+    render: (row) => {
+      const config = getStatusConfig(row.status);
       return <Chip size="small" label={config.label} color={config.color} />;
     },
   },
   {
     id: "duration",
-    header: "耗时",
-    accessor: "duration",
+    label: "耗时",
   },
   {
     id: "startTime",
-    header: "开始时间",
-    accessor: "startTime",
-  },
-];
-
-// ============ 筛选配置 ============
-const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "search",
-    placeholder: "搜索实例ID或申请人...",
-  },
-  {
-    id: "name",
-    label: "流程名称",
-    type: "select",
-    options: [
-      { value: "all", label: "全部" },
-      { value: "请假审批流程", label: "请假审批流程" },
-      { value: "费用报销流程", label: "费用报销流程" },
-      { value: "采购申请流程", label: "采购申请流程" },
-      { value: "合同审批流程", label: "合同审批流程" },
-      { value: "差旅申请流程", label: "差旅申请流程" },
-      { value: "加班申请流程", label: "加班申请流程" },
-      { value: "设备借用流程", label: "设备借用流程" },
-    ],
-  },
-  {
-    id: "status",
-    label: "状态",
-    type: "select",
-    options: [
-      { value: "all", label: "全部" },
-      { value: "running", label: "进行中" },
-      { value: "completed", label: "已完成" },
-      { value: "rejected", label: "已拒绝" },
-      { value: "terminated", label: "已终止" },
-    ],
+    label: "开始时间",
   },
 ];
 
@@ -232,7 +190,7 @@ const FlowMonitorPageRefactored: React.FC = () => {
 
   // 分页状态
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
 
   // 筛选状态
   const [filtersValue, setFiltersValue] = useState<FilterValues>({
@@ -243,7 +201,9 @@ const FlowMonitorPageRefactored: React.FC = () => {
 
   // 终止弹窗
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
-  const [selectedInstance, setSelectedInstance] = useState<FlowInstance | null>(null);
+  const [selectedInstance, setSelectedInstance] = useState<FlowInstance | null>(
+    null,
+  );
 
   // 统计
   const runningCount = data.filter((d) => d.status === "running").length;
@@ -254,24 +214,41 @@ const FlowMonitorPageRefactored: React.FC = () => {
     const matchesSearch =
       item.id.toLowerCase().includes(filtersValue.search.toLowerCase()) ||
       item.applicant.toLowerCase().includes(filtersValue.search.toLowerCase());
-    const matchesName = filtersValue.name === "all" || item.name === filtersValue.name;
-    const matchesStatus = filtersValue.status === "all" || item.status === filtersValue.status;
+    const matchesName =
+      filtersValue.name === "all" || item.name === filtersValue.name;
+    const matchesStatus =
+      filtersValue.status === "all" || item.status === filtersValue.status;
     return matchesSearch && matchesName && matchesStatus;
   });
 
   // 分页数据
-  const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedData = filteredData.slice(
+    (page - 1) * pageSize,
+    page * pageSize,
+  );
   const totalCount = filteredData.length;
 
+  // 处理搜索
+  const handleSearch = useCallback((value: string) => {
+    setFiltersValue((prev) => ({ ...prev, search: value }));
+    setPage(1);
+  }, []);
+
   // 处理筛选变化
-  const handleFilterChange = useCallback((filterId: string, value: any) => {
-    setFiltersValue((prev) => ({ ...prev, [filterId]: value }));
+  const handleFilterChange = useCallback((newFilters: Record<string, any>) => {
+    setFiltersValue((prev) => ({ ...prev, ...newFilters }));
     setPage(1);
   }, []);
 
   // 处理分页变化
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
+  }, []);
+
+  // 处理每页数量变化
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
   }, []);
 
   // 处理查看
@@ -316,14 +293,36 @@ const FlowMonitorPageRefactored: React.FC = () => {
     setTimeout(() => setLoading(false), 500);
   }, []);
 
+  // 行操作
+  const rowActions: RowAction<FlowInstance>[] = [
+    { label: "查看", icon: <Eye size={18} />, onClick: handleView },
+    {
+      label: "催办",
+      icon: <Bell size={18} />,
+      onClick: handleUrge,
+      show: (row) => row.status === "running",
+    },
+    {
+      label: "终止",
+      icon: <Ban size={18} />,
+      onClick: handleTerminate,
+      color: "error",
+      show: (row) => row.status === "running",
+    },
+    {
+      label: "取回",
+      icon: <RotateCcw size={18} />,
+      onClick: handleRecall,
+      show: (row) => row.status === "running",
+    },
+  ];
+
   return (
     <>
       <PageHeader
         title="流程监控"
         subtitle="监控所有流程实例的运行状态"
-        icon={<Activity size={24} />}
-        showBack
-        onBack={() => navigate(-1)}
+        backButton={{ onClick: () => navigate(-1) }}
       />
 
       {/* 统计卡片 */}
@@ -358,46 +357,73 @@ const FlowMonitorPageRefactored: React.FC = () => {
         </Stack>
       </Box>
 
-      <ListPageTemplate
+      <ListPageTemplate<FlowInstance>
+        title="流程实例"
         columns={columns}
         data={paginatedData}
         loading={loading}
-        filters={filters}
-        filtersValue={filtersValue}
+        searchable
+        searchPlaceholder="搜索实例ID或申请人..."
+        searchValue={filtersValue.search}
+        onSearch={handleSearch}
+        filters={[
+          {
+            id: "name",
+            label: "流程名称",
+            type: "select",
+            options: [
+              { value: "all", label: "全部" },
+              { value: "请假审批流程", label: "请假审批流程" },
+              { value: "费用报销流程", label: "费用报销流程" },
+              { value: "采购申请流程", label: "采购申请流程" },
+              { value: "合同审批流程", label: "合同审批流程" },
+              { value: "差旅申请流程", label: "差旅申请流程" },
+              { value: "加班申请流程", label: "加班申请流程" },
+              { value: "设备借用流程", label: "设备借用流程" },
+            ],
+          },
+          {
+            id: "status",
+            label: "状态",
+            type: "select",
+            options: [
+              { value: "all", label: "全部" },
+              { value: "running", label: "进行中" },
+              { value: "completed", label: "已完成" },
+              { value: "rejected", label: "已拒绝" },
+              { value: "terminated", label: "已终止" },
+            ],
+          },
+        ]}
         onFilterChange={handleFilterChange}
         pagination={{
           page,
           pageSize,
           total: totalCount,
           onPageChange: handlePageChange,
+          onPageSizeChange: handlePageSizeChange,
         }}
         onRowClick={handleView}
         emptyMessage="暂无流程实例"
-        customActions={
-          <IconButton onClick={handleRefresh} title="刷新">
-            <Loader2 size={20} sx={{ animation: loading ? "spin 1s linear infinite" : "none" }} />
-          </IconButton>
-        }
-        renderRowActions={(instance) => (
-          <Stack direction="row" spacing={1}>
-            <IconButton size="small" onClick={() => handleView(instance)} title="查看">
-              <Eye size={18} />
-            </IconButton>
-            {instance.status === "running" && (
-              <>
-                <IconButton size="small" onClick={() => handleUrge(instance)} title="催办">
-                  <Bell size={18} />
-                </IconButton>
-                <IconButton size="small" onClick={() => handleTerminate(instance)} title="终止">
-                  <Ban size={18} />
-                </IconButton>
-                <IconButton size="small" onClick={() => handleRecall(instance)} title="取回">
-                  <RotateCcw size={18} />
-                </IconButton>
-              </>
-            )}
+        rowActions={rowActions}
+        headerContent={
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ mb: 2, justifyContent: "flex-end" }}
+          >
+            <Tooltip title="刷新">
+              <IconButton onClick={handleRefresh}>
+                <RefreshCw
+                  size={20}
+                  style={{
+                    animation: loading ? "spin 1s linear infinite" : "none",
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
           </Stack>
-        )}
+        }
       />
 
       {/* 终止确认对话框 */}

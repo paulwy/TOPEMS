@@ -11,7 +11,7 @@ import {
   Clock,
   Settings,
 } from "lucide-react";
-import { Box, Card, CardContent, CardHeader, Typography, Grid, Chip, Button } from "@mui/material";
+import { Box, Card, CardContent, CardHeader, Typography, Grid, Chip, Button, Table, TableHead, TableBody, TableRow, TableCell } from "@mui/material";
 import { PageHeader } from "../components/templates/PageHeader";
 import { FilterBar, FilterConfig } from "../components/mui/FilterBar";
 import ExportButton from "../components/ExportButton";
