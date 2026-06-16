@@ -62,53 +62,47 @@ const getLedgerColumns = (
 ): ColumnDef<LedgerEntry>[] => [
   {
     id: "account_code",
-    header: "科目编码",
-    accessor: "account_code",
-    render: (value) => (
-      <Box sx={{ fontWeight: 600, color: "success.main" }}>{value}</Box>
+    label: "科目编码",
+    render: (row) => (
+      <Box sx={{ fontWeight: 600, color: "success.main" }}>{row.account_code}</Box>
     ),
   },
   {
     id: "account_name",
-    header: "科目名称",
-    accessor: "account_name",
-    render: (value) => <Box sx={{ fontWeight: 500 }}>{value}</Box>,
+    label: "科目名称",
+    render: (row) => <Box sx={{ fontWeight: 500 }}>{row.account_name}</Box>,
   },
   {
     id: "opening_balance",
-    header: "期初余额",
-    accessor: "opening_balance",
-    render: (value) => (
-      <Box sx={{ fontFamily: "monospace" }}>{formatCurrency(value)}</Box>
+    label: "期初余额",
+    render: (row) => (
+      <Box sx={{ fontFamily: "monospace" }}>{formatCurrency(row.opening_balance)}</Box>
     ),
   },
   {
     id: "debit_amount",
-    header: "借方发生额",
-    accessor: "debit_amount",
-    render: (value) => (
+    label: "借方发生额",
+    render: (row) => (
       <Box sx={{ color: "error.main", fontFamily: "monospace" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.debit_amount)}
       </Box>
     ),
   },
   {
     id: "credit_amount",
-    header: "贷方发生额",
-    accessor: "credit_amount",
-    render: (value) => (
+    label: "贷方发生额",
+    render: (row) => (
       <Box sx={{ color: "success.main", fontFamily: "monospace" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.credit_amount)}
       </Box>
     ),
   },
   {
     id: "closing_balance",
-    header: "期末余额",
-    accessor: "closing_balance",
-    render: (value) => (
+    label: "期末余额",
+    render: (row) => (
       <Box sx={{ fontWeight: 700, color: "primary.main", fontFamily: "monospace" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.closing_balance)}
       </Box>
     ),
   },
@@ -127,12 +121,6 @@ const getRowActions = (
 
 // ============ 筛选配置 ============
 const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "text",
-    placeholder: "搜索科目编码、名称...",
-  },
   {
     id: "category",
     label: "科目类别",
@@ -173,9 +161,8 @@ const FinanceLedgerPageRefactored: React.FC = () => {
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "category") setFilterCategory(value);
+    (filters: Record<string, any>) => {
+      if (filters.category !== undefined) setFilterCategory(filters.category);
     },
     [],
   );
@@ -200,28 +187,29 @@ const FinanceLedgerPageRefactored: React.FC = () => {
       <PageHeader
         title="总账管理"
         subtitle="管理会计科目总账，查看账户余额和发生额"
-        showBack
-        onBack={() => navigate(-1)}
-        actions={
-          <Button
-            variant="outlined"
-            startIcon={<Download style={{ width: 18, height: 18 }} />}
-            onClick={handleExport}
-            sx={{ borderColor: "#22c55e", color: "#22c55e" }}
-          >
-            导出
-          </Button>
-        }
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[
+          {
+            label: "导出",
+            icon: <Download style={{ width: 18, height: 18 }} />,
+            onClick: handleExport,
+            variant: "outlined",
+            color: "success",
+          },
+        ]}
       />
 
       <Box sx={{ px: 3, pb: 3 }}>
         <ListPageTemplate
+          title="总账列表"
           columns={getLedgerColumns(handleView)}
           data={filteredData}
           rowActions={getRowActions(handleView)}
           filters={filters}
           onFilterChange={handleFilterChange}
           searchable
+          searchValue={searchText}
+          onSearch={setSearchText}
           searchPlaceholder="搜索科目编码、名称..."
           emptyMessage="暂无总账数据"
         />

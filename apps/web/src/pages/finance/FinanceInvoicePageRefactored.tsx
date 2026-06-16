@@ -12,7 +12,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FileText,
   Download,
   Plus,
   Eye,
@@ -93,68 +92,60 @@ const getInvoiceColumns = (
 ): ColumnDef<Invoice>[] => [
   {
     id: "invoice_number",
-    header: "发票号码",
-    accessor: "invoice_number",
-    render: (value) => (
-      <Box sx={{ fontWeight: 600, color: "success.main" }}>{value}</Box>
+    label: "发票号码",
+    render: (row) => (
+      <Box sx={{ fontWeight: 600, color: "success.main" }}>{row.invoice_number}</Box>
     ),
   },
   {
     id: "invoice_date",
-    header: "开票日期",
-    accessor: "invoice_date",
-    render: (value) => (
-      <Box sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{value}</Box>
+    label: "开票日期",
+    render: (row) => (
+      <Box sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{row.invoice_date}</Box>
     ),
   },
   {
     id: "buyer",
-    header: "购买方",
-    accessor: "buyer",
-    render: (value) => <Box sx={{ fontWeight: 500 }}>{value}</Box>,
+    label: "购买方",
+    render: (row) => <Box sx={{ fontWeight: 500 }}>{row.buyer}</Box>,
   },
   {
     id: "seller",
-    header: "销售方",
-    accessor: "seller",
-    render: (value) => <Box sx={{ color: "text.secondary" }}>{value}</Box>,
+    label: "销售方",
+    render: (row) => <Box sx={{ color: "text.secondary" }}>{row.seller}</Box>,
   },
   {
     id: "amount",
-    header: "金额",
-    accessor: "amount",
-    render: (value) => (
+    label: "金额",
+    render: (row) => (
       <Box sx={{ fontFamily: "monospace", fontWeight: 600 }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.amount)}
       </Box>
     ),
   },
   {
     id: "tax_rate",
-    header: "税率",
-    accessor: "tax_rate",
-    render: (value) => <Chip label={`${value}%`} size="small" />,
+    label: "税率",
+    render: (row) => <Chip label={`${row.tax_rate}%`} size="small" />,
   },
   {
     id: "tax_amount",
-    header: "税额",
-    accessor: "tax_amount",
-    render: (value) => (
+    label: "税额",
+    render: (row) => (
       <Box sx={{ color: "warning.main", fontFamily: "monospace" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.tax_amount)}
       </Box>
     ),
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
-    render: (value) => {
-      const config = getStatusConfig(value);
+    label: "状态",
+    render: (row) => {
+      const config = getStatusConfig(row.status);
       return (
-        <Chip 
-          label={value} 
-          size="small" 
+        <Chip
+          label={row.status}
+          size="small"
           color={config.color}
           icon={config.icon as React.ReactElement}
         />
@@ -190,12 +181,6 @@ const getRowActions = (
 
 // ============ 筛选配置 ============
 const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "text",
-    placeholder: "搜索发票号码、购买方、销售方...",
-  },
   {
     id: "invoice_type",
     label: "发票类型",
@@ -257,10 +242,9 @@ const FinanceInvoicePageRefactored: React.FC = () => {
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "invoice_type") setFilterType(value);
-      if (filterId === "status") setFilterStatus(value);
+    (filters: Record<string, any>) => {
+      if (filters.invoice_type !== undefined) setFilterType(filters.invoice_type);
+      if (filters.status !== undefined) setFilterStatus(filters.status);
     },
     [],
   );
@@ -315,38 +299,36 @@ const FinanceInvoicePageRefactored: React.FC = () => {
       <PageHeader
         title="发票管理"
         subtitle="管理增值税发票，认证抵扣和查验"
-        showBack
-        onBack={() => navigate(-1)}
-        actions={
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Download style={{ width: 18, height: 18 }} />}
-              onClick={handleExport}
-              sx={{ borderColor: "#22c55e", color: "#22c55e" }}
-            >
-              导出
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={() => setShowCreateModal(true)}
-              sx={{ backgroundColor: "#22c55e" }}
-            >
-              开具发票
-            </Button>
-          </Box>
-        }
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[
+          {
+            label: "导出",
+            icon: <Download style={{ width: 18, height: 18 }} />,
+            onClick: handleExport,
+            variant: "outlined",
+            color: "success",
+          },
+          {
+            label: "开具发票",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+            color: "success",
+          },
+        ]}
       />
 
       <Box sx={{ px: 3, pb: 3 }}>
         <ListPageTemplate
+          title="发票列表"
           columns={getInvoiceColumns(handleView, handleVerify, handleDelete)}
           data={filteredData}
           rowActions={getRowActions(handleView, handleVerify, handleDelete)}
           filters={filters}
           onFilterChange={handleFilterChange}
           searchable
+          searchValue={searchText}
+          onSearch={setSearchText}
           searchPlaceholder="搜索发票号码、购买方、销售方..."
           emptyMessage="暂无发票数据"
         />

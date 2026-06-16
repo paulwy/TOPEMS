@@ -93,59 +93,52 @@ const getReceiptColumns = (
 ): ColumnDef<Receipt>[] => [
   {
     id: "receipt_number",
-    header: "收款单号",
-    accessor: "receipt_number",
-    render: (value) => (
-      <Box sx={{ fontWeight: 600, color: "success.main" }}>{value}</Box>
+    label: "收款单号",
+    render: (row) => (
+      <Box sx={{ fontWeight: 600, color: "success.main" }}>{row.receipt_number}</Box>
     ),
   },
   {
     id: "receipt_date",
-    header: "收款日期",
-    accessor: "receipt_date",
-    render: (value) => (
-      <Box sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{value}</Box>
+    label: "收款日期",
+    render: (row) => (
+      <Box sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{row.receipt_date}</Box>
     ),
   },
   {
     id: "customer",
-    header: "客户",
-    accessor: "customer",
-    render: (value) => <Box sx={{ fontWeight: 500 }}>{value}</Box>,
+    label: "客户",
+    render: (row) => <Box sx={{ fontWeight: 500 }}>{row.customer}</Box>,
   },
   {
     id: "receipt_method",
-    header: "收款方式",
-    accessor: "receipt_method",
-    render: (value) => <Chip label={value} size="small" />,
+    label: "收款方式",
+    render: (row) => <Chip label={row.receipt_method} size="small" />,
   },
   {
     id: "amount",
-    header: "收款金额",
-    accessor: "amount",
-    render: (value) => (
+    label: "收款金额",
+    render: (row) => (
       <Box sx={{ fontWeight: 700, color: "success.main", fontFamily: "monospace" }}>
-        {formatCurrency(value)}
+        {formatCurrency(row.amount)}
       </Box>
     ),
   },
   {
     id: "bank_account",
-    header: "银行账户",
-    accessor: "bank_account",
-    render: (value) => (
-      <Box sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{value}</Box>
+    label: "银行账户",
+    render: (row) => (
+      <Box sx={{ color: "text.secondary", fontSize: "0.875rem" }}>{row.bank_account}</Box>
     ),
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
-    render: (value) => {
-      const config = getStatusConfig(value);
+    label: "状态",
+    render: (row) => {
+      const config = getStatusConfig(row.status);
       return (
         <Chip 
-          label={value} 
+          label={row.status} 
           size="small" 
           color={config.color}
           icon={config.icon as React.ReactElement}
@@ -189,12 +182,6 @@ const getRowActions = (
 
 // ============ 筛选配置 ============
 const filters: FilterConfig[] = [
-  {
-    id: "search",
-    label: "搜索",
-    type: "text",
-    placeholder: "搜索收款单号、客户...",
-  },
   {
     id: "receipt_method",
     label: "收款方式",
@@ -256,10 +243,10 @@ const FinanceReceiptPageRefactored: React.FC = () => {
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "receipt_method") setFilterMethod(value);
-      if (filterId === "status") setFilterStatus(value);
+    (filters: Record<string, any>) => {
+      if (filters.search !== undefined) setSearchText(filters.search);
+      if (filters.receipt_method !== undefined) setFilterMethod(filters.receipt_method);
+      if (filters.status !== undefined) setFilterStatus(filters.status);
     },
     [],
   );
@@ -325,28 +312,23 @@ const FinanceReceiptPageRefactored: React.FC = () => {
       <PageHeader
         title="收款管理"
         subtitle="管理客户收款登记，确认到账和核销"
-        showBack
-        onBack={() => navigate(-1)}
-        actions={
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Download style={{ width: 18, height: 18 }} />}
-              onClick={handleExport}
-              sx={{ borderColor: "#22c55e", color: "#22c55e" }}
-            >
-              导出
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={() => setShowCreateModal(true)}
-              sx={{ backgroundColor: "#22c55e" }}
-            >
-              收款登记
-            </Button>
-          </Box>
-        }
+        backButton={{ onClick: () => navigate(-1) }}
+        actions={[
+          {
+            label: "导出",
+            icon: <Download style={{ width: 18, height: 18 }} />,
+            onClick: handleExport,
+            variant: "outlined",
+            color: "success",
+          },
+          {
+            label: "收款登记",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+            color: "success",
+          },
+        ]}
       />
 
       <Box sx={{ px: 3, pb: 3 }}>

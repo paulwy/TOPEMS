@@ -15,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus,
   Eye,
-  Edit2,
   Trash2,
   Package,
   Users,
@@ -33,12 +32,10 @@ import {
   DialogActions,
   TextField,
   Chip,
-  LinearProgress,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Stack,
 } from "@mui/material";
 import {
   ListPageTemplate,
@@ -124,9 +121,8 @@ const getStatusChip = (status: string) => {
 const columns: ColumnDef<Resource>[] = [
   {
     id: "name",
-    header: "资源名称",
-    accessor: "name",
-    render: (_, row) => (
+    label: "资源名称",
+    render: (row) => (
       <Box sx={{ display: "flex", alignItems: "center" }}>
         <Package sx={{ width: 16, height: 16, mr: 1, color: "blue.400" }} />
         {row.name}
@@ -135,23 +131,20 @@ const columns: ColumnDef<Resource>[] = [
   },
   {
     id: "type",
-    header: "资源类型",
-    accessor: "type",
+    label: "资源类型",
   },
   {
     id: "project",
-    header: "所属项目",
-    accessor: "project",
+    label: "所属项目",
   },
   {
     id: "assignedTo",
-    header: "分配给",
-    accessor: "assignedTo",
-    render: (value) =>
-      value ? (
+    label: "分配给",
+    render: (row) =>
+      row.assignedTo ? (
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Users sx={{ width: 14, height: 14, mr: 1, color: "grey.400" }} />
-          {value}
+          <Users sx={{ width: 14, height: 14, mr: 1, color: "gray.400" }} />
+          {row.assignedTo}
         </Box>
       ) : (
         <Box component="span" sx={{ color: "text.disabled" }}>未分配</Box>
@@ -159,18 +152,16 @@ const columns: ColumnDef<Resource>[] = [
   },
   {
     id: "status",
-    header: "使用状态",
-    accessor: "status",
-    render: (value) => getStatusChip(value),
+    label: "使用状态",
+    render: (row) => getStatusChip(row.status),
   },
   {
     id: "createdAt",
-    header: "创建时间",
-    accessor: "createdAt",
-    render: (value) => (
+    label: "创建时间",
+    render: (row) => (
       <Box sx={{ display: "flex", alignItems: "center" }}>
-        <Clock sx={{ width: 14, height: 14, mr: 1, color: "grey.400" }} />
-        {value}
+        <Clock sx={{ width: 14, height: 14, mr: 1, color: "gray.400" }} />
+        {row.createdAt}
       </Box>
     ),
   },
@@ -279,6 +270,7 @@ const PmResourcePageRefactored: React.FC = () => {
     type: "",
     project: "",
     status: "available",
+    assignedTo: "",
   });
 
   // 获取资源列表
@@ -318,15 +310,12 @@ const PmResourcePageRefactored: React.FC = () => {
   }), [resources]);
 
   // 处理筛选变化
-  const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "type") setFilterType(value);
-      if (filterId === "status") setFilterStatus(value);
-      if (filterId === "project") setFilterProject(value);
-    },
-    [],
-  );
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    if ("search" in filters) setSearchText(filters.search);
+    if ("type" in filters) setFilterType(filters.type);
+    if ("status" in filters) setFilterStatus(filters.status);
+    if ("project" in filters) setFilterProject(filters.project);
+  }, []);
 
   // 处理查看
   const handleView = useCallback((resource: Resource) => {
@@ -387,6 +376,7 @@ const PmResourcePageRefactored: React.FC = () => {
       type: "",
       project: "",
       status: "available",
+      assignedTo: "",
     });
   };
 
@@ -534,7 +524,7 @@ const PmResourcePageRefactored: React.FC = () => {
         <DialogTitle>分配资源</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+            <Box sx={{ p: 2, bgcolor: "gray.50", borderRadius: 1 }}>
               <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>正在分配</Box>
               <Box sx={{ fontWeight: "medium" }}>{selectedResource?.name}</Box>
             </Box>
@@ -563,31 +553,31 @@ const PmResourcePageRefactored: React.FC = () => {
         <DialogContent>
           {selectedResource && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-              <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+              <Box sx={{ p: 2, bgcolor: "gray.50", borderRadius: 1 }}>
                 <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>资源名称</Box>
                 <Box sx={{ fontWeight: "medium", mt: 0.5 }}>{selectedResource.name}</Box>
               </Box>
               <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: "gray.50", borderRadius: 1 }}>
                   <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>资源类型</Box>
                   <Box sx={{ fontWeight: "medium", mt: 0.5 }}>{selectedResource.type}</Box>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: "gray.50", borderRadius: 1 }}>
                   <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>所属项目</Box>
                   <Box sx={{ fontWeight: "medium", mt: 0.5 }}>{selectedResource.project}</Box>
                 </Box>
               </Box>
               <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: "gray.50", borderRadius: 1 }}>
                   <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>分配给</Box>
                   <Box sx={{ fontWeight: "medium", mt: 0.5 }}>{selectedResource.assignedTo || "未分配"}</Box>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+                <Box sx={{ p: 2, bgcolor: "gray.50", borderRadius: 1 }}>
                   <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>使用状态</Box>
                   <Box sx={{ mt: 0.5 }}>{getStatusChip(selectedResource.status)}</Box>
                 </Box>
               </Box>
-              <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
+              <Box sx={{ p: 2, bgcolor: "gray.50", borderRadius: 1 }}>
                 <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>创建时间</Box>
                 <Box sx={{ fontWeight: "medium", mt: 0.5 }}>{selectedResource.createdAt}</Box>
               </Box>
