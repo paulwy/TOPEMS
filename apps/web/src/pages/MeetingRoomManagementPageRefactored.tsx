@@ -164,7 +164,7 @@ const getRoomColumns = (
 ];
 
 const getBookingColumns = (
-  getStatusBadge: (status: string) => JSX.Element,
+  getStatusBadge: (status: string) => ReactElement,
 ): ColumnDef<MeetingBooking>[] => [
   {
     id: "room_name",
@@ -413,7 +413,7 @@ const MeetingRoomManagementPageRefactored: React.FC = () => {
         subtitle={`共 ${mockRooms.length} 间会议室`}
         showBack
         onBack={() => navigate(-1)}
-        actions={
+        rightContent={
           <Button
             variant="contained"
             startIcon={<Plus style={{ width: 18, height: 18 }} />}
@@ -469,6 +469,7 @@ const MeetingRoomManagementPageRefactored: React.FC = () => {
                 onSearch={handleSearch}
               />
               <ListPageTemplate
+                title="会议室列表"
                 columns={roomColumns}
                 data={roomData.items}
                 loading={loading}
@@ -488,6 +489,7 @@ const MeetingRoomManagementPageRefactored: React.FC = () => {
 
           {activeTab === "bookings" && (
             <ListPageTemplate
+              title="预约记录"
               columns={bookingColumns}
               data={bookingData.items}
               loading={loading}

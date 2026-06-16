@@ -22,7 +22,6 @@ import {
   ArrowRight,
   TrendingUp,
   Star,
-  KeyboardCommandKey,
 } from "lucide-react";
 
 /**
@@ -318,7 +317,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
           )}
           {enableShortcut && !query && (
             <ShortcutHint>
-              <KeyboardCommandKey size={14} />{shortcutKey.toUpperCase()}
+              <Box component="span" sx={{ fontSize: 14, fontWeight: "bold", fontFamily: "monospace" }}>⌘</Box>{shortcutKey.toUpperCase()}
             </ShortcutHint>
           )}
         </SearchWrapper>
@@ -381,12 +380,9 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                         <ListItemIcon sx={{ minWidth: 36 }}>
                           {getIcon(suggestion.icon)}
                         </ListItemIcon>
-                        <ListItemText
-                          primary={suggestion.text}
-                          primaryTypographyProps={{
-                            sx: { fontWeight: highlightedIndex === itemIndex ? 600 : 400 },
-                          }}
-                        />
+                        <Typography variant="body1" sx={{ fontWeight: highlightedIndex === itemIndex ? 600 : 400 }}>
+                          {suggestion.text}
+                        </Typography>
                         <ArrowRight size={16} />
                       </SuggestionItem>
                     );

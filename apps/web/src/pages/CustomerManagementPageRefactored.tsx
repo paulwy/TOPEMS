@@ -46,39 +46,36 @@ import { FilterBar, type FilterConfig } from "../components/mui";
 const columns: ColumnDef<Customer>[] = [
   {
     id: "name",
-    header: "客户名称",
-    accessor: "name",
+    label: "客户名称",
     sortable: true,
     width: 200,
+    render: (row) => row.name,
   },
   {
     id: "code",
-    header: "客户代码",
-    accessor: "code",
+    label: "客户代码",
     sortable: true,
     width: 120,
+    render: (row) => row.code,
   },
   {
     id: "industry",
-    header: "行业",
-    accessor: "industry",
+    label: "行业",
+    render: (row) => row.industry,
   },
   {
     id: "contact",
-    header: "联系人",
-    accessor: "contact_name",
-    render: (row) => row.contact_name || "-",
+    label: "联系人",
+    render: (row) => (row.contact_name || "-"),
   },
   {
     id: "phone",
-    header: "联系电话",
-    accessor: "phone",
-    render: (row) => row.phone || "-",
+    label: "联系电话",
+    render: (row) => (row.phone || "-"),
   },
   {
     id: "status",
-    header: "状态",
-    accessor: "status",
+    label: "状态",
     render: (row) => (
       <Chip
         label={row.status === "active" ? "活跃" : "停用"}
@@ -118,8 +115,7 @@ const filters: FilterConfig[] = [
   {
     id: "search",
     label: "搜索",
-    type: "search",
-    placeholder: "搜索客户名称/代码...",
+    type: "text",
   },
   {
     id: "status",
@@ -201,7 +197,7 @@ const CustomerManagementPage: React.FC = () => {
     try {
       const params: any = {
         page: data.page,
-        page_size: data.page_size,
+        pageSize: data.pageSize,
       };
       if (searchText) params.search = searchText;
       if (statusFilter !== "all") params.status = statusFilter;
@@ -225,14 +221,14 @@ const CustomerManagementPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [data.page, data.page_size, searchText, statusFilter, industryFilter, addNotification]);
+  }, [data.page, data.pageSize, searchText, statusFilter, industryFilter, addNotification]);
 
   // 处理筛选变化
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
-      if (filterId === "search") setSearchText(value);
-      if (filterId === "status") setStatusFilter(value);
-      if (filterId === "industry") setIndustryFilter(value);
+    (filters: Record<string, any>) => {
+      if (filters.search !== undefined) setSearchText(filters.search);
+      if (filters.status !== undefined) setStatusFilter(filters.status);
+      if (filters.industry !== undefined) setIndustryFilter(filters.industry);
     },
     [],
   );
@@ -320,25 +316,24 @@ const CustomerManagementPage: React.FC = () => {
       />
 
       <ListPageTemplate
-        columns={columns}
+        title="客户管理"
+        columns={columns as ColumnDef<Record<string, any>>[]}
         data={data.items}
         loading={loading}
-        rowActions={getRowActions(handleView, handleEdit, handleDelete)}
+        rowActions={getRowActions(handleView, handleEdit, handleDelete) as RowAction<Record<string, any>>[]}
         filters={filters}
         onFilterChange={handleFilterChange}
         pagination={{
           page: data.page,
-          pageSize: data.page_size,
+          pageSize: data.pageSize,
           total: data.total,
           onPageChange: handlePageChange,
         }}
-        onRowClick={handleView}
+        onRowClick={handleView as (row: Record<string, any>) => void}
         emptyMessage="暂无客户数据"
-        selection={{
-          selected: selectedIds,
-          onChange: handleSelectionChange,
-        }}
-        batchActions={batchActions}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={handleSelectionChange}
       />
 
       {/* 查看模态框 */}

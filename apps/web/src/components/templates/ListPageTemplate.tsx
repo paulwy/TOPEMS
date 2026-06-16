@@ -55,7 +55,7 @@ import {
 } from "lucide-react";
 
 // 从 FilterBar 导入 FilterConfig 类型以确保类型一致
-import type { FilterConfig as FilterConfigType } from "../mui/FilterBar";
+import type { FilterConfig } from "../mui/FilterBar";
 
 // ============ 类型定义 ============
 
@@ -98,8 +98,8 @@ export interface FilterOption {
   value: string | number;
 }
 
-// 使用从 FilterBar 导入的 FilterConfigType
-// export interface FilterConfig 已删除，统一使用 FilterBar.FilterConfig
+// 使用从 FilterBar 导入的 FilterConfig
+export type { FilterConfig } from "../mui/FilterBar";
 
 /**
  * 行操作接口
@@ -186,7 +186,7 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
   onSearch?: (value: string) => void;
 
   // 筛选
-  filters?: FilterConfigType[];
+  filters?: FilterConfig[];
   /** 受控的筛选值（与 onFilterChange 配合使用） */
   filtersValue?: Record<string, any>;
   onFilterChange?: (filters: Record<string, any>) => void;
@@ -740,7 +740,7 @@ export const ListPageTemplate = <T extends Record<string, any>>({
   };
 
   // 渲染筛选器
-  const renderFilter = (filter: FilterConfigType) => {
+  const renderFilter = (filter: FilterConfig) => {
     const commonProps = {
       size: "small" as const,
       label: filter.label,
