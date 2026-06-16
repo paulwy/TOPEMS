@@ -223,14 +223,14 @@ const CustomerDetailPage: React.FC = () => {
         subtitle="查看和编辑客户档案信息"
         showBack
         onBack={() => navigate("/crm/customers")}
-        actions={
-          <Button
-            variant="contained"
-            startIcon={<Edit style={{ width: 18, height: 18 }} />}
-          >
-            编辑
-          </Button>
-        }
+        actions={[
+          {
+            label: "编辑",
+            variant: "contained",
+            icon: <Edit style={{ width: 18, height: 18 }} />,
+            onClick: () => navigate(`/crm/customers/${id}/edit`),
+          },
+        ]}
       />
 
       <Box sx={{ maxWidth: 1200, mx: "auto", px: 3, py: 4 }}>

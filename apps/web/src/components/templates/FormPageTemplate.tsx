@@ -989,8 +989,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           open={showHint}
           autoHideDuration={3000}
           onClose={() => setShowHint(false)}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          TransitionComponent={Slide}
+          anchorOrigin={{ vertical: "top" as const, horizontal: "center" as const }}
         >
           <MuiAlert
             severity={validationHint?.type || "info"}

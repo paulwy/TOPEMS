@@ -7,7 +7,7 @@ import {
   BarChart3,
   PieChart,
   LineChart,
-  Table,
+  Table as TableIcon,
   Clock,
   Settings,
 } from "lucide-react";
@@ -230,7 +230,7 @@ const BIModuleDetailPageRefactored = () => {
 
         <Grid size={12}>
           <Card>
-            <CardHeader title="数据明细表" subheader="详细业务数据" avatar={<Table size={20} />} />
+            <CardHeader title="数据明细表" subheader="详细业务数据" avatar={<TableIcon size={20} />} />
             <CardContent>
               <Box sx={{ overflow: "auto" }}>
                 <Table size="small">
