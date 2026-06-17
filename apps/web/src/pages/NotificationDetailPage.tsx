@@ -10,14 +10,14 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
-import type { Notification, NotificationTypeEnum } from "../api/notification";
+import type { Notification, NotificationTypeEnum } from "@/api/notification";
 import {
   markAsRead,
   deleteNotification,
   getNotifications,
-} from "../api/notification";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
+} from "@/api/notification";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
 
 const NotificationDetailPage: React.FC = () => {
   const navigate = useNavigate();

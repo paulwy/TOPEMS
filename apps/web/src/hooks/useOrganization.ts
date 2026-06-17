@@ -6,7 +6,7 @@ import {
   type Company,
   type Department,
   type Employee,
-} from "../api/hrm";
+} from "@/api/hrm";
 
 export interface OrganizationData {
   companies: Company[];

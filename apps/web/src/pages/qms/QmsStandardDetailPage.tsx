@@ -27,10 +27,10 @@ import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { qmsApi } from "../../api/qms";
-import type { QualityStandard, StandardRevision } from "../../api/qms";
+import { qmsApi } from "@/api/qms";
+import type { QualityStandard, StandardRevision } from "@/api/qms";
 
 const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

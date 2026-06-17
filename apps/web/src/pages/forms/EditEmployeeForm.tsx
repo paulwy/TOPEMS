@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { employeeApi, type Employee } from "../../api/hrm";
+import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../../store";
 
 import {

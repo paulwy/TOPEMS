@@ -12,7 +12,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
 import { DataTable } from "@/components/DataTable";
-import { flowApi, type Workflow } from "../api/flow";
+import { flowApi, type Workflow } from "@/api/flow";
 
 export function WorkflowTableExample() {
   const [loading, setLoading] = useState(true);

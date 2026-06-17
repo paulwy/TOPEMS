@@ -41,7 +41,7 @@ import {
   Tooltip,
   Divider,
 } from "@mui/material";
-import { EmptyState } from "../components/EmptyState";
+import { EmptyState } from "@/components/EmptyState";
 
 interface VisualizationComponent {
   id: string;

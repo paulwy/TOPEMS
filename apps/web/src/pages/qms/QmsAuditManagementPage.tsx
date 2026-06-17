@@ -32,10 +32,10 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { qmsApi } from "../../api/qms";
-import type { AuditPlan, AuditTask, AuditFinding } from "../../api/qms";
+import { qmsApi } from "@/api/qms";
+import type { AuditPlan, AuditTask, AuditFinding } from "@/api/qms";
 
 const QmsAuditManagementPage: React.FC = () => {
   const navigate = useNavigate();

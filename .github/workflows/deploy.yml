@@ -1,0 +1,333 @@
+name: Build and Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Version to deploy (leave empty for latest)'
+        required: false
+
+env:
+  RUST_VERSION: '1.75'
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================================================
+  # Build Job
+  # ============================================================================
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Determine version
+      id: version
+      run: |
+        if [[ -n "${{ github.event.inputs.version }}" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+        elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          VERSION="${{ github.ref_name }}"
+        else
+          VERSION="$(git describe --tags --always)"
+        fi
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Building version: ${VERSION}"
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Cache Cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
+    - name: Build backend services
+      run: |
+        cargo build --release --workspace
+        # Create distribution directory
+        mkdir -p dist/bin
+        # Copy all service binaries
+        for svc in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal; do
+          if [[ -f "target/release/${svc}" ]]; then
+            cp "target/release/${svc}" "dist/bin/${svc}-service"
+          fi
+        done
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: apps/web/package-lock.json
+
+    - name: Build frontend
+      run: |
+        cd apps/web
+        npm install --legacy-peer-deps
+        npm run build
+        mkdir -p ../dist/web
+        cp -r dist/* ../dist/web/
+
+    - name: Copy deployment files
+      run: |
+        cp -r deploy/systemd dist/
+        cp -r deploy/scripts dist/
+        cp deploy/env/.env.production.template dist/config/.env.template
+        cp -r database dist/
+        cp -r migrations dist/
+
+    - name: Create distribution archive
+      run: |
+        cd dist
+        tar -czvf topems-${{ steps.version.outputs.version }}.tar.gz *
+        mv topems-${{ steps.version.outputs.version }}.tar.gz ..
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: topems-${{ steps.version.outputs.version }}
+        path: topems-${{ steps.version.outputs.version }}.tar.gz
+        retention-days: 30
+
+  # ============================================================================
+  # Test Job
+  # ============================================================================
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: topems
+          POSTGRES_PASSWORD: topems_secret
+          POSTGRES_DB: topems
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Run backend tests
+      run: cargo test --workspace --no-fail-fast
+      env:
+        DATABASE_URL: postgres://topems:topems_secret@localhost:5432/topems
+        REDIS_URL: redis://localhost:6379
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Run frontend tests
+      run: |
+        cd apps/web
+        npm install --legacy-peer-deps
+        npm run lint
+        npm run typecheck
+        npm run test
+
+  # ============================================================================
+  # Deploy to Staging
+  # ============================================================================
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.event.inputs.environment == 'staging' || github.event_name == 'push'
+    environment: staging
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: topems-${{ needs.build.outputs.version }}
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+    - name: Deploy to staging server
+      run: |
+        # Add staging server to known hosts
+        ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
+        # Create remote directory
+        ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} "mkdir -p /opt/topems/releases/${{ needs.build.outputs.version }}"
+
+        # Upload distribution
+        scp topems-${{ needs.build.outputs.version }}.tar.gz ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/releases/
+
+        # Extract and install
+        ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
+          cd /opt/topems/releases/${{ needs.build.outputs.version }}
+          tar -xzf ../topems-${{ needs.build.outputs.version }}.tar.gz
+
+          # Stop services
+          systemctl stop topems.target || true
+
+          # Update binaries
+          cp -r bin/* /opt/topems/bin/
+
+          # Update frontend
+          rm -rf /opt/topems/web
+          cp -r web /opt/topems/
+
+          # Update systemd files
+          cp systemd/*.service /etc/systemd/system/
+          cp systemd/topems.target /etc/systemd/system/
+          systemctl daemon-reload
+
+          # Start services
+          systemctl start topems.target
+
+          # Health check
+          sleep 10
+          systemctl status topems.target
+        EOF
+
+    - name: Verify deployment
+      run: |
+        ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} "curl -f http://localhost:8080/health || exit 1"
+
+  # ============================================================================
+  # Deploy to Production
+  # ============================================================================
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.event.inputs.environment == 'production' && github.event_name == 'workflow_dispatch'
+    environment: production
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: topems-${{ needs.build.outputs.version }}
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+    - name: Deploy to production server
+      run: |
+        ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+
+        ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} "mkdir -p /opt/topems/releases/${{ needs.build.outputs.version }}"
+
+        scp topems-${{ needs.build.outputs.version }}.tar.gz ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:/opt/topems/releases/
+
+        ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
+          cd /opt/topems/releases/${{ needs.build.outputs.version }}
+          tar -xzf ../topems-${{ needs.build.outputs.version }}.tar.gz
+
+          # Backup current version
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          cp -r /opt/topems/bin /opt/topems/bin.backup.${TIMESTAMP}
+          cp -r /opt/topems/web /opt/topems/web.backup.${TIMESTAMP}
+
+          # Stop services gracefully
+          systemctl stop topems.target
+
+          # Update
+          cp -r bin/* /opt/topems/bin/
+          rm -rf /opt/topems/web
+          cp -r web /opt/topems/
+          cp systemd/*.service /etc/systemd/system/
+          cp systemd/topems.target /etc/systemd/system/
+          systemctl daemon-reload
+
+          # Start services
+          systemctl start topems.target
+
+          # Wait for services to be ready
+          sleep 30
+
+          # Verify all services are running
+          systemctl status topems.target --no-pager
+        EOF
+
+    - name: Run production health checks
+      run: |
+        ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
+          # Check portal
+          curl -f http://localhost:8080/health
+
+          # Check unified-core
+          curl -f http://localhost:8001/health
+
+          # Check all services
+          for port in 8002 8003 8004 8005 8006 8007 8008 8009 8010 8011 8012 8013 8014 8015; do
+            curl -f http://localhost:${port}/health || echo "Service on port ${port} not responding"
+          done
+        EOF
+
+    - name: Notify deployment success
+      if: success()
+      run: |
+        echo "Production deployment successful for version ${{ needs.build.outputs.version }}"
+
+    - name: Rollback on failure
+      if: failure()
+      run: |
+        ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
+          # Find latest backup
+          LATEST_BACKUP=$(ls -dt /opt/topems/bin.backup.* | head -1)
+          TIMESTAMP=$(echo ${LATEST_BACKUP} | sed 's/.*backup\.//')
+
+          if [[ -n "${TIMESTAMP}" ]]; then
+            echo "Rolling back to backup ${TIMESTAMP}"
+
+            systemctl stop topems.target
+
+            rm -rf /opt/topems/bin
+            cp -r /opt/topems/bin.backup.${TIMESTAMP} /opt/topems/bin
+
+            rm -rf /opt/topems/web
+            cp -r /opt/topems/web.backup.${TIMESTAMP} /opt/topems/web
+
+            systemctl start topems.target
+
+            echo "Rollback completed"
+          fi
+        EOF

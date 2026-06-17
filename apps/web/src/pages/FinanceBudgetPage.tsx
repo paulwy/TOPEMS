@@ -17,7 +17,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { budgetApi, type Budget, type PaginatedResult } from "../api/erp";
+import { budgetApi, type Budget, type PaginatedResult } from "@/api/erp";
 import { useAppStore } from "../store";
 import {
   Card,
@@ -49,9 +49,9 @@ import {
 } from "@mui/material";
 import OrganizationFilter, {
   type OrganizationFilterValue,
-} from "../components/ui/OrganizationFilter";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
+} from "@/components/ui/OrganizationFilter";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();

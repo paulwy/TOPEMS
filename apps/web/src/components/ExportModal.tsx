@@ -9,7 +9,7 @@ import {
   Loader2,
   Columns,
 } from "lucide-react";
-import type { ReportData, ExportFormat } from "../api/report";
+import type { ReportData, ExportFormat } from "@/api/report";
 
 interface ExportModalProps {
   report: ReportData;

@@ -14,7 +14,7 @@ import type {
   ValidateRequest,
   ValidationIssue,
   Suggestion,
-} from "../../types/ai";
+} from "@/types/ai";
 
 export interface AIFormValidatorProps {
   isOpen: boolean;

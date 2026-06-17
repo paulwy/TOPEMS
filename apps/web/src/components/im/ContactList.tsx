@@ -245,7 +245,7 @@ export const ContactList: React.FC<ContactListProps> = ({
             {pendingRequests.map((friend) => (
               <div
                 key={friend.id}
-                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, marginHorizontal: 4 }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, margin: "0 4px" }}
               >
                 <div
                   style={{ display: "flex", alignItems: "center", gap: 12 }}
@@ -290,7 +290,7 @@ export const ContactList: React.FC<ContactListProps> = ({
               .map((friend) => (
                 <div
                   key={friend.id}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, marginHorizontal: 4, cursor: "pointer", position: "relative" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 8, borderRadius: 8, margin: "0 4px", cursor: "pointer", position: "relative" }}
                 >
                   <div
                     style={{ display: "flex", alignItems: "center", gap: 12 }}
@@ -346,7 +346,7 @@ export const ContactList: React.FC<ContactListProps> = ({
           <div style={{ padding: 8 }}>
             {groups.length === 0 ? (
               <div style={{ textAlign: "center", padding: 32, color: "#6b7280" }}>
-                <Users style={{ width: 48, height: 48, mx: "auto", mb: 8, color: "#d1d5db" }} />
+                <Users style={{ width: 48, height: 48, margin: "0 auto", marginBottom: 8, color: "#d1d5db" }} />
                 <p style={{ fontSize: 14 }}>暂无分组</p>
                 <button
                   onClick={() => setShowAddModal(true)}
@@ -359,7 +359,7 @@ export const ContactList: React.FC<ContactListProps> = ({
               groups.map((group) => (
                 <div
                   key={group.id}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, borderRadius: 8, marginHorizontal: 4, cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, borderRadius: 8, margin: "0 4px", cursor: "pointer" }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 40, height: 40, borderRadius: "9999px", backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -383,7 +383,7 @@ export const ContactList: React.FC<ContactListProps> = ({
           filteredFriends.length === 0 &&
           pendingRequests.length === 0 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#6b7280" }}>
-              <User style={{ width: 64, height: 64, color: "#d1d5db", mb: 16 }} />
+              <User style={{ width: 64, height: 64, color: "#d1d5db", marginBottom: 16 }} />
               <p style={{ fontSize: 14 }}>暂无联系人</p>
             </div>
           )}

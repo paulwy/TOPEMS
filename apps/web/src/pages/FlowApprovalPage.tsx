@@ -17,8 +17,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { Approval, WorkflowInstance } from "../api/flow";
-import { flowApi, ApprovalRecord } from "../api/flow";
+import type { Approval, WorkflowInstance } from "@/api/flow";
+import { flowApi, ApprovalRecord } from "@/api/flow";
 import { useAppStore } from "../store";
 import {
   Button,

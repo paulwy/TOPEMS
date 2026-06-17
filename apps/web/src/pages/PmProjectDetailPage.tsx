@@ -30,15 +30,15 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import GanttChart from "../components/pm/GanttChart";
-import { pmApi } from "../api/pm";
+import GanttChart from "@/components/pm/GanttChart";
+import { pmApi } from "@/api/pm";
 import type {
   Project,
   ProjectPhase,
   ProjectMilestone,
   GanttPhase,
   GanttMilestone,
-} from "../api/pm";
+} from "@/api/pm";
 import {
   CardTitle,
   Progress,
@@ -46,7 +46,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "../components/ui/shadcn";
+} from "@/components/ui/shadcn";
 
 const PmProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();

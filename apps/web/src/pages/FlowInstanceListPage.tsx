@@ -37,8 +37,8 @@ import {
   Users,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { WorkflowInstance, Workflow } from "../api/flow";
-import { flowApi } from "../api/flow";
+import type { WorkflowInstance, Workflow } from "@/api/flow";
+import { flowApi } from "@/api/flow";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";

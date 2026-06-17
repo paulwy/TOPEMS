@@ -30,8 +30,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { assetApi, type Asset } from "../api/erp";
-import { employeeApi, type Employee } from "../api/hrm";
+import { assetApi, type Asset } from "@/api/erp";
+import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";

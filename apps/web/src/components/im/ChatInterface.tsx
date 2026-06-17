@@ -551,7 +551,7 @@ export const ChatInterface: React.FC = () => {
               </div>
             ) : filteredRooms.length === 0 ? (
               <div style={{ textAlign: "center", padding: 32 }}>
-                <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", mx: "auto", mb: 12 }} />
+                <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", margin: "0 auto", marginBottom: 12 }} />
                 <p style={{ color: "#6b7280" }}>暂无聊天记录</p>
               </div>
             ) : (
@@ -609,14 +609,14 @@ export const ChatInterface: React.FC = () => {
               {messages.length === 0 ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
                   <div style={{ textAlign: "center" }}>
-                    <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", mx: "auto", mb: 12 }} />
+                    <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", margin: "0 auto", marginBottom: 12 }} />
                     <p style={{ color: "#6b7280" }}>暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
                   <div style={{ textAlign: "center" }}>
-                    <Search style={{ width: 48, height: 48, color: "#d1d5db", mx: "auto", mb: 12 }} />
+                    <Search style={{ width: 48, height: 48, color: "#d1d5db", margin: "0 auto", marginBottom: 12 }} />
                     <p style={{ color: "#6b7280" }}>未找到匹配的消息</p>
                   </div>
                 </div>
@@ -655,11 +655,11 @@ export const ChatInterface: React.FC = () => {
         ) : (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9fafb" }}>
             <div style={{ textAlign: "center" }}>
-              <MessageSquare style={{ width: 64, height: 64, color: "#d1d5db", mx: "auto", mb: 16 }} />
-              <h2 style={{ fontSize: 20, fontWeight: 600, color: "#111827", mb: 8 }}>
+              <MessageSquare style={{ width: 64, height: 64, color: "#d1d5db", margin: "0 auto", marginBottom: 16 }} />
+              <h2 style={{ fontSize: 20, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
                 欢迎使用 TOPEMS IM
               </h2>
-              <p style={{ color: "#6b7280", mb: 16 }}>
+              <p style={{ color: "#6b7280", marginBottom: 16 }}>
                 {activeTab === "notifications"
                   ? "查看通知中心"
                   : "选择一个聊天室开始聊天"}

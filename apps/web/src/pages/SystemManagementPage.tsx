@@ -13,8 +13,8 @@ import {
   Activity,
   Layout,
 } from "lucide-react";
-import MobileHeader from "../components/MobileHeader";
-import MobileNav from "../components/MobileNav";
+import MobileHeader from "@/components/MobileHeader";
+import MobileNav from "@/components/MobileNav";
 import { Box, Typography } from "@mui/material";
 
 interface SystemManagementPageProps {

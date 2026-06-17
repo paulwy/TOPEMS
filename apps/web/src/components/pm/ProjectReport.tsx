@@ -37,7 +37,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import type { PmStatistics, ProjectBenefit } from "../../api/pm";
+import type { PmStatistics, ProjectBenefit } from "@/api/pm";
 
 interface ProjectReportProps {
   stats: PmStatistics;

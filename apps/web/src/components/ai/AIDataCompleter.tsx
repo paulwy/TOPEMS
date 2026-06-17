@@ -8,7 +8,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
-import type { CompleteRequest, CompletionItem } from "../../types/ai";
+import type { CompleteRequest, CompletionItem } from "@/types/ai";
 
 export interface AIDataCompleterProps {
   isOpen: boolean;

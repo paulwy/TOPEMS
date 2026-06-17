@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Check, Trash2, ExternalLink } from "lucide-react";
-import type { Notification } from "../../api/notification";
-import { markAsRead, deleteNotification } from "../../api/notification";
+import type { Notification } from "@/api/notification";
+import { markAsRead, deleteNotification } from "@/api/notification";
 
 interface NotificationItemProps {
   notification: Notification;

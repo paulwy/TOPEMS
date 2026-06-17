@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 
 // Mock dependencies
-vi.mock("../api/hrm", () => ({
+vi.mock("../../api/hrm", () => ({
   departmentApi: {
     list: vi.fn(),
     create: vi.fn(),

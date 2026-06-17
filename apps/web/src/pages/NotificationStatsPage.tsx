@@ -11,15 +11,15 @@ import {
   Calendar,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { NotificationStats } from "../api/notification";
+import type { NotificationStats } from "@/api/notification";
 import {
   getMyNotificationStats,
   notificationServiceApi,
-} from "../api/notification";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-import { NotificationContainer } from "../components/NotificationContainer";
-import { useNotification } from "../hooks/useNotification";
+} from "@/api/notification";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { NotificationContainer } from "@/components/NotificationContainer";
+import { useNotification } from "@/hooks/useNotification";
 
 const NotificationStatsPage: React.FC = () => {
   const navigate = useNavigate();

@@ -27,7 +27,7 @@ import {
   type Vehicle,
   type VehicleRequest,
   type Announcement,
-} from "../api/erp";
+} from "@/api/erp";
 import { useAppStore } from "../store";
 
 export interface UseErpResult<T> {

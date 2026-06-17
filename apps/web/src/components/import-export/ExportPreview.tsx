@@ -37,9 +37,8 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
           <button
             onClick={onClose}
             style={{ color: "#94a3b8" }}
-            sx={{ "&:hover": { color: "#475569" } }}
           >
-            <X style={{ width: 20, height: 20 }} sx={{ "&:hover": { color: "#475569" } }} />
+            <X style={{ width: 20, height: 20 }} />
           </button>
         </div>
 
@@ -99,14 +98,12 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
           <button
             onClick={onClose}
             style={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 8 }}
-            sx={{ "&:hover": { backgroundColor: "#e2e8f0" }, transition: "colors 0.2s" }}
           >
             取消
           </button>
           <button
             onClick={onDownload}
             style={{ padding: "8px 16px", backgroundColor: "#16a34a", color: "white", borderRadius: 8 }}
-            sx={{ "&:hover": { backgroundColor: "#15803d" }, transition: "colors 0.2s" }}
           >
             <span style={{ display: "flex", alignItems: "center" }}>
               <Download style={{ width: 16, height: 16, marginRight: 8 }} />

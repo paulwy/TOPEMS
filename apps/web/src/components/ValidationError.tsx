@@ -169,7 +169,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <div style={{ width: "32px", height: "32px", backgroundColor: "#dcfce7", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg
-            sx={{ width: 20, height: 20, color: "#22c55e" }}
+            style={{ width: 20, height: 20, color: "#22c55e" }}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -187,7 +187,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({
       {onClose && (
         <button
           onClick={onClose}
-          sx={{ color: "#22c55e", "&:hover": { color: "#16a34a" } }}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#22c55e", padding: "4px" }}
         >
           <X sx={{ width: 20, height: 20 }} />
         </button>

@@ -23,7 +23,7 @@ import {
   Search,
   Filter,
 } from "lucide-react";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 
 interface Hazard {

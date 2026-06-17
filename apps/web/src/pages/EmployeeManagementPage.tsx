@@ -14,13 +14,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { employeeApi, type Employee } from "../api/hrm";
+import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../store";
 import {
   ListPageTemplate,
   type ColumnDef,
   type RowAction,
-} from "../components/templates";
+} from "@/components/templates";
 
 const CreateEmployeeForm = React.lazy(
   () => import("./forms/CreateEmployeeForm"),

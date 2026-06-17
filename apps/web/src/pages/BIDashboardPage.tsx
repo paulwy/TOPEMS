@@ -10,7 +10,7 @@ import {
   ArrowUpRight,
   RefreshCw,
 } from "lucide-react";
-import { BarChart } from "../components/charts/BarChart";
+import { BarChart } from "@/components/charts/BarChart";
 import {
   Bar,
   XAxis,
@@ -35,13 +35,13 @@ import {
   type QualityAnalytics,
   type ProductionAnalytics,
   type LaboratoryAnalytics,
-} from "../api/bi";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import MetricCard from "../components/MetricCard";
-import { ChartCard } from "../components/ChartCard";
-import { BIChartColors } from "../components/charts/chartTheme";
+} from "@/api/bi";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import MetricCard from "@/components/MetricCard";
+import { ChartCard } from "@/components/ChartCard";
+import { BIChartColors } from "@/components/charts/chartTheme";
 import { Button, Skeleton, Box, Typography } from "@mui/material";
-import { PageHeader } from "../components/templates/PageHeader";
+import { PageHeader } from "@/components/templates/PageHeader";
 
 const MetricCardSkeleton = () => (
   <Box

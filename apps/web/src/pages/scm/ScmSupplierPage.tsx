@@ -21,10 +21,10 @@ import {
   Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { scmApi } from "../../api/scm";
-import type { Supplier } from "../../api/scm";
+import { scmApi } from "@/api/scm";
+import type { Supplier } from "@/api/scm";
 import { toast } from "react-toastify";
 
 const ScmSupplierPage: React.FC = () => {

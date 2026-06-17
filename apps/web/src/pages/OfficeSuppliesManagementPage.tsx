@@ -21,7 +21,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { officeSupplyApi, type OfficeSupply } from "../api/erp";
+import { officeSupplyApi, type OfficeSupply } from "@/api/erp";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";

@@ -11,8 +11,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
-import type { Contract } from "../api/pm";
-import { pmApi } from "../api/pm";
+import type { Contract } from "@/api/pm";
+import { pmApi } from "@/api/pm";
 
 const CONTRACT_TYPES = [
   { value: "", label: "全部类型" },

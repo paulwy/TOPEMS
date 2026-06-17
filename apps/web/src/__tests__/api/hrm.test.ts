@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { hrmApi } from "../../api/hrm";
+import { hrmApi } from "@/api/hrm";
 
 // 模拟 apiClient
 vi.mock("../../api/client", () => ({

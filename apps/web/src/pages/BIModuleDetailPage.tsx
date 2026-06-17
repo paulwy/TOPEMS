@@ -27,8 +27,8 @@ import {
   Grid,
   Chip,
 } from "@mui/material";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import ExportButton from "../components/ExportButton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import ExportButton from "@/components/ExportButton";
 
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
   rs: { name: "研发管理", icon: "🔬", color: "#3B82F6" },

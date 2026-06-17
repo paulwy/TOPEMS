@@ -15,11 +15,11 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
-import type { Project, Contract, PmStatistics } from "../api/pm";
-import { pmApi } from "../api/pm";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-import { PageHeader } from "../components/templates";
+import type { Project, Contract, PmStatistics } from "@/api/pm";
+import { pmApi } from "@/api/pm";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { PageHeader } from "@/components/templates";
 
 const PmDashboardPage: React.FC = () => {
   const navigate = useNavigate();

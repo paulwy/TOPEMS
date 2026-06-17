@@ -27,8 +27,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { Workflow, WorkflowVersion } from "../api/flow";
-import { flowApi } from "../api/flow";
+import type { Workflow, WorkflowVersion } from "@/api/flow";
+import { flowApi } from "@/api/flow";
 import { useAppStore } from "../store";
 
 const FlowVersionHistoryPage: React.FC = () => {

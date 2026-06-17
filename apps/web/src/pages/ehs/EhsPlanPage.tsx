@@ -21,10 +21,10 @@ import {
   Search,
   Users,
 } from "lucide-react";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ehsApi } from "../../api/ehs";
-import type { EmergencyPlan } from "../../api/ehs";
+import { ehsApi } from "@/api/ehs";
+import type { EmergencyPlan } from "@/api/ehs";
 import { toast } from "react-toastify";
 
 const EhsPlanPage: React.FC = () => {

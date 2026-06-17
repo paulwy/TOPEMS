@@ -1,0 +1,32 @@
+[Unit]
+Description=TOPEMS Quality Assurance Service (QMS + LIMS + EHS)
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/quality-assurance
+ExecStart=/opt/topems/bin/quality-assurance-service
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/quality-assurance.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-quality-assurance
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/topems/logs /opt/topems/data
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

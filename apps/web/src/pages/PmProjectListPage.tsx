@@ -34,8 +34,8 @@ import {
   MenuItem,
   Tooltip,
 } from "@mui/material";
-import type { Project } from "../api/pm";
-import { pmApi } from "../api/pm";
+import type { Project } from "@/api/pm";
+import { pmApi } from "@/api/pm";
 
 const PROJECT_TYPES = [
   { value: "__ALL__", label: "全部类型" },

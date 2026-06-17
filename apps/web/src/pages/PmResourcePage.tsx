@@ -44,7 +44,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PageHeader } from "../components/templates";
+import { PageHeader } from "@/components/templates";
 
 interface Resource {
   id: string;

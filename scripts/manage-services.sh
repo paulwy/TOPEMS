@@ -14,12 +14,23 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# ================================================
+# [已整合] 新统一服务配置
+# ================================================
+# 整合服务：notification + im + mail → communication
+# 整合服务：mes + pdm → manufacturing
+# 整合服务：qms + lims + ehs → quality-assurance
+# 整合服务：bi + report → analytics
+
 # 服务配置 (使用空格分隔，格式: 服务名 路径 端口)
 SERVICES_CONFIG="
 iam platform/topems-iam/backend 8000
 doc platform/topems-doc/backend 8001
 pm services/topems-pm/backend 8002
-notification services/notification-service 8003
+# [已整合] 通讯服务 (notification + im + mail)
+communication services/communication-service 8055
+# [已整合] 制造服务 (mes + pdm)
+manufacturing services/manufacturing-service 8030
 integration services/topems-integration/backend 8004
 portal services/topems-portal/backend 8005
 flow platform/topems-flow/backend 8006
@@ -28,24 +39,33 @@ hrm services/topems-hrm/backend 8011
 crm services/topems-crm/backend 8012
 ai services/topems-ai/backend 8013
 rs services/topems-rs/backend 8020
-lims services/topems-lims/backend 8022
-pdm services/topems-pdm/backend 8023
-mes services/topems-mes/backend 8030
-qms services/topems-qms/backend 8031
-ehs services/topems-ehs/backend 8032
+# [已整合] 质量管控服务 (qms + lims + ehs)
+quality-assurance services/quality-assurance-service 8032
 scm services/topems-scm/backend 8040
 srm services/topems-srm/backend 8041
 wms services/topems-wms/backend 8042
-gis services/topems-gis/backend 8050
-im services/topems-im/backend 8051
-bi services/topems-bi/backend 8052
-report services/report-service 8053
-mail services/topems-mail/backend 8054
-mobile services/topems-mobile/backend 8055
+gis services/topems-gis/backend 8053
+mobile services/topems-mobile/backend 8070
+# [已整合] 分析服务 (bi + report)
+analytics services/analytics-service 8060
 "
 
+# ================================================
+# [已下线] 旧服务（仅供参考，不再使用）
+# ================================================
+# notification (8002) → communication (8055)
+# im (8051) → communication (8055)
+# mail (8054) → communication (8055)
+# mes (8030) → manufacturing (8030)
+# pdm (8023) → manufacturing (8030)
+# qms (8031) → quality-assurance (8032)
+# lims (8022) → quality-assurance (8032)
+# ehs (8032) → quality-assurance (8032)
+# bi (8052) → analytics (8060)
+# report (8053) → analytics (8060)
+
 # 核心服务列表（必须先启动的服务）
-CORE_SERVICES="iam doc notification"
+CORE_SERVICES="iam doc communication"
 
 # 获取服务路径
 get_service_path() {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
-import { integrationApi } from "../api/integration";
-import type { IntegrationEvent } from "../api/integration";
+import { integrationApi } from "@/api/integration";
+import type { IntegrationEvent } from "@/api/integration";
 
 const IntegrationEventsPage: React.FC = () => {
   const [events, setEvents] = useState<IntegrationEvent[]>([]);

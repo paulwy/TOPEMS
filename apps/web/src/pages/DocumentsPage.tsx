@@ -33,9 +33,9 @@ import {
   Type,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { docApi, type Folder as FolderType } from "../api/doc";
+import { docApi, type Folder as FolderType } from "@/api/doc";
 import { useAppStore } from "../store";
-import { DocumentPreviewModal } from "../components/DocumentPreviewModal";
+import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 
 import {
   Button,

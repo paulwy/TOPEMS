@@ -25,7 +25,7 @@ import {
   MapPin,
   User,
 } from "lucide-react";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 
 interface Accident {

@@ -37,7 +37,7 @@ import {
   Chip,
   Tooltip,
 } from "@mui/material";
-import { EmptyState } from "../components/EmptyState";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Report {
   id: string;

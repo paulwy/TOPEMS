@@ -7,7 +7,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import type { ProjectTemplate } from "./ProjectTemplateCard";
-import type { CreateProjectRequest } from "../../api/pm";
+import type { CreateProjectRequest } from "@/api/pm";
 
 interface ProjectTemplateModalProps {
   open: boolean;

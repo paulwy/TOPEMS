@@ -45,11 +45,11 @@ import type {
   CreateInspectionTaskRequest,
   CreateInspectionRecordRequest,
   LimsStatistics,
-} from "../api/lims";
-import { limsApi } from "../api/lims";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-import { PageHeader } from "../components/templates/PageHeader";
+} from "@/api/lims";
+import { limsApi } from "@/api/lims";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { PageHeader } from "@/components/templates/PageHeader";
 
 const LimsTaskPage: React.FC = () => {
   const navigate = useNavigate();

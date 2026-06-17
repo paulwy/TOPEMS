@@ -49,7 +49,6 @@ const config: RuntimeConfig = {
   services: {
     iam: getEnv("VITE_IAM_SERVICE_URL", "/iam"),
     pm: getEnv("VITE_PM_SERVICE_URL", "/pm"),
-    notification: getEnv("VITE_NOTIFICATION_SERVICE_URL", "/notification"),
     portal: getEnv("VITE_PORTAL_SERVICE_URL", "/portal"),
     flow: getEnv("VITE_FLOW_SERVICE_URL", "/flow"),
     integration: getEnv("VITE_INTEGRATION_SERVICE_URL", "/integration"),
@@ -57,24 +56,37 @@ const config: RuntimeConfig = {
     hrm: getEnv("VITE_HRM_SERVICE_URL", "/hrm"),
     crm: getEnv("VITE_CRM_SERVICE_URL", "/crm"),
     rs: getEnv("VITE_RS_SERVICE_URL", "/rs"),
-    lims: getEnv("VITE_LIMS_SERVICE_URL", "/lims"),
-    pdm: getEnv("VITE_PDM_SERVICE_URL", "/pdm"),
     doc: getEnv("VITE_DOC_SERVICE_URL", "/doc"),
-    mes: getEnv("VITE_MES_SERVICE_URL", "/mes"),
-    qms: getEnv("VITE_QMS_SERVICE_URL", "/qms"),
-    ehs: getEnv("VITE_EHS_SERVICE_URL", "/ehs"),
     scm: getEnv("VITE_SCM_SERVICE_URL", "/scm"),
     srm: getEnv("VITE_SRM_SERVICE_URL", "/srm"),
     wms: getEnv("VITE_WMS_SERVICE_URL", "/wms"),
     file: getEnv("VITE_FILE_SERVICE_URL", "/file"),
-    mail: getEnv("VITE_MAIL_SERVICE_URL", "/mail"),
-    im: getEnv("VITE_IM_SERVICE_URL", "/im"),
     gis: getEnv("VITE_GIS_SERVICE_URL", "/gis"),
-    bi: getEnv("VITE_BI_SERVICE_URL", "/bi"),
-    report: getEnv("VITE_REPORT_SERVICE_URL", "/report"),
     ai: getEnv("VITE_AI_SERVICE_URL", "/ai"),
     mobile: getEnv("VITE_MOBILE_SERVICE_URL", "http://localhost:8070"),
     migration: getEnv("VITE_MIGRATION_SERVICE_URL", "http://localhost:8787"),
+
+    // ========== [已整合] 统一服务 ==========
+    communication: getEnv("VITE_COMMUNICATION_SERVICE_URL", "/comm"),
+    manufacturing: getEnv("VITE_MANUFACTURING_SERVICE_URL", "/mfg"),
+    qualityAssurance: getEnv("VITE_QUALITY_ASSURANCE_SERVICE_URL", "/qa"),
+    analytics: getEnv("VITE_ANALYTICS_SERVICE_URL", "/analytics"),
+
+    // ========== [向后兼容] 旧服务路径 -> 新服务 ==========
+    // notification, im, mail -> communication
+    notification: getEnv("VITE_NOTIFICATION_SERVICE_URL", "/notification"),
+    mail: getEnv("VITE_MAIL_SERVICE_URL", "/mail"),
+    im: getEnv("VITE_IM_SERVICE_URL", "/im"),
+    // mes, pdm -> manufacturing
+    mes: getEnv("VITE_MES_SERVICE_URL", "/mes"),
+    pdm: getEnv("VITE_PDM_SERVICE_URL", "/pdm"),
+    // qms, lims, ehs -> qualityAssurance
+    qms: getEnv("VITE_QMS_SERVICE_URL", "/qms"),
+    lims: getEnv("VITE_LIMS_SERVICE_URL", "/lims"),
+    ehs: getEnv("VITE_EHS_SERVICE_URL", "/ehs"),
+    // bi, report -> analytics
+    bi: getEnv("VITE_BI_SERVICE_URL", "/bi"),
+    report: getEnv("VITE_REPORT_SERVICE_URL", "/report"),
   },
   features: {
     debugMode: getEnvBool("VITE_ENABLE_DEBUG_MODE", false),

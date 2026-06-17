@@ -8,7 +8,7 @@ import type {
   SummarizeRequest,
   SummarizeResponse,
   AITemplate,
-} from "../types/ai";
+} from "@/types/ai";
 
 export interface Document {
   id: string;

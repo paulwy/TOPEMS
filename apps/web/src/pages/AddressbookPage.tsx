@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Box } from "@mui/material";
-import { AddressbookSidebar } from "../components/addressbook/AddressbookSidebar";
-import { AddressbookHeader } from "../components/addressbook/AddressbookHeader";
-import { AddressbookFilters } from "../components/addressbook/AddressbookFilters";
-import { AddressbookList } from "../components/addressbook/AddressbookList";
-import { ContactDetailModal } from "../components/addressbook/ContactDetailModal";
-import { addressbookApi } from "../api/addressbook";
+import { AddressbookSidebar } from "@/components/addressbook/AddressbookSidebar";
+import { AddressbookHeader } from "@/components/addressbook/AddressbookHeader";
+import { AddressbookFilters } from "@/components/addressbook/AddressbookFilters";
+import { AddressbookList } from "@/components/addressbook/AddressbookList";
+import { ContactDetailModal } from "@/components/addressbook/ContactDetailModal";
+import { addressbookApi } from "@/api/addressbook";
 import type {
   AddressbookEntry,
   AddressbookDetail,
   DepartmentNode,
-} from "../types/addressbook";
+} from "@/types/addressbook";
 
 const AddressbookPage: React.FC = () => {
   const [contacts, setContacts] = useState<AddressbookEntry[]>([]);

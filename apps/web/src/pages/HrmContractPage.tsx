@@ -14,9 +14,9 @@ import {
   Clock,
   FileTextIcon,
 } from "lucide-react";
-import type { Contract, ContractRenewal, Employee } from "../api/hrm";
-import { contractApi, contractRenewalApi, employeeApi } from "../api/hrm";
-import type { PaginatedResult } from "../api/hrm";
+import type { Contract, ContractRenewal, Employee } from "@/api/hrm";
+import { contractApi, contractRenewalApi, employeeApi } from "@/api/hrm";
+import type { PaginatedResult } from "@/api/hrm";
 
 import {
   Button,

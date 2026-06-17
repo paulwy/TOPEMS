@@ -18,7 +18,7 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
-import type { TextOptimizeContext } from "../../types/ai";
+import type { TextOptimizeContext } from "@/types/ai";
 
 export interface AITextOptimizerProps {
   isOpen: boolean;

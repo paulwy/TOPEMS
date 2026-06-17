@@ -1,8 +1,8 @@
 import { Grid } from "@/components/Grid";
 import React, { useState, useEffect } from "react";
-import { mobileApi } from "../api/mobile";
-import MobileHeader from "../components/MobileHeader";
-import MobileNav from "../components/MobileNav";
+import { mobileApi } from "@/api/mobile";
+import MobileHeader from "@/components/MobileHeader";
+import MobileNav from "@/components/MobileNav";
 import {
   MapPin,
   QrCode,

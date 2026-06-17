@@ -30,10 +30,10 @@ import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { limsApi } from "../../api/lims";
-import type { Sample, InspectionTask, InspectionRecord } from "../../api/lims";
+import { limsApi } from "@/api/lims";
+import type { Sample, InspectionTask, InspectionRecord } from "@/api/lims";
 import { toast } from "react-toastify";
 import {
   BarChart,

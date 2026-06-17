@@ -68,18 +68,18 @@ import {
   Bell,
   Clock3,
 } from "lucide-react";
-import { authApi } from "../api/iam";
-import { docApi } from "../api/doc";
-import { flowApi } from "../api/flow";
-import { erpApi } from "../api/erp";
-import { hrmApi } from "../api/hrm";
-import { mobileApi } from "../api/mobile";
-import MobileNav from "../components/MobileNav";
-import MobileHeader from "../components/MobileHeader";
-import { usePermission } from "../hooks/usePermission";
-import { useAuth } from "../hooks/useAuth";
-import { StatsChart } from "../components/StatsChart";
-import { MetricCard } from "../components/MetricCard";
+import { authApi } from "@/api/iam";
+import { docApi } from "@/api/doc";
+import { flowApi } from "@/api/flow";
+import { erpApi } from "@/api/erp";
+import { hrmApi } from "@/api/hrm";
+import { mobileApi } from "@/api/mobile";
+import MobileNav from "@/components/MobileNav";
+import MobileHeader from "@/components/MobileHeader";
+import { usePermission } from "@/hooks/usePermission";
+import { useAuth } from "@/hooks/useAuth";
+import { StatsChart } from "@/components/StatsChart";
+import { MetricCard } from "@/components/MetricCard";
 import { useAppStore } from "../store";
 import {
   DashboardHeader,
@@ -97,7 +97,7 @@ import {
   ModuleNavigationSection,
   ServiceMonitorSection,
   RecentActivitySection,
-} from "../components/dashboard";
+} from "@/components/dashboard";
 
 interface DashboardPageProps {
   onLogout?: () => void;

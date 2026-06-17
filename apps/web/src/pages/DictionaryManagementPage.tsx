@@ -21,7 +21,7 @@ import {
   dictItemApi,
   type DictType,
   type DictItem,
-} from "../api/system";
+} from "@/api/system";
 import { useAppStore } from "../store";
 
 import {

@@ -1,0 +1,222 @@
+//! Plugin Marketplace module
+//!
+//! Manages plugin registration, installation, and marketplace
+
+pub mod models;
+pub mod handlers;
+
+use sqlx::PgPool;
+
+/// Initialize Plugin Marketplace database tables
+pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
+    // Plugin registry (available plugins)
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_plugins (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            code VARCHAR(64) NOT NULL UNIQUE,
+            name VARCHAR(128) NOT NULL,
+            description TEXT,
+            version VARCHAR(32) NOT NULL,
+            
+            -- Plugin type
+            plugin_type VARCHAR(32) DEFAULT 'business',  -- 'core' | 'business' | 'plugin'
+            
+            -- Installation
+            is_installed BOOLEAN DEFAULT FALSE,
+            installed_at TIMESTAMP,
+            is_active BOOLEAN DEFAULT FALSE,
+            activated_at TIMESTAMP,
+            
+            -- Pricing
+            is_free BOOLEAN DEFAULT TRUE,
+            price_cents INTEGER DEFAULT 0,
+            
+            -- Files and assets
+            remote_url VARCHAR(512),
+            checksum VARCHAR(64),
+            entry_point VARCHAR(256),
+            
+            -- Dependencies
+            dependencies JSONB DEFAULT '[]',
+            
+            -- Stats
+            install_count INTEGER DEFAULT 0,
+            rating DECIMAL(3,2) DEFAULT 0,
+            rating_count INTEGER DEFAULT 0,
+            
+            -- Status
+            is_published BOOLEAN DEFAULT FALSE,
+            is_featured BOOLEAN DEFAULT FALSE,
+            is_recommended BOOLEAN DEFAULT FALSE,
+            
+            -- Author info
+            author_name VARCHAR(128),
+            author_url VARCHAR(512),
+            homepage_url VARCHAR(512),
+            
+            -- Screenshots
+            screenshots JSONB DEFAULT '[]',
+            
+            -- Metadata
+            tags TEXT[],
+            category VARCHAR(64),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            published_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Plugin versions (for version management)
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_plugin_versions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            version VARCHAR(32) NOT NULL,
+            
+            -- Release info
+            release_notes TEXT,
+            is_stable BOOLEAN DEFAULT TRUE,
+            is_latest BOOLEAN DEFAULT FALSE,
+            
+            -- Files
+            download_url VARCHAR(512),
+            checksum VARCHAR(64),
+            file_size BIGINT,
+            
+            -- Compatibility
+            min_app_version VARCHAR(32),
+            
+            created_at TIMESTAMP DEFAULT NOW(),
+            
+            UNIQUE(plugin_id, version)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Plugin reviews
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_plugin_reviews (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            user_id UUID NOT NULL,
+            user_name VARCHAR(128),
+            
+            rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+            title VARCHAR(256),
+            content TEXT,
+            
+            is_verified_purchase BOOLEAN DEFAULT FALSE,
+            is_featured BOOLEAN DEFAULT FALSE,
+            
+            helpful_count INTEGER DEFAULT 0,
+            
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Tenant plugin installations
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_tenant_plugins (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL REFERENCES core_tenants(id) ON DELETE CASCADE,
+            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            
+            -- Installation info
+            installed_version VARCHAR(32),
+            is_active BOOLEAN DEFAULT TRUE,
+            
+            -- Purchase info
+            license_type VARCHAR(32) DEFAULT 'subscription',  -- 'perpetual' | 'subscription' | 'free'
+            license_expires_at TIMESTAMP,
+            purchase_order_id VARCHAR(128),
+            
+            -- Usage
+            activated_at TIMESTAMP DEFAULT NOW(),
+            last_used_at TIMESTAMP,
+            usage_count INTEGER DEFAULT 0,
+            
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            
+            UNIQUE(tenant_id, plugin_id)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Plugin categories
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_plugin_categories (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(64) NOT NULL,
+            code VARCHAR(64) NOT NULL UNIQUE,
+            description TEXT,
+            icon VARCHAR(64),
+            sort_order INTEGER DEFAULT 0,
+            
+            plugin_count INTEGER DEFAULT 0,
+            
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            
+            UNIQUE(code)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create indexes
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_code ON core_plugins(code)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_installed ON core_plugins(is_installed)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_category ON core_plugins(category)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_tenant ON core_tenant_plugins(tenant_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_reviews_plugin ON core_plugin_reviews(plugin_id)")
+        .execute(pool)
+        .await?;
+
+    // Insert default categories
+    sqlx::query(
+        r#"
+        INSERT INTO core_plugin_categories (name, code, description, icon, sort_order)
+        VALUES 
+            ('生产制造', 'manufacturing', '生产执行、MES、设备管理', 'Factory', 1),
+            ('质量管理', 'quality', 'QMS、LIMS、EHS', 'Shield', 2),
+            ('数据分析', 'analytics', 'BI大屏、报表、数据可视化', 'BarChart', 3),
+            ('供应链', 'supply-chain', 'SCM、SRM、WMS', 'Truck', 4),
+            ('人力资源', 'hr', 'HRM、考勤、绩效', 'Users', 5),
+            ('客户关系', 'crm', 'CRM、营销、客服', 'Heart', 6),
+            ('智能应用', 'ai', 'AI知识库、智能问答', 'Bot', 7),
+            ('地理信息', 'gis', '地图、位置服务', 'Map', 8),
+            ('开发工具', 'devtools', 'API、集成、Webhook', 'Code', 9)
+        ON CONFLICT (code) DO NOTHING
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}

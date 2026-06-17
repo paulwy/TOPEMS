@@ -19,10 +19,10 @@ import {
   Search,
   ShoppingCart,
 } from "lucide-react";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { srmApi } from "../../api/srm";
-import type { PurchaseOrder } from "../../api/srm";
+import { srmApi } from "@/api/srm";
+import type { PurchaseOrder } from "@/api/srm";
 import { toast } from "react-toastify";
 
 const SrmOrderPage: React.FC = () => {

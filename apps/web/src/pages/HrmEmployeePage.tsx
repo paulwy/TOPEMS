@@ -48,7 +48,7 @@ import {
   type Department,
   type Company,
   type PaginatedResult,
-} from "../api/hrm";
+} from "@/api/hrm";
 import { useAppStore } from "../store";
 import {
   ListPageTemplate,
@@ -58,15 +58,15 @@ import {
   EmptyState,
   type ColumnDef,
   type RowAction,
-} from "../components/mui";
-import { FilterBar, type FilterConfig } from "../components/mui/FilterBar";
+} from "@/components/mui";
+import { FilterBar, type FilterConfig } from "@/components/mui/FilterBar";
 import {
   AIHelperButton,
   AICodeGenerator,
   AIDataCompleter,
   AIFormValidator,
-} from "../components/ai";
-import type { CompletionItem } from "../types/ai";
+} from "@/components/ai";
+import type { CompletionItem } from "@/types/ai";
 
 type ViewMode = "list" | "tree";
 

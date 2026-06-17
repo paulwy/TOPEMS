@@ -16,8 +16,8 @@ import type {
   Contract,
   ContractMilestone,
   ContractPaymentSchedule,
-} from "../api/pm";
-import { pmApi } from "../api/pm";
+} from "@/api/pm";
+import { pmApi } from "@/api/pm";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "草稿",

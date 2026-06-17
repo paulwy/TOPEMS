@@ -20,10 +20,10 @@ import {
   Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { srmApi } from "../../api/srm";
-import type { Supplier } from "../../api/srm";
+import { srmApi } from "@/api/srm";
+import type { Supplier } from "@/api/srm";
 import { toast } from "react-toastify";
 
 const SrmSupplierPage: React.FC = () => {

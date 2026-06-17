@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import type { Notification } from "../api/notification";
+import type { Notification } from "@/api/notification";
 import useNotificationSettings from "./useNotificationSettings";
 import config from "../config/runtime";
 import createLogger from "../utils/logger";

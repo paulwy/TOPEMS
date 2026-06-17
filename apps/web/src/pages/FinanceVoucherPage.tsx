@@ -49,7 +49,7 @@ import {
   type VoucherItem,
   type VoucherItemRequest,
   type AccountingSubject,
-} from "../api/erp";
+} from "@/api/erp";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";

@@ -11,19 +11,19 @@ import {
   Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-import { StatusBadge } from "../components/hrm/StatusBadge";
-import { PageHeader } from "../components/templates";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { StatusBadge } from "@/components/hrm/StatusBadge";
+import { PageHeader } from "@/components/templates";
 import {
   performanceReviewApi,
   performanceGoalApi,
   employeeApi,
   departmentApi,
   type Employee,
-} from "../api/hrm";
+} from "@/api/hrm";
 
 interface PerformanceReview {
   id: string;

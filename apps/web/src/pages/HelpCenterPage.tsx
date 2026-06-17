@@ -15,8 +15,8 @@ import {
   Clock,
 } from "lucide-react";
 import { Box, Typography, Button, Tabs, Tab, Chip } from "@mui/material";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
 
 interface HelpArticle {
   id: string;

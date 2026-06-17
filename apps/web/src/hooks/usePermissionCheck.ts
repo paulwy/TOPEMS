@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { authApi } from "../api/iam";
+import { authApi } from "@/api/iam";
 import { useAuth } from "./useAuth";
 
 export const usePermissionCheck = () => {

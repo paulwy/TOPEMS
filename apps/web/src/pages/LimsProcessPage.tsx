@@ -30,10 +30,10 @@ import {
   Avatar,
   Stack,
 } from "@mui/material";
-import type { InspectionProcess, LimsStatistics } from "../api/lims";
-import { limsApi } from "../api/lims";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
+import type { InspectionProcess, LimsStatistics } from "@/api/lims";
+import { limsApi } from "@/api/lims";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
 
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();

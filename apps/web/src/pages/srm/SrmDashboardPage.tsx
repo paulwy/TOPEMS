@@ -8,10 +8,10 @@ import {
   ScrollText,
   Building2,
 } from "lucide-react";
-import { MetricCard } from "../../components/MetricCard";
-import { StatsChart } from "../../components/StatsChart";
-import { srmApi } from "../../api/srm";
-import type { SrmDetailedStatistics } from "../../api/srm";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { srmApi } from "@/api/srm";
+import type { SrmDetailedStatistics } from "@/api/srm";
 
 const SrmDashboardPage: React.FC = () => {
   const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(null);

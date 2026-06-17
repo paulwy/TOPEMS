@@ -36,7 +36,7 @@ import {
   meetingBookingApi,
   type MeetingRoom,
   type MeetingBooking,
-} from "../api/erp";
+} from "@/api/erp";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";

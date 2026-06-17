@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Check, Settings, RefreshCw } from "lucide-react";
 import NotificationItem from "./NotificationItem";
 import NotificationSettings from "./NotificationSettings";
-import type { Notification } from "../../api/notification";
+import type { Notification } from "@/api/notification";
 import {
   getNotifications,
   getUnreadCount,
   markAllAsRead,
-} from "../../api/notification";
+} from "@/api/notification";
 
 interface NotificationPanelProps {
   onClose: () => void;

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
-import { apiClient } from "../api/client";
+import { apiClient } from "@/api/client";
 
 interface ProjectSummary {
   total_projects: number;

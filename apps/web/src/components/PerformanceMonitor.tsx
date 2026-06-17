@@ -10,6 +10,7 @@ import {
   History,
   X,
 } from "lucide-react";
+import MuiButton from "@mui/material/Button";
 
 interface PerformanceMetrics {
   fps: number;
@@ -230,7 +231,7 @@ const PerformanceMonitor: React.FC = () => {
             </div>
             <button
               onClick={() => setIsVisible(false)}
-              style={{ color: "#94a3b8", "&:hover": { color: "#475569" } }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: "4px" }}
             >
               <X sx={{ width: 20, height: 20 }} />
             </button>
@@ -317,14 +318,14 @@ const PerformanceMonitor: React.FC = () => {
           </div>
 
           <div style={{ display: "flex", gap: "8px" }}>
-            <Button
+            <MuiButton
               onClick={handleManualReport}
               disabled={isReporting}
               sx={{ flex: 1, backgroundColor: "#2563eb", color: "#ffffff", fontSize: "14px", "&:hover": { backgroundColor: "#1d4ed8" } }}
             >
               <Send sx={{ width: 16, height: 16, marginRight: "8px" }} />
               {isReporting ? "上报中..." : "上报数据"}
-            </Button>
+            </MuiButton>
             {reportStatus === "success" && (
               <CheckCircle sx={{ width: 20, height: 20, color: "#22c55e", alignSelf: "center" }} />
             )}

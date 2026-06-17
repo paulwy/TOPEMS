@@ -14,30 +14,36 @@ export interface ServicesConfig {
   doc: string;
   ai: string;
   flow: string;
-  ehs: string;
-  lims: string;
-  pdm: string;
-  qms: string;
   rs: string;
   srm: string;
   erp: string;
-  notification: string;
-  report: string;
   gis: string;
-  bi: string;
   mobile: string;
-  im: string;
   integration: string;
   wms: string;
   hrm: string;
   crm: string;
-  mes: string;
   scm: string;
   portal: string;
-  mail: string;
   pm: string;
   migration: string;
   file: string;
+  // [已整合] 统一服务
+  communication: string;
+  manufacturing: string;
+  qualityAssurance: string;
+  analytics: string;
+  // [向后兼容] 旧服务路径
+  notification: string;
+  report: string;
+  bi: string;
+  im: string;
+  mail: string;
+  ehs: string;
+  lims: string;
+  pdm: string;
+  qms: string;
+  mes: string;
 }
 
 export interface FeaturesConfig {

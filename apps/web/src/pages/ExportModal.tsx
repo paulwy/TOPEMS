@@ -1,5 +1,5 @@
 import React from "react";
-import type { ReportData } from "../api/report";
+import type { ReportData } from "@/api/report";
 import { Box, Typography, Button } from "@mui/material";
 
 interface ExportModalProps {

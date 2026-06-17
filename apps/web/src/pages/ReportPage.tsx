@@ -24,8 +24,8 @@ import {
   MenuItem,
   Chip,
 } from "@mui/material";
-import type { ReportData, ReportTypeInfo } from "../api/report";
-import { reportApi } from "../api/report";
+import type { ReportData, ReportTypeInfo } from "@/api/report";
+import { reportApi } from "@/api/report";
 import ReportBuilder from "./ReportBuilder";
 import ReportViewer from "./ReportViewer";
 import ExportModal from "./ExportModal";

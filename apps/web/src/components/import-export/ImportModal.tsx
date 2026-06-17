@@ -107,9 +107,8 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           <button
             onClick={handleClose}
             style={{ color: "#94a3b8" }}
-            sx={{ "&:hover": { color: "#475569" } }}
           >
-            <X style={{ width: 20, height: 20 }} sx={{ "&:hover": { color: "#475569" } }} />
+            <X style={{ width: 20, height: 20 }} />
           </button>
         </div>
 
@@ -124,7 +123,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   value={entityType}
                   onChange={(e) => setEntityType(e.target.value)}
                   style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, outline: "none" }}
-                  sx={{ "&:focus": { ring: 2, ringColor: "primary.main" } }}
                 >
                   <option value="">请选择导入类型</option>
                   {entityTypes.map((type) => (
@@ -143,7 +141,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   value={importMode}
                   onChange={(e) => setImportMode(e.target.value)}
                   style={{ width: "100%", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 8, outline: "none" }}
-                  sx={{ "&:focus": { ring: 2, ringColor: "primary.main" } }}
                 >
                   <option value="create">仅创建（跳过已存在）</option>
                   <option value="update">仅更新</option>
@@ -158,7 +155,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   style={{ border: "2px dashed #cbd5e1", borderRadius: 8, padding: 32, textAlign: "center", cursor: "pointer" }}
-                  sx={{ "&:hover": { borderColor: "primary.main" }, transition: "colors 0.2s" }}
                 >
                   <input
                     ref={fileInputRef}
@@ -217,7 +213,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       <div
                         key={idx}
                         style={{ fontSize: 14, color: "#b91c1c", marginBottom: 8 }}
-                        sx={{ "&:last-child": { mb: 0 } }}
                       >
                         <span style={{ fontWeight: 500 }}>第{error.row}行:</span>{" "}
                         {error.message}
@@ -240,7 +235,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           <button
             onClick={handleClose}
             style={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 8 }}
-            sx={{ "&:hover": { backgroundColor: "#e2e8f0" }, transition: "colors 0.2s" }}
           >
             {importResult ? "关闭" : "取消"}
           </button>
@@ -249,7 +243,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               onClick={handleImport}
               disabled={!selectedFile || !entityType || isImporting}
               style={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 8 }}
-              sx={{ "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
             >
               {isImporting ? (
                 <span style={{ display: "flex", alignItems: "center" }}>

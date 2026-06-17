@@ -18,6 +18,7 @@ const DatabaseStructurePage = lazy(
 );
 const MigrationAdminPage = lazy(() => import("../pages/MigrationAdminPage"));
 const ConfigDebugPage = lazy(() => import("../pages/ConfigDebugPage"));
+const PluginMarketplacePage = lazy(() => import("../pages/plugin/PluginMarketplacePage"));
 
 export const iamRoutes: RouteConfig[] = [
   {
@@ -82,5 +83,11 @@ export const iamRoutes: RouteConfig[] = [
     requiredPermissions: ["iam:admin"],
     module: "iam",
     action: "admin",
+  },
+  {
+    path: "/plugins",
+    element: PluginMarketplacePage,
+    module: "iam",
+    action: "view",
   },
 ];

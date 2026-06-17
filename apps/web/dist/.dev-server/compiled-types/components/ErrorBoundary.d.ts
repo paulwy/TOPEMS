@@ -1,0 +1,19 @@
+import type { ErrorInfo, ReactNode } from "react";
+import { Component } from "react";
+interface ErrorBoundaryProps {
+    children: ReactNode;
+    fallback?: ReactNode;
+}
+interface ErrorBoundaryState {
+    hasError: boolean;
+    error?: Error;
+    errorInfo?: ErrorInfo;
+}
+export declare class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps);
+    static getDerivedStateFromError(error: Error): ErrorBoundaryState;
+    componentDidCatch(error: Error, errorInfo: ErrorInfo): void;
+    handleRetry: () => void;
+    render(): string | number | bigint | boolean | Iterable<ReactNode> | Promise<string | number | bigint | boolean | import("react").ReactPortal | import("react").ReactElement<unknown, string | import("react").JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | import("react").JSX.Element | null | undefined;
+}
+export default ErrorBoundary;

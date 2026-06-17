@@ -28,16 +28,16 @@ import {
   Chip,
   CircularProgress,
 } from "@mui/material";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
-import { StatusBadge } from "../components/hrm/StatusBadge";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
+import { StatusBadge } from "@/components/hrm/StatusBadge";
 import {
   leaveApi,
   employeeApi,
   type LeaveRequest,
   type PaginatedResult,
   type ListParams,
-} from "../api/hrm";
+} from "@/api/hrm";
 
 const LeaveManagementPage: React.FC = () => {
   const { success, error, notifications, hideNotification } = useNotification();

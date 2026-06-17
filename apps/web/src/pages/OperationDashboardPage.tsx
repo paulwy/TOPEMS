@@ -34,8 +34,8 @@ import {
   Plus,
   Eye,
 } from "lucide-react";
-import { PageHeader } from "../components/layout";
-import { StatCardGroup, type StatCardProps } from "../components/mui";
+import { PageHeader } from "@/components/layout";
+import { StatCardGroup, type StatCardProps } from "@/components/mui";
 
 // ============ Mock 数据 ============
 const mockStats = {

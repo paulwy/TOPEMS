@@ -8,7 +8,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 
 // Mock dependencies
-vi.mock("../api/pm", () => ({
+vi.mock("../../api/pm", () => ({
   pmApi: {
     projects: {
       list: vi.fn(),

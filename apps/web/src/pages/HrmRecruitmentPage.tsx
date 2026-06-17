@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Chip } from "@mui/material";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
 import {
   jobOpeningApi,
   candidateApi,
@@ -32,7 +32,7 @@ import {
   type Candidate as ApiCandidate,
   type Interview as ApiInterview,
   type Department,
-} from "../api/hrm";
+} from "@/api/hrm";
 
 interface Candidate {
   id: string;

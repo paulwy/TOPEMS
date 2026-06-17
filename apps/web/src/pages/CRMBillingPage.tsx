@@ -6,7 +6,7 @@ import { crmApi } from "@/api/crm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Receipt, CheckCircle, Clock, AlertCircle, Send } from "lucide-react";
-import { PageHeader } from "../components/templates";
+import { PageHeader } from "@/components/templates";
 
 const CRMBillingPage: React.FC = () => {
   const navigate = useNavigate();

@@ -83,7 +83,7 @@ import {
   type MeetingBooking,
   type Vehicle,
   type Announcement,
-} from "../api/erp";
+} from "@/api/erp";
 import {
   leaveApi,
   attendanceApi,
@@ -91,7 +91,7 @@ import {
   type AttendanceRecord,
   employeeApi,
   type Employee,
-} from "../api/hrm";
+} from "@/api/hrm";
 
 interface ExpenseClaim {
   id: string;

@@ -26,8 +26,8 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vitest/globals", "node", "react", "react-dom"],
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+    "types": ["vitest/globals", "node", "react", "react-dom"]
   },
   "include": ["src", "src/@types/**/*.d.ts"],
   "exclude": ["node_modules", "dist"],

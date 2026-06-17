@@ -23,9 +23,9 @@ import {
   PieChart,
   Calendar,
 } from "lucide-react";
-import { useNotification } from "../hooks/useNotification";
+import { useNotification } from "@/hooks/useNotification";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
-import { PageHeader } from "../components/templates";
+import { PageHeader } from "@/components/templates";
 
 interface EmployeeSummary {
   total_employees: number;

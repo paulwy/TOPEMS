@@ -28,8 +28,8 @@ import {
   InputLabel,
   TablePagination,
 } from "@mui/material";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import ExportButton from "../components/ExportButton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import ExportButton from "@/components/ExportButton";
 
 interface ComparisonRow {
   id: string;
