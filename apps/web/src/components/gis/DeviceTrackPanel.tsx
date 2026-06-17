@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -28,6 +28,8 @@ interface DeviceTrackPanelProps {
   onClose: () => void;
 }
 
+const MAX_TRACK_POINTS = 500;
+
 const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
   devicePoints,
   onClose,
@@ -50,6 +52,16 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
     start: "",
     end: "",
   });
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedDevice) {
@@ -58,19 +70,22 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
   }, [selectedDevice, timeRange]);
 
   useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
     if (
       isPlaying &&
       trackData.length > 0 &&
       currentIndex < trackData.length - 1
     ) {
-      const timer = setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
       }, 500);
-      return () => clearTimeout(timer);
     } else if (currentIndex >= trackData.length - 1) {
       setIsPlaying(false);
     }
-    return undefined;
   }, [isPlaying, currentIndex, trackData.length]);
 
   const fetchTrackData = async () => {
@@ -80,11 +95,13 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
       const params: any = { device_id: selectedDevice };
       if (timeRange.start) params.start_time = timeRange.start;
       if (timeRange.end) params.end_time = timeRange.end;
-      params.page_size = 1000;
+      params.page_size = MAX_TRACK_POINTS;
 
       const response = await gisApi.getDeviceTrack(params);
       if (response.success && response.data) {
-        setTrackData(response.data.data);
+        const data = response.data.data || [];
+        const limitedData = data.slice(0, MAX_TRACK_POINTS);
+        setTrackData(limitedData);
         setCurrentIndex(0);
         setIsPlaying(false);
 

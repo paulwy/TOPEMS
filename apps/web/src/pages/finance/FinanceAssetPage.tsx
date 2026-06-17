@@ -49,14 +49,86 @@ interface Asset {
 }
 
 const mockAssetData: Asset[] = [
-  { id: "1", asset_code: "A001", asset_name: "生产设备A", asset_category: "生产设备", original_value: 500000, accumulated_depreciation: 150000, net_value: 350000, usage_status: "使用中" },
-  { id: "2", asset_code: "A002", asset_name: "办公电脑", asset_category: "办公设备", original_value: 30000, accumulated_depreciation: 18000, net_value: 12000, usage_status: "使用中" },
-  { id: "3", asset_code: "A003", asset_name: "运输车辆", asset_category: "运输设备", original_value: 200000, accumulated_depreciation: 80000, net_value: 120000, usage_status: "使用中" },
-  { id: "4", asset_code: "A004", asset_name: "厂房建筑", asset_category: "房屋建筑", original_value: 2000000, accumulated_depreciation: 400000, net_value: 1600000, usage_status: "使用中" },
-  { id: "5", asset_code: "A005", asset_name: "检测仪器", asset_category: "检测设备", original_value: 150000, accumulated_depreciation: 45000, net_value: 105000, usage_status: "闲置" },
-  { id: "6", asset_code: "A006", asset_name: "空调系统", asset_category: "办公设备", original_value: 80000, accumulated_depreciation: 32000, net_value: 48000, usage_status: "使用中" },
-  { id: "7", asset_code: "A007", asset_name: "旧打印机", asset_category: "办公设备", original_value: 5000, accumulated_depreciation: 5000, net_value: 0, usage_status: "已报废" },
-  { id: "8", asset_code: "A008", asset_name: "研发设备", asset_category: "研发设备", original_value: 800000, accumulated_depreciation: 160000, net_value: 640000, usage_status: "使用中" },
+  {
+    id: "1",
+    asset_code: "A001",
+    asset_name: "生产设备A",
+    asset_category: "生产设备",
+    original_value: 500000,
+    accumulated_depreciation: 150000,
+    net_value: 350000,
+    usage_status: "使用中",
+  },
+  {
+    id: "2",
+    asset_code: "A002",
+    asset_name: "办公电脑",
+    asset_category: "办公设备",
+    original_value: 30000,
+    accumulated_depreciation: 18000,
+    net_value: 12000,
+    usage_status: "使用中",
+  },
+  {
+    id: "3",
+    asset_code: "A003",
+    asset_name: "运输车辆",
+    asset_category: "运输设备",
+    original_value: 200000,
+    accumulated_depreciation: 80000,
+    net_value: 120000,
+    usage_status: "使用中",
+  },
+  {
+    id: "4",
+    asset_code: "A004",
+    asset_name: "厂房建筑",
+    asset_category: "房屋建筑",
+    original_value: 2000000,
+    accumulated_depreciation: 400000,
+    net_value: 1600000,
+    usage_status: "使用中",
+  },
+  {
+    id: "5",
+    asset_code: "A005",
+    asset_name: "检测仪器",
+    asset_category: "检测设备",
+    original_value: 150000,
+    accumulated_depreciation: 45000,
+    net_value: 105000,
+    usage_status: "闲置",
+  },
+  {
+    id: "6",
+    asset_code: "A006",
+    asset_name: "空调系统",
+    asset_category: "办公设备",
+    original_value: 80000,
+    accumulated_depreciation: 32000,
+    net_value: 48000,
+    usage_status: "使用中",
+  },
+  {
+    id: "7",
+    asset_code: "A007",
+    asset_name: "旧打印机",
+    asset_category: "办公设备",
+    original_value: 5000,
+    accumulated_depreciation: 5000,
+    net_value: 0,
+    usage_status: "已报废",
+  },
+  {
+    id: "8",
+    asset_code: "A008",
+    asset_name: "研发设备",
+    asset_category: "研发设备",
+    original_value: 800000,
+    accumulated_depreciation: 160000,
+    net_value: 640000,
+    usage_status: "使用中",
+  },
 ];
 
 const FinanceAssetPage: React.FC = () => {
@@ -82,12 +154,15 @@ const FinanceAssetPage: React.FC = () => {
 
   const filteredData = useMemo(() => {
     return assetData.filter((asset) => {
-      if (filterCategory && asset.asset_category !== filterCategory) return false;
+      if (filterCategory && asset.asset_category !== filterCategory)
+        return false;
       if (filterStatus && asset.usage_status !== filterStatus) return false;
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        if (!asset.asset_code.toLowerCase().includes(query) && 
-            !asset.asset_name.toLowerCase().includes(query)) {
+        if (
+          !asset.asset_code.toLowerCase().includes(query) &&
+          !asset.asset_name.toLowerCase().includes(query)
+        ) {
           return false;
         }
       }
@@ -96,11 +171,12 @@ const FinanceAssetPage: React.FC = () => {
   }, [assetData, filterCategory, filterStatus, searchQuery]);
 
   const getStatusColor = (status: string) => {
-    const colors: Record<string, "success" | "warning" | "error" | "default"> = {
-      "使用中": "success",
-      "闲置": "warning",
-      "已报废": "error",
-    };
+    const colors: Record<string, "success" | "warning" | "error" | "default"> =
+      {
+        使用中: "success",
+        闲置: "warning",
+        已报废: "error",
+      };
     return colors[status] || "default";
   };
 
@@ -112,9 +188,19 @@ const FinanceAssetPage: React.FC = () => {
       net_value: newAsset.original_value,
     };
     setAssetData([...assetData, newEntry]);
-    addNotification({ title: "成功", message: "资产新增成功", type: "success" });
+    addNotification({
+      title: "成功",
+      message: "资产新增成功",
+      type: "success",
+    });
     setShowCreateModal(false);
-    setNewAsset({ asset_code: "", asset_name: "", asset_category: "", original_value: 0, usage_status: "使用中" });
+    setNewAsset({
+      asset_code: "",
+      asset_name: "",
+      asset_category: "",
+      original_value: 0,
+      usage_status: "使用中",
+    });
   };
 
   const handleEdit = (asset: Asset) => {
@@ -123,15 +209,25 @@ const FinanceAssetPage: React.FC = () => {
 
   const handleUpdate = () => {
     if (!editingAsset) return;
-    setAssetData(assetData.map(a => a.id === editingAsset.id ? editingAsset : a));
-    addNotification({ title: "成功", message: "资产更新成功", type: "success" });
+    setAssetData(
+      assetData.map((a) => (a.id === editingAsset.id ? editingAsset : a)),
+    );
+    addNotification({
+      title: "成功",
+      message: "资产更新成功",
+      type: "success",
+    });
     setEditingAsset(null);
   };
 
   const handleDelete = (id: string) => {
     if (!confirm("确定要删除该资产吗？")) return;
-    setAssetData(assetData.filter(a => a.id !== id));
-    addNotification({ title: "成功", message: "资产删除成功", type: "success" });
+    setAssetData(assetData.filter((a) => a.id !== id));
+    addNotification({
+      title: "成功",
+      message: "资产删除成功",
+      type: "success",
+    });
   };
 
   const handleDepreciation = (asset: Asset) => {
@@ -142,28 +238,45 @@ const FinanceAssetPage: React.FC = () => {
   const confirmDepreciation = () => {
     if (!selectedAsset) return;
     const depreciation = selectedAsset.original_value * 0.1;
-    const newAccumulated = selectedAsset.accumulated_depreciation + depreciation;
+    const newAccumulated =
+      selectedAsset.accumulated_depreciation + depreciation;
     const newNetValue = selectedAsset.original_value - newAccumulated;
-    
-    setAssetData(assetData.map(a => 
-      a.id === selectedAsset.id 
-        ? { ...a, accumulated_depreciation: newAccumulated, net_value: Math.max(0, newNetValue) }
-        : a
-    ));
-    addNotification({ title: "成功", message: "计提折旧完成", type: "success" });
+
+    setAssetData(
+      assetData.map((a) =>
+        a.id === selectedAsset.id
+          ? {
+              ...a,
+              accumulated_depreciation: newAccumulated,
+              net_value: Math.max(0, newNetValue),
+            }
+          : a,
+      ),
+    );
+    addNotification({
+      title: "成功",
+      message: "计提折旧完成",
+      type: "success",
+    });
     setShowDepreciationModal(false);
   };
 
   const handleScrap = (asset: Asset) => {
     if (!confirm(`确定要报废资产 "${asset.asset_name}" 吗？`)) return;
-    setAssetData(assetData.map(a => 
-      a.id === asset.id ? { ...a, usage_status: "已报废", net_value: 0 } : a
-    ));
+    setAssetData(
+      assetData.map((a) =>
+        a.id === asset.id ? { ...a, usage_status: "已报废", net_value: 0 } : a,
+      ),
+    );
     addNotification({ title: "成功", message: "资产已报废", type: "success" });
   };
 
   const handleExport = () => {
-    addNotification({ title: "导出成功", message: "资产数据已导出", type: "success" });
+    addNotification({
+      title: "导出成功",
+      message: "资产数据已导出",
+      type: "success",
+    });
   };
 
   const columns = useMemo<ColumnDef<Asset>[]>(
@@ -180,12 +293,16 @@ const FinanceAssetPage: React.FC = () => {
       {
         accessorKey: "asset_name",
         header: "资产名称",
-        cell: ({ row }) => <MuiBox sx={{ fontWeight: 500 }}>{row.original.asset_name}</MuiBox>,
+        cell: ({ row }) => (
+          <MuiBox sx={{ fontWeight: 500 }}>{row.original.asset_name}</MuiBox>
+        ),
       },
       {
         accessorKey: "asset_category",
         header: "资产类别",
-        cell: ({ row }) => <Chip label={row.original.asset_category} size="small" />,
+        cell: ({ row }) => (
+          <Chip label={row.original.asset_category} size="small" />
+        ),
       },
       {
         accessorKey: "original_value",
@@ -209,7 +326,13 @@ const FinanceAssetPage: React.FC = () => {
         accessorKey: "net_value",
         header: "净值",
         cell: ({ row }) => (
-          <MuiBox sx={{ fontWeight: 700, color: "primary.main", fontFamily: "monospace" }}>
+          <MuiBox
+            sx={{
+              fontWeight: 700,
+              color: "primary.main",
+              fontFamily: "monospace",
+            }}
+          >
             ¥{row.original.net_value.toLocaleString()}
           </MuiBox>
         ),
@@ -218,7 +341,11 @@ const FinanceAssetPage: React.FC = () => {
         accessorKey: "usage_status",
         header: "使用状态",
         cell: ({ row }) => (
-          <Chip label={row.original.usage_status} size="small" color={getStatusColor(row.original.usage_status)} />
+          <Chip
+            label={row.original.usage_status}
+            size="small"
+            color={getStatusColor(row.original.usage_status)}
+          />
         ),
       },
       {
@@ -227,7 +354,11 @@ const FinanceAssetPage: React.FC = () => {
         cell: ({ row }) => (
           <Stack direction="row" spacing={1}>
             <Tooltip title="计提折旧">
-              <IconButton size="small" color="success" onClick={() => handleDepreciation(row.original)}>
+              <IconButton
+                size="small"
+                color="success"
+                onClick={() => handleDepreciation(row.original)}
+              >
                 <Calculator sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
@@ -237,12 +368,20 @@ const FinanceAssetPage: React.FC = () => {
               </IconButton>
             </Tooltip>
             <Tooltip title="报废">
-              <IconButton size="small" color="warning" onClick={() => handleScrap(row.original)}>
+              <IconButton
+                size="small"
+                color="warning"
+                onClick={() => handleScrap(row.original)}
+              >
                 <AlertTriangle sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
             <Tooltip title="删除">
-              <IconButton size="small" color="error" onClick={() => handleDelete(row.original.id)}>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleDelete(row.original.id)}
+              >
                 <Trash2 sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
@@ -288,16 +427,50 @@ const FinanceAssetPage: React.FC = () => {
 
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <MuiBox sx={{ bgcolor: "background.paper", boxShadow: "sm", borderBottom: 1, borderColor: "divider" }}>
-        <MuiBox sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
+      <MuiBox
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: "sm",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <MuiBox
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <Stack
+            direction="row"
+            sx={{ justifyContent: "space-between", alignItems: "center" }}
+          >
             <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
               <IconButton onClick={() => navigate("/dashboard")}>
                 <ChevronLeft sx={{ width: 20, height: 20 }} />
               </IconButton>
               <MuiBox>
-                <Typography variant="h5" sx={{ display: "flex", alignItems: "center", fontWeight: 700 }}>
-                  <MuiBox component="span" sx={{ width: 28, height: 28, mr: 1.5, color: "success.main", display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontWeight: 700,
+                  }}
+                >
+                  <MuiBox
+                    component="span"
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      mr: 1.5,
+                      color: "success.main",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
                     <Calculator size={28} />
                   </MuiBox>
                   资产管理
@@ -308,10 +481,18 @@ const FinanceAssetPage: React.FC = () => {
               </MuiBox>
             </Stack>
             <Stack direction="row" spacing={1}>
-              <Button variant="outlined" startIcon={<Download sx={{ width: 20, height: 20 }} />} onClick={handleExport}>
+              <Button
+                variant="outlined"
+                startIcon={<Download sx={{ width: 20, height: 20 }} />}
+                onClick={handleExport}
+              >
                 导出
               </Button>
-              <Button variant="contained" startIcon={<Plus sx={{ width: 20, height: 20 }} />} onClick={() => setShowCreateModal(true)}>
+              <Button
+                variant="contained"
+                startIcon={<Plus sx={{ width: 20, height: 20 }} />}
+                onClick={() => setShowCreateModal(true)}
+              >
                 新增资产
               </Button>
             </Stack>
@@ -319,8 +500,18 @@ const FinanceAssetPage: React.FC = () => {
         </MuiBox>
       </MuiBox>
 
-      <MuiBox sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        <Stack sx={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2 }}>
+      <MuiBox
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
+      >
+        <Stack
+          sx={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+            gap: 2,
+          }}
+        >
           <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
             <TextField
               size="small"
@@ -329,7 +520,13 @@ const FinanceAssetPage: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               slotProps={{
                 input: {
-                  startAdornment: <InputAdornment position="start"><Search sx={{ width: 16, height: 16, color: "text.secondary" }} /></InputAdornment>,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search
+                        sx={{ width: 16, height: 16, color: "text.secondary" }}
+                      />
+                    </InputAdornment>
+                  ),
                 },
               }}
               sx={{ width: 280 }}
@@ -353,18 +550,43 @@ const FinanceAssetPage: React.FC = () => {
       </MuiBox>
 
       {/* Create Modal */}
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新增资产</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 2 }}>
             <Stack direction="row" spacing={2}>
-              <TextField label="资产编号 *" fullWidth value={newAsset.asset_code} onChange={(e) => setNewAsset({ ...newAsset, asset_code: e.target.value })} />
-              <TextField label="资产名称 *" fullWidth value={newAsset.asset_name} onChange={(e) => setNewAsset({ ...newAsset, asset_name: e.target.value })} />
+              <TextField
+                label="资产编号 *"
+                fullWidth
+                value={newAsset.asset_code}
+                onChange={(e) =>
+                  setNewAsset({ ...newAsset, asset_code: e.target.value })
+                }
+              />
+              <TextField
+                label="资产名称 *"
+                fullWidth
+                value={newAsset.asset_name}
+                onChange={(e) =>
+                  setNewAsset({ ...newAsset, asset_name: e.target.value })
+                }
+              />
             </Stack>
             <Stack direction="row" spacing={2}>
               <FormControl fullWidth>
                 <InputLabel>资产类别</InputLabel>
-                <Select value={newAsset.asset_category} label="资产类别" onChange={(e) => setNewAsset({ ...newAsset, asset_category: e.target.value })}>
+                <Select
+                  value={newAsset.asset_category}
+                  label="资产类别"
+                  onChange={(e) =>
+                    setNewAsset({ ...newAsset, asset_category: e.target.value })
+                  }
+                >
                   <MenuItem value="">请选择</MenuItem>
                   <MenuItem value="生产设备">生产设备</MenuItem>
                   <MenuItem value="办公设备">办公设备</MenuItem>
@@ -374,30 +596,72 @@ const FinanceAssetPage: React.FC = () => {
                   <MenuItem value="检测设备">检测设备</MenuItem>
                 </Select>
               </FormControl>
-              <TextField label="原值 *" type="number" fullWidth value={newAsset.original_value} onChange={(e) => setNewAsset({ ...newAsset, original_value: parseFloat(e.target.value) || 0 })} />
+              <TextField
+                label="原值 *"
+                type="number"
+                fullWidth
+                value={newAsset.original_value}
+                onChange={(e) =>
+                  setNewAsset({
+                    ...newAsset,
+                    original_value: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
             </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCreate}>保存</Button>
+          <Button variant="contained" onClick={handleCreate}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={!!editingAsset} onClose={() => setEditingAsset(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={!!editingAsset}
+        onClose={() => setEditingAsset(null)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>编辑资产</DialogTitle>
         <DialogContent>
           {editingAsset && (
             <Stack spacing={3} sx={{ pt: 2 }}>
               <Stack direction="row" spacing={2}>
-                <TextField label="资产编号" fullWidth value={editingAsset.asset_code} slotProps={{ input: { readOnly: true } }} />
-                <TextField label="资产名称" fullWidth value={editingAsset.asset_name} onChange={(e) => setEditingAsset({ ...editingAsset, asset_name: e.target.value })} />
+                <TextField
+                  label="资产编号"
+                  fullWidth
+                  value={editingAsset.asset_code}
+                  slotProps={{ input: { readOnly: true } }}
+                />
+                <TextField
+                  label="资产名称"
+                  fullWidth
+                  value={editingAsset.asset_name}
+                  onChange={(e) =>
+                    setEditingAsset({
+                      ...editingAsset,
+                      asset_name: e.target.value,
+                    })
+                  }
+                />
               </Stack>
               <Stack direction="row" spacing={2}>
                 <FormControl fullWidth>
                   <InputLabel>资产类别</InputLabel>
-                  <Select value={editingAsset.asset_category} label="资产类别" onChange={(e) => setEditingAsset({ ...editingAsset, asset_category: e.target.value })}>
+                  <Select
+                    value={editingAsset.asset_category}
+                    label="资产类别"
+                    onChange={(e) =>
+                      setEditingAsset({
+                        ...editingAsset,
+                        asset_category: e.target.value,
+                      })
+                    }
+                  >
                     <MenuItem value="生产设备">生产设备</MenuItem>
                     <MenuItem value="办公设备">办公设备</MenuItem>
                     <MenuItem value="运输设备">运输设备</MenuItem>
@@ -406,40 +670,91 @@ const FinanceAssetPage: React.FC = () => {
                     <MenuItem value="检测设备">检测设备</MenuItem>
                   </Select>
                 </FormControl>
-                <TextField label="使用状态" fullWidth value={editingAsset.usage_status} onChange={(e) => setEditingAsset({ ...editingAsset, usage_status: e.target.value })} />
+                <TextField
+                  label="使用状态"
+                  fullWidth
+                  value={editingAsset.usage_status}
+                  onChange={(e) =>
+                    setEditingAsset({
+                      ...editingAsset,
+                      usage_status: e.target.value,
+                    })
+                  }
+                />
               </Stack>
             </Stack>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditingAsset(null)}>取消</Button>
-          <Button variant="contained" onClick={handleUpdate}>保存</Button>
+          <Button variant="contained" onClick={handleUpdate}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Depreciation Modal */}
-      <Dialog open={showDepreciationModal} onClose={() => setShowDepreciationModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showDepreciationModal}
+        onClose={() => setShowDepreciationModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>计提折旧</DialogTitle>
         <DialogContent>
           {selectedAsset && (
             <Stack spacing={3} sx={{ pt: 2 }}>
               <MuiBox sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary">资产名称</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>{selectedAsset.asset_name}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  资产名称
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {selectedAsset.asset_name}
+                </Typography>
               </MuiBox>
-              <MuiBox sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 2 }}>
-                <MuiBox sx={{ p: 2, bgcolor: "primary.light", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">原值</Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>¥{selectedAsset.original_value.toLocaleString()}</Typography>
+              <MuiBox
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                }}
+              >
+                <MuiBox
+                  sx={{ p: 2, bgcolor: "primary.light", borderRadius: 1 }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    原值
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    ¥{selectedAsset.original_value.toLocaleString()}
+                  </Typography>
                 </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: "warning.light", borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">当前累计折旧</Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>¥{selectedAsset.accumulated_depreciation.toLocaleString()}</Typography>
+                <MuiBox
+                  sx={{ p: 2, bgcolor: "warning.light", borderRadius: 1 }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    当前累计折旧
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    ¥{selectedAsset.accumulated_depreciation.toLocaleString()}
+                  </Typography>
                 </MuiBox>
               </MuiBox>
-              <MuiBox sx={{ p: 2, bgcolor: "success.light", borderRadius: 1, textAlign: "center" }}>
-                <Typography variant="body2" color="text.secondary">本次计提折旧（10%）</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: "success.main" }}>
+              <MuiBox
+                sx={{
+                  p: 2,
+                  bgcolor: "success.light",
+                  borderRadius: 1,
+                  textAlign: "center",
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  本次计提折旧（10%）
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "success.main" }}
+                >
                   ¥{(selectedAsset.original_value * 0.1).toLocaleString()}
                 </Typography>
               </MuiBox>
@@ -448,7 +763,13 @@ const FinanceAssetPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDepreciationModal(false)}>取消</Button>
-          <Button variant="contained" color="success" onClick={confirmDepreciation}>确认计提</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={confirmDepreciation}
+          >
+            确认计提
+          </Button>
         </DialogActions>
       </Dialog>
     </MuiBox>

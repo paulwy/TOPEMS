@@ -4,7 +4,15 @@ mod services;
 mod utils;
 
 use anyhow::Result;
-use axum::{routing::get, Json, Router};
+use axum::{
+    body::Body,
+    extract::State,
+    http::{header, Request},
+    middleware::Next,
+    response::{IntoResponse, Response},
+    routing::get,
+    Json, Router,
+};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{
     register_int_counter, register_int_gauge, Encoder, IntCounter, IntGauge, TextEncoder,
@@ -18,9 +26,9 @@ use utoipa::OpenApi;
 
 use api::ApiState;
 use topems_shared::{
-    auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_hrm_client, init_logging, ApiResponse, AuthState, DependencyHealth, HealthStatus,
-    NotificationServiceClient, ServiceHealth, SystemMetrics,
+    check_http_health, create_api_info_router, create_cors_layer,
+    create_hrm_client, init_logging, ApiResponse, AuthState, Claims, DependencyHealth, HealthStatus,
+    NotificationServiceClient, ServiceHealth, SystemMetrics, verify_jwt_token,
 };
 
 lazy_static::lazy_static! {
@@ -139,7 +147,7 @@ async fn main() -> Result<()> {
     let protected_routes = api::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
-            auth_middleware,
+            erp_auth_middleware,
         ))
         .with_state(api_state.clone());
 
@@ -349,4 +357,79 @@ async fn check_iam_health() -> DependencyHealth {
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
+}
+
+// ==================== ERP 认证中间件 ====================
+// 支持两种认证模式：
+// 1. X-User-Id header 模式（通过 unified-core 代理访问）
+// 2. Authorization header 模式（直连模式）
+
+async fn erp_auth_middleware(
+    State(auth_state): State<AuthState>,
+    req: Request<Body>,
+    next: Next,
+) -> Response {
+    let path = req.uri().path();
+
+    // 公开路径不需要认证
+    let public_paths = [
+        "/",
+        "/health",
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+        "/api/plugins/info",
+    ];
+    if public_paths.contains(&path) {
+        return next.run(req).await;
+    }
+
+    let (mut parts, body) = req.into_parts();
+
+    // 模式 1: 检查 X-User-Id header（代理模式）
+    if let Some(user_id) = parts.headers.get("X-User-Id") {
+        if let Ok(user_id_str) = user_id.to_str() {
+            // 创建简化的 Claims 用于代理模式
+            let claims = Claims {
+                sub: user_id_str.to_string(),
+                username: user_id_str.to_string(),
+                role: "user".to_string(),
+                roles: vec!["user".to_string()],
+                permissions: vec![],
+                is_superuser: false,
+                exp: 0,
+                iat: 0,
+                email: None,
+                department: None,
+                tenant_id: parts.headers.get("X-Tenant-Id").and_then(|h| h.to_str().ok()).map(|s| s.to_string()),
+            };
+            parts.extensions.insert(claims);
+            let req = Request::from_parts(parts, body);
+            return next.run(req).await;
+        }
+    }
+
+    // 模式 2: 检查 Authorization header（直连模式）
+    let auth_header = parts
+        .headers
+        .get(header::AUTHORIZATION)
+        .and_then(|h| h.to_str().ok());
+
+    let token = match auth_header {
+        Some(header) if header.starts_with("Bearer ") => &header[7..],
+        _ => {
+            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
+        }
+    };
+
+    match verify_jwt_token(token, &auth_state.jwt_secret) {
+        Ok(claims) => {
+            parts.extensions.insert(claims);
+            let req = Request::from_parts(parts, body);
+            next.run(req).await
+        }
+        Err(e) => {
+            tracing::error!("Token verification failed: {}", e);
+            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e)).into_response()
+        }
+    }
 }

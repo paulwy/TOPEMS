@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, SxProps, Theme } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 const shadcnBase = {
   flexShrink: 0,

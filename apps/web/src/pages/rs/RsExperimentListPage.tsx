@@ -31,7 +31,15 @@ import {
   Tab,
   Stack,
 } from "@mui/material";
-import { Plus, Search, Edit, Trash2, Eye, Filter, FlaskConical as Flask } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  Filter,
+  FlaskConical as Flask,
+} from "lucide-react";
 
 interface Experiment {
   id: string;

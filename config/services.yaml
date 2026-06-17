@@ -1,51 +1,31 @@
 # TOPEMS 服务配置
 # 与 port-planning.md 保持严格一致
-# 版本: v4.0
+# 版本: v4.1
 
 service_groups:
   # 核心服务 (8000-8009)
   core:
-    - name: iam
+    - name: unified-core
       port: 8000
-      env_var: IAM_PORT
-      description: 身份认证服务
+      env_var: CORE_PORT
+      description: 统一核心服务 (IAM + Doc + Flow + File + Communication)
       status: implemented
       dependencies: []
+      service_dir: unified-core
 
     - name: pm
       port: 8001
       env_var: PM_PORT
       description: 项目管理服务
       status: implemented
-      dependencies: [iam]
-
-    - name: notification
-      port: 8002
-      env_var: NOTIFICATION_PORT
-      description: 通知服务
-      status: implemented
-      dependencies: [iam]
-
-    - name: portal
-      port: 8003
-      env_var: PORTAL_PORT
-      description: 统一门户
-      status: implemented
-      dependencies: [iam]
-
-    - name: flow
-      port: 8004
-      env_var: FLOW_PORT
-      description: 工作流引擎
-      status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
     - name: integration
       port: 8005
       env_var: INTEGRATION_PORT
       description: 集成服务
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
   # ERP/财务服务 (8010-8019)
   erp:
@@ -54,21 +34,21 @@ service_groups:
       env_var: ERP_PORT
       description: 企业资源计划
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
     - name: hrm
       port: 8011
       env_var: HRM_PORT
       description: 人力资源管理
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
     - name: crm
       port: 8012
       env_var: CRM_PORT
       description: 客户关系管理
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
   # PLM/研发服务 (8020-8029)
   plm:
@@ -77,51 +57,25 @@ service_groups:
       env_var: RS_PORT
       description: 研发管理
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
-    - name: lims
-      port: 8022
-      env_var: LIMS_PORT
-      description: 实验室管理
-      status: implemented
-      dependencies: [iam]
-
-    - name: pdm
+    - name: manufacturing
       port: 8023
-      env_var: PDM_PORT
-      description: 产品数据管理
+      env_var: MANUFACTURING_PORT
+      description: 制造服务 (PDM + MES)
       status: implemented
-      dependencies: [iam]
-
-    - name: doc
-      port: 8024
-      env_var: DOC_PORT
-      description: 文档管理
-      status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
+      service_dir: manufacturing
 
   # MES/生产服务 (8030-8039)
   mes:
-    - name: mes
-      port: 8030
-      env_var: MES_PORT
-      description: 制造执行系统
-      status: implemented
-      dependencies: [iam]
-
-    - name: qms
-      port: 8031
-      env_var: QMS_PORT
-      description: 质量管理
-      status: implemented
-      dependencies: [iam]
-
-    - name: ehs
+    - name: quality-assurance
       port: 8032
-      env_var: EHS_PORT
-      description: 环境健康安全
+      env_var: QUALITY_ASSURANCE_PORT
+      description: 质量保证服务 (QMS + LIMS + EHS)
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
+      service_dir: quality-assurance
 
   # SCM/供应链服务 (8040-8049)
   scm:
@@ -130,74 +84,39 @@ service_groups:
       env_var: SCM_PORT
       description: 供应链管理
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
     - name: srm
       port: 8041
       env_var: SRM_PORT
       description: 供应商管理
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
     - name: wms
       port: 8042
       env_var: WMS_PORT
       description: 仓储管理
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
 
   # 基础设施服务 (8050-8059)
   infrastructure:
-    - name: file
-      port: 8050
-      env_var: FILE_PORT
-      description: 文件存储服务
-      status: implemented
-      dependencies: []
-
-    - name: mail
-      port: 8051
-      env_var: MAIL_PORT
-      description: 邮件服务
-      status: implemented
-      dependencies: []
-
-    - name: im
-      port: 8052
-      env_var: IM_PORT
-      description: 即时通讯
-      status: implemented
-      dependencies: []
-
     - name: gis
       port: 8053
       env_var: GIS_PORT
       description: 地理信息服务
       status: implemented
-      dependencies: []
+      dependencies: [unified-core]
 
   # 数据分析服务 (8060-8069)
   analytics:
-    - name: bi
-      port: 8060
-      env_var: BI_PORT
-      description: 商业智能
-      status: implemented
-      dependencies: []
-
-    - name: report
-      port: 8061
-      env_var: REPORT_PORT
-      description: 报表服务
-      status: implemented
-      dependencies: []
-
     - name: ai
       port: 8062
       env_var: AI_PORT
       description: 人工智能服务
       status: implemented
-      dependencies: [file]
+      dependencies: [unified-core]
 
   # 扩展服务 (8070-8079)
   extensions:
@@ -206,7 +125,99 @@ service_groups:
       env_var: MOBILE_PORT
       description: 移动服务
       status: implemented
-      dependencies: [iam]
+      dependencies: [unified-core]
+
+# 虚拟服务（由 unified-core 内部模块提供，不独立启动）
+virtual_services:
+  - name: iam
+    port: 8000
+    env_var: IAM_PORT
+    description: 身份认证服务 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: notification
+    port: 8000
+    env_var: NOTIFICATION_PORT
+    description: 通知服务 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: portal
+    port: 8000
+    env_var: PORTAL_PORT
+    description: 统一门户 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: flow
+    port: 8000
+    env_var: FLOW_PORT
+    description: 工作流引擎 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: file
+    port: 8000
+    env_var: FILE_PORT
+    description: 文件存储服务 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: mail
+    port: 8000
+    env_var: MAIL_PORT
+    description: 邮件服务 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: im
+    port: 8000
+    env_var: IM_PORT
+    description: 即时通讯 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: doc
+    port: 8000
+    env_var: DOC_PORT
+    description: 文档管理 (由 unified-core 提供)
+    provider: unified-core
+
+  - name: lims
+    port: 8023
+    env_var: LIMS_PORT
+    description: 实验室管理 (由 manufacturing 提供)
+    provider: manufacturing
+
+  - name: pdm
+    port: 8023
+    env_var: PDM_PORT
+    description: 产品数据管理 (由 manufacturing 提供)
+    provider: manufacturing
+
+  - name: mes
+    port: 8023
+    env_var: MES_PORT
+    description: 制造执行系统 (由 manufacturing 提供)
+    provider: manufacturing
+
+  - name: qms
+    port: 8031
+    env_var: QMS_PORT
+    description: 质量管理 (由 quality-assurance 提供)
+    provider: quality-assurance
+
+  - name: ehs
+    port: 8031
+    env_var: EHS_PORT
+    description: 环境健康安全 (由 quality-assurance 提供)
+    provider: quality-assurance
+
+  - name: bi
+    port: 8060
+    env_var: BI_PORT
+    description: 商业智能 (预留)
+    status: reserved
+
+  - name: report
+    port: 8061
+    env_var: REPORT_PORT
+    description: 报表服务 (预留)
+    status: reserved
 
 # 特殊端口配置
 special_ports:
@@ -245,11 +256,8 @@ special_ports:
 # 服务模块分组 (用于 start-module 命令)
 module_groups:
   core:
-    - iam
+    - unified-core
     - pm
-    - notification
-    - portal
-    - flow
     - integration
 
   erp:
@@ -259,14 +267,10 @@ module_groups:
 
   plm:
     - rs
-    - lims
-    - pdm
-    - doc
+    - manufacturing
 
   mes:
-    - mes
-    - qms
-    - ehs
+    - quality-assurance
 
   scm:
     - scm
@@ -274,41 +278,27 @@ module_groups:
     - wms
 
   infrastructure:
-    - file
-    - mail
-    - im
     - gis
 
   analytics:
-    - bi
-    - report
     - ai
 
+  extensions:
+    - mobile
+
   all:
-    - iam
+    - unified-core
     - pm
-    - notification
-    - portal
-    - flow
     - integration
     - erp
     - hrm
     - crm
     - rs
-    - lims
-    - pdm
-    - doc
-    - mes
-    - qms
-    - ehs
+    - manufacturing
+    - quality-assurance
     - scm
     - srm
     - wms
-    - file
-    - mail
-    - im
     - gis
-    - bi
-    - report
     - ai
     - mobile

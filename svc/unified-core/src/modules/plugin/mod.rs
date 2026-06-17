@@ -218,5 +218,51 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Plugin instances (runtime state for each plugin)
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_plugin_instances (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            plugin_id UUID NOT NULL REFERENCES core_plugins(id) ON DELETE CASCADE,
+            runtime_url VARCHAR(512),
+            runtime_status VARCHAR(32) DEFAULT 'stopped',  -- stopped | starting | running | error
+            base_path VARCHAR(128) DEFAULT '/api/plugins/{code}',
+            last_heartbeat TIMESTAMP,
+            started_at TIMESTAMP,
+            stopped_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(plugin_id)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Plugin permissions (permissions registered by plugins)
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_plugin_permissions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            plugin_code VARCHAR(64) NOT NULL,
+            permission_code VARCHAR(100) NOT NULL,
+            permission_name VARCHAR(255),
+            resource_type VARCHAR(50),
+            action VARCHAR(50),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(plugin_code, permission_code)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Create indexes for new tables
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_instances_status ON core_plugin_instances(runtime_status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugin_permissions_code ON core_plugin_permissions(plugin_code)")
+        .execute(pool)
+        .await?;
+
     Ok(())
 }

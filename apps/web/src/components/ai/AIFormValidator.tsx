@@ -10,11 +10,7 @@ import {
 import { Button, Card, CardContent, Box, Typography } from "@mui/material";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
-import type {
-  ValidateRequest,
-  ValidationIssue,
-  Suggestion,
-} from "@/types/ai";
+import type { ValidateRequest, ValidationIssue, Suggestion } from "@/types/ai";
 
 export interface AIFormValidatorProps {
   isOpen: boolean;

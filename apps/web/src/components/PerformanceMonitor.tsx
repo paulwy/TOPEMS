@@ -223,38 +223,119 @@ const PerformanceMonitor: React.FC = () => {
   return (
     <>
       {isVisible && (
-        <div style={{ position: "fixed", bottom: "16px", right: "16px", zIndex: 50, width: "384px", backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", border: "1px solid #e2e8f0", padding: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+        <div
+          style={{
+            position: "fixed",
+            bottom: "16px",
+            right: "16px",
+            zIndex: 50,
+            width: "384px",
+            backgroundColor: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+            border: "1px solid #e2e8f0",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "16px",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Activity sx={{ width: 20, height: 20, color: "#2563eb" }} />
               <h3 style={{ fontWeight: 600, color: "#0f172a" }}>性能监控</h3>
             </div>
             <button
               onClick={() => setIsVisible(false)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: "4px" }}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#94a3b8",
+                padding: "4px",
+              }}
             >
               <X sx={{ width: 20, height: 20 }} />
             </button>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", padding: "16px", background: "linear-gradient(to bottom right, #eff6ff, #faf5ff)", borderRadius: "12px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "16px",
+              padding: "16px",
+              background: "linear-gradient(to bottom right, #eff6ff, #faf5ff)",
+              borderRadius: "12px",
+            }}
+          >
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "36px", fontWeight: 700, ...(getScoreColor() === "text-green-500" ? { color: "#22c55e" } : getScoreColor() === "text-yellow-500" ? { color: "#eab308" } : { color: "#ef4444" }) }}>
+              <div
+                style={{
+                  fontSize: "36px",
+                  fontWeight: 700,
+                  ...(getScoreColor() === "text-green-500"
+                    ? { color: "#22c55e" }
+                    : getScoreColor() === "text-yellow-500"
+                      ? { color: "#eab308" }
+                      : { color: "#ef4444" }),
+                }}
+              >
                 {getPerformanceScore()}
               </div>
-              <div style={{ fontSize: "14px", color: "#64748b", marginTop: "4px" }}>性能评分</div>
+              <div
+                style={{ fontSize: "14px", color: "#64748b", marginTop: "4px" }}
+              >
+                性能评分
+              </div>
             </div>
           </div>
 
           {performanceIssues.length > 0 && (
-            <div style={{ marginBottom: "16px", padding: "12px", backgroundColor: "#fef2f2", borderRadius: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#dc2626", fontSize: "14px" }}>
+            <div
+              style={{
+                marginBottom: "16px",
+                padding: "12px",
+                backgroundColor: "#fef2f2",
+                borderRadius: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  color: "#dc2626",
+                  fontSize: "14px",
+                }}
+              >
                 <AlertTriangle sx={{ width: 16, height: 16 }} />
                 <span>检测到 {performanceIssues.length} 个性能问题</span>
               </div>
-              <ul style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px", maxHeight: "96px", overflowY: "auto" }}>
+              <ul
+                style={{
+                  marginTop: "8px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
+                  maxHeight: "96px",
+                  overflowY: "auto",
+                }}
+              >
                 {performanceIssues.map((issue, index) => (
-                  <li key={index} style={{ fontSize: "12px", color: "#ef4444", marginLeft: "24px" }}>
+                  <li
+                    key={index}
+                    style={{
+                      fontSize: "12px",
+                      color: "#ef4444",
+                      marginLeft: "24px",
+                    }}
+                  >
                     • {issue}
                   </li>
                 ))}
@@ -262,55 +343,197 @@ const PerformanceMonitor: React.FC = () => {
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "16px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "12px",
+              marginBottom: "16px",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Zap sx={{ width: 16, height: 16, color: getStatusColor(metrics.fps, [45, 55]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.fps, [45, 55]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
+              <Zap
+                sx={{
+                  width: 16,
+                  height: 16,
+                  color:
+                    getStatusColor(metrics.fps, [45, 55]) === "text-green-500"
+                      ? "#22c55e"
+                      : getStatusColor(metrics.fps, [45, 55]) ===
+                          "text-yellow-500"
+                        ? "#eab308"
+                        : "#ef4444",
+                }}
+              />
               <div>
                 <div style={{ fontSize: "12px", color: "#64748b" }}>帧率</div>
-                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.fps, [45, 55]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.fps, [45, 55]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color:
+                      getStatusColor(metrics.fps, [45, 55]) === "text-green-500"
+                        ? "#22c55e"
+                        : getStatusColor(metrics.fps, [45, 55]) ===
+                            "text-yellow-500"
+                          ? "#eab308"
+                          : "#ef4444",
+                  }}
+                >
                   {metrics.fps} FPS
                 </div>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Activity sx={{ width: 16, height: 16, color: getStatusColor(metrics.cpu, [20, 50]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.cpu, [20, 50]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
+              <Activity
+                sx={{
+                  width: 16,
+                  height: 16,
+                  color:
+                    getStatusColor(metrics.cpu, [20, 50]) === "text-green-500"
+                      ? "#22c55e"
+                      : getStatusColor(metrics.cpu, [20, 50]) ===
+                          "text-yellow-500"
+                        ? "#eab308"
+                        : "#ef4444",
+                }}
+              />
               <div>
                 <div style={{ fontSize: "12px", color: "#64748b" }}>CPU</div>
-                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.cpu, [20, 50]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.cpu, [20, 50]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color:
+                      getStatusColor(metrics.cpu, [20, 50]) === "text-green-500"
+                        ? "#22c55e"
+                        : getStatusColor(metrics.cpu, [20, 50]) ===
+                            "text-yellow-500"
+                          ? "#eab308"
+                          : "#ef4444",
+                  }}
+                >
                   {metrics.cpu}%
                 </div>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Clock sx={{ width: 16, height: 16, color: getStatusColor(metrics.networkLatency, [200, 500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.networkLatency, [200, 500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
+              <Clock
+                sx={{
+                  width: 16,
+                  height: 16,
+                  color:
+                    getStatusColor(metrics.networkLatency, [200, 500]) ===
+                    "text-green-500"
+                      ? "#22c55e"
+                      : getStatusColor(metrics.networkLatency, [200, 500]) ===
+                          "text-yellow-500"
+                        ? "#eab308"
+                        : "#ef4444",
+                }}
+              />
               <div>
-                <div style={{ fontSize: "12px", color: "#64748b" }}>网络延迟</div>
-                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.networkLatency, [200, 500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.networkLatency, [200, 500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
+                <div style={{ fontSize: "12px", color: "#64748b" }}>
+                  网络延迟
+                </div>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color:
+                      getStatusColor(metrics.networkLatency, [200, 500]) ===
+                      "text-green-500"
+                        ? "#22c55e"
+                        : getStatusColor(metrics.networkLatency, [200, 500]) ===
+                            "text-yellow-500"
+                          ? "#eab308"
+                          : "#ef4444",
+                  }}
+                >
                   {metrics.networkLatency}ms
                 </div>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <TrendingUp sx={{ width: 16, height: 16, color: getStatusColor(metrics.lcp, [1200, 2500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.lcp, [1200, 2500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }} />
+              <TrendingUp
+                sx={{
+                  width: 16,
+                  height: 16,
+                  color:
+                    getStatusColor(metrics.lcp, [1200, 2500]) ===
+                    "text-green-500"
+                      ? "#22c55e"
+                      : getStatusColor(metrics.lcp, [1200, 2500]) ===
+                          "text-yellow-500"
+                        ? "#eab308"
+                        : "#ef4444",
+                }}
+              />
               <div>
                 <div style={{ fontSize: "12px", color: "#64748b" }}>LCP</div>
-                <div style={{ fontSize: "14px", fontWeight: 500, color: getStatusColor(metrics.lcp, [1200, 2500]) === "text-green-500" ? "#22c55e" : getStatusColor(metrics.lcp, [1200, 2500]) === "text-yellow-500" ? "#eab308" : "#ef4444" }}>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color:
+                      getStatusColor(metrics.lcp, [1200, 2500]) ===
+                      "text-green-500"
+                        ? "#22c55e"
+                        : getStatusColor(metrics.lcp, [1200, 2500]) ===
+                            "text-yellow-500"
+                          ? "#eab308"
+                          : "#ef4444",
+                  }}
+                >
                   {metrics.lcp}ms
                 </div>
               </div>
             </div>
           </div>
 
-          <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "12px", marginBottom: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <div
+            style={{
+              borderTop: "1px solid #f1f5f9",
+              paddingTop: "12px",
+              marginBottom: "16px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "8px",
+              }}
+            >
               <History sx={{ width: 16, height: 16, color: "#64748b" }} />
-              <span style={{ fontSize: "12px", color: "#64748b" }}>实时趋势</span>
+              <span style={{ fontSize: "12px", color: "#64748b" }}>
+                实时趋势
+              </span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "32px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-end",
+                gap: "4px",
+                height: "32px",
+              }}
+            >
               {history.map((item, index) => (
                 <div
                   key={index}
-                  style={{ flex: 1, borderRadius: "4px 4px 0 0", transition: "all 0.2s", height: `${(item.metrics.fps / 60) * 100}%`, backgroundColor: item.metrics.fps >= 45 ? "#22c55e" : item.metrics.fps >= 30 ? "#eab308" : "#ef4444" }}
+                  style={{
+                    flex: 1,
+                    borderRadius: "4px 4px 0 0",
+                    transition: "all 0.2s",
+                    height: `${(item.metrics.fps / 60) * 100}%`,
+                    backgroundColor:
+                      item.metrics.fps >= 45
+                        ? "#22c55e"
+                        : item.metrics.fps >= 30
+                          ? "#eab308"
+                          : "#ef4444",
+                  }}
                   title={`${item.metrics.fps} FPS`}
                 />
               ))}
@@ -321,21 +544,55 @@ const PerformanceMonitor: React.FC = () => {
             <MuiButton
               onClick={handleManualReport}
               disabled={isReporting}
-              sx={{ flex: 1, backgroundColor: "#2563eb", color: "#ffffff", fontSize: "14px", "&:hover": { backgroundColor: "#1d4ed8" } }}
+              sx={{
+                flex: 1,
+                backgroundColor: "#2563eb",
+                color: "#ffffff",
+                fontSize: "14px",
+                "&:hover": { backgroundColor: "#1d4ed8" },
+              }}
             >
               <Send sx={{ width: 16, height: 16, marginRight: "8px" }} />
               {isReporting ? "上报中..." : "上报数据"}
             </MuiButton>
             {reportStatus === "success" && (
-              <CheckCircle sx={{ width: 20, height: 20, color: "#22c55e", alignSelf: "center" }} />
+              <CheckCircle
+                sx={{
+                  width: 20,
+                  height: 20,
+                  color: "#22c55e",
+                  alignSelf: "center",
+                }}
+              />
             )}
             {reportStatus === "error" && (
-              <AlertTriangle sx={{ width: 20, height: 20, color: "#ef4444", alignSelf: "center" }} />
+              <AlertTriangle
+                sx={{
+                  width: 20,
+                  height: 20,
+                  color: "#ef4444",
+                  alignSelf: "center",
+                }}
+              />
             )}
           </div>
 
-          <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", fontSize: "12px", color: "#64748b" }}>
+          <div
+            style={{
+              marginTop: "12px",
+              paddingTop: "12px",
+              borderTop: "1px solid #f1f5f9",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "8px",
+                fontSize: "12px",
+                color: "#64748b",
+              }}
+            >
               <div>
                 <div>FCP</div>
                 <div style={{ fontWeight: 500, color: "#475569" }}>
@@ -344,7 +601,9 @@ const PerformanceMonitor: React.FC = () => {
               </div>
               <div>
                 <div>CLS</div>
-                <div style={{ fontWeight: 500, color: "#475569" }}>{metrics.cls}</div>
+                <div style={{ fontWeight: 500, color: "#475569" }}>
+                  {metrics.cls}
+                </div>
               </div>
               <div>
                 <div>FID</div>
@@ -372,13 +631,24 @@ const PerformanceMonitor: React.FC = () => {
           alignItems: "center",
           justifyContent: "center",
           transition: "all 0.2s",
-          backgroundColor: isVisible ? "#2563eb" : performanceIssues.length > 0 ? "#ef4444" : "#334155",
+          backgroundColor: isVisible
+            ? "#2563eb"
+            : performanceIssues.length > 0
+              ? "#ef4444"
+              : "#334155",
           color: "#ffffff",
-          animation: performanceIssues.length > 0 && !isVisible ? "pulse 2s infinite" : "none",
+          animation:
+            performanceIssues.length > 0 && !isVisible
+              ? "pulse 2s infinite"
+              : "none",
           cursor: "pointer",
-          border: "none"
+          border: "none",
         }}
-        title={performanceIssues.length > 0 ? `检测到 ${performanceIssues.length} 个性能问题` : "打开性能监控"}
+        title={
+          performanceIssues.length > 0
+            ? `检测到 ${performanceIssues.length} 个性能问题`
+            : "打开性能监控"
+        }
       >
         <Activity sx={{ width: 24, height: 24 }} />
       </button>

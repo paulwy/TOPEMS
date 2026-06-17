@@ -78,6 +78,7 @@ import MobileNav from "@/components/MobileNav";
 import MobileHeader from "@/components/MobileHeader";
 import { usePermission } from "@/hooks/usePermission";
 import { useAuth } from "@/hooks/useAuth";
+import { useServiceStatus } from "@/hooks/useServiceStatus";
 import { StatsChart } from "@/components/StatsChart";
 import { MetricCard } from "@/components/MetricCard";
 import { useAppStore } from "../../store";
@@ -112,6 +113,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     isAuthenticated,
     hasPermission,
   } = useAuth();
+  const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
   const shortcuts = useAppStore((state) => state.shortcuts);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -131,24 +133,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     moduleDistribution: [] as { name: string; value: number; color: string }[],
     monthlyTrend: [] as { name: string; value: number }[],
   });
-  const [serviceStatuses, setServiceStatuses] = useState<
-    Record<string, boolean>
-  >({
-    iam: false,
-    rs: false,
-    lims: false,
-    doc: false,
-    ai: false,
-    flow: false,
-    erp: false,
-    hrm: false,
-    mobile: false,
-    notification: false,
-    report: false,
-    pm: false,
-    bi: false,
-    integration: false,
-  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
   const [todoTab, setTodoTab] = useState(0);
@@ -160,7 +144,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     { id: 5, title: "参加项目评审会议", type: "meeting", done: false },
   ]);
 
-  const moduleToService: Record<string, keyof typeof serviceStatuses> = {
+  const moduleToService: Record<string, string> = {
     rs: "rs",
     lims: "lims",
     doc: "doc",
@@ -191,64 +175,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   };
 
   const initialized = useRef(false);
-
-  const checkServiceStatus = useCallback(
-    async (serviceKey: string, port: number) => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-        const response = await fetch(`/${serviceKey}/health`, {
-          signal: controller.signal,
-          method: "GET",
-        });
-        clearTimeout(timeoutId);
-        return response.ok;
-      } catch {
-        return false;
-      }
-    },
-    [],
-  );
-
-  const checkAllServicesStatus = useCallback(async () => {
-    const services = [
-      { key: "iam", port: 8000 },
-      { key: "doc", port: 8001 },
-      { key: "pm", port: 8002 },
-      { key: "notification", port: 8003 },
-      { key: "integration", port: 8004 },
-      { key: "portal", port: 8005 },
-      { key: "flow", port: 8006 },
-      { key: "erp", port: 8010 },
-      { key: "hrm", port: 8011 },
-      { key: "crm", port: 8012 },
-      { key: "ai", port: 8013 },
-      { key: "rs", port: 8020 },
-      { key: "lims", port: 8022 },
-      { key: "pdm", port: 8023 },
-      { key: "mes", port: 8030 },
-      { key: "qms", port: 8031 },
-      { key: "ehs", port: 8032 },
-      { key: "scm", port: 8040 },
-      { key: "srm", port: 8041 },
-      { key: "wms", port: 8042 },
-      { key: "gis", port: 8050 },
-      { key: "im", port: 8051 },
-      { key: "bi", port: 8052 },
-      { key: "report", port: 8053 },
-      { key: "mail", port: 8054 },
-      { key: "mobile", port: 8055 },
-    ];
-
-    const statusPromises = services.map(async (service) => {
-      const status = await checkServiceStatus(service.key, service.port);
-      return { [service.key]: status };
-    });
-
-    const results = await Promise.all(statusPromises);
-    const newStatuses = Object.assign({}, ...results);
-    setServiceStatuses(newStatuses as Record<string, boolean>);
-  }, [checkServiceStatus]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -341,7 +267,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
     const init = async () => {
       try {
-        await checkAllServicesStatus();
+        await refreshServiceStatuses();
         await loadStats().catch((err) => {
           console.warn("加载统计数据失败:", err);
         });
@@ -358,14 +284,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     init();
 
     const intervalId = setInterval(() => {
-      checkAllServicesStatus();
+      refreshServiceStatuses();
     }, 30000);
 
     return () => clearInterval(intervalId);
   }, [
     navigate,
     isAuthenticated,
-    checkAllServicesStatus,
+    refreshServiceStatuses,
     loadStats,
     loadRecentActivities,
   ]);
@@ -450,7 +376,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           path: "/system",
           color: "bg-slate-600",
           status: "online" as const,
-          permission: "system:admin",
+          permission: "iam:system_update",
           module: "iam",
           adminOnly: true,
         },
@@ -461,7 +387,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           path: "/integration",
           color: "bg-blue-500",
           status: "online" as const,
-          permission: "system:admin",
+          permission: "iam:system_update",
           module: "integration",
           adminOnly: true,
         },
@@ -472,7 +398,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           path: "/reports",
           color: "bg-emerald-500",
           status: "online" as const,
-          permission: "system:admin",
+          permission: "iam:system_update",
           module: "iam",
           adminOnly: true,
         },
@@ -1058,7 +984,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           <ServiceMonitorSection collapsible={true} defaultExpanded={false}>
             <ServiceStatusMonitor
               serviceStatuses={serviceStatuses}
-              onRefresh={checkAllServicesStatus}
+              onRefresh={refreshServiceStatuses}
             />
           </ServiceMonitorSection>
 

@@ -6,7 +6,7 @@ authors.workspace = true
 description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing"
 
 [dependencies]
-axum = { workspace = true }
+axum = { workspace = true, features = ["ws"] }
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -26,6 +26,9 @@ tower = { workspace = true }
 tower-cookies = { workspace = true }
 tower-util = { workspace = true }
 rust_decimal = { workspace = true, features = ["db-postgres"] }
+futures-util.workspace = true
+bcrypt.workspace = true
+reqwest.workspace = true
 
 [[bin]]
 name = "unified-core-service"

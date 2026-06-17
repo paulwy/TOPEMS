@@ -73,22 +73,22 @@ pub struct QueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/payroll-runs",
+            "/api/hrm/payroll-runs",
             get(list_payroll_runs).post(create_payroll_run),
         )
         .route(
-            "/api/v1/payroll-runs/{id}",
+            "/api/hrm/payroll-runs/{id}",
             get(get_payroll_run).delete(delete_payroll_run),
         )
         .route(
-            "/api/v1/payroll-runs/{id}/calculate",
+            "/api/hrm/payroll-runs/{id}/calculate",
             put(calculate_payroll_run),
         )
-        .route("/api/v1/payroll-runs/{id}/pay", put(pay_payroll_run))
-        .route("/api/v1/payroll-items", get(list_payroll_items))
-        .route("/api/v1/payroll-items/{id}", get(get_payroll_item))
+        .route("/api/hrm/payroll-runs/{id}/pay", put(pay_payroll_run))
+        .route("/api/hrm/payroll-items", get(list_payroll_items))
+        .route("/api/hrm/payroll-items/{id}", get(get_payroll_item))
         .route(
-            "/api/v1/payroll-details",
+            "/api/hrm/payroll-details",
             get(list_payroll_details).post(create_payroll_detail),
         )
 }

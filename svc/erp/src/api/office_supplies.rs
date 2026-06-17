@@ -26,11 +26,11 @@ pub struct SupplyQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/office-supplies",
+            "/api/erp/office-supplies",
             get(list_supplies).post(create_supply),
         )
         .route(
-            "/api/v1/office-supplies/{id}",
+            "/api/erp/office-supplies/{id}",
             get(get_supply).put(update_supply).delete(delete_supply),
         )
 }

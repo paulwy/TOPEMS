@@ -178,9 +178,27 @@ const LimsTaskDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        }}
+      >
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 48, height: 48, border: "4px solid #e9d5ff", borderTop: "4px solid #9333ea", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 16px auto" }}></div>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              border: "4px solid #e9d5ff",
+              borderTop: "4px solid #9333ea",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px auto",
+            }}
+          ></div>
           <p style={{ color: "#475569" }}>加载中...</p>
         </div>
       </div>
@@ -189,9 +207,24 @@ const LimsTaskDetailPage: React.FC = () => {
 
   if (!task) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        }}
+      >
         <div style={{ textAlign: "center" }}>
-          <AlertCircle sx={{ width: 64, height: 64, color: "#ef4444", margin: "0 auto 16px auto" }} />
+          <AlertCircle
+            sx={{
+              width: 64,
+              height: 64,
+              color: "#ef4444",
+              margin: "0 auto 16px auto",
+            }}
+          />
           <p style={{ color: "#475569" }}>检验任务不存在或已被删除</p>
           <Button onClick={() => navigate("/lims")} sx={{ mt: 2 }}>
             返回列表
@@ -202,10 +235,33 @@ const LimsTaskDetailPage: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
-      <Box component="header" sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+      }}
+    >
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              height: 64,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <Button
                 variant="text"
@@ -215,10 +271,18 @@ const LimsTaskDetailPage: React.FC = () => {
                 <Box component={ArrowLeft} sx={{ fontSize: 20 }} />
               </Button>
               <div>
-                <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a" }}>
+                <h1
+                  style={{
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                    color: "#0f172a",
+                  }}
+                >
                   检验任务详情
                 </h1>
-                <p style={{ fontSize: "0.75rem", color: "#64748b" }}>Inspection Task Detail</p>
+                <p style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                  Inspection Task Detail
+                </p>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -246,8 +310,21 @@ const LimsTaskDetailPage: React.FC = () => {
       </Box>
 
       <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" }, gap: 3 }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, gridColumn: { lg: "span 1" } }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" },
+            gap: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+              gridColumn: { lg: "span 1" },
+            }}
+          >
             <Card>
               <CardHeader sx={{ pb: 1 }}>
                 <Typography
@@ -261,35 +338,87 @@ const LimsTaskDetailPage: React.FC = () => {
                   任务信息
                 </Typography>
               </CardHeader>
-              <CardContent sx={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <CardContent
+                sx={{ display: "flex", flexDirection: "column", gap: 16 }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
                   <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>任务编号</p>
-                    <p style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", marginTop: 4 }}>
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                      任务编号
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "1.125rem",
+                        fontWeight: 600,
+                        color: "#0f172a",
+                        marginTop: 4,
+                      }}
+                    >
                       {task.task_no || task.id}
                     </p>
                   </div>
                   {getStatusBadge(task.status)}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 12, backgroundColor: "#faf5ff", borderRadius: 8 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: 12,
+                    backgroundColor: "#faf5ff",
+                    borderRadius: 8,
+                  }}
+                >
                   <Package sx={{ width: 20, height: 20, color: "#9333ea" }} />
                   <div>
-                    <p style={{ fontSize: "0.875rem", color: "#9333ea" }}>关联样品</p>
+                    <p style={{ fontSize: "0.875rem", color: "#9333ea" }}>
+                      关联样品
+                    </p>
                     <p style={{ color: "#581c87", fontWeight: 500 }}>
                       {task.sample_name || "未关联"}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                  <p
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#64748b",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
                     <FileText sx={{ width: 12, height: 12 }} />
                     检验流程
                   </p>
-                  <p style={{ color: "#0f172a", marginTop: 4 }}>{process?.name || "-"}</p>
+                  <p style={{ color: "#0f172a", marginTop: 4 }}>
+                    {process?.name || "-"}
+                  </p>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 16,
+                  }}
+                >
                   <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                    <p
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "#64748b",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
                       <User sx={{ width: 12, height: 12 }} />
                       检验员
                     </p>
@@ -298,7 +427,15 @@ const LimsTaskDetailPage: React.FC = () => {
                     </p>
                   </div>
                   <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
+                    <p
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "#64748b",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
                       <Clock sx={{ width: 12, height: 12 }} />
                       创建时间
                     </p>
@@ -326,34 +463,90 @@ const LimsTaskDetailPage: React.FC = () => {
                 </Typography>
               </CardHeader>
               <CardContent>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 16 }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "0.875rem",
+                    }}
+                  >
                     <span style={{ color: "#475569" }}>完成进度</span>
                     <span style={{ fontWeight: 500, color: "#0f172a" }}>
                       {completedSteps} / {totalSteps} 步骤
                     </span>
                   </div>
-                  <div style={{ height: 12, backgroundColor: "#e2e8f0", borderRadius: 999, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: 12,
+                      backgroundColor: "#e2e8f0",
+                      borderRadius: 999,
+                      overflow: "hidden",
+                    }}
+                  >
                     <div
-                      style={{ height: "100%", background: "linear-gradient(to right, #a855f7, #ec4899)", width: `${progressPercent}%`, transition: "all 0.3s" }}
+                      style={{
+                        height: "100%",
+                        background:
+                          "linear-gradient(to right, #a855f7, #ec4899)",
+                        width: `${progressPercent}%`,
+                        transition: "all 0.3s",
+                      }}
                     ></div>
                   </div>
                   <div style={{ textAlign: "center" }}>
-                    <span style={{ fontSize: "1.875rem", fontWeight: 700, color: "#9333ea" }}>
+                    <span
+                      style={{
+                        fontSize: "1.875rem",
+                        fontWeight: 700,
+                        color: "#9333ea",
+                      }}
+                    >
                       {Math.round(progressPercent)}%
                     </span>
                   </div>
                   {process?.steps && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                        marginTop: 16,
+                      }}
+                    >
                       {process.steps.map((step, index) => {
                         const isCompleted = index < completedSteps;
                         return (
                           <div
                             key={index}
-                            style={{ display: "flex", alignItems: "center", gap: 12, padding: 8, borderRadius: 8, backgroundColor: isCompleted ? "#f0fdf4" : "#f8fafc" }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                              padding: 8,
+                              borderRadius: 8,
+                              backgroundColor: isCompleted
+                                ? "#f0fdf4"
+                                : "#f8fafc",
+                            }}
                           >
                             <div
-                              style={{ width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.875rem", fontWeight: 500, backgroundColor: isCompleted ? "#22c55e" : "#cbd5e1", color: isCompleted ? "#ffffff" : "#475569" }}
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "0.875rem",
+                                fontWeight: 500,
+                                backgroundColor: isCompleted
+                                  ? "#22c55e"
+                                  : "#cbd5e1",
+                                color: isCompleted ? "#ffffff" : "#475569",
+                              }}
                             >
                               {isCompleted ? (
                                 <CheckCircle sx={{ width: 16, height: 16 }} />
@@ -362,7 +555,9 @@ const LimsTaskDetailPage: React.FC = () => {
                               )}
                             </div>
                             <span
-                              style={{ color: isCompleted ? "#15803d" : "#475569" }}
+                              style={{
+                                color: isCompleted ? "#15803d" : "#475569",
+                              }}
                             >
                               {step.name}
                             </span>
@@ -406,8 +601,21 @@ const LimsTaskDetailPage: React.FC = () => {
                     enablePagination={false}
                   />
                 ) : (
-                  <div style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
-                    <FileText sx={{ width: 64, height: 64, margin: "0 auto 16px auto", opacity: 0.5 }} />
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "48px 0",
+                      color: "#64748b",
+                    }}
+                  >
+                    <FileText
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        margin: "0 auto 16px auto",
+                        opacity: 0.5,
+                      }}
+                    />
                     <p>暂无检验记录</p>
                     <Button
                       variant="outlined"

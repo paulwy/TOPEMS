@@ -38,11 +38,15 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
   const getIcon = () => {
     switch (type) {
       case "success":
-        return <CheckCircle2 sx={{ height: 20, width: 20, color: "#22c55e" }} />;
+        return (
+          <CheckCircle2 sx={{ height: 20, width: 20, color: "#22c55e" }} />
+        );
       case "error":
         return <AlertCircle sx={{ height: 20, width: 20, color: "#ef4444" }} />;
       case "warning":
-        return <AlertTriangle sx={{ height: 20, width: 20, color: "#eab308" }} />;
+        return (
+          <AlertTriangle sx={{ height: 20, width: 20, color: "#eab308" }} />
+        );
       case "info":
       default:
         return <Info sx={{ height: 20, width: 20, color: "#3b82f6" }} />;
@@ -79,20 +83,30 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
         boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
         transition: "all 0.3s ease",
         animation: "slideIn 0.3s ease",
-        ...getBgColor()
+        ...getBgColor(),
       }}
     >
       {getIcon()}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontWeight: 500, color: "#111827" }}>{title}</p>
-        {message && <p style={{ fontSize: "14px", color: "#374151", marginTop: "4px" }}>{message}</p>}
+        {message && (
+          <p style={{ fontSize: "14px", color: "#374151", marginTop: "4px" }}>
+            {message}
+          </p>
+        )}
       </div>
       <button
         onClick={() => {
           setIsVisible(false);
           setTimeout(onClose, 300);
         }}
-        style={{ color: "#9ca3af", border: "none", background: "transparent", cursor: "pointer", transition: "color 0.2s" }}
+        style={{
+          color: "#9ca3af",
+          border: "none",
+          background: "transparent",
+          cursor: "pointer",
+          transition: "color 0.2s",
+        }}
       >
         <X sx={{ height: 16, width: 16 }} />
       </button>
@@ -109,7 +123,19 @@ export function Toaster() {
   }
 
   return (
-    <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", flexDirection: "column", gap: "8px", maxWidth: "384px", width: "100%" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: "16px",
+        right: "16px",
+        zIndex: 50,
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        maxWidth: "384px",
+        width: "100%",
+      }}
+    >
       {notifications.map((notification) => (
         <Toast
           key={notification.id}

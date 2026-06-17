@@ -50,12 +50,15 @@ export const UserSelect: React.FC<UserSelectProps> = ({
     onSearch?.(searchKeyword);
   }, [searchKeyword, onSearch]);
 
-  const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    if (!disabled) {
-      setAnchorEl(event.currentTarget);
-      setSearchKeyword("");
-    }
-  }, [disabled]);
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      if (!disabled) {
+        setAnchorEl(event.currentTarget);
+        setSearchKeyword("");
+      }
+    },
+    [disabled],
+  );
 
   const handleClose = useCallback(() => {
     setAnchorEl(null);

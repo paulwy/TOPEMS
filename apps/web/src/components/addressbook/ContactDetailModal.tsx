@@ -246,7 +246,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                 }}
               >
                 {contact.email && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
                     <Mail sx={{ width: 20, height: 20, color: "#94a3b8" }} />
                     <a
                       href={`mailto:${contact.email}`}
@@ -267,7 +269,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                   </div>
                 )}
                 {contact.phone && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
                     <Phone sx={{ width: 20, height: 20, color: "#94a3b8" }} />
                     <a
                       href={`tel:${contact.phone}`}
@@ -310,10 +314,15 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                     padding: 16,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <Calendar sx={{ width: 20, height: 20, color: "#94a3b8" }} />
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    <Calendar
+                      sx={{ width: 20, height: 20, color: "#94a3b8" }}
+                    />
                     <span style={{ fontSize: 14, color: "#0f172a" }}>
-                      入职时间: {new Date(contact.hire_date).toLocaleDateString()}
+                      入职时间:{" "}
+                      {new Date(contact.hire_date).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -344,11 +353,15 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                   color: "#64748b",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
                   <span>创建时间</span>
                   <span>{new Date(contact.created_at).toLocaleString()}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
                   <span>更新时间</span>
                   <span>{new Date(contact.updated_at).toLocaleString()}</span>
                 </div>
@@ -356,7 +369,13 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
             </div>
           </div>
 
-          <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+          <div
+            style={{
+              marginTop: 24,
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
             <button
               onClick={onClose}
               style={{

@@ -1,6 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import type { DevicePoint, StorageLocation } from "../../api/gis";
+import config from "../../config/runtime";
 
 interface AmapLayerProps {
   devicePoints: DevicePoint[];
@@ -35,7 +36,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       if (!mapContainer.current) return;
 
       AMapLoader.load({
-        key: "您的高德地图API Key",
+        key: config.thirdParty.amapKey || "您的高德地图API Key",
         version: "2.0",
         plugins: ["AMap.Scale", "AMap.ToolBar", "AMap.MarkerClusterer"],
       })

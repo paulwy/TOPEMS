@@ -1,188 +1,30 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import L from "leaflet";
+import { useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import type { DevicePoint, StorageLocation } from "../../api/gis";
 
 interface HeatmapLayerProps {
   devicePoints: DevicePoint[];
   storageLocations: StorageLocation[];
-  mapRef: React.RefObject<L.Map | null>;
+  mapRef?: React.RefObject<L.Map | null>;
   visible: boolean;
   intensityMode: "density" | "status";
 }
 
-const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
-  devicePoints,
-  storageLocations,
-  mapRef,
-  visible,
-  intensityMode,
-}) => {
-  const heatmapRef = useRef<HTMLDivElement | null>(null);
+const colorCache = new Map<number, string>();
 
-  useEffect(() => {
-    if (!visible || !mapRef.current) {
-      if (heatmapRef.current) {
-        heatmapRef.current.remove();
-        heatmapRef.current = null;
-      }
-      return;
-    }
-
-    const map = mapRef.current;
-    const size = map.getSize();
-
-    const canvas = document.createElement("canvas");
-    canvas.width = size.x;
-    canvas.height = size.y;
-    canvas.style.position = "absolute";
-    canvas.style.top = "0";
-    canvas.style.left = "0";
-    canvas.style.pointerEvents = "none";
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const heatmapData: { x: number; y: number; value: number }[] = [];
-
-    const allPoints = [
-      ...devicePoints.map((p) => ({
-        lat: p.latitude,
-        lng: p.longitude,
-        type: "device" as const,
-        status: p.status,
-      })),
-      ...storageLocations.map((s) => ({
-        lat: s.latitude,
-        lng: s.longitude,
-        type: "storage" as const,
-        status: "active",
-      })),
-    ];
-
-    allPoints.forEach((point) => {
-      const pixel = map.latLngToContainerPoint(L.latLng(point.lat, point.lng));
-
-      let value = 1;
-      if (intensityMode === "status") {
-        const status = point.status.toLowerCase();
-        if (status.includes("active") || status.includes("启用")) {
-          value = 0.3;
-        } else if (status.includes("pending") || status.includes("待处理")) {
-          value = 0.7;
-        } else if (status.includes("inactive") || status.includes("禁用")) {
-          value = 1;
-        }
-      } else {
-        value = 1;
-      }
-
-      heatmapData.push({
-        x: pixel.x,
-        y: pixel.y,
-        value,
-      });
-    });
-
-    drawHeatmap(ctx, heatmapData, size.x, size.y);
-
-    const overlay = L.DomUtil.create("div", "leaflet-heatmap-overlay");
-    overlay.appendChild(canvas);
-    overlay.style.position = "absolute";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-
-    const pane = map.getPane("overlayPane");
-    if (pane) {
-      pane.appendChild(overlay);
-      heatmapRef.current = overlay;
-    }
-
-    const handleMove = () => {
-      if (!heatmapRef.current) return;
-      heatmapRef.current.remove();
-      heatmapRef.current = null;
-    };
-
-    map.on("move", handleMove);
-    map.on("zoom", handleMove);
-
-    return () => {
-      map.off("move", handleMove);
-      map.off("zoom", handleMove);
-      if (heatmapRef.current) {
-        heatmapRef.current.remove();
-        heatmapRef.current = null;
-      }
-    };
-  }, [devicePoints, storageLocations, mapRef, visible, intensityMode]);
-
-  return null;
-};
-
-const drawHeatmap = (
-  ctx: CanvasRenderingContext2D,
-  data: { x: number; y: number; value: number }[],
-  width: number,
-  height: number,
-) => {
-  ctx.clearRect(0, 0, width, height);
-
-  const gridSize = 10;
-  const grid: number[][] = Array(Math.ceil(height / gridSize))
-    .fill(null)
-    .map(() => Array(Math.ceil(width / gridSize)).fill(0));
-
-  data.forEach((point) => {
-    const gridX = Math.floor(point.x / gridSize);
-    const gridY = Math.floor(point.y / gridSize);
-
-    const radius = 3;
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        const nx = gridX + dx;
-        const ny = gridY + dy;
-        if (nx >= 0 && nx < grid[0].length && ny >= 0 && ny < grid.length) {
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const weight =
-            distance <= radius ? (1 - distance / radius) * point.value : 0;
-          grid[ny][nx] += weight;
-        }
-      }
-    }
-  });
-
-  const maxIntensity = Math.max(...grid.flat());
-  if (maxIntensity === 0) return;
-
-  const gradient = createGradient();
-
-  for (let y = 0; y < grid.length; y++) {
-    for (let x = 0; x < grid[y].length; x++) {
-      const intensity = grid[y][x] / maxIntensity;
-      if (intensity < 0.05) continue;
-
-      const color = getColor(gradient, intensity);
-      ctx.fillStyle = color;
-      ctx.globalAlpha = Math.min(intensity, 0.6);
-      ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
-    }
+const getCachedColor = (intensity: number): string => {
+  const key = Math.floor(intensity * 255);
+  if (colorCache.has(key)) {
+    return colorCache.get(key)!;
   }
 
-  ctx.globalAlpha = 1;
-};
-
-const createGradient = (): CanvasGradient | null => {
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    return null;
-  }
-
   canvas.width = 256;
   canvas.height = 1;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "rgba(255, 0, 0, 0.5)";
 
   const gradient = ctx.createLinearGradient(0, 0, 256, 0);
   gradient.addColorStop(0, "rgba(0, 255, 0, 0)");
@@ -194,29 +36,170 @@ const createGradient = (): CanvasGradient | null => {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 256, 1);
 
-  return gradient;
+  const imageData = ctx.getImageData(0, 0, 256, 1);
+  const index = Math.min(key, 255);
+  const i = index * 4;
+  const color = `rgba(${imageData.data[i]}, ${imageData.data[i + 1]}, ${imageData.data[i + 2]}, ${imageData.data[i + 3] / 255})`;
+  
+  colorCache.set(key, color);
+  return color;
 };
 
-const getColor = (
-  gradient: CanvasGradient | null,
-  intensity: number,
-): string => {
-  if (!gradient) return "rgba(255, 0, 0, 0.5)";
+const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
+  devicePoints,
+  storageLocations,
+  mapRef,
+  visible,
+  intensityMode,
+}) => {
+  const heatmapRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const map = useMap();
+  const effectiveMap = mapRef?.current || map;
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return "rgba(255, 0, 0, 0.5)";
+  const heatmapData = useMemo(() => {
+    if (!visible || !effectiveMap) return [];
+    
+    const result: { x: number; y: number; value: number }[] = [];
 
-  canvas.width = 256;
-  canvas.height = 1;
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 256, 1);
+    devicePoints.forEach((p) => {
+      const pixel = effectiveMap.latLngToContainerPoint(L.latLng(p.latitude, p.longitude));
+      let value = 1;
+      if (intensityMode === "status") {
+        const status = p.status.toLowerCase();
+        if (status.includes("active") || status.includes("启用")) {
+          value = 0.3;
+        } else if (status.includes("pending") || status.includes("待处理")) {
+          value = 0.7;
+        } else if (status.includes("inactive") || status.includes("禁用")) {
+          value = 1;
+        }
+      }
+      result.push({ x: pixel.x, y: pixel.y, value });
+    });
 
-  const imageData = ctx.getImageData(0, 0, 256, 1);
-  const index = Math.min(Math.floor(intensity * 255), 255);
-  const i = index * 4;
+    storageLocations.forEach((s) => {
+      const pixel = effectiveMap.latLngToContainerPoint(L.latLng(s.latitude, s.longitude));
+      result.push({ x: pixel.x, y: pixel.y, value: 1 });
+    });
 
-  return `rgba(${imageData.data[i]}, ${imageData.data[i + 1]}, ${imageData.data[i + 2]}, ${imageData.data[i + 3] / 255})`;
+    return result;
+  }, [devicePoints, storageLocations, effectiveMap, visible, intensityMode]);
+
+  useEffect(() => {
+    if (!visible || !effectiveMap || heatmapData.length === 0) {
+      if (heatmapRef.current) {
+        heatmapRef.current.remove();
+        heatmapRef.current = null;
+      }
+      return;
+    }
+
+    const size = effectiveMap.getSize();
+
+    let canvas = canvasRef.current;
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      canvasRef.current = canvas;
+    }
+    canvas.width = size.x;
+    canvas.height = size.y;
+    canvas.style.position = "absolute";
+    canvas.style.top = "0";
+    canvas.style.left = "0";
+    canvas.style.pointerEvents = "none";
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, size.x, size.y);
+
+    const gridSize = 10;
+    const gridRows = Math.ceil(size.y / gridSize);
+    const gridCols = Math.ceil(size.x / gridSize);
+    
+    const grid = new Float32Array(gridRows * gridCols);
+    grid.fill(0);
+
+    heatmapData.forEach((point) => {
+      const gridX = Math.floor(point.x / gridSize);
+      const gridY = Math.floor(point.y / gridSize);
+
+      const radius = 3;
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = gridX + dx;
+          const ny = gridY + dy;
+          if (nx >= 0 && nx < gridCols && ny >= 0 && ny < gridRows) {
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const weight = distance <= radius ? (1 - distance / radius) * point.value : 0;
+            grid[ny * gridCols + nx] += weight;
+          }
+        }
+      }
+    });
+
+    let maxIntensity = 0;
+    for (let i = 0; i < grid.length; i++) {
+      if (grid[i] > maxIntensity) maxIntensity = grid[i];
+    }
+    if (maxIntensity === 0) return;
+
+    for (let y = 0; y < gridRows; y++) {
+      for (let x = 0; x < gridCols; x++) {
+        const intensity = grid[y * gridCols + x] / maxIntensity;
+        if (intensity < 0.05) continue;
+
+        const color = getCachedColor(intensity);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = Math.min(intensity, 0.6);
+        ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
+      }
+    }
+
+    ctx.globalAlpha = 1;
+
+    if (!heatmapRef.current) {
+      const overlay = L.DomUtil.create("div", "leaflet-heatmap-overlay");
+      overlay.style.position = "absolute";
+      overlay.style.top = "0";
+      overlay.style.left = "0";
+      overlay.style.width = "100%";
+      overlay.style.height = "100%";
+      
+      const pane = effectiveMap.getPane("overlayPane");
+      if (pane) {
+        pane.appendChild(overlay);
+        heatmapRef.current = overlay;
+      }
+    }
+
+    if (heatmapRef.current && canvas.parentNode !== heatmapRef.current) {
+      heatmapRef.current.innerHTML = "";
+      heatmapRef.current.appendChild(canvas);
+    }
+
+    const handleMove = () => {
+      if (heatmapRef.current) {
+        heatmapRef.current.remove();
+        heatmapRef.current = null;
+      }
+    };
+
+    effectiveMap.on("move", handleMove);
+    effectiveMap.on("zoom", handleMove);
+
+    return () => {
+      effectiveMap.off("move", handleMove);
+      effectiveMap.off("zoom", handleMove);
+      if (heatmapRef.current) {
+        heatmapRef.current.remove();
+        heatmapRef.current = null;
+      }
+    };
+  }, [heatmapData, effectiveMap, visible]);
+
+  return null;
 };
 
 export const HeatmapLegend: React.FC<{ mode: "density" | "status" }> = ({

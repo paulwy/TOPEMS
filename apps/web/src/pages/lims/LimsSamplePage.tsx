@@ -116,17 +116,21 @@ const LimsSamplePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "待接收": { bg: "#f3f4f6", color: "#4b5563" },
-      "待检测": { bg: "#fef9c3", color: "#ca8a04" },
-      "检测中": { bg: "#dbeafe", color: "#2563eb" },
-      "已完成": { bg: "#dcfce7", color: "#16a34a" },
+      待接收: { bg: "#f3f4f6", color: "#4b5563" },
+      待检测: { bg: "#fef9c3", color: "#ca8a04" },
+      检测中: { bg: "#dbeafe", color: "#2563eb" },
+      已完成: { bg: "#dcfce7", color: "#16a34a" },
     };
     const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
       <Chip
         label={status}
         size="small"
-        sx={{ backgroundColor: colors.bg, color: colors.color, fontWeight: 500 }}
+        sx={{
+          backgroundColor: colors.bg,
+          color: colors.color,
+          fontWeight: 500,
+        }}
       />
     );
   };
@@ -170,7 +174,8 @@ const LimsSamplePage: React.FC = () => {
     const matchesSearch =
       sample.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.sample_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || sample.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || sample.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -226,7 +231,9 @@ const LimsSamplePage: React.FC = () => {
 
   const stats = {
     total: samples.length,
-    pending: samples.filter((s) => s.status === "待接收" || s.status === "待检测").length,
+    pending: samples.filter(
+      (s) => s.status === "待接收" || s.status === "待检测",
+    ).length,
     inProgress: samples.filter((s) => s.status === "检测中").length,
     completed: samples.filter((s) => s.status === "已完成").length,
   };
@@ -324,13 +331,21 @@ const LimsSamplePage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <FlaskConical sx={{ width: 20, height: 20, color: "#06b6d4" }} />
+                  <FlaskConical
+                    sx={{ width: 20, height: 20, color: "#06b6d4" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     样品总数
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.total}
                   </Typography>
                 </Box>
@@ -354,10 +369,16 @@ const LimsSamplePage: React.FC = () => {
                   <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     待处理
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.pending}
                   </Typography>
                 </Box>
@@ -381,10 +402,16 @@ const LimsSamplePage: React.FC = () => {
                   <Search sx={{ width: 20, height: 20, color: "#2563eb" }} />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     检测中
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.inProgress}
                   </Typography>
                 </Box>
@@ -405,13 +432,21 @@ const LimsSamplePage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <FlaskConical sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <FlaskConical
+                    sx={{ width: 20, height: 20, color: "#16a34a" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     已完成
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.completed}
                   </Typography>
                 </Box>
@@ -430,8 +465,13 @@ const LimsSamplePage: React.FC = () => {
               pb: 0,
             }}
           >
-            <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <FlaskConical style={{ width: 20, height: 20, color: "#06b6d4" }} />
+            <Typography
+              variant="h6"
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <FlaskConical
+                style={{ width: 20, height: 20, color: "#06b6d4" }}
+              />
               样品列表
             </Typography>
           </CardHeader>
@@ -445,7 +485,11 @@ const LimsSamplePage: React.FC = () => {
                 sx={{ minWidth: 250 }}
                 slotProps={{
                   input: {
-                    startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
+                    startAdornment: (
+                      <Search
+                        style={{ width: 18, height: 18, marginRight: 8 }}
+                      />
+                    ),
                   },
                 }}
               />
@@ -458,7 +502,11 @@ const LimsSamplePage: React.FC = () => {
                 sx={{ minWidth: 150 }}
                 slotProps={{
                   input: {
-                    startAdornment: <Filter style={{ width: 18, height: 18, marginRight: 8 }} />,
+                    startAdornment: (
+                      <Filter
+                        style={{ width: 18, height: 18, marginRight: 8 }}
+                      />
+                    ),
                   },
                 }}
               >
@@ -469,12 +517,21 @@ const LimsSamplePage: React.FC = () => {
                 <option value="已完成">已完成</option>
               </TextField>
             </Box>
-            <DataTable columns={columns} data={filteredSamples} enablePagination />
+            <DataTable
+              columns={columns}
+              data={filteredSamples}
+              enablePagination
+            />
           </CardContent>
         </Card>
       </Box>
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{selectedSample ? "编辑样品" : "样品登记"}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -482,14 +539,18 @@ const LimsSamplePage: React.FC = () => {
               fullWidth
               label="样品名称 *"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="请输入样品名称"
             />
             <TextField
               fullWidth
               label="检测项目"
               value={formData.test_items}
-              onChange={(e) => setFormData({ ...formData, test_items: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, test_items: e.target.value })
+              }
               placeholder="请输入检测项目，多个用逗号分隔"
             />
             <TextField
@@ -497,7 +558,9 @@ const LimsSamplePage: React.FC = () => {
               select
               label="状态"
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value })
+              }
             >
               <option value="待接收">待接收</option>
               <option value="待检测">待检测</option>
@@ -510,49 +573,85 @@ const LimsSamplePage: React.FC = () => {
           <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleSave} sx={{ bgcolor: "#06b6d4" }}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            sx={{ bgcolor: "#06b6d4" }}
+          >
             保存
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>样品详情</DialogTitle>
         <DialogContent>
           {selectedSample && (
-            <Box sx={{ pt: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{
+                pt: 2,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 2,
+              }}
+            >
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   样品编号
                 </Box>
                 <Box sx={{ fontWeight: 500 }}>{selectedSample.sample_no}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   样品名称
                 </Box>
                 <Box sx={{ fontWeight: 500 }}>{selectedSample.name}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   检测项目
                 </Box>
                 <Box>{selectedSample.test_items}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedSample.status)}</Box>
+                <Box sx={{ mt: 0.5 }}>
+                  {getStatusBadge(selectedSample.status)}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   接收日期
                 </Box>
                 <Box>{selectedSample.received_date}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   检测结果
                 </Box>
                 <Box>{selectedSample.test_result}</Box>

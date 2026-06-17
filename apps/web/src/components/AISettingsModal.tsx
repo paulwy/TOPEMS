@@ -124,18 +124,58 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", width: "100%", maxWidth: "1024px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "12px",
+          width: "100%",
+          maxWidth: "1024px",
+          maxHeight: "90vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* Header */}
-        <div style={{ background: "linear-gradient(to right, #7c3aed, #2563eb)", color: "#ffffff", padding: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          style={{
+            background: "linear-gradient(to right, #7c3aed, #2563eb)",
+            color: "#ffffff",
+            padding: "24px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <Settings sx={{ width: 24, height: 24 }} />
               <h2 style={{ fontSize: "24px", fontWeight: 700 }}>AI 设置</h2>
             </div>
             <button
               onClick={onClose}
-              style={{ padding: "8px", borderRadius: "8px", border: "none", background: "rgba(255,255,255,0.2)", cursor: "pointer", transition: "background-color 0.2s" }}
+              style={{
+                padding: "8px",
+                borderRadius: "8px",
+                border: "none",
+                background: "rgba(255,255,255,0.2)",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
             >
               <X sx={{ width: 24, height: 24 }} />
             </button>
@@ -146,17 +186,57 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+          }}
+        >
           {/* Model Settings */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
-              <Brain sx={{ width: 20, height: 20, marginRight: "8px", color: "#7c3aed" }} />
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: 600,
+                color: "#111827",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Brain
+                sx={{
+                  width: 20,
+                  height: 20,
+                  marginRight: "8px",
+                  color: "#7c3aed",
+                }}
+              />
               模型配置
             </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "16px",
+              }}
+            >
               <div>
-                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "#374151",
+                    marginBottom: "8px",
+                  }}
+                >
                   AI 模型
                 </label>
                 <select
@@ -164,7 +244,14 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                   onChange={(e) =>
                     setConfig((prev) => ({ ...prev, model: e.target.value }))
                   }
-                  style={{ width: "100%", padding: "8px 16px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  style={{
+                    width: "100%",
+                    padding: "8px 16px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                  }}
                 >
                   <option value="qwen2.5:7b-instruct">
                     Qwen 2.5 7B Instruct
@@ -178,13 +265,27 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                     Mistral 7B Instruct
                   </option>
                 </select>
-                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#6b7280",
+                    marginTop: "4px",
+                  }}
+                >
                   选择用于生成回答的AI模型
                 </p>
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "#374151",
+                    marginBottom: "8px",
+                  }}
+                >
                   响应长度
                 </label>
                 <select
@@ -195,30 +296,83 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                       responseLength: e.target.value as any,
                     }))
                   }
-                  style={{ width: "100%", padding: "8px 16px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                  style={{
+                    width: "100%",
+                    padding: "8px 16px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                  }}
                 >
                   <option value="short">简短</option>
                   <option value="medium">中等</option>
                   <option value="long">详细</option>
                 </select>
-                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>控制回答的详细程度</p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#6b7280",
+                    marginTop: "4px",
+                  }}
+                >
+                  控制回答的详细程度
+                </p>
               </div>
             </div>
           </div>
 
           {/* Generation Parameters */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
-              <Sliders sx={{ width: 20, height: 20, marginRight: "8px", color: "#2563eb" }} />
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: 600,
+                color: "#111827",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Sliders
+                sx={{
+                  width: 20,
+                  height: 20,
+                  marginRight: "8px",
+                  color: "#2563eb",
+                }}
+              />
               生成参数
             </h3>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "16px",
+              }}
+            >
               <div>
-                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
-                  Temperature (创造性) <span style={{ color: "#dc2626" }}>*</span>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "#374151",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Temperature (创造性){" "}
+                  <span style={{ color: "#dc2626" }}>*</span>
                 </label>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
                   <input
                     type="range"
                     min="0"
@@ -233,7 +387,14 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                     }
                     style={{ width: "100%" }}
                   />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#6b7280" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "12px",
+                      color: "#6b7280",
+                    }}
+                  >
                     <span>0 (精确)</span>
                     <span style={{ fontWeight: 500, color: "#7c3aed" }}>
                       {config.temperature}
@@ -242,15 +403,33 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                   </div>
                 </div>
                 {errors.temperature && (
-                  <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
-                    <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
+                  <p
+                    style={{
+                      color: "#dc2626",
+                      fontSize: "12px",
+                      marginTop: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <AlertCircle
+                      sx={{ width: 12, height: 12, marginRight: "4px" }}
+                    />
                     {errors.temperature}
                   </p>
                 )}
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "#374151",
+                    marginBottom: "8px",
+                  }}
+                >
                   Max Tokens (最大令牌数){" "}
                   <span style={{ color: "#dc2626" }}>*</span>
                 </label>
@@ -269,19 +448,37 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                   style={{
                     width: "100%",
                     padding: "8px 16px",
-                    border: errors.maxTokens ? "1px solid #dc2626" : "1px solid #e5e7eb",
+                    border: errors.maxTokens
+                      ? "1px solid #dc2626"
+                      : "1px solid #e5e7eb",
                     borderRadius: "8px",
                     fontSize: "14px",
-                    outline: "none"
+                    outline: "none",
                   }}
                 />
                 {errors.maxTokens && (
-                  <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
-                    <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
+                  <p
+                    style={{
+                      color: "#dc2626",
+                      fontSize: "12px",
+                      marginTop: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <AlertCircle
+                      sx={{ width: 12, height: 12, marginRight: "4px" }}
+                    />
                     {errors.maxTokens}
                   </p>
                 )}
-                <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#6b7280",
+                    marginTop: "4px",
+                  }}
+                >
                   控制单次回答的最大长度
                 </p>
               </div>
@@ -289,9 +486,26 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
           </div>
 
           {/* System Prompt */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
-              <MessageSquare sx={{ width: 20, height: 20, marginRight: "8px", color: "#16a34a" }} />
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: 600,
+                color: "#111827",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <MessageSquare
+                sx={{
+                  width: 20,
+                  height: 20,
+                  marginRight: "8px",
+                  color: "#16a34a",
+                }}
+              />
               系统提示词 <span style={{ color: "#dc2626" }}>*</span>
             </h3>
 
@@ -309,42 +523,93 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                 style={{
                   width: "100%",
                   padding: "8px 16px",
-                  border: errors.systemPrompt ? "1px solid #dc2626" : "1px solid #e5e7eb",
+                  border: errors.systemPrompt
+                    ? "1px solid #dc2626"
+                    : "1px solid #e5e7eb",
                   borderRadius: "8px",
                   fontSize: "14px",
                   outline: "none",
-                  resize: "vertical"
+                  resize: "vertical",
                 }}
                 placeholder="定义AI助手的角色和行为..."
               />
               {errors.systemPrompt && (
-                <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
-                  <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
+                <p
+                  style={{
+                    color: "#dc2626",
+                    fontSize: "12px",
+                    marginTop: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <AlertCircle
+                    sx={{ width: 12, height: 12, marginRight: "4px" }}
+                  />
                   {errors.systemPrompt}
                 </p>
               )}
-              <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+              <p
+                style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}
+              >
                 定义AI助手的基本角色、知识范围和回答风格
               </p>
             </div>
           </div>
 
           {/* Knowledge Base Settings */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", display: "flex", alignItems: "center" }}>
-              <BookOpen sx={{ width: 20, height: 20, marginRight: "8px", color: "#ea580c" }} />
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            <h3
+              style={{
+                fontSize: "18px",
+                fontWeight: 600,
+                color: "#111827",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <BookOpen
+                sx={{
+                  width: 20,
+                  height: 20,
+                  marginRight: "8px",
+                  color: "#ea580c",
+                }}
+              />
               知识库配置
             </h3>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", backgroundColor: "#f9fafb", borderRadius: "8px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "16px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "8px",
+                }}
+              >
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, color: "#111827" }}>启用知识库</div>
+                  <div style={{ fontWeight: 500, color: "#111827" }}>
+                    启用知识库
+                  </div>
                   <div style={{ fontSize: "14px", color: "#6b7280" }}>
                     基于企业知识库生成回答
                   </div>
                 </div>
-                <label style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
+                <label
+                  style={{
+                    position: "relative",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={config.enableKnowledgeBase}
@@ -356,19 +621,61 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                     }
                     style={{ display: "none" }}
                   />
-                  <div style={{ width: "44px", height: "24px", backgroundColor: "#e5e7eb", borderRadius: "9999px", position: "relative", transition: "background-color 0.2s" }}>
-                    <div style={{ content: "''", position: "absolute", top: "2px", left: config.enableKnowledgeBase ? "22px" : "2px", width: "20px", height: "20px", backgroundColor: "#ffffff", borderRadius: "9999px", transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }} />
+                  <div
+                    style={{
+                      width: "44px",
+                      height: "24px",
+                      backgroundColor: "#e5e7eb",
+                      borderRadius: "9999px",
+                      position: "relative",
+                      transition: "background-color 0.2s",
+                    }}
+                  >
+                    <div
+                      style={{
+                        content: "''",
+                        position: "absolute",
+                        top: "2px",
+                        left: config.enableKnowledgeBase ? "22px" : "2px",
+                        width: "20px",
+                        height: "20px",
+                        backgroundColor: "#ffffff",
+                        borderRadius: "9999px",
+                        transition: "left 0.2s",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                      }}
+                    />
                   </div>
                 </label>
               </div>
 
               {config.enableKnowledgeBase && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: "16px",
+                  }}
+                >
                   <div>
-                    <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        color: "#374151",
+                        marginBottom: "8px",
+                      }}
+                    >
                       相似度阈值 <span style={{ color: "#dc2626" }}>*</span>
                     </label>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
                       <input
                         type="range"
                         min="0"
@@ -383,7 +690,14 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                         }
                         style={{ width: "100%" }}
                       />
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#6b7280" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: "12px",
+                          color: "#6b7280",
+                        }}
+                      >
                         <span>0 (宽松)</span>
                         <span style={{ fontWeight: 500, color: "#ea580c" }}>
                           {config.similarityThreshold.toFixed(2)}
@@ -392,18 +706,42 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                       </div>
                     </div>
                     {errors.similarityThreshold && (
-                      <p style={{ color: "#dc2626", fontSize: "12px", marginTop: "4px", display: "flex", alignItems: "center" }}>
-                        <AlertCircle sx={{ width: 12, height: 12, marginRight: "4px" }} />
+                      <p
+                        style={{
+                          color: "#dc2626",
+                          fontSize: "12px",
+                          marginTop: "4px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <AlertCircle
+                          sx={{ width: 12, height: 12, marginRight: "4px" }}
+                        />
                         {errors.similarityThreshold}
                       </p>
                     )}
-                    <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#6b7280",
+                        marginTop: "4px",
+                      }}
+                    >
                       控制知识匹配的严格程度
                     </p>
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "14px", fontWeight: 500, color: "#374151", marginBottom: "8px" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "14px",
+                        fontWeight: 500,
+                        color: "#374151",
+                        marginBottom: "8px",
+                      }}
+                    >
                       最大上下文消息数
                     </label>
                     <input
@@ -417,9 +755,22 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
                           maxContextMessages: parseInt(e.target.value),
                         }))
                       }
-                      style={{ width: "100%", padding: "8px 16px", border: "1px solid #e5e7eb", borderRadius: "8px", fontSize: "14px", outline: "none" }}
+                      style={{
+                        width: "100%",
+                        padding: "8px 16px",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        outline: "none",
+                      }}
                     />
-                    <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#6b7280",
+                        marginTop: "4px",
+                      }}
+                    >
                       用于理解对话历史的最多消息数
                     </p>
                   </div>
@@ -430,23 +781,68 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div style={{ backgroundColor: "#f9fafb", padding: "16px 24px", borderTop: "1px solid #e5e7eb" }}>
+        <div
+          style={{
+            backgroundColor: "#f9fafb",
+            padding: "16px 24px",
+            borderTop: "1px solid #e5e7eb",
+          }}
+        >
           {saved && (
-            <div style={{ marginBottom: "12px", padding: "12px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", display: "flex", alignItems: "center", color: "#15803d", fontSize: "14px" }}>
+            <div
+              style={{
+                marginBottom: "12px",
+                padding: "12px",
+                backgroundColor: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                color: "#15803d",
+                fontSize: "14px",
+              }}
+            >
               <CheckCircle sx={{ width: 16, height: 16, marginRight: "8px" }} />
               设置已成功保存
             </div>
           )}
           {errors.save && (
-            <div style={{ marginBottom: "12px", padding: "12px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", display: "flex", alignItems: "center", color: "#b91c1c", fontSize: "14px" }}>
+            <div
+              style={{
+                marginBottom: "12px",
+                padding: "12px",
+                backgroundColor: "#fef2f2",
+                border: "1px solid #fecaca",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                color: "#b91c1c",
+                fontSize: "14px",
+              }}
+            >
               <AlertCircle sx={{ width: 16, height: 16, marginRight: "8px" }} />
               {errors.save}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <button
               onClick={resetToDefaults}
-              style={{ display: "flex", alignItems: "center", padding: "8px 16px", color: "#4b5563", cursor: "pointer", border: "none", background: "transparent", transition: "color 0.2s" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "8px 16px",
+                color: "#4b5563",
+                cursor: "pointer",
+                border: "none",
+                background: "transparent",
+                transition: "color 0.2s",
+              }}
             >
               <RotateCcw sx={{ width: 16, height: 16, marginRight: "8px" }} />
               恢复默认
@@ -454,13 +850,31 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
             <div style={{ display: "flex", gap: "12px" }}>
               <button
                 onClick={onClose}
-                style={{ padding: "8px 24px", border: "1px solid #d1d5db", color: "#374151", borderRadius: "8px", cursor: "pointer", background: "#ffffff", transition: "background-color 0.2s" }}
+                style={{
+                  padding: "8px 24px",
+                  border: "1px solid #d1d5db",
+                  color: "#374151",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  background: "#ffffff",
+                  transition: "background-color 0.2s",
+                }}
               >
                 取消
               </button>
               <button
                 onClick={handleSave}
-                style={{ display: "flex", alignItems: "center", padding: "8px 24px", backgroundColor: "#7c3aed", color: "#ffffff", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.2s" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "8px 24px",
+                  backgroundColor: "#7c3aed",
+                  color: "#ffffff",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                }}
               >
                 <Save sx={{ width: 16, height: 16, marginRight: "8px" }} />
                 保存设置

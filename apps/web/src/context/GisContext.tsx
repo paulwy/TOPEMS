@@ -403,33 +403,44 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({
           return [];
         };
 
-        if (statsRes.success && statsRes.data) {
-          dispatch({ type: "SET_STATISTICS", payload: statsRes.data });
+        const newData = {
+          devicePoints: extractData(devicesRes),
+          pipelines: extractData(pipelinesRes),
+          storageLocations: extractData(storageRes),
+          evidenceRecords: extractData(evidenceRes),
+          factoryMaps: extractData(mapsRes),
+          businessLocations: extractData(businessRes),
+          statistics: statsRes.success ? statsRes.data : null,
+          timestamp: Date.now(),
+        };
+
+        if (newData.statistics) {
+          dispatch({ type: "SET_STATISTICS", payload: newData.statistics });
         }
 
-        dispatch({
-          type: "SET_DEVICE_POINTS",
-          payload: extractData(devicesRes),
-        });
-        dispatch({ type: "SET_PIPELINES", payload: extractData(pipelinesRes) });
+        dispatch({ type: "SET_DEVICE_POINTS", payload: newData.devicePoints });
+        dispatch({ type: "SET_PIPELINES", payload: newData.pipelines });
         dispatch({
           type: "SET_STORAGE_LOCATIONS",
-          payload: extractData(storageRes),
+          payload: newData.storageLocations,
         });
         dispatch({
           type: "SET_EVIDENCE_RECORDS",
-          payload: extractData(evidenceRes),
+          payload: newData.evidenceRecords,
         });
-        dispatch({ type: "SET_FACTORY_MAPS", payload: extractData(mapsRes) });
+        dispatch({ type: "SET_FACTORY_MAPS", payload: newData.factoryMaps });
         dispatch({
           type: "SET_BUSINESS_LOCATIONS",
-          payload: extractData(businessRes),
+          payload: newData.businessLocations,
         });
-
-        dispatch({ type: "SET_CACHE_TIMESTAMP", payload: Date.now() });
+        dispatch({ type: "SET_CACHE_TIMESTAMP", payload: newData.timestamp });
 
         setTimeout(() => {
-          saveCache({ ...state });
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(newData));
+          } catch (e) {
+            console.warn("Failed to save cache:", e);
+          }
         }, 100);
       } catch (err) {
         const errorMessage = getErrorMessage(err);
@@ -439,7 +450,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     },
-    [setLoading, setError, state],
+    [setLoading, setError],
   );
 
   const createDevicePoint = useCallback(

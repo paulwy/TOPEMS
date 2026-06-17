@@ -63,8 +63,8 @@ const config: RuntimeConfig = {
     file: getEnv("VITE_FILE_SERVICE_URL", "/file"),
     gis: getEnv("VITE_GIS_SERVICE_URL", "/gis"),
     ai: getEnv("VITE_AI_SERVICE_URL", "/ai"),
-    mobile: getEnv("VITE_MOBILE_SERVICE_URL", "http://localhost:8070"),
-    migration: getEnv("VITE_MIGRATION_SERVICE_URL", "http://localhost:8787"),
+    mobile: getEnv("VITE_MOBILE_SERVICE_URL", "/mobile"),
+    migration: getEnv("VITE_MIGRATION_SERVICE_URL", "/migration"),
 
     // ========== [已整合] 统一服务 ==========
     communication: getEnv("VITE_COMMUNICATION_SERVICE_URL", "/comm"),
@@ -126,6 +126,7 @@ const config: RuntimeConfig = {
   thirdParty: {
     sentryDsn: getEnv("VITE_SENTRY_DSN", ""),
     gaTrackingId: getEnv("VITE_GA_TRACKING_ID", ""),
+    amapKey: getEnv("VITE_AMAP_API_KEY", ""),
   },
 };
 

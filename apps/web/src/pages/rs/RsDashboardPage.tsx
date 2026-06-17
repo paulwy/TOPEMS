@@ -343,7 +343,9 @@ const RsDashboardPage: React.FC = () => {
             }}
           >
             <div>
-              <p style={{ fontSize: "0.875rem", color: "#64748b" }}>试验成功率</p>
+              <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                试验成功率
+              </p>
               <motion.p
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}

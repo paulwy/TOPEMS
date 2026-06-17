@@ -7,7 +7,7 @@ import type { DevicePoint, StorageLocation } from "../../../../api/gis";
 interface HeatmapLayerProps {
   devicePoints: DevicePoint[];
   storageLocations: StorageLocation[];
-  mapRef: unknown;
+  mapRef?: unknown;
   visible: boolean;
   intensityMode: "density" | "status";
 }

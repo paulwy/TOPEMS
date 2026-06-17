@@ -23,11 +23,15 @@ pub mod modules;
 use std::net::SocketAddr;
 
 use axum::{
-    extract::State,
+    body::Body,
+    extract::{Path, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
+use axum::http::{StatusCode, Request, Uri};
+use axum::response::Response;
 use axum_prometheus::PrometheusMetricLayer;
+use reqwest::Client;
 use sqlx::PgPool;
 
 use topems_shared::{
@@ -44,11 +48,19 @@ pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
+    pub ws_state: std::sync::Arc<modules::communication::ws::WsState>,
+    pub http_client: Client,
 }
 
 impl axum::extract::FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
+    }
+}
+
+impl axum::extract::FromRef<AppState> for std::sync::Arc<modules::communication::ws::WsState> {
+    fn from_ref(state: &AppState) -> Self {
+        state.ws_state.clone()
     }
 }
 
@@ -93,12 +105,28 @@ async fn main() {
 
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
+    let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new());
+    let http_client = Client::new();
 
     let state = AppState {
         auth_state,
         pool,
         health_config,
+        ws_state: ws_state.clone(),
+        http_client,
     };
+
+    // Spawn background task to cleanup timeout WebSocket connections
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60));
+        loop {
+            interval.tick().await;
+            let removed = ws_state.cleanup_timeout_connections(90).await;
+            if !removed.is_empty() {
+                tracing::info!("WebSocket cleanup: removed {} timeout connections", removed.len());
+            }
+        }
+    });
 
     let cors = create_cors_layer();
 
@@ -112,158 +140,173 @@ async fn main() {
         .route("/api/info", get(|| get_api_info_handler("unified-core-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }))
         // Auth endpoints (no auth required for login)
-        .route("/api/auth/login", post(modules::iam::auth::login))
-        .route("/api/auth/register", post(modules::iam::auth::register))
-        .route("/api/auth/refresh", post(modules::iam::auth::refresh_token));
+        .route("/api/v1/auth/login", post(modules::iam::auth::login))
+        .route("/api/v1/auth/register", post(modules::iam::auth::register))
+        .route("/api/v1/auth/refresh", post(modules::iam::auth::refresh_token))
+        // WebSocket endpoints (auth handled via token query param or subscribe message)
+        .route("/api/core/comm/ws/connect", get(modules::communication::ws::websocket_handler))
+        .route("/ws/notifications", get(modules::communication::ws::websocket_handler))
+        // Plugin proxy route (no auth required - plugins handle their own auth)
+        .route("/api/plugins/{plugin_code}/{*path}", get(plugin_proxy));
 
     // ===== Protected routes (auth required) =====
     let protected_routes = Router::new()
         // ===== IAM Routes (/api/core/iam/*) =====
         .route("/api/core/iam/users", get(modules::iam::user::list_users))
         .route("/api/core/iam/users", post(modules::iam::user::create_user))
-        .route("/api/core/iam/users/:id", get(modules::iam::user::get_user))
-        .route("/api/core/iam/users/:id", put(modules::iam::user::update_user))
-        .route("/api/core/iam/users/:id", delete(modules::iam::user::delete_user))
-        .route("/api/core/iam/users/:id/disable", post(modules::iam::user::disable_user))
-        .route("/api/core/iam/users/:id/enable", post(modules::iam::user::enable_user))
-        .route("/api/core/iam/users/:id/password", put(modules::iam::user::change_password))
+        .route("/api/core/iam/users/{id}", get(modules::iam::user::get_user))
+        .route("/api/core/iam/users/{id}", put(modules::iam::user::update_user))
+        .route("/api/core/iam/users/{id}", delete(modules::iam::user::delete_user))
+        .route("/api/core/iam/users/{id}/disable", post(modules::iam::user::disable_user))
+        .route("/api/core/iam/users/{id}/enable", post(modules::iam::user::enable_user))
+        .route("/api/core/iam/users/{id}/password", put(modules::iam::user::change_password))
         .route("/api/core/iam/roles", get(modules::iam::role::list_roles))
         .route("/api/core/iam/roles", post(modules::iam::role::create_role))
-        .route("/api/core/iam/roles/:id", get(modules::iam::role::get_role))
-        .route("/api/core/iam/roles/:id", put(modules::iam::role::update_role))
-        .route("/api/core/iam/roles/:id", delete(modules::iam::role::delete_role))
+        .route("/api/core/iam/roles/{id}", get(modules::iam::role::get_role))
+        .route("/api/core/iam/roles/{id}", put(modules::iam::role::update_role))
+        .route("/api/core/iam/roles/{id}", delete(modules::iam::role::delete_role))
         .route("/api/core/iam/permissions", get(modules::iam::permission::list_permissions))
-        .route("/api/core/iam/user-permissions/:user_id", get(modules::iam::user_permission::get_user_permissions))
-        .route("/api/core/iam/user-permissions/:user_id", put(modules::iam::user_permission::update_user_permissions))
+        .route("/api/core/iam/user-permissions/{user_id}", get(modules::iam::user_permission::get_user_permissions))
+        .route("/api/core/iam/user-permissions/{user_id}", put(modules::iam::user_permission::update_user_permissions))
 
         // ===== Doc Routes (/api/core/doc/*) =====
         .route("/api/core/doc/documents", get(modules::doc::document::list_documents))
         .route("/api/core/doc/documents", post(modules::doc::document::create_document))
-        .route("/api/core/doc/documents/:id", get(modules::doc::document::get_document))
-        .route("/api/core/doc/documents/:id", put(modules::doc::document::update_document))
-        .route("/api/core/doc/documents/:id", delete(modules::doc::document::delete_document))
-        .route("/api/core/doc/documents/:id/publish", post(modules::doc::document::publish_document))
-        .route("/api/core/doc/documents/:id/archive", post(modules::doc::document::archive_document))
+        .route("/api/core/doc/documents/{id}", get(modules::doc::document::get_document))
+        .route("/api/core/doc/documents/{id}", put(modules::doc::document::update_document))
+        .route("/api/core/doc/documents/{id}", delete(modules::doc::document::delete_document))
+        .route("/api/core/doc/documents/{id}/publish", post(modules::doc::document::publish_document))
+        .route("/api/core/doc/documents/{id}/archive", post(modules::doc::document::archive_document))
         .route("/api/core/doc/templates", get(modules::doc::template::list_templates))
         .route("/api/core/doc/templates", post(modules::doc::template::create_template))
-        .route("/api/core/doc/templates/:id", get(modules::doc::template::get_template))
-        .route("/api/core/doc/templates/:id", put(modules::doc::template::update_template))
-        .route("/api/core/doc/templates/:id/generate", post(modules::doc::template::generate_from_template))
+        .route("/api/core/doc/templates/{id}", get(modules::doc::template::get_template))
+        .route("/api/core/doc/templates/{id}", put(modules::doc::template::update_template))
+        .route("/api/core/doc/templates/{id}/generate", post(modules::doc::template::generate_from_template))
         .route("/api/core/doc/folders", get(modules::doc::folder::list_folders))
         .route("/api/core/doc/folders", post(modules::doc::folder::create_folder))
-        .route("/api/core/doc/folders/:id", get(modules::doc::folder::get_folder))
-        .route("/api/core/doc/folders/:id", put(modules::doc::folder::update_folder))
-        .route("/api/core/doc/folders/:id", delete(modules::doc::folder::delete_folder))
+        .route("/api/core/doc/folders/{id}", get(modules::doc::folder::get_folder))
+        .route("/api/core/doc/folders/{id}", put(modules::doc::folder::update_folder))
+        .route("/api/core/doc/folders/{id}", delete(modules::doc::folder::delete_folder))
 
         // ===== Flow Routes (/api/core/flow/*) =====
         .route("/api/core/flow/workflows", get(modules::flow::workflow::list_workflows))
         .route("/api/core/flow/workflows", post(modules::flow::workflow::create_workflow))
-        .route("/api/core/flow/workflows/:id", get(modules::flow::workflow::get_workflow))
-        .route("/api/core/flow/workflows/:id", put(modules::flow::workflow::update_workflow))
-        .route("/api/core/flow/workflows/:id", delete(modules::flow::workflow::delete_workflow))
-        .route("/api/core/flow/workflows/:id/publish", post(modules::flow::workflow::publish_workflow))
-        .route("/api/core/flow/workflows/:id/unpublish", post(modules::flow::workflow::unpublish_workflow))
+        .route("/api/core/flow/workflows/{id}", get(modules::flow::workflow::get_workflow))
+        .route("/api/core/flow/workflows/{id}", put(modules::flow::workflow::update_workflow))
+        .route("/api/core/flow/workflows/{id}", delete(modules::flow::workflow::delete_workflow))
+        .route("/api/core/flow/workflows/{id}/publish", post(modules::flow::workflow::publish_workflow))
+        .route("/api/core/flow/workflows/{id}/unpublish", post(modules::flow::workflow::unpublish_workflow))
         .route("/api/core/flow/instances", get(modules::flow::instance::list_instances))
         .route("/api/core/flow/instances", post(modules::flow::instance::create_instance))
-        .route("/api/core/flow/instances/:id", get(modules::flow::instance::get_instance))
-        .route("/api/core/flow/instances/:id/start", post(modules::flow::instance::start_instance))
-        .route("/api/core/flow/instances/:id/approve", post(modules::flow::instance::approve_instance))
-        .route("/api/core/flow/instances/:id/reject", post(modules::flow::instance::reject_instance))
-        .route("/api/core/flow/instances/:id/cancel", post(modules::flow::instance::cancel_instance))
+        .route("/api/core/flow/instances/{id}", get(modules::flow::instance::get_instance))
+        .route("/api/core/flow/instances/{id}/start", post(modules::flow::instance::start_instance))
+        .route("/api/core/flow/instances/{id}/approve", post(modules::flow::instance::approve_instance))
+        .route("/api/core/flow/instances/{id}/reject", post(modules::flow::instance::reject_instance))
+        .route("/api/core/flow/instances/{id}/cancel", post(modules::flow::instance::cancel_instance))
         .route("/api/core/flow/approvals/pending", get(modules::flow::approval::list_pending_approvals))
-        .route("/api/core/flow/approvals/:id/approve", post(modules::flow::approval::approve_task))
-        .route("/api/core/flow/approvals/:id/reject", post(modules::flow::approval::reject_task))
+        .route("/api/core/flow/approvals/{id}/approve", post(modules::flow::approval::approve_task))
+        .route("/api/core/flow/approvals/{id}/reject", post(modules::flow::approval::reject_task))
         .route("/api/core/flow/statistics", get(modules::flow::statistics::get_statistics))
 
         // ===== File Routes (/api/core/file/*) =====
         .route("/api/core/file/upload", post(modules::file::upload::upload_file))
         .route("/api/core/file/upload/multiple", post(modules::file::upload::upload_multiple))
-        .route("/api/core/file/download/:id", get(modules::file::download::download_file))
+        .route("/api/core/file/download/{id}", get(modules::file::download::download_file))
         .route("/api/core/file/files", get(modules::file::manage::list_files))
-        .route("/api/core/file/files/:id", get(modules::file::manage::get_file))
-        .route("/api/core/file/files/:id", delete(modules::file::manage::delete_file))
-        .route("/api/core/file/files/:id/move", post(modules::file::manage::move_file))
-        .route("/api/core/file/files/:id/copy", post(modules::file::manage::copy_file))
+        .route("/api/core/file/files/{id}", get(modules::file::manage::get_file))
+        .route("/api/core/file/files/{id}", delete(modules::file::manage::delete_file))
+        .route("/api/core/file/files/{id}/move", post(modules::file::manage::move_file))
+        .route("/api/core/file/files/{id}/copy", post(modules::file::manage::copy_file))
         .route("/api/core/file/folders", get(modules::file::folder::list_folders))
         .route("/api/core/file/folders", post(modules::file::folder::create_folder))
-        .route("/api/core/file/folders/:id", get(modules::file::folder::get_folder))
-        .route("/api/core/file/folders/:id", delete(modules::file::folder::delete_folder))
+        .route("/api/core/file/folders/{id}", get(modules::file::folder::get_folder))
+        .route("/api/core/file/folders/{id}", delete(modules::file::folder::delete_folder))
 
         // ===== Communication Routes (/api/core/comm/*) =====
         // Notification
         .route("/api/core/comm/notify/send", post(modules::communication::notification::send_notification))
         .route("/api/core/comm/notify/broadcast", post(modules::communication::notification::broadcast_notification))
         .route("/api/core/comm/notify/list", get(modules::communication::notification::list_notifications))
-        .route("/api/core/comm/notify/:id/read", post(modules::communication::notification::mark_as_read))
+        .route("/api/core/comm/notify/{id}/read", post(modules::communication::notification::mark_as_read))
         .route("/api/core/comm/notify/read-all", post(modules::communication::notification::mark_all_as_read))
+        // Notification API v1 (for frontend compatibility)
+        .route("/api/v1/notifications", get(modules::communication::notification::get_notifications))
+        .route("/api/v1/notifications/unread-count", get(modules::communication::notification::get_unread_count))
+        .route("/api/v1/notifications/unread", get(modules::communication::notification::get_unread_notifications))
+        .route("/api/v1/notifications/{id}", put(modules::communication::notification::mark_as_read))
+        .route("/api/v1/notifications/read-all", put(modules::communication::notification::mark_all_as_read))
         // IM
         .route("/api/core/comm/im/rooms", get(modules::communication::im::list_rooms))
         .route("/api/core/comm/im/rooms", post(modules::communication::im::create_room))
-        .route("/api/core/comm/im/rooms/:id", get(modules::communication::im::get_room))
-        .route("/api/core/comm/im/rooms/:id/messages", get(modules::communication::im::get_messages))
-        .route("/api/core/comm/im/rooms/:id/messages", post(modules::communication::im::send_message))
+        .route("/api/core/comm/im/rooms/{id}", get(modules::communication::im::get_room))
+        .route("/api/core/comm/im/rooms/{id}/messages", get(modules::communication::im::get_messages))
+        .route("/api/core/comm/im/rooms/{id}/messages", post(modules::communication::im::send_message))
         .route("/api/core/comm/im/contacts", get(modules::communication::im::list_contacts))
         .route("/api/core/comm/im/contacts", post(modules::communication::im::add_contact))
-        .route("/api/core/comm/im/online-status/:user_id", get(modules::communication::im::get_online_status))
+        .route("/api/core/comm/im/online-status/{user_id}", get(modules::communication::im::get_online_status))
         // Mail
         .route("/api/core/comm/mail/emails", get(modules::communication::mail::list_emails))
         .route("/api/core/comm/mail/emails", post(modules::communication::mail::send_email))
-        .route("/api/core/comm/mail/emails/:id", get(modules::communication::mail::get_email))
-        .route("/api/core/comm/mail/emails/:id", delete(modules::communication::mail::delete_email))
-        .route("/api/core/comm/mail/emails/:id/read", post(modules::communication::mail::mark_as_read))
+        .route("/api/core/comm/mail/emails/{id}", get(modules::communication::mail::get_email))
+        .route("/api/core/comm/mail/emails/{id}", delete(modules::communication::mail::delete_email))
+        .route("/api/core/comm/mail/emails/{id}/read", post(modules::communication::mail::mark_as_read))
         .route("/api/core/comm/mail/templates", get(modules::communication::mail::list_templates))
         .route("/api/core/comm/mail/templates", post(modules::communication::mail::create_template))
-        .route("/api/core/comm/mail/templates/:id", get(modules::communication::mail::get_template))
-        .route("/api/core/comm/mail/templates/:id", put(modules::communication::mail::update_template))
-        .route("/api/core/comm/mail/templates/:id/send", post(modules::communication::mail::send_with_template))
-        // WebSocket
-        .route("/api/core/comm/ws/connect", get(modules::communication::ws::websocket_handler))
+        .route("/api/core/comm/mail/templates/{id}", get(modules::communication::mail::get_template))
+        .route("/api/core/comm/mail/templates/{id}", put(modules::communication::mail::update_template))
+        .route("/api/core/comm/mail/templates/{id}/send", post(modules::communication::mail::send_with_template))
 
         // ===== Tenant Routes (/api/core/tenant/*) =====
         .route("/api/core/tenant/tenants", get(modules::tenant::handlers::list_tenants))
         .route("/api/core/tenant/tenants", post(modules::tenant::handlers::create_tenant))
-        .route("/api/core/tenant/tenants/:id", get(modules::tenant::handlers::get_tenant))
-        .route("/api/core/tenant/tenants/:id", put(modules::tenant::handlers::update_tenant))
-        .route("/api/core/tenant/tenants/:id/activate", post(modules::tenant::handlers::activate_tenant))
-        .route("/api/core/tenant/tenants/:id/suspend", post(modules::tenant::handlers::suspend_tenant))
-        .route("/api/core/tenant/tenants/:id/quota", get(modules::tenant::handlers::get_tenant_quota))
-        .route("/api/core/tenant/tenants/:id/modules", get(modules::tenant::handlers::list_tenant_modules))
-        .route("/api/core/tenant/tenants/:tenant_id/modules/:module_code/activate", post(modules::tenant::handlers::activate_module))
-        .route("/api/core/tenant/tenants/:tenant_id/modules/:module_code/deactivate", post(modules::tenant::handlers::deactivate_module))
-        .route("/api/core/tenant/by-code/:code", get(modules::tenant::handlers::get_tenant_by_code))
+        .route("/api/core/tenant/tenants/{id}", get(modules::tenant::handlers::get_tenant))
+        .route("/api/core/tenant/tenants/{id}", put(modules::tenant::handlers::update_tenant))
+        .route("/api/core/tenant/tenants/{id}/activate", post(modules::tenant::handlers::activate_tenant))
+        .route("/api/core/tenant/tenants/{id}/suspend", post(modules::tenant::handlers::suspend_tenant))
+        .route("/api/core/tenant/tenants/{id}/quota", get(modules::tenant::handlers::get_tenant_quota))
+        .route("/api/core/tenant/tenants/{id}/modules", get(modules::tenant::handlers::list_tenant_modules))
+        .route("/api/core/tenant/tenants/{tenant_id}/modules/{module_code}/activate", post(modules::tenant::handlers::activate_module))
+        .route("/api/core/tenant/tenants/{tenant_id}/modules/{module_code}/deactivate", post(modules::tenant::handlers::deactivate_module))
+        .route("/api/core/tenant/by-code/{code}", get(modules::tenant::handlers::get_tenant_by_code))
 
         // ===== Billing Routes (/api/core/billing/*) =====
         .route("/api/core/billing/plans", get(modules::billing::handlers::list_plans))
-        .route("/api/core/billing/plans/:id", get(modules::billing::handlers::get_plan))
-        .route("/api/core/billing/subscriptions/:tenant_id", get(modules::billing::handlers::get_subscription))
+        .route("/api/core/billing/plans/{id}", get(modules::billing::handlers::get_plan))
+        .route("/api/core/billing/subscriptions/{tenant_id}", get(modules::billing::handlers::get_subscription))
         .route("/api/core/billing/subscriptions", post(modules::billing::handlers::create_subscription))
-        .route("/api/core/billing/subscriptions/:tenant_id/cancel", post(modules::billing::handlers::cancel_subscription))
-        .route("/api/core/billing/invoices/:tenant_id", get(modules::billing::handlers::list_invoices))
-        .route("/api/core/billing/usage/:tenant_id", get(modules::billing::handlers::get_usage_summary))
-        .route("/api/core/billing/usage/:tenant_id/:metric_type", post(modules::billing::handlers::record_usage))
+        .route("/api/core/billing/subscriptions/{tenant_id}/cancel", post(modules::billing::handlers::cancel_subscription))
+        .route("/api/core/billing/invoices/{tenant_id}", get(modules::billing::handlers::list_invoices))
+        .route("/api/core/billing/usage/{tenant_id}", get(modules::billing::handlers::get_usage_summary))
+        .route("/api/core/billing/usage/{tenant_id}/{metric_type}", post(modules::billing::handlers::record_usage))
 
         // ===== Plugin Routes (/api/core/plugin/*) =====
         // Marketplace (public)
         .route("/api/core/plugin/marketplace", get(modules::plugin::handlers::get_marketplace_summary))
         .route("/api/core/plugin/marketplace/list", get(modules::plugin::handlers::list_plugins))
         .route("/api/core/plugin/marketplace/categories", get(modules::plugin::handlers::list_categories))
-        .route("/api/core/plugin/plugins/:code", get(modules::plugin::handlers::get_plugin))
-        .route("/api/core/plugin/plugins/:plugin_id/versions", get(modules::plugin::handlers::get_plugin_versions))
-        .route("/api/core/plugin/plugins/:plugin_id/reviews", get(modules::plugin::handlers::get_plugin_reviews))
-        .route("/api/core/plugin/plugins/:plugin_id/reviews", post(modules::plugin::handlers::create_review))
+        .route("/api/core/plugin/plugins/{code}", get(modules::plugin::handlers::get_plugin))
+        .route("/api/core/plugin/plugins/{plugin_id}/versions", get(modules::plugin::handlers::get_plugin_versions))
+        .route("/api/core/plugin/plugins/{plugin_id}/reviews", get(modules::plugin::handlers::get_plugin_reviews))
+        .route("/api/core/plugin/plugins/{plugin_id}/reviews", post(modules::plugin::handlers::create_review))
         // Developer routes (plugin management)
         .route("/api/core/plugin/dev/plugins", post(modules::plugin::handlers::upload_plugin))
-        .route("/api/core/plugin/dev/plugins/:code", put(modules::plugin::handlers::update_plugin))
-        .route("/api/core/plugin/dev/plugins/:code/publish", post(modules::plugin::handlers::publish_plugin))
-        .route("/api/core/plugin/dev/plugins/:code/unpublish", post(modules::plugin::handlers::unpublish_plugin))
-        .route("/api/core/plugin/dev/plugins/:plugin_code/versions", post(modules::plugin::handlers::upload_plugin_version))
+        .route("/api/core/plugin/dev/plugins/{code}", put(modules::plugin::handlers::update_plugin))
+        .route("/api/core/plugin/dev/plugins/{code}/publish", post(modules::plugin::handlers::publish_plugin))
+        .route("/api/core/plugin/dev/plugins/{code}/unpublish", post(modules::plugin::handlers::unpublish_plugin))
+        .route("/api/core/plugin/dev/plugins/{plugin_code}/versions", post(modules::plugin::handlers::upload_plugin_version))
+        // Plugin runtime management
+        .route("/api/core/plugin/dev/plugins/{code}/register", post(modules::plugin::handlers::register_plugin))
+        .route("/api/core/plugin/dev/plugins/{code}/status", put(modules::plugin::handlers::update_plugin_status))
+        .route("/api/core/plugin/dev/plugins/{code}/status", get(modules::plugin::handlers::get_plugin_status))
+        .route("/api/core/plugin/dev/plugins/{code}/unregister", post(modules::plugin::handlers::unregister_plugin))
+        .route("/api/core/plugin/runtime/list", get(modules::plugin::handlers::list_plugins_with_status))
         // Tenant plugins (protected)
-        .route("/api/core/plugin/tenant/:tenant_id/plugins", get(modules::plugin::handlers::list_tenant_plugins))
-        .route("/api/core/plugin/tenant/:tenant_id/plugins/:plugin_code/install", post(modules::plugin::handlers::install_plugin))
-        .route("/api/core/plugin/tenant/:tenant_id/plugins/:plugin_code/uninstall", post(modules::plugin::handlers::uninstall_plugin))
-        .route("/api/core/plugin/tenant/:tenant_id/plugins/:plugin_code/activate", post(modules::plugin::handlers::activate_plugin))
-        .route("/api/core/plugin/tenant/:tenant_id/plugins/:plugin_code/deactivate", post(modules::plugin::handlers::deactivate_plugin))
-        .route("/api/core/plugin/tenant/:tenant_id/available", get(modules::plugin::handlers::get_available_plugins))
+        .route("/api/core/plugin/tenant/{tenant_id}/plugins", get(modules::plugin::handlers::list_tenant_plugins))
+        .route("/api/core/plugin/tenant/{tenant_id}/plugins/{plugin_code}/install", post(modules::plugin::handlers::install_plugin))
+        .route("/api/core/plugin/tenant/{tenant_id}/plugins/{plugin_code}/uninstall", post(modules::plugin::handlers::uninstall_plugin))
+        .route("/api/core/plugin/tenant/{tenant_id}/plugins/{plugin_code}/activate", post(modules::plugin::handlers::activate_plugin))
+        .route("/api/core/plugin/tenant/{tenant_id}/plugins/{plugin_code}/deactivate", post(modules::plugin::handlers::deactivate_plugin))
+        .route("/api/core/plugin/tenant/{tenant_id}/available", get(modules::plugin::handlers::get_available_plugins))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
@@ -293,6 +336,84 @@ async fn main() {
     )
     .await
     .unwrap();
+}
+
+// ==================== 插件代理处理函数 ====================
+
+/// 插件代理处理器
+async fn plugin_proxy(
+    Path((plugin_code, remaining)): Path<(String, String)>,
+    State(state): State<AppState>,
+    request: Request<Body>,
+) -> Result<Response, (StatusCode, String)> {
+    // 1. 查询插件 runtime_url
+    let plugin_info: Option<(String, String)> = sqlx::query_as(
+        r#"
+        SELECT pi.runtime_url, pi.base_path
+        FROM core_plugin_instances pi
+        JOIN core_plugins p ON pi.plugin_id = p.id
+        WHERE p.code = $1 AND pi.runtime_status = 'running'
+        "#,
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let (runtime_url, base_path) = match plugin_info {
+        Some((url, path)) => (url, path),
+        None => return Err((StatusCode::NOT_FOUND, "Plugin not found or not running".to_string())),
+    };
+
+    // 2. 构造目标 URL
+    // base_path 格式如 "/api/plugins/erp"，remaining 格式如 "api/plugins/erp/xxx"
+    // 需要去掉 base_path 前缀得到 "/xxx"
+    let base_path_str = base_path.trim_start_matches('/');
+    let path_suffix: String = if remaining.starts_with(&base_path) {
+        remaining.strip_prefix(&base_path).unwrap_or(&remaining).to_string()
+    } else if remaining.starts_with(base_path_str) {
+        remaining.strip_prefix(base_path_str).unwrap_or(&remaining).to_string()
+    } else {
+        // 如果都不匹配，直接使用剩余路径（加上前导斜杠）
+        format!("/{}", remaining)
+    };
+    let target_url = format!("{}{}", runtime_url.trim_end_matches('/'), path_suffix);
+
+    tracing::info!("[Plugin Proxy] Forwarding {} -> {}", request.uri(), target_url);
+
+    // 3. 构造代理请求
+    let method = request.method().clone();
+
+    // 4. 构建 reqwest 请求，逐步添加头部
+    let mut req_builder = state.http_client.request(method.clone(), &target_url);
+
+    // 复制原始请求的头部，但跳过 host 和 content-length
+    for (key, value) in request.headers().iter() {
+        if key != axum::http::header::HOST && key != axum::http::header::CONTENT_LENGTH {
+            if let Ok(value_str) = value.to_str() {
+                req_builder = req_builder.header(key.as_str(), value_str);
+            }
+        }
+    }
+
+    // 5. 发送请求到目标插件
+    let response = req_builder.send()
+        .await
+        .map_err(|e| {
+            tracing::info!("[Plugin Proxy] Failed to forward request: {}", e);
+            (StatusCode::BAD_GATEWAY, e.to_string())
+        })?;
+
+    // 6. 转换响应
+    let status = StatusCode::from_u16(response.status().as_u16()).unwrap_or(StatusCode::OK);
+    let mut builder = Response::builder().status(status);
+
+    for (key, value) in response.headers().iter() {
+        builder = builder.header(key.as_str(), value.as_bytes());
+    }
+
+    let body = response.bytes().await.map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    Ok(builder.body(Body::from(body)).unwrap())
 }
 
 // ==================== 公共处理函数 ====================

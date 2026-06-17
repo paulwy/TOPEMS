@@ -157,25 +157,8 @@ export const useNotificationWebSocket = ({
     resetState();
 
     try {
-      const notificationServiceUrl = config.services.notification;
       const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-
-      let wsUrl: string;
-
-      try {
-        const url = new URL(notificationServiceUrl, window.location.origin);
-        const wsHost = url.host;
-        let wsPath = "/ws/notifications";
-        if (url.pathname && url.pathname !== "/") {
-          wsPath = `${url.pathname}${wsPath}`;
-        }
-        wsUrl = `${wsProtocol}://${wsHost}${wsPath}`;
-      } catch {
-        wsUrl = `${wsProtocol}://${window.location.host}/notification/ws/notifications`;
-        logger.warn(
-          "Failed to parse notification service URL, using proxy path",
-        );
-      }
+      const wsUrl = `${wsProtocol}://${window.location.host}/ws/notifications`;
 
       logger.info("Attempting to connect to notification service:", wsUrl);
 
@@ -265,8 +248,8 @@ export const useNotificationWebSocket = ({
       };
 
       ws.onerror = (err) => {
-        logger.error("WebSocket error:", err);
-        logger.error(
+        logger.warn("WebSocket error:", err);
+        logger.warn(
           "WebSocket error details:",
           JSON.stringify(err, Object.getOwnPropertyNames(err)),
         );

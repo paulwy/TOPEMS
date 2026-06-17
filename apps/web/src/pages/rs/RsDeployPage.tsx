@@ -118,7 +118,9 @@ const RsDeployPage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const getEnvColor = (env: string): "error" | "warning" | "success" | "default" => {
+  const getEnvColor = (
+    env: string,
+  ): "error" | "warning" | "success" | "default" => {
     switch (env) {
       case "production":
         return "error";
@@ -131,7 +133,9 @@ const RsDeployPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string): "success" | "error" | "primary" | "default" => {
+  const getStatusColor = (
+    status: string,
+  ): "success" | "error" | "primary" | "default" => {
     switch (status) {
       case "success":
         return "success";
@@ -188,7 +192,9 @@ const RsDeployPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -232,17 +238,34 @@ const RsDeployPage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             部署管理
           </Typography>
-          <Button variant="contained" startIcon={<Play size={18} />} sx={{ bgcolor: "#3b82f6" }} onClick={handleNewDeploy}>
+          <Button
+            variant="contained"
+            startIcon={<Play size={18} />}
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleNewDeploy}
+          >
             发起部署
           </Button>
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <TextField
               size="small"
               placeholder="搜索部署编号、应用..."
@@ -307,14 +330,30 @@ const RsDeployPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>部署编号</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>环境</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>应用名称</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>版本</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>部署时间</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作人</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    部署编号
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    环境
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    应用名称
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    版本
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    部署时间
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作人
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -323,35 +362,53 @@ const RsDeployPage: React.FC = () => {
                   .map((deploy) => (
                     <TableRow key={deploy.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Rocket size={16} color="#3b82f6" />
                           {deploy.deploy_no}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Chip label={getEnvLabel(deploy.environment)} size="small" color={getEnvColor(deploy.environment)} />
+                        <Chip
+                          label={getEnvLabel(deploy.environment)}
+                          size="small"
+                          color={getEnvColor(deploy.environment)}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Server size={14} />
                           {deploy.app_name}
                         </Box>
                       </TableCell>
                       <TableCell>{deploy.version}</TableCell>
                       <TableCell>
-                        <Chip label={getStatusLabel(deploy.status)} size="small" color={getStatusColor(deploy.status)} />
+                        <Chip
+                          label={getStatusLabel(deploy.status)}
+                          size="small"
+                          color={getStatusColor(deploy.status)}
+                        />
                       </TableCell>
                       <TableCell>{deploy.deploy_time}</TableCell>
                       <TableCell>{deploy.operator}</TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="查看详情">
-                            <IconButton size="small" onClick={() => handleViewDetail(deploy)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewDetail(deploy)}
+                            >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="回滚">
-                            <IconButton size="small" onClick={() => handleRollback(deploy.id)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleRollback(deploy.id)}
+                            >
                               <RotateCcw size={16} />
                             </IconButton>
                           </Tooltip>
@@ -374,7 +431,12 @@ const RsDeployPage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>部署详情</DialogTitle>
         <DialogContent>
           {selectedDeploy && (
@@ -383,8 +445,14 @@ const RsDeployPage: React.FC = () => {
                 {selectedDeploy.deploy_no}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Chip label={getEnvLabel(selectedDeploy.environment)} color={getEnvColor(selectedDeploy.environment)} />
-                <Chip label={getStatusLabel(selectedDeploy.status)} color={getStatusColor(selectedDeploy.status)} />
+                <Chip
+                  label={getEnvLabel(selectedDeploy.environment)}
+                  color={getEnvColor(selectedDeploy.environment)}
+                />
+                <Chip
+                  label={getStatusLabel(selectedDeploy.status)}
+                  color={getStatusColor(selectedDeploy.status)}
+                />
               </Stack>
               <Stack direction="row" spacing={4} sx={{ mt: 3 }}>
                 <Box>

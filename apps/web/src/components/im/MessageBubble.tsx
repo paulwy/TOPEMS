@@ -66,9 +66,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   return (
-    <div style={{ display: "flex", justifyContent: isSent ? "flex-end" : "flex-start", marginBottom: 16 }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: isSent ? "flex-end" : "flex-start",
+        marginBottom: 16,
+      }}
+    >
       <div
-        style={{ display: "flex", alignItems: "flex-end", maxWidth: "70%", flexDirection: isSent ? "row-reverse" : "row" }}
+        style={{
+          display: "flex",
+          alignItems: "flex-end",
+          maxWidth: "70%",
+          flexDirection: isSent ? "row-reverse" : "row",
+        }}
       >
         <div
           style={{
@@ -84,7 +95,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           }}
         >
           <User
-            style={{ width: 16, height: 16, color: isSent ? "#ffffff" : "#4b5563" }}
+            style={{
+              width: 16,
+              height: 16,
+              color: isSent ? "#ffffff" : "#4b5563",
+            }}
           />
         </div>
         <div
@@ -98,25 +113,75 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         >
           {isSent && (
             <div
-              style={{ position: "absolute", top: -4, right: -4, opacity: 0, transition: "opacity 0.15s", cursor: "pointer" }}
+              style={{
+                position: "absolute",
+                top: -4,
+                right: -4,
+                opacity: 0,
+                transition: "opacity 0.15s",
+                cursor: "pointer",
+              }}
               onClick={() => setShowMenu(!showMenu)}
             >
-              <MoreVertical style={{ width: 16, height: 16, color: "#9ca3af", backgroundColor: "#ffffff", borderRadius: "9999px", padding: 2 }} />
+              <MoreVertical
+                style={{
+                  width: 16,
+                  height: 16,
+                  color: "#9ca3af",
+                  backgroundColor: "#ffffff",
+                  borderRadius: "9999px",
+                  padding: 2,
+                }}
+              />
             </div>
           )}
 
           {showMenu && isSent && (
-            <div style={{ position: "absolute", top: -64, right: -4, backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", border: "1px solid #e5e7eb", padding: 4, zIndex: 10 }}>
+            <div
+              style={{
+                position: "absolute",
+                top: -64,
+                right: -4,
+                backgroundColor: "#ffffff",
+                borderRadius: 8,
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                border: "1px solid #e5e7eb",
+                padding: 4,
+                zIndex: 10,
+              }}
+            >
               <button
                 onClick={handleEdit}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", fontSize: 14, color: "#374151", backgroundColor: "transparent", border: "none", cursor: "pointer", width: "100%" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 16px",
+                  fontSize: 14,
+                  color: "#374151",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  width: "100%",
+                }}
               >
                 <Edit3 style={{ width: 16, height: 16 }} />
                 编辑
               </button>
               <button
                 onClick={handleDelete}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", fontSize: 14, color: "#dc2626", backgroundColor: "transparent", border: "none", cursor: "pointer", width: "100%" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 16px",
+                  fontSize: 14,
+                  color: "#dc2626",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  width: "100%",
+                }}
               >
                 <Trash2 style={{ width: 16, height: 16 }} />
                 删除
@@ -125,7 +190,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           )}
 
           {!isSent && (
-            <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 4, opacity: 0.7 }}>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 500,
+                marginBottom: 4,
+                opacity: 0.7,
+              }}
+            >
               {message.sender_name}
             </div>
           )}
@@ -147,7 +219,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 rows={3}
                 autoFocus
               />
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <div
+                style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
+              >
                 <button
                   onClick={handleCancelEdit}
                   style={{
@@ -182,7 +256,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             <img
               src={message.content}
               alt="Shared image"
-              style={{ borderRadius: 8, maxWidth: "100%", cursor: "pointer", maxHeight: 300 }}
+              style={{
+                borderRadius: 8,
+                maxWidth: "100%",
+                cursor: "pointer",
+                maxHeight: 300,
+              }}
               onClick={() => window.open(message.content, "_blank")}
             />
           ) : isFile ? (
@@ -192,7 +271,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 href={message.file_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ textDecoration: "underline", color: isSent ? "#ffffff" : "#4f46e5" }}
+                style={{
+                  textDecoration: "underline",
+                  color: isSent ? "#ffffff" : "#4f46e5",
+                }}
               >
                 {message.file_name || message.content}
               </a>

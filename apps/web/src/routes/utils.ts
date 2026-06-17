@@ -1,7 +1,7 @@
 import type { ComponentType, LazyExoticComponent, ReactElement } from "react";
 import type React from "react";
 import { lazy } from "react";
-import ErrorPage from "../pages/ErrorPage";
+import ErrorPage from "../pages/shared/ErrorPage";
 
 export const lazyWithRetry = <T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
@@ -21,5 +21,5 @@ export interface RouteConfig {
   element: ReactElement | LazyExoticComponent<ComponentType<any>>;
   requiredPermissions?: string[];
   module?: string;
-  action?: "read" | "write" | "delete" | "admin";
+  action?: "read" | "write" | "update" | "delete" | "admin";
 }

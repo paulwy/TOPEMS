@@ -1,14 +1,12 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-
-type IconComponent = React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+import { Box, Typography, SvgIconProps } from "@mui/material";
 
 interface ServiceStatusCardProps {
   name: string;
   service: string;
   port: number;
   status: boolean;
-  icon: IconComponent;
+  icon: React.ComponentType<SvgIconProps>;
 }
 
 const statusColors = {
@@ -58,7 +56,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
-          marginBottom: 1,
+          margin: "0 0 1 0",
         }}
       >
         <Box
@@ -93,7 +91,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-          marginBottom: 0.5,
+          margin: "0 0 0.5 0",
         }}
       >
         {name}
@@ -108,9 +106,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
         <Typography sx={{ fontSize: 10, fontWeight: 500, color: "#64748b" }}>
           {service}
         </Typography>
-        <Typography sx={{ fontSize: 10, color: "#64748b" }}>
-          :{port}
-        </Typography>
+        <Typography sx={{ fontSize: 10, color: "#64748b" }}>:{port}</Typography>
       </Box>
     </Box>
   );

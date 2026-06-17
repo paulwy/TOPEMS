@@ -1,3 +1,31 @@
+// 共享工具 - 从 shared-utils 导入
+import {
+  debounce,
+  throttle,
+  deepClone,
+  generateId,
+  formatNumber as sharedFormatNumber,
+  formatCurrency as sharedFormatCurrency,
+  formatFileSize as sharedFormatFileSize,
+  truncateText as sharedTruncateText,
+  capitalizeFirstLetter as sharedCapitalizeFirstLetter,
+  clearCloneCache,
+} from '@topems/shared-utils';
+
+// 重新导出共享工具
+export {
+  debounce,
+  throttle,
+  deepClone,
+  generateId,
+  sharedFormatFileSize as formatFileSize,
+  sharedFormatNumber as formatNumberBase,
+  sharedFormatCurrency as formatCurrencyBase,
+  sharedTruncateText as truncateText,
+  sharedCapitalizeFirstLetter as capitalizeFirstLetter,
+  clearCloneCache,
+};
+
 const FORMAT_CACHE_SIZE = 100;
 
 interface FormatCacheEntry {
@@ -35,6 +63,7 @@ const addToCache = (key: string, value: string): void => {
   }
 };
 
+// 保留缓存优化的 formatDate
 export const formatDate = (
   dateString: string,
   format: string = "YYYY-MM-DD HH:mm:ss",
@@ -70,18 +99,17 @@ export const formatDate = (
   return result;
 };
 
+// 基于 shared-utils 的 formatNumber
 export const formatNumber = (
   num: number | string,
   decimals: number = 2,
 ): string => {
   const number = typeof num === "string" ? parseFloat(num) : num;
   if (isNaN(number)) return "0";
-  return number.toLocaleString("zh-CN", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+  return sharedFormatNumber(number, decimals);
 };
 
+// 扩展货币符号支持
 export const formatCurrency = (
   amount: number | string,
   currency: string = "CNY",
@@ -97,113 +125,7 @@ export const formatCurrency = (
   };
 
   const symbol = symbols[currency] || "¥";
-  return `${symbol}${formatNumber(number, 2)}`;
-};
-
-export const truncateText = (
-  text: string,
-  maxLength: number = 50,
-  suffix: string = "...",
-): string => {
-  if (!text) return "";
-  if (text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + suffix;
-};
-
-export const capitalizeFirstLetter = (text: string): string => {
-  if (!text) return "";
-  return text.charAt(0).toUpperCase() + text.slice(1);
-};
-
-export const debounce = <T extends (...args: unknown[]) => unknown>(
-  func: T,
-  wait: number,
-): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout | null = null;
-  return (...args: Parameters<T>) => {
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
-};
-
-export const throttle = <T extends (...args: unknown[]) => unknown>(
-  func: T,
-  limit: number,
-): ((...args: Parameters<T>) => void) => {
-  let inThrottle = false;
-  return (...args: Parameters<T>) => {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
-    }
-  };
-};
-
-export const generateId = (): string => {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`;
-};
-
-let cloneMap = new WeakMap<object, unknown>();
-
-export const deepClone = <T>(obj: T): T => {
-  if (obj === null || typeof obj !== "object") return obj;
-
-  if (cloneMap.has(obj)) {
-    return cloneMap.get(obj) as T;
-  }
-
-  if (Array.isArray(obj)) {
-    const clone: unknown[] = [];
-    cloneMap.set(obj, clone);
-    for (let i = 0; i < obj.length; i++) {
-      clone[i] = deepClone(obj[i]);
-    }
-    return clone as unknown as T;
-  }
-
-  if (obj instanceof Date) {
-    return new Date(obj.getTime()) as unknown as T;
-  }
-
-  if (obj instanceof RegExp) {
-    return new RegExp(obj.source, obj.flags) as unknown as T;
-  }
-
-  const clone: Record<string, unknown> = {};
-  cloneMap.set(obj, clone);
-
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      clone[key] = deepClone((obj as Record<string, unknown>)[key]);
-    }
-  }
-
-  return clone as T;
-};
-
-export const clearCloneCache = (): void => {
-  // WeakMap doesn't have a clear method, so we create a new instance
-  cloneMap = new WeakMap<object, unknown>();
-};
-
-export const isEmpty = (value: unknown): boolean => {
-  if (value === null || value === undefined) return true;
-  if (typeof value === "string") return value.trim() === "";
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === "object")
-    return Object.keys(value as object).length === 0;
-  return false;
-};
-
-export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const size = bytes / Math.pow(k, i);
-  const formattedSize = i === 0 ? Math.round(size).toString() : size.toFixed(2);
-  return `${formattedSize} ${sizes[i]}`;
+  return `${symbol}${sharedFormatNumber(number, 2)}`;
 };
 
 export const formatDuration = (seconds: number): string => {

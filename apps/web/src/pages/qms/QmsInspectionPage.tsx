@@ -111,7 +111,8 @@ const QmsInspectionPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedInspection, setSelectedInspection] = useState<Inspection | null>(null);
+  const [selectedInspection, setSelectedInspection] =
+    useState<Inspection | null>(null);
   const [formData, setFormData] = useState({
     inspection_type: "来料检验",
     product_name: "",
@@ -134,16 +135,20 @@ const QmsInspectionPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "合格": { bg: "#dcfce7", color: "#16a34a" },
-      "不合格": { bg: "#fee2e2", color: "#dc2626" },
-      "待判定": { bg: "#fef9c3", color: "#ca8a04" },
+      合格: { bg: "#dcfce7", color: "#16a34a" },
+      不合格: { bg: "#fee2e2", color: "#dc2626" },
+      待判定: { bg: "#fef9c3", color: "#ca8a04" },
     };
     const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
       <Chip
         label={status}
         size="small"
-        sx={{ backgroundColor: colors.bg, color: colors.color, fontWeight: 500 }}
+        sx={{
+          backgroundColor: colors.bg,
+          color: colors.color,
+          fontWeight: 500,
+        }}
       />
     );
   };
@@ -219,10 +224,14 @@ const QmsInspectionPage: React.FC = () => {
 
   const filteredInspections = inspections.filter((inspection) => {
     const matchesSearch =
-      inspection.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inspection.product_name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       inspection.inspection_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || inspection.inspection_type === typeFilter;
-    const matchesStatus = statusFilter === "all" || inspection.status === statusFilter;
+    const matchesType =
+      typeFilter === "all" || inspection.inspection_type === typeFilter;
+    const matchesStatus =
+      statusFilter === "all" || inspection.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
   });
 
@@ -255,7 +264,8 @@ const QmsInspectionPage: React.FC = () => {
   const handleSave = () => {
     const quantity = parseInt(formData.inspection_quantity) || 0;
     const qualified = parseInt(formData.qualified_quantity) || 0;
-    const rate = quantity > 0 ? ((qualified / quantity) * 100).toFixed(1) + "%" : "0%";
+    const rate =
+      quantity > 0 ? ((qualified / quantity) * 100).toFixed(1) + "%" : "0%";
 
     const newInspection: Inspection = {
       id: String(Date.now()),
@@ -344,23 +354,33 @@ const QmsInspectionPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                   borderRadius: 2,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <ClipboardCheck sx={{ width: 24, height: 24, color: "white" }} />
+                <ClipboardCheck
+                  sx={{ width: 24, height: 24, color: "white" }}
+                />
               </Box>
               <Box>
                 <Typography
                   variant="h6"
-                  sx={{ fontWeight: 700, color: "slate.900", fontSize: "1.25rem" }}
+                  sx={{
+                    fontWeight: 700,
+                    color: "slate.900",
+                    fontSize: "1.25rem",
+                  }}
                 >
                   质量检验
                 </Typography>
-                <Typography variant="caption" sx={{ color: "slate.500", fontSize: "0.75rem" }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
+                >
                   Quality Inspection
                 </Typography>
               </Box>
@@ -403,13 +423,21 @@ const QmsInspectionPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ClipboardCheck sx={{ width: 20, height: 20, color: "#3b82f6" }} />
+                  <ClipboardCheck
+                    sx={{ width: 20, height: 20, color: "#3b82f6" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     检验总数
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.total}
                   </Typography>
                 </Box>
@@ -430,13 +458,21 @@ const QmsInspectionPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <CheckCircle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <CheckCircle
+                    sx={{ width: 20, height: 20, color: "#16a34a" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     合格
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.qualified}
                   </Typography>
                 </Box>
@@ -460,10 +496,16 @@ const QmsInspectionPage: React.FC = () => {
                   <XCircle sx={{ width: 20, height: 20, color: "#dc2626" }} />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     不合格
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.unqualified}
                   </Typography>
                 </Box>
@@ -487,10 +529,16 @@ const QmsInspectionPage: React.FC = () => {
                   <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     待判定
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.pending}
                   </Typography>
                 </Box>
@@ -509,8 +557,13 @@ const QmsInspectionPage: React.FC = () => {
               pb: 0,
             }}
           >
-            <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <ClipboardCheck style={{ width: 20, height: 20, color: "#3b82f6" }} />
+            <Typography
+              variant="h6"
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <ClipboardCheck
+                style={{ width: 20, height: 20, color: "#3b82f6" }}
+              />
               检验列表
             </Typography>
           </CardHeader>
@@ -524,7 +577,11 @@ const QmsInspectionPage: React.FC = () => {
                 sx={{ minWidth: 250 }}
                 slotProps={{
                   input: {
-                    startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
+                    startAdornment: (
+                      <Search
+                        style={{ width: 18, height: 18, marginRight: 8 }}
+                      />
+                    ),
                   },
                 }}
               />
@@ -555,12 +612,21 @@ const QmsInspectionPage: React.FC = () => {
                 <option value="待判定">待判定</option>
               </TextField>
             </Box>
-            <DataTable columns={columns} data={filteredInspections} enablePagination />
+            <DataTable
+              columns={columns}
+              data={filteredInspections}
+              enablePagination
+            />
           </CardContent>
         </Card>
       </Box>
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建检验</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -569,7 +635,9 @@ const QmsInspectionPage: React.FC = () => {
               select
               label="检验类型"
               value={formData.inspection_type}
-              onChange={(e) => setFormData({ ...formData, inspection_type: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, inspection_type: e.target.value })
+              }
             >
               <option value="来料检验">来料检验</option>
               <option value="过程检验">过程检验</option>
@@ -579,7 +647,9 @@ const QmsInspectionPage: React.FC = () => {
               fullWidth
               label="产品名称 *"
               value={formData.product_name}
-              onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, product_name: e.target.value })
+              }
               placeholder="请输入产品名称"
             />
             <TextField
@@ -587,7 +657,12 @@ const QmsInspectionPage: React.FC = () => {
               type="number"
               label="检验数量"
               value={formData.inspection_quantity}
-              onChange={(e) => setFormData({ ...formData, inspection_quantity: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  inspection_quantity: e.target.value,
+                })
+              }
               placeholder="请输入检验数量"
             />
             <TextField
@@ -595,14 +670,18 @@ const QmsInspectionPage: React.FC = () => {
               type="number"
               label="合格数量"
               value={formData.qualified_quantity}
-              onChange={(e) => setFormData({ ...formData, qualified_quantity: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, qualified_quantity: e.target.value })
+              }
               placeholder="请输入合格数量"
             />
             <TextField
               fullWidth
               label="检验员"
               value={formData.inspector}
-              onChange={(e) => setFormData({ ...formData, inspector: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, inspector: e.target.value })
+              }
               placeholder="请输入检验员姓名"
             />
           </Box>
@@ -611,55 +690,96 @@ const QmsInspectionPage: React.FC = () => {
           <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleSave} sx={{ bgcolor: "#3b82f6" }}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            sx={{ bgcolor: "#3b82f6" }}
+          >
             保存
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>检验详情</DialogTitle>
         <DialogContent>
           {selectedInspection && (
-            <Box sx={{ pt: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{
+                pt: 2,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 2,
+              }}
+            >
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   检验单号
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedInspection.inspection_no}</Box>
+                <Box sx={{ fontWeight: 500 }}>
+                  {selectedInspection.inspection_no}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   检验类型
                 </Box>
                 <Box>{selectedInspection.inspection_type}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   产品名称
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedInspection.product_name}</Box>
+                <Box sx={{ fontWeight: 500 }}>
+                  {selectedInspection.product_name}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   检验日期
                 </Box>
                 <Box>{selectedInspection.inspection_date}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   检验数量
                 </Box>
                 <Box>{selectedInspection.inspection_quantity}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   合格数量
                 </Box>
                 <Box>{selectedInspection.qualified_quantity}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   合格率
                 </Box>
                 <Box sx={{ fontWeight: 500, color: "#3b82f6" }}>
@@ -667,16 +787,24 @@ const QmsInspectionPage: React.FC = () => {
                 </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   检验员
                 </Box>
                 <Box>{selectedInspection.inspector}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedInspection.status)}</Box>
+                <Box sx={{ mt: 0.5 }}>
+                  {getStatusBadge(selectedInspection.status)}
+                </Box>
               </Box>
             </Box>
           )}

@@ -1,14 +1,11 @@
 import React, { useState } from "react";
-import { Box, Typography, Button, Chip } from "@mui/material";
+import { Box, Typography, Button, Chip, SvgIconProps } from "@mui/material";
 import {
   Activity,
-  Shield,
-  Database,
+  CircleDot,
   FolderKanban,
-  Bell,
-  Link,
   Building,
-  GitBranch,
+  Link,
   Users,
   Factory,
   ClipboardList,
@@ -17,13 +14,10 @@ import {
   ShoppingCart,
   Warehouse,
   Map,
-  MessageCircle,
   BarChart2,
-  BarChart3,
-  Mail,
+  Bot,
   Smartphone,
   FlaskConical,
-  FileText,
   RefreshCw,
 } from "lucide-react";
 import { ServiceStatusCard } from "./ServiceStatusCard";
@@ -33,33 +27,81 @@ interface ServiceStatusMonitorProps {
   onRefresh: () => void;
 }
 
-const groupColors: Record<string, { bg: string; border: string; titleColor: string; iconBg: string; iconColor: string }> = {
-  "核心服务": { bg: "#eff6ff", border: "#bfdbfe", titleColor: "#1d4ed8", iconBg: "#dbeafe", iconColor: "#2563eb" },
-  "业务运营": { bg: "#f0fdf4", border: "#bbf7d0", titleColor: "#15803d", iconBg: "#dcfce7", iconColor: "#22c55e" },
-  "研发管理": { bg: "#faf5ff", border: "#ddd6fe", titleColor: "#6d28d9", iconBg: "#ede9fe", iconColor: "#8b5cf6" },
-  "生产管理": { bg: "#fff7ed", border: "#fed7aa", titleColor: "#c2410c", iconBg: "#ffedd5", iconColor: "#f97316" },
-  "供应链": { bg: "#ecfdf5", border: "#a7f3d0", titleColor: "#065f46", iconBg: "#d1fae5", iconColor: "#10b981" },
-  "专业服务": { bg: "#eef2ff", border: "#c7d2fe", titleColor: "#4338ca", iconBg: "#ddd6fe", iconColor: "#6366f1" },
+const groupColors: Record<
+  string,
+  {
+    bg: string;
+    border: string;
+    titleColor: string;
+    iconBg: string;
+    iconColor: string;
+  }
+> = {
+  核心服务: {
+    bg: "#eff6ff",
+    border: "#bfdbfe",
+    titleColor: "#1d4ed8",
+    iconBg: "#dbeafe",
+    iconColor: "#2563eb",
+  },
+  业务运营: {
+    bg: "#f0fdf4",
+    border: "#bbf7d0",
+    titleColor: "#15803d",
+    iconBg: "#dcfce7",
+    iconColor: "#22c55e",
+  },
+  研发管理: {
+    bg: "#faf5ff",
+    border: "#ddd6fe",
+    titleColor: "#6d28d9",
+    iconBg: "#ede9fe",
+    iconColor: "#8b5cf6",
+  },
+  生产管理: {
+    bg: "#fff7ed",
+    border: "#fed7aa",
+    titleColor: "#c2410c",
+    iconBg: "#ffedd5",
+    iconColor: "#f97316",
+  },
+  供应链: {
+    bg: "#ecfdf5",
+    border: "#a7f3d0",
+    titleColor: "#065f46",
+    iconBg: "#d1fae5",
+    iconColor: "#10b981",
+  },
+  专业服务: {
+    bg: "#eef2ff",
+    border: "#c7d2fe",
+    titleColor: "#4338ca",
+    iconBg: "#ddd6fe",
+    iconColor: "#6366f1",
+  },
 };
+
+interface ServiceItem {
+  name: string;
+  service: string;
+  port: number;
+  key: string;
+  icon: React.ComponentType<SvgIconProps>;
+}
 
 export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
   serviceStatuses,
   onRefresh,
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const Brain = Activity;
 
-  const serviceGroups = [
+  const serviceGroups: { title: string; services: ServiceItem[] }[] = [
     {
       title: "核心服务",
       services: [
-        { name: "身份认证", service: "IAM", port: 8000, key: "iam", icon: Shield },
-        { name: "文档管理", service: "DOC", port: 8001, key: "doc", icon: Database },
-        { name: "项目管理", service: "PM", port: 8002, key: "pm", icon: FolderKanban },
-        { name: "通知服务", service: "NOTIFICATION", port: 8003, key: "notification", icon: Bell },
-        { name: "系统集成", service: "INTEGRATION", port: 8004, key: "integration", icon: Link },
-        { name: "统一门户", service: "PORTAL", port: 8005, key: "portal", icon: Building },
-        { name: "流程引擎", service: "FLOW", port: 8006, key: "flow", icon: GitBranch },
+        { name: "统一核心", service: "CORE", port: 8000, key: "unified-core", icon: CircleDot },
+        { name: "项目管理", service: "PM", port: 8001, key: "pm", icon: FolderKanban },
+        { name: "系统集成", service: "INTEGRATION", port: 8005, key: "integration", icon: Link },
       ],
     },
     {
@@ -73,18 +115,15 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     {
       title: "研发管理",
       services: [
-        { name: "AI 服务", service: "AI", port: 8013, key: "ai", icon: Brain },
         { name: "研发管理", service: "RS", port: 8020, key: "rs", icon: FlaskConical },
-        { name: "实验室管理", service: "LIMS", port: 8022, key: "lims", icon: ClipboardList },
-        { name: "产品数据管理", service: "PDM", port: 8023, key: "pdm", icon: FileText },
+        { name: "制造服务", service: "MFG", port: 8023, key: "manufacturing", icon: Factory },
+        { name: "AI服务", service: "AI", port: 8062, key: "ai", icon: Bot },
       ],
     },
     {
       title: "生产管理",
       services: [
-        { name: "制造执行", service: "MES", port: 8030, key: "mes", icon: Factory },
-        { name: "质量管理", service: "QMS", port: 8031, key: "qms", icon: ClipboardList },
-        { name: "环境安全", service: "EHS", port: 8032, key: "ehs", icon: AlertTriangle },
+        { name: "质量保证", service: "QA", port: 8032, key: "quality-assurance", icon: ClipboardList },
       ],
     },
     {
@@ -92,18 +131,14 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       services: [
         { name: "供应链管理", service: "SCM", port: 8040, key: "scm", icon: Truck },
         { name: "供应商管理", service: "SRM", port: 8041, key: "srm", icon: ShoppingCart },
-        { name: "仓库管理", service: "WMS", port: 8042, key: "wms", icon: Warehouse },
+        { name: "仓储管理", service: "WMS", port: 8042, key: "wms", icon: Warehouse },
       ],
     },
     {
       title: "专业服务",
       services: [
-        { name: "地理信息", service: "GIS", port: 8050, key: "gis", icon: Map },
-        { name: "即时通讯", service: "IM", port: 8051, key: "im", icon: MessageCircle },
-        { name: "数据分析", service: "BI", port: 8052, key: "bi", icon: BarChart2 },
-        { name: "报表服务", service: "REPORT", port: 8053, key: "report", icon: BarChart3 },
-        { name: "邮件服务", service: "MAIL", port: 8054, key: "mail", icon: Mail },
-        { name: "移动服务", service: "MOBILE", port: 8055, key: "mobile", icon: Smartphone },
+        { name: "地理信息", service: "GIS", port: 8053, key: "gis", icon: Map },
+        { name: "移动服务", service: "MOBILE", port: 8070, key: "mobile", icon: Smartphone },
       ],
     },
   ];
@@ -119,15 +154,44 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
   const offlineCount = totalCount - onlineCount;
 
   return (
-    <Box sx={{ backgroundColor: "#ffffff", borderRadius: 3, padding: 3, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 3 }}>
+    <Box
+      sx={{
+        backgroundColor: "#ffffff",
+        borderRadius: 3,
+        padding: 3,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 3,
+        }}
+      >
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Box sx={{ width: 40, height: 40, backgroundColor: "#dcfce7", borderRadius: 1.5, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 2 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              backgroundColor: "#dcfce7",
+              borderRadius: 1.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 2,
+            }}
+          >
             <Activity sx={{ width: 20, height: 20, color: "#22c55e" }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: 18, fontWeight: 600, color: "#1e293b" }}>服务状态监测</Typography>
-            <Typography sx={{ fontSize: 12, color: "#64748b" }}>实时监控各服务运行状态</Typography>
+            <Typography sx={{ fontSize: 18, fontWeight: 600, color: "#1e293b" }}>
+              服务状态监测
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "#64748b" }}>
+              实时监控各服务运行状态
+            </Typography>
           </Box>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -173,13 +237,28 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               "&:disabled": { opacity: 0.5 },
             }}
           >
-            <RefreshCw sx={{ width: 14, height: 14 }} style={{ animation: isRefreshing ? "spin 1s linear infinite" : "none" }} />
+            <RefreshCw
+              sx={{ width: 14, height: 14 }}
+              style={{
+                animation: isRefreshing ? "spin 1s linear infinite" : "none",
+              }}
+            />
             <span>刷新</span>
           </Button>
         </Box>
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            md: "repeat(2, 1fr)",
+            lg: "repeat(3, 1fr)",
+          },
+          gap: 3,
+        }}
+      >
         {serviceGroups.map((group) => {
           const colors = groupColors[group.title];
           return (
@@ -192,15 +271,44 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
                 backgroundColor: colors.bg,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", marginBottom: 1.5 }}>
-                <Box sx={{ width: 24, height: 24, borderRadius: 1, backgroundColor: colors.iconBg, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: 1.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 1,
+                    backgroundColor: colors.iconBg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 1,
+                  }}
+                >
                   <Activity sx={{ width: 14, height: 14, color: colors.iconColor }} />
                 </Box>
-                <Typography sx={{ fontSize: 13, fontWeight: 600, color: colors.titleColor }}>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: colors.titleColor,
+                  }}
+                >
                   {group.title}
                 </Typography>
               </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 1.5 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 1.5,
+                }}
+              >
                 {group.services.map((service) => (
                   <ServiceStatusCard
                     key={service.key}

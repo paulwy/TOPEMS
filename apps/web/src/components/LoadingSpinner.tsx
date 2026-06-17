@@ -18,7 +18,13 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <div role="status" aria-label="Loading">
-      <Loader2 sx={{ width: size === "sm" ? 16 : size === "md" ? 24 : 32, height: size === "sm" ? 16 : size === "md" ? 24 : 32, animation: "spin 1s linear infinite" }} />
+      <Loader2
+        sx={{
+          width: size === "sm" ? 16 : size === "md" ? 24 : 32,
+          height: size === "sm" ? 16 : size === "md" ? 24 : 32,
+          animation: "spin 1s linear infinite",
+        }}
+      />
     </div>
   );
 };
@@ -39,7 +45,17 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   return (
     <div style={{ position: "relative" }}>
       {children}
-      <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(255, 255, 255, 0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 50,
+        }}
+      >
         <div style={{ textAlign: "center" }}>
           <LoadingSpinner size="lg" />
           {message && (
@@ -56,7 +72,12 @@ export const SkeletonLoader: React.FC<{ className?: string }> = ({
 }) => {
   return (
     <div
-      style={{ animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite", backgroundColor: "#e5e7eb", borderRadius: "8px", ...(className ? {} : {}) }}
+      style={{
+        animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        backgroundColor: "#e5e7eb",
+        borderRadius: "8px",
+        ...(className ? {} : {}),
+      }}
     />
   );
 };

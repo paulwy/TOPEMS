@@ -78,16 +78,16 @@ pub struct FixedAssetParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/fixed-assets",
+            "/api/erp/fixed-assets",
             get(list_fixed_assets).post(create_fixed_asset),
         )
         .route(
-            "/api/v1/fixed-assets/{id}",
+            "/api/erp/fixed-assets/{id}",
             get(get_fixed_asset)
                 .put(update_fixed_asset)
                 .delete(delete_fixed_asset),
         )
-        .route("/api/v1/fixed-assets/depreciate", post(depreciate_assets))
+        .route("/api/erp/fixed-assets/depreciate", post(depreciate_assets))
 }
 
 async fn list_fixed_assets(

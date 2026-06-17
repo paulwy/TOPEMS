@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-} from "@mui/material";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import {
   TrendingUp,
   Factory,
@@ -16,7 +11,12 @@ import {
 import { MetricCard } from "@/components/MetricCard";
 import { StatsChart } from "@/components/StatsChart";
 import { pdmApi } from "@/api/pdm";
-import type { ProductionProcess, ProductionStep, ProductionFormula, ProductionBatch } from "@/api/pdm";
+import type {
+  ProductionProcess,
+  ProductionStep,
+  ProductionFormula,
+  ProductionBatch,
+} from "@/api/pdm";
 
 const PdmStatsPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);
@@ -42,37 +42,66 @@ const PdmStatsPage: React.FC = () => {
       if (processRes.success && processRes.data) {
         const data = processRes.data as any;
         const items = Array.isArray(data) ? data : data.processes || [];
-        setProcesses(items.map((item: any) => ({
-          ...item,
-          status: item.status === "active" ? "启用" : item.status === "inactive" ? "禁用" : item.status,
-        })));
+        setProcesses(
+          items.map((item: any) => ({
+            ...item,
+            status:
+              item.status === "active"
+                ? "启用"
+                : item.status === "inactive"
+                  ? "禁用"
+                  : item.status,
+          })),
+        );
       }
       if (stepRes.success && stepRes.data) {
         const data = stepRes.data as any;
         const items = Array.isArray(data) ? data : data.steps || [];
-        setSteps(items.map((item: any) => ({
-          ...item,
-          status: item.status === "active" ? "启用" : item.status === "inactive" ? "禁用" : item.status,
-        })));
+        setSteps(
+          items.map((item: any) => ({
+            ...item,
+            status:
+              item.status === "active"
+                ? "启用"
+                : item.status === "inactive"
+                  ? "禁用"
+                  : item.status,
+          })),
+        );
       }
       if (formulaRes.success && formulaRes.data) {
         const data = formulaRes.data as any;
         const items = Array.isArray(data) ? data : data.formulas || [];
-        setFormulas(items.map((item: any) => ({
-          ...item,
-          status: item.status === "active" ? "启用" : item.status === "inactive" ? "禁用" : item.status,
-        })));
+        setFormulas(
+          items.map((item: any) => ({
+            ...item,
+            status:
+              item.status === "active"
+                ? "启用"
+                : item.status === "inactive"
+                  ? "禁用"
+                  : item.status,
+          })),
+        );
       }
       if (batchRes.success && batchRes.data) {
         const data = batchRes.data as any;
         const items = Array.isArray(data) ? data : data.batches || [];
-        setBatches(items.map((item: any) => ({
-          ...item,
-          status: item.status === "planning" ? "规划中" : 
-                  item.status === "in_progress" ? "进行中" : 
-                  item.status === "completed" ? "已完成" : 
-                  item.status === "cancelled" ? "已取消" : item.status,
-        })));
+        setBatches(
+          items.map((item: any) => ({
+            ...item,
+            status:
+              item.status === "planning"
+                ? "规划中"
+                : item.status === "in_progress"
+                  ? "进行中"
+                  : item.status === "completed"
+                    ? "已完成"
+                    : item.status === "cancelled"
+                      ? "已取消"
+                      : item.status,
+          })),
+        );
       }
     } catch (err) {
       console.error("加载统计数据失败:", err);
@@ -263,10 +292,26 @@ const PdmStatsPage: React.FC = () => {
                 title="批次状态分布"
                 type="pie"
                 data={[
-                  { name: "规划中", value: stats.planningBatches, color: "#F59E0B" },
-                  { name: "进行中", value: stats.inProgressBatches, color: "#6366F1" },
-                  { name: "已完成", value: stats.completedBatches, color: "#00C897" },
-                  { name: "已取消", value: stats.cancelledBatches, color: "#6B7280" },
+                  {
+                    name: "规划中",
+                    value: stats.planningBatches,
+                    color: "#F59E0B",
+                  },
+                  {
+                    name: "进行中",
+                    value: stats.inProgressBatches,
+                    color: "#6366F1",
+                  },
+                  {
+                    name: "已完成",
+                    value: stats.completedBatches,
+                    color: "#00C897",
+                  },
+                  {
+                    name: "已取消",
+                    value: stats.cancelledBatches,
+                    color: "#6B7280",
+                  },
                 ].filter((d) => d.value > 0)}
                 dataKey="value"
                 nameKey="name"
@@ -279,8 +324,16 @@ const PdmStatsPage: React.FC = () => {
                 title="工艺与配方状态"
                 type="pie"
                 data={[
-                  { name: "活跃工艺", value: stats.activeProcesses, color: "#14B8A6" },
-                  { name: "活跃配方", value: stats.activeFormulas, color: "#F59E0B" },
+                  {
+                    name: "活跃工艺",
+                    value: stats.activeProcesses,
+                    color: "#14B8A6",
+                  },
+                  {
+                    name: "活跃配方",
+                    value: stats.activeFormulas,
+                    color: "#F59E0B",
+                  },
                   { name: "总工序", value: stats.totalSteps, color: "#8B5CF6" },
                 ].filter((d) => d.value > 0)}
                 dataKey="value"
@@ -294,7 +347,13 @@ const PdmStatsPage: React.FC = () => {
           <CardContent>
             <Typography
               variant="h6"
-              sx={{ fontWeight: 600, mb: 3, display: "flex", alignItems: "center", gap: 1 }}
+              sx={{
+                fontWeight: 600,
+                mb: 3,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
             >
               <TrendingUp sx={{ width: 20, height: 20, color: "#06b6d4" }} />
               各模块详细统计
@@ -306,85 +365,287 @@ const PdmStatsPage: React.FC = () => {
                 gap: 3,
               }}
             >
-              <Box sx={{ backgroundColor: "white", borderRadius: 3, boxShadow: 1, p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: 3,
+                  boxShadow: 1,
+                  p: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box>
-                    <Typography sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}>工艺总数</Typography>
-                    <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}>{stats.totalProcesses}</Typography>
+                    <Typography
+                      sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}
+                    >
+                      工艺总数
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "1.875rem",
+                        fontWeight: 700,
+                        color: "#111827",
+                      }}
+                    >
+                      {stats.totalProcesses}
+                    </Typography>
                   </Box>
-                  <Box sx={{ width: 48, height: 48, backgroundColor: "#f0fdfa", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      backgroundColor: "#f0fdfa",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <Factory sx={{ width: 24, height: 24, color: "#14B8A6" }} />
                   </Box>
                 </Box>
-                <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: "#f3f4f6" }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                    <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>已启用</Typography>
-                    <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>{stats.activeProcesses}</Typography>
+                <Box
+                  sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: "#f3f4f6" }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 1,
+                    }}
+                  >
+                    <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>
+                      已启用
+                    </Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>
+                      {stats.activeProcesses}
+                    </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>已禁用</Typography>
-                    <Typography sx={{ fontWeight: 500, color: "#dc2626" }}>{stats.totalProcesses - stats.activeProcesses}</Typography>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>
+                      已禁用
+                    </Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#dc2626" }}>
+                      {stats.totalProcesses - stats.activeProcesses}
+                    </Typography>
                   </Box>
                 </Box>
               </Box>
 
-              <Box sx={{ backgroundColor: "white", borderRadius: 3, boxShadow: 1, p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: 3,
+                  boxShadow: 1,
+                  p: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box>
-                    <Typography sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}>工序总数</Typography>
-                    <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}>{stats.totalSteps}</Typography>
+                    <Typography
+                      sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}
+                    >
+                      工序总数
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "1.875rem",
+                        fontWeight: 700,
+                        color: "#111827",
+                      }}
+                    >
+                      {stats.totalSteps}
+                    </Typography>
                   </Box>
-                  <Box sx={{ width: 48, height: 48, backgroundColor: "#faf5ff", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <ClipboardList sx={{ width: 24, height: 24, color: "#8B5CF6" }} />
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      backgroundColor: "#faf5ff",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <ClipboardList
+                      sx={{ width: 24, height: 24, color: "#8B5CF6" }}
+                    />
                   </Box>
                 </Box>
               </Box>
 
-              <Box sx={{ backgroundColor: "white", borderRadius: 3, boxShadow: 1, p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: 3,
+                  boxShadow: 1,
+                  p: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box>
-                    <Typography sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}>配方总数</Typography>
-                    <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}>{stats.totalFormulas}</Typography>
+                    <Typography
+                      sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}
+                    >
+                      配方总数
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "1.875rem",
+                        fontWeight: 700,
+                        color: "#111827",
+                      }}
+                    >
+                      {stats.totalFormulas}
+                    </Typography>
                   </Box>
-                  <Box sx={{ width: 48, height: 48, backgroundColor: "#fffbeb", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      backgroundColor: "#fffbeb",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <Package sx={{ width: 24, height: 24, color: "#D97706" }} />
                   </Box>
                 </Box>
-                <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: "#f3f4f6" }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>活跃配方</Typography>
-                    <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>{stats.activeFormulas}</Typography>
+                <Box
+                  sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: "#f3f4f6" }}
+                >
+                  <Box
+                    sx={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>
+                      活跃配方
+                    </Typography>
+                    <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>
+                      {stats.activeFormulas}
+                    </Typography>
                   </Box>
                 </Box>
               </Box>
 
-              <Box sx={{ backgroundColor: "white", borderRadius: 3, boxShadow: 1, p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: 3,
+                  boxShadow: 1,
+                  p: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Box>
-                    <Typography sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}>批次总数</Typography>
-                    <Typography sx={{ fontSize: "1.875rem", fontWeight: 700, color: "#111827" }}>{stats.totalBatches}</Typography>
+                    <Typography
+                      sx={{ color: "#4b5563", fontSize: "0.875rem", mb: 0.5 }}
+                    >
+                      批次总数
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "1.875rem",
+                        fontWeight: 700,
+                        color: "#111827",
+                      }}
+                    >
+                      {stats.totalBatches}
+                    </Typography>
                   </Box>
-                  <Box sx={{ width: 48, height: 48, backgroundColor: "#eff6ff", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Activity sx={{ width: 24, height: 24, color: "#6366F1" }} />
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      backgroundColor: "#eff6ff",
+                      borderRadius: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Activity
+                      sx={{ width: 24, height: 24, color: "#6366F1" }}
+                    />
                   </Box>
                 </Box>
-                <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: "#f3f4f6" }}>
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                <Box
+                  sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: "#f3f4f6" }}
+                >
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 1,
+                    }}
+                  >
                     <Box>
-                      <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>规划中</Typography>
-                      <Typography sx={{ fontWeight: 500, color: "#D97706" }}>{stats.planningBatches}</Typography>
+                      <Typography
+                        sx={{ color: "#6b7280", fontSize: "0.875rem" }}
+                      >
+                        规划中
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500, color: "#D97706" }}>
+                        {stats.planningBatches}
+                      </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>进行中</Typography>
-                      <Typography sx={{ fontWeight: 500, color: "#6366F1" }}>{stats.inProgressBatches}</Typography>
+                      <Typography
+                        sx={{ color: "#6b7280", fontSize: "0.875rem" }}
+                      >
+                        进行中
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500, color: "#6366F1" }}>
+                        {stats.inProgressBatches}
+                      </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>已完成</Typography>
-                      <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>{stats.completedBatches}</Typography>
+                      <Typography
+                        sx={{ color: "#6b7280", fontSize: "0.875rem" }}
+                      >
+                        已完成
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500, color: "#16a34a" }}>
+                        {stats.completedBatches}
+                      </Typography>
                     </Box>
                     <Box>
-                      <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>已取消</Typography>
-                      <Typography sx={{ fontWeight: 500, color: "#6b7280" }}>{stats.cancelledBatches}</Typography>
+                      <Typography
+                        sx={{ color: "#6b7280", fontSize: "0.875rem" }}
+                      >
+                        已取消
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500, color: "#6b7280" }}>
+                        {stats.cancelledBatches}
+                      </Typography>
                     </Box>
                   </Box>
                 </Box>

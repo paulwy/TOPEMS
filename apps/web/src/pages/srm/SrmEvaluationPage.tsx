@@ -13,12 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Award,
-  Search,
-  Star,
-} from "lucide-react";
+import { Plus, Award, Search, Star } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { srmApi } from "@/api/srm";
@@ -87,7 +82,8 @@ const SrmEvaluationPage: React.FC = () => {
 
   const columns: ColumnDef<SupplierEvaluation>[] = [
     { accessorKey: "evaluation_no", header: "评估编号" },
-    { accessorKey: "overall_score",
+    {
+      accessorKey: "overall_score",
       header: "评分",
       cell: ({ row }) => <ScoreChip score={row.original.overall_score || 0} />,
     },
@@ -127,9 +123,7 @@ const SrmEvaluationPage: React.FC = () => {
   ];
 
   const filteredEvaluations = evaluations.filter((e) => {
-    return (
-      e.evaluator?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return e.evaluator?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const handleCreate = () => {
@@ -165,9 +159,13 @@ const SrmEvaluationPage: React.FC = () => {
 
   const stats = {
     total: evaluations.length,
-    avgScore: evaluations.length > 0
-      ? (evaluations.reduce((sum, e) => sum + (e.overall_score || 0), 0) / evaluations.length).toFixed(1)
-      : "0",
+    avgScore:
+      evaluations.length > 0
+        ? (
+            evaluations.reduce((sum, e) => sum + (e.overall_score || 0), 0) /
+            evaluations.length
+          ).toFixed(1)
+        : "0",
     excellent: evaluations.filter((e) => (e.overall_score || 0) >= 80).length,
     poor: evaluations.filter((e) => (e.overall_score || 0) < 40).length,
   };
@@ -437,9 +435,7 @@ const SrmEvaluationPage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <Award
-                style={{ width: 20, height: 20, color: "#f59e0b" }}
-              />
+              <Award style={{ width: 20, height: 20, color: "#f59e0b" }} />
               评估列表
             </Typography>
           </CardHeader>

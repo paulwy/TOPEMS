@@ -813,7 +813,6 @@ const MapView: React.FC<MapViewProps> = ({
             <HeatmapLayer
               devicePoints={devicePoints}
               storageLocations={storageLocations}
-              mapRef={undefined}
               visible={showHeatmap}
               intensityMode={heatmapMode}
             />

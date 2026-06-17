@@ -490,6 +490,39 @@ class ApiClient {
     return this.clients.migration;
   }
 
+  // Generic HTTP methods using master client
+  async get<T = any>(url: string, config?: any): Promise<ApiResponse<T>> {
+    return this.clients.master.get<T>(url, config);
+  }
+
+  async post<T = any>(
+    url: string,
+    data?: any,
+    config?: any,
+  ): Promise<ApiResponse<T>> {
+    return this.clients.master.post<T>(url, data, config);
+  }
+
+  async put<T = any>(
+    url: string,
+    data?: any,
+    config?: any,
+  ): Promise<ApiResponse<T>> {
+    return this.clients.master.put<T>(url, data, config);
+  }
+
+  async patch<T = any>(
+    url: string,
+    data?: any,
+    config?: any,
+  ): Promise<ApiResponse<T>> {
+    return this.clients.master.patch<T>(url, data, config);
+  }
+
+  async delete<T = any>(url: string, config?: any): Promise<ApiResponse<T>> {
+    return this.clients.master.delete<T>(url, config);
+  }
+
   setAuthToken(token: string) {
     Object.values(this.clients).forEach((client) => {
       client.defaults.headers.common["Authorization"] = `Bearer ${token}`;

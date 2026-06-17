@@ -2,7 +2,10 @@ import React from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { FileText, Brain, GitBranch, Clock, Bell, User } from "lucide-react";
 
-type IconComponent = React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+type IconComponent = React.ComponentType<{
+  className?: string;
+  style?: React.CSSProperties;
+}>;
 
 interface QuickAction {
   label: string;
@@ -34,7 +37,11 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" },
+        gridTemplateColumns: {
+          xs: "repeat(2, 1fr)",
+          md: "repeat(3, 1fr)",
+          lg: "repeat(6, 1fr)",
+        },
         gap: 2,
       }}
     >

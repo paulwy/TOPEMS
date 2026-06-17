@@ -28,22 +28,22 @@ pub struct VehicleQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/vehicles", get(list_vehicles).post(create_vehicle))
+        .route("/api/erp/vehicles", get(list_vehicles).post(create_vehicle))
         .route(
-            "/api/v1/vehicles/{id}",
+            "/api/erp/vehicles/{id}",
             get(get_vehicle).put(update_vehicle).delete(delete_vehicle),
         )
         .route(
-            "/api/v1/vehicle-requests",
+            "/api/erp/vehicle-requests",
             get(list_vehicle_requests).post(create_vehicle_request),
         )
         .route(
-            "/api/v1/vehicle-requests/{id}",
+            "/api/erp/vehicle-requests/{id}",
             get(get_vehicle_request)
                 .put(update_vehicle_request)
                 .delete(delete_vehicle_request),
         )
-        .route("/api/v1/vehicles/{id}/requests", get(get_vehicle_requests))
+        .route("/api/erp/vehicles/{id}/requests", get(get_vehicle_requests))
 }
 
 async fn list_vehicles(

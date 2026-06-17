@@ -51,24 +51,24 @@ pub struct DictItemQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/dict-types",
+            "/api/erp/dict-types",
             get(list_dict_types).post(create_dict_type),
         )
         .route(
-            "/api/v1/dict-types/{id}",
+            "/api/erp/dict-types/{id}",
             get(get_dict_type)
                 .put(update_dict_type)
                 .delete(delete_dict_type),
         )
-        .route("/api/v1/dict-types/{id}/items", get(list_dict_items))
+        .route("/api/erp/dict-types/{id}/items", get(list_dict_items))
         .route(
-            "/api/v1/dict-types/{id}/items/export",
+            "/api/erp/dict-types/{id}/items/export",
             get(export_dict_items),
         )
-        .route("/api/v1/dict-items", post(create_dict_item))
-        .route("/api/v1/dict-items/batch", post(batch_create_dict_items))
+        .route("/api/erp/dict-items", post(create_dict_item))
+        .route("/api/erp/dict-items/batch", post(batch_create_dict_items))
         .route(
-            "/api/v1/dict-items/{id}",
+            "/api/erp/dict-items/{id}",
             get(get_dict_item)
                 .put(update_dict_item)
                 .delete(delete_dict_item),

@@ -147,9 +147,7 @@ const FlowDefinitionPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedFlow, setSelectedFlow] = useState<FlowDefinition | null>(
-    null,
-  );
+  const [selectedFlow, setSelectedFlow] = useState<FlowDefinition | null>(null);
 
   const filteredData = data.filter((item) => {
     const matchesSearch = item.name

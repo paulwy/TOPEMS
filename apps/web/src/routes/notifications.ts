@@ -1,18 +1,18 @@
 import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
-const NotificationCenter = lazy(() => import("../pages/NotificationCenter"));
+const NotificationCenter = lazy(() => import("../pages/notification/NotificationCenter"));
 const NotificationTemplatesPage = lazy(
-  () => import("../pages/NotificationTemplatesPage"),
+  () => import("../pages/notification/NotificationTemplatesPage"),
 );
 const NotificationArchivePage = lazy(
-  () => import("../pages/NotificationArchivePage"),
+  () => import("../pages/notification/NotificationArchivePage"),
 );
 const NotificationStatsPage = lazy(
-  () => import("../pages/NotificationStatsPage"),
+  () => import("../pages/notification/NotificationStatsPage"),
 );
 const NotificationDetailPage = lazy(
-  () => import("../pages/NotificationDetailPage"),
+  () => import("../pages/notification/NotificationDetailPage"),
 );
 
 export const notificationRoutes: RouteConfig[] = [

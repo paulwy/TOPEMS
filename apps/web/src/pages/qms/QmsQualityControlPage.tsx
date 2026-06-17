@@ -409,11 +409,21 @@ const QmsQualityControlPage: React.FC = () => {
           { label: "质量管理" },
         ]}
         tabs={[
-          { label: "不合格品管理", value: "nonconformance", active: activeTab === "nonconformance" },
+          {
+            label: "不合格品管理",
+            value: "nonconformance",
+            active: activeTab === "nonconformance",
+          },
           { label: "审核管理", value: "audit", active: activeTab === "audit" },
         ]}
-        onTabChange={(value) => setActiveTab(value as "nonconformance" | "audit")}
-        search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "搜索编号或标题..." }}
+        onTabChange={(value) =>
+          setActiveTab(value as "nonconformance" | "audit")
+        }
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: "搜索编号或标题...",
+        }}
         actions={[
           {
             label: activeTab === "nonconformance" ? "新增不合格品" : "新增审核",
@@ -644,8 +654,6 @@ const QmsQualityControlPage: React.FC = () => {
             </CardContent>
           </Card>
         </Box>
-
-        
 
         <Card>
           <CardContent sx={{ p: 0 }}>

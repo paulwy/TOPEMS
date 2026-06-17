@@ -14,12 +14,15 @@ interface RecentActivitiesProps {
   activities: ActivityItem[];
 }
 
-const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg: string }> = {
-  "系统": { bg: "#eff6ff", text: "#2563eb", bar: "#3b82f6", iconBg: "#dbeafe" },
-  "文档": { bg: "#faf5ff", text: "#7c3aed", bar: "#8b5cf6", iconBg: "#ede9fe" },
-  "工作流": { bg: "#f0fdf4", text: "#16a34a", bar: "#22c55e", iconBg: "#dcfce7" },
-  "培训": { bg: "#fefce8", text: "#ca8a04", bar: "#eab308", iconBg: "#fef9c3" },
-  "默认": { bg: "#f8fafc", text: "#64748b", bar: "#94a3b8", iconBg: "#f1f5f9" },
+const typeColors: Record<
+  string,
+  { bg: string; text: string; bar: string; iconBg: string }
+> = {
+  系统: { bg: "#eff6ff", text: "#2563eb", bar: "#3b82f6", iconBg: "#dbeafe" },
+  文档: { bg: "#faf5ff", text: "#7c3aed", bar: "#8b5cf6", iconBg: "#ede9fe" },
+  工作流: { bg: "#f0fdf4", text: "#16a34a", bar: "#22c55e", iconBg: "#dcfce7" },
+  培训: { bg: "#fefce8", text: "#ca8a04", bar: "#eab308", iconBg: "#fef9c3" },
+  默认: { bg: "#f8fafc", text: "#64748b", bar: "#94a3b8", iconBg: "#f1f5f9" },
 };
 
 export const RecentActivities: React.FC<RecentActivitiesProps> = ({
@@ -30,7 +33,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
       {activities.map((activity, index) => {
         const colors = typeColors[activity.type] || typeColors["默认"];
         const progressWidth = `${((activities.length - index) / activities.length) * 100}%`;
-        
+
         return (
           <Box
             key={activity.id}
@@ -44,7 +47,14 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
               cursor: "pointer",
             }}
           >
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", marginRight: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                marginRight: 2,
+              }}
+            >
               <Box
                 sx={{
                   width: 40,
@@ -86,7 +96,14 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
               )}
             </Box>
             <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 500, color: "#1e293b", marginBottom: 0.5 }}>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "#1e293b",
+                  marginBottom: 0.5,
+                }}
+              >
                 {activity.title}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -98,7 +115,9 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                     backgroundColor: colors.bg,
                   }}
                 >
-                  <Typography sx={{ fontSize: 11, fontWeight: 500, color: colors.text }}>
+                  <Typography
+                    sx={{ fontSize: 11, fontWeight: 500, color: colors.text }}
+                  >
                     {activity.type}
                   </Typography>
                 </Box>
@@ -107,7 +126,9 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                 </Typography>
               </Box>
             </Box>
-            <ChevronRight sx={{ width: 16, height: 16, color: "#cbd5e1", marginLeft: 1 }} />
+            <ChevronRight
+              sx={{ width: 16, height: 16, color: "#cbd5e1", marginLeft: 1 }}
+            />
           </Box>
         );
       })}

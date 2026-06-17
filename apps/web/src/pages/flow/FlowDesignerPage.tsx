@@ -149,10 +149,7 @@ const FlowDesignerPage: React.FC = () => {
               >
                 放大
               </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Maximize size={16} />}
-              >
+              <Button variant="outlined" startIcon={<Maximize size={16} />}>
                 适应画布
               </Button>
               <Button
@@ -455,7 +452,11 @@ const FlowDesignerPage: React.FC = () => {
                   <Button variant="outlined" fullWidth>
                     取消
                   </Button>
-                  <Button variant="contained" fullWidth sx={{ bgcolor: "#8b5cf6" }}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{ bgcolor: "#8b5cf6" }}
+                  >
                     保存
                   </Button>
                 </Stack>

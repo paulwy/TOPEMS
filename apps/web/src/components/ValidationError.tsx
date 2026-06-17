@@ -13,7 +13,16 @@ export const FieldError: React.FC<FieldErrorProps> = ({
   if (!error) return null;
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "14px", marginTop: "4px" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        color: "#dc2626",
+        fontSize: "14px",
+        marginTop: "4px",
+      }}
+    >
       {showIcon && <AlertCircle sx={{ width: 16, height: 16 }} />}
       <span>{error}</span>
     </div>
@@ -37,17 +46,58 @@ export const FormError: React.FC<FormErrorProps> = ({
   if (errorList.length === 0) return null;
 
   return (
-    <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "16px", marginBottom: "16px" }}>
+    <div
+      style={{
+        backgroundColor: "#fef2f2",
+        border: "1px solid #fecaca",
+        borderRadius: "8px",
+        padding: "16px",
+        marginBottom: "16px",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-        <AlertCircle sx={{ width: 20, height: 20, color: "#dc2626", marginTop: "2px" }} />
+        <AlertCircle
+          sx={{ width: 20, height: 20, color: "#dc2626", marginTop: "2px" }}
+        />
         <div style={{ flex: 1 }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 500, color: "#991b1b", marginBottom: "4px" }}>
+          <h4
+            style={{
+              fontSize: "14px",
+              fontWeight: 500,
+              color: "#991b1b",
+              marginBottom: "4px",
+            }}
+          >
             请修正以下错误：
           </h4>
-          <ul style={{ fontSize: "14px", color: "#b91c1c", display: "flex", flexDirection: "column", gap: "4px" }}>
+          <ul
+            style={{
+              fontSize: "14px",
+              color: "#b91c1c",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
             {errorList.map((error, index) => (
-              <li key={index} style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                <span style={{ width: "4px", height: "4px", backgroundColor: "#dc2626", borderRadius: "9999px", marginTop: "8px", flexShrink: 0 }}></span>
+              <li
+                key={index}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "8px",
+                }}
+              >
+                <span
+                  style={{
+                    width: "4px",
+                    height: "4px",
+                    backgroundColor: "#dc2626",
+                    borderRadius: "9999px",
+                    marginTop: "8px",
+                    flexShrink: 0,
+                  }}
+                ></span>
                 <span>{error}</span>
               </li>
             ))}
@@ -70,10 +120,27 @@ export const ValidationHint: React.FC<ValidationHintProps> = ({
   return (
     <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>
       <span style={{ fontWeight: 500 }}>{field}要求：</span>
-      <ul style={{ marginTop: "4px", display: "flex", flexDirection: "column", gap: "2px" }}>
+      <ul
+        style={{
+          marginTop: "4px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "2px",
+        }}
+      >
         {rules.map((rule, index) => (
-          <li key={index} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <span style={{ width: "4px", height: "4px", backgroundColor: "#94a3b8", borderRadius: "9999px" }}></span>
+          <li
+            key={index}
+            style={{ display: "flex", alignItems: "center", gap: "4px" }}
+          >
+            <span
+              style={{
+                width: "4px",
+                height: "4px",
+                backgroundColor: "#94a3b8",
+                borderRadius: "9999px",
+              }}
+            ></span>
             <span>{rule}</span>
           </li>
         ))}
@@ -148,7 +215,16 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
   if (!error) return null;
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#dc2626", fontSize: "14px", marginTop: "4px" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        color: "#dc2626",
+        fontSize: "14px",
+        marginTop: "4px",
+      }}
+    >
       <AlertCircle sx={{ width: 16, height: 16 }} />
       <span>{error}</span>
     </div>
@@ -165,9 +241,29 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({
   onClose,
 }) => {
   return (
-    <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div
+      style={{
+        backgroundColor: "#f0fdf4",
+        border: "1px solid #bbf7d0",
+        borderRadius: "8px",
+        padding: "16px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <div style={{ width: "32px", height: "32px", backgroundColor: "#dcfce7", borderRadius: "9999px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            width: "32px",
+            height: "32px",
+            backgroundColor: "#dcfce7",
+            borderRadius: "9999px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <svg
             style={{ width: 20, height: 20, color: "#22c55e" }}
             fill="none"
@@ -187,7 +283,13 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({
       {onClose && (
         <button
           onClick={onClose}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#22c55e", padding: "4px" }}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "#22c55e",
+            padding: "4px",
+          }}
         >
           <X sx={{ width: 20, height: 20 }} />
         </button>

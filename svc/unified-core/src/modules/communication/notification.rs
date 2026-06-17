@@ -60,3 +60,42 @@ pub async fn mark_all_as_read(
         "data": null
     }))
 }
+
+pub async fn get_notifications(
+    State(_state): State<AppState>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Communication notification get_notifications called");
+    Json(serde_json::json!({
+        "success": true,
+        "message": "get_notifications success",
+        "data": {
+            "notifications": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 20,
+            "unread_count": 0
+        }
+    }))
+}
+
+pub async fn get_unread_count(
+    State(_state): State<AppState>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Communication notification get_unread_count called");
+    Json(serde_json::json!({
+        "success": true,
+        "message": "get_unread_count success",
+        "data": 0
+    }))
+}
+
+pub async fn get_unread_notifications(
+    State(_state): State<AppState>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Communication notification get_unread_notifications called");
+    Json(serde_json::json!({
+        "success": true,
+        "message": "get_unread_notifications success",
+        "data": []
+    }))
+}

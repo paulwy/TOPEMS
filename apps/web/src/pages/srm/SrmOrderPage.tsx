@@ -13,12 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  ClipboardList,
-  Search,
-  ShoppingCart,
-} from "lucide-react";
+import { Plus, ClipboardList, Search, ShoppingCart } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { srmApi } from "@/api/srm";
@@ -53,11 +48,18 @@ const SrmOrderPage: React.FC = () => {
         const adapted = items.map((item: any) => ({
           ...item,
           total_amount: item.total_amount || item.amount || 0,
-          status: item.status === "pending" ? "待处理" : 
-                  item.status === "processing" ? "处理中" : 
-                  item.status === "delivered" ? "已交付" : 
-                  item.status === "completed" ? "已完成" : 
-                  item.status === "cancelled" ? "已取消" : item.status,
+          status:
+            item.status === "pending"
+              ? "待处理"
+              : item.status === "processing"
+                ? "处理中"
+                : item.status === "delivered"
+                  ? "已交付"
+                  : item.status === "completed"
+                    ? "已完成"
+                    : item.status === "cancelled"
+                      ? "已取消"
+                      : item.status,
           order_date: item.order_date || item.created_at,
         }));
         setOrders(adapted);
@@ -74,11 +76,11 @@ const SrmOrderPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "待处理": { bg: "#fef3c7", color: "#b45309" },
-      "处理中": { bg: "#dbeafe", color: "#2563eb" },
-      "已交付": { bg: "#dcfce7", color: "#15803d" },
-      "已完成": { bg: "#e0e7ff", color: "#6366f1" },
-      "已取消": { bg: "#fee2e2", color: "#b91c1c" },
+      待处理: { bg: "#fef3c7", color: "#b45309" },
+      处理中: { bg: "#dbeafe", color: "#2563eb" },
+      已交付: { bg: "#dcfce7", color: "#15803d" },
+      已完成: { bg: "#e0e7ff", color: "#6366f1" },
+      已取消: { bg: "#fee2e2", color: "#b91c1c" },
     };
     const colors = statusMap[status] || { bg: "#f1f5f9", color: "#475569" };
     return (
@@ -118,9 +120,7 @@ const SrmOrderPage: React.FC = () => {
   ];
 
   const filteredOrders = orders.filter((o) => {
-    return (
-      o.po_no?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return o.po_no?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const handleCreate = () => {
@@ -292,7 +292,9 @@ const SrmOrderPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ClipboardList sx={{ width: 20, height: 20, color: "#1d4ed8" }} />
+                  <ClipboardList
+                    sx={{ width: 20, height: 20, color: "#1d4ed8" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -325,7 +327,9 @@ const SrmOrderPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ClipboardList sx={{ width: 20, height: 20, color: "#d97706" }} />
+                  <ClipboardList
+                    sx={{ width: 20, height: 20, color: "#d97706" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -358,7 +362,9 @@ const SrmOrderPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ClipboardList sx={{ width: 20, height: 20, color: "#2563eb" }} />
+                  <ClipboardList
+                    sx={{ width: 20, height: 20, color: "#2563eb" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -391,7 +397,9 @@ const SrmOrderPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ClipboardList sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <ClipboardList
+                    sx={{ width: 20, height: 20, color: "#16a34a" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -424,7 +432,9 @@ const SrmOrderPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ShoppingCart sx={{ width: 20, height: 20, color: "#6366f1" }} />
+                  <ShoppingCart
+                    sx={{ width: 20, height: 20, color: "#6366f1" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -502,7 +512,9 @@ const SrmOrderPage: React.FC = () => {
         <DialogTitle>新增订单</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 fullWidth
                 label="订单编号 *"

@@ -13,6 +13,7 @@ pub mod customer_scoring;
 pub mod interaction;
 pub mod openapi;
 pub mod opportunity;
+pub mod plugin;
 pub mod sales_forecast;
 
 #[derive(Clone)]
@@ -45,4 +46,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(customer_scoring::create_routes())
         .merge(sales_forecast::create_routes())
         .merge(billing::create_routes())
+        .merge(plugin::create_routes())
 }

@@ -34,8 +34,22 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
-        <Loader2 sx={{ width: 16, height: 16, color: "#9ca3af", animation: "spin 1s linear infinite" }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
+        }}
+      >
+        <Loader2
+          sx={{
+            width: 16,
+            height: 16,
+            color: "#9ca3af",
+            animation: "spin 1s linear infinite",
+          }}
+        />
       </div>
     );
   }
@@ -59,7 +73,10 @@ export const PermissionGate: React.FC<PermissionGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div style={{ opacity: 0.5, cursor: "not-allowed" }} title="您没有此操作的权限">
+      <div
+        style={{ opacity: 0.5, cursor: "not-allowed" }}
+        title="您没有此操作的权限"
+      >
         {children}
       </div>
     );
@@ -89,8 +106,22 @@ export const RoleGate: React.FC<RoleGateProps> = ({
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
-        <Loader2 sx={{ width: 16, height: 16, color: "#9ca3af", animation: "spin 1s linear infinite" }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
+        }}
+      >
+        <Loader2
+          sx={{
+            width: 16,
+            height: 16,
+            color: "#9ca3af",
+            animation: "spin 1s linear infinite",
+          }}
+        />
       </div>
     );
   }
@@ -112,7 +143,10 @@ export const RoleGate: React.FC<RoleGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div style={{ opacity: 0.5, cursor: "not-allowed" }} title="您没有此角色权限">
+      <div
+        style={{ opacity: 0.5, cursor: "not-allowed" }}
+        title="您没有此角色权限"
+      >
         {children}
       </div>
     );
@@ -124,7 +158,7 @@ export const RoleGate: React.FC<RoleGateProps> = ({
 interface ModuleGateProps {
   children: ReactNode;
   module: string;
-  action?: "read" | "write" | "delete" | "admin";
+  action?: "read" | "write" | "update" | "delete" | "admin";
   fallback?: ReactNode;
   showDisabled?: boolean;
   loading?: boolean;
@@ -143,8 +177,22 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
-        <Loader2 sx={{ width: 16, height: 16, color: "#9ca3af", animation: "spin 1s linear infinite" }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
+        }}
+      >
+        <Loader2
+          sx={{
+            width: 16,
+            height: 16,
+            color: "#9ca3af",
+            animation: "spin 1s linear infinite",
+          }}
+        />
       </div>
     );
   }
@@ -201,8 +249,22 @@ export const AdminGate: React.FC<AdminGateProps> = ({
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
-        <Loader2 sx={{ width: 16, height: 16, color: "#9ca3af", animation: "spin 1s linear infinite" }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
+        }}
+      >
+        <Loader2
+          sx={{
+            width: 16,
+            height: 16,
+            color: "#9ca3af",
+            animation: "spin 1s linear infinite",
+          }}
+        />
       </div>
     );
   }
@@ -213,7 +275,10 @@ export const AdminGate: React.FC<AdminGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div style={{ opacity: 0.5, cursor: "not-allowed" }} title="需要管理员权限">
+      <div
+        style={{ opacity: 0.5, cursor: "not-allowed" }}
+        title="需要管理员权限"
+      >
         {children}
       </div>
     );
@@ -239,8 +304,22 @@ export const SuperuserGate: React.FC<SuperuserGateProps> = ({
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px" }}>
-        <Loader2 sx={{ width: 16, height: 16, color: "#9ca3af", animation: "spin 1s linear infinite" }} />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
+        }}
+      >
+        <Loader2
+          sx={{
+            width: 16,
+            height: 16,
+            color: "#9ca3af",
+            animation: "spin 1s linear infinite",
+          }}
+        />
       </div>
     );
   }
@@ -251,7 +330,10 @@ export const SuperuserGate: React.FC<SuperuserGateProps> = ({
 
   if (showDisabled) {
     return (
-      <div style={{ opacity: 0.5, cursor: "not-allowed" }} title="需要超级管理员权限">
+      <div
+        style={{ opacity: 0.5, cursor: "not-allowed" }}
+        title="需要超级管理员权限"
+      >
         {children}
       </div>
     );
@@ -340,16 +422,35 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({
     admin: { bg: "#f3e8ff", text: "#7c3aed" },
   };
 
-  const colorStyle =
-    actionColors[action] || { bg: "#f3f4f6", text: "#374151" };
+  const colorStyle = actionColors[action] || { bg: "#f3f4f6", text: "#374151" };
 
   const sizeStyles = {
-    sm: { fontSize: "12px", paddingLeft: "6px", paddingRight: "6px", paddingTop: "2px", paddingBottom: "2px" },
-    md: { fontSize: "14px", paddingLeft: "8px", paddingRight: "8px", paddingTop: "4px", paddingBottom: "4px" },
+    sm: {
+      fontSize: "12px",
+      paddingLeft: "6px",
+      paddingRight: "6px",
+      paddingTop: "2px",
+      paddingBottom: "2px",
+    },
+    md: {
+      fontSize: "14px",
+      paddingLeft: "8px",
+      paddingRight: "8px",
+      paddingTop: "4px",
+      paddingBottom: "4px",
+    },
   };
 
   return (
-    <span style={{ backgroundColor: colorStyle.bg, color: colorStyle.text, borderRadius: "4px", fontWeight: 500, ...sizeStyles[size] }}>
+    <span
+      style={{
+        backgroundColor: colorStyle.bg,
+        color: colorStyle.text,
+        borderRadius: "4px",
+        fontWeight: 500,
+        ...sizeStyles[size],
+      }}
+    >
       {module}:{action}
     </span>
   );

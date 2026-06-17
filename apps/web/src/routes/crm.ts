@@ -5,32 +5,35 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const CRMDashboardPage = lazy(() => import("../pages/CRMDashboardPage"));
+const CRMDashboardPage = lazy(() => import("../pages/crm/CRMDashboardPage"));
 const CustomerManagementPage = lazy(
-  () => import("../pages/CustomerManagementPage"),
+  () => import("../pages/crm/CustomerManagementPage"),
 );
 const ContactManagementPage = lazy(
-  () => import("../pages/ContactManagementPage"),
+  () => import("../pages/crm/ContactManagementPage"),
 );
 const OpportunityManagementPage = lazy(
-  () => import("../pages/OpportunityManagementPage"),
+  () => import("../pages/crm/OpportunityManagementPage"),
 );
 const InteractionManagementPage = lazy(
-  () => import("../pages/InteractionManagementPage"),
+  () => import("../pages/crm/InteractionManagementPage"),
 );
 const CRMCustomerScoringPage = lazy(
-  () => import("../pages/CRMCustomerScoringPage"),
+  () => import("../pages/crm/CRMCustomerScoringPage"),
 );
 const CRMSalesForecastPage = lazy(
-  () => import("../pages/CRMSalesForecastPage"),
+  () => import("../pages/crm/CRMSalesForecastPage"),
 );
-const CRMBillingPage = lazy(() => import("../pages/CRMBillingPage"));
-const CustomerDetailPage = lazy(() => import("../pages/CustomerDetailPage"));
+const CRMBillingPage = lazy(() => import("../pages/crm/CRMBillingPage"));
+const CustomerDetailPage = lazy(() => import("../pages/crm/CustomerDetailPage"));
 
 export const crmRoutes: RouteConfig[] = [
   {
     path: "/crm",
-    element: React.createElement(Navigate, { to: "/crm/dashboard", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/crm/dashboard",
+      replace: true,
+    }),
     requiredPermissions: ["crm:read"],
     module: "crm",
     action: "read",

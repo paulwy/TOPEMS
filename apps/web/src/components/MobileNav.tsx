@@ -29,7 +29,13 @@ const navItems = [
 const MobileNav: React.FC<MobileNavProps> = ({ currentPage, onNavigate }) => {
   return (
     <div className="mobile-menu mobile-only">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "4px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "4px",
+        }}
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
@@ -40,7 +46,9 @@ const MobileNav: React.FC<MobileNavProps> = ({ currentPage, onNavigate }) => {
               className={`mobile-nav-item ${isActive ? "active" : "inactive"}`}
             >
               <Icon size={20} />
-              <span style={{ fontSize: "12px", marginTop: "2px" }}>{item.label}</span>
+              <span style={{ fontSize: "12px", marginTop: "2px" }}>
+                {item.label}
+              </span>
             </button>
           );
         })}

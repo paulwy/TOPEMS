@@ -57,7 +57,10 @@ const RsReleasePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [envFilter, setEnvFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
+    start: "",
+    end: "",
+  });
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [newReleaseDialogOpen, setNewReleaseDialogOpen] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
@@ -145,7 +148,9 @@ const RsReleasePage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string): "success" | "warning" | "error" | "default" => {
+  const getStatusColor = (
+    status: string,
+  ): "success" | "warning" | "error" | "default" => {
     switch (status) {
       case "released":
         return "success";
@@ -188,7 +193,9 @@ const RsReleasePage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -204,7 +211,8 @@ const RsReleasePage: React.FC = () => {
       version: "上一版本",
       release_time: new Date().toLocaleString(),
       release_note: "回滚操作",
-      environment: releases.find((r) => r.id === releaseId)?.environment || "staging",
+      environment:
+        releases.find((r) => r.id === releaseId)?.environment || "staging",
       status: "planning",
       release_by: "当前用户",
     };
@@ -223,13 +231,24 @@ const RsReleasePage: React.FC = () => {
     };
     setReleases([newRelease, ...releases]);
     setNewReleaseDialogOpen(false);
-    setNewReleaseForm({ version: "", environment: "staging", release_note: "" });
+    setNewReleaseForm({
+      version: "",
+      environment: "staging",
+      release_note: "",
+    });
   };
 
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             发布管理
           </Typography>
@@ -244,7 +263,12 @@ const RsReleasePage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <TextField
               size="small"
               placeholder="搜索版本、说明..."
@@ -290,7 +314,9 @@ const RsReleasePage: React.FC = () => {
               type="date"
               label="开始日期"
               value={dateRange.start}
-              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, start: e.target.value })
+              }
               sx={{ width: 150 }}
               InputLabelProps={{ shrink: true }}
             />
@@ -299,7 +325,9 @@ const RsReleasePage: React.FC = () => {
               type="date"
               label="结束日期"
               value={dateRange.end}
-              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, end: e.target.value })
+              }
               sx={{ width: 150 }}
               InputLabelProps={{ shrink: true }}
             />
@@ -311,13 +339,27 @@ const RsReleasePage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>版本号</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>发布时间</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>发布说明</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>发布环境</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>发布人</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    版本号
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    发布时间
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    发布说明
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    发布环境
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    发布人
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -326,32 +368,61 @@ const RsReleasePage: React.FC = () => {
                   .map((release) => (
                     <TableRow key={release.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Tag size={16} color="#3b82f6" />
                           {release.version}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Calendar size={14} />
                           {release.release_time}
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Tooltip title={release.release_note}>
-                          <Box sx={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <Box
+                            sx={{
+                              maxWidth: 250,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             {release.release_note}
                           </Box>
                         </Tooltip>
                       </TableCell>
                       <TableCell>
-                        <Chip label={getEnvLabel(release.environment)} size="small" color={getEnvColor(release.environment)} />
+                        <Chip
+                          label={getEnvLabel(release.environment)}
+                          size="small"
+                          color={getEnvColor(release.environment)}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Chip label={getStatusLabel(release.status)} size="small" color={getStatusColor(release.status)} />
+                        <Chip
+                          label={getStatusLabel(release.status)}
+                          size="small"
+                          color={getStatusColor(release.status)}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <User size={14} />
                           {release.release_by}
                         </Box>
@@ -359,13 +430,19 @@ const RsReleasePage: React.FC = () => {
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="查看详情">
-                            <IconButton size="small" onClick={() => handleViewDetail(release)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewDetail(release)}
+                            >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
                           {release.status === "released" && (
                             <Tooltip title="回滚">
-                              <IconButton size="small" onClick={() => handleRollback(release.id)}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleRollback(release.id)}
+                              >
                                 <RotateCcw size={16} />
                               </IconButton>
                             </Tooltip>
@@ -389,7 +466,12 @@ const RsReleasePage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>发布详情</DialogTitle>
         <DialogContent>
           {selectedRelease && (
@@ -398,15 +480,25 @@ const RsReleasePage: React.FC = () => {
                 {selectedRelease.version}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Chip label={getEnvLabel(selectedRelease.environment)} size="small" color={getEnvColor(selectedRelease.environment)} />
-                <Chip label={getStatusLabel(selectedRelease.status)} size="small" color={getStatusColor(selectedRelease.status)} />
+                <Chip
+                  label={getEnvLabel(selectedRelease.environment)}
+                  size="small"
+                  color={getEnvColor(selectedRelease.environment)}
+                />
+                <Chip
+                  label={getStatusLabel(selectedRelease.status)}
+                  size="small"
+                  color={getStatusColor(selectedRelease.status)}
+                />
               </Stack>
               <Box sx={{ mt: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   发布说明
                 </Typography>
                 <Paper sx={{ p: 2, mt: 1, bgcolor: "#f5f5f5" }}>
-                  <Typography variant="body2">{selectedRelease.release_note}</Typography>
+                  <Typography variant="body2">
+                    {selectedRelease.release_note}
+                  </Typography>
                 </Paper>
               </Box>
               <Stack direction="row" spacing={4} sx={{ mt: 3 }}>
@@ -435,7 +527,12 @@ const RsReleasePage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={newReleaseDialogOpen} onClose={() => setNewReleaseDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={newReleaseDialogOpen}
+        onClose={() => setNewReleaseDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建发布</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
@@ -443,14 +540,24 @@ const RsReleasePage: React.FC = () => {
               label="版本号"
               fullWidth
               value={newReleaseForm.version}
-              onChange={(e) => setNewReleaseForm({ ...newReleaseForm, version: e.target.value })}
+              onChange={(e) =>
+                setNewReleaseForm({
+                  ...newReleaseForm,
+                  version: e.target.value,
+                })
+              }
             />
             <FormControl fullWidth>
               <InputLabel>发布环境</InputLabel>
               <Select
                 value={newReleaseForm.environment}
                 label="发布环境"
-                onChange={(e) => setNewReleaseForm({ ...newReleaseForm, environment: e.target.value })}
+                onChange={(e) =>
+                  setNewReleaseForm({
+                    ...newReleaseForm,
+                    environment: e.target.value,
+                  })
+                }
               >
                 <MenuItem value="production">生产环境</MenuItem>
                 <MenuItem value="staging">预发布环境</MenuItem>
@@ -463,13 +570,22 @@ const RsReleasePage: React.FC = () => {
               multiline
               rows={4}
               value={newReleaseForm.release_note}
-              onChange={(e) => setNewReleaseForm({ ...newReleaseForm, release_note: e.target.value })}
+              onChange={(e) =>
+                setNewReleaseForm({
+                  ...newReleaseForm,
+                  release_note: e.target.value,
+                })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewReleaseDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateRelease}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateRelease}
+          >
             创建
           </Button>
         </DialogActions>

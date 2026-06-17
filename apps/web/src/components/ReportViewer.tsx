@@ -60,23 +60,76 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}>
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", width: "100%", maxWidth: "1024px", maxHeight: "95vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        padding: "16px",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "12px",
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+          width: "100%",
+          maxWidth: "1024px",
+          maxHeight: "95vh",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* Header */}
-        <div style={{ padding: "24px", borderBottom: "1px solid #e2e8f0", background: "linear-gradient(to right, #eff6ff, #eef2ff)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div
+          style={{
+            padding: "24px",
+            borderBottom: "1px solid #e2e8f0",
+            background: "linear-gradient(to right, #eff6ff, #eef2ff)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
             <div>
-              <h3 style={{ fontSize: "20px", fontWeight: 600, color: "#0f172a" }}>
+              <h3
+                style={{ fontSize: "20px", fontWeight: 600, color: "#0f172a" }}
+              >
                 {report.config.title}
               </h3>
               {report.config.description && (
-                <p style={{ fontSize: "14px", color: "#475569", marginTop: "4px" }}>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#475569",
+                    marginTop: "4px",
+                  }}
+                >
                   {report.config.description}
                 </p>
               )}
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "12px", fontSize: "14px", color: "#64748b" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px",
+                  marginTop: "12px",
+                  fontSize: "14px",
+                  color: "#64748b",
+                }}
+              >
                 <span style={{ display: "flex", alignItems: "center" }}>
-                  <Rows3 sx={{ width: 16, height: 16, marginRight: "4px" }} />共 {report.row_count} 条记录
+                  <Rows3 sx={{ width: 16, height: 16, marginRight: "4px" }} />共{" "}
+                  {report.row_count} 条记录
                 </span>
                 <span style={{ display: "flex", alignItems: "center" }}>
                   <Columns sx={{ width: 16, height: 16, marginRight: "4px" }} />
@@ -86,7 +139,15 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             </div>
             <button
               onClick={onClose}
-              style={{ padding: "8px", color: "#94a3b8", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", transition: "all 0.2s" }}
+              style={{
+                padding: "8px",
+                color: "#94a3b8",
+                borderRadius: "8px",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
             >
               <X sx={{ width: 20, height: 20 }} />
             </button>
@@ -95,20 +156,52 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
 
         {/* Table */}
         <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
-          <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+          <div
+            style={{
+              overflowX: "auto",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+            }}
+          >
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead style={{ backgroundColor: "#f8fafc" }}>
                 <tr>
-                  <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: 500, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontSize: "12px",
+                      fontWeight: 500,
+                      color: "#64748b",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
                     #
                   </th>
                   {report.config.columns.map((column) => (
                     <th
                       key={column}
                       onClick={() => handleSort(column)}
-                      style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: 500, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", cursor: "pointer", transition: "background-color 0.2s" }}
+                      style={{
+                        padding: "12px 16px",
+                        textAlign: "left",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        color: "#64748b",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s",
+                      }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
                         <span>{column}</span>
                         {sortColumn === column && (
                           <span style={{ color: "#2563eb" }}>
@@ -127,20 +220,41 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       colSpan={report.config.columns.length + 1}
                       style={{ padding: "48px 16px", textAlign: "center" }}
                     >
-                      <FileText sx={{ width: 48, height: 48, color: "#cbd5e1", margin: "auto", marginBottom: "12px" }} />
+                      <FileText
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          color: "#cbd5e1",
+                          margin: "auto",
+                          marginBottom: "12px",
+                        }}
+                      />
                       <p style={{ color: "#94a3b8" }}>暂无数据</p>
                     </td>
                   </tr>
                 ) : (
                   currentData.map((row, idx) => (
-                    <tr key={idx} style={{ transition: "background-color 0.2s" }}>
-                      <td style={{ padding: "12px 16px", fontSize: "14px", color: "#64748b" }}>
+                    <tr
+                      key={idx}
+                      style={{ transition: "background-color 0.2s" }}
+                    >
+                      <td
+                        style={{
+                          padding: "12px 16px",
+                          fontSize: "14px",
+                          color: "#64748b",
+                        }}
+                      >
                         {startIndex + idx + 1}
                       </td>
                       {report.config.columns.map((column) => (
                         <td
                           key={column}
-                          style={{ padding: "12px 16px", fontSize: "14px", color: "#111827" }}
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: "14px",
+                            color: "#111827",
+                          }}
                         >
                           {getCellValue(row[column])}
                         </td>
@@ -154,17 +268,36 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         </div>
 
         {/* Pagination */}
-        <div style={{ padding: "16px", borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          style={{
+            padding: "16px",
+            borderTop: "1px solid #e2e8f0",
+            backgroundColor: "#f8fafc",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "14px", color: "#475569" }}>每页显示</span>
+              <span style={{ fontSize: "14px", color: "#475569" }}>
+                每页显示
+              </span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                style={{ padding: "4px 8px", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "14px" }}
+                style={{
+                  padding: "4px 8px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                }}
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -182,7 +315,15 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                style={{ padding: "8px", color: "#475569", borderRadius: "6px", border: "none", background: "transparent", cursor: currentPage === 1 ? "not-allowed" : "pointer", opacity: currentPage === 1 ? 0.5 : 1 }}
+                style={{
+                  padding: "8px",
+                  color: "#475569",
+                  borderRadius: "6px",
+                  border: "none",
+                  background: "transparent",
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                  opacity: currentPage === 1 ? 0.5 : 1,
+                }}
               >
                 <ChevronLeft sx={{ width: 16, height: 16 }} />
               </button>
@@ -192,7 +333,16 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                style={{ padding: "8px", color: "#475569", borderRadius: "6px", border: "none", background: "transparent", cursor: currentPage === totalPages ? "not-allowed" : "pointer", opacity: currentPage === totalPages ? 0.5 : 1 }}
+                style={{
+                  padding: "8px",
+                  color: "#475569",
+                  borderRadius: "6px",
+                  border: "none",
+                  background: "transparent",
+                  cursor:
+                    currentPage === totalPages ? "not-allowed" : "pointer",
+                  opacity: currentPage === totalPages ? 0.5 : 1,
+                }}
               >
                 <ChevronRight sx={{ width: 16, height: 16 }} />
               </button>

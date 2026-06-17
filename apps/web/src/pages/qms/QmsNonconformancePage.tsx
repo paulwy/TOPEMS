@@ -123,32 +123,40 @@ const QmsNonconformancePage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
-      "严重": { bg: "#fee2e2", color: "#dc2626" },
-      "一般": { bg: "#fef9c3", color: "#ca8a04" },
-      "轻微": { bg: "#dcfce7", color: "#16a34a" },
+      严重: { bg: "#fee2e2", color: "#dc2626" },
+      一般: { bg: "#fef9c3", color: "#ca8a04" },
+      轻微: { bg: "#dcfce7", color: "#16a34a" },
     };
     const colors = severityMap[severity] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
       <Chip
         label={severity}
         size="small"
-        sx={{ backgroundColor: colors.bg, color: colors.color, fontWeight: 500 }}
+        sx={{
+          backgroundColor: colors.bg,
+          color: colors.color,
+          fontWeight: 500,
+        }}
       />
     );
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "待评审": { bg: "#fef9c3", color: "#ca8a04" },
-      "处理中": { bg: "#dbeafe", color: "#2563eb" },
-      "已关闭": { bg: "#dcfce7", color: "#16a34a" },
+      待评审: { bg: "#fef9c3", color: "#ca8a04" },
+      处理中: { bg: "#dbeafe", color: "#2563eb" },
+      已关闭: { bg: "#dcfce7", color: "#16a34a" },
     };
     const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
       <Chip
         label={status}
         size="small"
-        sx={{ backgroundColor: colors.bg, color: colors.color, fontWeight: 500 }}
+        sx={{
+          backgroundColor: colors.bg,
+          color: colors.color,
+          fontWeight: 500,
+        }}
       />
     );
   };
@@ -199,8 +207,10 @@ const QmsNonconformancePage: React.FC = () => {
     const matchesSearch =
       nc.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       nc.nonconformance_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || nc.nonconformance_type === typeFilter;
-    const matchesSeverity = severityFilter === "all" || nc.severity === severityFilter;
+    const matchesType =
+      typeFilter === "all" || nc.nonconformance_type === typeFilter;
+    const matchesSeverity =
+      severityFilter === "all" || nc.severity === severityFilter;
     const matchesStatus = statusFilter === "all" || nc.status === statusFilter;
     return matchesSearch && matchesType && matchesSeverity && matchesStatus;
   });
@@ -313,7 +323,8 @@ const QmsNonconformancePage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                  background:
+                    "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
                   borderRadius: 2,
                   display: "flex",
                   alignItems: "center",
@@ -325,11 +336,18 @@ const QmsNonconformancePage: React.FC = () => {
               <Box>
                 <Typography
                   variant="h6"
-                  sx={{ fontWeight: 700, color: "slate.900", fontSize: "1.25rem" }}
+                  sx={{
+                    fontWeight: 700,
+                    color: "slate.900",
+                    fontSize: "1.25rem",
+                  }}
                 >
                   不合格品管理
                 </Typography>
-                <Typography variant="caption" sx={{ color: "slate.500", fontSize: "0.75rem" }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
+                >
                   Nonconformance Management
                 </Typography>
               </Box>
@@ -372,13 +390,21 @@ const QmsNonconformancePage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                  <AlertTriangle
+                    sx={{ width: 20, height: 20, color: "#dc2626" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     不合格品总数
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.total}
                   </Typography>
                 </Box>
@@ -402,10 +428,16 @@ const QmsNonconformancePage: React.FC = () => {
                   <Filter sx={{ width: 20, height: 20, color: "#ca8a04" }} />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     待评审
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.pending}
                   </Typography>
                 </Box>
@@ -426,13 +458,21 @@ const QmsNonconformancePage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: "#2563eb" }} />
+                  <AlertTriangle
+                    sx={{ width: 20, height: 20, color: "#2563eb" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     处理中
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.inProgress}
                   </Typography>
                 </Box>
@@ -453,13 +493,21 @@ const QmsNonconformancePage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <AlertTriangle
+                    sx={{ width: 20, height: 20, color: "#16a34a" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     已关闭
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.closed}
                   </Typography>
                 </Box>
@@ -478,8 +526,13 @@ const QmsNonconformancePage: React.FC = () => {
               pb: 0,
             }}
           >
-            <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <AlertTriangle style={{ width: 20, height: 20, color: "#3b82f6" }} />
+            <Typography
+              variant="h6"
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <AlertTriangle
+                style={{ width: 20, height: 20, color: "#3b82f6" }}
+              />
               不合格品列表
             </Typography>
           </CardHeader>
@@ -493,7 +546,11 @@ const QmsNonconformancePage: React.FC = () => {
                 sx={{ minWidth: 250 }}
                 slotProps={{
                   input: {
-                    startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
+                    startAdornment: (
+                      <Search
+                        style={{ width: 18, height: 18, marginRight: 8 }}
+                      />
+                    ),
                   },
                 }}
               />
@@ -544,7 +601,12 @@ const QmsNonconformancePage: React.FC = () => {
         </Card>
       </Box>
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建不合格单</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -552,7 +614,9 @@ const QmsNonconformancePage: React.FC = () => {
               fullWidth
               label="产品名称 *"
               value={formData.product_name}
-              onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, product_name: e.target.value })
+              }
               placeholder="请输入产品名称"
             />
             <TextField
@@ -560,7 +624,12 @@ const QmsNonconformancePage: React.FC = () => {
               type="number"
               label="不合格数量"
               value={formData.nonconformance_quantity}
-              onChange={(e) => setFormData({ ...formData, nonconformance_quantity: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  nonconformance_quantity: e.target.value,
+                })
+              }
               placeholder="请输入不合格数量"
             />
             <TextField
@@ -568,7 +637,12 @@ const QmsNonconformancePage: React.FC = () => {
               select
               label="不合格类型"
               value={formData.nonconformance_type}
-              onChange={(e) => setFormData({ ...formData, nonconformance_type: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  nonconformance_type: e.target.value,
+                })
+              }
             >
               <option value="外观缺陷">外观缺陷</option>
               <option value="尺寸偏差">尺寸偏差</option>
@@ -581,7 +655,9 @@ const QmsNonconformancePage: React.FC = () => {
               select
               label="严重程度"
               value={formData.severity}
-              onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, severity: e.target.value })
+              }
             >
               <option value="严重">严重</option>
               <option value="一般">一般</option>
@@ -592,7 +668,9 @@ const QmsNonconformancePage: React.FC = () => {
               select
               label="处理方式"
               value={formData.handling_method}
-              onChange={(e) => setFormData({ ...formData, handling_method: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, handling_method: e.target.value })
+              }
             >
               <option value="退货处理">退货处理</option>
               <option value="返工处理">返工处理</option>
@@ -606,55 +684,96 @@ const QmsNonconformancePage: React.FC = () => {
           <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleSave} sx={{ bgcolor: "#3b82f6" }}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            sx={{ bgcolor: "#3b82f6" }}
+          >
             保存
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>不合格品详情</DialogTitle>
         <DialogContent>
           {selectedNC && (
-            <Box sx={{ pt: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{
+                pt: 2,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 2,
+              }}
+            >
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   不合格单号
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedNC.nonconformance_no}</Box>
+                <Box sx={{ fontWeight: 500 }}>
+                  {selectedNC.nonconformance_no}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   产品名称
                 </Box>
                 <Box sx={{ fontWeight: 500 }}>{selectedNC.product_name}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   不合格数量
                 </Box>
                 <Box>{selectedNC.nonconformance_quantity}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   不合格类型
                 </Box>
                 <Box>{selectedNC.nonconformance_type}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   严重程度
                 </Box>
-                <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedNC.severity)}</Box>
+                <Box sx={{ mt: 0.5 }}>
+                  {getSeverityBadge(selectedNC.severity)}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   处理方式
                 </Box>
                 <Box>{selectedNC.handling_method}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   状态
                 </Box>
                 <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedNC.status)}</Box>

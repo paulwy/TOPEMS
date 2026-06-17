@@ -23,6 +23,7 @@ pub mod office_supplies;
 pub mod opening_balance;
 pub mod vehicles;
 pub mod voucher;
+pub mod plugin;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -66,4 +67,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(vehicles::create_routes())
         .merge(announcement::create_routes())
         .merge(hrm_integration_example::create_routes())
+        .merge(plugin::create_routes())
 }

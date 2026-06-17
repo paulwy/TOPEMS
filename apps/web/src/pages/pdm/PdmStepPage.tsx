@@ -57,7 +57,12 @@ const PdmStepPage: React.FC = () => {
           ...item,
           sort_order: item.sort_order || item.order || 0,
           duration: item.duration_hours || item.duration || 0,
-          status: item.status === "active" ? "启用" : item.status === "inactive" ? "禁用" : (item.status || "正常"),
+          status:
+            item.status === "active"
+              ? "启用"
+              : item.status === "inactive"
+                ? "禁用"
+                : item.status || "正常",
         }));
         setSteps(adapted);
       } else {
@@ -169,7 +174,9 @@ const PdmStepPage: React.FC = () => {
         description: formData.description || undefined,
         process_id: formData.process_id || "",
         sort_order: formData.sort_order,
-        duration_hours: formData.duration_hours ? parseFloat(formData.duration_hours) : undefined,
+        duration_hours: formData.duration_hours
+          ? parseFloat(formData.duration_hours)
+          : undefined,
         equipment_required: formData.equipment_required || undefined,
       });
       toast.success("工序步骤创建成功");
@@ -183,7 +190,8 @@ const PdmStepPage: React.FC = () => {
 
   const stats = {
     total: steps.length,
-    active: steps.filter((s) => s.status === "启用" || s.status === "正常").length,
+    active: steps.filter((s) => s.status === "启用" || s.status === "正常")
+      .length,
     inactive: steps.filter((s) => s.status === "禁用").length,
   };
 
@@ -501,7 +509,10 @@ const PdmStepPage: React.FC = () => {
               type="number"
               value={formData.sort_order}
               onChange={(e) =>
-                setFormData({ ...formData, sort_order: parseInt(e.target.value) || 1 })
+                setFormData({
+                  ...formData,
+                  sort_order: parseInt(e.target.value) || 1,
+                })
               }
             />
             <TextField

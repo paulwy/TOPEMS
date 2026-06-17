@@ -33,7 +33,7 @@
   "email": "test@example.com",
   "role": "admin",
   "roles": ["admin", "user"],
-  "permissions": ["rs:read", "rs:write"],
+  "permissions": ["iam:users_read", "iam:roles_read"],
   "is_active": true,
   "is_superuser": false,
   "created_at": "2026-05-20T10:00:00Z"
@@ -208,7 +208,7 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
       "email": "test@example.com",
       "role": "管理员",
       "roles": ["管理员"],
-      "permissions": ["rs:read", "rs:write", "rs:delete", "rs:admin", ...],
+      "permissions": ["iam:users_read", "iam:users_create", "iam:roles_read", ...],
       "is_active": true,
       "created_at": "2026-05-20T10:00:00Z"
     }
@@ -296,7 +296,7 @@ curl -X POST http://localhost:8000/api/v1/auth/refresh \
     "username": "testuser",
     "is_superuser": false,
     "roles": ["管理员"],
-    "permissions": ["rs:read", "rs:write"]
+    "permissions": ["iam:users_read", "iam:roles_read"]
   },
   "message": "Token刷新成功",
   "code": 200,
@@ -334,7 +334,7 @@ curl -X GET http://localhost:8000/api/v1/users/me \
     "email": "test@example.com",
     "role": "管理员",
     "roles": ["管理员"],
-    "permissions": ["rs:read", "rs:write", "rs:delete", "rs:admin", ...],
+    "permissions": ["iam:users_read", "iam:users_create", "iam:roles_read", ...],
     "is_active": true,
     "is_superuser": false,
     "created_at": "2026-05-20T10:00:00Z",
@@ -392,18 +392,16 @@ curl -X GET http://localhost:8000/api/v1/users/me/permissions \
     ],
     "permissions": [
       {
-        "id": "00000001-0000-0000-0000-000000000001",
-        "name": "rs:read",
-        "resource": "rs",
-        "action": "read",
-        "description": "读取科研研发数据"
+        "id": "iam:users_read",
+        "name": "读取用户",
+        "category": "用户管理",
+        "description": "查看用户列表和详情"
       },
       {
-        "id": "00000001-0000-0000-0000-000000000002",
-        "name": "rs:write",
-        "resource": "rs",
-        "action": "write",
-        "description": "创建和编辑科研研发数据"
+        "id": "iam:roles_read",
+        "name": "读取角色",
+        "category": "角色管理",
+        "description": "查看角色列表"
       }
     ]
   },
@@ -426,7 +424,7 @@ curl -X GET http://localhost:8000/api/v1/users/me/permissions \
 **请求体**:
 ```json
 {
-  "permission": "rs:project:create"
+  "permission": "iam:users_create"
 }
 ```
 
@@ -450,7 +448,7 @@ curl -X POST http://localhost:8000/api/v1/users/me/permissions/check \
   "success": true,
   "data": {
     "allowed": true,
-    "permission": "rs:read",
+    "permission": "iam:users_create",
     "user_id": "550e8400-e29b-41d4-a716-446655440000",
     "username": "testuser"
   },
@@ -640,11 +638,10 @@ curl -X GET http://localhost:8000/api/v1/roles/role-001/permissions \
   "success": true,
   "data": [
     {
-      "id": "perm-001",
-      "name": "rs:project:read",
-      "resource": "project",
-      "action": "read",
-      "description": "查看研发项目"
+      "id": "iam:users_read",
+      "name": "读取用户",
+      "category": "用户管理",
+      "description": "查看用户列表和详情"
     }
   ],
   "error": null
@@ -731,18 +728,16 @@ curl -X GET http://localhost:8000/api/v1/permissions \
   "success": true,
   "data": [
     {
-      "id": "perm-001",
-      "name": "rs:project:read",
-      "resource": "project",
-      "action": "read",
-      "description": "查看研发项目"
+      "id": "iam:users_read",
+      "name": "读取用户",
+      "category": "用户管理",
+      "description": "查看用户列表和详情"
     },
     {
-      "id": "perm-002",
-      "name": "rs:project:write",
-      "resource": "project",
-      "action": "write",
-      "description": "编辑研发项目"
+      "id": "iam:users_create",
+      "name": "创建用户",
+      "category": "用户管理",
+      "description": "创建新用户"
     }
   ],
   "error": null
@@ -939,19 +934,50 @@ curl -X GET "http://localhost:8000/api/v1/access-logs/user/user-001?limit=20" \
 
 ## 9. 权限命名规范
 
-TOPEMS 采用资源:操作 格式的权限命名规范：
+TOPEMS 采用 `模块:资源_操作` 格式的权限命名规范：
 
-| 资源 | 操作 | 说明 |
-|------|------|------|
-| project | read, write, delete | 研发项目 |
-| experiment | read, write, delete | 试验记录 |
-| sample | read, write, delete | 实验室样品 |
-| standard | read, write, delete | 质量标准 |
-| check | read, write, delete | 质量检查 |
-| supplier | read, write, delete | 供应商 |
-| process | read, write, delete | 生产工艺 |
-| formula | read, write, delete | 生产配方 |
-| batch | read, write, delete | 生产批次 |
+### 9.1 IAM 模块权限
+
+| 权限代码 | 说明 | 类别 |
+|----------|------|------|
+| iam:users_read | 读取用户 | 用户管理 |
+| iam:users_create | 创建用户 | 用户管理 |
+| iam:users_update | 更新用户 | 用户管理 |
+| iam:users_delete | 删除用户 | 用户管理 |
+| iam:roles_read | 读取角色 | 角色管理 |
+| iam:roles_create | 创建角色 | 角色管理 |
+| iam:roles_update | 更新角色 | 角色管理 |
+| iam:roles_delete | 删除角色 | 角色管理 |
+| iam:permissions_read | 读取权限 | 权限管理 |
+| iam:permissions_update | 更新权限 | 权限管理 |
+| iam:audit_read | 读取审计日志 | 系统管理 |
+| iam:system_read | 系统设置读取 | 系统管理 |
+| iam:system_update | 系统设置更新 | 系统管理 |
+| iam:dictionaries_read | 字典读取 | 系统管理 |
+| iam:dictionaries_update | 字典更新 | 系统管理 |
+| iam:plugins_read | 插件读取 | 系统管理 |
+| iam:plugins_update | 插件更新 | 系统管理 |
+
+### 9.2 其他模块权限
+
+| 权限代码 | 说明 | 类别 |
+|----------|------|------|
+| pm:projects_read | 读取项目 | 项目管理 |
+| pm:projects_create | 创建项目 | 项目管理 |
+| pm:projects_update | 更新项目 | 项目管理 |
+| pm:projects_delete | 删除项目 | 项目管理 |
+| doc:documents_read | 读取文档 | 文档管理 |
+| doc:documents_create | 创建文档 | 文档管理 |
+| doc:documents_update | 更新文档 | 文档管理 |
+| doc:documents_delete | 删除文档 | 文档管理 |
+| workflow:workflows_read | 读取工作流 | 工作流管理 |
+| workflow:workflows_create | 创建工作流 | 工作流管理 |
+| workflow:workflows_update | 更新工作流 | 工作流管理 |
+| workflow:workflows_delete | 删除工作流 | 工作流管理 |
+
+### 9.3 超级管理员
+
+超级用户 (`is_superuser: true`) 拥有特殊权限 `*`，可以访问所有功能。
 
 ---
 
@@ -959,5 +985,6 @@ TOPEMS 采用资源:操作 格式的权限命名规范：
 
 | 版本 | 日期 | 更新内容 |
 |------|------|----------|
+| v3.0.0 | 2026-06-17 | 统一权限命名规范为 `模块:资源_操作` 格式 |
 | v2.1.0 | 2026-05-22 | 完善权限管理接口 |
 | v1.0.0 | 2026-05-20 | 初始版本 |

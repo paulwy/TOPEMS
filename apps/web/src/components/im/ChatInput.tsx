@@ -78,7 +78,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div style={{ borderTop: "1px solid #e5e7eb", backgroundColor: "#ffffff", padding: 16 }}>
+    <div
+      style={{
+        borderTop: "1px solid #e5e7eb",
+        backgroundColor: "#ffffff",
+        padding: 16,
+      }}
+    >
       <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
         <div style={{ position: "relative" }}>
           <Button
@@ -92,8 +98,30 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
 
           {showFileMenu && (
-            <div style={{ position: "absolute", bottom: "100%", left: 0, marginBottom: 8, width: 192, backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", border: "1px solid #e5e7eb", padding: 4, zIndex: 10 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, cursor: "pointer" }}>
+            <div
+              style={{
+                position: "absolute",
+                bottom: "100%",
+                left: 0,
+                marginBottom: 8,
+                width: 192,
+                backgroundColor: "#ffffff",
+                borderRadius: 8,
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                border: "1px solid #e5e7eb",
+                padding: 4,
+                zIndex: 10,
+              }}
+            >
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: 8,
+                  cursor: "pointer",
+                }}
+              >
                 <Image style={{ width: 16, height: 16, color: "#6b7280" }} />
                 <span style={{ fontSize: 14, color: "#374151" }}>图片</span>
                 <input
@@ -105,7 +133,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   disabled={uploading}
                 />
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, cursor: "pointer" }}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: 8,
+                  cursor: "pointer",
+                }}
+              >
                 <FileText style={{ width: 16, height: 16, color: "#6b7280" }} />
                 <span style={{ fontSize: 14, color: "#374151" }}>文件</span>
                 <input
@@ -146,8 +182,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       </div>
 
       {uploading && (
-        <div style={{ marginTop: 8, fontSize: 14, color: "#6b7280", display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 16, height: 16, borderRadius: "9999px", border: "2px solid #e5e7eb", borderTopColor: "#6366f1", animation: "spin 1s linear infinite" }} />
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 14,
+            color: "#6b7280",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: "9999px",
+              border: "2px solid #e5e7eb",
+              borderTopColor: "#6366f1",
+              animation: "spin 1s linear infinite",
+            }}
+          />
           上传中...
         </div>
       )}

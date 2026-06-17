@@ -14,14 +14,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  Clock,
-  Search,
-  Users,
-  Calendar,
-} from "lucide-react";
+import { Plus, Eye, Clock, Search, Users, Calendar } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ehsApi } from "@/api/ehs";
@@ -61,7 +54,14 @@ const EhsDrillPage: React.FC = () => {
       if (response.success && response.data) {
         const adapted = (response.data as any).data.map((item: any) => ({
           ...item,
-          status: item.status === "completed" ? "已完成" : item.status === "scheduled" ? "已计划" : item.status === "in_progress" ? "进行中" : item.status,
+          status:
+            item.status === "completed"
+              ? "已完成"
+              : item.status === "scheduled"
+                ? "已计划"
+                : item.status === "in_progress"
+                  ? "进行中"
+                  : item.status,
         }));
         setDrills(adapted);
       } else {
@@ -175,7 +175,10 @@ const EhsDrillPage: React.FC = () => {
         drill_no: formData.drill_no,
         drill_name: formData.name,
         drill_date: formData.date || null,
-        participants: formData.participants.split(",").map((s) => s.trim()).filter((s) => s),
+        participants: formData.participants
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s),
         location: formData.location || null,
         duration_hours: parseInt(formData.duration) || 0,
         summary: formData.evaluation || null,
@@ -328,9 +331,7 @@ const EhsDrillPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Clock
-                    sx={{ width: 20, height: 20, color: "#f59e0b" }}
-                  />
+                  <Clock sx={{ width: 20, height: 20, color: "#f59e0b" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -363,9 +364,7 @@ const EhsDrillPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Clock
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
+                  <Clock sx={{ width: 20, height: 20, color: "#16a34a" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -398,9 +397,7 @@ const EhsDrillPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Clock
-                    sx={{ width: 20, height: 20, color: "#3b82f6" }}
-                  />
+                  <Clock sx={{ width: 20, height: 20, color: "#3b82f6" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -433,9 +430,7 @@ const EhsDrillPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Clock
-                    sx={{ width: 20, height: 20, color: "#ca8a04" }}
-                  />
+                  <Clock sx={{ width: 20, height: 20, color: "#ca8a04" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -470,9 +465,7 @@ const EhsDrillPage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <Clock
-                style={{ width: 20, height: 20, color: "#f59e0b" }}
-              />
+              <Clock style={{ width: 20, height: 20, color: "#f59e0b" }} />
               演练记录列表
             </Typography>
           </CardHeader>

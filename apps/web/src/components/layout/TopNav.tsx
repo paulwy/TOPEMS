@@ -75,7 +75,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
   const renderNavItem = (item: NavItem) => {
     const isActive =
       item.path === location.pathname ||
-      item.path && location.pathname.startsWith(item.path + "/");
+      (item.path && location.pathname.startsWith(item.path + "/"));
     const isMenuOpen = openMenu?.label === item.label;
 
     return (

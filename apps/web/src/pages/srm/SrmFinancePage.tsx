@@ -28,7 +28,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { srmApi } from "@/api/srm";
 import type { SupplierContract, PurchaseOrder } from "@/api/srm";
 import { toast } from "react-toastify";
-import { CreatePurchaseOrderRequest, CreateSupplierContractRequest } from "@/api/srm";
+import {
+  CreatePurchaseOrderRequest,
+  CreateSupplierContractRequest,
+} from "@/api/srm";
 
 interface FinanceRecord {
   id: string;
@@ -75,38 +78,55 @@ const SrmFinancePage: React.FC = () => {
       if (contractsRes.success && contractsRes.data) {
         const data = contractsRes.data as any;
         const items = Array.isArray(data) ? data : data.contracts || [];
-        invoiceRecords.push(...items.map((item: any) => ({
-          ...item,
-          record_no: item.contract_no || item.record_no || "",
-          supplier_name: item.supplier_name || "",
-          type: "contract",
-          amount: item.total_amount || 0,
-          status: item.status === "active" ? "有效" : 
-                  item.status === "expired" ? "已过期" : 
-                  item.status === "draft" ? "草稿" : 
-                  item.status === "terminated" ? "已终止" : item.status,
-          date: item.sign_date || item.start_date || item.created_at,
-          description: item.remarks || "",
-        })));
+        invoiceRecords.push(
+          ...items.map((item: any) => ({
+            ...item,
+            record_no: item.contract_no || item.record_no || "",
+            supplier_name: item.supplier_name || "",
+            type: "contract",
+            amount: item.total_amount || 0,
+            status:
+              item.status === "active"
+                ? "有效"
+                : item.status === "expired"
+                  ? "已过期"
+                  : item.status === "draft"
+                    ? "草稿"
+                    : item.status === "terminated"
+                      ? "已终止"
+                      : item.status,
+            date: item.sign_date || item.start_date || item.created_at,
+            description: item.remarks || "",
+          })),
+        );
       }
 
       if (ordersRes.success && ordersRes.data) {
         const data = ordersRes.data as any;
         const items = Array.isArray(data) ? data : data.orders || [];
-        paymentRecords.push(...items.map((item: any) => ({
-          ...item,
-          record_no: item.po_no || item.record_no || "",
-          supplier_name: "",
-          type: "order",
-          amount: item.total_amount || 0,
-          status: item.status === "pending" ? "待处理" : 
-                  item.status === "processing" ? "处理中" : 
-                  item.status === "delivered" ? "已交付" : 
-                  item.status === "completed" ? "已完成" : 
-                  item.status === "cancelled" ? "已取消" : item.status,
-          date: item.order_date || item.created_at,
-          description: item.remarks || "",
-        })));
+        paymentRecords.push(
+          ...items.map((item: any) => ({
+            ...item,
+            record_no: item.po_no || item.record_no || "",
+            supplier_name: "",
+            type: "order",
+            amount: item.total_amount || 0,
+            status:
+              item.status === "pending"
+                ? "待处理"
+                : item.status === "processing"
+                  ? "处理中"
+                  : item.status === "delivered"
+                    ? "已交付"
+                    : item.status === "completed"
+                      ? "已完成"
+                      : item.status === "cancelled"
+                        ? "已取消"
+                        : item.status,
+            date: item.order_date || item.created_at,
+            description: item.remarks || "",
+          })),
+        );
       }
 
       setRecords([...paymentRecords, ...invoiceRecords]);
@@ -119,11 +139,18 @@ const SrmFinancePage: React.FC = () => {
   };
 
   const getTypeBadge = (type: string) => {
-    const typeMap: Record<string, { bg: string; color: string; label: string }> = {
+    const typeMap: Record<
+      string,
+      { bg: string; color: string; label: string }
+    > = {
       order: { bg: "#dbeafe", color: "#2563eb", label: "订单" },
       contract: { bg: "#dcfce7", color: "#15803d", label: "合同" },
     };
-    const style = typeMap[type] || { bg: "#f1f5f9", color: "#475569", label: type };
+    const style = typeMap[type] || {
+      bg: "#f1f5f9",
+      color: "#475569",
+      label: type,
+    };
     return (
       <Chip
         label={style.label}
@@ -135,15 +162,15 @@ const SrmFinancePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "待处理": { bg: "#fef3c7", color: "#b45309" },
-      "处理中": { bg: "#dbeafe", color: "#2563eb" },
-      "已交付": { bg: "#dcfce7", color: "#15803d" },
-      "已完成": { bg: "#e0e7ff", color: "#6366f1" },
-      "已取消": { bg: "#f1f5f9", color: "#64748b" },
-      "有效": { bg: "#dcfce7", color: "#15803d" },
-      "已过期": { bg: "#fee2e2", color: "#b91c1c" },
-      "草稿": { bg: "#f1f5f9", color: "#64748b" },
-      "已终止": { bg: "#fde68a", color: "#92400e" },
+      待处理: { bg: "#fef3c7", color: "#b45309" },
+      处理中: { bg: "#dbeafe", color: "#2563eb" },
+      已交付: { bg: "#dcfce7", color: "#15803d" },
+      已完成: { bg: "#e0e7ff", color: "#6366f1" },
+      已取消: { bg: "#f1f5f9", color: "#64748b" },
+      有效: { bg: "#dcfce7", color: "#15803d" },
+      已过期: { bg: "#fee2e2", color: "#b91c1c" },
+      草稿: { bg: "#f1f5f9", color: "#64748b" },
+      已终止: { bg: "#fde68a", color: "#92400e" },
     };
     const colors = statusMap[status] || { bg: "#f1f5f9", color: "#475569" };
     return (
@@ -248,8 +275,15 @@ const SrmFinancePage: React.FC = () => {
     totalAmount: records.reduce((sum, r) => sum + r.amount, 0),
     orders: records.filter((r) => r.type === "order").length,
     contracts: records.filter((r) => r.type === "contract").length,
-    pendingAmount: records.filter((r) => r.status === "待处理" || r.status === "处理中" || r.status === "有效").reduce((sum, r) => sum + r.amount, 0),
-    completedAmount: records.filter((r) => r.status === "已完成" || r.status === "已交付").reduce((sum, r) => sum + r.amount, 0),
+    pendingAmount: records
+      .filter(
+        (r) =>
+          r.status === "待处理" || r.status === "处理中" || r.status === "有效",
+      )
+      .reduce((sum, r) => sum + r.amount, 0),
+    completedAmount: records
+      .filter((r) => r.status === "已完成" || r.status === "已交付")
+      .reduce((sum, r) => sum + r.amount, 0),
   };
 
   const typeDistribution = [
@@ -258,13 +292,31 @@ const SrmFinancePage: React.FC = () => {
   ];
 
   const statusDistribution = [
-    { name: "待处理", value: records.filter((r) => r.status === "待处理").length },
-    { name: "处理中", value: records.filter((r) => r.status === "处理中").length },
-    { name: "已完成", value: records.filter((r) => r.status === "已完成").length },
-    { name: "已交付", value: records.filter((r) => r.status === "已交付").length },
-    { name: "已取消", value: records.filter((r) => r.status === "已取消").length },
+    {
+      name: "待处理",
+      value: records.filter((r) => r.status === "待处理").length,
+    },
+    {
+      name: "处理中",
+      value: records.filter((r) => r.status === "处理中").length,
+    },
+    {
+      name: "已完成",
+      value: records.filter((r) => r.status === "已完成").length,
+    },
+    {
+      name: "已交付",
+      value: records.filter((r) => r.status === "已交付").length,
+    },
+    {
+      name: "已取消",
+      value: records.filter((r) => r.status === "已取消").length,
+    },
     { name: "有效", value: records.filter((r) => r.status === "有效").length },
-    { name: "已过期", value: records.filter((r) => r.status === "已过期").length },
+    {
+      name: "已过期",
+      value: records.filter((r) => r.status === "已过期").length,
+    },
   ];
 
   if (loading) {
@@ -480,9 +532,7 @@ const SrmFinancePage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <DollarSign
-                style={{ width: 20, height: 20, color: "#10b981" }}
-              />
+              <DollarSign style={{ width: 20, height: 20, color: "#10b981" }} />
               财务记录
             </Typography>
           </CardHeader>
@@ -523,7 +573,9 @@ const SrmFinancePage: React.FC = () => {
         <DialogTitle>新增财务单据</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 fullWidth
                 select

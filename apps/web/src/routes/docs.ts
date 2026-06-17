@@ -1,13 +1,13 @@
 import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
-const DocumentsPage = lazy(() => import("../pages/DocumentsPage"));
-const DocumentCenterPage = lazy(() => import("../pages/DocumentCenterPage"));
-const KnowledgeBasePage = lazy(() => import("../pages/KnowledgeBasePage"));
+const DocumentsPage = lazy(() => import("../pages/common/DocumentsPage"));
+const DocumentCenterPage = lazy(() => import("../pages/common/DocumentCenterPage"));
+const KnowledgeBasePage = lazy(() => import("../pages/common/KnowledgeBasePage"));
 const TemplateManagementPage = lazy(
-  () => import("../pages/TemplateManagementPage"),
+  () => import("../pages/templates/TemplateManagementPage"),
 );
-const HelpCenterPage = lazy(() => import("../pages/HelpCenterPage"));
+const HelpCenterPage = lazy(() => import("../pages/shared/HelpCenterPage"));
 
 export const docsRoutes: RouteConfig[] = [
   {

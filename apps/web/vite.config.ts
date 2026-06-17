@@ -1,9 +1,23 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import {federation} from '@module-federation/vite';
+import { federation } from '@module-federation/vite'
 
 import type { IncomingMessage, ServerResponse } from 'http';
+
+// Deployment mode: 'module-federation' | 'static' | 'hybrid'
+const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'module-federation';
+
+// Remote entry URL for Module Federation
+const getRemoteEntryUrl = () => {
+  const env = loadEnv('', process.cwd(), '');
+  if (DEPLOYMENT_MODE === 'static') {
+    // In static mode, use local chunks instead of remote
+    return undefined;
+  }
+  // Dynamic mode: use remote entry from env or default to localhost:3001/remoteEntry.js
+  return env.VITE_CORE_REMOTE_ENTRY || 'http://localhost:3001/remoteEntry.js';
+};
 
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
@@ -27,169 +41,111 @@ const createServiceProxyConfig = (serviceName: string, target: string, skipRewri
   }
 });
 
-// Environment variable for module loading mode
-const isDev = process.env.NODE_ENV === 'development';
-
 export default defineConfig({
   plugins: [
     react(),
-    // Module Federation Plugin
     federation({
-      name: 'topems-host',
-      // Expose modules that can be consumed by remote apps
-      exposes: {
-        './App': './src/App',
-        './Registry': './src/modules/registry/index.ts',
-        './ModuleLoader': './src/modules/loader/ModuleLoader.tsx',
-      },
-      // Shared dependencies (like React, React-DOM)
+      name: 'topems_portal',
+      /**
+       * Remote modules configuration
+       * 核心模块通过 Module Federation 动态加载
+       *
+       * 部署模式:
+       * - module-federation: 动态加载远程模块 (SaaS)
+       * - static: 静态打包所有模块 (本地安装)
+       * - hybrid: 核心静态 + 插件动态
+       */
+      remotes: DEPLOYMENT_MODE !== 'static' ? {
+        topems_core: getRemoteEntryUrl(),
+      } : {},
+      /**
+       * Shared dependencies - These are shared between host and remotes
+       * 配置为 singleton 模式避免重复加载
+       */
       shared: {
-        react: {
+        'react': {
           singleton: true,
-          requiredVersion: '^18.0.0',
+          requiredVersion: '^19.0.0',
+          strictVersion: true,
         },
         'react-dom': {
           singleton: true,
-          requiredVersion: '^18.0.0',
+          requiredVersion: '^19.0.0',
+          strictVersion: true,
+        },
+        'react-router-dom': {
+          singleton: true,
+          requiredVersion: '^7.0.0',
+          strictVersion: true,
         },
         '@mui/material': {
           singleton: true,
           requiredVersion: '^6.0.0',
+          strictVersion: true,
+        },
+        '@mui/icons-material': {
+          singleton: true,
+          requiredVersion: '^6.0.0',
+          strictVersion: true,
         },
         '@emotion/react': {
           singleton: true,
           requiredVersion: '^11.0.0',
+          strictVersion: true,
         },
         '@emotion/styled': {
           singleton: true,
           requiredVersion: '^11.0.0',
+          strictVersion: true,
         },
-      },
-      // Remote modules configuration
-      remotes: isDev ? {
-        // Remote modules for development
-        // These would be separate apps deployed on different ports
-        // 'plugin-ai': 'plugin_ai@http://localhost:3001/assets/plugin-ai-manifest.json',
-      } : {
-        // Remote modules for production
-        // Loaded from CDN or dedicated servers
+        'zustand': {
+          singleton: true,
+          strictVersion: true,
+        },
+        'i18next': {
+          singleton: true,
+          strictVersion: true,
+        },
+        'react-i18next': {
+          singleton: true,
+          strictVersion: true,
+        },
+        'axios': {
+          singleton: true,
+          requiredVersion: '^1.0.0',
+          strictVersion: true,
+        },
+        'dayjs': {
+          singleton: true,
+          requiredVersion: '^1.11.0',
+          strictVersion: true,
+        },
       },
     }),
   ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
+      '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
+      '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
     },
     dedupe: ['react', 'react-dom', 'scheduler'],
   },
   build: {
+    // Module Federation handles shared dependencies automatically
+    // DO NOT use manualChunks when using Module Federation
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return;
-          
-          const packageName = id.split('node_modules/')[1]?.split('/')[0] || '';
-          const scopedPackage = id.split('node_modules/')[1]?.split('/').slice(0, 2).join('/') || '';
-          
-          // 核心框架 - 必须首先匹配
-          if (/^react$/.test(packageName)) return 'vendor-react';
-          if (/^react-dom$/.test(packageName)) return 'vendor-react';
-          if (/^scheduler$/.test(packageName)) return 'vendor-react';
-          if (/^loose-envify$/.test(packageName)) return 'vendor-react';
-          if (/^object-assign$/.test(packageName)) return 'vendor-react';
-          if (/^prop-types$/.test(packageName)) return 'vendor-react';
-          if (/^react-is$/.test(packageName)) return 'vendor-react';
-          
-          // 路由
-          if (/^react-router(-dom)?$/.test(packageName)) return 'vendor-router';
-          if (/^history$/.test(packageName)) return 'vendor-router';
-          if (/^path-to-regexp$/.test(packageName)) return 'vendor-router';
-          if (/^query-string$/.test(packageName)) return 'vendor-router';
-          
-          // UI 库 - emotion 合并到 shared 以避免循环依赖
-          if (/^@emotion\/react$/.test(scopedPackage)) return 'vendor-shared';
-          if (/^@emotion\/styled$/.test(scopedPackage)) return 'vendor-shared';
-          if (/^@mui\/(material|icons-material|lab)$/.test(scopedPackage)) return 'vendor-mui';
-          if (/^@mui\/system$/.test(scopedPackage)) return 'vendor-mui';
-          if (/^@heroui\/(react|styles)$/.test(scopedPackage)) return 'vendor-heroui';
-          if (/^@nextui-org\/react$/.test(scopedPackage)) return 'vendor-nextui';
-
-          // 图表
-          if (/^recharts$/.test(packageName)) return 'vendor-charts';
-          if (/^victory$/.test(packageName)) return 'vendor-charts';
-          if (/^nivo_/.test(packageName)) return 'vendor-charts';
-          
-          // 数据处理
-          if (/^(xlsx|xlsx-populate|exceljs|file-saver)$/.test(packageName)) return 'vendor-excel';
-          
-          // 状态管理 - 合并到 shared 以避免循环依赖
-          if (/^(zustand|jotai|recoil|valtio)$/.test(packageName)) return 'vendor-shared';
-          
-          // 表单
-          if (/^@hookform\//.test(scopedPackage)) return 'vendor-form';
-          if (/^react-hook-form$/.test(packageName)) return 'vendor-form';
-          
-          // 验证
-          if (/^(yup|zod|joi|superstruct)$/.test(packageName)) return 'vendor-validation';
-          
-          // 工具库
-          if (/^(clsx|tailwind-merge|class-variance-authority)$/.test(packageName)) return 'vendor-utils';
-          if (/^(axios|follow-redirects)$/.test(packageName)) return 'vendor-axios';
-          if (/^(dayjs|date-fns|moment|luxon)$/.test(packageName)) return 'vendor-date';
-          if (/^i18next$/.test(packageName)) return 'vendor-i18n';
-          if (/^react-i18next$/.test(packageName)) return 'vendor-i18n';
-          if (/^lodash(-es)?$/.test(packageName)) return 'vendor-lodash';
-          
-          // 图标和动画
-          if (/^lucide-react$/.test(packageName)) return 'vendor-icons';
-          if (/^framer-motion$/.test(packageName)) return 'vendor-animation';
-          if (/^react-spring$/.test(packageName)) return 'vendor-animation';
-          
-          // 地图 - 合并到 shared 以避免循环依赖
-          if (/^leaflet$/.test(packageName)) return 'vendor-shared';
-          if (/^react-leaflet$/.test(packageName)) return 'vendor-shared';
-          if (/^leaflet-draw$/.test(packageName)) return 'vendor-shared';
-          if (/^leaflet-measure$/.test(packageName)) return 'vendor-shared';
-          
-          // 3D - 合并到 shared 以避免循环依赖
-          if (/^three$/.test(packageName)) return 'vendor-shared';
-          if (/^@react-three\//.test(scopedPackage)) return 'vendor-shared';
-          
-          // 特殊功能
-          if (/^@monaco-editor\//.test(scopedPackage)) return 'vendor-monaco';
-          if (/^pdfjs-dist$/.test(packageName)) return 'vendor-pdf';
-          if (/^react-pdf$/.test(packageName)) return 'vendor-pdf';
-          if (/^mapbox-gl$/.test(packageName)) return 'vendor-map';
-          if (/^react-map-gl$/.test(packageName)) return 'vendor-map';
-          
-          // Markdown 相关
-          if (/^react-markdown$/.test(packageName)) return 'vendor-markdown';
-          if (/^remark-gfm$/.test(packageName)) return 'vendor-markdown';
-          if (/^react-syntax-highlighter$/.test(packageName)) return 'vendor-markdown';
-          
-          // Toast
-          if (/^react-toastify$/.test(packageName)) return 'vendor-toast';
-          
-          // Docx preview
-          if (/^docx-preview$/.test(packageName)) return 'vendor-docx';
-          
-          // TanStack
-          if (/^@tanstack\/react-query$/.test(scopedPackage)) return 'vendor-query';
-          if (/^@tanstack\/react-table$/.test(scopedPackage)) return 'vendor-table';
-          if (/^@tanstack\/react-virtual$/.test(scopedPackage)) return 'vendor-virtual';
-          
-          // 其他明确命名的包
-          if (/^@amap\/amap-jsapi-loader$/.test(scopedPackage)) return 'vendor-amap';
-          if (/^heatmap\.js$/.test(packageName)) return 'vendor-heatmap';
-          if (/^react-heatmap-grid$/.test(packageName)) return 'vendor-heatmap';
-          if (/^@dnd-kit\//.test(scopedPackage)) return 'vendor-dnd';
-          if (/^react-window$/.test(packageName)) return 'vendor-virtualization';
-          if (/^react-virtualized$/.test(packageName)) return 'vendor-virtualization';
-          
-          // 其余都归入 vendor-shared
-          return 'vendor-shared';
-        },
+        // manualChunks is disabled when using Module Federation
+        // The federation plugin automatically optimizes shared dependencies
       },
+      // In static mode, externalize remote module imports
+      // so they are not bundled but loaded at runtime
+      external: DEPLOYMENT_MODE === 'static' ? [
+        'topems_core',
+        /^topems_core\/.*/,
+      ] : [],
     },
     chunkSizeWarningLimit: 1500,
     sourcemap: false,
@@ -206,9 +162,7 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: true,
     hmr: {
-      host: 'localhost',
-      protocol: 'ws',
-      port: 3000
+      path: '/vite-hmr',
     },
     fs: {
       allow: ['..'],
@@ -260,11 +214,28 @@ export default defineConfig({
       },
       
       // ========== [向后兼容] 旧核心服务路由代理 ==========
-      // IAM 服务代理 (/iam/* -> /api/core/iam/*)
-      '/iam': {
+      // IAM auth 代理 (/iam/api/v1/auth/* -> /api/v1/auth/*)
+      '/iam/api/v1/auth/login': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam(\/.*)$/, '/api/core/iam$1'),
+        rewrite: (path: string) => path.replace(/^\/iam/, ''),
+      },
+      '/iam/api/v1/auth/register': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/iam/, ''),
+      },
+      '/iam/api/v1/auth/refresh': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/iam/, ''),
+      },
+      
+      // IAM API 服务代理 (/iam/api/* -> /api/core/iam/*)
+      '/iam/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/iam(\/api.*)$/, '/api/core$1'),
       },
       
       // Doc 服务代理 (/doc/* -> /api/core/doc/*)
@@ -295,6 +266,12 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/mail(\/.*)$/, '/api/core/comm/mail$1'),
       },
       
+      // 通知服务代理 - API v1 路径直接转发
+      '/notification/api/v1': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/notification(\/api\/v1.*)$/, '$1'),
+      },
       // 通知服务代理 (/notification/* -> /api/core/comm/notify/*)
       '/notification': {
         target: 'http://localhost:8000',
@@ -315,13 +292,29 @@ export default defineConfig({
       
       '/hrm/api': createServiceProxyConfig('hrm', 'http://localhost:8011'),
       '/hrm/health': createServiceProxyConfig('hrm', 'http://localhost:8011'),
-      '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8004'),
+      '/flow/health': createServiceProxyConfig('flow', 'http://localhost:8000'),
       '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8005'),
       '/integration/health': createServiceProxyConfig('integration', 'http://localhost:8005'),
-      '/portal/api': createServiceProxyConfig('portal', 'http://localhost:8003'),
-      '/portal/health': createServiceProxyConfig('portal', 'http://localhost:8003'),
       '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
       '/erp/health': createServiceProxyConfig('erp', 'http://localhost:8010'),
+      // ERP 插件代理（通过 unified-core）
+      '/api/plugins/erp': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/api\/plugins\/erp/, '/api/plugins/erp'),
+      },
+      // HRM 插件代理（通过 unified-core）
+      '/api/plugins/hrm': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/api\/plugins\/hrm/, '/api/plugins/hrm'),
+      },
+      // CRM 插件代理（通过 unified-core）
+      '/api/plugins/crm': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/api\/plugins\/crm/, '/api/plugins/crm'),
+      },
       '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8012'),
       '/crm/health': createServiceProxyConfig('crm', 'http://localhost:8012'),
       '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8062'),
@@ -332,21 +325,23 @@ export default defineConfig({
       // ========== [已整合] 制造服务代理 ==========
       // 新统一制造服务 (mes + pdm -> manufacturing)
       '/mfg/api': {
-        target: 'http://localhost:8030',
+        target: 'http://localhost:8023',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/mfg/, '/api/mfg'),
       },
+      '/manufacturing/api': createServiceProxyConfig('manufacturing', 'http://localhost:8023'),
+      '/manufacturing/health': createServiceProxyConfig('manufacturing', 'http://localhost:8023'),
       
       // 向后兼容：MES 服务代理 -> manufacturing
       '/mes': {
-        target: 'http://localhost:8030',
+        target: 'http://localhost:8023',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/mes(\/.*)$/, '/api/mfg$1'),
       },
       
       // 向后兼容：PDM 服务代理 -> manufacturing
       '/pdm': {
-        target: 'http://localhost:8030',
+        target: 'http://localhost:8023',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/pdm(\/.*)$/, '/api/mfg/pdm$1'),
       },
@@ -388,32 +383,35 @@ export default defineConfig({
       '/wms/health': createServiceProxyConfig('wms', 'http://localhost:8042'),
       '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8001'),
       '/pm/health': createServiceProxyConfig('pm', 'http://localhost:8001'),
+      '/unified-core/api': createServiceProxyConfig('unified-core', 'http://localhost:8000'),
+      '/unified-core/health': createServiceProxyConfig('unified-core', 'http://localhost:8000'),
       '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8053'),
       '/gis/health': createServiceProxyConfig('gis', 'http://localhost:8053'),
       // [已整合] IM API - 注释掉，使用 /comm/im/*
       // '/im/api': createServiceProxyConfig('im', 'http://localhost:8052'),
       // '/im/health': createServiceProxyConfig('im', 'http://localhost:8052'),
       
-      // ========== [已整合] 分析服务代理 ==========
-      // 新统一分析服务 (bi + report -> analytics)
-      '/analytics/api': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/analytics/, '/api/analytics'),
-      },
-      
-      // 向后兼容：BI 服务代理 -> analytics
-      '/bi': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/bi(\/.*)$/, '/api/analytics/bi$1'),
-      },
-      
       // 向后兼容：Report 服务代理 -> analytics
       '/report': {
         target: 'http://localhost:8060',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/report(\/.*)$/, '/api/analytics/report$1'),
+      },
+
+      '/mobile/api': createServiceProxyConfig('mobile', 'http://localhost:8070'),
+      '/mobile/health': createServiceProxyConfig('mobile', 'http://localhost:8070'),
+      '/migration/api': createServiceProxyConfig('migration', 'http://localhost:8787'),
+      '/migration/health': createServiceProxyConfig('migration', 'http://localhost:8787'),
+
+      '/quality-assurance/api': createServiceProxyConfig('quality-assurance', 'http://localhost:8032'),
+      '/quality-assurance/health': createServiceProxyConfig('quality-assurance', 'http://localhost:8032'),
+      
+      // ========== [Module Federation] Core Remote Module 代理 ==========
+      // 将 /core-remote/* 请求代理到 apps/core 的 Vite dev server
+      '/core-remote': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/core-remote/, ''),
       },
     },
   },

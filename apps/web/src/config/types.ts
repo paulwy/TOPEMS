@@ -89,6 +89,7 @@ export interface SecurityConfig {
 export interface ThirdPartyConfig {
   sentryDsn: string;
   gaTrackingId: string;
+  amapKey: string;
 }
 
 export interface RuntimeConfig {

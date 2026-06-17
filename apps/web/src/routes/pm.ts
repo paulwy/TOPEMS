@@ -4,21 +4,21 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const PmDashboardPage = lazy(() => import("../pages/PmDashboardPage"));
-const PmProjectListPage = lazy(() => import("../pages/PmProjectListPage"));
-const PmProjectDetailPage = lazy(() => import("../pages/PmProjectDetailPage"));
-const PmProjectCreatePage = lazy(() => import("../pages/PmProjectCreatePage"));
-const PmContractListPage = lazy(() => import("../pages/PmContractListPage"));
+const PmDashboardPage = lazy(() => import("../pages/pm/PmDashboardPage"));
+const PmProjectListPage = lazy(() => import("../pages/pm/PmProjectListPage"));
+const PmProjectDetailPage = lazy(() => import("../pages/pm/PmProjectDetailPage"));
+const PmProjectCreatePage = lazy(() => import("../pages/pm/PmProjectCreatePage"));
+const PmContractListPage = lazy(() => import("../pages/pm/PmContractListPage"));
 const PmContractDetailPage = lazy(
-  () => import("../pages/PmContractDetailPage"),
+  () => import("../pages/pm/PmContractDetailPage"),
 );
 const PmContractCreatePage = lazy(
-  () => import("../pages/PmContractCreatePage"),
+  () => import("../pages/pm/PmContractCreatePage"),
 );
-const PmTemplatePage = lazy(() => import("../pages/PmTemplatePage"));
-const PmReportPage = lazy(() => import("../pages/PmReportPage"));
+const PmTemplatePage = lazy(() => import("../pages/pm/PmTemplatePage"));
+const PmReportPage = lazy(() => import("../pages/pm/PmReportPage"));
 const ProjectDashboardPage = lazy(
-  () => import("../pages/ProjectDashboardPage"),
+  () => import("../pages/shared/ProjectDashboardPage"),
 );
 
 export const pmRoutes: RouteConfig[] = [

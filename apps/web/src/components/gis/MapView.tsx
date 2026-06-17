@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -98,13 +98,14 @@ const LayerToggle: React.FC<{
 
 const FitBoundsControl: React.FC<{
   bounds: [number, number][] | undefined;
-}> = ({ bounds }) => {
-  const map = useMap();
+  mapRef: React.RefObject<any>;
+}> = ({ bounds, mapRef }) => {
   const fitBounds = useCallback(() => {
-    if (bounds && bounds.length >= 2) {
+    const map = mapRef.current;
+    if (map && bounds && bounds.length >= 2) {
       map.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [map, bounds]);
+  }, [mapRef, bounds]);
 
   return (
     <button
@@ -272,6 +273,20 @@ const MeasureTooltip: React.FC<{
   );
 };
 
+const deviceIcon = new (window as any).L.Icon({
+  iconUrl:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300C897'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
+
+const storageIcon = new (window as any).L.Icon({
+  iconUrl:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E",
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
+
 const MapView: React.FC<MapViewProps> = ({
   devicePoints = [],
   pipelines = [],
@@ -313,20 +328,6 @@ const MapView: React.FC<MapViewProps> = ({
   const _mapRef = useRef<any>(null);
   const leafletMapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const deviceIcon = new (window as any).L.Icon({
-    iconUrl:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300C897'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-  });
-
-  const storageIcon = new (window as any).L.Icon({
-    iconUrl:
-      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E",
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-  });
 
   const calculateDistance = (
     lat1: number,
@@ -645,7 +646,7 @@ const MapView: React.FC<MapViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  const calculateBounds = (): [number, number][] | undefined => {
+  const bounds = useMemo((): [number, number][] | undefined => {
     const allPoints: [number, number][] = [];
     if (visibleLayers.devices) {
       devicePoints.forEach((p) => {
@@ -666,9 +667,7 @@ const MapView: React.FC<MapViewProps> = ({
       ];
     }
     return undefined;
-  };
-
-  const bounds = calculateBounds();
+  }, [devicePoints, storageLocations, visibleLayers]);
 
   const getStatusColor = (status: string) => {
     if (!status) return "#6b7280";
@@ -727,6 +726,7 @@ const MapView: React.FC<MapViewProps> = ({
           center={mapCenter}
           zoom={zoom}
           style={{ height: "100%", width: "100%" }}
+          ref={leafletMapRef}
         >
           <MapEventHandler
             toolMode={toolMode}
@@ -1222,7 +1222,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <ZoomOut className="w-5 h-5 text-gray-700" />
         </button>
-        <FitBoundsControl bounds={bounds} />
+        <FitBoundsControl bounds={bounds} mapRef={leafletMapRef} />
       </div>
 
       <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md overflow-hidden">

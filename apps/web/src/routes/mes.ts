@@ -6,20 +6,23 @@ import { lazyWithRetry } from "./utils";
 const lazy = lazyWithRetry;
 
 const ProductionOrderManagementPage = lazy(
-  () => import("../pages/ProductionOrderManagementPage"),
+  () => import("../pages/mes/ProductionOrderManagementPage"),
 );
 const ProductionProcessPage = lazy(
-  () => import("../pages/ProductionProcessPage"),
+  () => import("../pages/mes/ProductionProcessPage"),
 );
-const WorkStationPage = lazy(() => import("../pages/WorkStationPage"));
+const WorkStationPage = lazy(() => import("../pages/mes/WorkStationPage"));
 const ProductionRecordPage = lazy(
-  () => import("../pages/ProductionRecordPage"),
+  () => import("../pages/mes/ProductionRecordPage"),
 );
 
 export const mesRoutes: RouteConfig[] = [
   {
     path: "/mes",
-    element: React.createElement(Navigate, { to: "/mes/orders", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/mes/orders",
+      replace: true,
+    }),
     requiredPermissions: ["mes:read"],
     module: "mes",
     action: "read",

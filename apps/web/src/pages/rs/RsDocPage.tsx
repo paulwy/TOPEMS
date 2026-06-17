@@ -63,7 +63,11 @@ const RsDocPage: React.FC = () => {
   const [newDocDialogOpen, setNewDocDialogOpen] = useState(false);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
-  const [newDocForm, setNewDocForm] = useState({ doc_name: "", doc_type: "设计文档", description: "" });
+  const [newDocForm, setNewDocForm] = useState({
+    doc_name: "",
+    doc_type: "设计文档",
+    description: "",
+  });
 
   useEffect(() => {
     const mockDocs: Document[] = [
@@ -139,7 +143,9 @@ const RsDocPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string): "success" | "warning" | "default" => {
+  const getStatusColor = (
+    status: string,
+  ): "success" | "warning" | "default" => {
     switch (status) {
       case "published":
         return "success";
@@ -176,7 +182,9 @@ const RsDocPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -208,7 +216,14 @@ const RsDocPage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             文档管理
           </Typography>
@@ -278,13 +293,27 @@ const RsDocPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>文档名称</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>文档类型</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>版本</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>作者</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>更新时间</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    文档名称
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    文档类型
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    版本
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    作者
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    更新时间
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -293,19 +322,29 @@ const RsDocPage: React.FC = () => {
                   .map((doc) => (
                     <TableRow key={doc.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           {getDocTypeIcon(doc.doc_type)}
                           {doc.doc_name}
                         </Box>
                       </TableCell>
                       <TableCell>{doc.doc_type}</TableCell>
                       <TableCell>
-                        <Chip label={doc.version} size="small" variant="outlined" />
+                        <Chip
+                          label={doc.version}
+                          size="small"
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>{doc.author}</TableCell>
                       <TableCell>{doc.update_time}</TableCell>
                       <TableCell>
-                        <Chip label={getStatusLabel(doc.status)} size="small" color={getStatusColor(doc.status)} />
+                        <Chip
+                          label={getStatusLabel(doc.status)}
+                          size="small"
+                          color={getStatusColor(doc.status)}
+                        />
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
@@ -315,7 +354,10 @@ const RsDocPage: React.FC = () => {
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="版本管理">
-                            <IconButton size="small" onClick={() => handleViewVersion(doc)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewVersion(doc)}
+                            >
                               <History size={16} />
                             </IconButton>
                           </Tooltip>
@@ -325,7 +367,10 @@ const RsDocPage: React.FC = () => {
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="删除">
-                            <IconButton size="small" onClick={() => handleDelete(doc.id)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDelete(doc.id)}
+                            >
                               <Trash2 size={16} />
                             </IconButton>
                           </Tooltip>
@@ -348,7 +393,12 @@ const RsDocPage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={newDocDialogOpen} onClose={() => setNewDocDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={newDocDialogOpen}
+        onClose={() => setNewDocDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建文档</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
@@ -356,14 +406,18 @@ const RsDocPage: React.FC = () => {
               label="文档名称"
               fullWidth
               value={newDocForm.doc_name}
-              onChange={(e) => setNewDocForm({ ...newDocForm, doc_name: e.target.value })}
+              onChange={(e) =>
+                setNewDocForm({ ...newDocForm, doc_name: e.target.value })
+              }
             />
             <FormControl fullWidth>
               <InputLabel>文档类型</InputLabel>
               <Select
                 value={newDocForm.doc_type}
                 label="文档类型"
-                onChange={(e) => setNewDocForm({ ...newDocForm, doc_type: e.target.value })}
+                onChange={(e) =>
+                  setNewDocForm({ ...newDocForm, doc_type: e.target.value })
+                }
               >
                 <MenuItem value="设计文档">设计文档</MenuItem>
                 <MenuItem value="接口文档">接口文档</MenuItem>
@@ -378,19 +432,30 @@ const RsDocPage: React.FC = () => {
               multiline
               rows={3}
               value={newDocForm.description}
-              onChange={(e) => setNewDocForm({ ...newDocForm, description: e.target.value })}
+              onChange={(e) =>
+                setNewDocForm({ ...newDocForm, description: e.target.value })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewDocDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateDoc}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateDoc}
+          >
             创建
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={versionDialogOpen} onClose={() => setVersionDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={versionDialogOpen}
+        onClose={() => setVersionDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>版本历史</DialogTitle>
         <DialogContent>
           {selectedDoc && (
@@ -400,12 +465,33 @@ const RsDocPage: React.FC = () => {
               </Typography>
               <Stack spacing={2} sx={{ mt: 2 }}>
                 {[
-                  { version: "v2.1.0", date: "2024-06-15", author: "张三", note: "更新架构设计" },
-                  { version: "v2.0.0", date: "2024-05-20", author: "张三", note: "重大改版" },
-                  { version: "v1.0.0", date: "2024-04-01", author: "李四", note: "初始版本" },
+                  {
+                    version: "v2.1.0",
+                    date: "2024-06-15",
+                    author: "张三",
+                    note: "更新架构设计",
+                  },
+                  {
+                    version: "v2.0.0",
+                    date: "2024-05-20",
+                    author: "张三",
+                    note: "重大改版",
+                  },
+                  {
+                    version: "v1.0.0",
+                    date: "2024-04-01",
+                    author: "李四",
+                    note: "初始版本",
+                  },
                 ].map((v, i) => (
                   <Paper key={i} sx={{ p: 2 }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
                       <Box>
                         <Typography variant="body1" fontWeight="bold">
                           {v.version}

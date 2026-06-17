@@ -81,19 +81,49 @@ const TreeView: React.FC<TreeViewProps> = ({
           }}
         >
           {hasChildren && (
-            <span style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span
+              style={{
+                width: "20px",
+                height: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               {isExpanded ? (
                 <ChevronDown sx={{ width: 16, height: 16, color: "#94a3b8" }} />
               ) : (
-                <ChevronRight sx={{ width: 16, height: 16, color: "#94a3b8" }} />
+                <ChevronRight
+                  sx={{ width: 16, height: 16, color: "#94a3b8" }}
+                />
               )}
             </span>
           )}
           {!hasChildren && <span style={{ width: "20px" }} />}
           <span style={{ flexShrink: 0 }}>{getIcon()}</span>
-          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.name}</span>
+          <span
+            style={{
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {node.name}
+          </span>
           {showEmployeeCount && node.type !== "employee" && node.children && (
-            <span style={{ fontSize: "12px", color: "#94a3b8", backgroundColor: "#f1f5f9", paddingLeft: "8px", paddingRight: "8px", paddingTop: "2px", paddingBottom: "2px", borderRadius: "9999px" }}>
+            <span
+              style={{
+                fontSize: "12px",
+                color: "#94a3b8",
+                backgroundColor: "#f1f5f9",
+                paddingLeft: "8px",
+                paddingRight: "8px",
+                paddingTop: "2px",
+                paddingBottom: "2px",
+                borderRadius: "9999px",
+              }}
+            >
               {node.children.length}
             </span>
           )}
@@ -108,7 +138,9 @@ const TreeView: React.FC<TreeViewProps> = ({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>{data.map((node) => renderNode(node))}</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+      {data.map((node) => renderNode(node))}
+    </div>
   );
 };
 

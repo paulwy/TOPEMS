@@ -19,7 +19,10 @@ import {
   TablePagination,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import type { OutboundOrder, CreateOutboundOrderRequest } from "@/api/shared/wms";
+import type {
+  OutboundOrder,
+  CreateOutboundOrderRequest,
+} from "@/api/shared/wms";
 import { wmsApi } from "@/api/shared/wms";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
