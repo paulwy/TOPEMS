@@ -433,7 +433,7 @@ pub struct PluginInstance {
 }
 
 /// 插件权限定义
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PluginPermission {
     pub id: uuid::Uuid,
     pub plugin_code: String,

@@ -813,3 +813,214 @@ pub async fn list_plugins_with_status(
 
     Json(CoreResponse::success(plugins, "Plugins retrieved"))
 }
+
+// ============================================================================
+// Simplified Plugin Management API (for frontend plugin marketplace)
+// ============================================================================
+
+/// Simplified: List installed plugins with runtime status
+pub async fn list_installed_plugins(
+    State(state): State<AppState>,
+) -> Json<CoreResponse<Vec<PluginWithRuntimeStatus>>> {
+    tracing::info!("[Plugin] Listing installed plugins");
+
+    let plugins: Vec<PluginWithRuntimeStatus> = sqlx::query_as(
+        r#"
+        SELECT p.id, p.code, p.name, p.description, p.version, p.plugin_type,
+               p.is_published, p.category,
+               pi.runtime_status, pi.runtime_url, pi.base_path, pi.last_heartbeat
+        FROM core_plugins p
+        LEFT JOIN core_plugin_instances pi ON p.id = pi.plugin_id
+        WHERE p.is_published = true
+        ORDER BY p.code
+        "#,
+    )
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    Json(CoreResponse::success(plugins, "Plugins retrieved"))
+}
+
+/// Simplified: Get plugin details with permissions
+pub async fn get_plugin_details(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<PluginDetailsResponse>> {
+    tracing::info!("[Plugin] Getting plugin details: {}", plugin_code);
+
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let plugin = match plugin {
+        Some(p) => p,
+        None => return Json(CoreResponse::error("Plugin not found")),
+    };
+
+    let permissions: Vec<PluginPermission> = sqlx::query_as(
+        "SELECT * FROM core_plugin_permissions WHERE plugin_code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let details = PluginDetailsResponse { plugin, permissions };
+    Json(CoreResponse::success(details, "Plugin details retrieved"))
+}
+
+/// Simplified: Install plugin (uses X-Tenant-ID header)
+pub async fn install_plugin_simple(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    headers: axum::http::HeaderMap,
+) -> Json<CoreResponse<TenantPlugin>> {
+    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+        Some(id) => id,
+        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+    };
+
+    tracing::info!("[Plugin] Installing plugin {} for tenant: {}", plugin_code, tenant_id);
+
+    // Get plugin
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1 AND is_published = true"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let plugin = match plugin {
+        Some(p) => p,
+        None => return Json(CoreResponse::error("Plugin not found")),
+    };
+
+    // Create installation
+    let installation: TenantPlugin = sqlx::query_as(
+        r#"
+        INSERT INTO core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
+        VALUES ($1, $2, true, $3)
+        ON CONFLICT (tenant_id, plugin_id)
+        DO UPDATE SET is_active = true, activated_at = NOW()
+        RETURNING *
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(plugin.id)
+    .bind(if plugin.is_free { "free" } else { "subscription" })
+    .fetch_one(&state.pool)
+    .await
+    .unwrap();
+
+    Json(CoreResponse::success(installation, "Plugin installed"))
+}
+
+/// Simplified: Uninstall plugin (uses X-Tenant-ID header)
+pub async fn uninstall_plugin_simple(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    headers: axum::http::HeaderMap,
+) -> Json<CoreResponse<bool>> {
+    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+        Some(id) => id,
+        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+    };
+
+    tracing::info!("[Plugin] Uninstalling plugin {} for tenant: {}", plugin_code, tenant_id);
+
+    let result = sqlx::query(
+        r#"
+        DELETE FROM core_tenant_plugins
+        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
+        "#
+    )
+    .bind(tenant_id)
+    .bind(&plugin_code)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => Json(CoreResponse::success(r.rows_affected() > 0, "Plugin uninstalled")),
+        Err(_) => Json(CoreResponse::error("Failed to uninstall plugin")),
+    }
+}
+
+/// Simplified: Enable plugin (uses X-Tenant-ID header)
+pub async fn enable_plugin_simple(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    headers: axum::http::HeaderMap,
+) -> Json<CoreResponse<TenantPlugin>> {
+    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+        Some(id) => id,
+        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+    };
+
+    tracing::info!("[Plugin] Enabling plugin {} for tenant: {}", plugin_code, tenant_id);
+
+    let installation: Option<TenantPlugin> = sqlx::query_as(
+        r#"
+        UPDATE core_tenant_plugins
+        SET is_active = true, activated_at = NOW()
+        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
+        RETURNING *
+        "#
+    )
+    .bind(tenant_id)
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    match installation {
+        Some(tp) => Json(CoreResponse::success(tp, "Plugin enabled")),
+        None => Json(CoreResponse::error("Plugin not installed")),
+    }
+}
+
+/// Simplified: Disable plugin (uses X-Tenant-ID header)
+pub async fn disable_plugin_simple(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    headers: axum::http::HeaderMap,
+) -> Json<CoreResponse<TenantPlugin>> {
+    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+        Some(id) => id,
+        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+    };
+
+    tracing::info!("[Plugin] Disabling plugin {} for tenant: {}", plugin_code, tenant_id);
+
+    let installation: Option<TenantPlugin> = sqlx::query_as(
+        r#"
+        UPDATE core_tenant_plugins
+        SET is_active = false
+        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
+        RETURNING *
+        "#
+    )
+    .bind(tenant_id)
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    match installation {
+        Some(tp) => Json(CoreResponse::success(tp, "Plugin disabled")),
+        None => Json(CoreResponse::error("Plugin not installed")),
+    }
+}
+
+/// Helper struct for plugin details with permissions
+#[derive(serde::Serialize)]
+pub struct PluginDetailsResponse {
+    plugin: Plugin,
+    permissions: Vec<PluginPermission>,
+}
+
