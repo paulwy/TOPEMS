@@ -308,6 +308,14 @@ async fn main() {
         .route("/api/core/plugin/tenant/{tenant_id}/plugins/{plugin_code}/deactivate", post(modules::plugin::handlers::deactivate_plugin))
         .route("/api/core/plugin/tenant/{tenant_id}/available", get(modules::plugin::handlers::get_available_plugins))
 
+        // Simplified Plugin Management API (frontend plugin marketplace)
+        .route("/api/core/plugins", get(modules::plugin::handlers::list_installed_plugins))
+        .route("/api/core/plugins/{plugin_code}", get(modules::plugin::handlers::get_plugin_details))
+        .route("/api/core/plugins/{plugin_code}/install", post(modules::plugin::handlers::install_plugin_simple))
+        .route("/api/core/plugins/{plugin_code}/uninstall", post(modules::plugin::handlers::uninstall_plugin_simple))
+        .route("/api/core/plugins/{plugin_code}/enable", post(modules::plugin::handlers::enable_plugin_simple))
+        .route("/api/core/plugins/{plugin_code}/disable", post(modules::plugin::handlers::disable_plugin_simple))
+
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
