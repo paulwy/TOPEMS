@@ -19,7 +19,7 @@ use axum::{extract::State, routing::get, Json, Router};
 use std::env;
 use std::time::Instant;
 
-use api::ApiState;
+use api::{plugin, ApiState};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
@@ -81,10 +81,11 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let public_routes = Router::new().route("/health", get(health_check)).route(
-        "/metrics",
-        get(move || async move { metric_handle.render() }),
-    );
+    let public_routes = Router::new()
+        .route("/health", get(health_check))
+        .route("/metrics", get(move || async move { metric_handle.render() }))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check));
 
     let protected_routes = api::create_routes()
         .route("/api/v1/health/detailed", get(health_check_detailed))
