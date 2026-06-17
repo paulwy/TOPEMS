@@ -9,6 +9,7 @@ pub mod inbound_order;
 pub mod inventory;
 pub mod openapi;
 pub mod outbound_order;
+pub mod plugin;
 pub mod warehouse;
 
 #[derive(Clone)]

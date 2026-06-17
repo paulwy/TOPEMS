@@ -105,38 +105,40 @@ async fn main() {
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("analytics-service")))
         .route("/api/info", get(|| get_api_info_handler("analytics-service")))
+        .route("/api/plugins/info", get(modules::bi::plugin::get_plugin_info))
+        .route("/api/plugins/health", get(modules::bi::plugin::plugin_health_check))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        // ===== BI routes (prefix: /api/analytics/bi) =====
+        // ===== BI routes (prefix: /api/bi) =====
         // Dashboard
-        .route("/api/analytics/bi/dashboard", get(modules::bi::dashboard::list_dashboards))
-        .route("/api/analytics/bi/dashboard", post(modules::bi::dashboard::create_dashboard))
-        .route("/api/analytics/bi/dashboard/:id", get(modules::bi::dashboard::get_dashboard))
-        .route("/api/analytics/bi/dashboard/:id", put(modules::bi::dashboard::update_dashboard))
-        .route("/api/analytics/bi/dashboard/:id", delete(modules::bi::dashboard::delete_dashboard))
+        .route("/api/bi/dashboard", get(modules::bi::dashboard::list_dashboards))
+        .route("/api/bi/dashboard", post(modules::bi::dashboard::create_dashboard))
+        .route("/api/bi/dashboard/:id", get(modules::bi::dashboard::get_dashboard))
+        .route("/api/bi/dashboard/:id", put(modules::bi::dashboard::update_dashboard))
+        .route("/api/bi/dashboard/:id", delete(modules::bi::dashboard::delete_dashboard))
         // Widget
-        .route("/api/analytics/bi/widget", get(modules::bi::widget::list_widgets))
-        .route("/api/analytics/bi/widget", post(modules::bi::widget::create_widget))
-        .route("/api/analytics/bi/widget/:id", get(modules::bi::widget::get_widget))
-        .route("/api/analytics/bi/widget/:id", put(modules::bi::widget::update_widget))
-        .route("/api/analytics/bi/widget/:id", delete(modules::bi::widget::delete_widget))
-        .route("/api/analytics/bi/widget/:id/data", get(modules::bi::widget::get_widget_data))
+        .route("/api/bi/widget", get(modules::bi::widget::list_widgets))
+        .route("/api/bi/widget", post(modules::bi::widget::create_widget))
+        .route("/api/bi/widget/:id", get(modules::bi::widget::get_widget))
+        .route("/api/bi/widget/:id", put(modules::bi::widget::update_widget))
+        .route("/api/bi/widget/:id", delete(modules::bi::widget::delete_widget))
+        .route("/api/bi/widget/:id/data", get(modules::bi::widget::get_widget_data))
         // Data Source
-        .route("/api/analytics/bi/datasource", get(modules::bi::datasource::list_datasources))
-        .route("/api/analytics/bi/datasource", post(modules::bi::datasource::create_datasource))
-        .route("/api/analytics/bi/datasource/:id", get(modules::bi::datasource::get_datasource))
-        .route("/api/analytics/bi/datasource/:id", put(modules::bi::datasource::update_datasource))
+        .route("/api/bi/datasource", get(modules::bi::datasource::list_datasources))
+        .route("/api/bi/datasource", post(modules::bi::datasource::create_datasource))
+        .route("/api/bi/datasource/:id", get(modules::bi::datasource::get_datasource))
+        .route("/api/bi/datasource/:id", put(modules::bi::datasource::update_datasource))
         // Visualization
-        .route("/api/analytics/bi/visualization", get(modules::bi::visualization::list_visualizations))
-        .route("/api/analytics/bi/visualization", post(modules::bi::visualization::create_visualization))
-        .route("/api/analytics/bi/visualization/:id", get(modules::bi::visualization::get_visualization))
+        .route("/api/bi/visualization", get(modules::bi::visualization::list_visualizations))
+        .route("/api/bi/visualization", post(modules::bi::visualization::create_visualization))
+        .route("/api/bi/visualization/:id", get(modules::bi::visualization::get_visualization))
         // Analysis
-        .route("/api/analytics/bi/analysis", get(modules::bi::analysis::list_analyses))
-        .route("/api/analytics/bi/analysis", post(modules::bi::analysis::create_analysis))
-        .route("/api/analytics/bi/analysis/:id", get(modules::bi::analysis::get_analysis))
-        .route("/api/analytics/bi/analysis/:id/execute", post(modules::bi::analysis::execute_analysis))
+        .route("/api/bi/analysis", get(modules::bi::analysis::list_analyses))
+        .route("/api/bi/analysis", post(modules::bi::analysis::create_analysis))
+        .route("/api/bi/analysis/:id", get(modules::bi::analysis::get_analysis))
+        .route("/api/bi/analysis/:id/execute", post(modules::bi::analysis::execute_analysis))
 
         // ===== Report routes (prefix: /api/analytics/report) =====
         // Report

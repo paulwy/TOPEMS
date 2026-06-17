@@ -18,46 +18,46 @@ use crate::models::contract::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/v1/contracts",
+            "/api/pm/contracts",
             get(list_contracts).post(create_contract),
         )
         .route(
-            "/api/v1/contracts/{id}",
+            "/api/pm/contracts/{id}",
             get(get_contract)
                 .put(update_contract)
                 .delete(delete_contract),
         )
-        .route("/api/v1/contracts/{id}/submit", post(submit_contract))
-        .route("/api/v1/contracts/{id}/approve", post(approve_contract))
-        .route("/api/v1/contracts/{id}/reject", post(reject_contract))
+        .route("/api/pm/contracts/{id}/submit", post(submit_contract))
+        .route("/api/pm/contracts/{id}/approve", post(approve_contract))
+        .route("/api/pm/contracts/{id}/reject", post(reject_contract))
         .route(
-            "/api/v1/contracts/{id}/milestones",
+            "/api/pm/contracts/{id}/milestones",
             get(list_contract_milestones).post(create_contract_milestone),
         )
         .route(
-            "/api/v1/contracts/{id}/milestones/{milestone_id}",
+            "/api/pm/contracts/{id}/milestones/{milestone_id}",
             put(update_contract_milestone).delete(delete_contract_milestone),
         )
         .route(
-            "/api/v1/contracts/{id}/payments",
+            "/api/pm/contracts/{id}/payments",
             get(list_payment_schedule).post(create_payment_schedule),
         )
         .route(
-            "/api/v1/contracts/{id}/payments/{payment_id}",
+            "/api/pm/contracts/{id}/payments/{payment_id}",
             put(update_payment_schedule).delete(delete_payment_schedule),
         )
         .route(
-            "/api/v1/contract-templates",
+            "/api/pm/contract-templates",
             get(list_templates).post(create_template),
         )
         .route(
-            "/api/v1/contract-templates/{id}",
+            "/api/pm/contract-templates/{id}",
             get(get_template)
                 .put(update_template)
                 .delete(delete_template),
         )
         .route(
-            "/api/v1/projects/{project_id}/contracts",
+            "/api/pm/projects/{project_id}/contracts",
             get(get_project_contracts).post(create_project_contract),
         )
         .with_state(pool)

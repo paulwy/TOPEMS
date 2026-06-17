@@ -5,6 +5,7 @@ pub mod contract;
 pub mod document;
 pub mod notification;
 pub mod openapi;
+pub mod plugin;
 pub mod project;
 pub mod project_approval;
 pub mod project_benefit;

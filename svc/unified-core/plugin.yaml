@@ -1,0 +1,38 @@
+code: "workflow"
+name: "工作流引擎"
+version: "1.0.0"
+description: "Workflow 工作流引擎，包含流程设计、流程实例、审批、历史记录等模块"
+
+deployment:
+  port: 8000
+  base_path: /api/flow
+
+permissions:
+  - code: "workflow:read"
+    name: "查看工作流"
+    resource_type: workflow
+    action: read
+  - code: "workflow:write"
+    name: "管理工作流"
+    resource_type: workflow
+    action: write
+  - code: "workflow:approve"
+    name: "审批工作流"
+    resource_type: workflow
+    action: approve
+  - code: "instance:read"
+    name: "查看流程实例"
+    resource_type: instance
+    action: read
+  - code: "instance:write"
+    name: "管理流程实例"
+    resource_type: instance
+    action: write
+  - code: "approval"
+    name: "审批任务"
+    resource_type: approval
+    action: execute
+  - code: "statistics"
+    name: "工作流统计"
+    resource_type: statistics
+    action: read

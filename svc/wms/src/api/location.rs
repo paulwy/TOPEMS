@@ -30,7 +30,7 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/locations", get(list_locations).post(create_location))
+        .route("/api/wms/locations", get(list_locations).post(create_location))
         .route(
             "/api/v1/locations/{id}",
             get(get_location).put(update_location).delete(delete_location),

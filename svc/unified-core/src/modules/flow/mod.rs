@@ -4,6 +4,7 @@ pub mod workflow;
 pub mod instance;
 pub mod approval;
 pub mod statistics;
+pub mod plugin;
 
 use sqlx::PgPool;
 

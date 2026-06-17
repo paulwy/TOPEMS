@@ -49,7 +49,7 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/audit-logs", get(list_audit_logs))
+        .route("/api/wms/audit-logs", get(list_audit_logs))
         .route("/api/v1/audit-logs/{id}", get(get_audit_log))
 }
 

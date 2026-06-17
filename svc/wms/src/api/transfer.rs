@@ -31,7 +31,7 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/transfers", get(list_transfers).post(create_transfer))
+        .route("/api/wms/transfers", get(list_transfers).post(create_transfer))
         .route("/api/v1/transfers/{id}", get(get_transfer).put(update_transfer).delete(delete_transfer))
         .route("/api/v1/transfers/{id}/items", get(list_transfer_items).post(create_transfer_item))
         .route("/api/v1/transfers/{id}/items/{item_id}", get(get_transfer_item).put(update_transfer_item).delete(delete_transfer_item))

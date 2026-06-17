@@ -2,7 +2,7 @@ pub mod api;
 pub mod models;
 pub mod services;
 
-use api::auth;
+use api::{auth, plugin};
 use axum::{routing::get, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
@@ -63,6 +63,8 @@ async fn main() -> Result<()> {
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .merge(auth::create_routes());
 
     let protected_routes = api::create_routes(pool.clone()).layer(

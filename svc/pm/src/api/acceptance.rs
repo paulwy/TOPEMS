@@ -18,31 +18,31 @@ use crate::models::acceptance::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/v1/projects/{project_id}/acceptance-plans",
+            "/api/pm/projects/{project_id}/acceptance-plans",
             get(get_project_plans).post(create_plan),
         )
         .route(
-            "/api/v1/acceptance-plans/{id}",
+            "/api/pm/acceptance-plans/{id}",
             get(get_plan).put(update_plan),
         )
         .route(
-            "/api/v1/acceptance-plans/{plan_id}/items",
+            "/api/pm/acceptance-plans/{plan_id}/items",
             get(get_plan_items).post(create_plan_item),
         )
         .route(
-            "/api/v1/acceptance-items/{id}",
+            "/api/pm/acceptance-items/{id}",
             put(update_plan_item).delete(delete_plan_item),
         )
         .route(
-            "/api/v1/projects/{project_id}/acceptance-records",
+            "/api/pm/projects/{project_id}/acceptance-records",
             get(get_project_records),
         )
         .route(
-            "/api/v1/acceptance-records/{id}",
+            "/api/pm/acceptance-records/{id}",
             get(get_record).put(update_record),
         )
         .route(
-            "/api/v1/acceptance-plans/{plan_id}/records",
+            "/api/pm/acceptance-plans/{plan_id}/records",
             post(create_record),
         )
         .with_state(pool)

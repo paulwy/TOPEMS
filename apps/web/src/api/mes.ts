@@ -259,29 +259,29 @@ export const productionOrderApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/orders${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/mes/api/mfg/orders${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.get(`/api/v1/orders/${id}`);
+    return apiClient.mes.get(`/api/plugins/mes/api/mfg/orders/${id}`);
   },
 
   async create(
     data: CreateProductionOrderRequest,
   ): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.post("/api/v1/orders", data);
+    return apiClient.mes.post("/api/plugins/mes/api/mfg/orders", data);
   },
 
   async update(
     id: string,
     data: UpdateProductionOrderRequest,
   ): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.put(`/api/v1/orders/${id}`, data);
+    return apiClient.mes.put(`/api/plugins/mes/api/mfg/orders/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/v1/orders/${id}`);
+    return apiClient.mes.delete(`/api/plugins/mes/api/mfg/orders/${id}`);
   },
 };
 
@@ -304,25 +304,25 @@ export const productionProcessApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/processes${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/mes/api/mfg/processes${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.get(`/api/v1/processes/${id}`);
+    return apiClient.mes.get(`/api/plugins/mes/api/mfg/processes/${id}`);
   },
 
   async create(
     data: CreateProductionProcessRequest,
   ): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.post("/api/v1/processes", data);
+    return apiClient.mes.post("/api/plugins/mes/api/mfg/processes", data);
   },
 
   async update(
     id: string,
     data: UpdateProductionProcessRequest,
   ): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.put(`/api/v1/processes/${id}`, data);
+    return apiClient.mes.put(`/api/plugins/mes/api/mfg/processes/${id}`, data);
   },
 };
 
@@ -345,25 +345,25 @@ export const workStationApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/workstations${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/mes/api/mfg/workstations${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.get(`/api/v1/workstations/${id}`);
+    return apiClient.mes.get(`/api/plugins/mes/api/mfg/workstations/${id}`);
   },
 
   async create(
     data: CreateWorkStationRequest,
   ): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.post("/api/v1/workstations", data);
+    return apiClient.mes.post("/api/plugins/mes/api/mfg/workstations", data);
   },
 
   async update(
     id: string,
     data: UpdateWorkStationRequest,
   ): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.put(`/api/v1/workstations/${id}`, data);
+    return apiClient.mes.put(`/api/plugins/mes/api/mfg/workstations/${id}`, data);
   },
 };
 
@@ -385,32 +385,32 @@ export const productionRecordApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/records${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/mes/api/mfg/records${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.get(`/api/v1/records/${id}`);
+    return apiClient.mes.get(`/api/plugins/mes/api/mfg/records/${id}`);
   },
 
   async create(
     data: CreateProductionRecordRequest,
   ): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.post("/api/v1/records", data);
+    return apiClient.mes.post("/api/plugins/mes/api/mfg/records", data);
   },
 
   async update(
     id: string,
     data: UpdateProductionRecordRequest,
   ): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.put(`/api/v1/records/${id}`, data);
+    return apiClient.mes.put(`/api/plugins/mes/api/mfg/records/${id}`, data);
   },
 };
 
 // 设备点检和维护 API
 export const mesEquipmentApi = {
   async getStatistics(): Promise<ApiResponse<EquipmentStatistics>> {
-    return apiClient.mes.get("/api/v1/equipment/statistics");
+    return apiClient.mes.get("/api/plugins/mes/api/mfg/equipment/statistics");
   },
 
   async listInspections(
@@ -425,14 +425,14 @@ export const mesEquipmentApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/inspections${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/mes/api/mfg/inspections${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async createInspection(
     data: CreateInspectionRecord,
   ): Promise<ApiResponse<InspectionRecord>> {
-    return apiClient.mes.post("/api/v1/inspections", data);
+    return apiClient.mes.post("/api/plugins/mes/api/mfg/inspections", data);
   },
 
   async listMaintenances(
@@ -447,21 +447,21 @@ export const mesEquipmentApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/maintenances${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/mes/api/mfg/maintenances${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async createMaintenance(
     data: CreateMaintenanceRecord,
   ): Promise<ApiResponse<MaintenanceRecord>> {
-    return apiClient.mes.post("/api/v1/maintenances", data);
+    return apiClient.mes.post("/api/plugins/mes/api/mfg/maintenances", data);
   },
 
   async updateMaintenanceStatus(
     id: string,
     data: UpdateMaintenanceStatus,
   ): Promise<ApiResponse<MaintenanceRecord>> {
-    return apiClient.mes.put(`/api/v1/maintenances/${id}/status`, data);
+    return apiClient.mes.put(`/api/plugins/mes/api/mfg/maintenances/${id}/status`, data);
   },
 };
 

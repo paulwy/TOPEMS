@@ -15,7 +15,7 @@ use topems_shared::{api_error, ApiResponse, PaginationParams};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/purchase-orders",
+            "/api/scm/purchase-orders",
             get(list_orders).post(create_order),
         )
         .route(

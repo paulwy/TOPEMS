@@ -17,18 +17,18 @@ use crate::models::budget::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/v1/projects/{project_id}/budgets",
+            "/api/pm/projects/{project_id}/budgets",
             get(get_project_budgets).post(create_budget),
         )
-        .route("/api/v1/budgets/{id}", get(get_budget).put(update_budget))
-        .route("/api/v1/budgets/{id}/submit", post(submit_budget))
-        .route("/api/v1/budgets/{id}/approve", post(approve_budget))
+        .route("/api/pm/budgets/{id}", get(get_budget).put(update_budget))
+        .route("/api/pm/budgets/{id}/submit", post(submit_budget))
+        .route("/api/pm/budgets/{id}/approve", post(approve_budget))
         .route(
-            "/api/v1/budgets/{id}/items",
+            "/api/pm/budgets/{id}/items",
             get(get_budget_items).post(create_budget_item),
         )
         .route(
-            "/api/v1/budgets/{id}/items/{item_id}",
+            "/api/pm/budgets/{id}/items/{item_id}",
             put(update_budget_item).delete(delete_budget_item),
         )
         .with_state(pool)

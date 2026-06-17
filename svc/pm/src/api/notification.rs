@@ -17,20 +17,20 @@ use crate::models::notification::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/v1/projects/{project_id}/notifications",
+            "/api/pm/projects/{project_id}/notifications",
             get(get_project_notifications).post(create_notification),
         )
         .route(
-            "/api/v1/notifications/{id}",
+            "/api/pm/notifications/{id}",
             get(get_notification).put(update_notification),
         )
-        .route("/api/v1/notifications/{id}/read", post(mark_as_read))
+        .route("/api/pm/notifications/{id}/read", post(mark_as_read))
         .route(
-            "/api/v1/projects/{project_id}/notification-settings",
+            "/api/pm/projects/{project_id}/notification-settings",
             get(get_project_settings).post(create_setting),
         )
-        .route("/api/v1/notification-settings/{id}", put(update_setting))
-        .route("/api/v1/notification-types", get(list_notification_types))
+        .route("/api/pm/notification-settings/{id}", put(update_setting))
+        .route("/api/pm/notification-types", get(list_notification_types))
         .with_state(pool)
 }
 
