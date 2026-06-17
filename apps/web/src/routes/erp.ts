@@ -4,62 +4,66 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const AssetManagementPage = lazy(() => import("../pages/AssetManagementPage"));
+const AssetManagementPage = lazy(
+  () => import("../pages/fixed/AssetManagementPage"),
+);
 const EquipmentManagementPage = lazy(
-  () => import("../pages/EquipmentManagementPage"),
+  () => import("../pages/fixed/EquipmentManagementPage"),
 );
 const EquipmentInspectionPage = lazy(
-  () => import("../pages/EquipmentInspectionPage"),
+  () => import("../pages/fixed/EquipmentInspectionPage"),
 );
 const EquipmentMaintenancePage = lazy(
-  () => import("../pages/EquipmentMaintenancePage"),
+  () => import("../pages/fixed/EquipmentMaintenancePage"),
 );
-const FinanceExpensePage = lazy(() => import("../pages/FinanceExpensePage"));
-const FinanceVoucherPage = lazy(() => import("../pages/FinanceVoucherPage"));
+const FinanceExpensePage = lazy(() => import("../pages/finance/FinanceExpensePage"));
+const FinanceVoucherPage = lazy(
+  () => import("../pages/finance/FinanceVoucherPage"),
+);
 const FinanceReceivablePayablePage = lazy(
-  () => import("../pages/FinanceReceivablePayablePage"),
+  () => import("../pages/finance/FinanceReceivablePayablePage"),
 );
-const FinanceReportsPage = lazy(() => import("../pages/FinanceReportsPage"));
-const FinanceBudgetPage = lazy(() => import("../pages/FinanceBudgetPage"));
-const AdministrationPage = lazy(() => import("../pages/AdministrationPage"));
+const FinanceReportsPage = lazy(() => import("../pages/finance/FinanceReportsPage"));
+const FinanceBudgetPage = lazy(() => import("../pages/finance/FinanceBudgetPage"));
+const AdministrationPage = lazy(() => import("../pages/admin/AdministrationPage"));
 const BudgetManagementPage = lazy(
-  () => import("../pages/BudgetManagementPage"),
+  () => import("../pages/finance/BudgetManagementPage"),
 );
 const OfficeSuppliesManagementPage = lazy(
-  () => import("../pages/OfficeSuppliesManagementPage"),
+  () => import("../pages/fixed/OfficeSuppliesManagementPage"),
 );
 const MeetingRoomManagementPage = lazy(
-  () => import("../pages/MeetingRoomManagementPage"),
+  () => import("../pages/common/MeetingRoomManagementPage"),
 );
 const VehicleManagementPage = lazy(
-  () => import("../pages/VehicleManagementPage"),
+  () => import("../pages/fixed/VehicleManagementPage"),
 );
 const AnnouncementManagementPage = lazy(
-  () => import("../pages/AnnouncementManagementPage"),
+  () => import("../pages/common/AnnouncementManagementPage"),
 );
-const VoucherTemplatePage = lazy(() => import("../pages/VoucherTemplatePage"));
+const VoucherTemplatePage = lazy(() => import("../pages/fixed/VoucherTemplatePage"));
 const FinancialReportsPage = lazy(
-  () => import("../pages/FinancialReportsPage"),
+  () => import("../pages/finance/FinancialReportsPage"),
 );
 const AccountManagementPage = lazy(
-  () => import("../pages/AccountManagementPage"),
+  () => import("../pages/admin/AccountManagementPage"),
 );
 const BankAccountManagementPage = lazy(
-  () => import("../pages/BankAccountManagementPage"),
+  () => import("../pages/admin/BankAccountManagementPage"),
 );
 const FixedAssetManagementPage = lazy(
-  () => import("../pages/FixedAssetManagementPage"),
+  () => import("../pages/fixed/FixedAssetManagementPage"),
 );
 const ConsolidationScopePage = lazy(
-  () => import("../pages/ConsolidationScopePage"),
+  () => import("../pages/finance/ConsolidationScopePage"),
 );
 const ConsolidationReportsPage = lazy(
-  () => import("../pages/ConsolidationReportsPage"),
+  () => import("../pages/finance/ConsolidationReportsPage"),
 );
 const CompanyStructurePage = lazy(
-  () => import("../pages/CompanyStructurePage"),
+  () => import("../pages/admin/CompanyStructurePage"),
 );
-const OpeningBalancePage = lazy(() => import("../pages/OpeningBalancePage"));
+const OpeningBalancePage = lazy(() => import("../pages/finance/OpeningBalancePage"));
 
 export const erpRoutes: RouteConfig[] = [
   {

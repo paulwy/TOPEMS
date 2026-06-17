@@ -1,0 +1,131 @@
+code: erp
+name: 企业资源计划
+version: 1.0.0
+description: ERP 企业资源计划系统，包含资产管理、财务管理、凭证管理、字典管理等模块
+plugin_type: business
+
+deployment:
+  type: standalone
+  port: 8010
+  base_path: /api/erp
+
+permissions:
+  # 资产管理
+  - code: erp:asset:read
+    name: 查看资产
+    resource_type: asset
+    action: read
+  - code: erp:asset:write
+    name: 管理资产
+    resource_type: asset
+    action: write
+  - code: erp:asset:delete
+    name: 删除资产
+    resource_type: asset
+    action: delete
+
+  # 固定资产
+  - code: erp:fixed_asset:read
+    name: 查看固定资产
+    resource_type: fixed_asset
+    action: read
+  - code: erp:fixed_asset:write
+    name: 管理固定资产
+    resource_type: fixed_asset
+    action: write
+
+  # 财务账户
+  - code: erp:finance:read
+    name: 查看财务
+    resource_type: finance
+    action: read
+  - code: erp:finance:write
+    name: 管理财务
+    resource_type: finance
+    action: write
+
+  # 凭证管理
+  - code: erp:voucher:read
+    name: 查看凭证
+    resource_type: voucher
+    action: read
+  - code: erp:voucher:write
+    name: 管理凭证
+    resource_type: voucher
+    action: write
+  - code: erp:voucher:approve
+    name: 审批凭证
+    resource_type: voucher
+    action: approve
+
+  # 银行管理
+  - code: erp:bank:read
+    name: 查看银行账户
+    resource_type: bank
+    action: read
+  - code: erp:bank:write
+    name: 管理银行账户
+    resource_type: bank
+    action: write
+
+  # 字典管理
+  - code: erp:dict:read
+    name: 查看字典
+    resource_type: dict
+    action: read
+  - code: erp:dict:write
+    name: 管理字典
+    resource_type: dict
+    action: write
+
+  # 车辆管理
+  - code: erp:vehicle:read
+    name: 查看车辆
+    resource_type: vehicle
+    action: read
+  - code: erp:vehicle:write
+    name: 管理车辆
+    resource_type: vehicle
+    action: write
+
+  # 会议室管理
+  - code: erp:meeting_room:read
+    name: 查看会议室
+    resource_type: meeting_room
+    action: read
+  - code: erp:meeting_room:write
+    name: 管理会议室
+    resource_type: meeting_room
+    action: write
+
+  # 办公用品
+  - code: erp:office_supplies:read
+    name: 查看办公用品
+    resource_type: office_supplies
+    action: read
+  - code: erp:office_supplies:write
+    name: 管理办公用品
+    resource_type: office_supplies
+    action: write
+
+  # 项目合同
+  - code: erp:project_contract:read
+    name: 查看项目合同
+    resource_type: project_contract
+    action: read
+  - code: erp:project_contract:write
+    name: 管理项目合同
+    resource_type: project_contract
+    action: write
+
+  # 项目预算
+  - code: erp:project_budget:read
+    name: 查看项目预算
+    resource_type: project_budget
+    action: read
+  - code: erp:project_budget:write
+    name: 管理项目预算
+    resource_type: project_budget
+    action: write
+
+dependencies: []

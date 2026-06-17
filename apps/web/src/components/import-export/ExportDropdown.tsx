@@ -22,20 +22,49 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <Box sx={{ position: "relative", display: "inline-block" }} className={className}>
+    <Box
+      sx={{ position: "relative", display: "inline-block" }}
+      className={className}
+    >
       <Button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
         startIcon={<Download sx={{ width: 16, height: 16, mr: 1 }} />}
-        sx={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 2, "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "8px 16px",
+          backgroundColor: "#2563eb",
+          color: "white",
+          borderRadius: 2,
+          "&:hover": { backgroundColor: "#1d4ed8" },
+          "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
+          transition: "colors 0.2s",
+        }}
       >
         导出
       </Button>
 
       {isOpen && (
         <>
-          <Box sx={{ position: "fixed", inset: 0 }} onClick={() => setIsOpen(false)} />
-          <Box sx={{ position: "absolute", right: 0, marginTop: 1, width: 192, backgroundColor: "white", borderRadius: 2, boxShadow: 3, border: "1px solid #e2e8f0", padding: 0.5, zIndex: 10 }}>
+          <Box
+            sx={{ position: "fixed", inset: 0 }}
+            onClick={() => setIsOpen(false)}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              right: 0,
+              marginTop: 1,
+              width: 192,
+              backgroundColor: "white",
+              borderRadius: 2,
+              boxShadow: 3,
+              border: "1px solid #e2e8f0",
+              padding: 0.5,
+              zIndex: 10,
+            }}
+          >
             {options.map((option) => (
               <Button
                 key={option.value}
@@ -43,7 +72,15 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
                   onExport(option.value);
                   setIsOpen(false);
                 }}
-                sx={{ width: "100%", padding: "8px 16px", textAlign: "left", fontSize: 14, color: "#334155", "&:hover": { backgroundColor: "#f1f5f9" }, transition: "colors 0.2s" }}
+                sx={{
+                  width: "100%",
+                  padding: "8px 16px",
+                  textAlign: "left",
+                  fontSize: 14,
+                  color: "#334155",
+                  "&:hover": { backgroundColor: "#f1f5f9" },
+                  transition: "colors 0.2s",
+                }}
               >
                 {option.label}
               </Button>

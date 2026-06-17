@@ -135,17 +135,17 @@ pub struct CategorySummary {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/reports/balance-sheet", get(balance_sheet))
-        .route("/api/v1/reports/income-statement", get(income_statement))
-        .route("/api/v1/reports/cash-flow", get(cash_flow))
-        .route("/api/v1/reports/voucher-summary", get(voucher_summary))
-        .route("/api/v1/reports/voucher-details", get(voucher_details))
-        .route("/api/v1/reports/receivables", get(receivables_report))
-        .route("/api/v1/reports/payables", get(payables_report))
-        .route("/api/v1/reports/budget-summary", get(budget_summary))
-        .route("/api/v1/reports/employee-summary", get(employee_summary))
-        .route("/api/v1/reports/voucher-trend", get(voucher_trend))
-        .route("/api/v1/reports/category-summary", get(category_summary))
+        .route("/api/erp/reports/balance-sheet", get(balance_sheet))
+        .route("/api/erp/reports/income-statement", get(income_statement))
+        .route("/api/erp/reports/cash-flow", get(cash_flow))
+        .route("/api/erp/reports/voucher-summary", get(voucher_summary))
+        .route("/api/erp/reports/voucher-details", get(voucher_details))
+        .route("/api/erp/reports/receivables", get(receivables_report))
+        .route("/api/erp/reports/payables", get(payables_report))
+        .route("/api/erp/reports/budget-summary", get(budget_summary))
+        .route("/api/erp/reports/employee-summary", get(employee_summary))
+        .route("/api/erp/reports/voucher-trend", get(voucher_trend))
+        .route("/api/erp/reports/category-summary", get(category_summary))
 }
 
 async fn balance_sheet(

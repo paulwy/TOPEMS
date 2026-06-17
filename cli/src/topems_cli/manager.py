@@ -233,7 +233,7 @@ class ServiceManager:
             return True
 
         # 查找服务目录
-        service_dir = self._find_service_dir(service_name)
+        service_dir = self._find_service_dir(service)
         if not service_dir:
             print(f"错误: 找不到服务 {service_name} 的目录")
             return False
@@ -244,7 +244,9 @@ class ServiceManager:
 
         try:
             env = os.environ.copy()
+            env[service.env_var] = str(service.port)
             env["SERVER_PORT"] = str(service.port)
+            env["PORT"] = str(service.port)
             env["DATABASE_URL"] = f"postgres://topems:topems_secret@localhost:5432/topems"
             
             with open(log_file, "w") as f:
@@ -320,12 +322,14 @@ class ServiceManager:
             results[service_name] = self.stop_service(service_name, force)
         return results
 
-    def _find_service_dir(self, service_name: str) -> Optional[Path]:
+    def _find_service_dir(self, service: Service) -> Optional[Path]:
         """查找服务目录"""
+        dir_name = service.service_dir or service.name
+
         possible_dirs = [
-            Path.cwd() / "svc" / service_name,
-            Path(__file__).parent.parent.parent.parent / "svc" / service_name,
-            Path.home() / "TOPEMS" / "svc" / service_name,
+            Path.cwd() / "svc" / dir_name,
+            Path(__file__).parent.parent.parent.parent / "svc" / dir_name,
+            Path.home() / "TOPEMS" / "svc" / dir_name,
         ]
 
         for d in possible_dirs:
@@ -335,7 +339,7 @@ class ServiceManager:
 
     def _get_log_path(self, service_name: str) -> Path:
         """获取日志文件路径"""
-        log_dir = Path.home() / ".topems" / "logs"
+        log_dir = Path(__file__).parent.parent.parent.parent / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         return log_dir / f"{service_name}.log"
 

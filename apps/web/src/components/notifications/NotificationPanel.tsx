@@ -87,27 +87,74 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       : notifications;
 
   return (
-    <div style={{ position: "absolute", right: 0, top: "100%", marginTop: 8, width: 384, backgroundColor: "#ffffff", borderRadius: 8, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", border: "1px solid #e5e7eb", zIndex: 50 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottom: "1px solid #e5e7eb" }}>
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: "#111827" }}>通知中心</h3>
+    <div
+      style={{
+        position: "absolute",
+        right: 0,
+        top: "100%",
+        marginTop: 8,
+        width: 384,
+        backgroundColor: "#ffffff",
+        borderRadius: 8,
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        border: "1px solid #e5e7eb",
+        zIndex: 50,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: 16,
+          borderBottom: "1px solid #e5e7eb",
+        }}
+      >
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: "#111827" }}>
+          通知中心
+        </h3>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
+            style={{
+              padding: 6,
+              color: "#6b7280",
+              backgroundColor: "transparent",
+              border: "none",
+              borderRadius: 8,
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
             title="通知设置"
           >
             <Settings style={{ width: 20, height: 20 }} />
           </button>
           <button
             onClick={fetchNotifications}
-            style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
+            style={{
+              padding: 6,
+              color: "#6b7280",
+              backgroundColor: "transparent",
+              border: "none",
+              borderRadius: 8,
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
             title="刷新"
           >
             <RefreshCw style={{ width: 20, height: 20 }} />
           </button>
           <button
             onClick={onClose}
-            style={{ padding: 6, color: "#6b7280", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}
+            style={{
+              padding: 6,
+              color: "#6b7280",
+              backgroundColor: "transparent",
+              border: "none",
+              borderRadius: 8,
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
           >
             <svg
               style={{ width: 20, height: 20 }}
@@ -141,7 +188,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             border: "none",
             cursor: "pointer",
             color: activeTab === "all" ? "#2563eb" : "#4b5563",
-            borderBottom: activeTab === "all" ? "2px solid #2563eb" : "2px solid transparent",
+            borderBottom:
+              activeTab === "all"
+                ? "2px solid #2563eb"
+                : "2px solid transparent",
           }}
         >
           全部通知
@@ -158,13 +208,25 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
             border: "none",
             cursor: "pointer",
             color: activeTab === "unread" ? "#2563eb" : "#4b5563",
-            borderBottom: activeTab === "unread" ? "2px solid #2563eb" : "2px solid transparent",
+            borderBottom:
+              activeTab === "unread"
+                ? "2px solid #2563eb"
+                : "2px solid transparent",
             position: "relative",
           }}
         >
           未读通知
           {totalUnread > 0 && (
-            <span style={{ marginLeft: 6, backgroundColor: "#ef4444", color: "#ffffff", fontSize: 12, borderRadius: 9999, padding: "2px 6px" }}>
+            <span
+              style={{
+                marginLeft: 6,
+                backgroundColor: "#ef4444",
+                color: "#ffffff",
+                fontSize: 12,
+                borderRadius: 9999,
+                padding: "2px 6px",
+              }}
+            >
               {totalUnread}
             </span>
           )}
@@ -172,10 +234,26 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       </div>
 
       {totalUnread > 0 && !showSettings && (
-        <div style={{ padding: "8px 16px", backgroundColor: "#eff6ff", borderBottom: "1px solid #dbeafe" }}>
+        <div
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#eff6ff",
+            borderBottom: "1px solid #dbeafe",
+          }}
+        >
           <button
             onClick={handleMarkAllAsRead}
-            style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#2563eb", fontWeight: 500, backgroundColor: "transparent", border: "none", cursor: "pointer" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 14,
+              color: "#2563eb",
+              fontWeight: 500,
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             <Check style={{ width: 16, height: 16 }} />
             全部标记为已读
@@ -185,13 +263,43 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
       <div style={{ maxHeight: 400, overflowY: "auto" }}>
         {loading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 48 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "9999px", border: "2px solid #e5e7eb", borderTopColor: "#2563eb", animation: "spin 1s linear infinite" }} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 48,
+            }}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "9999px",
+                border: "2px solid #e5e7eb",
+                borderTopColor: "#2563eb",
+                animation: "spin 1s linear infinite",
+              }}
+            />
           </div>
         ) : displayedNotifications.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, color: "#6b7280" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 48,
+              color: "#6b7280",
+            }}
+          >
             <svg
-              style={{ width: 64, height: 64, marginBottom: 16, color: "#d1d5db" }}
+              style={{
+                width: 64,
+                height: 64,
+                marginBottom: 16,
+                color: "#d1d5db",
+              }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -222,10 +330,22 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       </div>
 
       {displayedNotifications.length > 0 && (
-        <div style={{ padding: 12, borderTop: "1px solid #e5e7eb", backgroundColor: "#f9fafb" }}>
+        <div
+          style={{
+            padding: 12,
+            borderTop: "1px solid #e5e7eb",
+            backgroundColor: "#f9fafb",
+          }}
+        >
           <a
             href="/notifications"
-            style={{ display: "block", textAlign: "center", fontSize: 14, color: "#2563eb", fontWeight: 500 }}
+            style={{
+              display: "block",
+              textAlign: "center",
+              fontSize: 14,
+              color: "#2563eb",
+              fontWeight: 500,
+            }}
           >
             查看全部通知
           </a>

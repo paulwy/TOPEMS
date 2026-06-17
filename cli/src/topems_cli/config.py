@@ -67,6 +67,7 @@ class Config:
                     status=svc_data.get("status", "implemented"),
                     dependencies=svc_data.get("dependencies", []),
                     group=group_name,
+                    service_dir=svc_data.get("service_dir"),
                 )
                 self._services[service.name] = service
 

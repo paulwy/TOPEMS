@@ -1,7 +1,7 @@
 import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
-const AIPage = lazy(() => import("../pages/AIPage"));
+const AIPage = lazy(() => import("../pages/shared/AIPage"));
 
 export const aiRoutes: RouteConfig[] = [
   {

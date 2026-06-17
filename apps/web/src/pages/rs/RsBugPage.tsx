@@ -142,7 +142,9 @@ const RsBugPage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const getSeverityColor = (severity: string): "error" | "warning" | "info" | "default" => {
+  const getSeverityColor = (
+    severity: string,
+  ): "error" | "warning" | "info" | "default" => {
     switch (severity) {
       case "critical":
         return "error";
@@ -181,7 +183,9 @@ const RsBugPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string): "default" | "primary" | "success" | "error" => {
+  const getStatusColor = (
+    status: string,
+  ): "default" | "primary" | "success" | "error" => {
     switch (status) {
       case "open":
         return "error";
@@ -219,7 +223,13 @@ const RsBugPage: React.FC = () => {
     const matchesPriority = !priorityFilter || bug.priority === priorityFilter;
     const matchesStatus = !statusFilter || bug.status === statusFilter;
     const matchesAssignee = !assigneeFilter || bug.assignee === assigneeFilter;
-    return matchesSearch && matchesSeverity && matchesPriority && matchesStatus && matchesAssignee;
+    return (
+      matchesSearch &&
+      matchesSeverity &&
+      matchesPriority &&
+      matchesStatus &&
+      matchesAssignee
+    );
   });
 
   const uniqueAssignees = [...new Set(bugs.map((b) => b.assignee))];
@@ -228,7 +238,9 @@ const RsBugPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -247,7 +259,12 @@ const RsBugPage: React.FC = () => {
     };
     setBugs([newBug, ...bugs]);
     setNewBugDialogOpen(false);
-    setNewBugForm({ bug_title: "", severity: "medium", priority: "medium", description: "" });
+    setNewBugForm({
+      bug_title: "",
+      severity: "medium",
+      priority: "medium",
+      description: "",
+    });
   };
 
   const handleViewDetail = (bug: Bug) => {
@@ -262,7 +279,14 @@ const RsBugPage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             缺陷管理
           </Typography>
@@ -277,7 +301,12 @@ const RsBugPage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <TextField
               size="small"
               placeholder="搜索缺陷编号、标题..."
@@ -355,14 +384,30 @@ const RsBugPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>缺陷编号</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>缺陷标题</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>严重程度</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>优先级</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>指派给</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>创建时间</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    缺陷编号
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    缺陷标题
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    严重程度
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    优先级
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    指派给
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    创建时间
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -371,29 +416,56 @@ const RsBugPage: React.FC = () => {
                   .map((bug) => (
                     <TableRow key={bug.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Bug size={16} color="#3b82f6" />
                           {bug.bug_no}
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Tooltip title={bug.bug_title}>
-                          <Box sx={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <Box
+                            sx={{
+                              maxWidth: 250,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
                             {bug.bug_title}
                           </Box>
                         </Tooltip>
                       </TableCell>
                       <TableCell>
-                        <Chip label={getSeverityLabel(bug.severity)} size="small" color={getSeverityColor(bug.severity)} />
+                        <Chip
+                          label={getSeverityLabel(bug.severity)}
+                          size="small"
+                          color={getSeverityColor(bug.severity)}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Chip label={getPriorityLabel(bug.priority)} size="small" variant="outlined" />
+                        <Chip
+                          label={getPriorityLabel(bug.priority)}
+                          size="small"
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>
-                        <Chip label={getStatusLabel(bug.status)} size="small" color={getStatusColor(bug.status)} />
+                        <Chip
+                          label={getStatusLabel(bug.status)}
+                          size="small"
+                          color={getStatusColor(bug.status)}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <User size={14} />
                           {bug.assignee}
                         </Box>
@@ -402,7 +474,10 @@ const RsBugPage: React.FC = () => {
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="查看详情">
-                            <IconButton size="small" onClick={() => handleViewDetail(bug)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewDetail(bug)}
+                            >
                               <Bug size={16} />
                             </IconButton>
                           </Tooltip>
@@ -413,7 +488,10 @@ const RsBugPage: React.FC = () => {
                           </Tooltip>
                           {bug.status !== "closed" && (
                             <Tooltip title="关闭">
-                              <IconButton size="small" onClick={() => handleCloseBug(bug.id)}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleCloseBug(bug.id)}
+                              >
                                 <CheckCircle size={16} />
                               </IconButton>
                             </Tooltip>
@@ -437,7 +515,12 @@ const RsBugPage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={newBugDialogOpen} onClose={() => setNewBugDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={newBugDialogOpen}
+        onClose={() => setNewBugDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建缺陷</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
@@ -445,14 +528,18 @@ const RsBugPage: React.FC = () => {
               label="缺陷标题"
               fullWidth
               value={newBugForm.bug_title}
-              onChange={(e) => setNewBugForm({ ...newBugForm, bug_title: e.target.value })}
+              onChange={(e) =>
+                setNewBugForm({ ...newBugForm, bug_title: e.target.value })
+              }
             />
             <FormControl fullWidth>
               <InputLabel>严重程度</InputLabel>
               <Select
                 value={newBugForm.severity}
                 label="严重程度"
-                onChange={(e) => setNewBugForm({ ...newBugForm, severity: e.target.value })}
+                onChange={(e) =>
+                  setNewBugForm({ ...newBugForm, severity: e.target.value })
+                }
               >
                 <MenuItem value="critical">严重</MenuItem>
                 <MenuItem value="major">主要</MenuItem>
@@ -464,7 +551,9 @@ const RsBugPage: React.FC = () => {
               <Select
                 value={newBugForm.priority}
                 label="优先级"
-                onChange={(e) => setNewBugForm({ ...newBugForm, priority: e.target.value })}
+                onChange={(e) =>
+                  setNewBugForm({ ...newBugForm, priority: e.target.value })
+                }
               >
                 <MenuItem value="high">高</MenuItem>
                 <MenuItem value="medium">中</MenuItem>
@@ -477,19 +566,30 @@ const RsBugPage: React.FC = () => {
               multiline
               rows={4}
               value={newBugForm.description}
-              onChange={(e) => setNewBugForm({ ...newBugForm, description: e.target.value })}
+              onChange={(e) =>
+                setNewBugForm({ ...newBugForm, description: e.target.value })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewBugDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateBug}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateBug}
+          >
             创建
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>缺陷详情</DialogTitle>
         <DialogContent>
           {selectedBug && (
@@ -498,9 +598,21 @@ const RsBugPage: React.FC = () => {
                 {selectedBug.bug_no} - {selectedBug.bug_title}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Chip label={getSeverityLabel(selectedBug.severity)} size="small" color={getSeverityColor(selectedBug.severity)} />
-                <Chip label={getPriorityLabel(selectedBug.priority)} size="small" variant="outlined" />
-                <Chip label={getStatusLabel(selectedBug.status)} size="small" color={getStatusColor(selectedBug.status)} />
+                <Chip
+                  label={getSeverityLabel(selectedBug.severity)}
+                  size="small"
+                  color={getSeverityColor(selectedBug.severity)}
+                />
+                <Chip
+                  label={getPriorityLabel(selectedBug.priority)}
+                  size="small"
+                  variant="outlined"
+                />
+                <Chip
+                  label={getStatusLabel(selectedBug.status)}
+                  size="small"
+                  color={getStatusColor(selectedBug.status)}
+                />
               </Stack>
               <Stack direction="row" spacing={4} sx={{ mt: 3 }}>
                 <Box>

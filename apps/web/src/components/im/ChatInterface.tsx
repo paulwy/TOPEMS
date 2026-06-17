@@ -458,10 +458,27 @@ export const ChatInterface: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: "flex", height: "100vh", backgroundColor: "#f9fafb" }}>
-      <div style={{ width: 320, backgroundColor: "#ffffff", borderRight: "1px solid #e5e7eb", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{ display: "flex", height: "100vh", backgroundColor: "#f9fafb" }}
+    >
+      <div
+        style={{
+          width: 320,
+          backgroundColor: "#ffffff",
+          borderRight: "1px solid #e5e7eb",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <div style={{ padding: 16, borderBottom: "1px solid #e5e7eb" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 16,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Button
                 variant="text"
@@ -470,7 +487,11 @@ export const ChatInterface: React.FC = () => {
               >
                 <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>
-              <h1 style={{ fontSize: 20, fontWeight: "bold", color: "#111827" }}>消息</h1>
+              <h1
+                style={{ fontSize: 20, fontWeight: "bold", color: "#111827" }}
+              >
+                消息
+              </h1>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div
@@ -492,7 +513,17 @@ export const ChatInterface: React.FC = () => {
           </div>
 
           <div style={{ position: "relative" }}>
-            <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
+            <Search
+              style={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 16,
+                height: 16,
+                color: "#9ca3af",
+              }}
+            />
             <TextField
               size="small"
               placeholder="搜索聊天..."
@@ -527,7 +558,9 @@ export const ChatInterface: React.FC = () => {
                 }}
               >
                 <Icon style={{ width: 16, height: 16 }} />
-                <span style={{ fontSize: 12, fontWeight: 500 }}>{tab.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 500 }}>
+                  {tab.label}
+                </span>
               </button>
             );
           })}
@@ -546,12 +579,36 @@ export const ChatInterface: React.FC = () => {
         ) : (
           <div style={{ flex: 1, overflowY: "auto", padding: 8 }}>
             {loading ? (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 32 }}>
-                <div style={{ width: 32, height: 32, borderRadius: "9999px", border: "4px solid #4f46e5", borderTopColor: "transparent", animation: "spin 1s linear infinite" }} />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 32,
+                }}
+              >
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "9999px",
+                    border: "4px solid #4f46e5",
+                    borderTopColor: "transparent",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
               </div>
             ) : filteredRooms.length === 0 ? (
               <div style={{ textAlign: "center", padding: 32 }}>
-                <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", margin: "0 auto", marginBottom: 12 }} />
+                <MessageSquare
+                  style={{
+                    width: 48,
+                    height: 48,
+                    color: "#d1d5db",
+                    margin: "0 auto",
+                    marginBottom: 12,
+                  }}
+                />
                 <p style={{ color: "#6b7280" }}>暂无聊天记录</p>
               </div>
             ) : (
@@ -578,8 +635,21 @@ export const ChatInterface: React.FC = () => {
         activeTab !== "notifications" &&
         activeTab !== "contacts" ? (
           <>
-            <div style={{ backgroundColor: "#ffffff", borderBottom: "1px solid #e5e7eb", padding: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                borderBottom: "1px solid #e5e7eb",
+                padding: 16,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 12,
+                }}
+              >
                 <div>
                   <h2 style={{ fontWeight: 600, color: "#111827" }}>
                     {selectedRoom.name || "未命名会话"}
@@ -591,7 +661,17 @@ export const ChatInterface: React.FC = () => {
                 </div>
               </div>
               <div style={{ position: "relative" }}>
-                <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#9ca3af" }} />
+                <Search
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 16,
+                    height: 16,
+                    color: "#9ca3af",
+                  }}
+                />
                 <TextField
                   size="small"
                   placeholder="搜索消息..."
@@ -605,25 +685,70 @@ export const ChatInterface: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: "auto", padding: 16, backgroundColor: "#f9fafb" }}>
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: 16,
+                backgroundColor: "#f9fafb",
+              }}
+            >
               {messages.length === 0 ? (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
                   <div style={{ textAlign: "center" }}>
-                    <MessageSquare style={{ width: 48, height: 48, color: "#d1d5db", margin: "0 auto", marginBottom: 12 }} />
+                    <MessageSquare
+                      style={{
+                        width: 48,
+                        height: 48,
+                        color: "#d1d5db",
+                        margin: "0 auto",
+                        marginBottom: 12,
+                      }}
+                    />
                     <p style={{ color: "#6b7280" }}>暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                >
                   <div style={{ textAlign: "center" }}>
-                    <Search style={{ width: 48, height: 48, color: "#d1d5db", margin: "0 auto", marginBottom: 12 }} />
+                    <Search
+                      style={{
+                        width: 48,
+                        height: 48,
+                        color: "#d1d5db",
+                        margin: "0 auto",
+                        marginBottom: 12,
+                      }}
+                    />
                     <p style={{ color: "#6b7280" }}>未找到匹配的消息</p>
                   </div>
                 </div>
               ) : (
                 <>
                   {messageSearchQuery.trim() && filteredMessages.length > 0 && (
-                    <div style={{ marginBottom: 16, padding: 8, backgroundColor: "#fef9c3", border: "1px solid #fde047", borderRadius: 8 }}>
+                    <div
+                      style={{
+                        marginBottom: 16,
+                        padding: 8,
+                        backgroundColor: "#fef9c3",
+                        border: "1px solid #fde047",
+                        borderRadius: 8,
+                      }}
+                    >
                       <span style={{ fontSize: 14, color: "#854d0e" }}>
                         找到 {filteredMessages.length} 条匹配消息
                       </span>
@@ -653,10 +778,33 @@ export const ChatInterface: React.FC = () => {
             />
           </>
         ) : (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9fafb" }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "#f9fafb",
+            }}
+          >
             <div style={{ textAlign: "center" }}>
-              <MessageSquare style={{ width: 64, height: 64, color: "#d1d5db", margin: "0 auto", marginBottom: 16 }} />
-              <h2 style={{ fontSize: 20, fontWeight: 600, color: "#111827", marginBottom: 8 }}>
+              <MessageSquare
+                style={{
+                  width: 64,
+                  height: 64,
+                  color: "#d1d5db",
+                  margin: "0 auto",
+                  marginBottom: 16,
+                }}
+              />
+              <h2
+                style={{
+                  fontSize: 20,
+                  fontWeight: 600,
+                  color: "#111827",
+                  marginBottom: 8,
+                }}
+              >
                 欢迎使用 TOPEMS IM
               </h2>
               <p style={{ color: "#6b7280", marginBottom: 16 }}>

@@ -24,7 +24,9 @@
     "alwaysStrict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@topems/shared-types": ["../../packages/shared-types/src"],
+      "@topems/shared-utils": ["../../packages/shared-utils/src"]
     },
     "ignoreDeprecations": "6.0",
     "types": ["vitest/globals", "node", "react", "react-dom"]

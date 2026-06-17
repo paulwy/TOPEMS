@@ -5,32 +5,35 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const FlowWorkflowPage = lazy(() => import("../pages/FlowWorkflowPage"));
+const FlowWorkflowPage = lazy(() => import("../pages/workflow/FlowWorkflowPage"));
 const WorkflowDesignerPage = lazy(
-  () => import("../pages/WorkflowDesignerPage"),
+  () => import("../pages/templates/WorkflowDesignerPage"),
 );
 const FlowInstanceListPage = lazy(
-  () => import("../pages/FlowInstanceListPage"),
+  () => import("../pages/workflow/FlowInstanceListPage"),
 );
 const FlowInstanceDetailPage = lazy(
-  () => import("../pages/FlowInstanceDetailPage"),
+  () => import("../pages/workflow/FlowInstanceDetailPage"),
 );
-const FlowApprovalPage = lazy(() => import("../pages/FlowApprovalPage"));
+const FlowApprovalPage = lazy(() => import("../pages/workflow/FlowApprovalPage"));
 const FlowApprovalDetailPage = lazy(
-  () => import("../pages/FlowApprovalDetailPage"),
+  () => import("../pages/workflow/FlowApprovalDetailPage"),
 );
 const FlowNotificationCenter = lazy(
-  () => import("../pages/FlowNotificationCenter"),
+  () => import("../pages/workflow/FlowNotificationCenter"),
 );
-const FlowStatisticsPage = lazy(() => import("../pages/FlowStatisticsPage"));
+const FlowStatisticsPage = lazy(() => import("../pages/workflow/FlowStatisticsPage"));
 const FlowVersionHistoryPage = lazy(
-  () => import("../pages/FlowVersionHistoryPage"),
+  () => import("../pages/workflow/FlowVersionHistoryPage"),
 );
 
 export const workflowRoutes: RouteConfig[] = [
   {
     path: "/flow",
-    element: React.createElement(Navigate, { to: "/flow/approvals", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/flow/approvals",
+      replace: true,
+    }),
     requiredPermissions: ["workflow:read"],
     module: "workflow",
     action: "read",

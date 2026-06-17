@@ -149,7 +149,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {breadcrumbs.map((item, index) => {
             const isLast = index === breadcrumbs.length - 1;
             return (
-              <span key={index} style={{ display: "inline-flex", alignItems: "center" }}>
+              <span
+                key={index}
+                style={{ display: "inline-flex", alignItems: "center" }}
+              >
                 {item.href ? (
                   <Link
                     component={RouterLink}
@@ -175,7 +178,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 )}
                 {!isLast && (
                   <ChevronRight
-                    style={{ width: 16, height: 16, color: "#9ca3af", marginLeft: 4, marginRight: 4 }}
+                    style={{
+                      width: 16,
+                      height: 16,
+                      color: "#9ca3af",
+                      marginLeft: 4,
+                      marginRight: 4,
+                    }}
                   />
                 )}
               </span>
@@ -276,37 +285,35 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         )}
 
         {/* 其他操作按钮 */}
-        {Array.isArray(actions) ? (
-          actions.map((action, index) => {
-            const buttonContent = (
-              <Button
-                key={index}
-                variant={action.variant || "outlined"}
-                color={action.color || "primary"}
-                startIcon={action.icon}
-                onClick={action.onClick}
-                disabled={action.disabled || action.loading}
-                component={action.href ? RouterLink : "button"}
-                to={action.href}
-                size={isMobile ? "small" : "medium"}
-              >
-                {!isMobile && action.label}
-              </Button>
-            );
-
-            if (action.tooltip) {
-              return (
-                <Tooltip key={index} title={action.tooltip}>
-                  <span>{buttonContent}</span>
-                </Tooltip>
+        {Array.isArray(actions)
+          ? actions.map((action, index) => {
+              const buttonContent = (
+                <Button
+                  key={index}
+                  variant={action.variant || "outlined"}
+                  color={action.color || "primary"}
+                  startIcon={action.icon}
+                  onClick={action.onClick}
+                  disabled={action.disabled || action.loading}
+                  component={action.href ? RouterLink : "button"}
+                  to={action.href}
+                  size={isMobile ? "small" : "medium"}
+                >
+                  {!isMobile && action.label}
+                </Button>
               );
-            }
 
-            return buttonContent;
-          })
-        ) : (
-          actions
-        )}
+              if (action.tooltip) {
+                return (
+                  <Tooltip key={index} title={action.tooltip}>
+                    <span>{buttonContent}</span>
+                  </Tooltip>
+                );
+              }
+
+              return buttonContent;
+            })
+          : actions}
 
         {/* 自定义右侧内容 */}
         {rightContent}

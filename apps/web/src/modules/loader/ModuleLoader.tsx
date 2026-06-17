@@ -2,8 +2,8 @@
  * ModuleLoader - Lazy loading component for modules
  */
 
-import React, { Suspense, lazy } from 'react';
-import { CircularProgress, Box, Typography } from '@mui/material';
+import React, { Suspense, lazy } from "react";
+import { CircularProgress, Box, Typography } from "@mui/material";
 
 interface ModuleLoaderProps {
   /** Component to load */
@@ -20,11 +20,11 @@ interface ModuleLoaderProps {
 export const ModuleLoadingFallback: React.FC = () => (
   <Box
     sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100%",
       minHeight: 200,
       gap: 2,
     }}
@@ -42,11 +42,11 @@ export const ModuleLoadingFallback: React.FC = () => (
 export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
   <Box
     sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100%",
       minHeight: 200,
       gap: 2,
       p: 3,
@@ -72,7 +72,7 @@ export const ModuleLoader: React.FC<ModuleLoaderProps> = ({
   errorFallback = <ModuleErrorFallback />,
 }) => {
   const LazyComponent = lazy(component);
-  
+
   return (
     <Suspense fallback={fallback}>
       <LazyComponent />
@@ -88,9 +88,12 @@ export class DynamicModuleLoader {
   private retryCount: Map<string, number> = new Map();
   private maxRetries = 3;
 
-  async loadModule(component: () => Promise<any>, moduleId?: string): Promise<any> {
+  async loadModule(
+    component: () => Promise<any>,
+    moduleId?: string,
+  ): Promise<any> {
     const cacheKey = moduleId || component.toString();
-    
+
     // Return from cache if available
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey);
@@ -108,7 +111,9 @@ export class DynamicModuleLoader {
       if (retries < this.maxRetries) {
         this.retryCount.set(retryKey, retries + 1);
         // Exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, retries) * 1000),
+        );
         return this.loadModule(component, moduleId);
       }
       throw error;
@@ -188,7 +193,8 @@ export const ModuleRouteWrapper: React.FC<ModuleRouteWrapperProps> = ({
   }
 
   if (moduleComponent) {
-    return <moduleComponent />;
+    const Component = moduleComponent;
+    return <Component />;
   }
 
   return null;

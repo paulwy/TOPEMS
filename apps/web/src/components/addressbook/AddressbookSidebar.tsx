@@ -114,7 +114,11 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
           </span>
         </div>
         {hasChildren && isExpanded && (
-          <div>{node.children.map((child) => renderDepartmentNode(child, level + 1))}</div>
+          <div>
+            {node.children.map((child) =>
+              renderDepartmentNode(child, level + 1),
+            )}
+          </div>
         )}
       </div>
     );
@@ -139,14 +143,23 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
       }}
     >
       <div style={{ padding: 16, borderBottom: "1px solid #e2e8f0" }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: 0 }}>
+        <h2
+          style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: 0 }}
+        >
           通讯录
         </h2>
       </div>
 
       {/* 类型筛选 */}
       <div style={{ padding: 16, borderBottom: "1px solid #e2e8f0" }}>
-        <h3 style={{ fontSize: 14, fontWeight: 500, color: "#64748b", marginBottom: 12 }}>
+        <h3
+          style={{
+            fontSize: 14,
+            fontWeight: 500,
+            color: "#64748b",
+            marginBottom: 12,
+          }}
+        >
           分类
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -163,7 +176,8 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
                 borderRadius: 6,
                 border: "none",
                 cursor: "pointer",
-                backgroundColor: selectedType === id ? "#eff6ff" : "transparent",
+                backgroundColor:
+                  selectedType === id ? "#eff6ff" : "transparent",
                 color: selectedType === id ? "#1d4ed8" : "#334155",
                 transition: "colors 0.2s",
                 width: "100%",
@@ -189,7 +203,14 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
 
       {/* 部门树 */}
       <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
-        <h3 style={{ fontSize: 14, fontWeight: 500, color: "#64748b", marginBottom: 12 }}>
+        <h3
+          style={{
+            fontSize: 14,
+            fontWeight: 500,
+            color: "#64748b",
+            marginBottom: 12,
+          }}
+        >
           组织架构
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -204,7 +225,8 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
               borderRadius: 6,
               border: "none",
               cursor: "pointer",
-              backgroundColor: selectedDepartment === null ? "#eff6ff" : "transparent",
+              backgroundColor:
+                selectedDepartment === null ? "#eff6ff" : "transparent",
               color: selectedDepartment === null ? "#1d4ed8" : "#334155",
               transition: "colors 0.2s",
               width: "100%",

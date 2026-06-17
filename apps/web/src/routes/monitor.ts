@@ -4,13 +4,13 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const MonitorPage = lazy(() => import("../pages/MonitorPage"));
+const MonitorPage = lazy(() => import("../pages/system/MonitorPage"));
 
 export const monitorRoutes: RouteConfig[] = [
   {
     path: "/monitor",
     element: MonitorPage,
-    requiredPermissions: ["system:read"],
+    requiredPermissions: ["iam:system_read"],
     module: "monitor",
     action: "read",
   },

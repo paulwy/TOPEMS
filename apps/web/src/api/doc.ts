@@ -41,14 +41,26 @@ export interface CreateFolderRequest {
   parent_id?: string;
 }
 
+// 文件上传使用 file 服务
+export interface UploadFileResponse {
+  id: string;
+  name: string;
+  size: number;
+  content_type: string;
+  url: string;
+}
+
 export const docApi = {
+  // ========== 文档操作 (使用 /api/core/doc/*) ==========
+
   list: async (folderId?: string): Promise<ApiResponse<FileListResponse>> => {
     const params = folderId ? { folder_id: folderId } : {};
-    return apiClient.doc.get<FileListResponse>("/api/v1/files", { params });
+    // 使用 doc 服务，路径 /doc/* 会被代理到 /api/core/doc/*
+    return apiClient.doc.get<FileListResponse>("/documents", { params });
   },
 
   get: async (id: string): Promise<ApiResponse<FileMetadata>> => {
-    return apiClient.doc.get<FileMetadata>(`/api/v1/files/${id}`);
+    return apiClient.doc.get<FileMetadata>(`/documents/${id}`);
   },
 
   upload: async (
@@ -60,54 +72,57 @@ export const docApi = {
     if (folderId) {
       formData.append("folder_id", folderId);
     }
-    return apiClient.doc.post<FileMetadata>("/api/v1/files", formData);
+    // 上传使用 file 服务
+    return apiClient.file.post<FileMetadata>("/upload", formData);
   },
 
   download: async (id: string): Promise<Blob> => {
-    const baseURL =
-      (apiClient.doc as any).defaults?.baseURL || config.services.doc;
-    return downloadBlob(baseURL, `/api/v1/files/${id}/download`);
+    // 使用 file 服务下载
+    return downloadBlob(config.services.file, `/download/${id}`);
   },
 
   preview: async (id: string): Promise<string> => {
-    const baseURL =
-      (apiClient.doc as any).defaults?.baseURL || config.services.doc;
-    return `${baseURL}/api/v1/files/${id}/preview`;
+    // 使用 file 服务预览
+    return `${config.services.file}/files/${id}/preview`;
   },
 
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.doc.delete<void>(`/api/v1/files/${id}`);
+    return apiClient.doc.delete<void>(`/documents/${id}`);
   },
 
-  health: async (): Promise<ApiResponse<string>> => {
-    return apiClient.doc.get<string>("/health");
-  },
+  // ========== 文件夹操作 (使用 /api/core/doc/folders) ==========
 
   listFolders: async (
     parentId?: string,
   ): Promise<ApiResponse<ListFoldersData>> => {
     const params = parentId ? { parent_id: parentId } : {};
-    return apiClient.doc.get<ListFoldersData>("/api/v1/folders", { params });
+    return apiClient.doc.get<ListFoldersData>("/folders", { params });
   },
 
   createFolder: async (
     request: CreateFolderRequest,
   ): Promise<ApiResponse<Folder>> => {
-    return apiClient.doc.post<Folder>("/api/v1/folders", request);
+    return apiClient.doc.post<Folder>("/folders", request);
   },
 
   getFolder: async (id: string): Promise<ApiResponse<Folder>> => {
-    return apiClient.doc.get<Folder>(`/api/v1/folders/${id}`);
+    return apiClient.doc.get<Folder>(`/folders/${id}`);
   },
 
   updateFolder: async (
     id: string,
     request: CreateFolderRequest,
   ): Promise<ApiResponse<Folder>> => {
-    return apiClient.doc.put<Folder>(`/api/v1/folders/${id}`, request);
+    return apiClient.doc.put<Folder>(`/folders/${id}`, request);
   },
 
   deleteFolder: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.doc.delete<void>(`/api/v1/folders/${id}`);
+    return apiClient.doc.delete<void>(`/folders/${id}`);
+  },
+
+  // ========== 健康检查 ==========
+
+  health: async (): Promise<ApiResponse<string>> => {
+    return apiClient.doc.get<string>("/health");
   },
 };

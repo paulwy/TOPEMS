@@ -10,6 +10,11 @@ import React, {
 } from "react";
 import { authApi } from "@/api/iam";
 import apiClient from "../api/client";
+import type { User } from "@topems/shared-types";
+import { mapApiUserToUser } from "@topems/shared-types";
+
+// Re-export User type for backward compatibility
+export type { User } from "@topems/shared-types";
 
 // 默认 token 过期时间（24小时，毫秒）- 当无法解析 JWT 时使用
 const DEFAULT_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
@@ -30,92 +35,7 @@ const parseTokenExpiryFromJWT = (token: string): number => {
   return Date.now() + DEFAULT_TOKEN_EXPIRY_MS;
 };
 
-// 权限名称到ID的映射 - 移到组件外部避免重复创建
-const permissionNameToId: Record<string, string> = {
-  "user:read": "00000000-0000-0000-0000-000000000010",
-  "user:write": "00000000-0000-0000-0000-000000000011",
-  "user:delete": "00000000-0000-0000-0000-000000000012",
-  "user:admin": "00000000-0000-0000-0000-000000000013",
-  "role:read": "00000000-0000-0000-0000-000000000014",
-  "role:write": "00000000-0000-0000-0000-000000000015",
-  "role:delete": "00000000-0000-0000-0000-000000000016",
-  "role:admin": "00000000-0000-0000-0000-000000000017",
-  "system:read": "00000000-0000-0000-0000-000000000020",
-  "system:write": "00000000-0000-0000-0000-000000000021",
-  "system:admin": "00000000-0000-0000-0000-000000000022",
-  "rs:read": "00000001-0000-0000-0000-000000000001",
-  "rs:write": "00000001-0000-0000-0000-000000000002",
-  "rs:delete": "00000001-0000-0000-0000-000000000003",
-  "rs:admin": "00000001-0000-0000-0000-000000000004",
-  "lims:read": "00000002-0000-0000-0000-000000000001",
-  "lims:write": "00000002-0000-0000-0000-000000000002",
-  "lims:delete": "00000002-0000-0000-0000-000000000003",
-  "lims:admin": "00000002-0000-0000-0000-000000000004",
-  "qms:read": "00000003-0000-0000-0000-000000000001",
-  "qms:write": "00000003-0000-0000-0000-000000000002",
-  "qms:delete": "00000003-0000-0000-0000-000000000003",
-  "qms:admin": "00000003-0000-0000-0000-000000000004",
-  "ehs:read": "00000004-0000-0000-0000-000000000001",
-  "ehs:write": "00000004-0000-0000-0000-000000000002",
-  "ehs:delete": "00000004-0000-0000-0000-000000000003",
-  "ehs:admin": "00000004-0000-0000-0000-000000000004",
-  "srm:read": "00000005-0000-0000-0000-000000000001",
-  "srm:write": "00000005-0000-0000-0000-000000000002",
-  "srm:delete": "00000005-0000-0000-0000-000000000003",
-  "srm:admin": "00000005-0000-0000-0000-000000000004",
-  "pdm:read": "00000006-0000-0000-0000-000000000001",
-  "pdm:write": "00000006-0000-0000-0000-000000000002",
-  "pdm:delete": "00000006-0000-0000-0000-000000000003",
-  "pdm:admin": "00000006-0000-0000-0000-000000000004",
-  "workflow:read": "00000007-0000-0000-0000-000000000001",
-  "workflow:write": "00000007-0000-0000-0000-000000000002",
-  "workflow:approve": "00000007-0000-0000-0000-000000000003",
-  "workflow:reject": "00000007-0000-0000-0000-000000000004",
-  "workflow:admin": "00000007-0000-0000-0000-000000000005",
-  "doc:read": "00000008-0000-0000-0000-000000000001",
-  "doc:write": "00000008-0000-0000-0000-000000000002",
-  "doc:delete": "00000008-0000-0000-0000-000000000003",
-  "doc:admin": "00000008-0000-0000-0000-000000000004",
-  "file:read": "00000016-0000-0000-0000-000000000001",
-  "file:write": "00000016-0000-0000-0000-000000000002",
-  "file:delete": "00000016-0000-0000-0000-000000000003",
-  "file:admin": "00000016-0000-0000-0000-000000000004",
-  "ai:read": "00000009-0000-0000-0000-000000000001",
-  "ai:write": "00000009-0000-0000-0000-000000000002",
-  "ai:delete": "00000009-0000-0000-0000-000000000003",
-  "ai:admin": "00000009-0000-0000-0000-000000000004",
-  "im:read": "00000010-0000-0000-0000-000000000001",
-  "im:write": "00000010-0000-0000-0000-000000000002",
-  "im:admin": "00000010-0000-0000-0000-000000000003",
-  "mail:read": "00000011-0000-0000-0000-000000000001",
-  "mail:write": "00000011-0000-0000-0000-000000000002",
-  "mail:admin": "00000011-0000-0000-0000-000000000003",
-  "gis:read": "00000012-0000-0000-0000-000000000001",
-  "gis:write": "00000012-0000-0000-0000-000000000002",
-  "gis:admin": "00000012-0000-0000-0000-000000000003",
-  "notification:read": "00000013-0000-0000-0000-000000000001",
-  "notification:write": "00000013-0000-0000-0000-000000000002",
-  "pm:read": "00000014-0000-0000-0000-000000000001",
-  "pm:write": "00000014-0000-0000-0000-000000000002",
-  "pm:admin": "00000014-0000-0000-0000-000000000003",
-  "integration:read": "00000015-0000-0000-0000-000000000001",
-  "integration:write": "00000015-0000-0000-0000-000000000002",
-  "integration:admin": "00000015-0000-0000-0000-000000000003",
-};
-
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  full_name?: string;
-  role?: string;
-  roles?: string[];
-  permissions?: string[];
-  created_at: string;
-  is_active: boolean;
-  is_superuser?: boolean;
-}
-
+// AuthState uses User from shared-types but adds React-specific fields
 export interface AuthState {
   user: User | null;
   token: string | null;
@@ -297,7 +217,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (token && userStr) {
         try {
-          const user = JSON.parse(userStr);
+          const rawUser = JSON.parse(userStr);
+          // Transform user to unified format (handles both old snake_case and new format)
+          const user = mapApiUserToUser(rawUser);
           const roles = rolesStr ? JSON.parse(rolesStr) : [];
           const permissions = permissionsStr ? JSON.parse(permissionsStr) : [];
 
@@ -349,12 +271,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (response.success && response.data) {
         const { access_token, refresh_token, user } = response.data;
+        // Transform user to unified format (camelCase + snake_case compatibility)
+        const mappedUser = mapApiUserToUser(user);
 
         localStorage.setItem("token", access_token);
         if (refresh_token) {
           localStorage.setItem("refresh_token", refresh_token);
         }
-        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("user", JSON.stringify(mappedUser));
 
         apiClient.setAuthToken(access_token);
 
@@ -363,8 +287,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         setTokenExpiry(expiry);
         localStorage.setItem("token_expiry", expiry.toString());
 
-        const roles = user.roles || [];
-        const permissions = user.permissions || [];
+        const roles = mappedUser.roles || [];
+        const permissions = mappedUser.permissions || [];
 
         if (roles.length > 0) {
           localStorage.setItem("roles", JSON.stringify(roles));
@@ -374,7 +298,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
 
         setState({
-          user,
+          user: mappedUser,
           token: access_token,
           isAuthenticated: true,
           isLoading: false,
@@ -421,19 +345,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, [logout]);
 
-  const hasPermission = useCallback((permission: string) => {
-    const { permissions, user } = stateRef.current;
-    if (user?.is_superuser) return true;
-
-    const permissionId = permissionNameToId[permission];
-    const altFormat = permission.replace(":", "_");
-
-    return (
-      permissions.includes(permission) ||
-      permissions.includes(altFormat) ||
-      (permissionId !== undefined && permissions.includes(permissionId))
-    );
-  }, []);
+  // hasPermission moved below to read from localStorage directly
 
   const hasRole = useCallback((role: string) => {
     const { roles, user } = stateRef.current;
@@ -442,15 +354,80 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const hasAnyPermission = useCallback((perms: string[]) => {
-    const { permissions, user } = stateRef.current;
+    // 直接从 localStorage 读取权限，确保获取最新数据
+    const userStr = localStorage.getItem("user");
+    const permissionsStr = localStorage.getItem("permissions");
+    
+    let user = null;
+    let permissions: string[] = [];
+    
+    try {
+      if (userStr) {
+        user = JSON.parse(userStr);
+      }
+      if (permissionsStr) {
+        permissions = JSON.parse(permissionsStr);
+      }
+    } catch (e) {
+      console.error("Failed to parse auth data from localStorage:", e);
+    }
+    
+    // 超级用户拥有所有权限
     if (user?.is_superuser) return true;
+    
+    // 检查是否有任意一个要求的权限
     return perms.some((perm) => permissions.includes(perm));
   }, []);
 
   const hasAllPermissions = useCallback((perms: string[]) => {
-    const { permissions, user } = stateRef.current;
+    // 直接从 localStorage 读取权限
+    const userStr = localStorage.getItem("user");
+    const permissionsStr = localStorage.getItem("permissions");
+    
+    let user = null;
+    let permissions: string[] = [];
+    
+    try {
+      if (userStr) {
+        user = JSON.parse(userStr);
+      }
+      if (permissionsStr) {
+        permissions = JSON.parse(permissionsStr);
+      }
+    } catch (e) {
+      console.error("Failed to parse auth data from localStorage:", e);
+    }
+    
+    // 超级用户拥有所有权限
     if (user?.is_superuser) return true;
+    
+    // 检查是否拥有所有要求的权限
     return perms.every((perm) => permissions.includes(perm));
+  }, []);
+
+  const hasPermission = useCallback((permission: string) => {
+    // 直接从 localStorage 读取权限
+    const userStr = localStorage.getItem("user");
+    const permissionsStr = localStorage.getItem("permissions");
+    
+    let user = null;
+    let permissions: string[] = [];
+    
+    try {
+      if (userStr) {
+        user = JSON.parse(userStr);
+      }
+      if (permissionsStr) {
+        permissions = JSON.parse(permissionsStr);
+      }
+    } catch (e) {
+      console.error("Failed to parse auth data from localStorage:", e);
+    }
+    
+    // 超级用户拥有所有权限
+    if (user?.is_superuser) return true;
+    
+    return permissions.includes(permission);
   }, []);
 
   const refreshPermissions = useCallback(async () => {

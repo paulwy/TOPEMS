@@ -13,12 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  Users,
-  Search,
-} from "lucide-react";
+import { Plus, Eye, Users, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -33,7 +28,9 @@ const SrmSupplierPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
+    null,
+  );
   const [formData, setFormData] = useState({
     supplier_no: "",
     name: "",
@@ -60,8 +57,14 @@ const SrmSupplierPage: React.FC = () => {
         const adapted = items.map((item: any) => ({
           ...item,
           supplier_no: item.supplier_no || item.supplierNo || "",
-          contact_phone: item.phone || item.contactPhone || item.contact_phone || "",
-          status: item.status === "active" ? "启用" : item.status === "inactive" ? "禁用" : item.status,
+          contact_phone:
+            item.phone || item.contactPhone || item.contact_phone || "",
+          status:
+            item.status === "active"
+              ? "启用"
+              : item.status === "inactive"
+                ? "禁用"
+                : item.status,
         }));
         setSuppliers(adapted);
       } else {
@@ -76,8 +79,10 @@ const SrmSupplierPage: React.FC = () => {
   };
 
   const getRiskStyle = (level: string) => {
-    if (level === "low") return { bgcolor: "#dcfce7", color: "#15803d", label: "低" };
-    if (level === "medium") return { bgcolor: "#fef3c7", color: "#b45309", label: "中" };
+    if (level === "low")
+      return { bgcolor: "#dcfce7", color: "#15803d", label: "低" };
+    if (level === "medium")
+      return { bgcolor: "#fef3c7", color: "#b45309", label: "中" };
     return { bgcolor: "#fee2e2", color: "#b91c1c", label: "高" };
   };
 
@@ -116,7 +121,9 @@ const SrmSupplierPage: React.FC = () => {
     {
       accessorKey: "risk_level",
       header: "风险等级",
-      cell: ({ row }) => <RiskChip level={row.original.risk_level || "medium"} />,
+      cell: ({ row }) => (
+        <RiskChip level={row.original.risk_level || "medium"} />
+      ),
     },
     {
       accessorKey: "status",
@@ -144,7 +151,8 @@ const SrmSupplierPage: React.FC = () => {
     return (
       s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.supplier_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.contact_person && s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()))
+      (s.contact_person &&
+        s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   });
 
@@ -463,9 +471,7 @@ const SrmSupplierPage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <Users
-                style={{ width: 20, height: 20, color: "#a855f7" }}
-              />
+              <Users style={{ width: 20, height: 20, color: "#a855f7" }} />
               供应商列表
             </Typography>
           </CardHeader>
@@ -506,7 +512,9 @@ const SrmSupplierPage: React.FC = () => {
         <DialogTitle>新增供应商</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 fullWidth
                 label="编号 *"

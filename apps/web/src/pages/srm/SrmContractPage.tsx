@@ -13,16 +13,14 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  ScrollText,
-  Search,
-  FileText,
-} from "lucide-react";
+import { Plus, ScrollText, Search, FileText } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { srmApi } from "@/api/srm";
-import type { SupplierContract, CreateSupplierContractRequest } from "@/api/srm";
+import type {
+  SupplierContract,
+  CreateSupplierContractRequest,
+} from "@/api/srm";
 import { toast } from "react-toastify";
 
 interface ContractWithAmount extends SupplierContract {
@@ -61,10 +59,16 @@ const SrmContractPage: React.FC = () => {
         const adapted = items.map((item: any) => ({
           ...item,
           amount: item.amount || 0,
-          status: item.status === "active" ? "有效" : 
-                  item.status === "expired" ? "已过期" : 
-                  item.status === "draft" ? "草稿" : 
-                  item.status === "terminated" ? "已终止" : item.status,
+          status:
+            item.status === "active"
+              ? "有效"
+              : item.status === "expired"
+                ? "已过期"
+                : item.status === "draft"
+                  ? "草稿"
+                  : item.status === "terminated"
+                    ? "已终止"
+                    : item.status,
         }));
         setContracts(adapted);
       } else {
@@ -80,10 +84,10 @@ const SrmContractPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "有效": { bg: "#dcfce7", color: "#15803d" },
-      "已过期": { bg: "#fee2e2", color: "#b91c1c" },
-      "草稿": { bg: "#f1f5f9", color: "#475569" },
-      "已终止": { bg: "#fde68a", color: "#92400e" },
+      有效: { bg: "#dcfce7", color: "#15803d" },
+      已过期: { bg: "#fee2e2", color: "#b91c1c" },
+      草稿: { bg: "#f1f5f9", color: "#475569" },
+      已终止: { bg: "#fde68a", color: "#92400e" },
     };
     const colors = statusMap[status] || { bg: "#f1f5f9", color: "#475569" };
     return (
@@ -99,7 +103,8 @@ const SrmContractPage: React.FC = () => {
     { accessorKey: "contract_no", header: "合同编号" },
     { accessorKey: "title", header: "合同名称" },
     { accessorKey: "supplier_name", header: "供应商" },
-    { accessorKey: "total_amount",
+    {
+      accessorKey: "total_amount",
       header: "合同金额",
       cell: ({ row }) => (
         <Typography sx={{ fontWeight: 600, color: "#1f2937" }}>
@@ -316,7 +321,9 @@ const SrmContractPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ScrollText sx={{ width: 20, height: 20, color: "#db2777" }} />
+                  <ScrollText
+                    sx={{ width: 20, height: 20, color: "#db2777" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -349,7 +356,9 @@ const SrmContractPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ScrollText sx={{ width: 20, height: 20, color: "#16a34a" }} />
+                  <ScrollText
+                    sx={{ width: 20, height: 20, color: "#16a34a" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -382,7 +391,9 @@ const SrmContractPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ScrollText sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                  <ScrollText
+                    sx={{ width: 20, height: 20, color: "#dc2626" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -415,7 +426,9 @@ const SrmContractPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <ScrollText sx={{ width: 20, height: 20, color: "#64748b" }} />
+                  <ScrollText
+                    sx={{ width: 20, height: 20, color: "#64748b" }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -483,9 +496,7 @@ const SrmContractPage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <ScrollText
-                style={{ width: 20, height: 20, color: "#ec4899" }}
-              />
+              <ScrollText style={{ width: 20, height: 20, color: "#ec4899" }} />
               合同列表
             </Typography>
           </CardHeader>
@@ -526,7 +537,9 @@ const SrmContractPage: React.FC = () => {
         <DialogTitle>新增合同</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <TextField
                 fullWidth
                 label="合同编号 *"

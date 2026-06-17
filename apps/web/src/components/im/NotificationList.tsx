@@ -101,12 +101,35 @@ export const NotificationList: React.FC<NotificationListProps> = ({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ padding: 16, borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
             <Bell sx={{ width: 20, height: 20 }} />
             通知
             {unreadCount > 0 && (
-              <span style={{ backgroundColor: "#ef4444", color: "#ffffff", fontSize: 12, padding: "2px 8px", borderRadius: 9999 }}>
+              <span
+                style={{
+                  backgroundColor: "#ef4444",
+                  color: "#ffffff",
+                  fontSize: 12,
+                  padding: "2px 8px",
+                  borderRadius: 9999,
+                }}
+              >
                 {unreadCount}
               </span>
             )}
@@ -127,12 +150,36 @@ export const NotificationList: React.FC<NotificationListProps> = ({
 
       <div style={{ flex: 1, overflowY: "auto" }}>
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 32 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "9999px", border: "4px solid #6366f1", borderTopColor: "transparent", animation: "spin 1s linear infinite" }} />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 32,
+            }}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "9999px",
+                border: "4px solid #6366f1",
+                borderTopColor: "transparent",
+                animation: "spin 1s linear infinite",
+              }}
+            />
           </div>
         ) : notifications.length === 0 ? (
           <div style={{ textAlign: "center", padding: 48, color: "#6b7280" }}>
-            <Bell sx={{ width: 48, height: 48, mx: "auto", mb: 3, color: "#d1d5db" }} />
+            <Bell
+              sx={{
+                width: 48,
+                height: 48,
+                mx: "auto",
+                mb: 3,
+                color: "#d1d5db",
+              }}
+            />
             <p>暂无通知</p>
           </div>
         ) : (
@@ -143,7 +190,9 @@ export const NotificationList: React.FC<NotificationListProps> = ({
                 style={{
                   padding: 16,
                   transition: "background-color 0.15s",
-                  backgroundColor: !notification.is_read ? "#eff6ff" : undefined,
+                  backgroundColor: !notification.is_read
+                    ? "#eff6ff"
+                    : undefined,
                 }}
               >
                 <div style={{ display: "flex", gap: 12 }}>
@@ -151,12 +200,33 @@ export const NotificationList: React.FC<NotificationListProps> = ({
                     {getNotificationIcon(notification.notification_type)}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: 8,
+                      }}
+                    >
                       <h3 style={{ fontWeight: 500, color: "#111827" }}>
                         {notification.title}
                       </h3>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "#6b7280",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
+                        >
                           <Clock sx={{ width: 12, height: 12 }} />
                           {formatTime(notification.created_at)}
                         </span>

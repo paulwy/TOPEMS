@@ -130,7 +130,7 @@ export interface PluginFilters {
   category?: string;
   search?: string;
   is_free?: boolean;
-  sort_by?: 'popular' | 'rating' | 'recent' | 'name';
+  sort_by?: "popular" | "rating" | "recent" | "name";
   page?: number;
   page_size?: number;
 }
@@ -150,22 +150,33 @@ export interface PluginListResponse {
 /**
  * Get marketplace summary (featured, new, top-rated plugins)
  */
-export async function getMarketplaceSummary(): Promise<ApiResponse<MarketplaceSummary>> {
+export async function getMarketplaceSummary(): Promise<
+  ApiResponse<MarketplaceSummary>
+> {
   return apiClient.get<MarketplaceSummary>("/api/core/plugin/marketplace");
 }
 
 /**
  * List plugins with filters
  */
-export async function listPlugins(filters?: PluginFilters): Promise<ApiResponse<PluginListResponse>> {
-  return apiClient.get<PluginListResponse>("/api/core/plugin/marketplace/list", { params: filters });
+export async function listPlugins(
+  filters?: PluginFilters,
+): Promise<ApiResponse<PluginListResponse>> {
+  return apiClient.get<PluginListResponse>(
+    "/api/core/plugin/marketplace/list",
+    { params: filters },
+  );
 }
 
 /**
  * Get plugin categories
  */
-export async function getPluginCategories(): Promise<ApiResponse<PluginCategory[]>> {
-  return apiClient.get<PluginCategory[]>("/api/core/plugin/marketplace/categories");
+export async function getPluginCategories(): Promise<
+  ApiResponse<PluginCategory[]>
+> {
+  return apiClient.get<PluginCategory[]>(
+    "/api/core/plugin/marketplace/categories",
+  );
 }
 
 /**
@@ -178,15 +189,23 @@ export async function getPlugin(code: string): Promise<ApiResponse<Plugin>> {
 /**
  * Get plugin versions
  */
-export async function getPluginVersions(pluginId: string): Promise<ApiResponse<PluginVersion[]>> {
-  return apiClient.get<PluginVersion[]>(`/api/core/plugin/plugins/${pluginId}/versions`);
+export async function getPluginVersions(
+  pluginId: string,
+): Promise<ApiResponse<PluginVersion[]>> {
+  return apiClient.get<PluginVersion[]>(
+    `/api/core/plugin/plugins/${pluginId}/versions`,
+  );
 }
 
 /**
  * Get plugin reviews
  */
-export async function getPluginReviews(pluginId: string): Promise<ApiResponse<PluginReview[]>> {
-  return apiClient.get<PluginReview[]>(`/api/core/plugin/plugins/${pluginId}/reviews`);
+export async function getPluginReviews(
+  pluginId: string,
+): Promise<ApiResponse<PluginReview[]>> {
+  return apiClient.get<PluginReview[]>(
+    `/api/core/plugin/plugins/${pluginId}/reviews`,
+  );
 }
 
 /**
@@ -194,16 +213,23 @@ export async function getPluginReviews(pluginId: string): Promise<ApiResponse<Pl
  */
 export async function createPluginReview(
   pluginId: string,
-  data: { rating: number; title?: string; content: string }
+  data: { rating: number; title?: string; content: string },
 ): Promise<ApiResponse<PluginReview>> {
-  return apiClient.post<PluginReview>(`/api/core/plugin/plugins/${pluginId}/reviews`, data);
+  return apiClient.post<PluginReview>(
+    `/api/core/plugin/plugins/${pluginId}/reviews`,
+    data,
+  );
 }
 
 /**
  * Get tenant's installed plugins
  */
-export async function listTenantPlugins(tenantId: string): Promise<ApiResponse<TenantPluginWithDetails[]>> {
-  return apiClient.get<TenantPluginWithDetails[]>(`/api/core/plugin/tenant/${tenantId}/plugins`);
+export async function listTenantPlugins(
+  tenantId: string,
+): Promise<ApiResponse<TenantPluginWithDetails[]>> {
+  return apiClient.get<TenantPluginWithDetails[]>(
+    `/api/core/plugin/tenant/${tenantId}/plugins`,
+  );
 }
 
 /**
@@ -211,9 +237,11 @@ export async function listTenantPlugins(tenantId: string): Promise<ApiResponse<T
  */
 export async function installPlugin(
   tenantId: string,
-  pluginCode: string
+  pluginCode: string,
 ): Promise<ApiResponse<TenantPlugin>> {
-  return apiClient.post<TenantPlugin>(`/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/install`);
+  return apiClient.post<TenantPlugin>(
+    `/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/install`,
+  );
 }
 
 /**
@@ -221,9 +249,11 @@ export async function installPlugin(
  */
 export async function uninstallPlugin(
   tenantId: string,
-  pluginCode: string
+  pluginCode: string,
 ): Promise<ApiResponse<boolean>> {
-  return apiClient.post<boolean>(`/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/uninstall`);
+  return apiClient.post<boolean>(
+    `/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/uninstall`,
+  );
 }
 
 /**
@@ -231,9 +261,11 @@ export async function uninstallPlugin(
  */
 export async function activatePlugin(
   tenantId: string,
-  pluginCode: string
+  pluginCode: string,
 ): Promise<ApiResponse<TenantPlugin>> {
-  return apiClient.post<TenantPlugin>(`/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/activate`);
+  return apiClient.post<TenantPlugin>(
+    `/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/activate`,
+  );
 }
 
 /**
@@ -241,9 +273,11 @@ export async function activatePlugin(
  */
 export async function deactivatePlugin(
   tenantId: string,
-  pluginCode: string
+  pluginCode: string,
 ): Promise<ApiResponse<TenantPlugin>> {
-  return apiClient.post<TenantPlugin>(`/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/deactivate`);
+  return apiClient.post<TenantPlugin>(
+    `/api/core/plugin/tenant/${tenantId}/plugins/${pluginCode}/deactivate`,
+  );
 }
 
 /**
@@ -251,9 +285,12 @@ export async function deactivatePlugin(
  */
 export async function getAvailablePlugins(
   tenantId: string,
-  filters?: PluginFilters
+  filters?: PluginFilters,
 ): Promise<ApiResponse<PluginWithStatus[]>> {
-  return apiClient.get<PluginWithStatus[]>(`/api/core/plugin/tenant/${tenantId}/available`, { params: filters });
+  return apiClient.get<PluginWithStatus[]>(
+    `/api/core/plugin/tenant/${tenantId}/available`,
+    { params: filters },
+  );
 }
 
 /**
@@ -295,7 +332,7 @@ export async function updatePlugin(
     screenshots: string[];
     tags: string[];
     category: string;
-  }>
+  }>,
 ): Promise<ApiResponse<Plugin>> {
   return apiClient.put<Plugin>(`/api/core/plugin/dev/plugins/${code}`, data);
 }
@@ -303,15 +340,21 @@ export async function updatePlugin(
 /**
  * Publish plugin
  */
-export async function publishPlugin(code: string): Promise<ApiResponse<Plugin>> {
+export async function publishPlugin(
+  code: string,
+): Promise<ApiResponse<Plugin>> {
   return apiClient.post<Plugin>(`/api/core/plugin/dev/plugins/${code}/publish`);
 }
 
 /**
  * Unpublish plugin
  */
-export async function unpublishPlugin(code: string): Promise<ApiResponse<Plugin>> {
-  return apiClient.post<Plugin>(`/api/core/plugin/dev/plugins/${code}/unpublish`);
+export async function unpublishPlugin(
+  code: string,
+): Promise<ApiResponse<Plugin>> {
+  return apiClient.post<Plugin>(
+    `/api/core/plugin/dev/plugins/${code}/unpublish`,
+  );
 }
 
 /**
@@ -328,7 +371,10 @@ export async function uploadPluginVersion(
     checksum?: string;
     file_size?: number;
     min_app_version?: string;
-  }
+  },
 ): Promise<ApiResponse<PluginVersion>> {
-  return apiClient.post<PluginVersion>(`/api/core/plugin/dev/plugins/${pluginCode}/versions`, data);
+  return apiClient.post<PluginVersion>(
+    `/api/core/plugin/dev/plugins/${pluginCode}/versions`,
+    data,
+  );
 }

@@ -97,20 +97,20 @@ pub struct BankTransactionParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/bank-accounts",
+            "/api/erp/bank-accounts",
             get(list_bank_accounts).post(create_bank_account),
         )
         .route(
-            "/api/v1/bank-accounts/{id}",
+            "/api/erp/bank-accounts/{id}",
             get(get_bank_account)
                 .put(update_bank_account)
                 .delete(delete_bank_account),
         )
         .route(
-            "/api/v1/bank-transactions",
+            "/api/erp/bank-transactions",
             get(list_bank_transactions).post(create_bank_transaction),
         )
-        .route("/api/v1/bank-transactions/{id}", get(get_bank_transaction))
+        .route("/api/erp/bank-transactions/{id}", get(get_bank_transaction))
 }
 
 async fn list_bank_accounts(

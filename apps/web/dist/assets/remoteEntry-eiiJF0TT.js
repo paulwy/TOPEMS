@@ -1,0 +1,1 @@
+import{n as _,t}from"./virtual_mf-REMOTE_ENTRY_ID___mfe_internal__topems_portal__remoteEntry-_hash_-kiYy_7QI.js";export{t as get,_ as init};

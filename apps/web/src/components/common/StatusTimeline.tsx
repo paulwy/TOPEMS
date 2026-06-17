@@ -96,7 +96,10 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     variant="caption"
                     sx={{
                       textAlign: "center",
-                      color: item.status === "current" ? "primary.main" : "text.secondary",
+                      color:
+                        item.status === "current"
+                          ? "primary.main"
+                          : "text.secondary",
                       fontWeight: item.status === "current" ? 600 : 400,
                     }}
                   >
@@ -156,8 +159,14 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  border: item.status === "current" ? `2px solid ${config.color}` : "none",
-                  boxShadow: item.status === "current" ? `0 0 0 4px ${config.bgColor}` : "none",
+                  border:
+                    item.status === "current"
+                      ? `2px solid ${config.color}`
+                      : "none",
+                  boxShadow:
+                    item.status === "current"
+                      ? `0 0 0 4px ${config.bgColor}`
+                      : "none",
                 }}
               >
                 <Box sx={{ color: config.color }}>
@@ -171,7 +180,8 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     flex: 1,
                     minHeight: 40,
                     bgColor:
-                      items[index + 1].status === "completed" || item.status === "completed"
+                      items[index + 1].status === "completed" ||
+                      item.status === "completed"
                         ? config.color
                         : "divider",
                     mt: 1,
@@ -185,7 +195,10 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                   variant="body1"
                   sx={{
                     fontWeight: item.status === "current" ? 600 : 500,
-                    color: item.status === "current" ? "primary.main" : "text.primary",
+                    color:
+                      item.status === "current"
+                        ? "primary.main"
+                        : "text.primary",
                   }}
                 >
                   {item.title}
@@ -203,12 +216,20 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 )}
               </Box>
               {item.description && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
                   {item.description}
                 </Typography>
               )}
               {(item.time || item.user) && (
-                <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5, display: "block" }}>
+                <Typography
+                  variant="caption"
+                  color="text.disabled"
+                  sx={{ mt: 0.5, display: "block" }}
+                >
                   {item.user && `${item.user} · `}
                   {item.time}
                 </Typography>

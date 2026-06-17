@@ -69,17 +69,60 @@ export const AlertCard = ({
         border: "1px solid",
         cursor: onClick ? "pointer" : "default",
         transition: "all 0.2s",
-        ...(level === "success" ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" } : {}),
-        ...(level === "warning" ? { backgroundColor: "#fffbeb", borderColor: "#fde68a" } : {}),
-        ...(level === "error" ? { backgroundColor: "#fef2f2", borderColor: "#fecaca" } : {}),
-        ...(level === "info" ? { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" } : {}),
+        ...(level === "success"
+          ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }
+          : {}),
+        ...(level === "warning"
+          ? { backgroundColor: "#fffbeb", borderColor: "#fde68a" }
+          : {}),
+        ...(level === "error"
+          ? { backgroundColor: "#fef2f2", borderColor: "#fecaca" }
+          : {}),
+        ...(level === "info"
+          ? { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" }
+          : {}),
       }}
       onClick={onClick}
     >
-      <Icon sx={{ width: 20, height: 20, flexShrink: 0, marginTop: "2px", ...(level === "success" ? { color: "#22c55e" } : {}), ...(level === "warning" ? { color: "#f59e0b" } : {}), ...(level === "error" ? { color: "#ef4444" } : {}), ...(level === "info" ? { color: "#3b82f6" } : {}) }} />
+      <Icon
+        sx={{
+          width: 20,
+          height: 20,
+          flexShrink: 0,
+          marginTop: "2px",
+          ...(level === "success" ? { color: "#22c55e" } : {}),
+          ...(level === "warning" ? { color: "#f59e0b" } : {}),
+          ...(level === "error" ? { color: "#ef4444" } : {}),
+          ...(level === "info" ? { color: "#3b82f6" } : {}),
+        }}
+      />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <h4 style={{ fontWeight: 500, ...(level === "success" ? { color: "#166534" } : {}), ...(level === "warning" ? { color: "#92400e" } : {}), ...(level === "error" ? { color: "#991b1b" } : {}), ...(level === "info" ? { color: "#1e40af" } : {}), overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</h4>
-        <p style={{ fontSize: "14px", ...(level === "success" ? { color: "#15803d" } : {}), ...(level === "warning" ? { color: "#b45309" } : {}), ...(level === "error" ? { color: "#b91c1c" } : {}), ...(level === "info" ? { color: "#1d4ed8" } : {}), marginTop: "4px" }}>{message}</p>
+        <h4
+          style={{
+            fontWeight: 500,
+            ...(level === "success" ? { color: "#166534" } : {}),
+            ...(level === "warning" ? { color: "#92400e" } : {}),
+            ...(level === "error" ? { color: "#991b1b" } : {}),
+            ...(level === "info" ? { color: "#1e40af" } : {}),
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {title}
+        </h4>
+        <p
+          style={{
+            fontSize: "14px",
+            ...(level === "success" ? { color: "#15803d" } : {}),
+            ...(level === "warning" ? { color: "#b45309" } : {}),
+            ...(level === "error" ? { color: "#b91c1c" } : {}),
+            ...(level === "info" ? { color: "#1d4ed8" } : {}),
+            marginTop: "4px",
+          }}
+        >
+          {message}
+        </p>
       </div>
     </div>
   );

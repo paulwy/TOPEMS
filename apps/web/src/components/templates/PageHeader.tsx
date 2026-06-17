@@ -72,8 +72,18 @@ export interface PageHeaderProps {
     placeholder?: string;
     size?: "small" | "medium";
   };
-  stats?: { label: string; value: string | number; color?: string; icon?: React.ReactElement }[];
-  tabs?: { label: string; value: string; active?: boolean; disabled?: boolean }[];
+  stats?: {
+    label: string;
+    value: string | number;
+    color?: string;
+    icon?: React.ReactElement;
+  }[];
+  tabs?: {
+    label: string;
+    value: string;
+    active?: boolean;
+    disabled?: boolean;
+  }[];
   onTabChange?: (value: string) => void;
   badge?: {
     label: string;
@@ -218,7 +228,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         scrollButtons="auto"
       >
         {tabs.map((tab) => (
-          <Tab key={tab.value} label={tab.label} value={tab.value} disabled={tab.disabled} />
+          <Tab
+            key={tab.value}
+            label={tab.label}
+            value={tab.value}
+            disabled={tab.disabled}
+          />
         ))}
       </Tabs>
     );
@@ -304,7 +319,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         ...(compact && { py: 1 }),
       }}
     >
-      <Box maxWidth={maxWidth || false} sx={{ mx: "auto", px: { xs: 2, sm: 3 }, py: compact ? 1.5 : 3 }}>
+      <Box
+        maxWidth={maxWidth || false}
+        sx={{ mx: "auto", px: { xs: 2, sm: 3 }, py: compact ? 1.5 : 3 }}
+      >
         {/* 面包屑导航 */}
         {renderBreadcrumbs()}
 
@@ -375,7 +393,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     </Typography>
                   )}
                   {description && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.5 }}
+                    >
                       {description}
                     </Typography>
                   )}
@@ -385,7 +407,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           </Box>
 
           {/* 搜索和操作按钮区域 */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
             {search && !isMobile && renderSearch()}
             {customToolbar}
             {!loading && renderActions()}
@@ -400,14 +429,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </Box>
 
         {/* 移动端搜索 */}
-        {search && isMobile && (
-          <Box sx={{ mt: 2 }}>{renderSearch()}</Box>
-        )}
+        {search && isMobile && <Box sx={{ mt: 2 }}>{renderSearch()}</Box>}
 
         {/* 统计信息 */}
-        {stats && !loading && (
-          <Box sx={{ mt: 2 }}>{renderStats()}</Box>
-        )}
+        {stats && !loading && <Box sx={{ mt: 2 }}>{renderStats()}</Box>}
 
         {/* 标签页 */}
         {tabs && renderTabs()}

@@ -13,13 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  Activity,
-  Search,
-  Clock,
-} from "lucide-react";
+import { Plus, Eye, Activity, Search, Clock } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { pdmApi } from "@/api/pdm";
@@ -32,7 +26,9 @@ const PdmBatchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedBatch, setSelectedBatch] = useState<ProductionBatch | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<ProductionBatch | null>(
+    null,
+  );
   const [formData, setFormData] = useState({
     batch_no: "",
     product_name: "",
@@ -52,10 +48,16 @@ const PdmBatchPage: React.FC = () => {
         const adapted = (response.data as any).map((item: any) => ({
           ...item,
           quantity: item.planned_quantity || item.actual_quantity || 0,
-          status: item.status === "planning" ? "规划中" : 
-                  item.status === "in_progress" ? "进行中" : 
-                  item.status === "completed" ? "已完成" : 
-                  item.status === "cancelled" ? "已取消" : item.status,
+          status:
+            item.status === "planning"
+              ? "规划中"
+              : item.status === "in_progress"
+                ? "进行中"
+                : item.status === "completed"
+                  ? "已完成"
+                  : item.status === "cancelled"
+                    ? "已取消"
+                    : item.status,
         }));
         setBatches(adapted);
       } else {
@@ -71,10 +73,10 @@ const PdmBatchPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "规划中": { bg: "#fef9c3", color: "#ca8a04" },
-      "进行中": { bg: "#dbeafe", color: "#1d4ed8" },
-      "已完成": { bg: "#dcfce7", color: "#16a34a" },
-      "已取消": { bg: "#fee2e2", color: "#dc2626" },
+      规划中: { bg: "#fef9c3", color: "#ca8a04" },
+      进行中: { bg: "#dbeafe", color: "#1d4ed8" },
+      已完成: { bg: "#dcfce7", color: "#16a34a" },
+      已取消: { bg: "#fee2e2", color: "#dc2626" },
     };
     const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
@@ -93,9 +95,11 @@ const PdmBatchPage: React.FC = () => {
   const columns: ColumnDef<ProductionBatch>[] = [
     { accessorKey: "batch_no", header: "批次号" },
     { accessorKey: "product_name", header: "产品名称" },
-    { accessorKey: "planned_quantity",
+    {
+      accessorKey: "planned_quantity",
       header: "计划数量",
-      cell: ({ row }) => `${row.original.planned_quantity || 0} ${row.original.unit || ""}`,
+      cell: ({ row }) =>
+        `${row.original.planned_quantity || 0} ${row.original.unit || ""}`,
     },
     {
       accessorKey: "status",
@@ -297,9 +301,7 @@ const PdmBatchPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Activity
-                    sx={{ width: 20, height: 20, color: "#06b6d4" }}
-                  />
+                  <Activity sx={{ width: 20, height: 20, color: "#06b6d4" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -332,9 +334,7 @@ const PdmBatchPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Activity
-                    sx={{ width: 20, height: 20, color: "#ca8a04" }}
-                  />
+                  <Activity sx={{ width: 20, height: 20, color: "#ca8a04" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -367,9 +367,7 @@ const PdmBatchPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Activity
-                    sx={{ width: 20, height: 20, color: "#1d4ed8" }}
-                  />
+                  <Activity sx={{ width: 20, height: 20, color: "#1d4ed8" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -402,9 +400,7 @@ const PdmBatchPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Activity
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
+                  <Activity sx={{ width: 20, height: 20, color: "#16a34a" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -439,9 +435,7 @@ const PdmBatchPage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <Activity
-                style={{ width: 20, height: 20, color: "#06b6d4" }}
-              />
+              <Activity style={{ width: 20, height: 20, color: "#06b6d4" }} />
               生产批次列表
             </Typography>
           </CardHeader>
@@ -584,7 +578,9 @@ const PdmBatchPage: React.FC = () => {
                 >
                   数量
                 </Box>
-                <Box>{selectedBatch.planned_quantity || 0} {selectedBatch.unit}</Box>
+                <Box>
+                  {selectedBatch.planned_quantity || 0} {selectedBatch.unit}
+                </Box>
               </Box>
               <Box>
                 <Box

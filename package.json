@@ -1,8 +1,31 @@
 {
-  "dependencies": {
-    "@radix-ui/react-alert-dialog": "^1.1.16",
-    "@types/leaflet": "^1.9.21",
-    "leaflet": "^1.9.4",
-    "react-leaflet": "^5.0.0"
-  }
+  "name": "topems",
+  "version": "1.0.0",
+  "description": "TOPEMS - Enterprise Management System with Module Federation",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:host": "pnpm --filter topems-portal dev",
+    "dev:core": "pnpm --filter topems-core dev",
+    "build:host": "pnpm --filter topems-portal build",
+    "build:core": "pnpm --filter topems-core build",
+    "build:shared-types": "pnpm --filter @topems/shared-types build",
+    "build:shared-utils": "pnpm --filter @topems/shared-utils build",
+    "build": "pnpm run build:shared-types && pnpm run build:shared-utils && pnpm run build:core && pnpm run build:host",
+    "lint": "pnpm --filter topems-portal lint",
+    "test": "pnpm --filter topems-portal test",
+    "typecheck": "pnpm --filter topems-portal typecheck"
+  },
+  "keywords": [
+    "enterprise",
+    "management",
+    "module-federation",
+    "monorepo"
+  ],
+  "author": "TOPEMS Team",
+  "license": "MIT",
+  "packageManager": "pnpm@8.0.0"
 }

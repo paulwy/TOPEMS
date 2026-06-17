@@ -133,16 +133,22 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         display: "flex",
         alignItems: "center",
         gap: "8px",
-        backgroundColor: disabled ? "#cbd5e1" : exportComplete ? "#22c55e" : "#2563eb",
+        backgroundColor: disabled
+          ? "#cbd5e1"
+          : exportComplete
+            ? "#22c55e"
+            : "#2563eb",
         color: disabled ? "#64748b" : "#ffffff",
         cursor: disabled || exporting ? "not-allowed" : "pointer",
         border: "none",
-        ...(buttonClassName ? {} : {})
+        ...(buttonClassName ? {} : {}),
       }}
     >
       {exporting ? (
         <>
-          <Loader2 sx={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+          <Loader2
+            sx={{ width: 16, height: 16, animation: "spin 1s linear infinite" }}
+          />
           <span>导出中...</span>
         </>
       ) : exportComplete ? (

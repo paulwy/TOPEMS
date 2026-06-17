@@ -45,30 +45,34 @@ export const usePermission = () => {
 
   const canAccessModule = useCallback(
     (module: string): boolean => {
-      return hasPermission(`${module}:read`);
+      if (user?.is_superuser) return true;
+      return permissions.some((p) => p.startsWith(`${module}:`) && p.endsWith("_read"));
     },
-    [hasPermission],
+    [permissions, user?.is_superuser],
   );
 
   const canWriteModule = useCallback(
     (module: string): boolean => {
-      return hasPermission(`${module}:write`);
+      if (user?.is_superuser) return true;
+      return permissions.some((p) => p.startsWith(`${module}:`) && (p.endsWith("_write") || p.endsWith("_create") || p.endsWith("_update")));
     },
-    [hasPermission],
+    [permissions, user?.is_superuser],
   );
 
   const canDeleteModule = useCallback(
     (module: string): boolean => {
-      return hasPermission(`${module}:delete`);
+      if (user?.is_superuser) return true;
+      return permissions.some((p) => p.startsWith(`${module}:`) && p.endsWith("_delete"));
     },
-    [hasPermission],
+    [permissions, user?.is_superuser],
   );
 
   const canAdminModule = useCallback(
     (module: string): boolean => {
-      return hasPermission(`${module}:admin`);
+      if (user?.is_superuser) return true;
+      return permissions.some((p) => p.startsWith(`${module}:`) && p.endsWith("_admin"));
     },
-    [hasPermission],
+    [permissions, user?.is_superuser],
   );
 
   const isSuperuser = useMemo(

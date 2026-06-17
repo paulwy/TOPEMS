@@ -81,21 +81,65 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
     <div style={{ position: "relative" }}>
       <button
         onClick={handleBellClick}
-        style={{ padding: 8, color: "#4b5563", backgroundColor: "transparent", border: "none", borderRadius: 8, cursor: "pointer", transition: "all 0.2s" }}
+        style={{
+          padding: 8,
+          color: "#4b5563",
+          backgroundColor: "transparent",
+          border: "none",
+          borderRadius: 8,
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
         aria-label="通知"
       >
         <Bell style={{ width: 24, height: 24 }} />
         {unreadCount > 0 && (
-          <span style={{ position: "absolute", top: -4, right: -4, backgroundColor: "#ef4444", color: "#ffffff", fontSize: 12, fontWeight: "bold", borderRadius: 9999, minWidth: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>
+          <span
+            style={{
+              position: "absolute",
+              top: -4,
+              right: -4,
+              backgroundColor: "#ef4444",
+              color: "#ffffff",
+              fontSize: 12,
+              fontWeight: "bold",
+              borderRadius: 9999,
+              minWidth: 20,
+              height: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 6px",
+            }}
+          >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
         {hasNewNotification && (
-          <span style={{ position: "absolute", top: -4, right: -4, width: 12, height: 12, backgroundColor: "#22c55e", borderRadius: "9999px", animation: "ping 1s cubic-bezier(0, 0, 0.2, 1)" }} />
+          <span
+            style={{
+              position: "absolute",
+              top: -4,
+              right: -4,
+              width: 12,
+              height: 12,
+              backgroundColor: "#22c55e",
+              borderRadius: "9999px",
+              animation: "ping 1s cubic-bezier(0, 0, 0.2, 1)",
+            }}
+          />
         )}
         {isConnected && (
           <span
-            style={{ position: "absolute", bottom: 4, right: 4, width: 8, height: 8, backgroundColor: "#22c55e", borderRadius: "9999px" }}
+            style={{
+              position: "absolute",
+              bottom: 4,
+              right: 4,
+              width: 8,
+              height: 8,
+              backgroundColor: "#22c55e",
+              borderRadius: "9999px",
+            }}
             title="已连接"
           />
         )}
@@ -103,7 +147,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({
 
       {showPanel && (
         <>
-          <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={handleClose} />
+          <div
+            style={{ position: "fixed", inset: 0, zIndex: 40 }}
+            onClick={handleClose}
+          />
           <NotificationPanel
             onClose={handleClose}
             onUnreadCountChange={handleUnreadCountChange}

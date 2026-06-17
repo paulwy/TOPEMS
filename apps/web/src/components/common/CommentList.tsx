@@ -42,7 +42,14 @@ const CommentItem: React.FC<{
   allowReply?: boolean;
   allowLike?: boolean;
   depth?: number;
-}> = ({ comment, onLike, onReply, allowReply = true, allowLike = true, depth = 0 }) => {
+}> = ({
+  comment,
+  onLike,
+  onReply,
+  allowReply = true,
+  allowLike = true,
+  depth = 0,
+}) => {
   const [replyText, setReplyText] = useState("");
   const [showReply, setShowReply] = useState(false);
 

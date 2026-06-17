@@ -33,79 +33,79 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         // 合并范围
         .route(
-            "/api/v1/consolidation/scopes",
+            "/api/erp/consolidation/scopes",
             get(list_scopes).post(create_scope),
         )
         .route(
-            "/api/v1/consolidation/scopes/{scopeId}",
+            "/api/erp/consolidation/scopes/{scopeId}",
             get(get_scope).put(update_scope).delete(delete_scope),
         )
         // 合并范围公司
         .route(
-            "/api/v1/consolidation/scopes/{scopeId}/companies",
+            "/api/erp/consolidation/scopes/{scopeId}/companies",
             get(list_scope_companies),
         )
         .route(
-            "/api/v1/consolidation/scopes/companies",
+            "/api/erp/consolidation/scopes/companies",
             post(add_scope_company),
         )
         .route(
-            "/api/v1/consolidation/scopes/companies/{companyId}",
+            "/api/erp/consolidation/scopes/companies/{companyId}",
             put(update_scope_company).delete(remove_scope_company),
         )
         // 抵消规则
         .route(
-            "/api/v1/consolidation/elimination-rules",
+            "/api/erp/consolidation/elimination-rules",
             get(list_elimination_rules).post(create_elimination_rule),
         )
         .route(
-            "/api/v1/consolidation/elimination-rules/{ruleId}",
+            "/api/erp/consolidation/elimination-rules/{ruleId}",
             get(get_elimination_rule)
                 .put(update_elimination_rule)
                 .delete(delete_elimination_rule),
         )
         // 内部交易
         .route(
-            "/api/v1/consolidation/internal-transactions",
+            "/api/erp/consolidation/internal-transactions",
             get(list_internal_transactions),
         )
         .route(
-            "/api/v1/consolidation/execute-elimination",
+            "/api/erp/consolidation/execute-elimination",
             post(execute_elimination),
         )
         // 合并报表
         .route(
-            "/api/v1/consolidation/reports",
+            "/api/erp/consolidation/reports",
             get(list_reports).post(generate_report),
         )
         .route(
-            "/api/v1/consolidation/reports/{reportId}",
+            "/api/erp/consolidation/reports/{reportId}",
             get(get_report).delete(delete_report),
         )
         .route(
-            "/api/v1/consolidation/reports/{reportId}/lines",
+            "/api/erp/consolidation/reports/{reportId}/lines",
             get(get_report_lines),
         )
         .route(
-            "/api/v1/consolidation/reports/{reportId}/approve",
+            "/api/erp/consolidation/reports/{reportId}/approve",
             post(approve_report),
         )
         .route(
-            "/api/v1/consolidation/reports/{reportId}/publish",
+            "/api/erp/consolidation/reports/{reportId}/publish",
             post(publish_report),
         )
         // 公司关系
         .route(
-            "/api/v1/consolidation/company-relations",
+            "/api/erp/consolidation/company-relations",
             get(list_company_relations).post(create_company_relation),
         )
-        .route("/api/v1/consolidation/company-tree", get(get_company_tree))
+        .route("/api/erp/consolidation/company-tree", get(get_company_tree))
         .route(
-            "/api/v1/consolidation/company-relations/{relationId}",
+            "/api/erp/consolidation/company-relations/{relationId}",
             put(update_company_relation).delete(delete_company_relation),
         )
         .route(
-            "/api/v1/consolidation/companies/{companyId}/financial-data",
+            "/api/erp/consolidation/companies/{companyId}/financial-data",
             get(get_company_financial_data),
         )
 }

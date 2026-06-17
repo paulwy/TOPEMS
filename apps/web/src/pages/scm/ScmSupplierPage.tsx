@@ -14,12 +14,7 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  Users,
-  Search,
-} from "lucide-react";
+import { Plus, Eye, Users, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -37,7 +32,9 @@ const ScmSupplierPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
+    null,
+  );
   const [formData, setFormData] = useState({
     name: "",
     short_name: "",
@@ -188,58 +185,86 @@ const ScmSupplierPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>新增供应商</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 2,
+              mt: 2,
+            }}
+          >
             <TextField
               label="供应商名称"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               fullWidth
               required
             />
             <TextField
               label="简称"
               value={formData.short_name}
-              onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, short_name: e.target.value })
+              }
               fullWidth
             />
             <TextField
               label="联系人"
               value={formData.contact_name}
-              onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, contact_name: e.target.value })
+              }
               fullWidth
             />
             <TextField
               label="联系电话"
               value={formData.contact_phone}
-              onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, contact_phone: e.target.value })
+              }
               fullWidth
             />
             <TextField
               label="邮箱"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               fullWidth
             />
             <TextField
               label="银行账户"
               value={formData.bank_account}
-              onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, bank_account: e.target.value })
+              }
               fullWidth
             />
             <TextField
               label="税号"
               value={formData.tax_number}
-              onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, tax_number: e.target.value })
+              }
               fullWidth
             />
             <TextField
               label="地址"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
               fullWidth
               multiline
               rows={2}
@@ -249,26 +274,45 @@ const ScmSupplierPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCreate}>创建</Button>
+          <Button variant="contained" onClick={handleCreate}>
+            创建
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>供应商详情</DialogTitle>
         <DialogContent>
           {selectedSupplier && (
             <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>供应商名称</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                供应商名称
+              </Typography>
               <Typography>{selectedSupplier.name}</Typography>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>简称</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>
+                简称
+              </Typography>
               <Typography>{selectedSupplier.short_name || "-"}</Typography>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>联系人</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>
+                联系人
+              </Typography>
               <Typography>{selectedSupplier.contact_name || "-"}</Typography>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>联系电话</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>
+                联系电话
+              </Typography>
               <Typography>{selectedSupplier.contact_phone || "-"}</Typography>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>邮箱</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>
+                邮箱
+              </Typography>
               <Typography>{selectedSupplier.email || "-"}</Typography>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>地址</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2 }}>
+                地址
+              </Typography>
               <Typography>{selectedSupplier.address || "-"}</Typography>
             </Box>
           )}

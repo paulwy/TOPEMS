@@ -131,7 +131,9 @@ const RsTestPage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const getPriorityColor = (priority: string): "error" | "warning" | "default" => {
+  const getPriorityColor = (
+    priority: string,
+  ): "error" | "warning" | "default" => {
     switch (priority) {
       case "high":
         return "error";
@@ -157,7 +159,9 @@ const RsTestPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string): "success" | "error" | "warning" | "default" => {
+  const getStatusColor = (
+    status: string,
+  ): "success" | "error" | "warning" | "default" => {
     switch (status) {
       case "passed":
         return "success";
@@ -211,7 +215,9 @@ const RsTestPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -228,7 +234,12 @@ const RsTestPage: React.FC = () => {
     };
     setTestCases([newCase, ...testCases]);
     setNewCaseDialogOpen(false);
-    setNewCaseForm({ case_name: "", case_type: "功能测试", priority: "medium", related_requirement: "" });
+    setNewCaseForm({
+      case_name: "",
+      case_type: "功能测试",
+      priority: "medium",
+      related_requirement: "",
+    });
   };
 
   const handleViewDetail = (tc: TestCase) => {
@@ -237,13 +248,24 @@ const RsTestPage: React.FC = () => {
   };
 
   const handleExecuteTest = (tcId: string) => {
-    setTestCases(testCases.map((tc) => (tc.id === tcId ? { ...tc, status: "passed" } : tc)));
+    setTestCases(
+      testCases.map((tc) =>
+        tc.id === tcId ? { ...tc, status: "passed" } : tc,
+      ),
+    );
   };
 
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             测试管理
           </Typography>
@@ -258,7 +280,12 @@ const RsTestPage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <TextField
               size="small"
               placeholder="搜索用例编号、名称..."
@@ -322,13 +349,27 @@ const RsTestPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>用例编号</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>用例名称</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>用例类型</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>优先级</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>关联需求</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    用例编号
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    用例名称
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    用例类型
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    优先级
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    关联需求
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -337,20 +378,36 @@ const RsTestPage: React.FC = () => {
                   .map((tc) => (
                     <TableRow key={tc.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <ClipboardList size={16} color="#3b82f6" />
                           {tc.case_no}
                         </Box>
                       </TableCell>
                       <TableCell>{tc.case_name}</TableCell>
                       <TableCell>
-                        <Chip label={getCaseTypeLabel(tc.case_type)} size="small" variant="outlined" />
+                        <Chip
+                          label={getCaseTypeLabel(tc.case_type)}
+                          size="small"
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>
-                        <Chip label={getPriorityLabel(tc.priority)} size="small" color={getPriorityColor(tc.priority)} />
+                        <Chip
+                          label={getPriorityLabel(tc.priority)}
+                          size="small"
+                          color={getPriorityColor(tc.priority)}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           {tc.status === "passed" ? (
                             <CheckCircle size={14} color="green" />
                           ) : tc.status === "failed" ? (
@@ -358,19 +415,29 @@ const RsTestPage: React.FC = () => {
                           ) : (
                             <Clock size={14} color="orange" />
                           )}
-                          <Chip label={getStatusLabel(tc.status)} size="small" color={getStatusColor(tc.status)} />
+                          <Chip
+                            label={getStatusLabel(tc.status)}
+                            size="small"
+                            color={getStatusColor(tc.status)}
+                          />
                         </Box>
                       </TableCell>
                       <TableCell>{tc.related_requirement}</TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="查看详情">
-                            <IconButton size="small" onClick={() => handleViewDetail(tc)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewDetail(tc)}
+                            >
                               <FileText size={16} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="执行测试">
-                            <IconButton size="small" onClick={() => handleExecuteTest(tc.id)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleExecuteTest(tc.id)}
+                            >
                               <Play size={16} />
                             </IconButton>
                           </Tooltip>
@@ -398,7 +465,12 @@ const RsTestPage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={newCaseDialogOpen} onClose={() => setNewCaseDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={newCaseDialogOpen}
+        onClose={() => setNewCaseDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建用例</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
@@ -406,14 +478,18 @@ const RsTestPage: React.FC = () => {
               label="用例名称"
               fullWidth
               value={newCaseForm.case_name}
-              onChange={(e) => setNewCaseForm({ ...newCaseForm, case_name: e.target.value })}
+              onChange={(e) =>
+                setNewCaseForm({ ...newCaseForm, case_name: e.target.value })
+              }
             />
             <FormControl fullWidth>
               <InputLabel>用例类型</InputLabel>
               <Select
                 value={newCaseForm.case_type}
                 label="用例类型"
-                onChange={(e) => setNewCaseForm({ ...newCaseForm, case_type: e.target.value })}
+                onChange={(e) =>
+                  setNewCaseForm({ ...newCaseForm, case_type: e.target.value })
+                }
               >
                 <MenuItem value="功能测试">功能测试</MenuItem>
                 <MenuItem value="性能测试">性能测试</MenuItem>
@@ -427,7 +503,9 @@ const RsTestPage: React.FC = () => {
               <Select
                 value={newCaseForm.priority}
                 label="优先级"
-                onChange={(e) => setNewCaseForm({ ...newCaseForm, priority: e.target.value })}
+                onChange={(e) =>
+                  setNewCaseForm({ ...newCaseForm, priority: e.target.value })
+                }
               >
                 <MenuItem value="high">高</MenuItem>
                 <MenuItem value="medium">中</MenuItem>
@@ -438,19 +516,33 @@ const RsTestPage: React.FC = () => {
               label="关联需求"
               fullWidth
               value={newCaseForm.related_requirement}
-              onChange={(e) => setNewCaseForm({ ...newCaseForm, related_requirement: e.target.value })}
+              onChange={(e) =>
+                setNewCaseForm({
+                  ...newCaseForm,
+                  related_requirement: e.target.value,
+                })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewCaseDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateCase}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateCase}
+          >
             创建
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>用例详情</DialogTitle>
         <DialogContent>
           {selectedCase && (
@@ -459,9 +551,21 @@ const RsTestPage: React.FC = () => {
                 {selectedCase.case_no} - {selectedCase.case_name}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Chip label={getCaseTypeLabel(selectedCase.case_type)} size="small" variant="outlined" />
-                <Chip label={getPriorityLabel(selectedCase.priority)} size="small" color={getPriorityColor(selectedCase.priority)} />
-                <Chip label={getStatusLabel(selectedCase.status)} size="small" color={getStatusColor(selectedCase.status)} />
+                <Chip
+                  label={getCaseTypeLabel(selectedCase.case_type)}
+                  size="small"
+                  variant="outlined"
+                />
+                <Chip
+                  label={getPriorityLabel(selectedCase.priority)}
+                  size="small"
+                  color={getPriorityColor(selectedCase.priority)}
+                />
+                <Chip
+                  label={getStatusLabel(selectedCase.status)}
+                  size="small"
+                  color={getStatusColor(selectedCase.status)}
+                />
               </Stack>
               <Box sx={{ mt: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
@@ -469,7 +573,9 @@ const RsTestPage: React.FC = () => {
                 </Typography>
               </Box>
               <Paper sx={{ p: 2, mt: 2, bgcolor: "#f5f5f5" }}>
-                <Typography variant="body2">测试步骤和预期结果区域 - 待实现</Typography>
+                <Typography variant="body2">
+                  测试步骤和预期结果区域 - 待实现
+                </Typography>
               </Paper>
             </Box>
           )}

@@ -163,41 +163,139 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}>
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", width: "100%", maxWidth: "1024px", maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        padding: "16px",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "12px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          width: "100%",
+          maxWidth: "1024px",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {/* 头部 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: "1px solid #e5e7eb" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "16px",
+            borderBottom: "1px solid #e5e7eb",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <FileText sx={{ width: 24, height: 24, color: "#2563eb" }} />
-            <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <h2
+              style={{
+                fontSize: "18px",
+                fontWeight: 600,
+                color: "#111827",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {fileName}
             </h2>
           </div>
           <button
             onClick={onClose}
-            style={{ padding: "8px", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}
+            style={{
+              padding: "8px",
+              borderRadius: "8px",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              transition: "background-color 0.2s",
+            }}
           >
             <X sx={{ width: 20, height: 20, color: "#6b7280" }} />
           </button>
         </div>
 
         {/* 内容区域 */}
-        <div style={{ flex: 1, overflow: "auto", backgroundColor: "#f9fafb", position: "relative" }}>
+        <div
+          style={{
+            flex: 1,
+            overflow: "auto",
+            backgroundColor: "#f9fafb",
+            position: "relative",
+          }}
+        >
           {/* 加载和错误状态使用绝对定位 */}
           {loading && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.8)", zIndex: 10 }}>
-              <Loader2 sx={{ width: 40, height: 40, color: "#2563eb", animation: "spin 1s linear infinite", marginBottom: "12px" }} />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                zIndex: 10,
+              }}
+            >
+              <Loader2
+                sx={{
+                  width: 40,
+                  height: 40,
+                  color: "#2563eb",
+                  animation: "spin 1s linear infinite",
+                  marginBottom: "12px",
+                }}
+              />
               <p style={{ color: "#6b7280" }}>正在加载文档...</p>
             </div>
           )}
 
           {error && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.8)", zIndex: 10 }}>
-              <AlertCircle sx={{ width: 40, height: 40, color: "#ef4444", marginBottom: "12px" }} />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                zIndex: 10,
+              }}
+            >
+              <AlertCircle
+                sx={{
+                  width: 40,
+                  height: 40,
+                  color: "#ef4444",
+                  marginBottom: "12px",
+                }}
+              />
               <p style={{ color: "#dc2626", marginBottom: "16px" }}>{error}</p>
               <button
                 onClick={onClose}
-                style={{ padding: "8px 16px", backgroundColor: "#e5e7eb", color: "#374151", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.2s" }}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#e5e7eb",
+                  color: "#374151",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                }}
               >
                 关闭
               </button>
@@ -205,14 +303,32 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           )}
 
           {/* 容器始终渲染和显示 */}
-          <div ref={containerRef} style={{ padding: "16px", minHeight: "80vh" }} />
+          <div
+            ref={containerRef}
+            style={{ padding: "16px", minHeight: "80vh" }}
+          />
         </div>
 
         {/* 底部操作栏 */}
-        <div style={{ padding: "16px", borderTop: "1px solid #e5e7eb", backgroundColor: "#f9fafb" }}>
+        <div
+          style={{
+            padding: "16px",
+            borderTop: "1px solid #e5e7eb",
+            backgroundColor: "#f9fafb",
+          }}
+        >
           <button
             onClick={onClose}
-            style={{ width: "100%", padding: "8px 16px", backgroundColor: "#e5e7eb", color: "#374151", borderRadius: "8px", border: "none", cursor: "pointer", transition: "background-color 0.2s" }}
+            style={{
+              width: "100%",
+              padding: "8px 16px",
+              backgroundColor: "#e5e7eb",
+              color: "#374151",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              transition: "background-color 0.2s",
+            }}
           >
             关闭
           </button>

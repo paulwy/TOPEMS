@@ -10,10 +10,10 @@ import {
   generateId,
   deepClone,
   clearCloneCache,
-  isEmpty,
   formatFileSize,
   formatDuration,
 } from "../../utils/format";
+import { isEmpty } from "@topems/shared-utils";
 
 describe("format utils", () => {
   beforeEach(() => {
@@ -98,12 +98,12 @@ describe("format utils", () => {
 
   describe("truncateText", () => {
     it("should not truncate short text", () => {
-      expect(truncateText("short")).toBe("short");
+      expect(truncateText("short", 50)).toBe("short");
     });
 
     it("should truncate long text with default suffix", () => {
       const longText = "a".repeat(60);
-      const result = truncateText(longText);
+      const result = truncateText(longText, 50);
       expect(result).toHaveLength(53); // 50 + "..."
       expect(result.endsWith("...")).toBe(true);
     });
@@ -115,7 +115,7 @@ describe("format utils", () => {
     });
 
     it("should handle empty string", () => {
-      expect(truncateText("")).toBe("");
+      expect(truncateText("", 50)).toBe("");
       expect(truncateText("", 10)).toBe("");
     });
 

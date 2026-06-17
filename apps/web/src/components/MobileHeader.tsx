@@ -16,21 +16,70 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
     <header className="mobile-header mobile-only">
       <button
         onClick={onMenuClick}
-        style={{ padding: "4px", marginLeft: "-8px", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}
+        style={{
+          padding: "4px",
+          marginLeft: "-8px",
+          borderRadius: "8px",
+          border: "none",
+          background: "transparent",
+          cursor: "pointer",
+          transition: "background-color 0.2s",
+        }}
       >
         <Menu size={24} />
       </button>
-      <h1 style={{ fontSize: "18px", fontWeight: 600, flex: 1, textAlign: "center", paddingLeft: "16px", paddingRight: "16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <h1
+        style={{
+          fontSize: "18px",
+          fontWeight: 600,
+          flex: 1,
+          textAlign: "center",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
         {title}
       </h1>
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <button style={{ padding: "4px", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s", position: "relative" }}>
+        <button
+          style={{
+            padding: "4px",
+            borderRadius: "8px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+            position: "relative",
+          }}
+        >
           <Bell size={20} />
           {hasNotifications && (
-            <span style={{ position: "absolute", top: 0, right: 0, width: "8px", height: "8px", backgroundColor: "#ef4444", borderRadius: "9999px" }} />
+            <span
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                width: "8px",
+                height: "8px",
+                backgroundColor: "#ef4444",
+                borderRadius: "9999px",
+              }}
+            />
           )}
         </button>
-        <button style={{ padding: "4px", borderRadius: "8px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}>
+        <button
+          style={{
+            padding: "4px",
+            borderRadius: "8px",
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            transition: "background-color 0.2s",
+          }}
+        >
           <User size={20} />
         </button>
       </div>

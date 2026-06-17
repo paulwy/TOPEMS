@@ -1,0 +1,1 @@
+import{useAuth as s}from"./useAuth-CZRguL2-.js";var i=()=>{const{user:i}=s(),e=s=>!!i&&(i.permissions?.includes(s)??!1);return{hasPermission:e,hasAnyPermission:s=>!!i&&s.some(s=>i.permissions?.includes(s)),hasAllPermissions:s=>!!i&&s.every(s=>i.permissions?.includes(s)),isAdmin:()=>e("admin")}};export{i as usePermission};

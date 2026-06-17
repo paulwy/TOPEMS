@@ -1,5 +1,9 @@
 import * as XLSX from "xlsx";
 import dayjs from "dayjs";
+import i18next from "i18next";
+
+// i18n key 翻译函数
+const t = (key: string): string => i18next.t(key);
 
 export const parseFileExtension = (filename: string): string => {
   const ext = filename.split(".").pop()?.toLowerCase() || "";
@@ -11,9 +15,9 @@ export const parseFileExtension = (filename: string): string => {
 
 export const getImportModeLabel = (mode: string): string => {
   const labels: Record<string, string> = {
-    create: "仅创建（跳过已存在）",
-    update: "仅更新",
-    create_update: "创建或更新",
+    create: i18next.t("import.mode.create", "仅创建（跳过已存在）"),
+    update: i18next.t("import.mode.update", "仅更新"),
+    create_update: i18next.t("import.mode.createUpdate", "创建或更新"),
   };
   return labels[mode] || mode;
 };
@@ -65,7 +69,7 @@ export const exportToExcel = <T>(
         return "";
       }
       if (typeof value === "boolean") {
-        return value ? "是" : "否";
+        return value ? i18next.t("common.yes", "是") : i18next.t("common.no", "否");
       }
       if (
         value instanceof Date ||

@@ -59,21 +59,21 @@ pub struct OpeningBalanceParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/finance/accounts/opening-balances",
+            "/api/erp/finance/accounts/opening-balances",
             get(list_opening_balances).post(create_opening_balance),
         )
         .route(
-            "/api/v1/finance/accounts/opening-balances/{id}",
+            "/api/erp/finance/accounts/opening-balances/{id}",
             get(get_opening_balance)
                 .put(update_opening_balance)
                 .delete(delete_opening_balance),
         )
         .route(
-            "/api/v1/finance/accounts/opening-balances/batch",
+            "/api/erp/finance/accounts/opening-balances/batch",
             post(import_opening_balances),
         )
         .route(
-            "/api/v1/finance/accounts/opening-balances/carry-forward",
+            "/api/erp/finance/accounts/opening-balances/carry-forward",
             post(carry_forward_opening_balance),
         )
 }

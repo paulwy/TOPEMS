@@ -1,0 +1,224 @@
+//! Plugin interface for ERP
+//!
+//! Implements the plugin interface protocol for integration with unified-core
+
+use axum::{extract::State, Json, routing::get, Router};
+use serde::{Deserialize, Serialize};
+use std::env;
+
+use crate::ApiState;
+use topems_shared::ApiResponse;
+
+/// 插件信息
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginInfo {
+    pub code: String,
+    pub name: String,
+    pub version: String,
+    pub description: String,
+    pub permissions: Vec<PermissionDef>,
+}
+
+/// 权限定义
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PermissionDef {
+    pub code: String,
+    pub name: String,
+    pub resource_type: String,
+    pub action: String,
+}
+
+/// 插件心跳请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginHeartbeat {
+    pub status: String,
+    pub version: Option<String>,
+}
+
+/// 获取插件信息
+pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let info = PluginInfo {
+        code: "erp".to_string(),
+        name: "企业资源计划".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "ERP 企业资源计划系统，包含资产管理、财务管理、凭证管理、字典管理等模块".to_string(),
+        permissions: vec![
+            // 资产管理
+            PermissionDef {
+                code: "erp:asset:read".to_string(),
+                name: "查看资产".to_string(),
+                resource_type: "asset".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:asset:write".to_string(),
+                name: "管理资产".to_string(),
+                resource_type: "asset".to_string(),
+                action: "write".to_string(),
+            },
+            PermissionDef {
+                code: "erp:asset:delete".to_string(),
+                name: "删除资产".to_string(),
+                resource_type: "asset".to_string(),
+                action: "delete".to_string(),
+            },
+            // 固定资产
+            PermissionDef {
+                code: "erp:fixed_asset:read".to_string(),
+                name: "查看固定资产".to_string(),
+                resource_type: "fixed_asset".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:fixed_asset:write".to_string(),
+                name: "管理固定资产".to_string(),
+                resource_type: "fixed_asset".to_string(),
+                action: "write".to_string(),
+            },
+            // 财务
+            PermissionDef {
+                code: "erp:finance:read".to_string(),
+                name: "查看财务".to_string(),
+                resource_type: "finance".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:finance:write".to_string(),
+                name: "管理财务".to_string(),
+                resource_type: "finance".to_string(),
+                action: "write".to_string(),
+            },
+            // 凭证
+            PermissionDef {
+                code: "erp:voucher:read".to_string(),
+                name: "查看凭证".to_string(),
+                resource_type: "voucher".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:voucher:write".to_string(),
+                name: "管理凭证".to_string(),
+                resource_type: "voucher".to_string(),
+                action: "write".to_string(),
+            },
+            // 银行
+            PermissionDef {
+                code: "erp:bank:read".to_string(),
+                name: "查看银行账户".to_string(),
+                resource_type: "bank".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:bank:write".to_string(),
+                name: "管理银行账户".to_string(),
+                resource_type: "bank".to_string(),
+                action: "write".to_string(),
+            },
+            // 字典
+            PermissionDef {
+                code: "erp:dict:read".to_string(),
+                name: "查看字典".to_string(),
+                resource_type: "dict".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:dict:write".to_string(),
+                name: "管理字典".to_string(),
+                resource_type: "dict".to_string(),
+                action: "write".to_string(),
+            },
+            // 车辆
+            PermissionDef {
+                code: "erp:vehicle:read".to_string(),
+                name: "查看车辆".to_string(),
+                resource_type: "vehicle".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:vehicle:write".to_string(),
+                name: "管理车辆".to_string(),
+                resource_type: "vehicle".to_string(),
+                action: "write".to_string(),
+            },
+            // 会议室
+            PermissionDef {
+                code: "erp:meeting_room:read".to_string(),
+                name: "查看会议室".to_string(),
+                resource_type: "meeting_room".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:meeting_room:write".to_string(),
+                name: "管理会议室".to_string(),
+                resource_type: "meeting_room".to_string(),
+                action: "write".to_string(),
+            },
+            // 办公用品
+            PermissionDef {
+                code: "erp:office_supplies:read".to_string(),
+                name: "查看办公用品".to_string(),
+                resource_type: "office_supplies".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "erp:office_supplies:write".to_string(),
+                name: "管理办公用品".to_string(),
+                resource_type: "office_supplies".to_string(),
+                action: "write".to_string(),
+            },
+        ],
+    };
+    Json(ApiResponse::success(info, "Plugin info"))
+}
+
+/// 插件健康检查
+pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
+    let db_healthy = sqlx::query("SELECT 1")
+        .fetch_one(&state.db)
+        .await
+        .is_ok();
+
+    if db_healthy {
+        Json(ApiResponse::success("healthy".to_string(), "Plugin is healthy"))
+    } else {
+        Json(ApiResponse::error(500, "Database connection failed"))
+    }
+}
+
+/// 注册插件到核心平台（启动时调用）
+pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiResponse<()>> {
+    let core_url = std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+
+    // 获取插件信息
+    let info = PluginInfo {
+        code: "erp".to_string(),
+        name: "企业资源计划".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        description: "ERP 企业资源计划系统".to_string(),
+        permissions: vec![],
+    };
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/core/plugin/dev/plugins/erp/register", core_url);
+
+    match client.post(&url).json(&info).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::info!("[ERP Plugin] Successfully registered to core");
+                Json(ApiResponse::success((), "Registered to core"))
+            } else {
+                tracing::warn!("[ERP Plugin] Failed to register to core: {}", response.status());
+                Json(ApiResponse::error(500, &format!("Failed to register: {}", response.status())))
+            }
+        }
+        Err(e) => {
+            tracing::warn!("[ERP Plugin] Failed to register to core: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to connect to core: {}", e)))
+        }
+    }
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route("/api/plugins/info", get(get_plugin_info))
+}

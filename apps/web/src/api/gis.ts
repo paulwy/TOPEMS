@@ -12,8 +12,28 @@ export interface PaginatedResponse<T> {
   data: T[];
   total: number;
   page: number;
-  page_size: number;
-  total_pages: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+interface RawPaginatedResponse {
+  [key: string]: any[] | number;
+  total: number;
+}
+
+function adaptResponse<T>(
+  response: RawPaginatedResponse,
+  dataKey: string,
+): PaginatedResponse<T> {
+  const data = (response[dataKey] as T[]) || [];
+  const total = response.total as number || data.length;
+  return {
+    data,
+    total,
+    page: response.page as number || 1,
+    pageSize: (response.pageSize as number) || (response.page_size as number) || data.length,
+    totalPages: (response.totalPages as number) || (response.total_pages as number) || 1,
+  };
 }
 
 export interface GisStatistics {
@@ -299,9 +319,13 @@ export const gisApi = {
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
 
-    return apiClient.gis.get<PaginatedResponse<DevicePoint>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/device-locations?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<DevicePoint>(response.data, "device_locations");
+    }
+    return response as ApiResponse<PaginatedResponse<DevicePoint>>;
   },
   getDevicePoint: async (id: string): Promise<ApiResponse<DevicePoint>> => {
     return apiClient.gis.get<DevicePoint>(`/api/v1/device-locations/${id}`);
@@ -348,9 +372,13 @@ export const gisApi = {
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
 
-    return apiClient.gis.get<PaginatedResponse<Pipeline>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/pipelines?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<Pipeline>(response.data, "pipelines");
+    }
+    return response as ApiResponse<PaginatedResponse<Pipeline>>;
   },
   getPipeline: async (id: string): Promise<ApiResponse<Pipeline>> => {
     return apiClient.gis.get<Pipeline>(`/api/v1/pipelines/${id}`);
@@ -394,9 +422,13 @@ export const gisApi = {
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
 
-    return apiClient.gis.get<PaginatedResponse<StorageLocation>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/warehouse-locations?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<StorageLocation>(response.data, "warehouse_locations");
+    }
+    return response as ApiResponse<PaginatedResponse<StorageLocation>>;
   },
   getStorageLocation: async (
     id: string,
@@ -449,9 +481,13 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
     if (params?.search) queryParams.append("search", params.search);
 
-    return apiClient.gis.get<PaginatedResponse<EvidenceRecord>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/location-photos?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<EvidenceRecord>(response.data, "location_photos");
+    }
+    return response as ApiResponse<PaginatedResponse<EvidenceRecord>>;
   },
   getEvidenceRecord: async (
     id: string,
@@ -490,9 +526,13 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
     if (params?.search) queryParams.append("search", params.search);
 
-    return apiClient.gis.get<PaginatedResponse<FactoryMap>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/factory-maps?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<FactoryMap>(response.data, "factory_maps");
+    }
+    return response as ApiResponse<PaginatedResponse<FactoryMap>>;
   },
   getFactoryMap: async (id: string): Promise<ApiResponse<FactoryMap>> => {
     return apiClient.gis.get<FactoryMap>(`/api/v1/factory-maps/${id}`);
@@ -523,9 +563,13 @@ export const gisApi = {
     if (params?.search) queryParams.append("search", params.search);
     if (params?.status) queryParams.append("status", params.status);
 
-    return apiClient.gis.get<PaginatedResponse<BusinessLocation>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/business-locations?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<BusinessLocation>(response.data, "business_locations");
+    }
+    return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },
   getBusinessLocation: async (
     id: string,
@@ -543,9 +587,13 @@ export const gisApi = {
     if (params?.page_size)
       queryParams.append("page_size", params.page_size.toString());
 
-    return apiClient.gis.get<PaginatedResponse<BusinessLocation>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/business-locations/type/${type}?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<BusinessLocation>(response.data, "business_locations");
+    }
+    return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },
   createBusinessLocation: async (
     data: CreateBusinessLocationRequest,
@@ -578,9 +626,13 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
     if (params?.search) queryParams.append("search", params.search);
 
-    return apiClient.gis.get<PaginatedResponse<MapMarker>>(
+    const response = await apiClient.gis.get<any>(
       `/api/v1/map-markers?${queryParams.toString()}`,
     );
+    if (response.success && response.data) {
+      response.data = adaptResponse<MapMarker>(response.data, "map_markers");
+    }
+    return response as ApiResponse<PaginatedResponse<MapMarker>>;
   },
   createMapMarker: async (
     data: CreateMapMarkerRequest,

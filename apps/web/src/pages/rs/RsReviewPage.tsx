@@ -58,11 +58,18 @@ const RsReviewPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [reviewerFilter, setReviewerFilter] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
+    start: "",
+    end: "",
+  });
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [newReviewDialogOpen, setNewReviewDialogOpen] = useState(false);
-  const [newReviewForm, setNewReviewForm] = useState({ title: "", description: "", author: "" });
+  const [newReviewForm, setNewReviewForm] = useState({
+    title: "",
+    description: "",
+    author: "",
+  });
 
   useEffect(() => {
     const mockReviews: Review[] = [
@@ -116,7 +123,9 @@ const RsReviewPage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const getStatusColor = (status: string): "default" | "primary" | "success" | "error" | "warning" => {
+  const getStatusColor = (
+    status: string,
+  ): "default" | "primary" | "success" | "error" | "warning" => {
     switch (status) {
       case "pending":
         return "warning";
@@ -152,11 +161,14 @@ const RsReviewPage: React.FC = () => {
       review.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
       review.reviewer.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || review.status === statusFilter;
-    const matchesReviewer = !reviewerFilter || review.reviewer === reviewerFilter;
+    const matchesReviewer =
+      !reviewerFilter || review.reviewer === reviewerFilter;
     const matchesDateRange =
       (!dateRange.start || review.create_time >= dateRange.start) &&
       (!dateRange.end || review.create_time <= dateRange.end);
-    return matchesSearch && matchesStatus && matchesReviewer && matchesDateRange;
+    return (
+      matchesSearch && matchesStatus && matchesReviewer && matchesDateRange
+    );
   });
 
   const uniqueReviewers = [...new Set(reviews.map((r) => r.reviewer))];
@@ -165,7 +177,9 @@ const RsReviewPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -176,11 +190,19 @@ const RsReviewPage: React.FC = () => {
   };
 
   const handleApprove = (reviewId: string) => {
-    setReviews(reviews.map((r) => (r.id === reviewId ? { ...r, status: "approved" } : r)));
+    setReviews(
+      reviews.map((r) =>
+        r.id === reviewId ? { ...r, status: "approved" } : r,
+      ),
+    );
   };
 
   const handleReject = (reviewId: string) => {
-    setReviews(reviews.map((r) => (r.id === reviewId ? { ...r, status: "rejected" } : r)));
+    setReviews(
+      reviews.map((r) =>
+        r.id === reviewId ? { ...r, status: "rejected" } : r,
+      ),
+    );
   };
 
   const handleCreateReview = () => {
@@ -201,7 +223,14 @@ const RsReviewPage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             代码评审
           </Typography>
@@ -216,7 +245,12 @@ const RsReviewPage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <TextField
               size="small"
               placeholder="搜索评审标题、作者..."
@@ -265,7 +299,9 @@ const RsReviewPage: React.FC = () => {
               type="date"
               label="开始日期"
               value={dateRange.start}
-              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, start: e.target.value })
+              }
               sx={{ width: 150 }}
               InputLabelProps={{ shrink: true }}
             />
@@ -274,7 +310,9 @@ const RsReviewPage: React.FC = () => {
               type="date"
               label="结束日期"
               value={dateRange.end}
-              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, end: e.target.value })
+              }
               sx={{ width: 150 }}
               InputLabelProps={{ shrink: true }}
             />
@@ -286,13 +324,27 @@ const RsReviewPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>评审标题</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>评审人</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>作者</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>创建时间</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>评论数</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    评审标题
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    评审人
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    作者
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    创建时间
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    评论数
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -301,13 +353,17 @@ const RsReviewPage: React.FC = () => {
                   .map((review) => (
                     <TableRow key={review.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <GitPullRequest size={16} color="#3b82f6" />
                           {review.title}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <User size={14} />
                           {review.reviewer}
                         </Box>
@@ -321,13 +377,17 @@ const RsReviewPage: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Clock size={14} />
                           {review.create_time}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <MessageSquare size={14} />
                           {review.comment_count}
                         </Box>
@@ -335,19 +395,28 @@ const RsReviewPage: React.FC = () => {
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="查看评审">
-                            <IconButton size="small" onClick={() => handleViewDetail(review)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewDetail(review)}
+                            >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
                           {review.status === "pending" && (
                             <>
                               <Tooltip title="通过">
-                                <IconButton size="small" onClick={() => handleApprove(review.id)}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleApprove(review.id)}
+                                >
                                   <Check size={16} color="green" />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="拒绝">
-                                <IconButton size="small" onClick={() => handleReject(review.id)}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleReject(review.id)}
+                                >
                                   <X size={16} color="red" />
                                 </IconButton>
                               </Tooltip>
@@ -372,7 +441,12 @@ const RsReviewPage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>评审详情</DialogTitle>
         <DialogContent>
           {selectedReview && (
@@ -381,7 +455,10 @@ const RsReviewPage: React.FC = () => {
                 {selectedReview.title}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Chip label={getStatusLabel(selectedReview.status)} color={getStatusColor(selectedReview.status)} />
+                <Chip
+                  label={getStatusLabel(selectedReview.status)}
+                  color={getStatusColor(selectedReview.status)}
+                />
                 <Typography variant="body2" color="text.secondary">
                   作者: {selectedReview.author}
                 </Typography>
@@ -400,7 +477,12 @@ const RsReviewPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={newReviewDialogOpen} onClose={() => setNewReviewDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={newReviewDialogOpen}
+        onClose={() => setNewReviewDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建评审</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
@@ -408,13 +490,17 @@ const RsReviewPage: React.FC = () => {
               label="评审标题"
               fullWidth
               value={newReviewForm.title}
-              onChange={(e) => setNewReviewForm({ ...newReviewForm, title: e.target.value })}
+              onChange={(e) =>
+                setNewReviewForm({ ...newReviewForm, title: e.target.value })
+              }
             />
             <TextField
               label="作者"
               fullWidth
               value={newReviewForm.author}
-              onChange={(e) => setNewReviewForm({ ...newReviewForm, author: e.target.value })}
+              onChange={(e) =>
+                setNewReviewForm({ ...newReviewForm, author: e.target.value })
+              }
             />
             <TextField
               label="描述"
@@ -422,13 +508,22 @@ const RsReviewPage: React.FC = () => {
               multiline
               rows={4}
               value={newReviewForm.description}
-              onChange={(e) => setNewReviewForm({ ...newReviewForm, description: e.target.value })}
+              onChange={(e) =>
+                setNewReviewForm({
+                  ...newReviewForm,
+                  description: e.target.value,
+                })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewReviewDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateReview}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateReview}
+          >
             创建
           </Button>
         </DialogActions>

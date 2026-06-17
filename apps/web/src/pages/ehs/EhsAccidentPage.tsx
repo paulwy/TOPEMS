@@ -102,7 +102,9 @@ const EhsAccidentPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedAccident, setSelectedAccident] = useState<Accident | null>(null);
+  const [selectedAccident, setSelectedAccident] = useState<Accident | null>(
+    null,
+  );
   const [formData, setFormData] = useState({
     accident_type: "物体打击",
     severity: "轻微",
@@ -126,31 +128,39 @@ const EhsAccidentPage: React.FC = () => {
 
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
-      "轻微": { bg: "#fef9c3", color: "#ca8a04" },
-      "严重": { bg: "#fee2e2", color: "#dc2626" },
+      轻微: { bg: "#fef9c3", color: "#ca8a04" },
+      严重: { bg: "#fee2e2", color: "#dc2626" },
     };
     const colors = severityMap[severity] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
       <Chip
         label={severity}
         size="small"
-        sx={{ backgroundColor: colors.bg, color: colors.color, fontWeight: 500 }}
+        sx={{
+          backgroundColor: colors.bg,
+          color: colors.color,
+          fontWeight: 500,
+        }}
       />
     );
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      "处理中": { bg: "#dbeafe", color: "#2563eb" },
-      "调查中": { bg: "#fef9c3", color: "#ca8a04" },
-      "已结案": { bg: "#dcfce7", color: "#16a34a" },
+      处理中: { bg: "#dbeafe", color: "#2563eb" },
+      调查中: { bg: "#fef9c3", color: "#ca8a04" },
+      已结案: { bg: "#dcfce7", color: "#16a34a" },
     };
     const colors = statusMap[status] || { bg: "#f3f4f6", color: "#4b5563" };
     return (
       <Chip
         label={status}
         size="small"
-        sx={{ backgroundColor: colors.bg, color: colors.color, fontWeight: 500 }}
+        sx={{
+          backgroundColor: colors.bg,
+          color: colors.color,
+          fontWeight: 500,
+        }}
       />
     );
   };
@@ -192,9 +202,12 @@ const EhsAccidentPage: React.FC = () => {
     const matchesSearch =
       accident.accident_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       accident.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || accident.accident_type === typeFilter;
-    const matchesSeverity = severityFilter === "all" || accident.severity === severityFilter;
-    const matchesStatus = statusFilter === "all" || accident.status === statusFilter;
+    const matchesType =
+      typeFilter === "all" || accident.accident_type === typeFilter;
+    const matchesSeverity =
+      severityFilter === "all" || accident.severity === severityFilter;
+    const matchesStatus =
+      statusFilter === "all" || accident.status === statusFilter;
     return matchesSearch && matchesType && matchesSeverity && matchesStatus;
   });
 
@@ -302,7 +315,8 @@ const EhsAccidentPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                  background:
+                    "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                   borderRadius: 2,
                   display: "flex",
                   alignItems: "center",
@@ -314,11 +328,18 @@ const EhsAccidentPage: React.FC = () => {
               <Box>
                 <Typography
                   variant="h6"
-                  sx={{ fontWeight: 700, color: "slate.900", fontSize: "1.25rem" }}
+                  sx={{
+                    fontWeight: 700,
+                    color: "slate.900",
+                    fontSize: "1.25rem",
+                  }}
                 >
                   事故记录
                 </Typography>
-                <Typography variant="caption" sx={{ color: "slate.500", fontSize: "0.75rem" }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
+                >
                   Accident Records
                 </Typography>
               </Box>
@@ -361,13 +382,21 @@ const EhsAccidentPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <AlertCircle sx={{ width: 20, height: 20, color: "#ef4444" }} />
+                  <AlertCircle
+                    sx={{ width: 20, height: 20, color: "#ef4444" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     事故总数
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.total}
                   </Typography>
                 </Box>
@@ -391,10 +420,16 @@ const EhsAccidentPage: React.FC = () => {
                   <FileText sx={{ width: 20, height: 20, color: "#2563eb" }} />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     处理中
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.inProgress}
                   </Typography>
                 </Box>
@@ -415,13 +450,21 @@ const EhsAccidentPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: "#ca8a04" }} />
+                  <AlertTriangle
+                    sx={{ width: 20, height: 20, color: "#ca8a04" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     调查中
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.investigating}
                   </Typography>
                 </Box>
@@ -445,10 +488,16 @@ const EhsAccidentPage: React.FC = () => {
                   <FileText sx={{ width: 20, height: 20, color: "#16a34a" }} />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     已结案
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.closed}
                   </Typography>
                 </Box>
@@ -469,13 +518,21 @@ const EhsAccidentPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: "#dc2626" }} />
+                  <AlertTriangle
+                    sx={{ width: 20, height: 20, color: "#dc2626" }}
+                  />
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: "slate.600", fontSize: "0.875rem" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                  >
                     严重事故
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "slate.900" }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 700, color: "slate.900" }}
+                  >
                     {stats.serious}
                   </Typography>
                 </Box>
@@ -494,8 +551,13 @@ const EhsAccidentPage: React.FC = () => {
               pb: 0,
             }}
           >
-            <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <AlertCircle style={{ width: 20, height: 20, color: "#ef4444" }} />
+            <Typography
+              variant="h6"
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <AlertCircle
+                style={{ width: 20, height: 20, color: "#ef4444" }}
+              />
               事故列表
             </Typography>
           </CardHeader>
@@ -509,7 +571,11 @@ const EhsAccidentPage: React.FC = () => {
                 sx={{ minWidth: 250 }}
                 slotProps={{
                   input: {
-                    startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
+                    startAdornment: (
+                      <Search
+                        style={{ width: 18, height: 18, marginRight: 8 }}
+                      />
+                    ),
                   },
                 }}
               />
@@ -554,12 +620,21 @@ const EhsAccidentPage: React.FC = () => {
                 <option value="已结案">已结案</option>
               </TextField>
             </Box>
-            <DataTable columns={columns} data={filteredAccidents} enablePagination />
+            <DataTable
+              columns={columns}
+              data={filteredAccidents}
+              enablePagination
+            />
           </CardContent>
         </Card>
       </Box>
 
-      <Dialog open={showCreateModal} onClose={() => setShowCreateModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>事故上报</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -568,7 +643,9 @@ const EhsAccidentPage: React.FC = () => {
               select
               label="事故类型"
               value={formData.accident_type}
-              onChange={(e) => setFormData({ ...formData, accident_type: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, accident_type: e.target.value })
+              }
             >
               <option value="物体打击">物体打击</option>
               <option value="机械伤害">机械伤害</option>
@@ -581,7 +658,9 @@ const EhsAccidentPage: React.FC = () => {
               select
               label="严重程度"
               value={formData.severity}
-              onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, severity: e.target.value })
+              }
             >
               <option value="轻微">轻微</option>
               <option value="严重">严重</option>
@@ -590,14 +669,18 @@ const EhsAccidentPage: React.FC = () => {
               fullWidth
               label="发生地点"
               value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
               placeholder="请输入事故发生地点"
             />
             <TextField
               fullWidth
               label="报告人"
               value={formData.reporter}
-              onChange={(e) => setFormData({ ...formData, reporter: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, reporter: e.target.value })
+              }
               placeholder="请输入报告人姓名"
             />
             <TextField
@@ -605,14 +688,18 @@ const EhsAccidentPage: React.FC = () => {
               type="datetime-local"
               label="发生时间"
               value={formData.occurred_at}
-              onChange={(e) => setFormData({ ...formData, occurred_at: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, occurred_at: e.target.value })
+              }
               slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               fullWidth
               label="事故描述"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               placeholder="请详细描述事故经过"
               multiline
               rows={4}
@@ -623,43 +710,80 @@ const EhsAccidentPage: React.FC = () => {
           <Button variant="outlined" onClick={() => setShowCreateModal(false)}>
             取消
           </Button>
-          <Button variant="contained" onClick={handleSave} sx={{ bgcolor: "#ef4444" }}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            sx={{ bgcolor: "#ef4444" }}
+          >
             上报
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailModal} onClose={() => setShowDetailModal(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>事故详情</DialogTitle>
         <DialogContent>
           {selectedAccident && (
-            <Box sx={{ pt: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{
+                pt: 2,
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 2,
+              }}
+            >
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   事故编号
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedAccident.accident_no}</Box>
+                <Box sx={{ fontWeight: 500 }}>
+                  {selectedAccident.accident_no}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   事故类型
                 </Box>
                 <Box>{selectedAccident.accident_type}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   严重程度
                 </Box>
-                <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedAccident.severity)}</Box>
+                <Box sx={{ mt: 0.5 }}>
+                  {getSeverityBadge(selectedAccident.severity)}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedAccident.status)}</Box>
+                <Box sx={{ mt: 0.5 }}>
+                  {getStatusBadge(selectedAccident.status)}
+                </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   发生地点
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -668,13 +792,19 @@ const EhsAccidentPage: React.FC = () => {
                 </Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   发生时间
                 </Box>
                 <Box>{selectedAccident.occurred_at}</Box>
               </Box>
               <Box>
-                <Box component="span" sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                <Box
+                  component="span"
+                  sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                >
                   报告人
                 </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>

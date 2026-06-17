@@ -220,9 +220,27 @@ const QmsStandardDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        }}
+      >
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 48, height: 48, border: "4px solid #bfdbfe", borderTop: "4px solid #2563eb", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 16px auto" }}></div>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              border: "4px solid #bfdbfe",
+              borderTop: "4px solid #2563eb",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px auto",
+            }}
+          ></div>
           <p style={{ color: "#475569" }}>加载中...</p>
         </div>
       </div>
@@ -231,9 +249,24 @@ const QmsStandardDetailPage: React.FC = () => {
 
   if (!standard) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        }}
+      >
         <div style={{ textAlign: "center" }}>
-          <AlertCircle style={{ width: 64, height: 64, color: "#ef4444", margin: "0 auto 16px auto" }} />
+          <AlertCircle
+            style={{
+              width: 64,
+              height: 64,
+              color: "#ef4444",
+              margin: "0 auto 16px auto",
+            }}
+          />
           <p style={{ color: "#475569" }}>质量标准不存在或已被删除</p>
           <Button onClick={() => navigate("/qms")} sx={{ mt: 2 }}>
             返回列表
@@ -244,10 +277,33 @@ const QmsStandardDetailPage: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)" }}>
-      <Box component="header" sx={{ bgcolor: "background.paper", boxShadow: 1, borderBottom: 1, borderColor: "divider", position: "sticky", top: 0, zIndex: 10 }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+      }}
+    >
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "background.paper",
+          boxShadow: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 64 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              height: 64,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <Button
                 variant="outlined"
@@ -257,7 +313,13 @@ const QmsStandardDetailPage: React.FC = () => {
                 <ArrowLeft sx={{ width: 16, height: 16 }} />
               </Button>
               <div>
-                <h1 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a" }}>
+                <h1
+                  style={{
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                    color: "#0f172a",
+                  }}
+                >
                   质量标准详情
                 </h1>
                 <p style={{ fontSize: "0.75rem", color: "#64748b" }}>
@@ -286,8 +348,21 @@ const QmsStandardDetailPage: React.FC = () => {
       </Box>
 
       <main style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" }, gap: 3 }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, gridColumn: { lg: "span 1" } }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "repeat(3, 1fr)" },
+            gap: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+              gridColumn: { lg: "span 1" },
+            }}
+          >
             <Card>
               <CardHeader sx={{ pb: 1 }}>
                 <Typography
@@ -304,25 +379,59 @@ const QmsStandardDetailPage: React.FC = () => {
                   标准信息
                 </Typography>
               </CardHeader>
-              <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <CardContent
+                sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
                   <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>标准编号</p>
-                    <p style={{ fontSize: "1.125rem", fontWeight: 600, color: "#0f172a", marginTop: 4 }}>
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                      标准编号
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "1.125rem",
+                        fontWeight: 600,
+                        color: "#0f172a",
+                        marginTop: 4,
+                      }}
+                    >
                       {standard.code || standard.id}
                     </p>
                   </div>
                   {getStatusBadge(standard.status)}
                 </div>
                 <div>
-                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>标准名称</p>
-                  <p style={{ fontSize: "1.125rem", fontWeight: 500, color: "#0f172a", marginTop: 4 }}>
+                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                    标准名称
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "1.125rem",
+                      fontWeight: 500,
+                      color: "#0f172a",
+                      marginTop: 4,
+                    }}
+                  >
                     {standard.name}
                   </p>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 16,
+                  }}
+                >
                   <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>版本</p>
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                      版本
+                    </p>
                     <p style={{ color: "#0f172a", marginTop: 4 }}>
                       <Chip
                         label={`v${standard.version}`}
@@ -332,15 +441,27 @@ const QmsStandardDetailPage: React.FC = () => {
                     </p>
                   </div>
                   <div>
-                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>分类</p>
+                    <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                      分类
+                    </p>
                     <p style={{ color: "#0f172a", marginTop: 4 }}>
                       {standard.category || "-"}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>生效日期</p>
-                  <p style={{ color: "#0f172a", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                    生效日期
+                  </p>
+                  <p
+                    style={{
+                      color: "#0f172a",
+                      marginTop: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
                     <Calendar sx={{ width: 16, height: 16 }} />
                     {standard.effective_date
                       ? new Date(standard.effective_date).toLocaleDateString(
@@ -350,8 +471,17 @@ const QmsStandardDetailPage: React.FC = () => {
                   </p>
                 </div>
                 <div style={{ paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
-                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>标准描述</p>
-                  <p style={{ color: "#0f172a", marginTop: 4, fontSize: "0.875rem", lineHeight: 1.6 }}>
+                  <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                    标准描述
+                  </p>
+                  <p
+                    style={{
+                      color: "#0f172a",
+                      marginTop: 4,
+                      fontSize: "0.875rem",
+                      lineHeight: 1.6,
+                    }}
+                  >
                     {standard.description || "暂无描述"}
                   </p>
                 </div>
@@ -374,7 +504,9 @@ const QmsStandardDetailPage: React.FC = () => {
                   操作
                 </Typography>
               </CardHeader>
-              <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <CardContent
+                sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
+              >
                 <Button
                   fullWidth
                   sx={{ justifyContent: "flex-start" }}
@@ -431,8 +563,21 @@ const QmsStandardDetailPage: React.FC = () => {
                     enablePagination={false}
                   />
                 ) : (
-                  <div style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
-                    <FileText style={{ width: 64, height: 64, margin: "0 auto 16px auto", opacity: 0.5 }} />
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "48px 0",
+                      color: "#64748b",
+                    }}
+                  >
+                    <FileText
+                      style={{
+                        width: 64,
+                        height: 64,
+                        margin: "0 auto 16px auto",
+                        opacity: 0.5,
+                      }}
+                    />
                     <p>暂无版本记录</p>
                     <Button
                       variant="outlined"
@@ -460,7 +605,9 @@ const QmsStandardDetailPage: React.FC = () => {
         <DialogTitle>编辑质量标准</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
                 <Box
                   component="label"
@@ -531,7 +678,9 @@ const QmsStandardDetailPage: React.FC = () => {
                 placeholder="请输入标准名称"
               />
             </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box
+              sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+            >
               <Box>
                 <Box
                   component="label"

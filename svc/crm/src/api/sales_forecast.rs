@@ -17,15 +17,15 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/sales-forecast",
+            "/api/crm/sales-forecast",
             get(list_sales_forecasts).post(create_sales_forecast),
         )
         .route(
-            "/api/v1/sales-forecast/generate",
+            "/api/crm/sales-forecast/generate",
             post(generate_forecast),
         )
         .route(
-            "/api/v1/sales-forecast/:id",
+            "/api/crm/sales-forecast/{id}",
             get(get_sales_forecast)
                 .put(update_sales_forecast)
                 .delete(delete_sales_forecast),

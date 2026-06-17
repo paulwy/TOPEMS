@@ -1,0 +1,1 @@
+var t=(t,r)=>{try{localStorage.setItem(t,JSON.stringify(r))}catch(a){}},r=(t,r)=>{try{const a=localStorage.getItem(t);return a?JSON.parse(a):r}catch(a){return r}},a=t=>{try{localStorage.removeItem(t)}catch(r){}};export{a as n,t as r,r as t};

@@ -151,15 +151,17 @@ const FlowMonitorPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
-  const [selectedInstance, setSelectedInstance] =
-    useState<FlowInstance | null>(null);
+  const [selectedInstance, setSelectedInstance] = useState<FlowInstance | null>(
+    null,
+  );
 
   const filteredData = data.filter((item) => {
     const matchesSearch =
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.applicant.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesName = nameFilter === "all" || item.name === nameFilter;
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || item.status === statusFilter;
     return matchesSearch && matchesName && matchesStatus;
   });
 
@@ -236,7 +238,10 @@ const FlowMonitorPage: React.FC = () => {
           <Box sx={{ ml: "auto" }}>
             <Stack direction="row" spacing={3}>
               <Box sx={{ textAlign: "center" }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: "#f59e0b" }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: "#f59e0b" }}
+                >
                   {runningCount}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -244,7 +249,10 @@ const FlowMonitorPage: React.FC = () => {
                 </Typography>
               </Box>
               <Box sx={{ textAlign: "center" }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: "#16a34a" }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: 700, color: "#16a34a" }}
+                >
                   {completedCount}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -444,25 +452,17 @@ const FlowMonitorPage: React.FC = () => {
         <DialogTitle>终止流程实例</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要终止流程实例{" "}
-            <strong>{selectedInstance?.id}</strong> 吗？
+            确定要终止流程实例 <strong>{selectedInstance?.id}</strong> 吗？
           </Typography>
           <Typography variant="body2" sx={{ color: "grey.500", mt: 1 }}>
             终止后该流程将无法恢复
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            color="inherit"
-            onClick={() => setShowTerminateDialog(false)}
-          >
+          <Button color="inherit" onClick={() => setShowTerminateDialog(false)}>
             取消
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={confirmTerminate}
-          >
+          <Button variant="contained" color="error" onClick={confirmTerminate}>
             确认终止
           </Button>
         </DialogActions>

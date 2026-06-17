@@ -61,7 +61,9 @@ const RsCodePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [repoFilter, setRepoFilter] = useState<string | null>(null);
   const [branchTypeFilter, setBranchTypeFilter] = useState<string | null>(null);
-  const [filterMenuAnchor, setFilterMenuAnchor] = useState<null | HTMLElement>(null);
+  const [filterMenuAnchor, setFilterMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<CodeRepo | null>(null);
@@ -123,7 +125,9 @@ const RsCodePage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const getBranchTypeColor = (type: string): "primary" | "success" | "warning" | "error" => {
+  const getBranchTypeColor = (
+    type: string,
+  ): "primary" | "success" | "warning" | "error" => {
     switch (type) {
       case "main":
         return "primary";
@@ -144,7 +148,8 @@ const RsCodePage: React.FC = () => {
       repo.branch_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       repo.committer.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRepo = !repoFilter || repo.repo_name === repoFilter;
-    const matchesBranchType = !branchTypeFilter || repo.branch_type === branchTypeFilter;
+    const matchesBranchType =
+      !branchTypeFilter || repo.branch_type === branchTypeFilter;
     return matchesSearch && matchesRepo && matchesBranchType;
   });
 
@@ -155,7 +160,9 @@ const RsCodePage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -173,11 +180,22 @@ const RsCodePage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             代码管理
           </Typography>
-          <Button variant="contained" startIcon={<Plus size={18} />} sx={{ bgcolor: "#3b82f6" }}>
+          <Button
+            variant="contained"
+            startIcon={<Plus size={18} />}
+            sx={{ bgcolor: "#3b82f6" }}
+          >
             新建仓库
           </Button>
         </Box>
@@ -233,7 +251,9 @@ const RsCodePage: React.FC = () => {
                   <Select
                     value={branchTypeFilter || ""}
                     label="分支类型"
-                    onChange={(e) => setBranchTypeFilter(e.target.value || null)}
+                    onChange={(e) =>
+                      setBranchTypeFilter(e.target.value || null)
+                    }
                   >
                     <MenuItem value="">全部</MenuItem>
                     {uniqueBranchTypes.map((type) => (
@@ -253,13 +273,27 @@ const RsCodePage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>仓库名称</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>分支名称</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>最近提交</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>提交者</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>代码行数</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>最后更新时间</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    仓库名称
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    分支名称
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    最近提交
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    提交者
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    代码行数
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    最后更新时间
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -268,13 +302,17 @@ const RsCodePage: React.FC = () => {
                   .map((repo) => (
                     <TableRow key={repo.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Code size={16} color="#3b82f6" />
                           {repo.repo_name}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <GitBranch size={16} />
                           {repo.branch_name}
                           <Chip
@@ -286,24 +324,45 @@ const RsCodePage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Tooltip title={repo.last_commit}>
-                          <Box sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            <GitCommit size={14} style={{ marginRight: 4, verticalAlign: "middle" }} />
+                          <Box
+                            sx={{
+                              maxWidth: 200,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <GitCommit
+                              size={14}
+                              style={{
+                                marginRight: 4,
+                                verticalAlign: "middle",
+                              }}
+                            />
                             {repo.last_commit}
                           </Box>
                         </Tooltip>
                       </TableCell>
                       <TableCell>{repo.committer}</TableCell>
-                      <TableCell>{repo.lines_of_code.toLocaleString()}</TableCell>
+                      <TableCell>
+                        {repo.lines_of_code.toLocaleString()}
+                      </TableCell>
                       <TableCell>{repo.last_update}</TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="代码浏览">
-                            <IconButton size="small" onClick={() => handleViewDetail(repo)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewDetail(repo)}
+                            >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="提交历史">
-                            <IconButton size="small" onClick={() => handleViewHistory(repo)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewHistory(repo)}
+                            >
                               <History size={16} />
                             </IconButton>
                           </Tooltip>
@@ -331,7 +390,12 @@ const RsCodePage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>代码浏览</DialogTitle>
         <DialogContent>
           {selectedRepo && (
@@ -355,7 +419,12 @@ const RsCodePage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={historyDialogOpen} onClose={() => setHistoryDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={historyDialogOpen}
+        onClose={() => setHistoryDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>提交历史</DialogTitle>
         <DialogContent>
           {selectedRepo && (

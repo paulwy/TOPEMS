@@ -70,20 +70,61 @@ export const Toast: React.FC<ToastProps> = ({ notification, onClose }) => {
         maxWidth: "448px",
         transition: "all 0.3s ease-in-out",
         opacity: isVisible && !isLeaving ? 1 : 0,
-        transform: isVisible && !isLeaving ? "translateX(0)" : "translateX(16px)",
-        ...(notification.type === "success" ? { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", color: "#166534" } : {}),
-        ...(notification.type === "error" ? { backgroundColor: "#fef2f2", borderColor: "#fecaca", color: "#991b1b" } : {}),
-        ...(notification.type === "info" ? { backgroundColor: "#eff6ff", borderColor: "#bfdbfe", color: "#1e40af" } : {}),
-        ...(notification.type === "warning" ? { backgroundColor: "#fefce8", borderColor: "#fef08a", color: "#854d0e" } : {}),
+        transform:
+          isVisible && !isLeaving ? "translateX(0)" : "translateX(16px)",
+        ...(notification.type === "success"
+          ? {
+              backgroundColor: "#f0fdf4",
+              borderColor: "#bbf7d0",
+              color: "#166534",
+            }
+          : {}),
+        ...(notification.type === "error"
+          ? {
+              backgroundColor: "#fef2f2",
+              borderColor: "#fecaca",
+              color: "#991b1b",
+            }
+          : {}),
+        ...(notification.type === "info"
+          ? {
+              backgroundColor: "#eff6ff",
+              borderColor: "#bfdbfe",
+              color: "#1e40af",
+            }
+          : {}),
+        ...(notification.type === "warning"
+          ? {
+              backgroundColor: "#fefce8",
+              borderColor: "#fef08a",
+              color: "#854d0e",
+            }
+          : {}),
       }}
     >
-      <div style={{ width: 20, height: 20, flexShrink: 0, color: iconColorMap[notification.type] }}>
+      <div
+        style={{
+          width: 20,
+          height: 20,
+          flexShrink: 0,
+          color: iconColorMap[notification.type],
+        }}
+      >
         <Icon />
       </div>
-      <p style={{ flex: 1, fontSize: "14px", fontWeight: 500 }}>{notification.message}</p>
+      <p style={{ flex: 1, fontSize: "14px", fontWeight: 500 }}>
+        {notification.message}
+      </p>
       <button
         onClick={handleClose}
-        style={{ padding: "4px", borderRadius: "9999px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}
+        style={{
+          padding: "4px",
+          borderRadius: "9999px",
+          border: "none",
+          background: "transparent",
+          cursor: "pointer",
+          transition: "background-color 0.2s",
+        }}
         aria-label="关闭通知"
       >
         <X sx={{ width: 16, height: 16 }} />
@@ -102,7 +143,17 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   onClose,
 }) => {
   return (
-    <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", flexDirection: "column", gap: "12px" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: "16px",
+        right: "16px",
+        zIndex: 50,
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+      }}
+    >
       {notifications.map((notification) => (
         <Toast
           key={notification.id}

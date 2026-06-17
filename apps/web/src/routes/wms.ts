@@ -6,16 +6,19 @@ import { lazyWithRetry } from "./utils";
 const lazy = lazyWithRetry;
 
 const WarehouseManagementPage = lazy(
-  () => import("../pages/WarehouseManagementPage"),
+  () => import("../pages/wms/WarehouseManagementPage"),
 );
-const InventoryPage = lazy(() => import("../pages/InventoryPage"));
-const InboundOrderPage = lazy(() => import("../pages/InboundOrderPage"));
-const OutboundOrderPage = lazy(() => import("../pages/OutboundOrderPage"));
+const InventoryPage = lazy(() => import("../pages/wms/InventoryPage"));
+const InboundOrderPage = lazy(() => import("../pages/wms/InboundOrderPage"));
+const OutboundOrderPage = lazy(() => import("../pages/wms/OutboundOrderPage"));
 
 export const wmsRoutes: RouteConfig[] = [
   {
     path: "/wms",
-    element: React.createElement(Navigate, { to: "/wms/warehouses", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/wms/warehouses",
+      replace: true,
+    }),
     requiredPermissions: ["wms:read"],
     module: "wms",
     action: "read",

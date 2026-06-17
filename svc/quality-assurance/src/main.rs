@@ -116,20 +116,20 @@ async fn main() {
         // Quality Inspection
         .route("/api/qa/quality/inspection", get(modules::qms::quality_inspection::list_inspections))
         .route("/api/qa/quality/inspection", post(modules::qms::quality_inspection::create_inspection))
-        .route("/api/qa/quality/inspection/:id", get(modules::qms::quality_inspection::get_inspection))
-        .route("/api/qa/quality/inspection/:id", put(modules::qms::quality_inspection::update_inspection))
-        .route("/api/qa/quality/inspection/:id/result", post(modules::qms::quality_inspection::submit_result))
+        .route("/api/qa/quality/inspection/{id}", get(modules::qms::quality_inspection::get_inspection))
+        .route("/api/qa/quality/inspection/{id}", put(modules::qms::quality_inspection::update_inspection))
+        .route("/api/qa/quality/inspection/{id}/result", post(modules::qms::quality_inspection::submit_result))
         // Quality Issue
         .route("/api/qa/quality/issue", get(modules::qms::quality_issue::list_issues))
         .route("/api/qa/quality/issue", post(modules::qms::quality_issue::create_issue))
-        .route("/api/qa/quality/issue/:id", get(modules::qms::quality_issue::get_issue))
-        .route("/api/qa/quality/issue/:id", put(modules::qms::quality_issue::update_issue))
-        .route("/api/qa/quality/issue/:id/resolve", post(modules::qms::quality_issue::resolve_issue))
+        .route("/api/qa/quality/issue/{id}", get(modules::qms::quality_issue::get_issue))
+        .route("/api/qa/quality/issue/{id}", put(modules::qms::quality_issue::update_issue))
+        .route("/api/qa/quality/issue/{id}/resolve", post(modules::qms::quality_issue::resolve_issue))
         // Quality Standard
         .route("/api/qa/quality/standard", get(modules::qms::quality_standard::list_standards))
         .route("/api/qa/quality/standard", post(modules::qms::quality_standard::create_standard))
-        .route("/api/qa/quality/standard/:id", get(modules::qms::quality_standard::get_standard))
-        .route("/api/qa/quality/standard/:id", put(modules::qms::quality_standard::update_standard))
+        .route("/api/qa/quality/standard/{id}", get(modules::qms::quality_standard::get_standard))
+        .route("/api/qa/quality/standard/{id}", put(modules::qms::quality_standard::update_standard))
         // Dashboard
         .route("/api/qa/quality/dashboard", get(modules::qms::dashboard::get_dashboard_stats))
 
@@ -137,26 +137,26 @@ async fn main() {
         // Sample Management
         .route("/api/qa/lab/sample", get(modules::lims::sample::list_samples))
         .route("/api/qa/lab/sample", post(modules::lims::sample::register_sample))
-        .route("/api/qa/lab/sample/:id", get(modules::lims::sample::get_sample))
-        .route("/api/qa/lab/sample/:id", put(modules::lims::sample::update_sample))
+        .route("/api/qa/lab/sample/{id}", get(modules::lims::sample::get_sample))
+        .route("/api/qa/lab/sample/{id}", put(modules::lims::sample::update_sample))
         // Inspection Task
         .route("/api/qa/lab/task", get(modules::lims::inspection_task::list_tasks))
         .route("/api/qa/lab/task", post(modules::lims::inspection_task::create_task))
-        .route("/api/qa/lab/task/:id", get(modules::lims::inspection_task::get_task))
-        .route("/api/qa/lab/task/:id/result", post(modules::lims::inspection_task::submit_result))
+        .route("/api/qa/lab/task/{id}", get(modules::lims::inspection_task::get_task))
+        .route("/api/qa/lab/task/{id}/result", post(modules::lims::inspection_task::submit_result))
         // Inspection Record
         .route("/api/qa/lab/record", get(modules::lims::inspection_record::list_records))
         .route("/api/qa/lab/record", post(modules::lims::inspection_record::create_record))
-        .route("/api/qa/lab/record/:id", get(modules::lims::inspection_record::get_record))
+        .route("/api/qa/lab/record/{id}", get(modules::lims::inspection_record::get_record))
         // Instrument
         .route("/api/qa/lab/instrument", get(modules::lims::instrument::list_instruments))
         .route("/api/qa/lab/instrument", post(modules::lims::instrument::create_instrument))
-        .route("/api/qa/lab/instrument/:id", get(modules::lims::instrument::get_instrument))
-        .route("/api/qa/lab/instrument/:id/calibration", post(modules::lims::instrument::calibrate))
+        .route("/api/qa/lab/instrument/{id}", get(modules::lims::instrument::get_instrument))
+        .route("/api/qa/lab/instrument/{id}/calibration", post(modules::lims::instrument::calibrate))
         // Reagent
         .route("/api/qa/lab/reagent", get(modules::lims::reagent::list_reagents))
         .route("/api/qa/lab/reagent", post(modules::lims::reagent::create_reagent))
-        .route("/api/qa/lab/reagent/:id", get(modules::lims::reagent::get_reagent))
+        .route("/api/qa/lab/reagent/{id}", get(modules::lims::reagent::get_reagent))
         // Statistics
         .route("/api/qa/lab/statistics", get(modules::lims::statistics::get_statistics))
 
@@ -164,25 +164,25 @@ async fn main() {
         // Risk Assessment
         .route("/api/qa/ehs/risk", get(modules::ehs::risk::list_risks))
         .route("/api/qa/ehs/risk", post(modules::ehs::risk::create_risk))
-        .route("/api/qa/ehs/risk/:id", get(modules::ehs::risk::get_risk))
-        .route("/api/qa/ehs/risk/:id", put(modules::ehs::risk::update_risk))
-        .route("/api/qa/ehs/risk/:id/assess", post(modules::ehs::risk::assess_risk))
+        .route("/api/qa/ehs/risk/{id}", get(modules::ehs::risk::get_risk))
+        .route("/api/qa/ehs/risk/{id}", put(modules::ehs::risk::update_risk))
+        .route("/api/qa/ehs/risk/{id}/assess", post(modules::ehs::risk::assess_risk))
         // Safety Inspection
         .route("/api/qa/ehs/safety", get(modules::ehs::safety::list_inspections))
         .route("/api/qa/ehs/safety", post(modules::ehs::safety::create_inspection))
-        .route("/api/qa/ehs/safety/:id", get(modules::ehs::safety::get_inspection))
+        .route("/api/qa/ehs/safety/{id}", get(modules::ehs::safety::get_inspection))
         // Accident Report
         .route("/api/qa/ehs/accident", get(modules::ehs::accident::list_accidents))
         .route("/api/qa/ehs/accident", post(modules::ehs::accident::report_accident))
-        .route("/api/qa/ehs/accident/:id", get(modules::ehs::accident::get_accident))
-        .route("/api/qa/ehs/accident/:id", put(modules::ehs::accident::update_accident))
+        .route("/api/qa/ehs/accident/{id}", get(modules::ehs::accident::get_accident))
+        .route("/api/qa/ehs/accident/{id}", put(modules::ehs::accident::update_accident))
         // Environment
         .route("/api/qa/ehs/environment", get(modules::ehs::environment::list_records))
         .route("/api/qa/ehs/environment", post(modules::ehs::environment::create_record))
         // Training
         .route("/api/qa/ehs/training", get(modules::ehs::training::list_trainings))
         .route("/api/qa/ehs/training", post(modules::ehs::training::create_training))
-        .route("/api/qa/ehs/training/:id", get(modules::ehs::training::get_training))
+        .route("/api/qa/ehs/training/{id}", get(modules::ehs::training::get_training))
         // Health
         .route("/api/qa/ehs/health", get(modules::ehs::health::list_records))
         .route("/api/qa/ehs/health", post(modules::ehs::health::create_record))

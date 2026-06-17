@@ -9,8 +9,8 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
-import { ToastProvider } from "@/components/ToastProvider";
-import MigrationAdminPage from "@/pages/MigrationAdminPage";
+import { ToastProvider } from "@/components/notification/ToastProvider";
+import MigrationAdminPage from "@/pages/system/MigrationAdminPage";
 import type { MigrationService, MigrationStatus } from "@/api/migration";
 
 const mockListServices = vi.fn();
@@ -205,7 +205,9 @@ describe("MigrationAdminPage", () => {
       });
 
       const allButtons = screen.getAllByRole("button");
-      const rollbackBtn = allButtons.find((b) => b.textContent?.includes("回滚")) as HTMLButtonElement;
+      const rollbackBtn = allButtons.find((b) =>
+        b.textContent?.includes("回滚"),
+      ) as HTMLButtonElement;
       expect(rollbackBtn).toBeInTheDocument();
 
       rollbackBtn.removeAttribute("disabled");

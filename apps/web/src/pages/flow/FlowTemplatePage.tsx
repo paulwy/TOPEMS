@@ -137,8 +137,9 @@ const FlowTemplatePage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<FlowTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(
+    null,
+  );
 
   const filteredData = data.filter((item) => {
     const matchesSearch = item.name
@@ -396,17 +397,10 @@ const FlowTemplatePage: React.FC = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            color="inherit"
-            onClick={() => setShowDeleteDialog(false)}
-          >
+          <Button color="inherit" onClick={() => setShowDeleteDialog(false)}>
             取消
           </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={confirmDelete}
-          >
+          <Button variant="contained" color="error" onClick={confirmDelete}>
             确认删除
           </Button>
         </DialogActions>

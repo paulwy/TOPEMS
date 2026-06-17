@@ -31,20 +31,20 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/accounting-subjects",
+            "/api/erp/accounting-subjects",
             get(list_subjects).post(create_subject),
         )
         .route(
-            "/api/v1/accounting-subjects/{id}",
+            "/api/erp/accounting-subjects/{id}",
             get(get_subject).put(update_subject).delete(delete_subject),
         )
-        .route("/api/v1/vouchers", get(list_vouchers).post(create_voucher))
+        .route("/api/erp/vouchers", get(list_vouchers).post(create_voucher))
         .route(
-            "/api/v1/vouchers/{id}",
+            "/api/erp/vouchers/{id}",
             get(get_voucher).put(update_voucher).delete(delete_voucher),
         )
-        .route("/api/v1/vouchers/{id}/items", get(get_voucher_items))
-        .route("/api/v1/vouchers/import/u8", post(import_u8_vouchers))
+        .route("/api/erp/vouchers/{id}/items", get(get_voucher_items))
+        .route("/api/erp/vouchers/import/u8", post(import_u8_vouchers))
 }
 
 async fn list_subjects(

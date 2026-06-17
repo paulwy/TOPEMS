@@ -1,0 +1,23 @@
+{
+  "name": "@topems/shared-utils",
+  "version": "1.0.0",
+  "description": "Shared utility functions for TOPEMS",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "utils",
+    "topems"
+  ],
+  "author": "TOPEMS Team",
+  "license": "MIT",
+  "dependencies": {
+    "@topems/shared-types": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

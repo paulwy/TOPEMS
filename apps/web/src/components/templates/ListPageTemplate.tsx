@@ -479,9 +479,12 @@ export function ListPageTemplate<T>({
           <TableCell padding="checkbox" sx={{ width: 48 }}>
             <Checkbox
               indeterminate={
-                effectiveSelectedIds.length > 0 && effectiveSelectedIds.length < data.length
+                effectiveSelectedIds.length > 0 &&
+                effectiveSelectedIds.length < data.length
               }
-              checked={data.length > 0 && effectiveSelectedIds.length === data.length}
+              checked={
+                data.length > 0 && effectiveSelectedIds.length === data.length
+              }
               onChange={handleSelectAll}
             />
           </TableCell>
@@ -586,10 +589,7 @@ export function ListPageTemplate<T>({
             align="center"
             sx={{ py: 8 }}
           >
-            <ErrorEmptyState
-              error={error}
-              onRetry={onRefresh}
-            />
+            <ErrorEmptyState error={error} onRetry={onRefresh} />
           </TableCell>
         </TableRow>
       );
@@ -670,7 +670,9 @@ export function ListPageTemplate<T>({
             )}
             {visibleColumns.map((column) => (
               <TableCell key={column.id} align={column.align || "left"}>
-                {column.render ? column.render(row, index) : String((row as Record<string, unknown>)[column.id])}
+                {column.render
+                  ? column.render(row, index)
+                  : String((row as Record<string, unknown>)[column.id])}
               </TableCell>
             ))}
             {rowActions && rowActions.length > 0 && (
@@ -998,10 +1000,7 @@ export function ListPageTemplate<T>({
         >
           {/* 面包屑导航 */}
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <Breadcrumbs
-              separator={<ChevronRight size={14} />}
-              sx={{ mb: 1 }}
-            >
+            <Breadcrumbs separator={<ChevronRight size={14} />} sx={{ mb: 1 }}>
               {breadcrumbs.map((crumb, index) =>
                 crumb.href ? (
                   <Link
@@ -1153,6 +1152,6 @@ export function ListPageTemplate<T>({
       </Menu>
     </Box>
   );
-};
+}
 
 export default ListPageTemplate;

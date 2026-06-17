@@ -32,6 +32,7 @@ class Service:
     status: str = "implemented"
     dependencies: list[str] = field(default_factory=list)
     group: Optional[str] = None
+    service_dir: Optional[str] = None
 
     def __post_init__(self):
         if isinstance(self.dependencies, str):

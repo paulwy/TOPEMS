@@ -30,22 +30,80 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
-      <div style={{ backgroundColor: "white", borderRadius: 12, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)", width: "100%", maxWidth: 896, maxHeight: "90vh", overflow: "hidden" }}>
-        <div style={{ padding: 24, borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#0f172a", margin: 0 }}>{title}</h3>
-          <button
-            onClick={onClose}
-            style={{ color: "#94a3b8" }}
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          borderRadius: 12,
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          width: "100%",
+          maxWidth: 896,
+          maxHeight: "90vh",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: 24,
+            borderBottom: "1px solid #e2e8f0",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#0f172a",
+              margin: 0,
+            }}
           >
+            {title}
+          </h3>
+          <button onClick={onClose} style={{ color: "#94a3b8" }}>
             <X style={{ width: 20, height: 20 }} />
           </button>
         </div>
 
-        <div style={{ padding: 24, maxHeight: "calc(90vh - 180px)", overflow: "auto" }}>
-          <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-              <FileText style={{ width: 20, height: 20, color: "#16a34a", marginRight: 8 }} />
+        <div
+          style={{
+            padding: 24,
+            maxHeight: "calc(90vh - 180px)",
+            overflow: "auto",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              borderRadius: 8,
+              padding: 16,
+              marginBottom: 16,
+            }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "center", marginBottom: 8 }}
+            >
+              <FileText
+                style={{
+                  width: 20,
+                  height: 20,
+                  color: "#16a34a",
+                  marginRight: 8,
+                }}
+              />
               <span style={{ fontWeight: 500, color: "#166534" }}>
                 {fileName || `export.${format}`}
               </span>
@@ -55,7 +113,13 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
             </p>
           </div>
 
-          <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, overflow: "hidden" }}>
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+              overflow: "hidden",
+            }}
+          >
             <div style={{ overflowX: "auto" }}>
               <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ backgroundColor: "#f8fafc" }}>
@@ -63,7 +127,14 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
                     {columns.map((col) => (
                       <th
                         key={col}
-                        style={{ padding: "8px 16px", textAlign: "left", fontSize: 12, fontWeight: 500, color: "#64748b", textTransform: "uppercase" }}
+                        style={{
+                          padding: "8px 16px",
+                          textAlign: "left",
+                          fontSize: 12,
+                          fontWeight: 500,
+                          color: "#64748b",
+                          textTransform: "uppercase",
+                        }}
                       >
                         {getColumnLabel(col)}
                       </th>
@@ -76,7 +147,11 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
                       {columns.map((col) => (
                         <td
                           key={col}
-                          style={{ padding: "8px 16px", fontSize: 14, color: "#0f172a" }}
+                          style={{
+                            padding: "8px 16px",
+                            fontSize: 14,
+                            color: "#0f172a",
+                          }}
                         >
                           {String(row[col] || "")}
                         </td>
@@ -87,23 +162,49 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
               </table>
             </div>
             {data.length > 10 && (
-              <div style={{ padding: "8px 16px", backgroundColor: "#f8fafc", fontSize: 14, color: "#475569", textAlign: "center" }}>
+              <div
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#f8fafc",
+                  fontSize: 14,
+                  color: "#475569",
+                  textAlign: "center",
+                }}
+              >
                 ... 还有 {data.length - 10} 行数据
               </div>
             )}
           </div>
         </div>
 
-        <div style={{ padding: 24, borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: 12 }}>
+        <div
+          style={{
+            padding: 24,
+            borderTop: "1px solid #e2e8f0",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 12,
+          }}
+        >
           <button
             onClick={onClose}
-            style={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 8 }}
+            style={{
+              padding: "8px 16px",
+              color: "#334155",
+              backgroundColor: "#f1f5f9",
+              borderRadius: 8,
+            }}
           >
             取消
           </button>
           <button
             onClick={onDownload}
-            style={{ padding: "8px 16px", backgroundColor: "#16a34a", color: "white", borderRadius: 8 }}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#16a34a",
+              color: "white",
+              borderRadius: 8,
+            }}
           >
             <span style={{ display: "flex", alignItems: "center" }}>
               <Download style={{ width: 16, height: 16, marginRight: 8 }} />

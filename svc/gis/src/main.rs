@@ -465,20 +465,82 @@ async fn delete_factory_map(
 
 async fn list_device_locations(
     State(state): State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, DeviceLocation>(
-        "SELECT * FROM device_locations ORDER BY created_at DESC",
-    )
-    .fetch_all(&state.pool)
-    .await
-    {
-        Ok(locations) => Json(ApiResponse::success(
-            serde_json::json!({
-                "device_locations": locations,
-                "total": locations.len()
-            }),
-            "获取设备位置列表成功",
-        )),
+    let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
+    let page_size: i64 = params.get("page_size").and_then(|s| s.parse().ok()).unwrap_or(20);
+    let search = params.get("search").cloned().unwrap_or_default();
+    let status = params.get("status").cloned();
+
+    let offset = (page - 1) * page_size;
+
+    let mut query = "SELECT * FROM device_locations".to_string();
+    let mut count_query = "SELECT COUNT(*) FROM device_locations".to_string();
+    let mut conditions: Vec<String> = Vec::new();
+    let mut bindings: Vec<(String, serde_json::Value)> = Vec::new();
+
+    if !search.is_empty() {
+        let pattern = format!("%{}%", search);
+        conditions.push("(device_name ILIKE $1 OR device_code ILIKE $1)".to_string());
+        bindings.push(("$1".to_string(), serde_json::json!(pattern)));
+    }
+
+    if let Some(s) = status {
+        let idx = bindings.len() + 1;
+        conditions.push(format!("status = ${}", idx));
+        bindings.push((format!("${}", idx), serde_json::json!(s)));
+    }
+
+    if !conditions.is_empty() {
+        let where_clause = conditions.join(" AND ");
+        query.push_str(&format!(" WHERE {}", where_clause));
+        count_query.push_str(&format!(" WHERE {}", where_clause));
+    }
+
+    query.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+
+    let mut sqlx_query = sqlx::query_as::<_, DeviceLocation>(&query);
+    for (_, val) in &bindings {
+        if let Some(s) = val.as_str() {
+            sqlx_query = sqlx_query.bind(s);
+        } else if let Some(n) = val.as_i64() {
+            sqlx_query = sqlx_query.bind(n);
+        } else {
+            sqlx_query = sqlx_query.bind(val.clone());
+        }
+    }
+    sqlx_query = sqlx_query.bind(page_size).bind(offset);
+
+    match sqlx_query.fetch_all(&state.pool).await {
+        Ok(locations) => {
+            let mut count_sqlx_query = sqlx::query(&count_query);
+            for (_, val) in &bindings {
+                if let Some(s) = val.as_str() {
+                    count_sqlx_query = count_sqlx_query.bind(s);
+                } else if let Some(n) = val.as_i64() {
+                    count_sqlx_query = count_sqlx_query.bind(n);
+                } else {
+                    count_sqlx_query = count_sqlx_query.bind(val.clone());
+                }
+            }
+
+            let total: i64 = count_sqlx_query
+                .fetch_one(&state.pool)
+                .await
+                .map(|row| row.get::<i64, _>(0))
+                .unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "device_locations": locations,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": (total + page_size - 1) / page_size
+                }),
+                "获取设备位置列表成功",
+            ))
+        }
         Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
@@ -622,18 +684,84 @@ async fn delete_device_location(
     }
 }
 
-async fn list_pipelines(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Pipeline>("SELECT * FROM pipelines ORDER BY created_at DESC")
-        .fetch_all(&state.pool)
-        .await
-    {
-        Ok(pipelines) => Json(ApiResponse::success(
-            serde_json::json!({
-                "pipelines": pipelines,
-                "total": pipelines.len()
-            }),
-            "获取管道列表成功",
-        )),
+async fn list_pipelines(
+    State(state): State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
+    let page_size: i64 = params.get("page_size").and_then(|s| s.parse().ok()).unwrap_or(20);
+    let search = params.get("search").cloned().unwrap_or_default();
+    let status = params.get("status").cloned();
+
+    let offset = (page - 1) * page_size;
+
+    let mut query = "SELECT * FROM pipelines".to_string();
+    let mut count_query = "SELECT COUNT(*) FROM pipelines".to_string();
+    let mut conditions: Vec<String> = Vec::new();
+    let mut bindings: Vec<(String, serde_json::Value)> = Vec::new();
+
+    if !search.is_empty() {
+        let pattern = format!("%{}%", search);
+        conditions.push("(name ILIKE $1 OR code ILIKE $1)".to_string());
+        bindings.push(("$1".to_string(), serde_json::json!(pattern)));
+    }
+
+    if let Some(s) = status {
+        let idx = bindings.len() + 1;
+        conditions.push(format!("status = ${}", idx));
+        bindings.push((format!("${}", idx), serde_json::json!(s)));
+    }
+
+    if !conditions.is_empty() {
+        let where_clause = conditions.join(" AND ");
+        query.push_str(&format!(" WHERE {}", where_clause));
+        count_query.push_str(&format!(" WHERE {}", where_clause));
+    }
+
+    query.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+
+    let mut sqlx_query = sqlx::query_as::<_, Pipeline>(&query);
+    for (_, val) in &bindings {
+        if let Some(s) = val.as_str() {
+            sqlx_query = sqlx_query.bind(s);
+        } else if let Some(n) = val.as_i64() {
+            sqlx_query = sqlx_query.bind(n);
+        } else {
+            sqlx_query = sqlx_query.bind(val.clone());
+        }
+    }
+    sqlx_query = sqlx_query.bind(page_size).bind(offset);
+
+    match sqlx_query.fetch_all(&state.pool).await {
+        Ok(pipelines) => {
+            let mut count_sqlx_query = sqlx::query(&count_query);
+            for (_, val) in &bindings {
+                if let Some(s) = val.as_str() {
+                    count_sqlx_query = count_sqlx_query.bind(s);
+                } else if let Some(n) = val.as_i64() {
+                    count_sqlx_query = count_sqlx_query.bind(n);
+                } else {
+                    count_sqlx_query = count_sqlx_query.bind(val.clone());
+                }
+            }
+
+            let total: i64 = count_sqlx_query
+                .fetch_one(&state.pool)
+                .await
+                .map(|row| row.get::<i64, _>(0))
+                .unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "pipelines": pipelines,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": (total + page_size - 1) / page_size
+                }),
+                "获取管道列表成功",
+            ))
+        }
         Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }
@@ -770,20 +898,75 @@ async fn delete_pipeline(
 
 async fn list_warehouse_locations(
     State(state): State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, WarehouseLocation>(
-        "SELECT * FROM warehouse_locations ORDER BY created_at DESC",
-    )
-    .fetch_all(&state.pool)
-    .await
-    {
-        Ok(locations) => Json(ApiResponse::success(
-            serde_json::json!({
-                "warehouse_locations": locations,
-                "total": locations.len()
-            }),
-            "获取仓库位置列表成功",
-        )),
+    let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
+    let page_size: i64 = params.get("page_size").and_then(|s| s.parse().ok()).unwrap_or(20);
+    let search = params.get("search").cloned().unwrap_or_default();
+
+    let offset = (page - 1) * page_size;
+
+    let mut query = "SELECT * FROM warehouse_locations".to_string();
+    let mut count_query = "SELECT COUNT(*) FROM warehouse_locations".to_string();
+    let mut conditions: Vec<String> = Vec::new();
+    let mut bindings: Vec<(String, serde_json::Value)> = Vec::new();
+
+    if !search.is_empty() {
+        let pattern = format!("%{}%", search);
+        conditions.push("warehouse_name ILIKE $1".to_string());
+        bindings.push(("$1".to_string(), serde_json::json!(pattern)));
+    }
+
+    if !conditions.is_empty() {
+        let where_clause = conditions.join(" AND ");
+        query.push_str(&format!(" WHERE {}", where_clause));
+        count_query.push_str(&format!(" WHERE {}", where_clause));
+    }
+
+    query.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+
+    let mut sqlx_query = sqlx::query_as::<_, WarehouseLocation>(&query);
+    for (_, val) in &bindings {
+        if let Some(s) = val.as_str() {
+            sqlx_query = sqlx_query.bind(s);
+        } else if let Some(n) = val.as_i64() {
+            sqlx_query = sqlx_query.bind(n);
+        } else {
+            sqlx_query = sqlx_query.bind(val.clone());
+        }
+    }
+    sqlx_query = sqlx_query.bind(page_size).bind(offset);
+
+    match sqlx_query.fetch_all(&state.pool).await {
+        Ok(locations) => {
+            let mut count_sqlx_query = sqlx::query(&count_query);
+            for (_, val) in &bindings {
+                if let Some(s) = val.as_str() {
+                    count_sqlx_query = count_sqlx_query.bind(s);
+                } else if let Some(n) = val.as_i64() {
+                    count_sqlx_query = count_sqlx_query.bind(n);
+                } else {
+                    count_sqlx_query = count_sqlx_query.bind(val.clone());
+                }
+            }
+
+            let total: i64 = count_sqlx_query
+                .fetch_one(&state.pool)
+                .await
+                .map(|row| row.get::<i64, _>(0))
+                .unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "warehouse_locations": locations,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": (total + page_size - 1) / page_size
+                }),
+                "获取仓库位置列表成功",
+            ))
+        }
         Err(e) => Json(ApiResponse::error(500, &format!("数据库查询失败: {}", e))),
     }
 }

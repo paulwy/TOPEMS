@@ -1,0 +1,78 @@
+code: hrm
+name: 人力资源管理
+version: 0.1.0
+description: HRM 人力资源管理系统，包含员工管理、部门管理、考勤管理、薪酬管理、招聘管理、培训管理、绩效管理等模块
+plugin_type: business
+
+deployment:
+  type: standalone
+  port: 8011
+  base_path: /api/hrm
+
+permissions:
+  - code: hrm:employee:read
+    name: 查看员工
+    resource_type: employee
+    action: read
+  - code: hrm:employee:write
+    name: 管理员工
+    resource_type: employee
+    action: write
+  - code: hrm:department:read
+    name: 查看部门
+    resource_type: department
+    action: read
+  - code: hrm:department:write
+    name: 管理部门
+    resource_type: department
+    action: write
+  - code: hrm:attendance:read
+    name: 查看考勤
+    resource_type: attendance
+    action: read
+  - code: hrm:attendance:write
+    name: 管理考勤
+    resource_type: attendance
+    action: write
+  - code: hrm:leave:read
+    name: 查看请假
+    resource_type: leave
+    action: read
+  - code: hrm:leave:write
+    name: 管理请假
+    resource_type: leave
+    action: write
+  - code: hrm:payroll:read
+    name: 查看薪酬
+    resource_type: payroll
+    action: read
+  - code: hrm:payroll:write
+    name: 管理薪酬
+    resource_type: payroll
+    action: write
+  - code: hrm:recruitment:read
+    name: 查看招聘
+    resource_type: recruitment
+    action: read
+  - code: hrm:recruitment:write
+    name: 管理招聘
+    resource_type: recruitment
+    action: write
+  - code: hrm:training:read
+    name: 查看培训
+    resource_type: training
+    action: read
+  - code: hrm:training:write
+    name: 管理培训
+    resource_type: training
+    action: write
+  - code: hrm:performance:read
+    name: 查看绩效
+    resource_type: performance
+    action: read
+  - code: hrm:performance:write
+    name: 管理绩效
+    resource_type: performance
+    action: write
+
+dependencies: []

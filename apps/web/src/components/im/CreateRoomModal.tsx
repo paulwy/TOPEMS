@@ -219,7 +219,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         {activeTab === "chat" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}>
+              <label
+                style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}
+              >
                 聊天室类型
               </label>
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -256,7 +258,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}>
+              <label
+                style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}
+              >
                 添加成员
               </label>
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -316,7 +320,12 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                             member,
                           )
                         }
-                        style={{ color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
+                        style={{
+                          color: "#6b7280",
+                          backgroundColor: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                        }}
                       >
                         <X sx={{ width: 12, height: 12 }} />
                       </button>
@@ -360,7 +369,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}>
+              <label
+                style={{ fontSize: 14, fontWeight: 500, color: "#374151" }}
+              >
                 添加成员
               </label>
               <Box sx={{ display: "flex", gap: 1 }}>
@@ -416,7 +427,12 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                         onClick={() =>
                           removeMember(groupMembers, setGroupMembers, member)
                         }
-                        style={{ color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer" }}
+                        style={{
+                          color: "#6b7280",
+                          backgroundColor: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                        }}
                       >
                         <X sx={{ width: 12, height: 12 }} />
                       </button>

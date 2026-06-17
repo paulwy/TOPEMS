@@ -13,12 +13,17 @@ const ScmPurchaseItemPage = lazy(
   () => import("../pages/scm/ScmPurchaseItemPage"),
 );
 const ScmEvaluationPage = lazy(() => import("../pages/scm/ScmEvaluationPage"));
-const SupplierDetailPage = lazy(() => import("../pages/SupplierDetailPage"));
+const SupplierDetailPage = lazy(
+  () => import("../pages/wms/SupplierDetailPage"),
+);
 
 export const scmRoutes: RouteConfig[] = [
   {
     path: "/scm",
-    element: React.createElement(Navigate, { to: "/scm/suppliers", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/scm/suppliers",
+      replace: true,
+    }),
     requiredPermissions: ["scm:read"],
     module: "scm",
     action: "read",

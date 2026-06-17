@@ -10,7 +10,14 @@ import {
   CircularProgress,
   Collapse,
 } from "@mui/material";
-import { Search, Building2, ChevronRight, ChevronDown, Check, X } from "lucide-react";
+import {
+  Search,
+  Building2,
+  ChevronRight,
+  ChevronDown,
+  Check,
+  X,
+} from "lucide-react";
 
 export interface Department {
   id: string;
@@ -48,9 +55,17 @@ const TreeNode: React.FC<{
         selected={selected}
         sx={{ pl: depth * 2 + 1, minHeight: "auto", py: 1 }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}
+        >
           {hasChildren && (
-            <Box onClick={(e) => { e.stopPropagation(); onToggleExpand(); }} sx={{ cursor: "pointer" }}>
+            <Box
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand();
+              }}
+              sx={{ cursor: "pointer" }}
+            >
               {expanded ? (
                 <ChevronDown size={16} />
               ) : (
@@ -60,10 +75,7 @@ const TreeNode: React.FC<{
           )}
           {!hasChildren && <Box sx={{ width: 16 }} />}
           <Building2 size={16} sx={{ color: "text.secondary" }} />
-          <ListItemText
-            primary={node.name}
-            sx={{ flex: 1 }}
-          />
+          <ListItemText primary={node.name} sx={{ flex: 1 }} />
           {selected && <Check size={16} />}
         </Box>
       </MenuItem>
@@ -92,7 +104,7 @@ const DepartmentTree: React.FC<{
   onSelect: (dept: Department) => void;
 }> = ({ departments, selectedIds, onSelect }) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(
-    new Set(departments.filter((d) => d.children?.length).map((d) => d.id))
+    new Set(departments.filter((d) => d.children?.length).map((d) => d.id)),
   );
 
   const renderTree = (nodes: Department[], depth = 0) => {
@@ -108,7 +120,14 @@ const DepartmentTree: React.FC<{
             selected={isSelected}
             sx={{ pl: depth * 2 + 1, minHeight: "auto", py: 1 }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                width: "100%",
+              }}
+            >
               {hasChildren && (
                 <Box
                   onClick={(e) => {
@@ -125,7 +144,11 @@ const DepartmentTree: React.FC<{
                   }}
                   sx={{ cursor: "pointer" }}
                 >
-                  {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  {isExpanded ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
                 </Box>
               )}
               {!hasChildren && <Box sx={{ width: 16 }} />}
@@ -165,12 +188,15 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
     onSearch?.(searchKeyword);
   }, [searchKeyword, onSearch]);
 
-  const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    if (!disabled) {
-      setAnchorEl(event.currentTarget);
-      setSearchKeyword("");
-    }
-  }, [disabled]);
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      if (!disabled) {
+        setAnchorEl(event.currentTarget);
+        setSearchKeyword("");
+      }
+    },
+    [disabled],
+  );
 
   const handleClose = useCallback(() => {
     setAnchorEl(null);

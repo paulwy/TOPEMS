@@ -4,9 +4,9 @@
 
 | 项目 | 内容 |
 |------|------|
-| 版本 | v1.0 |
-| 日期 | 2026-06-17 |
-| 状态 | 初稿 |
+| 版本 | v1.1 |
+| 日期 | 2026-06-18 |
+| 状态 | 实施中 |
 
 ---
 
@@ -177,7 +177,7 @@ plugin_crm
 
 #### 2.2.1 Module Federation 架构
 
-采用 Webpack 5 Module Federation 实现前端微前端化：
+采用 **@module-federation/vite** 实现前端微前端化：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -189,33 +189,113 @@ plugin_crm
 │  │  - Module Federation Host 配置                    │   │
 │  └─────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
-          │                    │                    │
-┌─────────┴─────┐    ┌────────┴────┐    ┌────────┴────────┐
-│   Remote: IAM │    │  Remote: Doc│    │  Remote: ERP    │
-│   (8000 port) │    │  (8001 port)│    │  (8010 port)    │
-└───────────────┘    └─────────────┘    └─────────────────┘
+          │                    
+┌─────────┴─────┐    
+│   Remote: topems_core │    
+│   Port: 3001 (preview) │    
+│   Entry: /remoteEntry.js │    
+└─────────────────┘    
 ```
 
-**Host 配置**（vite.config.ts）：
+**⚠️ 重要限制**：
+- **Remote 端不支持 dev 模式**：@module-federation/vite 的 Remote 必须通过 `vite build` 构建后使用 `preview` 模式运行
+- **Host 端支持 dev 模式**：可以正常使用 `npm run dev` 开发
+
+**Host 配置**（apps/web/vite.config.ts）：
 
 ```typescript
 // vite.config.ts
-import { defineConfig } from 'vite';
-import mf from 'vite-plugin-webpack-federation';
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
+import { federation } from '@module-federation/vite';
+
+const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'module-federation';
 
 export default defineConfig({
   plugins: [
-    mf({
-      remotes: {
-        iam: 'http://localhost:8000/assets/remoteEntry.js',
-        doc: 'http://localhost:8001/assets/remoteEntry.js',
-        flow: 'http://localhost:8002/assets/remoteEntry.js',
-        // 动态插件在运行时按需加载
+    react(),
+    federation({
+      name: 'topems_portal',
+      remotes: DEPLOYMENT_MODE !== 'static' ? {
+        topems_core: 'http://localhost:3001/remoteEntry.js',
+      } : {},
+      shared: {
+        'react': { singleton: true, requiredVersion: '^19.0.0', strictVersion: true },
+        'react-dom': { singleton: true, requiredVersion: '^19.0.0', strictVersion: true },
+        'react-router-dom': { singleton: true, requiredVersion: '^7.0.0', strictVersion: true },
+        '@mui/material': { singleton: true, requiredVersion: '^6.0.0', strictVersion: true },
+        '@mui/icons-material': { singleton: true, requiredVersion: '^6.0.0', strictVersion: true },
+        '@emotion/react': { singleton: true, requiredVersion: '^11.0.0', strictVersion: true },
+        '@emotion/styled': { singleton: true, requiredVersion: '^11.0.0', strictVersion: true },
+        'zustand': { singleton: true, strictVersion: true },
+        'i18next': { singleton: true, strictVersion: true },
+        'react-i18next': { singleton: true, strictVersion: true },
+        'axios': { singleton: true, requiredVersion: '^1.0.0', strictVersion: true },
+        'dayjs': { singleton: true, requiredVersion: '^1.11.0', strictVersion: true },
       },
-      shared: ['react', 'react-dom', 'zustand', '@mui/material'],
+    }),
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
+      '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
+      '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
+    },
+    dedupe: ['react', 'react-dom', 'scheduler'],
+  },
+});
+```
+
+**Remote 配置**（apps/core/vite.config.ts）：
+
+```typescript
+// vite.config.ts
+import { federation } from '@module-federation/vite';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    federation({
+      name: 'topems_core',
+      filename: 'remoteEntry.js',
+      dts: false,
+      exposes: {
+        './api/auth': './src/api/auth.ts',
+        './api/org': './src/api/org.ts',
+        './pages/UserManagement': './src/pages/UserManagement',
+        './pages/RoleManagement': './src/pages/RoleManagement',
+        './pages/OrgChart': './src/pages/OrgChart',
+        './store/authStore': './src/store/authStore.ts',
+        // ... 更多 exposes
+      },
+      shared: {
+        'react-router-dom': { singleton: true, requiredVersion: '^7.0.0', strictVersion: true },
+        '@mui/material': { singleton: true, requiredVersion: '^6.0.0', strictVersion: true },
+        // ... 其他 shared deps
+      },
     }),
   ],
 });
+```
+
+**Remote 启动命令**：
+
+```bash
+# 必须先构建，然后使用 preview 模式
+cd apps/core
+npm run build    # 构建产出到 dist/
+npm run preview  # 启动 preview 服务器（端口 3001）
+```
+
+**环境变量配置**（.env.example）：
+
+```bash
+# 部署模式
+VITE_DEPLOYMENT_MODE=module-federation  # module-federation | static | hybrid
+
+# Remote 入口地址
+VITE_CORE_REMOTE_ENTRY=http://localhost:3001/remoteEntry.js
 ```
 
 #### 2.2.2 静态打包模式
@@ -837,9 +917,11 @@ Phase 1 (Q3 2026)     Phase 2 (Q4 2026)     Phase 3 (Q1 2027)     Phase 4 (Q2 20
 | ORM | SQLx | - |
 | 缓存 | Redis 7+ | - |
 | 消息队列 | NATS | Kafka |
-| 前端框架 | React 18 | Vue 3 |
+| 前端框架 | React 18/19 | Vue 3 |
 | 构建工具 | Vite 5 | Webpack 5 |
-| 模块联邦 | vite-plugin-webpack-federation | - |
+| 模块联邦 | @module-federation/vite | @originjs/vite-plugin-federation |
+| 状态管理 | Zustand | Jotai |
+| UI 组件库 | MUI 6 | - |
 | 容器化 | Docker | - |
 | 编排 | Docker Compose / K8s | - |
 
@@ -856,6 +938,67 @@ Phase 1 (Q3 2026)     Phase 2 (Q4 2026)     Phase 3 (Q1 2027)     Phase 4 (Q2 20
 2. 向量数据库选型（Pinecone vs 自托管 Milvus）？
 3. 前端状态管理是否从 Zustand 迁移到 Jotai？
 4. 是否引入 CQRS 架构应对读写分离需求？
+
+---
+
+## 附录 D：实施状态跟踪
+
+### Phase 3 前端模块化 - 实施中
+
+| 任务 | 状态 | 备注 |
+|------|------|------|
+| Host Shell 架构设计 | ✅ 完成 | apps/web 配置为 MF Host |
+| @module-federation/vite 集成 | ✅ 完成 | 配置共享依赖 |
+| Remote (core) 配置 | ✅ 完成 | apps/core 配置为 MF Remote |
+| DynamicRouter 实现 | ✅ 完成 | 支持远程模块加载 |
+| ModuleRegistry 升级 | ✅ 完成 | 支持 remoteEntry 配置 |
+| 静态打包模式支持 | ✅ 完成 | DEPLOYMENT_MODE 环境变量 |
+| 路径别名配置 | ✅ 完成 | @topems/shared-* packages |
+| 文档更新 | ✅ 完成 | 本文档 |
+
+### 当前架构
+
+```
+开发环境：
+┌─────────────────────────────────────────────────────────┐
+│  Host Shell (apps/web)                                 │
+│  Port: 3000                                            │
+│  Command: npm run dev                                  │
+│  └── Remote: topems_core → http://localhost:3001/...   │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  Remote Module (apps/core)                             │
+│  Port: 3001 (preview)                                  │
+│  Command: npm run build && npm run preview              │
+│  └── Exposes: pages, store, api, components            │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 已知限制
+
+1. **Remote 不支持 dev 模式**：Remote 必须先 build 再 preview
+2. **开发流程**：修改 core 代码后需要重新 build 并重启 preview
+3. **DTS 类型下载失败**：preview 模式下无法获取远程类型定义（开发不影响）
+
+---
+
+### ERP 插件化改造 - 已完成
+
+| 任务 | 状态 | 完成日期 |
+|------|------|----------|
+| unified-core 插件运行时状态表 | ✅ 完成 | 2026-06-18 |
+| unified-core 插件注册处理器 | ✅ 完成 | 2026-06-18 |
+| unified-core 插件路由代理中间件 | ✅ 完成 | 2026-06-18 |
+| ERP 插件元数据 plugin.yaml | ✅ 完成 | 2026-06-18 |
+| ERP 插件接口实现 | ✅ 完成 | 2026-06-18 |
+| ERP 路由前缀调整 /api/erp/* | ✅ 完成 | 2026-06-18 |
+| ERP 认证中间件（X-User-Id + Authorization） | ✅ 完成 | 2026-06-18 |
+| 前端 Vite 代理配置 | ✅ 完成 | 2026-06-18 |
+| 集成测试 | ✅ 完成 | 2026-06-18 |
+
+详细设计文档：[docs/architecture/erp-plugin-design.md](../architecture/erp-plugin-design.md)
 
 ---
 

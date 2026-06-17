@@ -17,34 +17,34 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/training-plans", get(list_plans).post(create_plan))
+        .route("/api/hrm/training-plans", get(list_plans).post(create_plan))
         .route(
-            "/api/v1/training-plans/{id}",
+            "/api/hrm/training-plans/{id}",
             get(get_plan).put(update_plan).delete(delete_plan),
         )
         .route(
-            "/api/v1/training-courses",
+            "/api/hrm/training-courses",
             get(list_courses).post(create_course),
         )
         .route(
-            "/api/v1/training-courses/{id}",
+            "/api/hrm/training-courses/{id}",
             get(get_course).put(update_course).delete(delete_course),
         )
         .route(
-            "/api/v1/training-records",
+            "/api/hrm/training-records",
             get(list_records).post(create_record),
         )
         .route(
-            "/api/v1/training-records/{id}",
+            "/api/hrm/training-records/{id}",
             get(get_record).put(update_record).delete(delete_record),
         )
-        .route("/api/v1/training-courses/{id}/enroll", post(enroll_course))
+        .route("/api/hrm/training-courses/{id}/enroll", post(enroll_course))
         .route(
-            "/api/v1/training-courses/{id}/records",
+            "/api/hrm/training-courses/{id}/records",
             get(get_course_records),
         )
         .route(
-            "/api/v1/employees/{id}/training-records",
+            "/api/hrm/employees/{id}/training-records",
             get(get_employee_records),
         )
 }

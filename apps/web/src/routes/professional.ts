@@ -5,12 +5,13 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-
-const LimsSamplePage = lazy(() => import("../pages/LimsSamplePage"));
-const LimsProcessPage = lazy(() => import("../pages/LimsProcessPage"));
-const LimsTaskPage = lazy(() => import("../pages/LimsTaskPage"));
-const LimsInstrumentPage = lazy(() => import("../pages/LimsInstrumentPage"));
-const QmsStandardPage = lazy(() => import("../pages/qms/QmsQualityControlPage"));
+const LimsSamplePage = lazy(() => import("../pages/lims/LimsSamplePage"));
+const LimsProcessPage = lazy(() => import("../pages/lims/LimsProcessPage"));
+const LimsTaskPage = lazy(() => import("../pages/lims/LimsTaskPage"));
+const LimsInstrumentPage = lazy(() => import("../pages/lims/LimsInstrumentPage"));
+const QmsStandardPage = lazy(
+  () => import("../pages/qms/QmsQualityControlPage"),
+);
 const QmsCheckPage = lazy(() => import("../pages/qms/QmsInspectionPage"));
 const QmsIssuePage = lazy(() => import("../pages/qms/QmsNonconformancePage"));
 const QmsAuditPage = lazy(() => import("../pages/qms/QmsAuditManagementPage"));
@@ -24,44 +25,46 @@ const SrmEvaluationPage = lazy(() => import("../pages/srm/SrmEvaluationPage"));
 const SrmOrderPage = lazy(() => import("../pages/srm/SrmOrderPage"));
 const SrmContractPage = lazy(() => import("../pages/srm/SrmContractPage"));
 const SrmFinancePage = lazy(() => import("../pages/srm/SrmFinancePage"));
-const SupplierDetailPage = lazy(() => import("../pages/SupplierDetailPage"));
+const SupplierDetailPage = lazy(
+  () => import("../pages/wms/SupplierDetailPage"),
+);
 const PdmProcessPage = lazy(() => import("../pages/pdm/PdmProcessPage"));
 const PdmStepPage = lazy(() => import("../pages/pdm/PdmStepPage"));
 const PdmFormulaPage = lazy(() => import("../pages/pdm/PdmFormulaPage"));
 const PdmBatchPage = lazy(() => import("../pages/pdm/PdmBatchPage"));
 const PdmStatsPage = lazy(() => import("../pages/pdm/PdmStatsPage"));
-const Gispage = lazy(() => import("../pages/Gispage"));
-const Impage = lazy(() => import("../pages/Impage"));
-const MailPage = lazy(() => import("../pages/MailPage"));
+const Gispage = lazy(() => import("../pages/bi/Gispage"));
+const Impage = lazy(() => import("../pages/shared/Impage"));
+const MailPage = lazy(() => import("../pages/common/MailPage"));
 const IntegrationDashboardPage = lazy(
-  () => import("../pages/IntegrationDashboardPage"),
+  () => import("../pages/integration/IntegrationDashboardPage"),
 );
 const IntegrationLimsQmsPage = lazy(
-  () => import("../pages/IntegrationLimsQmsPage"),
+  () => import("../pages/integration/IntegrationLimsQmsPage"),
 );
 const IntegrationMesErpPage = lazy(
-  () => import("../pages/IntegrationMesErpPage"),
+  () => import("../pages/integration/IntegrationMesErpPage"),
 );
 const IntegrationWmsScmPage = lazy(
-  () => import("../pages/IntegrationWmsScmPage"),
+  () => import("../pages/integration/IntegrationWmsScmPage"),
 );
 const IntegrationEventsPage = lazy(
-  () => import("../pages/IntegrationEventsPage"),
+  () => import("../pages/integration/IntegrationEventsPage"),
 );
 const IntegrationExternalErpOverviewPage = lazy(
-  () => import("../pages/IntegrationExternalErpOverviewPage"),
+  () => import("../pages/integration/IntegrationExternalErpOverviewPage"),
 );
 const MobileWorkstationPage = lazy(
-  () => import("../pages/MobileWorkstationPage"),
+  () => import("../pages/mes/MobileWorkstationPage"),
 );
 const PerformanceMonitorPage = lazy(
-  () => import("../pages/PerformanceMonitorPage"),
+  () => import("../pages/system/PerformanceMonitorPage"),
 );
 const ExternalErpMappingPage = lazy(
-  () => import("../pages/ExternalErpMappingPage"),
+  () => import("../pages/integration/ExternalErpMappingPage"),
 );
 const ExternalErpConnectionsPage = lazy(
-  () => import("../pages/ExternalErpConnectionsPage"),
+  () => import("../pages/integration/ExternalErpConnectionsPage"),
 );
 
 const LimsSampleDetailPage = lazy(
@@ -91,7 +94,10 @@ const EhsIncidentReportPage = lazy(
 export const professionalRoutes: RouteConfig[] = [
   {
     path: "/lims",
-    element: React.createElement(Navigate, { to: "/lims/samples", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/lims/samples",
+      replace: true,
+    }),
     requiredPermissions: [],
     module: "lims",
     action: "read",
@@ -147,7 +153,10 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/qms",
-    element: React.createElement(Navigate, { to: "/qms/standards", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/qms/standards",
+      replace: true,
+    }),
     requiredPermissions: ["qms:read"],
     module: "qms",
     action: "read",
@@ -196,7 +205,10 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/ehs",
-    element: React.createElement(Navigate, { to: "/ehs/hazards", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/ehs/hazards",
+      replace: true,
+    }),
     requiredPermissions: ["ehs:read"],
     module: "ehs",
     action: "read",
@@ -245,7 +257,10 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/srm",
-    element: React.createElement(Navigate, { to: "/srm/dashboard", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/srm/dashboard",
+      replace: true,
+    }),
     requiredPermissions: ["srm:read"],
     module: "srm",
     action: "read",
@@ -301,7 +316,10 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/pdm",
-    element: React.createElement(Navigate, { to: "/pdm/processes", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/pdm/processes",
+      replace: true,
+    }),
     requiredPermissions: ["pdm:read"],
     module: "pdm",
     action: "read",
@@ -378,7 +396,10 @@ export const professionalRoutes: RouteConfig[] = [
   },
   {
     path: "/integration",
-    element: React.createElement(Navigate, { to: "/integration/dashboard", replace: true }),
+    element: React.createElement(Navigate, {
+      to: "/integration/dashboard",
+      replace: true,
+    }),
     requiredPermissions: [],
     module: "integration",
     action: "read",

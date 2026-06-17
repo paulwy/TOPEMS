@@ -110,13 +110,29 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
         borderRadius: 8,
         cursor: "pointer",
         transition: "background-color 0.15s",
-        backgroundColor: isActive ? "#eef2ff" : chatRoom.is_pinned ? "rgba(251, 191, 36, 0.1)" : undefined,
+        backgroundColor: isActive
+          ? "#eef2ff"
+          : chatRoom.is_pinned
+            ? "rgba(251, 191, 36, 0.1)"
+            : undefined,
         borderLeft: isActive ? "4px solid #4f46e5" : "4px solid transparent",
       }}
     >
-      <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>
-        {chatRoom.is_pinned && <Pin style={{ width: 12, height: 12, color: "#f59e0b" }} />}
-        {chatRoom.is_muted && <BellOff style={{ width: 12, height: 12, color: "#9ca3af" }} />}
+      <div
+        style={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          display: "flex",
+          gap: 4,
+        }}
+      >
+        {chatRoom.is_pinned && (
+          <Pin style={{ width: 12, height: 12, color: "#f59e0b" }} />
+        )}
+        {chatRoom.is_muted && (
+          <BellOff style={{ width: 12, height: 12, color: "#9ca3af" }} />
+        )}
       </div>
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -136,37 +152,105 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
             {getRoomIcon()}
           </div>
           {isOnline && (
-            <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, backgroundColor: "#22c55e", borderRadius: "9999px", border: "2px solid #ffffff" }} />
+            <div
+              style={{
+                position: "absolute",
+                bottom: -2,
+                right: -2,
+                width: 14,
+                height: 14,
+                backgroundColor: "#22c55e",
+                borderRadius: "9999px",
+                border: "2px solid #ffffff",
+              }}
+            />
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h3 style={{ fontWeight: 500, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 32 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <h3
+              style={{
+                fontWeight: 500,
+                color: "#111827",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                paddingRight: 32,
+              }}
+            >
               {chatRoom.name || "未命名会话"}
             </h3>
             {chatRoom.last_message_time && (
-              <span style={{ fontSize: 12, color: "#6b7280", display: "flex", alignItems: "center", gap: 4 }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  color: "#6b7280",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
                 <Clock style={{ width: 12, height: 12 }} />
                 {formatTime(chatRoom.last_message_time)}
               </span>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-            <p style={{ fontSize: 14, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: 4,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 14,
+                color: "#6b7280",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flex: 1,
+              }}
+            >
               {chatRoom.last_message || "暂无消息"}
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {chatRoom.room_type !== "direct" && (
-                <span style={{ fontSize: 12, color: "#9ca3af", display: "flex", alignItems: "center", gap: 4 }}>
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "#9ca3af",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
                   {getOnlineCount() > 0 && (
-                    <span style={{ width: 6, height: 6, backgroundColor: "#22c55e", borderRadius: "9999px" }} />
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        backgroundColor: "#22c55e",
+                        borderRadius: "9999px",
+                      }}
+                    />
                   )}
                   {getMemberCount()}人
                 </span>
               )}
               {chatRoom.room_type === "direct" && (
                 <span
-                  style={{ fontSize: 12, color: isOnline ? "#16a34a" : "#9ca3af" }}
+                  style={{
+                    fontSize: 12,
+                    color: isOnline ? "#16a34a" : "#9ca3af",
+                  }}
                 >
                   {isOnline ? "在线" : "离线"}
                 </span>
@@ -174,9 +258,17 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
               {onSettings && (
                 <button
                   onClick={onSettings}
-                  style={{ padding: 4, borderRadius: 4, backgroundColor: "transparent", border: "none", cursor: "pointer" }}
+                  style={{
+                    padding: 4,
+                    borderRadius: 4,
+                    backgroundColor: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
                 >
-                  <MoreVertical style={{ width: 16, height: 16, color: "#9ca3af" }} />
+                  <MoreVertical
+                    style={{ width: 16, height: 16, color: "#9ca3af" }}
+                  />
                 </button>
               )}
             </div>

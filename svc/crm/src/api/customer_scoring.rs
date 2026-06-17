@@ -26,15 +26,15 @@ pub struct BatchCalculateRequest {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/customer-scoring",
+            "/api/crm/customer-scoring",
             get(list_customer_scores).post(create_customer_score),
         )
         .route(
-            "/api/v1/customer-scoring/calculate",
+            "/api/crm/customer-scoring/calculate",
             post(batch_calculate),
         )
         .route(
-            "/api/v1/customer-scoring/:id",
+            "/api/crm/customer-scoring/{id}",
             get(get_customer_score)
                 .put(update_customer_score)
                 .delete(delete_customer_score),

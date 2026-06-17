@@ -26,7 +26,17 @@ export const NotificationContainer: React.FC<NotificationContainerProps> = ({
   onClose,
 }) => {
   return (
-    <div style={{ position: "fixed", top: "16px", right: "16px", zIndex: 50, display: "flex", flexDirection: "column", gap: "12px" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: "16px",
+        right: "16px",
+        zIndex: 50,
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+      }}
+    >
       {notifications.map((notification) => {
         const Icon = iconMap[notification.type];
         return (
@@ -43,17 +53,50 @@ export const NotificationContainer: React.FC<NotificationContainerProps> = ({
               minWidth: "300px",
               maxWidth: "448px",
               transition: "all 0.3s ease",
-              ...(notification.type === "success" ? { backgroundColor: "#22c55e", borderColor: "#16a34a", color: "#ffffff" } : {}),
-              ...(notification.type === "error" ? { backgroundColor: "#ef4444", borderColor: "#dc2626", color: "#ffffff" } : {}),
-              ...(notification.type === "info" ? { backgroundColor: "#3b82f6", borderColor: "#2563eb", color: "#ffffff" } : {}),
-              ...(notification.type === "warning" ? { backgroundColor: "#eab308", borderColor: "#ca8a04", color: "#ffffff" } : {}),
+              ...(notification.type === "success"
+                ? {
+                    backgroundColor: "#22c55e",
+                    borderColor: "#16a34a",
+                    color: "#ffffff",
+                  }
+                : {}),
+              ...(notification.type === "error"
+                ? {
+                    backgroundColor: "#ef4444",
+                    borderColor: "#dc2626",
+                    color: "#ffffff",
+                  }
+                : {}),
+              ...(notification.type === "info"
+                ? {
+                    backgroundColor: "#3b82f6",
+                    borderColor: "#2563eb",
+                    color: "#ffffff",
+                  }
+                : {}),
+              ...(notification.type === "warning"
+                ? {
+                    backgroundColor: "#eab308",
+                    borderColor: "#ca8a04",
+                    color: "#ffffff",
+                  }
+                : {}),
             }}
           >
             <Icon sx={{ width: 20, height: 20, flexShrink: 0 }} />
-            <p style={{ flex: 1, fontSize: "14px", fontWeight: 500 }}>{notification.message}</p>
+            <p style={{ flex: 1, fontSize: "14px", fontWeight: 500 }}>
+              {notification.message}
+            </p>
             <button
               onClick={() => onClose(notification.id)}
-              style={{ padding: "4px", borderRadius: "9999px", border: "none", background: "transparent", cursor: "pointer", transition: "background-color 0.2s" }}
+              style={{
+                padding: "4px",
+                borderRadius: "9999px",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
             >
               <X sx={{ width: 16, height: 16 }} />
             </button>

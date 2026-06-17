@@ -15,6 +15,7 @@ pub mod leave;
 pub mod openapi;
 pub mod payroll;
 pub mod performance;
+pub mod plugin;
 pub mod position;
 pub mod recruitment;
 pub mod reports;
@@ -52,6 +53,7 @@ impl FromRef<ApiState> for Arc<dyn CacheService + Send + Sync> {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .merge(health::create_routes())
+        .merge(plugin::create_routes())
         .merge(employee::create_routes())
         .merge(department::create_routes())
         .merge(contract::create_routes())

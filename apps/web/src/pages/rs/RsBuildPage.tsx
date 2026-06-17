@@ -113,7 +113,9 @@ const RsBuildPage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const getStatusColor = (status: string): "success" | "error" | "primary" | "default" => {
+  const getStatusColor = (
+    status: string,
+  ): "success" | "error" | "primary" | "default" => {
     switch (status) {
       case "success":
         return "success";
@@ -183,7 +185,8 @@ const RsBuildPage: React.FC = () => {
       build.build_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       build.build_task.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || build.status === statusFilter;
-    const matchesTaskType = !taskTypeFilter || build.build_task.includes(taskTypeFilter);
+    const matchesTaskType =
+      !taskTypeFilter || build.build_task.includes(taskTypeFilter);
     return matchesSearch && matchesStatus && matchesTaskType;
   });
 
@@ -193,7 +196,9 @@ const RsBuildPage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -219,11 +224,23 @@ const RsBuildPage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             构建管理
           </Typography>
-          <Button variant="contained" startIcon={<Play size={18} />} sx={{ bgcolor: "#3b82f6" }} onClick={handleTriggerBuild}>
+          <Button
+            variant="contained"
+            startIcon={<Play size={18} />}
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleTriggerBuild}
+          >
             触发构建
           </Button>
         </Box>
@@ -281,13 +298,27 @@ const RsBuildPage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>构建编号</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>构建任务</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>触发方式</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>耗时</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>构建时间</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    构建编号
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    构建任务
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    触发方式
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    耗时
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    构建时间
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -296,14 +327,20 @@ const RsBuildPage: React.FC = () => {
                   .map((build) => (
                     <TableRow key={build.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Package size={16} color="#3b82f6" />
                           {build.build_no}
                         </Box>
                       </TableCell>
                       <TableCell>{build.build_task}</TableCell>
                       <TableCell>
-                        <Chip label={getTriggerTypeLabel(build.trigger_type)} size="small" variant="outlined" />
+                        <Chip
+                          label={getTriggerTypeLabel(build.trigger_type)}
+                          size="small"
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -314,7 +351,9 @@ const RsBuildPage: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Clock size={14} />
                           {formatDuration(build.duration)}
                         </Box>
@@ -323,7 +362,10 @@ const RsBuildPage: React.FC = () => {
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="查看日志">
-                            <IconButton size="small" onClick={() => handleViewLog(build)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewLog(build)}
+                            >
                               <FileText size={16} />
                             </IconButton>
                           </Tooltip>
@@ -351,7 +393,12 @@ const RsBuildPage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={logDialogOpen} onClose={() => setLogDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={logDialogOpen}
+        onClose={() => setLogDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>构建日志</DialogTitle>
         <DialogContent>
           {selectedBuild && (
@@ -359,9 +406,18 @@ const RsBuildPage: React.FC = () => {
               <Typography variant="subtitle1" fontWeight="bold">
                 {selectedBuild.build_no} - {selectedBuild.build_task}
               </Typography>
-              <Paper sx={{ p: 2, mt: 2, bgcolor: "#1e1e1e", color: "#d4d4d4", fontFamily: "monospace", fontSize: 12 }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  mt: 2,
+                  bgcolor: "#1e1e1e",
+                  color: "#d4d4d4",
+                  fontFamily: "monospace",
+                  fontSize: 12,
+                }}
+              >
                 <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-{`[14:30:00] Starting build...
+                  {`[14:30:00] Starting build...
 [14:30:01] Cloning repository...
 [14:30:05] Installing dependencies...
 [14:30:15] Dependencies installed successfully

@@ -1,93 +1,96 @@
 import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
-const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
-const RoleManagementPage = lazy(() => import("../pages/RoleManagementPage"));
+const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
+const RoleManagementPage = lazy(() => import("../pages/admin/RoleManagementPage"));
 const PermissionManagementPage = lazy(
-  () => import("../pages/PermissionManagementPage"),
+  () => import("../pages/admin/PermissionManagementPage"),
 );
-const AuditLogPage = lazy(() => import("../pages/AuditLogPage"));
+const AuditLogPage = lazy(() => import("../pages/admin/AuditLogPage"));
 const SystemManagementPage = lazy(
-  () => import("../pages/SystemManagementPage"),
+  () => import("../pages/admin/SystemManagementPage"),
 );
 const DictionaryManagementPage = lazy(
-  () => import("../pages/DictionaryManagementPage"),
+  () => import("../pages/admin/DictionaryManagementPage"),
 );
 const DatabaseStructurePage = lazy(
-  () => import("../pages/DatabaseStructurePage"),
+  () => import("../pages/admin/DatabaseStructurePage"),
 );
-const MigrationAdminPage = lazy(() => import("../pages/MigrationAdminPage"));
-const ConfigDebugPage = lazy(() => import("../pages/ConfigDebugPage"));
-const PluginMarketplacePage = lazy(() => import("../pages/plugin/PluginMarketplacePage"));
+const MigrationAdminPage = lazy(() => import("../pages/system/MigrationAdminPage"));
+const ConfigDebugPage = lazy(() => import("../pages/admin/ConfigDebugPage"));
+const PluginMarketplacePage = lazy(
+  () => import("../pages/plugin/PluginMarketplacePage"),
+);
 
 export const iamRoutes: RouteConfig[] = [
   {
-    path: "/users",
+    path: "/iam/users",
     element: UserManagementPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:users_read"],
     module: "iam",
-    action: "admin",
+    action: "read",
   },
   {
-    path: "/roles",
+    path: "/iam/roles",
     element: RoleManagementPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:roles_read"],
     module: "iam",
-    action: "admin",
+    action: "read",
   },
   {
-    path: "/permissions",
+    path: "/iam/permissions",
     element: PermissionManagementPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:permissions_read"],
     module: "iam",
-    action: "admin",
+    action: "read",
   },
   {
-    path: "/audit",
+    path: "/iam/audit",
     element: AuditLogPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:audit_read"],
     module: "iam",
-    action: "admin",
+    action: "read",
   },
   {
-    path: "/system",
+    path: "/iam/system",
     element: SystemManagementPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:system_read"],
     module: "iam",
-    action: "admin",
+    action: "read",
   },
   {
-    path: "/dictionaries",
+    path: "/iam/dictionaries",
     element: DictionaryManagementPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:dictionaries_read"],
     module: "iam",
-    action: "admin",
+    action: "read",
   },
   {
-    path: "/database",
+    path: "/iam/database",
     element: DatabaseStructurePage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:system_read"],
     module: "iam",
-    action: "admin",
+    action: "read",
   },
   {
-    path: "/migration",
+    path: "/iam/migration",
     element: MigrationAdminPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:system_update"],
     module: "iam",
-    action: "admin",
+    action: "update",
   },
   {
-    path: "/debug",
+    path: "/iam/debug",
     element: ConfigDebugPage,
-    requiredPermissions: ["iam:admin"],
+    requiredPermissions: ["iam:system_update"],
     module: "iam",
-    action: "admin",
+    action: "update",
   },
   {
-    path: "/plugins",
+    path: "/iam/plugins",
     element: PluginMarketplacePage,
+    requiredPermissions: ["iam:plugins_read"],
     module: "iam",
-    action: "view",
+    action: "read",
   },
 ];

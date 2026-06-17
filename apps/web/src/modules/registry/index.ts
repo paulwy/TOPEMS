@@ -1,6 +1,6 @@
 /**
  * TOPEMS Module Registry
- * 
+ *
  * Manages all available modules/plugins in the system.
  * Supports both static (bundled) and dynamic (remote) modules.
  */
@@ -13,7 +13,7 @@ export interface ModuleConfig {
   /** Module description */
   description?: string;
   /** Module category */
-  category: 'core' | 'business' | 'plugin';
+  category: "core" | "business" | "plugin";
   /** Version */
   version: string;
   /** Entry point for the module */
@@ -37,8 +37,12 @@ export interface ModuleRoute {
   path: string;
   /** Route name */
   name: string;
-  /** Component to load */
+  /** Component to load (local modules) */
   component: () => Promise<any>;
+  /** Component name (remote modules) */
+  componentName?: string;
+  /** Component path (remote modules, e.g., './pages/UserManagement') */
+  componentPath?: string;
   /** Icon for the route */
   icon?: string;
   /** Required permissions */
@@ -48,83 +52,49 @@ export interface ModuleRoute {
 }
 
 // ============================================================================
-// Core Modules (always included, bundled with main app)
+// Core Modules (Remote modules loaded via Module Federation)
 // ============================================================================
 
 export const CORE_MODULES: ModuleConfig[] = [
   {
-    id: 'core-iam',
-    name: '身份认证',
-    description: '用户、角色、权限管理',
-    category: 'core',
-    version: '1.0.0',
-    entry: '@/modules/iam',
+    id: "topems_core",
+    name: "Core",
+    description: "核心模块 - 认证、组织架构、工作流",
+    category: "core",
+    version: "1.0.0",
+    entry: "topems_core",
+    remoteEntry: "http://localhost:3001/assets/remoteEntry.js",
     routes: [
-      { path: '/iam/users', name: '用户管理', component: () => import('@/modules/iam/pages/Users') },
-      { path: '/iam/roles', name: '角色管理', component: () => import('@/modules/iam/pages/Roles') },
-      { path: '/iam/permissions', name: '权限管理', component: () => import('@/modules/iam/pages/Permissions') },
+      {
+        path: "/core/users",
+        name: "用户管理",
+        component: () => import("topems_core/pages/UserManagement"),
+        componentName: "UserManagement",
+        componentPath: "./pages/UserManagement",
+        icon: "User",
+        permissions: ["iam.user.read"],
+      },
+      {
+        path: "/core/roles",
+        name: "角色管理",
+        component: () => import("topems_core/pages/RoleManagement"),
+        componentName: "RoleManagement",
+        componentPath: "./pages/RoleManagement",
+        icon: "Shield",
+        permissions: ["iam.role.read"],
+      },
+      {
+        path: "/core/org",
+        name: "组织架构",
+        component: () => import("topems_core/pages/OrgChart"),
+        componentName: "OrgChart",
+        componentPath: "./pages/OrgChart",
+        icon: "Building",
+        permissions: ["iam.org.read"],
+      },
     ],
     isDefault: true,
-    icon: 'User',
-  },
-  {
-    id: 'core-doc',
-    name: '文档管理',
-    description: '云文档、知识库管理',
-    category: 'core',
-    version: '1.0.0',
-    entry: '@/modules/doc',
-    routes: [
-      { path: '/doc/documents', name: '我的文档', component: () => import('@/modules/doc/pages/Documents') },
-      { path: '/doc/folders', name: '文件夹', component: () => import('@/modules/doc/pages/Folders') },
-      { path: '/doc/templates', name: '模板库', component: () => import('@/modules/doc/pages/Templates') },
-    ],
-    isDefault: true,
-    icon: 'FileText',
-  },
-  {
-    id: 'core-flow',
-    name: '流程审批',
-    description: '工作流、表单审批',
-    category: 'core',
-    version: '1.0.0',
-    entry: '@/modules/flow',
-    routes: [
-      { path: '/flow/workflows', name: '流程设计', component: () => import('@/modules/flow/pages/Workflows') },
-      { path: '/flow/instances', name: '我的申请', component: () => import('@/modules/flow/pages/Instances') },
-      { path: '/flow/approvals', name: '待我审批', component: () => import('@/modules/flow/pages/Approvals') },
-    ],
-    isDefault: true,
-    icon: 'GitBranch',
-  },
-  {
-    id: 'core-file',
-    name: '文件中心',
-    description: '文件上传、下载、管理',
-    category: 'core',
-    version: '1.0.0',
-    entry: '@/modules/file',
-    routes: [
-      { path: '/file/manage', name: '文件管理', component: () => import('@/modules/file/pages/Manage') },
-      { path: '/file/shared', name: '共享文件', component: () => import('@/modules/file/pages/Shared') },
-    ],
-    isDefault: true,
-    icon: 'Folder',
-  },
-  {
-    id: 'core-comm',
-    name: '协同通讯',
-    description: '即时通讯、邮件、通知',
-    category: 'core',
-    version: '1.0.0',
-    entry: '@/modules/communication',
-    routes: [
-      { path: '/comm/im', name: '即时消息', component: () => import('@/modules/communication/pages/IM') },
-      { path: '/comm/mail', name: '企业邮箱', component: () => import('@/modules/communication/pages/Mail') },
-      { path: '/comm/notify', name: '通知中心', component: () => import('@/modules/communication/pages/Notifications') },
-    ],
-    isDefault: true,
-    icon: 'MessageSquare',
+    icon: "Layers",
   },
 ];
 
@@ -132,81 +102,92 @@ export const CORE_MODULES: ModuleConfig[] = [
 // Business Modules (sold as packages)
 // ============================================================================
 
+// TODO: 这些模块尚未实现，注释掉以避免编译错误
+// 以下模块需要实现后才可启用:
+// - biz-manufacturing (制造执行)
+// - biz-quality (质量管控)
+// - biz-analytics (数据分析)
+
 export const BUSINESS_MODULES: ModuleConfig[] = [
-  {
-    id: 'biz-manufacturing',
-    name: '制造执行',
-    description: 'MES 生产执行系统',
-    category: 'business',
-    version: '1.0.0',
-    entry: '@/modules/manufacturing',
-    routes: [
-      { path: '/mfg/orders', name: '生产工单', component: () => import('@/modules/manufacturing/pages/Orders') },
-      { path: '/mfg/process', name: '工序管理', component: () => import('@/modules/manufacturing/pages/Process') },
-      { path: '/mfg/equipment', name: '设备管理', component: () => import('@/modules/manufacturing/pages/Equipment') },
-    ],
-    icon: 'Factory',
-  },
-  {
-    id: 'biz-quality',
-    name: '质量管控',
-    description: 'QMS + LIMS + EHS',
-    category: 'business',
-    version: '1.0.0',
-    entry: '@/modules/quality',
-    routes: [
-      { path: '/qa/inspection', name: '质量检验', component: () => import('@/modules/quality/pages/Inspection') },
-      { path: '/qa/lab', name: '实验室', component: () => import('@/modules/quality/pages/Lab') },
-      { path: '/qa/ehs', name: '环境健康', component: () => import('@/modules/quality/pages/EHS') },
-    ],
-    icon: 'Shield',
-  },
-  {
-    id: 'biz-analytics',
-    name: '数据分析',
-    description: 'BI 大屏、报表中心',
-    category: 'business',
-    version: '1.0.0',
-    entry: '@/modules/analytics',
-    routes: [
-      { path: '/analytics/dashboard', name: '数据大屏', component: () => import('@/modules/analytics/pages/Dashboard') },
-      { path: '/analytics/reports', name: '报表中心', component: () => import('@/modules/analytics/pages/Reports') },
-    ],
-    icon: 'BarChart',
-  },
+  // {
+  //   id: 'biz-manufacturing',
+  //   name: '制造执行',
+  //   description: 'MES 生产执行系统',
+  //   category: 'business',
+  //   version: '1.0.0',
+  //   entry: '@/modules/manufacturing',
+  //   routes: [
+  //     { path: '/mfg/orders', name: '生产工单', component: () => import('@/modules/manufacturing/pages/Orders') },
+  //     { path: '/mfg/process', name: '工序管理', component: () => import('@/modules/manufacturing/pages/Process') },
+  //     { path: '/mfg/equipment', name: '设备管理', component: () => import('@/modules/manufacturing/pages/Equipment') },
+  //   ],
+  //   icon: 'Factory',
+  // },
+  // {
+  //   id: 'biz-quality',
+  //   name: '质量管控',
+  //   description: 'QMS + LIMS + EHS',
+  //   category: 'business',
+  //   version: '1.0.0',
+  //   entry: '@/modules/quality',
+  //   routes: [
+  //     { path: '/qa/inspection', name: '质量检验', component: () => import('@/modules/quality/pages/Inspection') },
+  //     { path: '/qa/lab', name: '实验室', component: () => import('@/modules/quality/pages/Lab') },
+  //     { path: '/qa/ehs', name: '环境健康', component: () => import('@/modules/quality/pages/EHS') },
+  //   ],
+  //   icon: 'Shield',
+  // },
+  // {
+  //   id: 'biz-analytics',
+  //   name: '数据分析',
+  //   description: 'BI 大屏、报表中心',
+  //   category: 'business',
+  //   version: '1.0.0',
+  //   entry: '@/modules/analytics',
+  //   routes: [
+  //     { path: '/analytics/dashboard', name: '数据大屏', component: () => import('@/modules/analytics/pages/Dashboard') },
+  //     { path: '/analytics/reports', name: '报表中心', component: () => import('@/modules/analytics/pages/Reports') },
+  //   ],
+  //   icon: 'BarChart',
+  // },
 ];
 
 // ============================================================================
 // Plugin Modules (dynamically loaded from remote)
 // ============================================================================
 
+// TODO: 这些模块尚未实现，注释掉以避免编译错误
+// 以下模块需要实现后才可启用:
+// - plugin-ai (AI 知识库)
+// - plugin-erp (ERP 系统)
+
 export const PLUGIN_MODULES: ModuleConfig[] = [
-  {
-    id: 'plugin-ai',
-    name: 'AI 知识库',
-    description: 'RAG 智能问答',
-    category: 'plugin',
-    version: '1.0.0',
-    entry: '@/modules/ai',
-    routes: [
-      { path: '/ai/knowledge', name: '知识库', component: () => import('@/modules/ai/pages/Knowledge') },
-      { path: '/ai/chat', name: 'AI 助手', component: () => import('@/modules/ai/pages/Chat') },
-    ],
-    icon: 'Bot',
-  },
-  {
-    id: 'plugin-erp',
-    name: 'ERP 系统',
-    description: '企业资源计划',
-    category: 'plugin',
-    version: '1.0.0',
-    entry: '@/modules/erp',
-    routes: [
-      { path: '/erp/purchase', name: '采购管理', component: () => import('@/modules/erp/pages/Purchase') },
-      { path: '/erp/sale', name: '销售管理', component: () => import('@/modules/erp/pages/Sale') },
-    ],
-    icon: 'DollarSign',
-  },
+  // {
+  //   id: 'plugin-ai',
+  //   name: 'AI 知识库',
+  //   description: 'RAG 智能问答',
+  //   category: 'plugin',
+  //   version: '1.0.0',
+  //   entry: '@/modules/ai',
+  //   routes: [
+  //     { path: '/ai/knowledge', name: '知识库', component: () => import('@/modules/ai/pages/Knowledge') },
+  //     { path: '/ai/chat', name: 'AI 助手', component: () => import('@/modules/ai/pages/Chat') },
+  //   ],
+  //   icon: 'Bot',
+  // },
+  // {
+  //   id: 'plugin-erp',
+  //   name: 'ERP 系统',
+  //   description: '企业资源计划',
+  //   category: 'plugin',
+  //   version: '1.0.0',
+  //   entry: '@/modules/erp',
+  //   routes: [
+  //     { path: '/erp/purchase', name: '采购管理', component: () => import('@/modules/erp/pages/Purchase') },
+  //     { path: '/erp/sale', name: '销售管理', component: () => import('@/modules/erp/pages/Sale') },
+  //   ],
+  //   icon: 'DollarSign',
+  // },
 ];
 
 // ============================================================================
@@ -248,12 +229,16 @@ export class ModuleRegistry {
     return Array.from(this.modules.values());
   }
 
-  getModulesByCategory(category: 'core' | 'business' | 'plugin'): ModuleConfig[] {
+  getModulesByCategory(
+    category: "core" | "business" | "plugin",
+  ): ModuleConfig[] {
     return this.getAllModules().filter((m) => m.category === category);
   }
 
   getEnabledModules(): ModuleConfig[] {
-    return Array.from(this.enabledModules).map((id) => this.modules.get(id)!).filter(Boolean);
+    return Array.from(this.enabledModules)
+      .map((id) => this.modules.get(id)!)
+      .filter(Boolean);
   }
 
   enableModule(id: string): void {
@@ -279,6 +264,25 @@ export class ModuleRegistry {
   }
 
   /**
+   * Get a module by its route path
+   */
+  getModuleByRoutePath(routePath: string): ModuleConfig | undefined {
+    for (const module of this.modules.values()) {
+      if (module.routes.some((route) => route.path === routePath)) {
+        return module;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Get all remote (Module Federation) modules
+   */
+  getRemoteModules(): ModuleConfig[] {
+    return this.getAllModules().filter((m) => !!m.remoteEntry);
+  }
+
+  /**
    * Load a remote module dynamically
    */
   async loadRemoteModule(moduleId: string): Promise<any> {
@@ -287,7 +291,7 @@ export class ModuleRegistry {
       throw new Error(`Module ${moduleId} not found`);
     }
 
-    if (module.category === 'core' || module.category === 'business') {
+    if (module.category === "core" || module.category === "business") {
       // Static module - use lazy import
       return import(/* @vite-ignore */ module.entry);
     }
@@ -295,7 +299,7 @@ export class ModuleRegistry {
     if (module.remoteEntry && module.entry) {
       // Dynamic remote module
       // @ts-ignore
-      await __webpack_init_sharing__('default');
+      await __webpack_init_sharing__("default");
       // @ts-ignore
       const container = await window[module.id];
       // @ts-ignore
@@ -320,19 +324,19 @@ export function useModules() {
     registry: moduleRegistry,
     allModules: moduleRegistry.getAllModules(),
     enabledModules: moduleRegistry.getEnabledModules(),
-    coreModules: moduleRegistry.getModulesByCategory('core'),
-    businessModules: moduleRegistry.getModulesByCategory('business'),
-    pluginModules: moduleRegistry.getModulesByCategory('plugin'),
+    coreModules: moduleRegistry.getModulesByCategory("core"),
+    businessModules: moduleRegistry.getModulesByCategory("business"),
+    pluginModules: moduleRegistry.getModulesByCategory("plugin"),
   };
 }
 
 export function useModuleRoutes() {
   const { enabledModules } = useModules();
-  
+
   const routes: ModuleRoute[] = [];
   enabledModules.forEach((module) => {
     routes.push(...module.routes);
   });
-  
+
   return routes;
 }

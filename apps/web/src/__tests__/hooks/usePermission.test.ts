@@ -7,6 +7,9 @@ vi.mock("../../hooks/useAuth", () => ({
   useAuth: vi.fn(() => ({
     hasPermission: vi.fn((perm: string) => {
       const permissions = [
+        "iam:users_read",
+        "iam:users_create",
+        "iam:users_delete",
         "user:read",
         "user:write",
         "user:delete",
@@ -18,6 +21,9 @@ vi.mock("../../hooks/useAuth", () => ({
     }),
     hasAnyPermission: vi.fn((perms: string[]) => {
       const userPerms = [
+        "iam:users_read",
+        "iam:users_create",
+        "iam:users_delete",
         "user:read",
         "user:write",
         "user:delete",
@@ -29,6 +35,9 @@ vi.mock("../../hooks/useAuth", () => ({
     }),
     hasAllPermissions: vi.fn((perms: string[]) => {
       const userPerms = [
+        "iam:users_read",
+        "iam:users_create",
+        "iam:users_delete",
         "user:read",
         "user:write",
         "user:delete",
@@ -38,7 +47,7 @@ vi.mock("../../hooks/useAuth", () => ({
       ];
       return perms.every((p) => userPerms.includes(p));
     }),
-    permissions: ["user:read", "user:write", "user:delete", "hrm:read", "hrm:write", "crm:admin"],
+    permissions: ["iam:users_read", "iam:users_create", "iam:users_delete", "user:read", "user:write", "user:delete", "hrm:read", "hrm:write", "crm:admin"],
     user: { id: "1", name: "Test User", is_superuser: false },
   })),
 }));
@@ -51,30 +60,30 @@ describe("usePermission hook", () => {
   it("should return permissions from auth", () => {
     const { result } = renderHook(() => usePermission());
     
-    expect(result.current.permissions).toContain("user:read");
+    expect(result.current.permissions).toContain("iam:users_read");
     expect(result.current.permissions).toContain("hrm:write");
   });
 
   it("should check single permission with checkPermission", () => {
     const { result } = renderHook(() => usePermission());
     
-    expect(result.current.checkPermission("user:read")).toBe(true);
-    expect(result.current.checkPermission("user:delete")).toBe(true);
+    expect(result.current.checkPermission("iam:users_read")).toBe(true);
+    expect(result.current.checkPermission("iam:users_delete")).toBe(true);
     expect(result.current.checkPermission("nonexistent:read")).toBe(false);
   });
 
   it("should check any permission with checkAnyPermission", () => {
     const { result } = renderHook(() => usePermission());
     
-    expect(result.current.checkAnyPermission(["user:read", "admin:read"])).toBe(true);
+    expect(result.current.checkAnyPermission(["iam:users_read", "admin:read"])).toBe(true);
     expect(result.current.checkAnyPermission(["nonexistent:read", "admin:read"])).toBe(false);
   });
 
   it("should check all permissions with checkAllPermissions", () => {
     const { result } = renderHook(() => usePermission());
     
-    expect(result.current.checkAllPermissions(["user:read", "user:write"])).toBe(true);
-    expect(result.current.checkAllPermissions(["user:read", "nonexistent:read"])).toBe(false);
+    expect(result.current.checkAllPermissions(["iam:users_read", "iam:users_create"])).toBe(true);
+    expect(result.current.checkAllPermissions(["iam:users_read", "nonexistent:read"])).toBe(false);
   });
 
   it("should get module permissions with getModulePermissions", () => {

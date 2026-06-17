@@ -14,14 +14,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  ClipboardCheck,
-  Search,
-  User,
-  MapPin,
-} from "lucide-react";
+import { Plus, Eye, ClipboardCheck, Search, User, MapPin } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ehsApi } from "@/api/ehs";
@@ -58,7 +51,14 @@ const EhsCheckPage: React.FC = () => {
       if (response.success && response.data) {
         const adapted = (response.data as any).data.map((item: any) => ({
           ...item,
-          status: item.status === "completed" ? "已完成" : item.status === "in_progress" ? "进行中" : item.status === "pending" ? "待处理" : item.status,
+          status:
+            item.status === "completed"
+              ? "已完成"
+              : item.status === "in_progress"
+                ? "进行中"
+                : item.status === "pending"
+                  ? "待处理"
+                  : item.status,
         }));
         setChecks(adapted);
       } else {
@@ -133,8 +133,7 @@ const EhsCheckPage: React.FC = () => {
     const matchesSearch =
       check.check_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
       check.inspector.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType =
-      typeFilter === "all" || check.check_type === typeFilter;
+    const matchesType = typeFilter === "all" || check.check_type === typeFilter;
     const matchesStatus =
       statusFilter === "all" || check.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
@@ -165,7 +164,10 @@ const EhsCheckPage: React.FC = () => {
         inspector: formData.inspector,
         location: formData.location || null,
         result: formData.result,
-        issues: formData.issues.split(",").map((s) => s.trim()).filter((s) => s),
+        issues: formData.issues
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s),
         status: "in_progress",
       });
       toast.success("安全检查创建成功");
@@ -256,7 +258,9 @@ const EhsCheckPage: React.FC = () => {
                   justifyContent: "center",
                 }}
               >
-                <ClipboardCheck sx={{ width: 24, height: 24, color: "white" }} />
+                <ClipboardCheck
+                  sx={{ width: 24, height: 24, color: "white" }}
+                />
               </Box>
               <Box>
                 <Typography

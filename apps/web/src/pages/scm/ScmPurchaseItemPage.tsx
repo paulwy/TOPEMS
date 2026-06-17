@@ -18,10 +18,7 @@ import {
   TablePagination,
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import type {
-  PurchaseItem,
-  CreatePurchaseItemRequest,
-} from "@/api/scm";
+import type { PurchaseItem, CreatePurchaseItemRequest } from "@/api/scm";
 import { scmApi } from "@/api/scm";
 import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";

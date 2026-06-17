@@ -13,13 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  Factory,
-  Search,
-  Clock,
-} from "lucide-react";
+import { Plus, Eye, Factory, Search, Clock } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { pdmApi } from "@/api/pdm";
@@ -32,7 +26,8 @@ const PdmProcessPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedProcess, setSelectedProcess] = useState<ProductionProcess | null>(null);
+  const [selectedProcess, setSelectedProcess] =
+    useState<ProductionProcess | null>(null);
   const [formData, setFormData] = useState({
     process_no: "",
     name: "",
@@ -51,7 +46,12 @@ const PdmProcessPage: React.FC = () => {
       if (response.success && response.data) {
         const adapted = (response.data as any).map((item: any) => ({
           ...item,
-          status: item.status === "active" ? "启用" : item.status === "inactive" ? "禁用" : item.status,
+          status:
+            item.status === "active"
+              ? "启用"
+              : item.status === "inactive"
+                ? "禁用"
+                : item.status,
         }));
         setProcesses(adapted);
       } else {
@@ -287,9 +287,7 @@ const PdmProcessPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Factory
-                    sx={{ width: 20, height: 20, color: "#06b6d4" }}
-                  />
+                  <Factory sx={{ width: 20, height: 20, color: "#06b6d4" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -322,9 +320,7 @@ const PdmProcessPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Factory
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
+                  <Factory sx={{ width: 20, height: 20, color: "#16a34a" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -357,9 +353,7 @@ const PdmProcessPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Factory
-                    sx={{ width: 20, height: 20, color: "#dc2626" }}
-                  />
+                  <Factory sx={{ width: 20, height: 20, color: "#dc2626" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -394,9 +388,7 @@ const PdmProcessPage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <Factory
-                style={{ width: 20, height: 20, color: "#06b6d4" }}
-              />
+              <Factory style={{ width: 20, height: 20, color: "#06b6d4" }} />
               生产工艺列表
             </Typography>
           </CardHeader>

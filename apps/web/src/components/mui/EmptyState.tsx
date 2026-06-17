@@ -47,7 +47,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   compact = false,
   children,
 }) => {
-  const resolvedAction = action || (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
+  const resolvedAction =
+    action ||
+    (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
   const theme = useTheme();
 
   return (

@@ -1,0 +1,54 @@
+code: crm
+name: 客户关系管理
+version: 0.1.0
+description: CRM 客户关系管理系统，包含客户管理、联系人管理、销售机会管理、销售预测、计费管理等模块
+plugin_type: business
+
+deployment:
+  type: standalone
+  port: 8012
+  base_path: /api/crm
+
+permissions:
+  - code: crm:customer:read
+    name: 查看客户
+    resource_type: customer
+    action: read
+  - code: crm:customer:write
+    name: 管理客户
+    resource_type: customer
+    action: write
+  - code: crm:contact:read
+    name: 查看联系人
+    resource_type: contact
+    action: read
+  - code: crm:contact:write
+    name: 管理联系人
+    resource_type: contact
+    action: write
+  - code: crm:opportunity:read
+    name: 查看销售机会
+    resource_type: opportunity
+    action: read
+  - code: crm:opportunity:write
+    name: 管理销售机会
+    resource_type: opportunity
+    action: write
+  - code: crm:sales_forecast:read
+    name: 查看销售预测
+    resource_type: sales_forecast
+    action: read
+  - code: crm:sales_forecast:write
+    name: 管理销售预测
+    resource_type: sales_forecast
+    action: write
+  - code: crm:billing:read
+    name: 查看计费
+    resource_type: billing
+    action: read
+  - code: crm:billing:write
+    name: 管理计费
+    resource_type: billing
+    action: write
+
+dependencies: []

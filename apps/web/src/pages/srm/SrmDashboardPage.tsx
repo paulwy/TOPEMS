@@ -14,7 +14,9 @@ import { srmApi } from "@/api/srm";
 import type { SrmDetailedStatistics } from "@/api/srm";
 
 const SrmDashboardPage: React.FC = () => {
-  const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(null);
+  const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

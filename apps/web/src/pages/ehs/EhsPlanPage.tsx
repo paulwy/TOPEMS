@@ -14,13 +14,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  FileText,
-  Search,
-  Users,
-} from "lucide-react";
+import { Plus, Eye, FileText, Search, Users } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ehsApi } from "@/api/ehs";
@@ -59,7 +53,12 @@ const EhsPlanPage: React.FC = () => {
       if (response.success && response.data) {
         const adapted = (response.data as any).data.map((item: any) => ({
           ...item,
-          status: item.status === "active" ? "有效" : item.status === "inactive" ? "无效" : item.status,
+          status:
+            item.status === "active"
+              ? "有效"
+              : item.status === "inactive"
+                ? "无效"
+                : item.status,
         }));
         setPlans(adapted);
       } else {
@@ -102,7 +101,9 @@ const EhsPlanPage: React.FC = () => {
       header: "负责人",
       cell: ({ row }) => {
         const persons = row.original.responsible_persons;
-        const displayText = Array.isArray(persons) ? persons.join(", ") : persons;
+        const displayText = Array.isArray(persons)
+          ? persons.join(", ")
+          : persons;
         return (
           <span className="truncate max-w-[150px]" title={displayText}>
             {displayText || "-"}
@@ -136,8 +137,7 @@ const EhsPlanPage: React.FC = () => {
     const matchesSearch =
       plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       plan.plan_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType =
-      typeFilter === "all" || plan.plan_type === typeFilter;
+    const matchesType = typeFilter === "all" || plan.plan_type === typeFilter;
     const matchesStatus =
       statusFilter === "all" || plan.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
@@ -171,7 +171,10 @@ const EhsPlanPage: React.FC = () => {
         scope: formData.scope || null,
         trigger_conditions: formData.trigger_conditions || null,
         response_procedures: formData.response_procedures || null,
-        responsible_persons: formData.responsible_persons.split(",").map((s) => s.trim()).filter((s) => s),
+        responsible_persons: formData.responsible_persons
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s),
         contact_info: formData.contact_info || null,
         status: "active",
       });
@@ -321,9 +324,7 @@ const EhsPlanPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <FileText
-                    sx={{ width: 20, height: 20, color: "#22c55e" }}
-                  />
+                  <FileText sx={{ width: 20, height: 20, color: "#22c55e" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -356,9 +357,7 @@ const EhsPlanPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <FileText
-                    sx={{ width: 20, height: 20, color: "#16a34a" }}
-                  />
+                  <FileText sx={{ width: 20, height: 20, color: "#16a34a" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -391,9 +390,7 @@ const EhsPlanPage: React.FC = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <FileText
-                    sx={{ width: 20, height: 20, color: "#dc2626" }}
-                  />
+                  <FileText sx={{ width: 20, height: 20, color: "#dc2626" }} />
                 </Box>
                 <Box>
                   <Typography
@@ -428,9 +425,7 @@ const EhsPlanPage: React.FC = () => {
               variant="h6"
               sx={{ display: "flex", alignItems: "center", gap: 1 }}
             >
-              <FileText
-                style={{ width: 20, height: 20, color: "#22c55e" }}
-              />
+              <FileText style={{ width: 20, height: 20, color: "#22c55e" }} />
               应急预案列表
             </Typography>
           </CardHeader>
@@ -551,7 +546,10 @@ const EhsPlanPage: React.FC = () => {
               label="响应程序"
               value={formData.response_procedures}
               onChange={(e) =>
-                setFormData({ ...formData, response_procedures: e.target.value })
+                setFormData({
+                  ...formData,
+                  response_procedures: e.target.value,
+                })
               }
               placeholder="请输入响应程序"
               multiline
@@ -562,7 +560,10 @@ const EhsPlanPage: React.FC = () => {
               label="负责人"
               value={formData.responsible_persons}
               onChange={(e) =>
-                setFormData({ ...formData, responsible_persons: e.target.value })
+                setFormData({
+                  ...formData,
+                  responsible_persons: e.target.value,
+                })
               }
               placeholder="多个负责人用逗号分隔"
             />

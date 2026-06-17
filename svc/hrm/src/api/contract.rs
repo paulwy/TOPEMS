@@ -19,29 +19,29 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/contracts",
+            "/api/hrm/contracts",
             get(list_contracts).post(create_contract),
         )
         .route(
-            "/api/v1/contracts/{id}",
+            "/api/hrm/contracts/{id}",
             get(get_contract)
                 .put(update_contract)
                 .delete(delete_contract),
         )
-        .route("/api/v1/contracts/expiring", get(list_expiring_contracts))
-        .route("/api/v1/contracts/{id}/renew", post(create_renewal))
-        .route("/api/v1/contract-renewals", get(list_renewals))
+        .route("/api/hrm/contracts/expiring", get(list_expiring_contracts))
+        .route("/api/hrm/contracts/{id}/renew", post(create_renewal))
+        .route("/api/hrm/contract-renewals", get(list_renewals))
         .route(
-            "/api/v1/contract-renewals/{id}",
+            "/api/hrm/contract-renewals/{id}",
             get(get_renewal).put(update_renewal).delete(delete_renewal),
         )
         .route(
-            "/api/v1/contract-renewals/{id}/approve",
+            "/api/hrm/contract-renewals/{id}/approve",
             put(approve_renewal),
         )
-        .route("/api/v1/contract-renewals/{id}/reject", put(reject_renewal))
+        .route("/api/hrm/contract-renewals/{id}/reject", put(reject_renewal))
         .route(
-            "/api/v1/contract-renewals/{id}/execute",
+            "/api/hrm/contract-renewals/{id}/execute",
             put(execute_renewal),
         )
 }

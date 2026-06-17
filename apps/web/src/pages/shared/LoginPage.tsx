@@ -74,7 +74,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           message: "欢迎回来!",
           type: "success",
         });
-        navigate("/dashboard");
       } else {
         addNotification({
           title: "登录失败",

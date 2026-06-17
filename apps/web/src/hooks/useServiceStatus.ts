@@ -7,38 +7,25 @@ export interface ServiceInfo {
 }
 
 const services: ServiceInfo[] = [
-  { key: "iam", name: "身份认证", port: 8000 },
-  { key: "doc", name: "文档管理", port: 8001 },
-  { key: "pm", name: "项目管理", port: 8002 },
-  { key: "notification", name: "通知服务", port: 8003 },
-  { key: "integration", name: "系统集成", port: 8004 },
-  { key: "portal", name: "统一门户", port: 8005 },
-  { key: "flow", name: "流程引擎", port: 8006 },
+  { key: "unified-core", name: "统一核心", port: 8000 },
+  { key: "pm", name: "项目管理", port: 8001 },
+  { key: "integration", name: "系统集成", port: 8005 },
   { key: "erp", name: "企业资源", port: 8010 },
   { key: "hrm", name: "人力资源", port: 8011 },
   { key: "crm", name: "客户关系", port: 8012 },
-  { key: "ai", name: "AI服务", port: 8013 },
   { key: "rs", name: "研发管理", port: 8020 },
-  { key: "lims", name: "实验室管理", port: 8022 },
-  { key: "pdm", name: "产品数据管理", port: 8023 },
-  { key: "mes", name: "制造执行", port: 8030 },
-  { key: "qms", name: "质量管理", port: 8031 },
-  { key: "ehs", name: "环境安全", port: 8032 },
+  { key: "manufacturing", name: "制造服务", port: 8023 },
+  { key: "quality-assurance", name: "质量保证", port: 8032 },
   { key: "scm", name: "供应链管理", port: 8040 },
   { key: "srm", name: "供应商管理", port: 8041 },
-  { key: "wms", name: "仓库管理", port: 8042 },
-  { key: "gis", name: "地理信息", port: 8050 },
-  { key: "im", name: "即时通讯", port: 8051 },
-  { key: "bi", name: "数据分析", port: 8052 },
-  { key: "report", name: "报表服务", port: 8053 },
-  { key: "mail", name: "邮件服务", port: 8054 },
-  { key: "mobile", name: "移动服务", port: 8055 },
+  { key: "wms", name: "仓储管理", port: 8042 },
+  { key: "gis", name: "地理信息", port: 8053 },
+  { key: "ai", name: "AI服务", port: 8062 },
+  { key: "mobile", name: "移动服务", port: 8070 },
 ];
 
 export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
-  const [serviceStatuses, setServiceStatuses] = useState<
-    Record<string, boolean>
-  >({});
+  const [serviceStatuses, setServiceStatuses] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const intervalRef = useRef<number | null>(null);
 
@@ -82,10 +69,7 @@ export const useServiceStatus = (autoRefreshInterval: number = 30000) => {
     checkAllServicesStatus();
 
     if (autoRefreshInterval > 0) {
-      intervalRef.current = window.setInterval(
-        checkAllServicesStatus,
-        autoRefreshInterval,
-      );
+      intervalRef.current = window.setInterval(checkAllServicesStatus, autoRefreshInterval);
     }
 
     return () => {

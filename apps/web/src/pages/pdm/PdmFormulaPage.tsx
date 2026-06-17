@@ -13,13 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
-import {
-  Plus,
-  Eye,
-  FlaskConical,
-  Search,
-  Clock,
-} from "lucide-react";
+import { Plus, Eye, FlaskConical, Search, Clock } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { pdmApi } from "@/api/pdm";
@@ -32,7 +26,8 @@ const PdmFormulaPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedFormula, setSelectedFormula] = useState<ProductionFormula | null>(null);
+  const [selectedFormula, setSelectedFormula] =
+    useState<ProductionFormula | null>(null);
   const [formData, setFormData] = useState({
     formula_no: "",
     name: "",
@@ -53,7 +48,16 @@ const PdmFormulaPage: React.FC = () => {
         const adapted = (response.data as any).map((item: any) => ({
           ...item,
           product_name: item.name || "",
-          status: item.status === "active" ? "启用" : item.status === "inactive" ? "禁用" : item.status === "draft" ? "草稿" : item.status === "approved" ? "已批准" : item.status,
+          status:
+            item.status === "active"
+              ? "启用"
+              : item.status === "inactive"
+                ? "禁用"
+                : item.status === "draft"
+                  ? "草稿"
+                  : item.status === "approved"
+                    ? "已批准"
+                    : item.status,
         }));
         setFormulas(adapted);
       } else {

@@ -57,10 +57,15 @@ const RsMilestonePage: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" });
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
+    start: "",
+    end: "",
+  });
   const [newMilestoneDialogOpen, setNewMilestoneDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(
+    null,
+  );
   const [newMilestoneForm, setNewMilestoneForm] = useState({
     name: "",
     start_date: "",
@@ -120,7 +125,9 @@ const RsMilestonePage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const getStatusColor = (status: string): "success" | "primary" | "warning" | "default" => {
+  const getStatusColor = (
+    status: string,
+  ): "success" | "primary" | "warning" | "default" => {
     switch (status) {
       case "completed":
         return "success";
@@ -161,7 +168,9 @@ const RsMilestonePage: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -178,7 +187,12 @@ const RsMilestonePage: React.FC = () => {
     };
     setMilestones([newMs, ...milestones]);
     setNewMilestoneDialogOpen(false);
-    setNewMilestoneForm({ name: "", start_date: "", end_date: "", related_project: "" });
+    setNewMilestoneForm({
+      name: "",
+      start_date: "",
+      end_date: "",
+      related_project: "",
+    });
   };
 
   const handleViewDetail = (ms: Milestone) => {
@@ -189,7 +203,14 @@ const RsMilestonePage: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
       <Container maxWidth="xl">
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
             里程碑
           </Typography>
@@ -204,7 +225,12 @@ const RsMilestonePage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            flexWrap="wrap"
+          >
             <TextField
               size="small"
               placeholder="搜索里程碑名称、项目..."
@@ -237,7 +263,9 @@ const RsMilestonePage: React.FC = () => {
               type="date"
               label="开始日期"
               value={dateRange.start}
-              onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, start: e.target.value })
+              }
               sx={{ width: 150 }}
               InputLabelProps={{ shrink: true }}
             />
@@ -246,7 +274,9 @@ const RsMilestonePage: React.FC = () => {
               type="date"
               label="结束日期"
               value={dateRange.end}
-              onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+              onChange={(e) =>
+                setDateRange({ ...dateRange, end: e.target.value })
+              }
               sx={{ width: 150 }}
               InputLabelProps={{ shrink: true }}
             />
@@ -258,13 +288,27 @@ const RsMilestonePage: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>里程碑名称</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>开始日期</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>结束日期</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>进度</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>关联项目</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>状态</TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>操作</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    里程碑名称
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    开始日期
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    结束日期
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    进度
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    关联项目
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    状态
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                    操作
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -273,46 +317,77 @@ const RsMilestonePage: React.FC = () => {
                   .map((ms) => (
                     <TableRow key={ms.id} hover>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <Flag size={16} color="#3b82f6" />
                           {ms.name}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Calendar size={14} />
                           {ms.start_date}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Calendar size={14} />
                           {ms.end_date}
                         </Box>
                       </TableCell>
                       <TableCell sx={{ minWidth: 150 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <LinearProgress
                             variant="determinate"
                             value={ms.progress}
                             sx={{ flex: 1, height: 8, borderRadius: 4 }}
                           />
-                          <Typography variant="caption">{ms.progress}%</Typography>
+                          <Typography variant="caption">
+                            {ms.progress}%
+                          </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <Link2 size={14} />
                           {ms.related_project}
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Chip label={getStatusLabel(ms.status)} size="small" color={getStatusColor(ms.status)} />
+                        <Chip
+                          label={getStatusLabel(ms.status)}
+                          size="small"
+                          color={getStatusColor(ms.status)}
+                        />
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <Tooltip title="查看进度">
-                            <IconButton size="small" onClick={() => handleViewDetail(ms)}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewDetail(ms)}
+                            >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
@@ -345,7 +420,12 @@ const RsMilestonePage: React.FC = () => {
         </Paper>
       </Container>
 
-      <Dialog open={newMilestoneDialogOpen} onClose={() => setNewMilestoneDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={newMilestoneDialogOpen}
+        onClose={() => setNewMilestoneDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>新建里程碑</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2 }}>
@@ -353,14 +433,24 @@ const RsMilestonePage: React.FC = () => {
               label="里程碑名称"
               fullWidth
               value={newMilestoneForm.name}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, name: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  name: e.target.value,
+                })
+              }
             />
             <TextField
               label="开始日期"
               type="date"
               fullWidth
               value={newMilestoneForm.start_date}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, start_date: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  start_date: e.target.value,
+                })
+              }
               InputLabelProps={{ shrink: true }}
             />
             <TextField
@@ -368,26 +458,45 @@ const RsMilestonePage: React.FC = () => {
               type="date"
               fullWidth
               value={newMilestoneForm.end_date}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, end_date: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  end_date: e.target.value,
+                })
+              }
               InputLabelProps={{ shrink: true }}
             />
             <TextField
               label="关联项目"
               fullWidth
               value={newMilestoneForm.related_project}
-              onChange={(e) => setNewMilestoneForm({ ...newMilestoneForm, related_project: e.target.value })}
+              onChange={(e) =>
+                setNewMilestoneForm({
+                  ...newMilestoneForm,
+                  related_project: e.target.value,
+                })
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewMilestoneDialogOpen(false)}>取消</Button>
-          <Button variant="contained" sx={{ bgcolor: "#3b82f6" }} onClick={handleCreateMilestone}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#3b82f6" }}
+            onClick={handleCreateMilestone}
+          >
             创建
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>里程碑详情</DialogTitle>
         <DialogContent>
           {selectedMilestone && (
@@ -396,13 +505,19 @@ const RsMilestonePage: React.FC = () => {
                 {selectedMilestone.name}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Chip label={getStatusLabel(selectedMilestone.status)} size="small" color={getStatusColor(selectedMilestone.status)} />
+                <Chip
+                  label={getStatusLabel(selectedMilestone.status)}
+                  size="small"
+                  color={getStatusColor(selectedMilestone.status)}
+                />
               </Stack>
               <Box sx={{ mt: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   进度
                 </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}
+                >
                   <LinearProgress
                     variant="determinate"
                     value={selectedMilestone.progress}

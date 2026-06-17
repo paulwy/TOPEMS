@@ -127,11 +127,11 @@ const mockNotificationTemplates: NotificationTemplate[] = [
 
 const FlowSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const [categories, setCategories] =
-    useState<FlowCategory[]>(mockCategories);
+  const [categories, setCategories] = useState<FlowCategory[]>(mockCategories);
   const [nodeTypes] = useState<NodeType[]>(mockNodeTypes);
-  const [templates, setTemplates] =
-    useState<NotificationTemplate[]>(mockNotificationTemplates);
+  const [templates, setTemplates] = useState<NotificationTemplate[]>(
+    mockNotificationTemplates,
+  );
 
   const [basicSettings, setBasicSettings] = useState({
     autoArchive: true,
@@ -210,7 +210,8 @@ const FlowSettingsPage: React.FC = () => {
                   onClick={() => setActiveTab(index)}
                   sx={{
                     cursor: "pointer",
-                    bgcolor: activeTab === index ? "primary.light" : "transparent",
+                    bgcolor:
+                      activeTab === index ? "primary.light" : "transparent",
                     "&:hover": {
                       bgcolor:
                         activeTab === index ? "primary.light" : "grey.100",
@@ -256,10 +257,16 @@ const FlowSettingsPage: React.FC = () => {
                           }}
                         >
                           <Box sx={{ flex: 1 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500 }}
+                            >
                               {category.name}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               {category.code} - {category.description}
                             </Typography>
                           </Box>
@@ -294,7 +301,11 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       归档设置
                     </Typography>
-                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: "center" }}
+                      spacing={2}
+                    >
                       <Switch
                         checked={basicSettings.autoArchive}
                         onChange={(e) =>
@@ -331,7 +342,11 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       撤回设置
                     </Typography>
-                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: "center" }}
+                      spacing={2}
+                    >
                       <Switch
                         checked={basicSettings.allowRecall}
                         onChange={(e) =>
@@ -368,7 +383,11 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       草稿设置
                     </Typography>
-                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: "center" }}
+                      spacing={2}
+                    >
                       <Switch
                         checked={basicSettings.enableDraft}
                         onChange={(e) =>
@@ -397,7 +416,10 @@ const FlowSettingsPage: React.FC = () => {
                   </Box>
                 </Stack>
 
-                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: "flex-end", mt: 3 }}
+                >
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>
@@ -436,7 +458,10 @@ const FlowSettingsPage: React.FC = () => {
                           }}
                         >
                           <Box sx={{ flex: 1 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500 }}
+                            >
                               {nodeType.name}
                             </Typography>
                           </Box>
@@ -459,7 +484,11 @@ const FlowSettingsPage: React.FC = () => {
                       超时设置
                     </Typography>
                     <Stack spacing={2}>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 100 }}>
                           默认超时时间
                         </Typography>
@@ -470,15 +499,18 @@ const FlowSettingsPage: React.FC = () => {
                           onChange={(e) =>
                             setApprovalSettings({
                               ...approvalSettings,
-                              defaultTimeout:
-                                parseInt(e.target.value) || 24,
+                              defaultTimeout: parseInt(e.target.value) || 24,
                             })
                           }
                           sx={{ width: 100 }}
                         />
                         <Typography variant="body2">小时</Typography>
                       </Stack>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 100 }}>
                           超时操作
                         </Typography>
@@ -510,7 +542,11 @@ const FlowSettingsPage: React.FC = () => {
                     >
                       催办设置
                     </Typography>
-                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: "center" }}
+                      spacing={2}
+                    >
                       <Switch
                         checked={approvalSettings.enableUrge}
                         onChange={(e) =>
@@ -541,7 +577,11 @@ const FlowSettingsPage: React.FC = () => {
                   <Divider />
 
                   <Box>
-                    <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: "center" }}
+                      spacing={2}
+                    >
                       <Switch
                         checked={approvalSettings.enableDelegation}
                         onChange={(e) =>
@@ -556,7 +596,10 @@ const FlowSettingsPage: React.FC = () => {
                   </Box>
                 </Stack>
 
-                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: "flex-end", mt: 3 }}
+                >
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>
@@ -630,7 +673,10 @@ const FlowSettingsPage: React.FC = () => {
                   </Stack>
                 </Box>
 
-                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: "flex-end", mt: 3 }}
+                >
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>
@@ -655,7 +701,11 @@ const FlowSettingsPage: React.FC = () => {
                       流程管理权限
                     </Typography>
                     <Stack spacing={2}>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           创建流程定义
                         </Typography>
@@ -666,7 +716,11 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           编辑流程定义
                         </Typography>
@@ -677,7 +731,11 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           删除流程定义
                         </Typography>
@@ -701,7 +759,11 @@ const FlowSettingsPage: React.FC = () => {
                       流程操作权限
                     </Typography>
                     <Stack spacing={2}>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           催办权限
                         </Typography>
@@ -712,7 +774,11 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           终止权限
                         </Typography>
@@ -723,7 +789,11 @@ const FlowSettingsPage: React.FC = () => {
                           </Select>
                         </FormControl>
                       </Stack>
-                      <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
+                      <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={2}
+                      >
                         <Typography variant="body2" sx={{ minWidth: 200 }}>
                           取回权限
                         </Typography>
@@ -738,7 +808,10 @@ const FlowSettingsPage: React.FC = () => {
                   </Box>
                 </Stack>
 
-                <Stack direction="row" sx={{ justifyContent: "flex-end", mt: 3 }}>
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: "flex-end", mt: 3 }}
+                >
                   <Button variant="contained" sx={{ bgcolor: "#8b5cf6" }}>
                     保存设置
                   </Button>

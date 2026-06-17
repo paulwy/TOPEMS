@@ -415,3 +415,76 @@ pub struct MarketplaceSummary {
     pub new_plugins: Vec<Plugin>,
     pub top_rated: Vec<Plugin>,
 }
+
+// ============================================================================
+// Plugin Runtime & Registration Types
+// ============================================================================
+
+/// 插件运行时状态
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct PluginInstance {
+    pub id: uuid::Uuid,
+    pub plugin_id: uuid::Uuid,
+    pub runtime_url: Option<String>,
+    pub runtime_status: String,
+    pub base_path: Option<String>,
+    pub last_heartbeat: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// 插件权限定义
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginPermission {
+    pub id: uuid::Uuid,
+    pub plugin_code: String,
+    pub permission_code: String,
+    pub permission_name: Option<String>,
+    pub resource_type: Option<String>,
+    pub action: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// 请求注册插件
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegisterPluginRequest {
+    pub code: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub version: String,
+    pub runtime_url: String,
+    pub base_path: Option<String>,
+    pub permissions: Vec<PermissionDef>,
+}
+
+/// 权限定义
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PermissionDef {
+    pub code: String,
+    pub name: String,
+    pub resource_type: String,
+    pub action: String,
+}
+
+/// 心跳请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginHeartbeatRequest {
+    pub status: String,
+    pub version: Option<String>,
+}
+
+/// 插件运行时状态（带插件信息）
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct PluginWithRuntimeStatus {
+    pub id: uuid::Uuid,
+    pub code: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub version: String,
+    pub plugin_type: String,
+    pub is_published: bool,
+    pub category: Option<String>,
+    pub runtime_status: Option<String>,
+    pub runtime_url: Option<String>,
+    pub base_path: Option<String>,
+    pub last_heartbeat: Option<DateTime<Utc>>,
+}

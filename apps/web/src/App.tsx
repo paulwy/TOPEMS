@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ProtectedRoute, GuestRoute } from "./components/ProtectedRoute";
@@ -11,6 +11,8 @@ import { Toaster } from "./components/Toaster";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { TemplateDemoPage } from "./components/templates/index";
 import { GlobalLayout } from "./components/layout";
+import { DynamicRouter } from "./modules/loader/DynamicRouter";
+import { eventBus, ModuleEvents } from "./modules/loader/EventBus";
 
 import {
   authRoutes,
@@ -30,6 +32,7 @@ import {
   mesRoutes,
   scmRoutes,
   wmsRoutes,
+  gisRoutes,
   type RouteConfig,
 } from "./routes";
 
@@ -89,6 +92,24 @@ const ProtectedRouteWrapper: React.FC<{
 
 const AppContent: React.FC = () => {
   useAuth();
+
+  useEffect(() => {
+    const handleModuleLoaded = (data: { moduleId: string; path: string }) => {
+      console.log(`[Dynamic Router] Module loaded: ${data.moduleId}`);
+    };
+
+    const handleModuleError = (data: { moduleId: string; error: Error }) => {
+      console.error(`[Dynamic Router] Module load error: ${data.moduleId}`, data.error);
+    };
+
+    eventBus.on(ModuleEvents.MODULE_LOADED, handleModuleLoaded);
+    eventBus.on(ModuleEvents.MODULE_ERROR, handleModuleError);
+
+    return () => {
+      eventBus.off(ModuleEvents.MODULE_LOADED, handleModuleLoaded);
+      eventBus.off(ModuleEvents.MODULE_ERROR, handleModuleError);
+    };
+  }, []);
 
   const renderRoutes = (routes: RouteConfig[]) => {
     return routes.map((route) => {
@@ -163,6 +184,18 @@ const AppContent: React.FC = () => {
         {renderRoutes(mesRoutes)}
         {renderRoutes(scmRoutes)}
         {renderRoutes(wmsRoutes)}
+        {renderRoutes(gisRoutes)}
+
+        <Route
+          path="/core/*"
+          element={
+            <ProtectedRoute>
+              <GlobalLayout>
+                <DynamicRouter />
+              </GlobalLayout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/departments"

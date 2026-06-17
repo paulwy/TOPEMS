@@ -1,0 +1,1 @@
+import{t as a}from"./_virtual_mf___mfe_internal__topems_core__loadShare__axios__loadShare__.js-BS8Zslqm.js";var e=a.create({baseURL:"/core/api/auth",timeout:1e4}),t={login:async a=>(await e.post("/login",a)).data,logout:async()=>{await e.post("/logout")},refresh:async a=>(await e.post("/refresh",{refreshToken:a})).data,getCurrentUser:async()=>(await e.get("/me")).data};export{t};

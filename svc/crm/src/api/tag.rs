@@ -24,11 +24,11 @@ pub struct TagPaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/tags", get(list_tags).post(create_tag))
-        .route("/api/v1/tags/{id}", get(get_tag).put(update_tag).delete(delete_tag))
-        .route("/api/v1/tags/{id}/customers", get(get_tagged_customers))
-        .route("/api/v1/customers/{id}/tags", get(get_customer_tags).post(add_tag_to_customer))
-        .route("/api/v1/customers/{id}/tags/{tag_id}", delete(remove_tag_from_customer))
+        .route("/api/crm/tags", get(list_tags).post(create_tag))
+        .route("/api/crm/tags/{id}", get(get_tag).put(update_tag).delete(delete_tag))
+        .route("/api/crm/tags/{id}/customers", get(get_tagged_customers))
+        .route("/api/crm/customers/{id}/tags", get(get_customer_tags).post(add_tag_to_customer))
+        .route("/api/crm/customers/{id}/tags/{tag_id}", delete(remove_tag_from_customer))
 }
 
 async fn list_tags(
