@@ -14,13 +14,13 @@ use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
-        .route("/api/v1/members", post(create_member))
+        .route("/api/rs/members", post(create_member))
         .route(
-            "/api/v1/members/project/{project_id}",
+            "/api/rs/members/project/{project_id}",
             get(get_project_members),
         )
-        .route("/api/v1/members/{id}", put(update_member))
-        .route("/api/v1/members/{id}", delete(delete_member))
+        .route("/api/rs/members/{id}", put(update_member))
+        .route("/api/rs/members/{id}", delete(delete_member))
 }
 
 pub async fn create_member(

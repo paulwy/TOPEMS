@@ -3,6 +3,7 @@
 mod api;
 mod db;
 mod models;
+mod plugin;
 
 use axum::{
     extract::{FromRef, State},
@@ -36,6 +37,8 @@ use api::task::{
 use api::user::{get_profile, update_profile, upload_avatar};
 use db::repository::*;
 use models::*;
+
+use plugin::create_routes;
 
 #[derive(Clone)]
 struct AppState {
@@ -251,123 +254,124 @@ async fn main() -> anyhow::Result<()> {
 
     let public_routes = Router::new()
         .route("/health", axum::routing::get(health_check))
-        .route("/api/v1/auth/login", axum::routing::post(login))
-        .route("/api/v1/auth/verify-code", axum::routing::post(verify_code));
+        .route("/api/mobile/auth/login", axum::routing::post(login))
+        .route("/api/mobile/auth/verify-code", axum::routing::post(verify_code))
+        .merge(create_routes());
 
     let protected_routes = Router::new()
         // Stats Routes
         .route(
-            "/api/v1/stats/dashboard",
+            "/api/mobile/stats/dashboard",
             axum::routing::get(get_dashboard_stats),
         )
-        .route("/api/v1/stats/patrol", axum::routing::get(get_patrol_stats))
-        .route("/api/v1/stats/task", axum::routing::get(get_task_stats))
+        .route("/api/mobile/stats/patrol", axum::routing::get(get_patrol_stats))
+        .route("/api/mobile/stats/task", axum::routing::get(get_task_stats))
         // Auth Routes
-        .route("/api/v1/auth/logout", axum::routing::post(logout))
-        .route("/api/v1/auth/refresh", axum::routing::post(refresh_token))
+        .route("/api/mobile/auth/logout", axum::routing::post(logout))
+        .route("/api/mobile/auth/refresh", axum::routing::post(refresh_token))
         // User Routes
         .route(
-            "/api/v1/user/profile",
+            "/api/mobile/user/profile",
             axum::routing::get(get_profile).put(update_profile),
         )
-        .route("/api/v1/user/avatar", axum::routing::post(upload_avatar))
+        .route("/api/mobile/user/avatar", axum::routing::post(upload_avatar))
         // Notification Routes
         .route(
-            "/api/v1/notifications",
+            "/api/mobile/notifications",
             axum::routing::get(get_notifications),
         )
         .route(
-            "/api/v1/notifications/unread-count",
+            "/api/mobile/notifications/unread-count",
             axum::routing::get(get_unread_count),
         )
         .route(
-            "/api/v1/notifications/read-all",
+            "/api/mobile/notifications/read-all",
             axum::routing::put(mark_all_read),
         )
         // Scan Routes
-        .route("/api/v1/scan/barcode", axum::routing::post(scan_barcode))
-        .route("/api/v1/scan/qrcode", axum::routing::post(scan_qrcode))
-        .route("/api/v1/scan/image-ocr", axum::routing::post(image_ocr))
+        .route("/api/mobile/scan/barcode", axum::routing::post(scan_barcode))
+        .route("/api/mobile/scan/qrcode", axum::routing::post(scan_qrcode))
+        .route("/api/mobile/scan/image-ocr", axum::routing::post(image_ocr))
         // Offline Routes
         .route(
-            "/api/v1/offline/sync",
+            "/api/mobile/offline/sync",
             axum::routing::post(sync_offline_data),
         )
         .route(
-            "/api/v1/offline/status",
+            "/api/mobile/offline/status",
             axum::routing::get(get_offline_status),
         )
         // Device Routes
         .route(
-            "/api/v1/devices/register",
+            "/api/mobile/devices/register",
             axum::routing::post(register_device),
         )
         .route(
-            "/api/v1/devices/token",
+            "/api/mobile/devices/token",
             axum::routing::put(update_push_token),
         )
         // Shortcut Routes
         .route(
-            "/api/v1/shortcuts",
+            "/api/mobile/shortcuts",
             axum::routing::get(get_shortcuts).post(create_shortcut),
         )
         // Patrol Routes
         .route(
-            "/api/v1/patrol-records",
+            "/api/mobile/patrol-records",
             axum::routing::get(get_all_patrol_records).post(create_patrol_record),
         )
         .route(
-            "/api/v1/patrol-records/{id}",
+            "/api/mobile/patrol-records/{id}",
             axum::routing::get(get_patrol_record)
                 .put(update_patrol_record)
                 .delete(delete_patrol_record),
         )
         // Task Routes
         .route(
-            "/api/v1/mobile-tasks",
+            "/api/mobile/mobile-tasks",
             axum::routing::get(get_all_tasks).post(create_task),
         )
         .route(
-            "/api/v1/mobile-tasks/{id}",
+            "/api/mobile/mobile-tasks/{id}",
             axum::routing::get(get_task)
                 .put(update_task)
                 .delete(delete_task),
         )
         .route(
-            "/api/v1/mobile-tasks/{id}/status",
+            "/api/mobile/mobile-tasks/{id}/status",
             axum::routing::post(update_task_status),
         )
         // Media Routes
-        .route("/api/v1/media/photos", axum::routing::get(get_photos))
-        .route("/api/v1/media/audio", axum::routing::get(get_audio))
-        .route("/api/v1/media/video", axum::routing::get(get_video))
+        .route("/api/mobile/media/photos", axum::routing::get(get_photos))
+        .route("/api/mobile/media/audio", axum::routing::get(get_audio))
+        .route("/api/mobile/media/video", axum::routing::get(get_video))
         .route(
-            "/api/v1/media/upload/{file_type}",
+            "/api/mobile/media/upload/{file_type}",
             axum::routing::post(upload_media),
         )
         .route(
-            "/api/v1/media/{file_type}/{id}",
+            "/api/mobile/media/{file_type}/{id}",
             axum::routing::delete(delete_media),
         )
         // Legacy Routes
         .route(
-            "/api/v1/dashboard/stats",
+            "/api/mobile/dashboard/stats",
             axum::routing::get(get_dashboard_stats),
         )
         .route(
-            "/api/v1/scan-records",
+            "/api/mobile/scan-records",
             axum::routing::get(list_scan_records).post(create_scan_record),
         )
         .route(
-            "/api/v1/photo-evidences",
+            "/api/mobile/photo-evidences",
             axum::routing::get(list_photo_evidences).post(create_photo_evidence),
         )
         .route(
-            "/api/v1/audio-recordings",
+            "/api/mobile/audio-recordings",
             axum::routing::get(list_audio_recordings).post(create_audio_recording),
         )
         .route(
-            "/api/v1/video-recordings",
+            "/api/mobile/video-recordings",
             axum::routing::get(list_video_recordings).post(create_video_recording),
         )
         .layer(axum::middleware::from_fn_with_state(

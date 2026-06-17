@@ -1,6 +1,7 @@
 mod api;
 mod cache;
 mod models;
+mod plugin;
 mod repositories;
 mod services;
 
@@ -106,13 +107,15 @@ async fn main() -> Result<()> {
 
     let public_routes: Router<api::ApiState> = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/api/v1/metrics", get(get_metrics))
+        .route("/api/rs/health/detailed", get(health_check_detailed))
+        .route("/api/rs/metrics", get(get_metrics))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
-        );
+        )
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check));
 
     let protected_routes = api::create_routes().layer(axum::middleware::from_fn_with_state(
         auth_state.clone(),

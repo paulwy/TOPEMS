@@ -17,13 +17,13 @@ use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
-        .route("/api/v1/milestones", post(create_milestone))
+        .route("/api/rs/milestones", post(create_milestone))
         .route(
-            "/api/v1/milestones/project/{project_id}",
+            "/api/rs/milestones/project/{project_id}",
             get(get_project_milestones),
         )
-        .route("/api/v1/milestones/{id}", put(update_milestone))
-        .route("/api/v1/milestones/{id}", delete(delete_milestone))
+        .route("/api/rs/milestones/{id}", put(update_milestone))
+        .route("/api/rs/milestones/{id}", delete(delete_milestone))
 }
 
 pub async fn create_milestone(

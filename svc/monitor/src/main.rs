@@ -28,6 +28,9 @@ use topems_shared::{
 
 mod api;
 mod models;
+mod plugin;
+mod repositories;
+mod services;
 
 use api::ApiState;
 
@@ -100,7 +103,8 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .merge(create_api_info_router("topems-monitor"))
         .layer(prometheus_layer)
-        .layer(cors);
+        .layer(cors)
+        .with_state(api_state.clone());
 
     let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8020".to_string());
     let addr = format!("0.0.0.0:{}", port);

@@ -1,0 +1,18 @@
+code: "srm"
+name: "供应商管理"
+version: "1.0.0"
+description: "SRM 供应商关系管理系统 - 供应商档案、合同管理、评估"
+
+category: "Business"
+plugin_type: "business"
+
+deployment:
+  port: 8060
+  base_path: /api/srm
+
+permissions:
+  - supplier
+  - category
+  - contract
+  - evaluation
+  - product

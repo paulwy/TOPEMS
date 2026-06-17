@@ -36,17 +36,17 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
     let app = Router::new()
         .route(
-            "/api/v1/supplier-contracts",
+            "/api/srm/supplier-contracts",
             get(list_contracts).post(create_contract),
         )
         .route(
-            "/api/v1/supplier-contracts/{id}",
+            "/api/srm/supplier-contracts/{id}",
             get(get_contract)
                 .put(update_contract)
                 .delete(delete_contract),
         )
         .route(
-            "/api/v1/supplier-contracts/{id}/terms",
+            "/api/srm/supplier-contracts/{id}/terms",
             get(get_contract_terms),
         )
         .with_state(state);

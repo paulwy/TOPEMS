@@ -1,0 +1,15 @@
+code: "rs"
+name: "研发管理"
+version: "1.0.0"
+description: "RS 研发管理系统 - 项目管理、实验记录、配方管理"
+category: "R&D"
+plugin_type: "business"
+deployment:
+  port: 8058
+  base_path: /api/rs
+permissions:
+  - project
+  - experiment
+  - formula
+  - material
+  - patent

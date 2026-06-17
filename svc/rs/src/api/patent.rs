@@ -78,12 +78,12 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/v1/patents", get(list_patents).post(create_patent))
+        .route("/api/rs/patents", get(list_patents).post(create_patent))
         .route(
-            "/api/v1/patents/{id}",
+            "/api/rs/patents/{id}",
             get(get_patent).put(update_patent).delete(delete_patent),
         )
-        .route("/api/v1/patents/project/{project_id}", get(list_patents_by_project))
+        .route("/api/rs/patents/project/{project_id}", get(list_patents_by_project))
         .with_state(state);
 
     Ok(app)

@@ -2,6 +2,7 @@
 // =============================================================================
 
 mod api;
+mod plugin;
 mod services;
 
 // 分析 API handlers
@@ -1819,9 +1820,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/api/v1/metrics", get(VectorApi::stats))
-        .route("/api/v1/ai/search", post(ai_search))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route("/api/ai/health/detailed", get(health_check_detailed))
+        .route("/api/ai/metrics", get(VectorApi::stats))
+        .route("/api/ai/search", post(ai_search))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
@@ -1829,52 +1832,52 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .route("/api/v1/ai/chat", post(chat))
-        .route("/api/v1/ai/generate", post(generate))
-        .route("/api/v1/ai/validate", post(validate))
-        .route("/api/v1/ai/complete", post(complete))
-        .route("/api/v1/ai/summarize", post(summarize))
-        .route("/api/v1/ai/templates", get(list_templates))
+        .route("/api/ai/chat", post(chat))
+        .route("/api/ai/generate", post(generate))
+        .route("/api/ai/validate", post(validate))
+        .route("/api/ai/complete", post(complete))
+        .route("/api/ai/summarize", post(summarize))
+        .route("/api/ai/templates", get(list_templates))
         // 文档处理 API - 使用 DocumentApi 模块
-        .route("/api/v1/documents", get(DocumentApi::list))
-        .route("/api/v1/documents/upload", post(DocumentApi::upload))
+        .route("/api/ai/documents", get(DocumentApi::list))
+        .route("/api/ai/documents/upload", post(DocumentApi::upload))
         .route(
-            "/api/v1/documents/vectorize-from-file",
+            "/api/ai/documents/vectorize-from-file",
             post(DocumentApi::vectorize_from_file),
         )
-        .route("/api/v1/documents/{id}", get(DocumentApi::get))
-        .route("/api/v1/documents/{id}", delete(DocumentApi::delete))
-        .route("/api/v1/documents/{id}/process", post(DocumentApi::process))
-        .route("/api/v1/documents/{id}/extract", post(DocumentApi::extract))
+        .route("/api/ai/documents/{id}", get(DocumentApi::get))
+        .route("/api/ai/documents/{id}", delete(DocumentApi::delete))
+        .route("/api/ai/documents/{id}/process", post(DocumentApi::process))
+        .route("/api/ai/documents/{id}/extract", post(DocumentApi::extract))
         .route(
-            "/api/v1/documents/{id}/summarize",
+            "/api/ai/documents/{id}/summarize",
             post(DocumentApi::summarize),
         )
         // 向量检索 API - 使用 VectorApi 模块
-        .route("/api/v1/vectors/stats", get(VectorApi::stats))
-        .route("/api/v1/vectors/search", post(VectorApi::search))
-        .route("/api/v1/vectors/store", post(VectorApi::store))
-        .route("/api/v1/vectors/{id}", get(VectorApi::get))
-        .route("/api/v1/vectors/{id}", delete(VectorApi::delete))
-        .route("/api/v1/vectors/batch-store", post(VectorApi::batch_store))
+        .route("/api/ai/vectors/stats", get(VectorApi::stats))
+        .route("/api/ai/vectors/search", post(VectorApi::search))
+        .route("/api/ai/vectors/store", post(VectorApi::store))
+        .route("/api/ai/vectors/{id}", get(VectorApi::get))
+        .route("/api/ai/vectors/{id}", delete(VectorApi::delete))
+        .route("/api/ai/vectors/batch-store", post(VectorApi::batch_store))
         .route(
-            "/api/v1/vectors/hybrid-search",
+            "/api/ai/vectors/hybrid-search",
             post(VectorApi::hybrid_search),
         )
-        .route("/api/v1/vectors/clear", post(VectorApi::clear_all))
+        .route("/api/ai/vectors/clear", post(VectorApi::clear_all))
         // 问答 API - 使用 QaApi 模块
-        .route("/api/v1/qa/ask", post(QaApi::ask))
-        .route("/api/v1/qa/ask-with-context", post(QaApi::ask_with_context))
-        .route("/api/v1/qa/history", get(QaApi::history))
-        .route("/api/v1/qa/feedback", post(QaApi::feedback))
+        .route("/api/ai/qa/ask", post(QaApi::ask))
+        .route("/api/ai/qa/ask-with-context", post(QaApi::ask_with_context))
+        .route("/api/ai/qa/history", get(QaApi::history))
+        .route("/api/ai/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API
-        .route("/api/v1/connectors", get(list_connectors))
-        .route("/api/v1/connectors/get", get(get_connector))
-        .route("/api/v1/connectors/create", post(create_connector))
-        .route("/api/v1/connectors/update", post(update_connector))
-        .route("/api/v1/connectors/delete", post(delete_connector))
-        .route("/api/v1/connectors/test", get(test_connector))
-        .route("/api/v1/connectors/query", post(query_data))
+        .route("/api/ai/connectors", get(list_connectors))
+        .route("/api/ai/connectors/get", get(get_connector))
+        .route("/api/ai/connectors/create", post(create_connector))
+        .route("/api/ai/connectors/update", post(update_connector))
+        .route("/api/ai/connectors/delete", post(delete_connector))
+        .route("/api/ai/connectors/test", get(test_connector))
+        .route("/api/ai/connectors/query", post(query_data))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -1883,17 +1886,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 分析 API - 使用 AnalysisApi 模块
     let analysis_router = Router::new()
-        .route("/api/v1/analysis/sentiment", post(AnalysisApi::sentiment))
-        .route("/api/v1/analysis/classify", post(AnalysisApi::classify))
+        .route("/api/ai/analysis/sentiment", post(AnalysisApi::sentiment))
+        .route("/api/ai/analysis/classify", post(AnalysisApi::classify))
         .route(
-            "/api/v1/analysis/entities",
+            "/api/ai/analysis/entities",
             post(AnalysisApi::extract_entities),
         )
         .route(
-            "/api/v1/analysis/keywords",
+            "/api/ai/analysis/keywords",
             post(AnalysisApi::extract_keywords),
         )
-        .route("/api/v1/analysis/history", post(AnalysisApi::history))
+        .route("/api/ai/analysis/history", post(AnalysisApi::history))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,

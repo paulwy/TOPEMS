@@ -1,0 +1,53 @@
+# TOPEMS AI Service Plugin Configuration
+code: ai
+name: AI 智能服务
+version: 1.0.0
+description: AI 智能服务 - 向量数据库、文档分析、QA问答、智能生成
+author: TOPEMS
+category: AI
+plugin_type: ai
+
+# Runtime configuration
+runtime:
+  port: 8050
+  health_endpoint: /health
+  base_path: /api/ai
+
+# Permissions required by this plugin
+permissions:
+  - code: ai:search
+    name: AI 搜索
+    description: 使用向量搜索功能
+  - code: ai:chat
+    name: AI 对话
+    description: 使用智能对话功能
+  - code: ai:generate
+    name: AI 生成
+    description: 使用内容生成功能
+  - code: ai:document:read
+    name: 查看文档
+    description: 查看已上传的文档
+  - code: ai:document:upload
+    name: 上传文档
+    description: 上传文档进行智能分析
+  - code: ai:document:delete
+    name: 删除文档
+    description: 删除已上传的文档
+  - code: ai:vector:read
+    name: 查看向量
+    description: 查看向量存储
+  - code: ai:vector:write
+    name: 管理向量
+    description: 存储和管理向量
+  - code: ai:qa:ask
+    name: QA 问答
+    description: 使用问答功能
+  - code: ai:analysis:sentiment
+    name: 情感分析
+    description: 使用情感分析功能
+  - code: ai:analysis:classify
+    name: 文本分类
+    description: 使用文本分类功能
+  - code: ai:connector:manage
+    name: 管理连接器
+    description: 管理数据连接器

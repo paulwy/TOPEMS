@@ -1,0 +1,13 @@
+code: "monitor"
+name: "监控告警"
+version: "1.0.0"
+description: "Monitor 监控系统 - 告警管理、指标采集"
+category: "System"
+plugin_type: "system"
+deployment:
+  port: 8064
+  base_path: "/api/monitor"
+permissions:
+  - code: "alerts"
+  - code: "metrics"
+  - code: "health"
