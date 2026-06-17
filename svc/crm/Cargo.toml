@@ -29,6 +29,7 @@ rand = "0.8"
 
 [dev-dependencies]
 tokio-test.workspace = true
+reqwest = { version = "0.12", features = ["json"] }
 
 [[bin]]
 name = "topems-crm"
