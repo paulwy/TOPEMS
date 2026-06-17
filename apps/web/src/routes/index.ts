@@ -17,4 +17,5 @@ export { mesRoutes } from "./mes";
 export { scmRoutes } from "./scm";
 export { wmsRoutes } from "./wms";
 export { gisRoutes } from "./gis";
+export { pluginRoutes } from "./plugin";
 export { type RouteConfig, lazyWithRetry } from "./utils";
