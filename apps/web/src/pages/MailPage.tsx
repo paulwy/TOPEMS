@@ -56,7 +56,7 @@ import {
   STATUS_OPTIONS,
   PRIORITY_OPTIONS,
   TEMPLATE_CATEGORIES,
-} from "../api/mail";
+} from "@/api/mail";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

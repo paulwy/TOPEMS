@@ -130,7 +130,6 @@ impl ServiceRegistry {
                 api_prefix: "/api/v1".to_string(),
             },
             ServiceConfig {
-<<<<<<< Updated upstream:lib/src/config/services.rs
                 name: "topems-ai".to_string(),
                 display_name: "AI知识库".to_string(),
                 description: "AI智能知识库".to_string(),
@@ -139,8 +138,6 @@ impl ServiceRegistry {
                 api_prefix: "/api/v1".to_string(),
             },
             ServiceConfig {
-=======
->>>>>>> Stashed changes:shared/lib/src/config/services.rs
                 name: "topems-pdm".to_string(),
                 display_name: "产品数据管理".to_string(),
                 description: "产品数据管理".to_string(),
@@ -320,9 +317,6 @@ pub fn get_default_port(service_name: &str) -> u16 {
         _ => 8080,
     }
 }
-<<<<<<< Updated upstream:lib/src/config/services.rs
-=======
-
 pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
     match port {
         8000 => Some("topems-iam"),
@@ -354,4 +348,3 @@ pub fn get_service_name_by_port(port: u16) -> Option<&'static str> {
         _ => None,
     }
 }
->>>>>>> Stashed changes:shared/lib/src/config/services.rs

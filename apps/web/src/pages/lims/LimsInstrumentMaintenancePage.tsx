@@ -27,11 +27,11 @@ import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { limsApi } from "../../api/lims";
-import type { Instrument, MaintenanceRecord } from "../../api/lims";
-import { PageHeader } from "../../components/templates/PageHeader";
+import { limsApi } from "@/api/lims";
+import type { Instrument, MaintenanceRecord } from "@/api/lims";
+import { PageHeader } from "@/components/templates/PageHeader";
 
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

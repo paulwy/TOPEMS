@@ -27,14 +27,14 @@ import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { limsApi } from "../../api/lims";
+import { limsApi } from "@/api/lims";
 import type {
   InspectionTask,
   InspectionRecord,
   InspectionProcess,
-} from "../../api/lims";
+} from "@/api/lims";
 
 interface TaskRecord extends InspectionRecord {
   step_name: string;

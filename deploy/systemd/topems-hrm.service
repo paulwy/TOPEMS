@@ -1,0 +1,31 @@
+[Unit]
+Description=TOPEMS HRM Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/hrm
+ExecStart=/opt/topems/bin/hrm-service
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/hrm.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-hrm
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/topems/logs
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -26,7 +26,7 @@ import {
   Beaker as Flask,
   BarChart3,
 } from "lucide-react";
-import { PageHeader } from "../../components/templates/PageHeader";
+import { PageHeader } from "@/components/templates/PageHeader";
 
 const containerVariants = {
   hidden: { opacity: 0 },

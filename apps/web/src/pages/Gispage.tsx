@@ -25,10 +25,10 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useGis, GisProvider } from "../context/GisContext";
-import MapView from "../components/gis/MapView";
-import MetricCard from "../components/MetricCard";
-import StatsChart from "../components/StatsChart";
-import { DataTable } from "../components/DataTable";
+import MapView from "@/components/gis/MapView";
+import MetricCard from "@/components/MetricCard";
+import StatsChart from "@/components/StatsChart";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import type {
   DevicePoint,
@@ -37,7 +37,7 @@ import type {
   EvidenceRecord,
   FactoryMap,
   BusinessLocation,
-} from "../api/gis";
+} from "@/api/gis";
 import {
   Box,
   Paper,

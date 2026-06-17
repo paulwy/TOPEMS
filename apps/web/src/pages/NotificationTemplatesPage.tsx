@@ -20,15 +20,15 @@ import type {
   UpdateTemplateRequest,
   TemplateStatusEnum,
   NotificationTypeEnum,
-} from "../api/notification";
+} from "@/api/notification";
 import {
   getTemplates,
   createTemplate,
   updateTemplate,
   deleteTemplate,
-} from "../api/notification";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
+} from "@/api/notification";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
 
 const NotificationTemplatesPage: React.FC = () => {
   const navigate = useNavigate();

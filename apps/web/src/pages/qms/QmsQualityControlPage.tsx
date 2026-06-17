@@ -30,11 +30,11 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "react-toastify";
 import * as z from "zod";
-import { PageHeader } from "../../components/templates/PageHeader";
+import { PageHeader } from "@/components/templates/PageHeader";
 
 interface Nonconformance {
   id: string;

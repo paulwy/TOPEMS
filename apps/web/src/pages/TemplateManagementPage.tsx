@@ -20,9 +20,9 @@ import {
   type Template,
   type TemplateCategory,
   type CreateTemplateRequest,
-} from "../api/template";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
+} from "@/api/template";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
 import {
   Box,
   Button,

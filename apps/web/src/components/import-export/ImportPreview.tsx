@@ -1,5 +1,7 @@
 import React from "react";
 import { AlertCircle } from "lucide-react";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
 
 export interface ImportPreviewProps {
   data: any[];
@@ -21,26 +23,26 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
 }) => {
   if (data.length === 0) {
     return (
-      <div style={{ textAlign: "center", paddingTop: 32, paddingBottom: 32 }}>
+      <Box sx={{ textAlign: "center", pt: 4, pb: 4 }}>
         <AlertCircle style={{ width: 48, height: 48, color: "#eab308", margin: "0 auto 8px" }} />
         <p style={{ color: "#475569", margin: 0 }}>没有可预览的数据</p>
-      </div>
+      </Box>
     );
   }
 
   const columns = Object.keys(data[0] || {});
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: 16 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ backgroundColor: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 2, p: 2 }}>
         <p style={{ fontSize: 14, color: "#1e40af", margin: 0 }}>
           共 {data.length} 条数据，将导入 {data.length - errors.length} 条
           {errors.length > 0 && `，${errors.length} 条有错误`}
         </p>
-      </div>
+      </Box>
 
-      <div style={{ border: "1px solid #e2e8f0", borderRadius: 8, overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
+      <Box sx={{ border: "1px solid #e2e8f0", borderRadius: 2, overflow: "hidden" }}>
+        <Box sx={{ overflowX: "auto" }}>
           <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
             <thead style={{ backgroundColor: "#f8fafc" }}>
               <tr>
@@ -81,56 +83,54 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
               })}
             </tbody>
           </table>
-        </div>
+        </Box>
         {data.length > 20 && (
-          <div style={{ padding: "8px 16px", backgroundColor: "#f8fafc", fontSize: 14, color: "#475569", textAlign: "center" }}>
+          <Box sx={{ p: 2, backgroundColor: "#f8fafc", fontSize: 14, color: "#475569", textAlign: "center" }}>
             ... 还有 {data.length - 20} 行数据
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
 
       {errors.length > 0 && (
-        <div>
+        <Box>
           <h4 style={{ fontWeight: 500, color: "#334155", marginBottom: 8, display: "flex", alignItems: "center" }}>
             <AlertCircle style={{ width: 16, height: 16, marginRight: 4, color: "#ef4444" }} />
             验证错误:
           </h4>
-          <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: 16, maxHeight: 240, overflowY: "auto" }}>
+          <Box sx={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 2, p: 2, maxHeight: 240, overflowY: "auto" }}>
             {errors.slice(0, 20).map((error, idx) => (
-              <div key={idx} style={{ fontSize: 14, color: "#b91c1c", marginBottom: 8 }} sx={{ "&:last-child": { mb: 0 } }}>
+              <Box key={idx} sx={{ fontSize: 14, color: "#b91c1c", mb: 1, "&:last-child": { mb: 0 } }}>
                 <span style={{ fontWeight: 500 }}>
                   第{error.row}行 {error.field}:
                 </span>{" "}
                 {error.message}
-              </div>
+              </Box>
             ))}
             {errors.length > 20 && (
               <p style={{ fontSize: 14, color: "#dc2626", marginTop: 8 }}>
                 ... 还有 {errors.length - 20} 个错误
               </p>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
-        <button
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, pt: 2, borderTop: "1px solid #e2e8f0" }}>
+        <Button
           onClick={onCancel}
-          style={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 8 }}
-          sx={{ "&:hover": { backgroundColor: "#e2e8f0" }, transition: "colors 0.2s" }}
+          sx={{ padding: "8px 16px", color: "#334155", backgroundColor: "#f1f5f9", borderRadius: 2, "&:hover": { backgroundColor: "#e2e8f0" }, transition: "colors 0.2s" }}
         >
           取消
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={onConfirm}
           disabled={errors.length > 0}
-          style={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 8 }}
-          sx={{ "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
+          sx={{ padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 2, "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
         >
           确认导入
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 };
 

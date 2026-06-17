@@ -19,13 +19,13 @@ import {
   PieChart as RechartsPieChart,
   Pie,
 } from "recharts";
-import { fetchAnalyticsOverview } from "../api/bi";
-import { LoadingSpinner } from "../components/LoadingSpinner";
-import { ChartCard } from "../components/ChartCard";
-import { BIChartColors } from "../components/charts/chartTheme";
+import { fetchAnalyticsOverview } from "@/api/bi";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ChartCard } from "@/components/ChartCard";
+import { BIChartColors } from "@/components/charts/chartTheme";
 import OrganizationFilter, {
   type OrganizationFilterValue,
-} from "../components/ui/OrganizationFilter";
+} from "@/components/ui/OrganizationFilter";
 import { Button, Skeleton, Box } from "@mui/material";
 import Typography from "@mui/material/Typography";
 

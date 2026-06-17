@@ -49,16 +49,16 @@ import {
   type Employee,
   type Company,
   type PaginatedResult,
-} from "../api/hrm";
+} from "@/api/hrm";
 import { useAppStore } from "../store";
 import {
   AIHelperButton,
   AICodeGenerator,
   AITextOptimizer,
   AIFormValidator,
-} from "../components/ai";
-import type { ValidationIssue, Suggestion } from "../types/ai";
-import { EmptyState } from "../components/mui";
+} from "@/components/ai";
+import type { ValidationIssue, Suggestion } from "@/types/ai";
+import { EmptyState } from "@/components/mui";
 
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();

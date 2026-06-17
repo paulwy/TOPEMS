@@ -8,7 +8,7 @@ import type {
   CompleteResponse,
   SummarizeRequest,
   SummarizeResponse,
-} from "../types/ai";
+} from "@/types/ai";
 
 interface UseAIHelperOptions {
   featureType: AIFeatureType;

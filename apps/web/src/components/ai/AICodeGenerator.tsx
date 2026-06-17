@@ -9,7 +9,7 @@ import {
   TextField,
 } from "@mui/material";
 import { AIGenerateModal } from "./AIGenerateModal";
-import type { CodeGenerateContext } from "../../types/ai";
+import type { CodeGenerateContext } from "@/types/ai";
 
 export interface AICodeGeneratorProps {
   isOpen: boolean;

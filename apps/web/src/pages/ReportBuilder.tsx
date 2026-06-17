@@ -24,7 +24,7 @@ import type {
   ReportType,
   ExportFormat,
   CreateReportRequest,
-} from "../api/report";
+} from "@/api/report";
 
 interface ReportBuilderProps {
   onClose: () => void;

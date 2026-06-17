@@ -23,8 +23,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store";
-import type { Document } from "../api/ai";
-import { aiApi } from "../api/ai";
+import type { Document } from "@/api/ai";
+import { aiApi } from "@/api/ai";
 
 import {
   Button,

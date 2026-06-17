@@ -44,8 +44,8 @@ import {
   departmentApi,
   type Employee,
   type Department,
-} from "../api/hrm";
-import { useNotification } from "../hooks/useNotification";
+} from "@/api/hrm";
+import { useNotification } from "@/hooks/useNotification";
 
 const HrmEmployeeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

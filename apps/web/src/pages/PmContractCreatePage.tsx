@@ -2,19 +2,19 @@ import React, { useState, useEffect } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@mui/material";
-import type { Project } from "../api/pm";
-import { pmApi } from "../api/pm";
+import type { Project } from "@/api/pm";
+import { pmApi } from "@/api/pm";
 import {
   AICodeGenerator,
   AITextOptimizer,
   AIDataCompleter,
   AIFormValidator,
-} from "../components/ai";
+} from "@/components/ai";
 import type {
   CompleteRequest,
   ValidateRequest,
   CompletionItem,
-} from "../types/ai";
+} from "@/types/ai";
 
 const CONTRACT_TYPES = [
   { value: "construction", label: "工程合同" },

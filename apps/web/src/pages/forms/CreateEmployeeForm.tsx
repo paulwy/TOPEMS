@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Key } from "lucide-react";
-import { employeeApi, type Employee } from "../../api/hrm";
+import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../../store";
 
 import {

@@ -1,0 +1,29 @@
+[Unit]
+Description=TOPEMS Portal Service (API Gateway)
+Documentation=https://github.com/topems/topems
+After=network.target
+Wants=topems-unified-core.service topems-ai.service topems-hrm.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/portal
+ExecStart=/opt/topems/bin/portal-service
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/portal.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-portal
+
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/topems/logs
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

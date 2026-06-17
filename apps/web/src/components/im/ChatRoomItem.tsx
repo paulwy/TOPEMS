@@ -110,9 +110,8 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
         borderRadius: 8,
         cursor: "pointer",
         transition: "background-color 0.15s",
-        backgroundColor: chatRoom.is_pinned ? "rgba(251, 191, 36, 0.1)" : undefined,
-        borderLeft: isActive ? "4px solid #4f46e5" : "4px solid transparent",
         backgroundColor: isActive ? "#eef2ff" : chatRoom.is_pinned ? "rgba(251, 191, 36, 0.1)" : undefined,
+        borderLeft: isActive ? "4px solid #4f46e5" : "4px solid transparent",
       }}
     >
       <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 4 }}>

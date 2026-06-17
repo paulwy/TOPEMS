@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Filter } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Card, CardContent, TextField, MenuItem } from "@mui/material";
-import ProjectReport from "../components/pm/ProjectReport";
-import { pmApi } from "../api/pm";
-import type { PmStatistics, ProjectBenefit } from "../api/pm";
+import ProjectReport from "@/components/pm/ProjectReport";
+import { pmApi } from "@/api/pm";
+import type { PmStatistics, ProjectBenefit } from "@/api/pm";
 
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
-import type { Notification, NotificationTypeEnum } from "../api/notification";
+import type { Notification, NotificationTypeEnum } from "@/api/notification";
 import {
   getNotifications,
   markAsRead,
@@ -25,10 +25,10 @@ import {
   deleteNotification,
   bulkMarkAsRead,
   bulkDeleteNotifications,
-} from "../api/notification";
-import NotificationItem from "../components/notifications/NotificationItem";
-import NotificationSettings from "../components/notifications/NotificationSettings";
-import useNotificationSettings from "../hooks/useNotificationSettings";
+} from "@/api/notification";
+import NotificationItem from "@/components/notifications/NotificationItem";
+import NotificationSettings from "@/components/notifications/NotificationSettings";
+import useNotificationSettings from "@/hooks/useNotificationSettings";
 
 type NotificationFilterType = "all" | NotificationTypeEnum;
 

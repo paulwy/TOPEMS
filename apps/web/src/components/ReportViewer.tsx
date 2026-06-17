@@ -7,7 +7,7 @@ import {
   Columns,
   Rows3,
 } from "lucide-react";
-import type { ReportData } from "../api/report";
+import type { ReportData } from "@/api/report";
 
 interface ReportViewerProps {
   report: ReportData;

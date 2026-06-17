@@ -50,12 +50,12 @@ import type {
   CreateSampleRequest,
   InspectionProcess,
   LimsStatistics,
-} from "../api/lims";
-import { limsApi } from "../api/lims";
-import { ModuleGate } from "../components/PermissionGate";
-import { MODULES } from "../config/permissions";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
+} from "@/api/lims";
+import { limsApi } from "@/api/lims";
+import { ModuleGate } from "@/components/PermissionGate";
+import { MODULES } from "@/config/permissions";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
 
 const LimsSamplePage: React.FC = () => {
   const navigate = useNavigate();

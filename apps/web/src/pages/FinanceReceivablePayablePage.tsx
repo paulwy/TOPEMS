@@ -42,7 +42,7 @@ import {
   payableApi,
   type Receivable,
   type Payable,
-} from "../api/erp";
+} from "@/api/erp";
 import { useAppStore } from "../store";
 
 const FinanceReceivablePayablePage: React.FC = () => {

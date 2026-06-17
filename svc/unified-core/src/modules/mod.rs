@@ -1,0 +1,11 @@
+//! Modules for unified-core service
+//! Contains IAM, Doc, Flow, File, Communication, Tenant, Billing, and Plugin submodules
+
+pub mod iam;
+pub mod doc;
+pub mod flow;
+pub mod file;
+pub mod communication;
+pub mod tenant;
+pub mod billing;
+pub mod plugin;

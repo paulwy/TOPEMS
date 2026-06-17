@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Download, Loader2, CheckCircle } from "lucide-react";
-import type { ExportFormat } from "../api/report";
+import type { ExportFormat } from "@/api/report";
 
 interface ExportButtonProps {
   data: any[];

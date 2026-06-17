@@ -1,0 +1,32 @@
+[Unit]
+Description=TOPEMS Analytics Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/analytics
+ExecStart=/opt/topems/bin/analytics-service
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/analytics.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-analytics
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/topems/logs /opt/topems/data
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

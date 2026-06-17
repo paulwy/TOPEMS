@@ -31,7 +31,7 @@ import {
   User,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { announcementApi, type Announcement } from "../api/erp";
+import { announcementApi, type Announcement } from "@/api/erp";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";

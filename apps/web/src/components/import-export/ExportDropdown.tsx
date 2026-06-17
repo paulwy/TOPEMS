@@ -1,5 +1,7 @@
 import React from "react";
 import { Download } from "lucide-react";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
 
 export interface ExportDropdownProps {
   onExport: (format: string, columns?: string[]) => void;
@@ -20,38 +22,36 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }} className={className}>
-      <button
+    <Box sx={{ position: "relative", display: "inline-block" }} className={className}>
+      <Button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        style={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 8 }}
-        sx={{ "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
+        startIcon={<Download sx={{ width: 16, height: 16, mr: 1 }} />}
+        sx={{ display: "inline-flex", alignItems: "center", padding: "8px 16px", backgroundColor: "#2563eb", color: "white", borderRadius: 2, "&:hover": { backgroundColor: "#1d4ed8" }, "&:disabled": { opacity: 0.5, cursor: "not-allowed" }, transition: "colors 0.2s" }}
       >
-        <Download style={{ width: 16, height: 16, marginRight: 8 }} />
         导出
-      </button>
+      </Button>
 
       {isOpen && (
         <>
-          <div style={{ position: "fixed", inset: 0 }} onClick={() => setIsOpen(false)} />
-          <div style={{ position: "absolute", right: 0, marginTop: 8, width: 192, backgroundColor: "white", borderRadius: 8, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)", border: "1px solid #e2e8f0", padding: 4, zIndex: 10 }}>
+          <Box sx={{ position: "fixed", inset: 0 }} onClick={() => setIsOpen(false)} />
+          <Box sx={{ position: "absolute", right: 0, marginTop: 1, width: 192, backgroundColor: "white", borderRadius: 2, boxShadow: 3, border: "1px solid #e2e8f0", padding: 0.5, zIndex: 10 }}>
             {options.map((option) => (
-              <button
+              <Button
                 key={option.value}
                 onClick={() => {
                   onExport(option.value);
                   setIsOpen(false);
                 }}
-                style={{ width: "100%", padding: "8px 16px", textAlign: "left", fontSize: 14, color: "#334155" }}
-                sx={{ "&:hover": { backgroundColor: "#f1f5f9" }, transition: "colors 0.2s" }}
+                sx={{ width: "100%", padding: "8px 16px", textAlign: "left", fontSize: 14, color: "#334155", "&:hover": { backgroundColor: "#f1f5f9" }, transition: "colors 0.2s" }}
               >
                 {option.label}
-              </button>
+              </Button>
             ))}
-          </div>
+          </Box>
         </>
       )}
-    </div>
+    </Box>
   );
 };
 

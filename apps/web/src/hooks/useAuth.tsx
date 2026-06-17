@@ -8,7 +8,7 @@ import React, {
   createContext,
   useContext,
 } from "react";
-import { authApi } from "../api/iam";
+import { authApi } from "@/api/iam";
 import apiClient from "../api/client";
 
 // 默认 token 过期时间（24小时，毫秒）- 当无法解析 JWT 时使用

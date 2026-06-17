@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
-import { integrationApi } from "../api/integration";
+import { integrationApi } from "@/api/integration";
 import type {
   WmsScmSync,
   CreateWmsScmSyncRequest,
-} from "../api/integration";
+} from "@/api/integration";
 
 const IntegrationWmsScmPage: React.FC = () => {
   const [syncs, setSyncs] = useState<WmsScmSync[]>([]);

@@ -2,7 +2,7 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-2.4.0-blue)
+![Version](https://img.shields.io/badge/version-2.4.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
 ![React](https://img.shields.io/badge/react-18-blue)
@@ -47,6 +47,7 @@
 - 🤖 **AI 增强** - Ollama 本地 LLM + 向量搜索（pgvector）
 - 📦 **统一文件存储** - DOC-File服务整合
 - 🗄️ **共享Schema** - 跨服务数据统一管理
+- 🚀 **服务整合** - 4组服务已整合为统一服务，降低运维复杂度
 
 ## 📁 项目结构
 
@@ -59,46 +60,42 @@ topems/
 │   ├── guides/                   # 用户指南
 │   ├── services/                 # 服务文档
 │   └── user/                     # 用户手册
-├── frontend/                      # 前端应用
-│   ├── src/
-│   │   ├── components/           # 可复用组件
-│   │   ├── pages/               # 页面组件
-│   │   ├── hooks/               # 自定义 hooks
-│   │   ├── api/                 # API 客户端
-│   │   ├── config/              # 配置文件
-│   │   └── store/               # 状态管理
-│   └── vite.config.ts           # Vite 配置
-<<<<<<< Updated upstream
 ├── apps/                          # 应用目录
 │   └── web/                     # Web 应用
-├── svc/                          # 后端服务
-│   ├── iam/                     # 身份认证服务 (8000)
-│   ├── notification/            # 通知服务 (8004)
-│   ├── portal/                  # 企业门户 (8005)
-│   ├── flow/                    # 工作流服务 (8006)
-│   ├── integration/             # 集成服务 (8007)
-│   ├── erp/                     # 企业资源计划 (8010)
-│   ├── hrm/                     # 人力资源管理 (8012)
-│   ├── crm/                     # 客户关系管理 (8013)
-│   ├── rs/                      # 研发管理系统 (8020)
-│   ├── lims/                    # 实验室系统 (8022)
-│   ├── pdm/                     # 产品数据管理 (8023)
-│   ├── pm/                      # 项目管理
-│   ├── doc/                     # 文档管理服务 (8028)
-│   ├── mes/                     # 制造执行系统 (8030)
-│   ├── qms/                     # 质量管理系统 (8031)
-│   ├── ehs/                     # 安全管理系统 (8032)
-│   ├── scm/                     # 供应链系统 (8040)
-│   ├── srm/                     # 供应商管理 (8041)
-│   ├── wms/                     # 仓库管理系统 (8042)
-│   ├── file/                    # 文件服务 (8050)
-│   ├── mail/                    # 邮件服务 (8051)
-│   ├── im/                      # 即时通讯 (8052)
-│   ├── gis/                     # 地理信息系统 (8053)
-│   ├── bi/                      # 商业智能 (8060)
-│   ├── report/                  # 报表服务 (8061)
-│   ├── ai/                      # AI 知识库 (8062)
-│   └── mobile/                  # 移动端服务 (8070)
+│       ├── src/
+│       │   ├── components/       # 可复用组件
+│       │   ├── pages/           # 页面组件
+│       │   ├── hooks/           # 自定义 hooks
+│       │   ├── api/             # API 客户端
+│       │   ├── config/          # 配置文件
+│       │   └── store/           # 状态管理
+│       └── vite.config.ts       # Vite 配置
+├── platform/                      # 核心平台服务
+│   ├── topems-iam/              # 身份认证服务 (8000)
+│   ├── topems-doc/              # 文档管理服务 (8001)
+│   └── topems-flow/             # 工作流服务 (8006)
+├── services/                      # 业务应用服务
+│   ├── topems-pm/               # 项目管理服务 (8002)
+│   ├── topems-integration/      # 集成服务 (8004)
+│   ├── topems-portal/           # 企业门户 (8005)
+│   ├── topems-erp/              # 企业资源计划 (8010)
+│   ├── topems-hrm/              # 人力资源管理 (8011)
+│   ├── topems-crm/              # 客户关系管理 (8012)
+│   ├── topems-ai/               # AI 知识库 (8013)
+│   ├── topems-rs/               # 研发管理系统 (8020)
+│   ├── topems-scm/              # 供应链系统 (8040)
+│   ├── topems-srm/              # 供应商管理 (8041)
+│   ├── topems-wms/              # 仓库管理系统 (8042)
+│   ├── topems-gis/              # 地理信息系统 (8053)
+│   ├── topems-mobile/           # 移动端服务 (8070)
+│   ├── communication-service/   # [已整合] 统一通讯服务 (8055)
+│   │                               # 包含: notification, im, mail
+│   ├── manufacturing-service/   # [已整合] 统一制造服务 (8030)
+│   │                               # 包含: mes, pdm
+│   ├── quality-assurance-service/ # [已整合] 统一质量服务 (8032)
+│   │                               # 包含: qms, lims, ehs
+│   └── analytics-service/       # [已整合] 统一分析服务 (8060)
+│                                   # 包含: bi, report
 ├── lib/                          # 共享库 (topems-shared)
 ├── docker/                       # Docker 配置
 │   ├── init-scripts/            # 数据库初始化脚本
@@ -109,90 +106,11 @@ topems/
 ├── tools/                        # 开发工具
 ├── templates/                    # 数据模板
 ├── Cargo.toml                   # Cargo Workspace 配置
-└── .env                         # 环境变量配置
-=======
-├── platform/                      # 核心平台服务
-│   ├── topems-iam/              # 身份认证服务 (8000)
-│   ├── topems-doc/              # 文档管理服务 (8001)
-│   └── topems-flow/             # 工作流服务 (8006)
-├── services/                      # 业务应用服务
-│   ├── topems-pm/               # 项目管理服务 (8002)
-│   ├── notification-service/     # 通知服务 (8003)
-│   ├── topems-integration/      # 集成服务 (8004)
-│   ├── topems-portal/           # 企业门户 (8005)
-│   ├── topems-erp/              # 企业资源计划 (8010)
-│   ├── topems-hrm/              # 人力资源管理 (8011)
-│   ├── topems-crm/              # 客户关系管理 (8012)
-│   ├── topems-ai/               # AI 知识库 (8013)
-│   ├── topems-rs/               # 研发管理系统 (8020)
-│   ├── topems-lims/             # 实验室系统 (8022)
-│   ├── topems-pdm/              # 产品数据管理 (8023)
-│   ├── topems-mes/              # 制造执行系统 (8030)
-│   ├── topems-qms/              # 质量管理系统 (8031)
-│   ├── topems-ehs/              # 安全管理系统 (8032)
-│   ├── topems-scm/              # 供应链系统 (8040)
-│   ├── topems-srm/              # 供应商管理 (8041)
-│   ├── topems-wms/              # 仓库管理系统 (8042)
-│   ├── topems-gis/              # 地理信息系统 (8050)
-│   ├── topems-im/               # 即时通讯 (8051)
-│   ├── topems-bi/               # 商业智能 (8052)
-│   ├── report-service/           # 报表服务 (8053)
-│   ├── topems-mail/             # 邮件服务 (8054)
-│   └── topems-mobile/           # 移动端服务 (8055)
-├── shared/                        # 共享库
-│   └── lib/                     # topems-shared 库
-├── scripts/                       # 管理脚本
-├── docker/                        # Docker 配置
-└── .env.example                  # 环境变量示例
->>>>>>> Stashed changes
+└── .env.example                 # 环境变量配置
 ```
 
 ## 🚀 快速开始
 
-<<<<<<< Updated upstream
-> **推荐使用 Python CLI 工具进行服务管理**。详见 [Python CLI 文档](./cli/README.md)
-
-### Python CLI（推荐）
-
-```bash
-# 1. 安装 Python CLI
-cd cli
-python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-pip install pyyaml click rich httpx
-
-# 2. 查看服务状态
-python -m topems_cli status --all
-
-# 3. 启动服务
-python -m topems_cli start -m core
-
-# 4. 数据库初始化
-python -m topems_cli db init
-python -m topems_cli db migrate
-```
-
-### Bash 脚本（备用）
-
-> **注意**: Bash 脚本功能已被 Python CLI 覆盖，主要用于向后兼容。
-
-```bash
-# 启动所有服务
-bash scripts/topems.sh start
-
-# 启动核心服务
-bash scripts/topems.sh start-core
-```
-
-### Docker 方案（需要外网）
-
-```bash
-# 启动所有服务（需要从外网拉取镜像）
-bash scripts/topems.sh start-docker
-
-# 访问应用
-open http://localhost:3000
-=======
 ### 系统要求
 
 - **前端**: Node.js 18+, npm 9+
@@ -219,7 +137,6 @@ openssl rand -base64 32
 cd docker
 cp .env.example .env
 docker-compose up -d
->>>>>>> Stashed changes
 ```
 
 ### 前端开发
@@ -234,7 +151,6 @@ npm run dev
 
 ### 后端开发
 
-<<<<<<< Updated upstream
 项目采用 Cargo Workspace 架构，所有服务共享依赖。
 
 ```bash
@@ -248,57 +164,11 @@ cargo build
 cargo check --workspace
 ```
 
-### 数据库初始化
-
-```bash
-# 使用 Python CLI 初始化（推荐）
-python -m topems_cli db init
-python -m topems_cli db migrate
-```
-
-### 数据库配置
-
-TOPEMS 支持多种数据库环境配置：
-
-| 环境 | 数据库 | pgvector | 说明 |
-|------|--------|----------|------|
-| 本地 macOS | PostgreSQL 18.4 | ✅ 0.8.2 | 推荐开发使用 |
-| Docker | PostgreSQL 18.4 | ❌ | 需要重建镜像 |
-| 远程 | PostgreSQL 16+ | 可选 | 生产环境 |
-
-#### 自动检测顺序
-
-1. 本地 PostgreSQL（优先，支持 pgvector）
-2. Docker PostgreSQL（备用）
-3. 远程 PostgreSQL
-
-#### 手动配置
-
-```bash
-# 本地 PostgreSQL
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
-
-# Docker PostgreSQL
-DATABASE_URL=postgres://topems:topems@host.docker.internal:5432/topems
-
-# 远程 PostgreSQL
-DATABASE_URL=postgres://user:password@remote-host:5432/topems
-=======
-```bash
-# 使用服务管理脚本（推荐）
-./scripts/manage-services.sh start iam
-
-# 或者手动启动
-cd platform/topems-iam/backend
-cargo run
-```
-
 ### 一键启动所有服务
 
 ```bash
 # 一键启动所有服务（包括前端）
 ./scripts/start-all.sh
->>>>>>> Stashed changes
 ```
 
 ## 🔌 端口配置规范
@@ -513,11 +383,11 @@ python -m topems_cli db migrate
 - [Python CLI](./cli/README.md) - 服务管理命令行工具
 - [API概览](./docs/api/API_DOCUMENTATION.md) - API 文档总览
 - [架构设计](./docs/architecture/overview.md) - 系统架构设计
-<<<<<<< Updated upstream
-- [部署指南](./docs/deployment/README.md) - 部署指南
-- [Windows部署](./docs/deployment/windows-deployment.md) - Windows 部署指南
+- [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
+- [离线部署指南](./docs/deployment/DEPLOYMENT_OFFLINE.md) - 离线部署指南
 - [用户手册](./docs/user/UserManual.md) - 用户使用手册
 - [服务文档](./docs/services/) - 各个服务详细文档
+- [环境配置指南](./docs/guides/ENVIRONMENT_CONFIG.md) - 环境配置指南
 - [AI 模块](./docs/AI_MODULE.md) - AI 知识库与向量搜索
 - [向量搜索架构](./docs/vector-architecture.md) - 向量存储设计
 - [PostgreSQL 故障排查](./docs/postgresql-troubleshooting.md) - 数据库自动修复与故障排查
@@ -617,24 +487,18 @@ TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管�
 | `collect-test-data.sh` | 收集测试数据 |
 
 详细说明请参考 [脚本工具文档](./scripts/README.md)。
-=======
-- [部署指南](./docs/deployment/DEPLOYMENT_GUIDE.md) - 部署指南
-- [离线部署指南](./docs/deployment/DEPLOYMENT_OFFLINE.md) - 离线部署指南
-- [用户手册](./docs/user/UserManual.md) - 用户使用手册
-- [服务文档](./docs/services/) - 各个服务详细文档
-- [环境配置指南](./docs/guides/ENVIRONMENT_CONFIG.md) - 环境配置指南
 
 ## 📦 配置文件
 
 ### 前端配置
 
-- `frontend/vite.config.ts` - Vite 构建配置，包含端口代理配置
-- `frontend/src/config/runtime.ts` - 运行时配置，包含所有服务 URL
-- `frontend/src/config/types.ts` - TypeScript 类型定义
+- `apps/web/vite.config.ts` - Vite 构建配置，包含端口代理配置
+- `apps/web/src/config/runtime.ts` - 运行时配置，包含所有服务 URL
+- `apps/web/src/config/types.ts` - TypeScript 类型定义
 
 ### 后端配置
 
-- `shared/lib/src/config/services.rs` - 服务注册中心，统一端口配置
+- `lib/src/config/services.rs` - 服务注册中心，统一端口配置
 - `docker/docker-compose.yml` - Docker Compose 数据库配置
 
 ### 环境变量
@@ -666,7 +530,6 @@ cargo test           # 运行测试
 cargo clippy         # 代码检查
 cargo fmt            # 代码格式化
 ```
->>>>>>> Stashed changes
 
 ## 📄 许可证
 
@@ -681,10 +544,5 @@ MIT License
 
 ---
 
-<<<<<<< Updated upstream
-**最后更新**: 2026-06-12
+**最后更新**: 2026-06-16
 **版本**: v2.4.2
-=======
-**最后更新**: 2026-06-08
-**版本**: v2.0.0
->>>>>>> Stashed changes

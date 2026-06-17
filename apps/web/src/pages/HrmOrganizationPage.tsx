@@ -39,9 +39,9 @@ import {
   type Company,
   type Department,
   type Employee,
-} from "../api/hrm";
+} from "@/api/hrm";
 import { useAppStore } from "../store";
-import { AIHelperButton, AICodeGenerator } from "../components/ai";
+import { AIHelperButton, AICodeGenerator } from "@/components/ai";
 
 interface OrganizationNode {
   id: string;

@@ -1,0 +1,32 @@
+[package]
+name = "unified-core-service"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing"
+
+[dependencies]
+axum = { workspace = true }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+dotenv.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tower-http.workspace = true
+thiserror.workspace = true
+sqlx = { workspace = true, features = ["rust_decimal"] }
+topems-shared = { path = "../../lib" }
+axum-prometheus.workspace = true
+prometheus.workspace = true
+anyhow.workspace = true
+tower = { workspace = true }
+tower-cookies = { workspace = true }
+tower-util = { workspace = true }
+rust_decimal = { workspace = true, features = ["db-postgres"] }
+
+[[bin]]
+name = "unified-core-service"
+path = "src/main.rs"

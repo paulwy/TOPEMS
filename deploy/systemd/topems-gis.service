@@ -1,0 +1,29 @@
+[Unit]
+Description=TOPEMS GIS Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/gis
+ExecStart=/opt/topems/bin/gis-service
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/gis.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-gis
+
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/topems/logs /opt/topems/offline_tiles
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

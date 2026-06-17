@@ -37,10 +37,10 @@ import {
   type Position,
   type PaginatedResult,
   type ListParams,
-} from "../api/hrm";
+} from "@/api/hrm";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 
 import { ModeToggle } from "@/components/ModeToggle";
 

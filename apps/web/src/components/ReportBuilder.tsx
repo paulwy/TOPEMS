@@ -4,8 +4,8 @@ import type {
   ReportType,
   ReportTypeInfo,
   CreateReportRequest,
-} from "../api/report";
-import { reportApi } from "../api/report";
+} from "@/api/report";
+import { reportApi } from "@/api/report";
 
 interface ReportBuilderProps {
   onClose: () => void;

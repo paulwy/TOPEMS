@@ -43,14 +43,14 @@ import {
   vscDarkPlus,
   vs,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { aiApi } from "../api/ai";
+import { aiApi } from "@/api/ai";
 import { useAppStore } from "../store";
-import AISettingsModal from "../components/AISettingsModal";
+import AISettingsModal from "@/components/AISettingsModal";
 import {
   AIDocumentGenerator,
   DocumentManager,
   AIAnalyzer,
-} from "../components/ai";
+} from "@/components/ai";
 
 import { ModeToggle } from "@/components/ModeToggle";
 

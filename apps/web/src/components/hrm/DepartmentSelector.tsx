@@ -1,6 +1,6 @@
 import React from "react";
 import { Building2, ChevronRight } from "lucide-react";
-import { type Department } from "../../api/hrm";
+import { type Department } from "@/api/hrm";
 import type { TreeNode } from "../TreeView";
 import TreeView from "../TreeView";
 

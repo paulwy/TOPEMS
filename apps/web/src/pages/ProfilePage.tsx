@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { authApi, type User as UserType, type AccessLog } from "../api/iam";
+import { authApi, type User as UserType, type AccessLog } from "@/api/iam";
 import { useAppStore } from "../store";
 
 import {

@@ -22,7 +22,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { usePerformanceMonitor } from "../hooks/usePerformanceMonitor";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";

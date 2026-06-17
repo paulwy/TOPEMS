@@ -24,12 +24,12 @@ import {
   Chip,
   CircularProgress,
 } from "@mui/material";
-import { useToast } from "../components/ToastProvider";
+import { useToast } from "@/components/ToastProvider";
 import {
   migrationApi,
   type MigrationService,
   type MigrationStatus,
-} from "../api/migration";
+} from "@/api/migration";
 
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;

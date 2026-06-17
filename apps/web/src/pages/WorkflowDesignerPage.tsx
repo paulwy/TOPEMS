@@ -15,14 +15,14 @@ import {
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import WorkflowDesigner from "../components/WorkflowDesigner";
+import WorkflowDesigner from "@/components/WorkflowDesigner";
 import { useAppStore } from "../store";
 import type {
   Workflow,
   CreateWorkflowRequest,
   UpdateWorkflowRequest,
-} from "../api/flow";
-import { flowApi } from "../api/flow";
+} from "@/api/flow";
+import { flowApi } from "@/api/flow";
 import { Save, ArrowLeft } from "lucide-react";
 
 const WorkflowDesignerPage: React.FC = () => {

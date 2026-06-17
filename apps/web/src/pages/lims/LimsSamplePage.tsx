@@ -25,9 +25,9 @@ import {
   Search,
   Filter,
 } from "lucide-react";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { PageHeader } from "../../components/templates";
+import { PageHeader } from "@/components/templates";
 
 interface Sample {
   id: string;

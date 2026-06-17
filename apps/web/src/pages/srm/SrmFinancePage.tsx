@@ -21,14 +21,14 @@ import {
   Receipt,
   TrendingUp,
 } from "lucide-react";
-import { DataTable } from "../../components/DataTable";
-import { MetricCard } from "../../components/MetricCard";
-import { StatsChart } from "../../components/StatsChart";
+import { DataTable } from "@/components/DataTable";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
 import type { ColumnDef } from "@tanstack/react-table";
-import { srmApi } from "../../api/srm";
-import type { SupplierContract, PurchaseOrder } from "../../api/srm";
+import { srmApi } from "@/api/srm";
+import type { SupplierContract, PurchaseOrder } from "@/api/srm";
 import { toast } from "react-toastify";
-import { CreatePurchaseOrderRequest, CreateSupplierContractRequest } from "../../api/srm";
+import { CreatePurchaseOrderRequest, CreateSupplierContractRequest } from "@/api/srm";
 
 interface FinanceRecord {
   id: string;

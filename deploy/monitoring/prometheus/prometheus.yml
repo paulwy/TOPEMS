@@ -1,0 +1,123 @@
+# Prometheus Configuration for TOPEMS
+# Non-Docker deployment
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'topems'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - localhost:9093
+
+# Load alert rules
+rule_files:
+  - /opt/topems/config/alerts.yml
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # TOPEMS Portal (API Gateway)
+  - job_name: 'topems-portal'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+
+  # Unified Core Service
+  - job_name: 'topems-unified-core'
+    static_configs:
+      - targets: ['localhost:9091']
+    metrics_path: '/metrics'
+
+  # AI Service
+  - job_name: 'topems-ai'
+    static_configs:
+      - targets: ['localhost:9092']
+
+  # Analytics Service
+  - job_name: 'topems-analytics'
+    static_configs:
+      - targets: ['localhost:9093']
+
+  # Manufacturing Service
+  - job_name: 'topems-manufacturing'
+    static_configs:
+      - targets: ['localhost:9094']
+
+  # Quality Assurance Service
+  - job_name: 'topems-quality-assurance'
+    static_configs:
+      - targets: ['localhost:9095']
+
+  # HRM Service
+  - job_name: 'topems-hrm'
+    static_configs:
+      - targets: ['localhost:9096']
+
+  # CRM Service
+  - job_name: 'topems-crm'
+    static_configs:
+      - targets: ['localhost:9097']
+
+  # PM Service
+  - job_name: 'topems-pm'
+    static_configs:
+      - targets: ['localhost:9098']
+
+  # ERP Service
+  - job_name: 'topems-erp'
+    static_configs:
+      - targets: ['localhost:9099']
+
+  # GIS Service
+  - job_name: 'topems-gis'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  # RS Service
+  - job_name: 'topems-rs'
+    static_configs:
+      - targets: ['localhost:9101']
+
+  # SCM Service
+  - job_name: 'topems-scm'
+    static_configs:
+      - targets: ['localhost:9102']
+
+  # WMS Service
+  - job_name: 'topems-wms'
+    static_configs:
+      - targets: ['localhost:9103']
+
+  # Mobile Service
+  - job_name: 'topems-mobile'
+    static_configs:
+      - targets: ['localhost:9104']
+
+  # Monitor Service
+  - job_name: 'topems-monitor'
+    static_configs:
+      - targets: ['localhost:9105']
+
+  # PostgreSQL metrics (if postgres_exporter installed)
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['localhost:9187']
+
+  # Redis metrics (if redis_exporter installed)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
+
+  # Node metrics (node_exporter)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']

@@ -47,11 +47,11 @@ import type {
   MaintenanceRecord,
   CreateMaintenanceRecordRequest,
   LimsStatistics,
-} from "../api/lims";
-import { limsApi } from "../api/lims";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-import { PageHeader } from "../components/templates/PageHeader";
+} from "@/api/lims";
+import { limsApi } from "@/api/lims";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { PageHeader } from "@/components/templates/PageHeader";
 
 const LimsInstrumentPage: React.FC = () => {
   const navigate = useNavigate();

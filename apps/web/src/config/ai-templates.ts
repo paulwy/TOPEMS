@@ -1,4 +1,4 @@
-import type { AITemplate } from "../types/ai";
+import type { AITemplate } from "@/types/ai";
 
 export const AI_TEMPLATES: Record<string, AITemplate> = {
   "meeting-minutes": {

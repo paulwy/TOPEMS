@@ -9,7 +9,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { pmApi } from "../api/pm";
+import { pmApi } from "@/api/pm";
 import {
   Button,
   Card,
@@ -25,8 +25,8 @@ import {
   AITextOptimizer,
   AIFormValidator,
   AIDataCompleter,
-} from "../components/ai";
-import type { CompletionItem } from "../types/ai";
+} from "@/components/ai";
+import type { CompletionItem } from "@/types/ai";
 import {
   CardTitle,
   Label,
@@ -34,7 +34,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "../components/ui/shadcn";
+} from "@/components/ui/shadcn";
 
 type ProjectType =
   | "RESEARCH"

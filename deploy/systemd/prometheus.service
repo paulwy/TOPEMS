@@ -1,0 +1,28 @@
+[Unit]
+Description=Prometheus Monitoring System
+Documentation=https://prometheus.io/docs/
+After=network.target
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+ExecStart=/usr/local/bin/prometheus \
+  --config.file=/opt/topems/config/prometheus.yml \
+  --storage.tsdb.path=/opt/topems/data/prometheus \
+  --web.listen-address=:9090 \
+  --web.external-url=http://localhost:9090
+Restart=on-failure
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=prometheus
+
+NoNewPrivileges=true
+ReadWritePaths=/opt/topems/data/prometheus
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

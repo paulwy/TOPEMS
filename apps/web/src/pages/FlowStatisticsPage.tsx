@@ -27,7 +27,7 @@ import {
   GitBranch,
   AlertCircle,
 } from "lucide-react";
-import { flowApi } from "../api/flow";
+import { flowApi } from "@/api/flow";
 import { useAppStore } from "../store";
 
 interface Statistics {

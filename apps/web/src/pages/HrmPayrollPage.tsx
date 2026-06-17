@@ -24,11 +24,11 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-import { StatusBadge } from "../components/hrm/StatusBadge";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { StatusBadge } from "@/components/hrm/StatusBadge";
 import {
   payrollApi,
   payrollItemApi,
@@ -38,7 +38,7 @@ import {
   type PayrollItem,
   type Employee,
   type SalaryAdjustment,
-} from "../api/hrm";
+} from "@/api/hrm";
 
 interface PayrollSummary {
   total_employees: number;

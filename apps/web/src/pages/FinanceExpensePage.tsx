@@ -15,7 +15,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { expenseApi, type Expense } from "../api/erp";
+import { expenseApi, type Expense } from "@/api/erp";
 import {
   employeeApi,
   departmentApi,
@@ -23,14 +23,14 @@ import {
   type Employee,
   type Department,
   type Company,
-} from "../api/hrm";
+} from "@/api/hrm";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 import type { OrganizationFilterValue } from "@/components/ui/OrganizationFilter";
 import OrganizationFilter from "@/components/ui/OrganizationFilter";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
 
 import {
   Button,

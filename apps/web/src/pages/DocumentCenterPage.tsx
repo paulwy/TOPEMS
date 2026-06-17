@@ -24,8 +24,8 @@ import {
   FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
 import { Box, Typography } from "@mui/material";
 
 interface Document {

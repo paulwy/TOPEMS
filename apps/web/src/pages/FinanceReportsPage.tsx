@@ -42,7 +42,7 @@ import {
   type ExpenseAnalysis,
   type ProfitAnalysis,
   type FinancialOverview,
-} from "../api/erp";
+} from "@/api/erp";
 import { useAppStore } from "../store";
 import {
   Box,
@@ -65,7 +65,7 @@ import {
 } from "@mui/material";
 import OrganizationFilter, {
   type OrganizationFilterValue,
-} from "../components/ui/OrganizationFilter";
+} from "@/components/ui/OrganizationFilter";
 import { BarChart } from "@/components/charts/BarChart";
 import { LineChart } from "@/components/charts/LineChart";
 import { PieChart as RechartsPieChart } from "@/components/charts/PieChart";

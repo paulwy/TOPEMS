@@ -12,7 +12,7 @@ import Box from "@mui/material/Box";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import { AI_TEMPLATES, getAITemplatesList } from "../../config/ai-templates";
-import type { AITemplate } from "../../types/ai";
+import type { AITemplate } from "@/types/ai";
 
 export interface AIDocumentGeneratorProps {
   isOpen: boolean;

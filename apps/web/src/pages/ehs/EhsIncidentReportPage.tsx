@@ -33,10 +33,10 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ehsApi } from "../../api/ehs";
-import type { Incident, IncidentAction } from "../../api/ehs";
+import { ehsApi } from "@/api/ehs";
+import type { Incident, IncidentAction } from "@/api/ehs";
 import { toast } from "react-toastify";
 
 const EhsIncidentReportPage: React.FC = () => {

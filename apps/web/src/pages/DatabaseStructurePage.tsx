@@ -56,7 +56,7 @@ import {
   type DbChange,
   type DbColumnDefinition,
   type SqlPreview,
-} from "../api/system";
+} from "@/api/system";
 
 const DatabaseStructurePage: React.FC = () => {
   const navigate = useNavigate();

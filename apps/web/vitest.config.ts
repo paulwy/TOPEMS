@@ -8,12 +8,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      // 解决 react-transition-group ES modules 问题
-      'react-transition-group': path.resolve(__dirname, './node_modules/react-transition-group/cjs/index.js'),
-      'react-transition-group/TransitionGroupContext': path.resolve(__dirname, './node_modules/react-transition-group/cjs/TransitionGroupContext.js'),
-      // 解决 MUI ES modules 问题
-      '@mui/material': path.resolve(__dirname, './node_modules/@mui/material'),
-      '@mui/lab': path.resolve(__dirname, './node_modules/@mui/lab'),
     },
   },
   test: {
@@ -25,11 +19,9 @@ export default defineConfig({
     ],
     include: ['src/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
     css: false,
-    deps: {
-      optimizer: {
-        web: {
-          include: ['@mui/material', '@mui/lab', '@emotion/react', '@emotion/styled', 'react-transition-group'],
-        },
+    resolve: {
+      alias: {
+        'react-transition-group/TransitionGroupContext': 'react-transition-group/cjs/TransitionGroupContext.js',
       },
     },
   },

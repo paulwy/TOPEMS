@@ -20,10 +20,10 @@ import {
   Search,
   Clock,
 } from "lucide-react";
-import { DataTable } from "../../components/DataTable";
+import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { pdmApi } from "../../api/pdm";
-import type { ProductionProcess } from "../../api/pdm";
+import { pdmApi } from "@/api/pdm";
+import type { ProductionProcess } from "@/api/pdm";
 import { toast } from "react-toastify";
 
 const PdmProcessPage: React.FC = () => {

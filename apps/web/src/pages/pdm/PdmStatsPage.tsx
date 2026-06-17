@@ -13,10 +13,10 @@ import {
   Activity,
   CheckCircle,
 } from "lucide-react";
-import { MetricCard } from "../../components/MetricCard";
-import { StatsChart } from "../../components/StatsChart";
-import { pdmApi } from "../../api/pdm";
-import type { ProductionProcess, ProductionStep, ProductionFormula, ProductionBatch } from "../../api/pdm";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { pdmApi } from "@/api/pdm";
+import type { ProductionProcess, ProductionStep, ProductionFormula, ProductionBatch } from "@/api/pdm";
 
 const PdmStatsPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);

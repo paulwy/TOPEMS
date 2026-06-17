@@ -10,8 +10,8 @@ import {
   Settings,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { budgetApi, type Budget } from "../api/erp";
-import { departmentApi, type Department } from "../api/hrm";
+import { budgetApi, type Budget } from "@/api/erp";
+import { departmentApi, type Department } from "@/api/hrm";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
@@ -41,7 +41,7 @@ import {
 import { ModeToggle } from "@/components/ModeToggle";
 import OrganizationFilter, {
   type OrganizationFilterValue,
-} from "../components/ui/OrganizationFilter";
+} from "@/components/ui/OrganizationFilter";
 
 const BudgetManagementPage: React.FC = () => {
   const navigate = useNavigate();

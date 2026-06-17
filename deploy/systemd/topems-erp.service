@@ -1,0 +1,29 @@
+[Unit]
+Description=TOPEMS ERP Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/erp
+ExecStart=/opt/topems/bin/erp-service
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/erp.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-erp
+
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/topems/logs
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

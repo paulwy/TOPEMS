@@ -230,15 +230,14 @@ export const topNavItems: NavGroup[] = [
           { label: "用户管理", path: "/iam/users" },
           { label: "角色管理", path: "/iam/roles" },
           { label: "权限配置", path: "/iam/permissions" },
+          { label: "插件市场", path: "/plugins" },
           { label: "通知管理", path: "/notifications" },
           { label: "系统集成", path: "/integration" },
         ],
       },
       {
         label: "帮助",
-        children: [
-          { label: "帮助中心", path: "/help" },
-        ],
+        children: [{ label: "帮助中心", path: "/help" }],
       },
     ],
   },
@@ -422,9 +421,7 @@ export const moduleTabsConfig: ModuleTabsConfig[] = [
   },
   {
     module: "gis",
-    tabs: [
-      { label: "概览", path: "/gis", pinned: true },
-    ],
+    tabs: [{ label: "概览", path: "/gis", pinned: true }],
   },
   {
     module: "ai",
@@ -444,6 +441,7 @@ export const moduleTabsConfig: ModuleTabsConfig[] = [
       { label: "用户管理", path: "/iam/users" },
       { label: "角色管理", path: "/iam/roles" },
       { label: "权限配置", path: "/iam/permissions" },
+      { label: "插件市场", path: "/plugins" },
       { label: "通知管理", path: "/notifications" },
       { label: "系统集成", path: "/integration" },
     ],
@@ -502,6 +500,7 @@ export function getModuleFromPath(path: string): string | null {
     users: "iam",
     roles: "iam",
     permissions: "iam",
+    plugins: "iam",
     audit: "iam",
     system: "iam",
     dictionaries: "iam",

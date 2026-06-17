@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
-import type { SummarizeRequest, SummarizeResponse } from "../../types/ai";
+import type { SummarizeRequest, SummarizeResponse } from "@/types/ai";
 
 export interface AISummarizerProps {
   isOpen: boolean;

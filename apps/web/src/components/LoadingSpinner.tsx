@@ -39,11 +39,11 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   return (
     <div style={{ position: "relative" }}>
       {children}
-      <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(255, 255, 255, 0.8)", dark: { backgroundColor: "rgba(55, 65, 81, 0.8)" }, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+      <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(255, 255, 255, 0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
         <div style={{ textAlign: "center" }}>
           <LoadingSpinner size="lg" />
           {message && (
-            <p style={{ marginTop: "16px", color: "#6b7280", dark: { color: "#d1d5db" } }}>{message}</p>
+            <p style={{ marginTop: "16px", color: "#6b7280" }}>{message}</p>
           )}
         </div>
       </div>

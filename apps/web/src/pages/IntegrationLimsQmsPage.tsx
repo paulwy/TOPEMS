@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button } from "@mui/material";
-import { integrationApi } from "../api/integration";
+import { integrationApi } from "@/api/integration";
 import type {
   LimsQmsSync,
   CreateLimsQmsSyncRequest,
-} from "../api/integration";
+} from "@/api/integration";
 
 const IntegrationLimsQmsPage: React.FC = () => {
   const [syncs, setSyncs] = useState<LimsQmsSync[]>([]);

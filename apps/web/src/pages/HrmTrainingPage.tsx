@@ -27,9 +27,9 @@ import {
   type TrainingCourse,
   type TrainingRecord,
   type Employee,
-} from "../api/hrm";
-import { useNotification } from "../hooks/useNotification";
-import { PageHeader } from "../components/templates";
+} from "@/api/hrm";
+import { useNotification } from "@/hooks/useNotification";
+import { PageHeader } from "@/components/templates";
 
 import {
   Button,

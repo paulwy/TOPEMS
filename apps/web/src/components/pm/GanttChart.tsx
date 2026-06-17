@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronRight, ChevronLeft, ZoomIn, ZoomOut } from "lucide-react";
-import type { GanttPhase, GanttMilestone } from "../../api/pm";
+import type { GanttPhase, GanttMilestone } from "@/api/pm";
 
 interface GanttChartProps {
   phases: GanttPhase[];

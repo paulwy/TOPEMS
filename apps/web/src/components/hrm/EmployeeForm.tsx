@@ -1,12 +1,12 @@
 import React from "react";
-import { type Employee, type Department } from "../../api/hrm";
+import { type Employee, type Department } from "@/api/hrm";
 import {
   AIHelperButton,
   AICodeGenerator,
   AIDataCompleter,
   AIFormValidator,
 } from "../ai";
-import type { CompletionItem } from "../../types/ai";
+import type { CompletionItem } from "@/types/ai";
 
 import {
   Button,

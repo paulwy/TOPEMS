@@ -1,0 +1,29 @@
+[Unit]
+Description=TOPEMS SCM Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/scm
+ExecStart=/opt/topems/bin/scm-service
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/scm.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-scm
+
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/topems/logs
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

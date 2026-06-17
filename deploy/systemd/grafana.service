@@ -1,0 +1,27 @@
+[Unit]
+Description=Grafana Dashboard System
+Documentation=https://grafana.com/docs/
+After=network.target prometheus.service
+Wants=prometheus.service
+
+[Service]
+Type=simple
+User=grafana
+Group=grafana
+ExecStart=/usr/local/bin/grafana-server \
+  --homepath=/usr/share/grafana \
+  --config=/opt/topems/config/grafana.ini
+Restart=on-failure
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=grafana
+
+NoNewPrivileges=true
+ReadWritePaths=/opt/topems/data/grafana /var/log/grafana
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

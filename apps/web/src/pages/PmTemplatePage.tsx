@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, CardContent, CardHeader, TextField, InputAdornment, Typography, Box } from "@mui/material";
-import type { ProjectTemplate } from "../components/pm/ProjectTemplateCard";
-import ProjectTemplateCard from "../components/pm/ProjectTemplateCard";
-import ProjectTemplateModal from "../components/pm/ProjectTemplateModal";
-import { pmApi } from "../api/pm";
-import type { CreateProjectRequest } from "../api/pm";
+import type { ProjectTemplate } from "@/components/pm/ProjectTemplateCard";
+import ProjectTemplateCard from "@/components/pm/ProjectTemplateCard";
+import ProjectTemplateModal from "@/components/pm/ProjectTemplateModal";
+import { pmApi } from "@/api/pm";
+import type { CreateProjectRequest } from "@/api/pm";
 
 const PmTemplatePage: React.FC = () => {
   const navigate = useNavigate();

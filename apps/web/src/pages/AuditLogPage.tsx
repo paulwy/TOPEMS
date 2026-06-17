@@ -27,10 +27,10 @@ import {
   Filter,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { AuditLog as LimsAuditLog } from "../api/lims";
-import { auditLimsApi } from "../api/lims";
-import type { AuditLog as RsAuditLog } from "../api/rs";
-import { auditRsApi } from "../api/rs";
+import type { AuditLog as LimsAuditLog } from "@/api/lims";
+import { auditLimsApi } from "@/api/lims";
+import type { AuditLog as RsAuditLog } from "@/api/rs";
+import { auditRsApi } from "@/api/rs";
 import { useAppStore } from "../store";
 
 import { ModeToggle } from "@/components/ModeToggle";

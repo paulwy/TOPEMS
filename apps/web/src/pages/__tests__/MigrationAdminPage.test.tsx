@@ -9,16 +9,16 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
-import { ToastProvider } from "../../components/ToastProvider";
-import MigrationAdminPage from "../../pages/MigrationAdminPage";
-import type { MigrationService, MigrationStatus } from "../../api/migration";
+import { ToastProvider } from "@/components/ToastProvider";
+import MigrationAdminPage from "@/pages/MigrationAdminPage";
+import type { MigrationService, MigrationStatus } from "@/api/migration";
 
 const mockListServices = vi.fn();
 const mockApplyMigration = vi.fn();
 const mockRollbackMigration = vi.fn();
 const mockGetMigrationStatus = vi.fn();
 
-vi.mock("../../api/migration", () => ({
+vi.mock("@/api/migration", () => ({
   migrationApi: {
     listServices: (...args: unknown[]) => mockListServices(...args),
     applyMigration: (...args: unknown[]) => mockApplyMigration(...args),

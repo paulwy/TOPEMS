@@ -45,10 +45,10 @@ import {
   type Employee,
   type PaginatedResult,
   type ListParams,
-} from "../api/hrm";
+} from "@/api/hrm";
 import { useAppStore } from "../store";
-import type { TreeNode } from "../components/TreeView";
-import TreeView from "../components/TreeView";
+import type { TreeNode } from "@/components/TreeView";
+import TreeView from "@/components/TreeView";
 
 const HrmCompanyPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);

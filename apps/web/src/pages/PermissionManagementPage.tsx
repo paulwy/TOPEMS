@@ -27,7 +27,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { authApi, type Permission } from "../api/iam";
+import { authApi, type Permission } from "@/api/iam";
 import { useAppStore } from "../store";
 import { ModeToggle } from "@/components/ModeToggle";
 

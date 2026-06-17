@@ -23,7 +23,7 @@ import {
   vehicleRequestApi,
   type Vehicle,
   type VehicleRequest,
-} from "../api/erp";
+} from "@/api/erp";
 import { useAppStore } from "../store";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";

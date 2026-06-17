@@ -37,11 +37,11 @@ import {
   InputAdornment,
   Chip,
 } from "@mui/material";
-import { useNotification } from "../hooks/useNotification";
-import { NotificationContainer } from "../components/NotificationContainer";
-import { MetricCard } from "../components/MetricCard";
-import { StatsChart } from "../components/StatsChart";
-import { StatusBadge } from "../components/hrm/StatusBadge";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/NotificationContainer";
+import { MetricCard } from "@/components/MetricCard";
+import { StatsChart } from "@/components/StatsChart";
+import { StatusBadge } from "@/components/hrm/StatusBadge";
 
 interface AttendanceRecord {
   id: string;

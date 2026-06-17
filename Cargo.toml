@@ -1,36 +1,48 @@
 [workspace]
 members = [
     "lib",
-    "svc/file",
-    "svc/iam",
-    "svc/doc",
-    "svc/flow",
+    # [核心平台] 统一核心平台
+    "svc/unified-core",      # IAM + Doc + Flow + File + Communication
+    # [已整合] 统一服务
+    "svc/manufacturing",     # mes + pdm
+    "svc/quality-assurance", # qms + lims + ehs
+    "svc/analytics",        # bi + report
+    # [独立服务]
     "svc/ai",
     "svc/erp",
     "svc/hrm",
     "svc/crm",
-    "svc/lims",
     "svc/pm",
-    "svc/pdm",
-    "svc/qms",
     "svc/rs",
     "svc/scm",
     "svc/srm",
     "svc/wms",
-    "svc/ehs",
     "svc/gis",
-    "svc/im",
-    "svc/mail",
-    "svc/mes",
-    "svc/portal",
-    "svc/notification",
-    "svc/report",
-    "svc/bi",
     "svc/integration",
     "svc/mobile",
     "svc/monitor",
 ]
 resolver = "2"
+
+# ================================================
+# [已整合服务 - 待删除]
+# ================================================
+# svc/notification   → svc/unified-core
+# svc/im             → svc/unified-core
+# svc/mail           → svc/unified-core
+# svc/mes            → svc/manufacturing
+# svc/pdm            → svc/manufacturing
+# svc/qms            → svc/quality-assurance
+# svc/lims           → svc/quality-assurance
+# svc/ehs            → svc/quality-assurance
+# svc/bi             → svc/analytics
+# svc/report         → svc/analytics
+# svc/iam            → svc/unified-core (已整合)
+# svc/doc            → svc/unified-core (已整合)
+# svc/flow           → svc/unified-core (已整合)
+# svc/file           → svc/unified-core (已整合)
+# svc/communication  → svc/unified-core (已整合)
+# ================================================
 
 [workspace.package]
 version = "0.1.0"
