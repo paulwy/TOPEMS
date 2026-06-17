@@ -1,0 +1,75 @@
+code: mes
+name: 制造执行系统
+version: 1.0.0
+description: MES 制造执行系统，包含生产工单、生产工艺、生产记录、设备管理、工位管理等模块
+plugin_type: business
+
+deployment:
+  type: standalone
+  port: 8030
+  base_path: /api/mfg
+
+permissions:
+  # 生产工单
+  - code: mes:production_order:read
+    name: 查看生产工单
+    resource_type: production_order
+    action: read
+  - code: mes:production_order:write
+    name: 管理生产工单
+    resource_type: production_order
+    action: write
+  - code: mes:production_order:start
+    name: 启动生产工单
+    resource_type: production_order
+    action: start
+  - code: mes:production_order:complete
+    name: 完成生产工单
+    resource_type: production_order
+    action: complete
+  - code: mes:production_order:cancel
+    name: 取消生产工单
+    resource_type: production_order
+    action: cancel
+
+  # 生产工艺
+  - code: mes:process:read
+    name: 查看生产工艺
+    resource_type: process
+    action: read
+  - code: mes:process:write
+    name: 管理生产工艺
+    resource_type: process
+    action: write
+
+  # 生产记录
+  - code: mes:record:read
+    name: 查看生产记录
+    resource_type: record
+    action: read
+  - code: mes:record:write
+    name: 管理生产记录
+    resource_type: record
+    action: write
+
+  # 设备管理
+  - code: mes:equipment:read
+    name: 查看设备
+    resource_type: equipment
+    action: read
+  - code: mes:equipment:write
+    name: 管理设备
+    resource_type: equipment
+    action: write
+
+  # 工位管理
+  - code: mes:work_station:read
+    name: 查看工位
+    resource_type: work_station
+    action: read
+  - code: mes:work_station:write
+    name: 管理工位
+    resource_type: work_station
+    action: write
+
+dependencies: []

@@ -1,0 +1,54 @@
+code: bi
+name: 商业智能
+version: 1.0.0
+description: BI 商业智能系统，包含数据分析、仪表盘、数据源、可视化、报表等模块
+plugin_type: business
+
+deployment:
+  type: standalone
+  port: 8044
+  base_path: /api/bi
+
+permissions:
+  - code: bi:analysis:read
+    name: 查看分析
+    resource_type: analysis
+    action: read
+  - code: bi:analysis:write
+    name: 管理分析
+    resource_type: analysis
+    action: write
+  - code: bi:dashboard:read
+    name: 查看仪表盘
+    resource_type: dashboard
+    action: read
+  - code: bi:dashboard:write
+    name: 管理仪表盘
+    resource_type: dashboard
+    action: write
+  - code: bi:datasource:read
+    name: 查看数据源
+    resource_type: datasource
+    action: read
+  - code: bi:datasource:write
+    name: 管理数据源
+    resource_type: datasource
+    action: write
+  - code: bi:visualization:read
+    name: 查看可视化
+    resource_type: visualization
+    action: read
+  - code: bi:visualization:write
+    name: 管理可视化
+    resource_type: visualization
+    action: write
+  - code: bi:widget:read
+    name: 查看组件
+    resource_type: widget
+    action: read
+  - code: bi:widget:write
+    name: 管理组件
+    resource_type: widget
+    action: write
+
+dependencies: []

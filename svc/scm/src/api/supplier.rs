@@ -16,11 +16,11 @@ use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/v1/suppliers",
+            "/api/scm/suppliers",
             get(list_suppliers).post(create_supplier),
         )
         .route(
-            "/api/v1/suppliers/{id}",
+            "/api/scm/suppliers/{id}",
             get(get_supplier)
                 .put(update_supplier)
                 .delete(delete_supplier),

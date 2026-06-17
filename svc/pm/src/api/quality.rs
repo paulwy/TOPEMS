@@ -17,19 +17,19 @@ use crate::models::quality::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/v1/projects/{project_id}/quality-checks",
+            "/api/pm/projects/{project_id}/quality-checks",
             get(get_project_quality_checks).post(create_quality_check),
         )
         .route(
-            "/api/v1/quality-checks/{id}",
+            "/api/pm/quality-checks/{id}",
             get(get_quality_check).put(update_quality_check),
         )
         .route(
-            "/api/v1/projects/{project_id}/defects",
+            "/api/pm/projects/{project_id}/defects",
             get(get_project_defects).post(create_defect),
         )
         .route(
-            "/api/v1/defects/{id}",
+            "/api/pm/defects/{id}",
             get(get_defect).put(update_defect).delete(delete_defect),
         )
         .with_state(pool)

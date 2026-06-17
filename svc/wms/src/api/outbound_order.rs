@@ -19,7 +19,7 @@ where
 {
     Router::new()
         .route(
-            "/api/v1/outbound-orders",
+            "/api/wms/outbound-orders",
             get(list_outbound_orders).post(create_outbound_order),
         )
         .route(

@@ -101,6 +101,8 @@ async fn main() {
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("manufacturing-service")))
         .route("/api/info", get(|| get_api_info_handler("manufacturing-service")))
+        .route("/api/plugins/info", get(modules::mes::plugin::get_plugin_info))
+        .route("/api/plugins/health", get(modules::mes::plugin::plugin_health_check))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes (auth required)

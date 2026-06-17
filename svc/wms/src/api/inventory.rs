@@ -31,7 +31,7 @@ where
 {
     Router::new()
         .route(
-            "/api/v1/inventory",
+            "/api/wms/inventory",
             get(list_inventory).post(create_inventory),
         )
         .route(

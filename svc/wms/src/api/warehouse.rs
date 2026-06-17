@@ -19,7 +19,7 @@ where
 {
     Router::new()
         .route(
-            "/api/v1/warehouses",
+            "/api/wms/warehouses",
             get(list_warehouses).post(create_warehouse),
         )
         .route(

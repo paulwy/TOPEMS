@@ -26,7 +26,7 @@ pub struct ListAuditLogsQuery {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/audit-logs", get(list_audit_logs))
+        .route("/api/scm/audit-logs", get(list_audit_logs))
         .route("/api/v1/audit-logs/{id}", get(get_audit_log))
 }
 

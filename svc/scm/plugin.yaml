@@ -1,0 +1,61 @@
+code: scm
+name: 供应链管理
+version: 1.0.0
+description: SCM 供应链管理系统，包含供应商管理、采购订单管理、采购供应商评价等模块
+plugin_type: business
+
+deployment:
+  type: standalone
+  port: 8040
+  base_path: /api/scm
+
+permissions:
+  # 供应商管理
+  - code: scm:supplier:read
+    name: 查看供应商
+    resource_type: supplier
+    action: read
+  - code: scm:supplier:write
+    name: 管理供应商
+    resource_type: supplier
+    action: write
+  - code: scm:supplier:delete
+    name: 删除供应商
+    resource_type: supplier
+    action: delete
+
+  # 采购订单
+  - code: scm:purchase_order:read
+    name: 查看采购订单
+    resource_type: purchase_order
+    action: read
+  - code: scm:purchase_order:write
+    name: 管理采购订单
+    resource_type: purchase_order
+    action: write
+  - code: scm:purchase_order:approve
+    name: 审批采购订单
+    resource_type: purchase_order
+    action: approve
+
+  # 采购明细
+  - code: scm:purchase_item:read
+    name: 查看采购明细
+    resource_type: purchase_item
+    action: read
+  - code: scm:purchase_item:write
+    name: 管理采购明细
+    resource_type: purchase_item
+    action: write
+
+  # 供应商评价
+  - code: scm:supplier_evaluation:read
+    name: 查看供应商评价
+    resource_type: supplier_evaluation
+    action: read
+  - code: scm:supplier_evaluation:write
+    name: 管理供应商评价
+    resource_type: supplier_evaluation
+    action: write
+
+dependencies: []

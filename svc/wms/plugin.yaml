@@ -1,0 +1,95 @@
+code: wms
+name: 仓储管理
+version: 1.0.0
+description: WMS 仓储管理系统，包含仓库管理、库存管理、入库管理、出库管理、库位管理、库存盘点、库存调拨等模块
+plugin_type: business
+
+deployment:
+  type: standalone
+  port: 8042
+  base_path: /api/wms
+
+permissions:
+  # 仓库管理
+  - code: wms:warehouse:read
+    name: 查看仓库
+    resource_type: warehouse
+    action: read
+  - code: wms:warehouse:write
+    name: 管理仓库
+    resource_type: warehouse
+    action: write
+
+  # 库位管理
+  - code: wms:location:read
+    name: 查看库位
+    resource_type: location
+    action: read
+  - code: wms:location:write
+    name: 管理库位
+    resource_type: location
+    action: write
+
+  # 库存管理
+  - code: wms:inventory:read
+    name: 查看库存
+    resource_type: inventory
+    action: read
+  - code: wms:inventory:write
+    name: 管理库存
+    resource_type: inventory
+    action: write
+
+  # 入库管理
+  - code: wms:inbound_order:read
+    name: 查看入库单
+    resource_type: inbound_order
+    action: read
+  - code: wms:inbound_order:write
+    name: 管理入库单
+    resource_type: inbound_order
+    action: write
+  - code: wms:inbound_order:approve
+    name: 审批入库单
+    resource_type: inbound_order
+    action: approve
+
+  # 出库管理
+  - code: wms:outbound_order:read
+    name: 查看出库单
+    resource_type: outbound_order
+    action: read
+  - code: wms:outbound_order:write
+    name: 管理出库单
+    resource_type: outbound_order
+    action: write
+  - code: wms:outbound_order:approve
+    name: 审批出库单
+    resource_type: outbound_order
+    action: approve
+
+  # 库存盘点
+  - code: wms:stock_take:read
+    name: 查看盘点
+    resource_type: stock_take
+    action: read
+  - code: wms:stock_take:write
+    name: 管理盘点
+    resource_type: stock_take
+    action: write
+
+  # 库存调拨
+  - code: wms:transfer:read
+    name: 查看调拨
+    resource_type: transfer
+    action: read
+  - code: wms:transfer:write
+    name: 管理调拨
+    resource_type: transfer
+    action: write
+  - code: wms:transfer:approve
+    name: 审批调拨
+    resource_type: transfer
+    action: approve
+
+dependencies: []

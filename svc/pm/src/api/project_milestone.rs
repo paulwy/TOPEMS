@@ -15,11 +15,11 @@ use crate::models::project_milestone::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
-            "/api/v1/projects/{project_id}/milestones",
+            "/api/pm/projects/{project_id}/milestones",
             get(list_milestones).post(create_milestone),
         )
         .route(
-            "/api/v1/projects/{project_id}/milestones/{id}",
+            "/api/pm/projects/{project_id}/milestones/{id}",
             get(get_milestone)
                 .put(update_milestone)
                 .delete(delete_milestone),
@@ -29,7 +29,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    path = "/api/v1/projects/:project_id/milestones",
+    path = "/api/pm/projects/:project_id/milestones",
     tag = "project_milestones",
     responses(
         (status = 200, description = "获取项目里程碑列表成功", body = ApiResponse<Vec<ProjectMilestone>>),
@@ -58,7 +58,7 @@ async fn list_milestones(
 
 #[utoipa::path(
     post,
-    path = "/api/v1/projects/:project_id/milestones",
+    path = "/api/pm/projects/:project_id/milestones",
     tag = "project_milestones",
     request_body = CreateMilestoneRequest,
     responses(
@@ -108,7 +108,7 @@ async fn create_milestone(
 
 #[utoipa::path(
     get,
-    path = "/api/v1/projects/:project_id/milestones/:id",
+    path = "/api/pm/projects/:project_id/milestones/:id",
     tag = "project_milestones",
     responses(
         (status = 200, description = "获取项目里程碑成功", body = ApiResponse<ProjectMilestone>),
@@ -140,7 +140,7 @@ async fn get_milestone(
 
 #[utoipa::path(
     put,
-    path = "/api/v1/projects/:project_id/milestones/:id",
+    path = "/api/pm/projects/:project_id/milestones/:id",
     tag = "project_milestones",
     request_body = UpdateMilestoneRequest,
     responses(
@@ -194,7 +194,7 @@ async fn update_milestone(
 
 #[utoipa::path(
     delete,
-    path = "/api/v1/projects/:project_id/milestones/:id",
+    path = "/api/pm/projects/:project_id/milestones/:id",
     tag = "project_milestones",
     responses(
         (status = 200, description = "删除项目里程碑成功", body = ApiResponse<bool>),

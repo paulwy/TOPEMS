@@ -4,6 +4,7 @@ use topems_shared::AuthState;
 
 pub mod audit;
 pub mod openapi;
+pub mod plugin;
 pub mod purchase_item;
 pub mod purchase_order;
 pub mod supplier;
@@ -34,4 +35,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(purchase_item::create_routes())
         .merge(supplier_evaluation::create_routes())
         .merge(audit::create_routes())
+        .merge(plugin::create_routes())
 }

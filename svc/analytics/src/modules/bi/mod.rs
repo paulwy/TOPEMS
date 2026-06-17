@@ -1,10 +1,11 @@
 //! BI module - Business Intelligence
 
-pub mod dashboard;
-pub mod widget;
-pub mod datasource;
-pub mod visualization;
 pub mod analysis;
+pub mod dashboard;
+pub mod datasource;
+pub mod plugin;
+pub mod visualization;
+pub mod widget;
 
 use sqlx::PgPool;
 

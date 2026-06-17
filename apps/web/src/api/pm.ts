@@ -714,37 +714,37 @@ export const pmApi = {
       if (params?.page) query.set("page", params.page.toString());
       if (params?.page_size)
         query.set("page_size", params.page_size.toString());
-      return apiClient.pm.get(`/api/v1/projects?${query.toString()}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects?${query.toString()}`);
     },
 
     create: async (data: CreateProjectRequest) => {
-      return apiClient.pm.post("/api/v1/projects", data);
+      return apiClient.pm.post("/api/plugins/pm/api/pm/projects", data);
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${id}`);
     },
 
     update: async (id: string, data: UpdateProjectRequest) => {
-      return apiClient.pm.put(`/api/v1/projects/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/projects/${id}`, data);
     },
 
     delete: async (id: string) => {
-      return apiClient.pm.delete(`/api/v1/projects/${id}`);
+      return apiClient.pm.delete(`/api/plugins/pm/api/pm/projects/${id}`);
     },
 
     dashboard: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${id}/dashboard`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${id}/dashboard`);
     },
 
     gantt: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${id}/gantt`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${id}/gantt`);
     },
   },
 
   phases: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/phases`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/phases`);
     },
 
     create: async (
@@ -757,11 +757,11 @@ export const pmApi = {
         predecessor_ids?: string[];
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/phases`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/phases`, data);
     },
 
     get: async (projectId: string, id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/phases/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/phases/${id}`);
     },
 
     update: async (
@@ -779,19 +779,19 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.put(
-        `/api/v1/projects/${projectId}/phases/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/phases/${id}`,
         data,
       );
     },
 
     delete: async (projectId: string, id: string) => {
-      return apiClient.pm.delete(`/api/v1/projects/${projectId}/phases/${id}`);
+      return apiClient.pm.delete(`/api/plugins/pm/api/pm/projects/${projectId}/phases/${id}`);
     },
   },
 
   milestones: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/milestones`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/milestones`);
     },
 
     create: async (
@@ -805,13 +805,13 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.post(
-        `/api/v1/projects/${projectId}/milestones`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/milestones`,
         data,
       );
     },
 
     get: async (projectId: string, id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/milestones/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/milestones/${id}`);
     },
 
     update: async (
@@ -827,21 +827,21 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.put(
-        `/api/v1/projects/${projectId}/milestones/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/milestones/${id}`,
         data,
       );
     },
 
     delete: async (projectId: string, id: string) => {
       return apiClient.pm.delete(
-        `/api/v1/projects/${projectId}/milestones/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/milestones/${id}`,
       );
     },
   },
 
   members: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/members`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/members`);
     },
 
     create: async (
@@ -854,11 +854,11 @@ export const pmApi = {
         end_date?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/members`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/members`, data);
     },
 
     get: async (projectId: string, id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/members/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/members/${id}`);
     },
 
     update: async (
@@ -872,19 +872,19 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.put(
-        `/api/v1/projects/${projectId}/members/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/members/${id}`,
         data,
       );
     },
 
     delete: async (projectId: string, id: string) => {
-      return apiClient.pm.delete(`/api/v1/projects/${projectId}/members/${id}`);
+      return apiClient.pm.delete(`/api/plugins/pm/api/pm/projects/${projectId}/members/${id}`);
     },
   },
 
   resources: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/resources`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/resources`);
     },
 
     create: async (
@@ -900,11 +900,11 @@ export const pmApi = {
         created_by?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/resources`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/resources`, data);
     },
 
     get: async (projectId: string, id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/resources/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/resources/${id}`);
     },
 
     update: async (
@@ -921,21 +921,21 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.put(
-        `/api/v1/projects/${projectId}/resources/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/resources/${id}`,
         data,
       );
     },
 
     delete: async (projectId: string, id: string) => {
       return apiClient.pm.delete(
-        `/api/v1/projects/${projectId}/resources/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/resources/${id}`,
       );
     },
   },
 
   expenses: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/expenses`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/expenses`);
     },
 
     create: async (
@@ -957,11 +957,11 @@ export const pmApi = {
         created_by?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/expenses`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/expenses`, data);
     },
 
     get: async (projectId: string, id: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/expenses/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/expenses/${id}`);
     },
 
     update: async (
@@ -979,26 +979,26 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.put(
-        `/api/v1/projects/${projectId}/expenses/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/expenses/${id}`,
         data,
       );
     },
 
     delete: async (projectId: string, id: string) => {
       return apiClient.pm.delete(
-        `/api/v1/projects/${projectId}/expenses/${id}`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/expenses/${id}`,
       );
     },
   },
 
   benefits: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/benefits`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/benefits`);
     },
 
     analysis: async (projectId: string) => {
       return apiClient.pm.get(
-        `/api/v1/projects/${projectId}/benefits/analysis`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/benefits/analysis`,
       );
     },
 
@@ -1018,13 +1018,13 @@ export const pmApi = {
         created_by?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/benefits`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/benefits`, data);
     },
   },
 
   approval: {
     get: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/approval`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/approval`);
     },
 
     submit: async (
@@ -1034,12 +1034,12 @@ export const pmApi = {
         approver_id: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/approval`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/approval`, data);
     },
 
     action: async (projectId: string, data: ApprovalRequest) => {
       return apiClient.pm.post(
-        `/api/v1/projects/${projectId}/approval/action`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/approval/action`,
         data,
       );
     },
@@ -1047,11 +1047,11 @@ export const pmApi = {
 
   contracts: {
     list: async () => {
-      return apiClient.pm.get("/api/v1/contracts");
+      return apiClient.pm.get("/api/plugins/pm/api/pm/contracts");
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/contracts/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/contracts/${id}`);
     },
 
     create: async (data: {
@@ -1074,7 +1074,7 @@ export const pmApi = {
       description?: string;
       created_by?: string;
     }) => {
-      return apiClient.pm.post("/api/v1/contracts", data);
+      return apiClient.pm.post("/api/plugins/pm/api/pm/contracts", data);
     },
 
     update: async (
@@ -1096,28 +1096,28 @@ export const pmApi = {
         description?: string;
       },
     ) => {
-      return apiClient.pm.put(`/api/v1/contracts/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/contracts/${id}`, data);
     },
 
     delete: async (id: string) => {
-      return apiClient.pm.delete(`/api/v1/contracts/${id}`);
+      return apiClient.pm.delete(`/api/plugins/pm/api/pm/contracts/${id}`);
     },
 
     submit: async (id: string) => {
-      return apiClient.pm.post(`/api/v1/contracts/${id}/submit`);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/contracts/${id}/submit`);
     },
 
     approve: async (id: string) => {
-      return apiClient.pm.post(`/api/v1/contracts/${id}/approve`);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/contracts/${id}/approve`);
     },
 
     reject: async (id: string) => {
-      return apiClient.pm.post(`/api/v1/contracts/${id}/reject`);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/contracts/${id}/reject`);
     },
 
     milestones: {
       list: async (contractId: string) => {
-        return apiClient.pm.get(`/api/v1/contracts/${contractId}/milestones`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/contracts/${contractId}/milestones`);
       },
 
       create: async (
@@ -1132,7 +1132,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/contracts/${contractId}/milestones`,
+          `/api/plugins/pm/api/pm/contracts/${contractId}/milestones`,
           data,
         );
       },
@@ -1149,21 +1149,21 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.put(
-          `/api/v1/contracts/${contractId}/milestones/${milestoneId}`,
+          `/api/plugins/pm/api/pm/contracts/${contractId}/milestones/${milestoneId}`,
           data,
         );
       },
 
       delete: async (contractId: string, milestoneId: string) => {
         return apiClient.pm.delete(
-          `/api/v1/contracts/${contractId}/milestones/${milestoneId}`,
+          `/api/plugins/pm/api/pm/contracts/${contractId}/milestones/${milestoneId}`,
         );
       },
     },
 
     payments: {
       list: async (contractId: string) => {
-        return apiClient.pm.get(`/api/v1/contracts/${contractId}/payments`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/contracts/${contractId}/payments`);
       },
 
       create: async (
@@ -1177,7 +1177,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/contracts/${contractId}/payments`,
+          `/api/plugins/pm/api/pm/contracts/${contractId}/payments`,
           data,
         );
       },
@@ -1193,21 +1193,21 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.put(
-          `/api/v1/contracts/${contractId}/payments/${paymentId}`,
+          `/api/plugins/pm/api/pm/contracts/${contractId}/payments/${paymentId}`,
           data,
         );
       },
 
       delete: async (contractId: string, paymentId: string) => {
         return apiClient.pm.delete(
-          `/api/v1/contracts/${contractId}/payments/${paymentId}`,
+          `/api/plugins/pm/api/pm/contracts/${contractId}/payments/${paymentId}`,
         );
       },
     },
 
     projectContracts: {
       list: async (projectId: string) => {
-        return apiClient.pm.get(`/api/v1/projects/${projectId}/contracts`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/contracts`);
       },
 
       create: async (
@@ -1233,7 +1233,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/projects/${projectId}/contracts`,
+          `/api/plugins/pm/api/pm/projects/${projectId}/contracts`,
           data,
         );
       },
@@ -1242,11 +1242,11 @@ export const pmApi = {
 
   contractTemplates: {
     list: async () => {
-      return apiClient.pm.get("/api/v1/contract-templates");
+      return apiClient.pm.get("/api/plugins/pm/api/pm/contract-templates");
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/contract-templates/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/contract-templates/${id}`);
     },
 
     create: async (data: {
@@ -1256,7 +1256,7 @@ export const pmApi = {
       content: Record<string, unknown>;
       created_by?: string;
     }) => {
-      return apiClient.pm.post("/api/v1/contract-templates", data);
+      return apiClient.pm.post("/api/plugins/pm/api/pm/contract-templates", data);
     },
 
     update: async (
@@ -1268,21 +1268,21 @@ export const pmApi = {
         content?: Record<string, unknown>;
       },
     ) => {
-      return apiClient.pm.put(`/api/v1/contract-templates/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/contract-templates/${id}`, data);
     },
 
     delete: async (id: string) => {
-      return apiClient.pm.delete(`/api/v1/contract-templates/${id}`);
+      return apiClient.pm.delete(`/api/plugins/pm/api/pm/contract-templates/${id}`);
     },
   },
 
   budgets: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/budgets`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/budgets`);
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/budgets/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/budgets/${id}`);
     },
 
     create: async (
@@ -1295,7 +1295,7 @@ export const pmApi = {
         created_by?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/budgets`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/budgets`, data);
     },
 
     update: async (
@@ -1307,20 +1307,20 @@ export const pmApi = {
         status?: string;
       },
     ) => {
-      return apiClient.pm.put(`/api/v1/budgets/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/budgets/${id}`, data);
     },
 
     submit: async (id: string) => {
-      return apiClient.pm.post(`/api/v1/budgets/${id}/submit`);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/budgets/${id}/submit`);
     },
 
     approve: async (id: string) => {
-      return apiClient.pm.post(`/api/v1/budgets/${id}/approve`);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/budgets/${id}/approve`);
     },
 
     items: {
       list: async (budgetId: string) => {
-        return apiClient.pm.get(`/api/v1/budgets/${budgetId}/items`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/budgets/${budgetId}/items`);
       },
 
       create: async (
@@ -1334,7 +1334,7 @@ export const pmApi = {
           description?: string;
         },
       ) => {
-        return apiClient.pm.post(`/api/v1/budgets/${budgetId}/items`, data);
+        return apiClient.pm.post(`/api/plugins/pm/api/pm/budgets/${budgetId}/items`, data);
       },
 
       update: async (
@@ -1349,14 +1349,14 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.put(
-          `/api/v1/budgets/${budgetId}/items/${itemId}`,
+          `/api/plugins/pm/api/pm/budgets/${budgetId}/items/${itemId}`,
           data,
         );
       },
 
       delete: async (budgetId: string, itemId: string) => {
         return apiClient.pm.delete(
-          `/api/v1/budgets/${budgetId}/items/${itemId}`,
+          `/api/plugins/pm/api/pm/budgets/${budgetId}/items/${itemId}`,
         );
       },
     },
@@ -1364,11 +1364,11 @@ export const pmApi = {
 
   risks: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/risks`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/risks`);
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/risks/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/risks/${id}`);
     },
 
     create: async (
@@ -1391,7 +1391,7 @@ export const pmApi = {
         created_by?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/risks`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/risks`, data);
     },
 
     update: async (
@@ -1413,12 +1413,12 @@ export const pmApi = {
         response_due_date?: string;
       },
     ) => {
-      return apiClient.pm.put(`/api/v1/risks/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/risks/${id}`, data);
     },
 
     events: {
       list: async (riskId: string) => {
-        return apiClient.pm.get(`/api/v1/risks/${riskId}/events`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/risks/${riskId}/events`);
       },
 
       create: async (
@@ -1429,7 +1429,7 @@ export const pmApi = {
           reported_by?: string;
         },
       ) => {
-        return apiClient.pm.post(`/api/v1/risks/${riskId}/events`, data);
+        return apiClient.pm.post(`/api/plugins/pm/api/pm/risks/${riskId}/events`, data);
       },
     },
   },
@@ -1437,11 +1437,11 @@ export const pmApi = {
   quality: {
     checks: {
       list: async (projectId: string) => {
-        return apiClient.pm.get(`/api/v1/projects/${projectId}/quality-checks`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/quality-checks`);
       },
 
       get: async (id: string) => {
-        return apiClient.pm.get(`/api/v1/quality-checks/${id}`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/quality-checks/${id}`);
       },
 
       create: async (
@@ -1458,7 +1458,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/projects/${projectId}/quality-checks`,
+          `/api/plugins/pm/api/pm/projects/${projectId}/quality-checks`,
           data,
         );
       },
@@ -1479,17 +1479,17 @@ export const pmApi = {
           follow_up_date?: string;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/quality-checks/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/quality-checks/${id}`, data);
       },
     },
 
     defects: {
       list: async (projectId: string) => {
-        return apiClient.pm.get(`/api/v1/projects/${projectId}/defects`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/defects`);
       },
 
       get: async (id: string) => {
-        return apiClient.pm.get(`/api/v1/defects/${id}`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/defects/${id}`);
       },
 
       create: async (
@@ -1506,7 +1506,7 @@ export const pmApi = {
           created_by?: string;
         },
       ) => {
-        return apiClient.pm.post(`/api/v1/projects/${projectId}/defects`, data);
+        return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/defects`, data);
       },
 
       update: async (
@@ -1522,11 +1522,11 @@ export const pmApi = {
           resolution?: string;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/defects/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/defects/${id}`, data);
       },
 
       delete: async (id: string) => {
-        return apiClient.pm.delete(`/api/v1/defects/${id}`);
+        return apiClient.pm.delete(`/api/plugins/pm/api/pm/defects/${id}`);
       },
     },
   },
@@ -1535,12 +1535,12 @@ export const pmApi = {
     plans: {
       list: async (projectId: string) => {
         return apiClient.pm.get(
-          `/api/v1/projects/${projectId}/acceptance-plans`,
+          `/api/plugins/pm/api/pm/projects/${projectId}/acceptance-plans`,
         );
       },
 
       get: async (id: string) => {
-        return apiClient.pm.get(`/api/v1/acceptance-plans/${id}`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/acceptance-plans/${id}`);
       },
 
       create: async (
@@ -1559,7 +1559,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/projects/${projectId}/acceptance-plans`,
+          `/api/plugins/pm/api/pm/projects/${projectId}/acceptance-plans`,
           data,
         );
       },
@@ -1576,13 +1576,13 @@ export const pmApi = {
           documents_required?: Record<string, any>;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/acceptance-plans/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/acceptance-plans/${id}`, data);
       },
     },
 
     items: {
       list: async (planId: string) => {
-        return apiClient.pm.get(`/api/v1/acceptance-plans/${planId}/items`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/acceptance-plans/${planId}/items`);
       },
 
       create: async (
@@ -1595,7 +1595,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/acceptance-plans/${planId}/items`,
+          `/api/plugins/pm/api/pm/acceptance-plans/${planId}/items`,
           data,
         );
       },
@@ -1608,23 +1608,23 @@ export const pmApi = {
           comments?: string;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/acceptance-items/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/acceptance-items/${id}`, data);
       },
 
       delete: async (id: string) => {
-        return apiClient.pm.delete(`/api/v1/acceptance-items/${id}`);
+        return apiClient.pm.delete(`/api/plugins/pm/api/pm/acceptance-items/${id}`);
       },
     },
 
     records: {
       list: async (projectId: string) => {
         return apiClient.pm.get(
-          `/api/v1/projects/${projectId}/acceptance-records`,
+          `/api/plugins/pm/api/pm/projects/${projectId}/acceptance-records`,
         );
       },
 
       get: async (id: string) => {
-        return apiClient.pm.get(`/api/v1/acceptance-records/${id}`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/acceptance-records/${id}`);
       },
 
       create: async (
@@ -1642,7 +1642,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/acceptance-plans/${planId}/records`,
+          `/api/plugins/pm/api/pm/acceptance-plans/${planId}/records`,
           data,
         );
       },
@@ -1658,18 +1658,18 @@ export const pmApi = {
           recommendations?: Record<string, any>;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/acceptance-records/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/acceptance-records/${id}`, data);
       },
     },
   },
 
   settlement: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/settlements`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/settlements`);
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/settlements/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/settlements/${id}`);
     },
 
     create: async (
@@ -1685,7 +1685,7 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.post(
-        `/api/v1/projects/${projectId}/settlements`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/settlements`,
         data,
       );
     },
@@ -1699,16 +1699,16 @@ export const pmApi = {
         description?: string;
       },
     ) => {
-      return apiClient.pm.put(`/api/v1/settlements/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/settlements/${id}`, data);
     },
 
     approve: async (id: string) => {
-      return apiClient.pm.post(`/api/v1/settlements/${id}/approve`);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/settlements/${id}/approve`);
     },
 
     items: {
       list: async (settlementId: string) => {
-        return apiClient.pm.get(`/api/v1/settlements/${settlementId}/items`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/settlements/${settlementId}/items`);
       },
 
       create: async (
@@ -1725,7 +1725,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/settlements/${settlementId}/items`,
+          `/api/plugins/pm/api/pm/settlements/${settlementId}/items`,
           data,
         );
       },
@@ -1739,18 +1739,18 @@ export const pmApi = {
           description?: string;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/settlement-items/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/settlement-items/${id}`, data);
       },
 
       delete: async (id: string) => {
-        return apiClient.pm.delete(`/api/v1/settlement-items/${id}`);
+        return apiClient.pm.delete(`/api/plugins/pm/api/pm/settlement-items/${id}`);
       },
     },
 
     adjustments: {
       list: async (settlementId: string) => {
         return apiClient.pm.get(
-          `/api/v1/settlements/${settlementId}/adjustments`,
+          `/api/plugins/pm/api/pm/settlements/${settlementId}/adjustments`,
         );
       },
 
@@ -1767,7 +1767,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/settlements/${settlementId}/adjustments`,
+          `/api/plugins/pm/api/pm/settlements/${settlementId}/adjustments`,
           data,
         );
       },
@@ -1776,11 +1776,11 @@ export const pmApi = {
 
   document: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/documents`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/documents`);
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/documents/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/documents/${id}`);
     },
 
     create: async (
@@ -1797,7 +1797,7 @@ export const pmApi = {
         created_by?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/documents`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/documents`, data);
     },
 
     update: async (
@@ -1810,16 +1810,16 @@ export const pmApi = {
         tags?: string[];
       },
     ) => {
-      return apiClient.pm.put(`/api/v1/documents/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/documents/${id}`, data);
     },
 
     delete: async (id: string) => {
-      return apiClient.pm.delete(`/api/v1/documents/${id}`);
+      return apiClient.pm.delete(`/api/plugins/pm/api/pm/documents/${id}`);
     },
 
     versions: {
       list: async (documentId: string) => {
-        return apiClient.pm.get(`/api/v1/documents/${documentId}/versions`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/documents/${documentId}/versions`);
       },
 
       create: async (
@@ -1832,7 +1832,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/documents/${documentId}/versions`,
+          `/api/plugins/pm/api/pm/documents/${documentId}/versions`,
           data,
         );
       },
@@ -1840,11 +1840,11 @@ export const pmApi = {
 
     folders: {
       list: async (projectId: string) => {
-        return apiClient.pm.get(`/api/v1/projects/${projectId}/folders`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/folders`);
       },
 
       get: async (id: string) => {
-        return apiClient.pm.get(`/api/v1/folders/${id}`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/folders/${id}`);
       },
 
       create: async (
@@ -1856,7 +1856,7 @@ export const pmApi = {
           created_by?: string;
         },
       ) => {
-        return apiClient.pm.post(`/api/v1/projects/${projectId}/folders`, data);
+        return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/folders`, data);
       },
 
       update: async (
@@ -1866,22 +1866,22 @@ export const pmApi = {
           description?: string;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/folders/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/folders/${id}`, data);
       },
 
       delete: async (id: string) => {
-        return apiClient.pm.delete(`/api/v1/folders/${id}`);
+        return apiClient.pm.delete(`/api/plugins/pm/api/pm/folders/${id}`);
       },
     },
   },
 
   report: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/reports`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/reports`);
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/reports/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/reports/${id}`);
     },
 
     create: async (
@@ -1894,7 +1894,7 @@ export const pmApi = {
         generated_by?: string;
       },
     ) => {
-      return apiClient.pm.post(`/api/v1/projects/${projectId}/reports`, data);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/projects/${projectId}/reports`, data);
     },
 
     generate: async (
@@ -1908,18 +1908,18 @@ export const pmApi = {
       },
     ) => {
       return apiClient.pm.post(
-        `/api/v1/projects/${projectId}/reports/generate`,
+        `/api/plugins/pm/api/pm/projects/${projectId}/reports/generate`,
         data,
       );
     },
 
     templates: {
       list: async () => {
-        return apiClient.pm.get("/api/v1/report-templates");
+        return apiClient.pm.get("/api/plugins/pm/api/pm/report-templates");
       },
 
       get: async (id: string) => {
-        return apiClient.pm.get(`/api/v1/report-templates/${id}`);
+        return apiClient.pm.get(`/api/plugins/pm/api/pm/report-templates/${id}`);
       },
 
       create: async (data: {
@@ -1929,7 +1929,7 @@ export const pmApi = {
         content: Record<string, any>;
         created_by?: string;
       }) => {
-        return apiClient.pm.post("/api/v1/report-templates", data);
+        return apiClient.pm.post("/api/plugins/pm/api/pm/report-templates", data);
       },
 
       update: async (
@@ -1939,22 +1939,22 @@ export const pmApi = {
           content?: Record<string, any>;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/report-templates/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/report-templates/${id}`, data);
       },
 
       delete: async (id: string) => {
-        return apiClient.pm.delete(`/api/v1/report-templates/${id}`);
+        return apiClient.pm.delete(`/api/plugins/pm/api/pm/report-templates/${id}`);
       },
     },
   },
 
   notification: {
     list: async (projectId: string) => {
-      return apiClient.pm.get(`/api/v1/projects/${projectId}/notifications`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/projects/${projectId}/notifications`);
     },
 
     get: async (id: string) => {
-      return apiClient.pm.get(`/api/v1/notifications/${id}`);
+      return apiClient.pm.get(`/api/plugins/pm/api/pm/notifications/${id}`);
     },
 
     create: async (data: {
@@ -1967,7 +1967,7 @@ export const pmApi = {
       metadata?: Record<string, any>;
       due_date?: string;
     }) => {
-      return apiClient.pm.post("/api/v1/notifications", data);
+      return apiClient.pm.post("/api/plugins/pm/api/pm/notifications", data);
     },
 
     update: async (
@@ -1977,17 +1977,17 @@ export const pmApi = {
         read_at?: string;
       },
     ) => {
-      return apiClient.pm.put(`/api/v1/notifications/${id}`, data);
+      return apiClient.pm.put(`/api/plugins/pm/api/pm/notifications/${id}`, data);
     },
 
     markAsRead: async (id: string) => {
-      return apiClient.pm.post(`/api/v1/notifications/${id}/read`);
+      return apiClient.pm.post(`/api/plugins/pm/api/pm/notifications/${id}/read`);
     },
 
     settings: {
       list: async (projectId: string) => {
         return apiClient.pm.get(
-          `/api/v1/projects/${projectId}/notification-settings`,
+          `/api/plugins/pm/api/pm/projects/${projectId}/notification-settings`,
         );
       },
 
@@ -2001,7 +2001,7 @@ export const pmApi = {
         },
       ) => {
         return apiClient.pm.post(
-          `/api/v1/projects/${projectId}/notification-settings`,
+          `/api/plugins/pm/api/pm/projects/${projectId}/notification-settings`,
           data,
         );
       },
@@ -2014,18 +2014,18 @@ export const pmApi = {
           preferred_channel?: string;
         },
       ) => {
-        return apiClient.pm.put(`/api/v1/notification-settings/${id}`, data);
+        return apiClient.pm.put(`/api/plugins/pm/api/pm/notification-settings/${id}`, data);
       },
     },
 
     types: {
       list: async () => {
-        return apiClient.pm.get("/api/v1/notification-types");
+        return apiClient.pm.get("/api/plugins/pm/api/pm/notification-types");
       },
     },
   },
 
   getStatistics: async (): Promise<any> => {
-    return apiClient.pm.get("/api/v1/statistics");
+    return apiClient.pm.get("/api/plugins/pm/api/pm/statistics");
   },
 };

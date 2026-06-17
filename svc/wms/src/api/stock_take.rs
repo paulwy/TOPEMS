@@ -30,7 +30,7 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/v1/stock-takes", get(list_stock_takes).post(create_stock_take))
+        .route("/api/wms/stock-takes", get(list_stock_takes).post(create_stock_take))
         .route("/api/v1/stock-takes/{id}", get(get_stock_take).put(update_stock_take).delete(delete_stock_take))
         .route("/api/v1/stock-takes/{id}/items", get(list_stock_take_items).post(create_stock_take_item))
         .route("/api/v1/stock-takes/{id}/items/{item_id}", get(get_stock_take_item).put(update_stock_take_item).delete(delete_stock_take_item))

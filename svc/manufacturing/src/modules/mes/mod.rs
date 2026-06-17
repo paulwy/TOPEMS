@@ -1,9 +1,10 @@
 //! MES module - Manufacturing Execution System
 
+pub mod equipment;
+pub mod plugin;
 pub mod production_order;
 pub mod production_process;
 pub mod production_record;
-pub mod equipment;
 pub mod work_station;
 
 use sqlx::PgPool;
