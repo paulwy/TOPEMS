@@ -35,5 +35,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(purchase_item::create_routes())
         .merge(supplier_evaluation::create_routes())
         .merge(audit::create_routes())
-        .merge(plugin::create_routes())
+        // plugin routes are in public_routes
 }
