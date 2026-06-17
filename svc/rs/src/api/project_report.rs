@@ -58,18 +58,18 @@ pub struct ReportQuery {
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
-        .route("/api/v1/reports/projects/summary", get(get_project_summary))
-        .route("/api/v1/reports/projects/trends", get(get_project_trends))
+        .route("/api/rs/reports/projects/summary", get(get_project_summary))
+        .route("/api/rs/reports/projects/trends", get(get_project_trends))
         .route(
-            "/api/v1/reports/projects/types",
+            "/api/rs/reports/projects/types",
             get(get_project_type_stats),
         )
         .route(
-            "/api/v1/reports/projects/performance",
+            "/api/rs/reports/projects/performance",
             get(get_performance_metrics),
         )
         .route(
-            "/api/v1/reports/projects/{id}/details",
+            "/api/rs/reports/projects/{id}/details",
             get(get_project_detail_report),
         )
 }

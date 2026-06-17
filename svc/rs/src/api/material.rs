@@ -59,21 +59,21 @@ pub struct UpdateMaterialTestRequest {
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
         .route(
-            "/api/v1/material-tests",
+            "/api/rs/material-tests",
             get(list_material_tests).post(create_material_test),
         )
         .route(
-            "/api/v1/material-tests/{id}",
+            "/api/rs/material-tests/{id}",
             get(get_material_test)
                 .put(update_material_test)
                 .delete(delete_material_test),
         )
         .route(
-            "/api/v1/material-tests/project/{project_id}",
+            "/api/rs/material-tests/project/{project_id}",
             get(list_by_project),
         )
         .route(
-            "/api/v1/material-tests/experiment/{experiment_id}",
+            "/api/rs/material-tests/experiment/{experiment_id}",
             get(list_by_experiment),
         )
 }

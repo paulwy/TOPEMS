@@ -1,0 +1,131 @@
+// Mobile Service Plugin Interface
+// 移动端服务插件接口实现
+
+use crate::AppState;
+use axum::{extract::State, routing::get, Json, Router};
+use serde::{Deserialize, Serialize};
+use topems_shared::{ApiResponse, ServiceHealth};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginInfo {
+    pub code: String,
+    pub name: String,
+    pub version: String,
+    pub description: String,
+    pub category: String,
+    pub plugin_type: String,
+    pub permissions: Vec<Permission>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Permission {
+    pub code: String,
+    pub name: String,
+    pub resource_type: String,
+    pub action: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginHealth {
+    pub status: String,
+    pub database: bool,
+}
+
+// Plugin info endpoint
+pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let plugin_info = PluginInfo {
+        code: "mobile".to_string(),
+        name: "移动端服务".to_string(),
+        version: "1.0.0".to_string(),
+        description: "Mobile 移动端服务 - 离线同步、扫码、设备管理".to_string(),
+        category: "System".to_string(),
+        plugin_type: "business".to_string(),
+        permissions: vec![
+            Permission {
+                code: "mobile:device:register".to_string(),
+                name: "注册设备".to_string(),
+                resource_type: "device".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "mobile:device:manage".to_string(),
+                name: "管理设备".to_string(),
+                resource_type: "device".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "mobile:offline:sync".to_string(),
+                name: "离线同步".to_string(),
+                resource_type: "offline".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "mobile:offline:read".to_string(),
+                name: "查看离线数据".to_string(),
+                resource_type: "offline".to_string(),
+                action: "read".to_string(),
+            },
+            Permission {
+                code: "mobile:scan:barcode".to_string(),
+                name: "扫码".to_string(),
+                resource_type: "scan".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "mobile:scan:qrcode".to_string(),
+                name: "二维码扫描".to_string(),
+                resource_type: "scan".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "mobile:scan:ocr".to_string(),
+                name: "图像识别".to_string(),
+                resource_type: "scan".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "mobile:notification:read".to_string(),
+                name: "查看通知".to_string(),
+                resource_type: "notification".to_string(),
+                action: "read".to_string(),
+            },
+            Permission {
+                code: "mobile:notification:write".to_string(),
+                name: "管理通知".to_string(),
+                resource_type: "notification".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "mobile:task:read".to_string(),
+                name: "查看任务".to_string(),
+                resource_type: "task".to_string(),
+                action: "read".to_string(),
+            },
+            Permission {
+                code: "mobile:task:write".to_string(),
+                name: "管理任务".to_string(),
+                resource_type: "task".to_string(),
+                action: "write".to_string(),
+            },
+        ],
+    };
+
+    Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
+}
+
+// Plugin health check endpoint
+pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ServiceHealth> {
+    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    Json(topems_shared::build_health_response("topems-mobile", db_status))
+}
+
+// Create plugin routes
+pub fn create_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/plugins/info", get(get_plugin_info))
+        .route("/api/plugins/health", get(plugin_health_check))
+}

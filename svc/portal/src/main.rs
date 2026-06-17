@@ -17,6 +17,9 @@ use topems_shared::{
     ServiceHealth, ServiceRegistryStatus,
 };
 
+mod plugin;
+use crate::plugin::{get_plugin_info, plugin_health_check};
+
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 
 fn get_uptime() -> u64 {
@@ -78,6 +81,8 @@ async fn main() -> anyhow::Result<()> {
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/api/plugins/info", get(get_plugin_info))
+        .route("/api/plugins/health", get(plugin_health_check))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),

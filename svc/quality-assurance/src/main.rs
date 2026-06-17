@@ -17,6 +17,7 @@
 mod shared;
 
 pub mod modules;
+pub mod plugin;
 
 use std::net::SocketAddr;
 
@@ -106,6 +107,8 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/api", get(|| get_api_info_handler("quality-assurance-service")))
         .route("/api/info", get(|| get_api_info_handler("quality-assurance-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));

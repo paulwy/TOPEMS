@@ -13,6 +13,7 @@
 
 mod api;
 mod models;
+mod plugin;
 mod services;
 
 use anyhow::Result;
@@ -112,11 +113,13 @@ async fn main() -> Result<()> {
 
     let health_router = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/api/srm/health/detailed", get(health_check_detailed))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -138,7 +141,7 @@ async fn main() -> Result<()> {
         .layer(cors)
         .layer(prometheus_layer);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8041".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8060".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("📦 端口: {}", port);
@@ -233,10 +236,10 @@ async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiRespons
 // Statistics routes
 fn create_statistics_routes(db: sqlx::PgPool) -> Router {
     Router::new()
-        .route("/api/v1/statistics", get(get_statistics))
-        .route("/api/v1/statistics/detailed", get(get_detailed_statistics))
+        .route("/api/srm/statistics", get(get_statistics))
+        .route("/api/srm/statistics/detailed", get(get_detailed_statistics))
         .route(
-            "/api/v1/suppliers-with-stats",
+            "/api/srm/suppliers-with-stats",
             get(get_suppliers_with_stats),
         )
         .with_state(db)

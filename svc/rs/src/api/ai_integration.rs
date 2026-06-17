@@ -61,12 +61,12 @@ struct ListQueryParams {
 
 pub fn create_routes() -> axum::Router<super::ApiState> {
     axum::Router::<super::ApiState>::new()
-        .route("/api/v1/ai/analyses", axum::routing::get(list_analyses))
-        .route("/api/v1/ai/analyses", axum::routing::post(create_analysis))
-        .route("/api/v1/ai/analyses/{id}", axum::routing::get(get_analysis))
-        .route("/api/v1/ai/chat", axum::routing::post(ai_chat))
+        .route("/api/rs/ai/analyses", axum::routing::get(list_analyses))
+        .route("/api/rs/ai/analyses", axum::routing::post(create_analysis))
+        .route("/api/rs/ai/analyses/{id}", axum::routing::get(get_analysis))
+        .route("/api/rs/ai/chat", axum::routing::post(ai_chat))
         .route(
-            "/api/v1/entities/{entity_type}/{entity_id}/analyses",
+            "/api/rs/entities/{entity_type}/{entity_id}/analyses",
             axum::routing::get(get_entity_analyses),
         )
 }
@@ -250,7 +250,7 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Resul
     });
 
     match client
-        .post(format!("{}/api/v1/ai/chat", url))
+        .post(format!("{}/api/rs/ai/chat", url))
         .json(&request_body)
         .timeout(std::time::Duration::from_secs(60))
         .send()

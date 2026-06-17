@@ -1,0 +1,13 @@
+code: "portal"
+name: "企业门户"
+version: "1.0.0"
+description: "Portal 企业门户 - 首页、公告、快捷入口"
+category: "System"
+plugin_type: "system"
+deployment:
+  port: 8066
+  base_path: "/api/portal"
+permissions:
+  - code: "announcement"
+  - code: "shortcut"
+  - code: "widget"

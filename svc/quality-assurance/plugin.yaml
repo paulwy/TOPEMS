@@ -1,0 +1,98 @@
+# TOPEMS Quality Assurance Service Plugin Configuration
+code: qa
+name: 质量管理与安全
+version: 1.0.0
+description: 质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全
+author: TOPEMS
+category: Quality
+plugin_type: business
+
+# Runtime configuration
+runtime:
+  port: 8052
+  health_endpoint: /health
+  base_path: /api/qa
+
+# Permissions required by this plugin
+permissions:
+  # QMS - Quality Management
+  - code: qa:quality:inspection:read
+    name: 查看质量检验
+    description: 查看质量检验记录
+  - code: qa:quality:inspection:write
+    name: 管理质量检验
+    description: 创建和更新质量检验
+  - code: qa:quality:issue:read
+    name: 查看质量问题
+    description: 查看质量问题记录
+  - code: qa:quality:issue:write
+    name: 管理质量问题
+    description: 创建和解决质量问题
+  - code: qa:quality:standard:read
+    name: 查看质量标准
+    description: 查看质量标准
+  - code: qa:quality:standard:write
+    name: 管理质量标准
+    description: 创建和更新质量标准
+  - code: qa:quality:dashboard:read
+    name: 查看质量仪表盘
+    description: 查看质量统计数据
+  # LIMS - Laboratory Information Management
+  - code: qa:lims:sample:read
+    name: 查看样品
+    description: 查看实验室样品
+  - code: qa:lims:sample:write
+    name: 管理样品
+    description: 注册和管理样品
+  - code: qa:lims:task:read
+    name: 查看检验任务
+    description: 查看检验任务
+  - code: qa:lims:task:write
+    name: 管理检验任务
+    description: 创建和管理检验任务
+  - code: qa:lims:record:read
+    name: 查看检验记录
+    description: 查看检验记录
+  - code: qa:lims:instrument:read
+    name: 查看仪器设备
+    description: 查看实验室仪器设备
+  - code: qa:lims:instrument:write
+    name: 管理仪器设备
+    description: 管理仪器设备
+  - code: qa:lims:reagent:read
+    name: 查看试剂
+    description: 查看实验室试剂
+  - code: qa:lims:reagent:write
+    name: 管理试剂
+    description: 管理实验室试剂
+  # EHS - Environment Health Safety
+  - code: qa:ehs:risk:read
+    name: 查看风险评估
+    description: 查看风险评估记录
+  - code: qa:ehs:risk:write
+    name: 管理风险评估
+    description: 创建和管理风险评估
+  - code: qa:ehs:safety:read
+    name: 查看安全检查
+    description: 查看安全检查记录
+  - code: qa:ehs:safety:write
+    name: 管理安全检查
+    description: 创建和管理安全检查
+  - code: qa:ehs:accident:read
+    name: 查看事故记录
+    description: 查看事故记录
+  - code: qa:ehs:accident:write
+    name: 管理事故记录
+    description: 上报和管理事故
+  - code: qa:ehs:environment:read
+    name: 查看环境记录
+    description: 查看环境监测记录
+  - code: qa:ehs:training:read
+    name: 查看培训记录
+    description: 查看安全培训记录
+  - code: qa:ehs:training:write
+    name: 管理培训记录
+    description: 创建和管理培训记录
+  - code: qa:ehs:health:read
+    name: 查看健康记录
+    description: 查看职业健康记录

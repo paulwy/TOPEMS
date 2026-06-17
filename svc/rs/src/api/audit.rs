@@ -13,8 +13,8 @@ use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
-        .route("/api/v1/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
+        .route("/api/rs/audit-logs", get(list_audit_logs))
+        .route("/api/rs/audit-logs/{id}", get(get_audit_log))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -31,7 +31,7 @@ pub struct ListAuditLogsQuery {
 
 #[utoipa::path(
     get,
-    path = "/api/v1/audit-logs",
+    path = "/api/rs/audit-logs",
     tag = "audit",
     params(
         ("action" = Option<String>, Query, description = "操作类型"),
@@ -126,7 +126,7 @@ async fn list_audit_logs(
 
 #[utoipa::path(
     get,
-    path = "/api/v1/audit-logs/{id}",
+    path = "/api/rs/audit-logs/{id}",
     tag = "audit",
     params(
         ("id" = Uuid, Path, description = "审计日志 ID")

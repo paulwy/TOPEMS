@@ -1,0 +1,13 @@
+code: "gis"
+name: "地理信息服务"
+version: "1.0.0"
+description: "GIS 地理信息服务 - 位置服务、轨迹追踪、地理围栏"
+category: "IoT"
+plugin_type: "business"
+port: 8054
+base_path: /api/gis
+permissions:
+  - location
+  - geofence
+  - device
+  - track

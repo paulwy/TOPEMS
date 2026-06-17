@@ -21,9 +21,11 @@ use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use uuid::Uuid;
 
 use topems_shared::{
-    auth_middleware, build_health_response, create_cors_layer, init_logging, ApiResponse,
-    AuthState, ServiceHealth,
+    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    init_logging, ApiResponse, AuthState, ServiceHealth,
 };
+
+mod plugin;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct IntegrationEvent {
@@ -212,27 +214,29 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .route("/api/v1/integration/stats", get(get_sync_stats))
-        .route("/api/v1/integration/events", get(list_events))
-        .route("/api/v1/integration/events", post(create_event))
-        .route("/api/v1/integration/lims-qms", get(list_lims_qms_sync))
-        .route("/api/v1/integration/lims-qms", post(create_lims_qms_sync))
-        .route("/api/v1/integration/lims-qms/{id}", get(get_lims_qms_sync))
+        .route("/api/integration/stats", get(get_sync_stats))
+        .route("/api/integration/events", get(list_events))
+        .route("/api/integration/events", post(create_event))
+        .route("/api/integration/lims-qms", get(list_lims_qms_sync))
+        .route("/api/integration/lims-qms", post(create_lims_qms_sync))
+        .route("/api/integration/lims-qms/{id}", get(get_lims_qms_sync))
         .route(
-            "/api/v1/integration/lims-qms/{id}/sync",
+            "/api/integration/lims-qms/{id}/sync",
             post(sync_lims_qms),
         )
-        .route("/api/v1/integration/mes-erp", get(list_mes_erp_sync))
-        .route("/api/v1/integration/mes-erp", post(create_mes_erp_sync))
-        .route("/api/v1/integration/mes-erp/{id}", get(get_mes_erp_sync))
-        .route("/api/v1/integration/mes-erp/{id}/sync", post(sync_mes_erp))
-        .route("/api/v1/integration/wms-scm", get(list_wms_scm_sync))
-        .route("/api/v1/integration/wms-scm", post(create_wms_scm_sync))
-        .route("/api/v1/integration/wms-scm/{id}", get(get_wms_scm_sync))
-        .route("/api/v1/integration/wms-scm/{id}/sync", post(sync_wms_scm))
+        .route("/api/integration/mes-erp", get(list_mes_erp_sync))
+        .route("/api/integration/mes-erp", post(create_mes_erp_sync))
+        .route("/api/integration/mes-erp/{id}", get(get_mes_erp_sync))
+        .route("/api/integration/mes-erp/{id}/sync", post(sync_mes_erp))
+        .route("/api/integration/wms-scm", get(list_wms_scm_sync))
+        .route("/api/integration/wms-scm", post(create_wms_scm_sync))
+        .route("/api/integration/wms-scm/{id}", get(get_wms_scm_sync))
+        .route("/api/integration/wms-scm/{id}/sync", post(sync_wms_scm))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
