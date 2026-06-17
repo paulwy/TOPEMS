@@ -580,12 +580,12 @@ export const assetApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/assets${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/assets${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.get(`/api/v1/assets/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/assets/${id}`);
   },
 
   async create(data: Partial<Asset>): Promise<ApiResponse<Asset>> {
@@ -593,11 +593,11 @@ export const assetApi = {
   },
 
   async update(id: string, data: Partial<Asset>): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.put(`/api/v1/assets/${id}`, cleanEmptyUuids(data));
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/assets/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/assets/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/assets/${id}`);
   },
 };
 
@@ -620,12 +620,12 @@ export const expenseApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/expenses${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/expenses${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Expense>> {
-    return apiClient.erp.get(`/api/v1/expenses/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/expenses/${id}`);
   },
 
   async create(data: Partial<Expense>): Promise<ApiResponse<Expense>> {
@@ -636,11 +636,11 @@ export const expenseApi = {
     id: string,
     data: Partial<Expense>,
   ): Promise<ApiResponse<Expense>> {
-    return apiClient.erp.put(`/api/v1/expenses/${id}`, cleanEmptyUuids(data));
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/expenses/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/expenses/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/expenses/${id}`);
   },
 };
 
@@ -657,12 +657,12 @@ export const budgetApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/budgets${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/budgets${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Budget>> {
-    return apiClient.erp.get(`/api/v1/budgets/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/budgets/${id}`);
   },
 
   async create(data: Partial<Budget>): Promise<ApiResponse<Budget>> {
@@ -673,11 +673,11 @@ export const budgetApi = {
     id: string,
     data: Partial<Budget>,
   ): Promise<ApiResponse<Budget>> {
-    return apiClient.erp.put(`/api/v1/budgets/${id}`, cleanEmptyUuids(data));
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/budgets/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/budgets/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/budgets/${id}`);
   },
 };
 
@@ -694,12 +694,12 @@ export const receivableApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/receivables${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/receivables${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Receivable>> {
-    return apiClient.erp.get(`/api/v1/receivables/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/receivables/${id}`);
   },
 
   async create(data: Partial<Receivable>): Promise<ApiResponse<Receivable>> {
@@ -711,13 +711,13 @@ export const receivableApi = {
     data: Partial<Receivable>,
   ): Promise<ApiResponse<Receivable>> {
     return apiClient.erp.put(
-      `/api/v1/receivables/${id}`,
+      `/api/plugins/erp/api/erp/receivables/${id}`,
       cleanEmptyUuids(data),
     );
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/receivables/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/receivables/${id}`);
   },
 };
 
@@ -734,12 +734,12 @@ export const payableApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/payables${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/payables${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Payable>> {
-    return apiClient.erp.get(`/api/v1/payables/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/payables/${id}`);
   },
 
   async create(data: Partial<Payable>): Promise<ApiResponse<Payable>> {
@@ -750,11 +750,11 @@ export const payableApi = {
     id: string,
     data: Partial<Payable>,
   ): Promise<ApiResponse<Payable>> {
-    return apiClient.erp.put(`/api/v1/payables/${id}`, cleanEmptyUuids(data));
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/payables/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/payables/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/payables/${id}`);
   },
 };
 
@@ -771,12 +771,12 @@ export const accountingSubjectApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/accounting-subjects${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/accounting-subjects${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<AccountingSubject>> {
-    return apiClient.erp.get(`/api/v1/accounting-subjects/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/accounting-subjects/${id}`);
   },
 
   async create(
@@ -789,11 +789,11 @@ export const accountingSubjectApi = {
     id: string,
     data: Partial<AccountingSubject>,
   ): Promise<ApiResponse<AccountingSubject>> {
-    return apiClient.erp.put(`/api/v1/accounting-subjects/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/accounting-subjects/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/accounting-subjects/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/accounting-subjects/${id}`);
   },
 };
 
@@ -811,16 +811,16 @@ export const voucherApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/vouchers${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/vouchers${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<FinancialVoucher>> {
-    return apiClient.erp.get(`/api/v1/vouchers/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/vouchers/${id}`);
   },
 
   async getItems(id: string): Promise<ApiResponse<VoucherItem[]>> {
-    return apiClient.erp.get(`/api/v1/vouchers/${id}/items`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/vouchers/${id}/items`);
   },
 
   async create(
@@ -833,11 +833,11 @@ export const voucherApi = {
     id: string,
     data: Partial<FinancialVoucher>,
   ): Promise<ApiResponse<FinancialVoucher>> {
-    return apiClient.erp.put(`/api/v1/vouchers/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/vouchers/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/vouchers/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/vouchers/${id}`);
   },
 
   async importU8(data: {
@@ -857,7 +857,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/balance-sheet${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/balance-sheet${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -868,7 +868,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/income-statement${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/income-statement${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -879,7 +879,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/cash-flow${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/cash-flow${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -890,7 +890,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/business-overview${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/business-overview${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -901,7 +901,7 @@ export const financeReportApi = {
     if (params?.project_id) searchParams.set("project_id", params.project_id);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/project-summary${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/project-summary${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -917,7 +917,7 @@ export const financeReportApi = {
       searchParams.set("department_id", params.department_id);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/department-summary${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/department-summary${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -932,7 +932,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/voucher-statistics${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/voucher-statistics${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -943,7 +943,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/cash-flow-analysis${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/cash-flow-analysis${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -954,7 +954,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/expense-analysis${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/expense-analysis${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -965,7 +965,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/profit-analysis${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/profit-analysis${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -976,7 +976,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set("period", params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/reports/financial-overview${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/reports/financial-overview${queryString ? "?" + queryString : ""}`,
     );
   },
 };
@@ -995,12 +995,12 @@ export const officeSupplyApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/office-supplies${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/office-supplies${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<OfficeSupply>> {
-    return apiClient.erp.get(`/api/v1/office-supplies/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/office-supplies/${id}`);
   },
 
   async create(
@@ -1013,11 +1013,11 @@ export const officeSupplyApi = {
     id: string,
     data: Partial<OfficeSupply>,
   ): Promise<ApiResponse<OfficeSupply>> {
-    return apiClient.erp.put(`/api/v1/office-supplies/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/office-supplies/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/office-supplies/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/office-supplies/${id}`);
   },
 };
 
@@ -1034,12 +1034,12 @@ export const meetingRoomApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/meeting-rooms${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/meeting-rooms${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<MeetingRoom>> {
-    return apiClient.erp.get(`/api/v1/meeting-rooms/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/meeting-rooms/${id}`);
   },
 
   async create(data: Partial<MeetingRoom>): Promise<ApiResponse<MeetingRoom>> {
@@ -1050,15 +1050,15 @@ export const meetingRoomApi = {
     id: string,
     data: Partial<MeetingRoom>,
   ): Promise<ApiResponse<MeetingRoom>> {
-    return apiClient.erp.put(`/api/v1/meeting-rooms/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/meeting-rooms/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/meeting-rooms/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/meeting-rooms/${id}`);
   },
 
   async getBookings(id: string): Promise<ApiResponse<MeetingBooking[]>> {
-    return apiClient.erp.get(`/api/v1/meeting-rooms/${id}/bookings`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/meeting-rooms/${id}/bookings`);
   },
 };
 
@@ -1075,12 +1075,12 @@ export const meetingBookingApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/meeting-bookings${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/meeting-bookings${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<MeetingBooking>> {
-    return apiClient.erp.get(`/api/v1/meeting-bookings/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/meeting-bookings/${id}`);
   },
 
   async create(
@@ -1093,11 +1093,11 @@ export const meetingBookingApi = {
     id: string,
     data: Partial<MeetingBooking>,
   ): Promise<ApiResponse<MeetingBooking>> {
-    return apiClient.erp.put(`/api/v1/meeting-bookings/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/meeting-bookings/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/meeting-bookings/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/meeting-bookings/${id}`);
   },
 };
 
@@ -1116,12 +1116,12 @@ export const vehicleApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/vehicles${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/vehicles${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Vehicle>> {
-    return apiClient.erp.get(`/api/v1/vehicles/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/vehicles/${id}`);
   },
 
   async create(data: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
@@ -1132,15 +1132,15 @@ export const vehicleApi = {
     id: string,
     data: Partial<Vehicle>,
   ): Promise<ApiResponse<Vehicle>> {
-    return apiClient.erp.put(`/api/v1/vehicles/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/vehicles/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/vehicles/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/vehicles/${id}`);
   },
 
   async getRequests(id: string): Promise<ApiResponse<VehicleRequest[]>> {
-    return apiClient.erp.get(`/api/v1/vehicles/${id}/requests`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/vehicles/${id}/requests`);
   },
 };
 
@@ -1157,12 +1157,12 @@ export const vehicleRequestApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/vehicle-requests${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/vehicle-requests${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<VehicleRequest>> {
-    return apiClient.erp.get(`/api/v1/vehicle-requests/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/vehicle-requests/${id}`);
   },
 
   async create(
@@ -1175,11 +1175,11 @@ export const vehicleRequestApi = {
     id: string,
     data: Partial<VehicleRequest>,
   ): Promise<ApiResponse<VehicleRequest>> {
-    return apiClient.erp.put(`/api/v1/vehicle-requests/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/vehicle-requests/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/vehicle-requests/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/vehicle-requests/${id}`);
   },
 };
 
@@ -1197,12 +1197,12 @@ export const announcementApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/announcements${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/announcements${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.get(`/api/v1/announcements/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/announcements/${id}`);
   },
 
   async create(
@@ -1215,19 +1215,19 @@ export const announcementApi = {
     id: string,
     data: Partial<Announcement>,
   ): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.put(`/api/v1/announcements/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/announcements/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/announcements/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/announcements/${id}`);
   },
 
   async publish(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post(`/api/v1/announcements/${id}/publish`);
+    return apiClient.erp.post(`/api/plugins/erp/api/erp/announcements/${id}/publish`);
   },
 
   async unpublish(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post(`/api/v1/announcements/${id}/unpublish`);
+    return apiClient.erp.post(`/api/plugins/erp/api/erp/announcements/${id}/unpublish`);
   },
 };
 
@@ -1245,12 +1245,12 @@ export const openingBalanceApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/finance/accounts/opening-balances${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/finance/accounts/opening-balances${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.get(`/api/v1/finance/accounts/opening-balances/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/finance/accounts/opening-balances/${id}`);
   },
 
   async create(
@@ -1267,14 +1267,14 @@ export const openingBalanceApi = {
     data: Partial<OpeningBalance>,
   ): Promise<ApiResponse<OpeningBalance>> {
     return apiClient.erp.put(
-      `/api/v1/finance/accounts/opening-balances/${id}`,
+      `/api/plugins/erp/api/erp/finance/accounts/opening-balances/${id}`,
       data,
     );
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
     return apiClient.erp.delete(
-      `/api/v1/finance/accounts/opening-balances/${id}`,
+      `/api/plugins/erp/api/erp/finance/accounts/opening-balances/${id}`,
     );
   },
 
@@ -1312,12 +1312,12 @@ export const fixedAssetApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/fixed-assets${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/fixed-assets${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<FixedAsset>> {
-    return apiClient.erp.get(`/api/v1/fixed-assets/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/fixed-assets/${id}`);
   },
 
   async create(data: Partial<FixedAsset>): Promise<ApiResponse<FixedAsset>> {
@@ -1328,11 +1328,11 @@ export const fixedAssetApi = {
     id: string,
     data: Partial<FixedAsset>,
   ): Promise<ApiResponse<FixedAsset>> {
-    return apiClient.erp.put(`/api/v1/fixed-assets/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/fixed-assets/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/fixed-assets/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/fixed-assets/${id}`);
   },
 
   async depreciate(
@@ -1356,12 +1356,12 @@ export const bankAccountApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/bank-accounts${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/bank-accounts${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<BankAccount>> {
-    return apiClient.erp.get(`/api/v1/bank-accounts/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/bank-accounts/${id}`);
   },
 
   async create(data: Partial<BankAccount>): Promise<ApiResponse<BankAccount>> {
@@ -1372,11 +1372,11 @@ export const bankAccountApi = {
     id: string,
     data: Partial<BankAccount>,
   ): Promise<ApiResponse<BankAccount>> {
-    return apiClient.erp.put(`/api/v1/bank-accounts/${id}`, data);
+    return apiClient.erp.put(`/api/plugins/erp/api/erp/bank-accounts/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/bank-accounts/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/bank-accounts/${id}`);
   },
 };
 
@@ -1398,12 +1398,12 @@ export const bankTransactionApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/v1/bank-transactions${queryString ? "?" + queryString : ""}`,
+      `/api/plugins/erp/api/erp/bank-transactions${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<BankTransaction>> {
-    return apiClient.erp.get(`/api/v1/bank-transactions/${id}`);
+    return apiClient.erp.get(`/api/plugins/erp/api/erp/bank-transactions/${id}`);
   },
 
   async create(
@@ -1413,6 +1413,6 @@ export const bankTransactionApi = {
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/v1/bank-transactions/${id}`);
+    return apiClient.erp.delete(`/api/plugins/erp/api/erp/bank-transactions/${id}`);
   },
 };
