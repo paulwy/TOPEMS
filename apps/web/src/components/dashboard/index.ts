@@ -21,3 +21,4 @@ export {
   RecentActivitySection,
   type DashboardSectionProps,
 } from "./DashboardSections";
+export { HybridDashboard } from "./HybridDashboard";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import type { ModuleStatus } from "./StatusBadge";
 import { StatusBadge } from "./StatusBadge";
 
@@ -69,6 +69,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
   size = "medium",
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
   const Icon = item.icon;
 
   const sizeStyles = {
@@ -81,7 +82,11 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
 
   return (
     <div
-      onClick={onClick}
+      onClick={() => {
+        setIsClicked(true);
+        setTimeout(() => setIsClicked(false), 150);
+        onClick();
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -89,14 +94,32 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
         borderRadius: "16px",
         padding: currentSize.padding,
         cursor: "pointer",
-        transition: "all 0.3s ease",
-        transform: isHovered ? "translateY(-4px)" : "translateY(0)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        transform: isHovered ? "translateY(-4px)" : isClicked ? "scale(0.98)" : "translateY(0)",
         boxShadow: isHovered
           ? "0 20px 40px rgba(0, 0, 0, 0.12)"
           : "0 4px 6px rgba(0, 0, 0, 0.05)",
-        border: "1px solid rgba(0,0,0,0.08)",
+        border: `1px solid ${isHovered ? "rgba(59, 130, 246, 0.2)" : "rgba(0,0,0,0.08)"}`,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "3px",
+          background: item.status === "running" 
+            ? "linear-gradient(90deg, #22c55e, #16a34a)"
+            : item.status === "warning"
+            ? "linear-gradient(90deg, #f59e0b, #ca8a04)"
+            : "linear-gradient(90deg, #94a3b8, #64748b)",
+          transition: "opacity 0.3s ease",
+          opacity: isHovered ? 1 : 0.6,
+        }}
+      />
       <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
         <div
           style={{
@@ -109,9 +132,12 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            transition: "transform 0.3s ease",
-            transform: isHovered ? "scale(1.1)" : "scale(1)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            transform: isHovered ? "scale(1.1) rotate(5deg)" : "scale(1) rotate(0deg)",
+            boxShadow: isHovered
+              ? `0 8px 24px ${colorToGradient[item.color] || "#3b82f6"}40`
+              : "0 4px 12px rgba(0,0,0,0.15)",
+            animation: item.status === "running" ? "glow 2s ease-in-out infinite" : "none",
           }}
         >
           <Icon
@@ -119,6 +145,8 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
               width: currentSize.iconSize * 0.55,
               height: currentSize.iconSize * 0.55,
               color: "#ffffff",
+              transition: "transform 0.3s ease",
+              transform: isHovered ? "scale(1.05)" : "scale(1)",
             }}
           />
         </div>
@@ -135,11 +163,12 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
               style={{
                 fontSize: currentSize.titleSize,
                 fontWeight: 600,
-                color: "#1e293b",
+                color: isHovered ? "#1d4ed8" : "#1e293b",
                 margin: 0,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                transition: "color 0.2s ease",
               }}
             >
               {item.title}
@@ -149,17 +178,24 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
           <p
             style={{
               fontSize: currentSize.descSize,
-              color: "#64748b",
+              color: isHovered ? "#475569" : "#64748b",
               margin: 0,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              transition: "color 0.2s ease",
             }}
           >
             {item.description}
           </p>
         </div>
       </div>
+      <style>{`
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || "#3b82f6"}60; }
+        }
+      `}</style>
     </div>
   );
 };

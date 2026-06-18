@@ -2,10 +2,15 @@ import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
 const DashboardPage = lazy(() => import("../pages/shared/DashboardPage"));
+const HybridHomePage = lazy(() => import("../pages/shared/HybridHomePage"));
 const ProfilePage = lazy(() => import("../pages/shared/ProfilePage"));
 const AddressbookPage = lazy(() => import("../pages/common/AddressbookPage"));
 
 export const dashboardRoutes: RouteConfig[] = [
+  {
+    path: "/",
+    element: HybridHomePage,
+  },
   {
     path: "/dashboard",
     element: DashboardPage,

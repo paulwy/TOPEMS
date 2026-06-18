@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, FileText, Clock, AlertTriangle, Users, CheckCircle2, AlertCircle } from "lucide-react";
 
 export interface ActivityItem {
   id: string;
@@ -11,7 +11,7 @@ export interface ActivityItem {
 }
 
 interface RecentActivitiesProps {
-  activities: ActivityItem[];
+  activities?: ActivityItem[];
 }
 
 const typeColors: Record<
@@ -25,14 +25,70 @@ const typeColors: Record<
   默认: { bg: "#f8fafc", text: "#64748b", bar: "#94a3b8", iconBg: "#f1f5f9" },
 };
 
+const generateMockActivities = (): ActivityItem[] => [
+  {
+    id: "1",
+    title: "审批请求: 采购订单 #PO-2024-001 需要审批",
+    type: "工作流",
+    time: "2分钟前",
+    icon: <AlertCircle size={20} color="#22c55e" />,
+  },
+  {
+    id: "2",
+    title: "文档更新: 产品规格书 v2.0 已发布",
+    type: "文档",
+    time: "15分钟前",
+    icon: <FileText size={20} color="#8b5cf6" />,
+  },
+  {
+    id: "3",
+    title: "系统通知: 数据库备份已完成",
+    type: "系统",
+    time: "1小时前",
+    icon: <CheckCircle2 size={20} color="#3b82f6" />,
+  },
+  {
+    id: "4",
+    title: "培训提醒: 新员工入职培训明天开始",
+    type: "培训",
+    time: "2小时前",
+    icon: <Users size={20} color="#eab308" />,
+  },
+  {
+    id: "5",
+    title: "告警: CRM服务响应时间超过阈值",
+    type: "系统",
+    time: "3小时前",
+    icon: <AlertTriangle size={20} color="#ef4444" />,
+  },
+  {
+    id: "6",
+    title: "审批请求: 请假申请 #LV-2024-015 需要审批",
+    type: "工作流",
+    time: "5小时前",
+    icon: <Clock size={20} color="#22c55e" />,
+  },
+];
+
 export const RecentActivities: React.FC<RecentActivitiesProps> = ({
-  activities,
+  activities: externalActivities,
 }) => {
+  const [internalActivities, setInternalActivities] = useState<ActivityItem[]>([]);
+
+  const hasExternalActivities = externalActivities && externalActivities.length > 0;
+  const currentActivities = hasExternalActivities ? externalActivities : internalActivities;
+
+  useEffect(() => {
+    if (!hasExternalActivities) {
+      setInternalActivities(generateMockActivities());
+    }
+  }, [hasExternalActivities]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {activities.map((activity, index) => {
+      {currentActivities.map((activity, index) => {
         const colors = typeColors[activity.type] || typeColors["默认"];
-        const progressWidth = `${((activities.length - index) / activities.length) * 100}%`;
+        const progressWidth = `${((currentActivities.length - index) / currentActivities.length) * 100}%`;
 
         return (
           <Box
@@ -69,7 +125,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
               >
                 {activity.icon}
               </Box>
-              {index < activities.length - 1 && (
+              {index < currentActivities.length - 1 && (
                 <Box
                   sx={{
                     position: "relative",

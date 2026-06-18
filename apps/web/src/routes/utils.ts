@@ -3,16 +3,31 @@ import type React from "react";
 import { lazy } from "react";
 import ErrorPage from "../pages/shared/ErrorPage";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
 export const lazyWithRetry = <T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
+  moduleName?: string,
 ): LazyExoticComponent<T> => {
   return lazy(async () => {
-    try {
-      return await factory();
-    } catch (error) {
-      console.error("Failed to load component:", error);
-      return { default: ErrorPage as unknown as T };
+    let lastError: Error | null = null;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await factory();
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.error(
+          "[Lazy Load] Failed to load component " + (moduleName || "unknown") + " (attempt " + attempt + "/" + MAX_RETRIES + "):",
+          lastError.message,
+        );
+        if (attempt < MAX_RETRIES) {
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+        }
+      }
     }
+    console.error("[Lazy Load] Component " + (moduleName || "unknown") + " failed after " + MAX_RETRIES + " retries");
+    return { default: ErrorPage as unknown as T };
   });
 };
 
