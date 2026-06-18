@@ -175,20 +175,46 @@ fi
 
 echo ""
 
-# Build frontend
-echo -e "${YELLOW}Building frontend...${NC}"
+# Build shared packages
+echo -e "${YELLOW}Building shared packages...${NC}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+cd "${SCRIPT_DIR}/packages/shared-types"
+pnpm install --legacy-peer-deps
+pnpm run build
+
+cd "${SCRIPT_DIR}/packages/shared-utils"
+pnpm install --legacy-peer-deps
+pnpm run build
+
+echo -e "${GREEN}✓ Shared packages built${NC}"
+echo ""
+
+# Build Remote Module (core)
+echo -e "${YELLOW}Building Remote Module (core)...${NC}"
+
+cd "${SCRIPT_DIR}/apps/core"
+pnpm install --legacy-peer-deps
+pnpm run build
+
+mkdir -p "${PREFIX}/core-remote"
+cp -r dist/* "${PREFIX}/core-remote/"
+
+echo -e "${GREEN}✓ Remote Module built and installed${NC}"
+echo ""
+
+# Build Host Shell (web)
+echo -e "${YELLOW}Building Host Shell (web)...${NC}"
+
 cd "${SCRIPT_DIR}/apps/web"
+pnpm install --legacy-peer-deps
+pnpm run build
 
-npm install
-npm run build
-
-# Copy frontend dist
 mkdir -p "${PREFIX}/web"
 cp -r dist/* "${PREFIX}/web/"
 
-echo -e "${GREEN}✓ Frontend built and installed${NC}"
+echo -e "${GREEN}✓ Host Shell built and installed${NC}"
 echo ""
 
 # Copy configuration templates

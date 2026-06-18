@@ -11,11 +11,14 @@ pub enum EventType {
     HrmEmployeeDeleted,
     HrmDepartmentCreated,
     HrmDepartmentUpdated,
+    HrmDepartmentDeleted,
 
     /// PM 相关事件
     PmProjectCreated,
     PmProjectUpdated,
     PmTaskCreated,
+    PmTaskUpdated,
+    PmTaskDeleted,
 
     /// 通用事件
     HealthCheck,
@@ -77,6 +80,68 @@ pub struct PmProjectCreatedPayload {
     pub project_id: Uuid,
     pub project_name: String,
     pub owner_id: Uuid,
+}
+
+/// PM 任务创建事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PmTaskCreatedPayload {
+    pub task_id: Uuid,
+    pub project_id: Uuid,
+    pub task_name: String,
+}
+
+/// PM 项目更新事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PmProjectUpdatedPayload {
+    pub project_id: Uuid,
+    pub updated_fields: Vec<String>,
+    pub old_data: Option<serde_json::Value>,
+    pub new_data: Option<serde_json::Value>,
+}
+
+/// PM 任务更新事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PmTaskUpdatedPayload {
+    pub task_id: Uuid,
+    pub project_id: Uuid,
+    pub updated_fields: Vec<String>,
+    pub old_data: Option<serde_json::Value>,
+    pub new_data: Option<serde_json::Value>,
+}
+
+/// PM 任务删除事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PmTaskDeletedPayload {
+    pub task_id: Uuid,
+    pub project_id: Uuid,
+    pub deleted_by: Option<Uuid>,
+}
+
+// --- HRM 部门事件专用 ---
+
+/// HRM 部门创建事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmDepartmentCreatedPayload {
+    pub department_id: Uuid,
+    pub department_name: String,
+    pub parent_id: Option<Uuid>,
+}
+
+/// HRM 部门更新事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmDepartmentUpdatedPayload {
+    pub department_id: Uuid,
+    pub updated_fields: Vec<String>,
+    pub old_data: Option<serde_json::Value>,
+    pub new_data: Option<serde_json::Value>,
+}
+
+/// HRM 部门删除事件 Payload
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HrmDepartmentDeletedPayload {
+    pub department_id: Uuid,
+    pub department_name: String,
+    pub deleted_by: Option<Uuid>,
 }
 
 impl std::fmt::Display for EventType {

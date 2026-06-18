@@ -1,5 +1,9 @@
 use super::error::EventResult;
-use super::event_types::{Event, EventType, HrmEmployeeCreatedPayload, PmProjectCreatedPayload};
+use super::event_types::{
+    Event, EventType, HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload,
+    HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload, PmProjectCreatedPayload,
+    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+};
 use redis::Client;
 use serde::Serialize;
 use std::env;
@@ -86,6 +90,126 @@ impl EventPublisher {
         };
 
         self.publish_event(EventType::PmProjectCreated, payload)
+            .await
+    }
+
+    pub async fn publish_pm_project_updated(
+        &self,
+        project_id: uuid::Uuid,
+        updated_fields: Vec<String>,
+        old_data: Option<serde_json::Value>,
+        new_data: Option<serde_json::Value>,
+    ) -> EventResult<()> {
+        let payload = PmProjectUpdatedPayload {
+            project_id,
+            updated_fields,
+            old_data,
+            new_data,
+        };
+
+        self.publish_event(EventType::PmProjectUpdated, payload)
+            .await
+    }
+
+    pub async fn publish_pm_task_created(
+        &self,
+        task_id: uuid::Uuid,
+        project_id: uuid::Uuid,
+        task_name: &str,
+    ) -> EventResult<()> {
+        let payload = PmTaskCreatedPayload {
+            task_id,
+            project_id,
+            task_name: task_name.to_string(),
+        };
+
+        self.publish_event(EventType::PmTaskCreated, payload)
+            .await
+    }
+
+    pub async fn publish_pm_task_updated(
+        &self,
+        task_id: uuid::Uuid,
+        project_id: uuid::Uuid,
+        updated_fields: Vec<String>,
+        old_data: Option<serde_json::Value>,
+        new_data: Option<serde_json::Value>,
+    ) -> EventResult<()> {
+        let payload = PmTaskUpdatedPayload {
+            task_id,
+            project_id,
+            updated_fields,
+            old_data,
+            new_data,
+        };
+
+        self.publish_event(EventType::PmTaskUpdated, payload)
+            .await
+    }
+
+    pub async fn publish_pm_task_deleted(
+        &self,
+        task_id: uuid::Uuid,
+        project_id: uuid::Uuid,
+        deleted_by: Option<uuid::Uuid>,
+    ) -> EventResult<()> {
+        let payload = PmTaskDeletedPayload {
+            task_id,
+            project_id,
+            deleted_by,
+        };
+
+        self.publish_event(EventType::PmTaskDeleted, payload)
+            .await
+    }
+
+    pub async fn publish_hrm_department_created(
+        &self,
+        department_id: uuid::Uuid,
+        department_name: &str,
+        parent_id: Option<uuid::Uuid>,
+    ) -> EventResult<()> {
+        let payload = HrmDepartmentCreatedPayload {
+            department_id,
+            department_name: department_name.to_string(),
+            parent_id,
+        };
+
+        self.publish_event(EventType::HrmDepartmentCreated, payload)
+            .await
+    }
+
+    pub async fn publish_hrm_department_updated(
+        &self,
+        department_id: uuid::Uuid,
+        updated_fields: Vec<String>,
+        old_data: Option<serde_json::Value>,
+        new_data: Option<serde_json::Value>,
+    ) -> EventResult<()> {
+        let payload = HrmDepartmentUpdatedPayload {
+            department_id,
+            updated_fields,
+            old_data,
+            new_data,
+        };
+
+        self.publish_event(EventType::HrmDepartmentUpdated, payload)
+            .await
+    }
+
+    pub async fn publish_hrm_department_deleted(
+        &self,
+        department_id: uuid::Uuid,
+        department_name: &str,
+        deleted_by: Option<uuid::Uuid>,
+    ) -> EventResult<()> {
+        let payload = HrmDepartmentDeletedPayload {
+            department_id,
+            department_name: department_name.to_string(),
+            deleted_by,
+        };
+
+        self.publish_event(EventType::HrmDepartmentDeleted, payload)
             .await
     }
 }

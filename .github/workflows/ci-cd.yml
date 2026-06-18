@@ -133,17 +133,62 @@ jobs:
       - name: Build all services
         run: cargo build --release --all
 
-      - name: Upload artifacts
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build shared packages
+        run: |
+          cd packages/shared-types
+          npm install --legacy-peer-deps
+          npm run build
+          cd ../shared-utils
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Build core frontend module
+        run: |
+          cd apps/core
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Build host frontend
+        run: |
+          cd apps/web
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Upload backend artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: topems-services
+          name: topems-backend
           path: |
-            target/release/topems-iam
-            target/release/topems-hrm
-            target/release/topems-erp
-            target/release/topems-crm
-            target/release/topems-doc
-            target/release/topems-ai
+            target/release/unified-core
+            target/release/ai
+            target/release/analytics
+            target/release/manufacturing
+            target/release/quality-assurance
+            target/release/hrm
+            target/release/crm
+            target/release/pm
+            target/release/erp
+            target/release/gis
+            target/release/rs
+            target/release/scm
+            target/release/wms
+            target/release/mobile
+            target/release/monitor
+            target/release/portal
+          retention-days: 7
+
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: topems-frontend
+          path: |
+            apps/web/dist/
+            apps/core/dist/
           retention-days: 7
 
   deploy-staging:
@@ -156,45 +201,53 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download artifacts
+      - name: Download backend artifacts
         uses: actions/download-artifact@v4
         with:
-          name: topems-services
+          name: topems-backend
           path: target/release/
 
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: topems-frontend
+          path: dist/
+
       - name: Make artifacts executable
-        run: chmod +x target/release/topems-*
+        run: chmod +x target/release/*
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
 
       - name: Deploy to staging
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
-          port: ${{ secrets.STAGING_PORT || 22 }}
-          script: |
+        run: |
+          ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+          
+          ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
             set -e
             mkdir -p /opt/topems/staging/services
-            cd /opt/topems/staging/services
+            mkdir -p /opt/topems/staging/web
+            mkdir -p /opt/topems/staging/core-remote
             
-            # Stop running services
-            for service in iam hrm erp crm doc ai; do
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal; do
               sudo systemctl stop topems-${service}-staging 2>/dev/null || true
             done
-            
-            # Copy new binaries
-            scp -P ${{ secrets.STAGING_PORT || 22 }} -i /tmp/ssh_key \
-              ${{ github.workspace }}/target/release/topems-* \
-              ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/services/
-            
-            # Start services
-            for service in iam hrm erp crm doc ai; do
+          EOF
+          
+          scp -P ${{ secrets.STAGING_PORT || 22 }} target/release/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/services/
+          scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/web/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/web/
+          scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/core-remote/
+          
+          ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal; do
               sudo systemctl start topems-${service}-staging
             done
             
-            # Verify deployment
             sleep 10
             curl -s http://localhost:8000/health
+          EOF
 
   deploy-production:
     name: Deploy to Production
@@ -207,45 +260,55 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download artifacts
+      - name: Download backend artifacts
         uses: actions/download-artifact@v4
         with:
-          name: topems-services
+          name: topems-backend
           path: target/release/
 
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: topems-frontend
+          path: dist/
+
       - name: Make artifacts executable
-        run: chmod +x target/release/topems-*
+        run: chmod +x target/release/*
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
 
       - name: Deploy to production
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          port: ${{ secrets.PROD_PORT || 22 }}
-          script: |
+        run: |
+          ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+          
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
             set -e
-            mkdir -p /opt/topems/production/services
-            cd /opt/topems/production/services
             
-            # Stop running services
-            for service in iam hrm erp crm doc ai; do
+            cp -r /opt/topems/bin /opt/topems/bin.backup.${TIMESTAMP}
+            cp -r /opt/topems/web /opt/topems/web.backup.${TIMESTAMP}
+            
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal; do
               sudo systemctl stop topems-${service} 2>/dev/null || true
             done
-            
-            # Copy new binaries
-            scp -P ${{ secrets.PROD_PORT || 22 }} -i /tmp/ssh_key \
-              ${{ github.workspace }}/target/release/topems-* \
-              ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/production/services/
-            
-            # Start services
-            for service in iam hrm erp crm doc ai; do
+          EOF
+          
+          scp -P ${{ secrets.PROD_PORT || 22 }} target/release/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/bin/
+          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} "rm -rf /opt/topems/web/*"
+          scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/web/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/web/
+          scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/core-remote/
+          
+          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal; do
               sudo systemctl start topems-${service}
             done
             
-            # Verify deployment
-            sleep 10
+            sleep 15
             curl -s https://${{ secrets.PROD_DOMAIN }}/health
+          EOF
 
   notify:
     name: Notify Deployment
