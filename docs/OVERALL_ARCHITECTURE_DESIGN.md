@@ -4,13 +4,13 @@
 
 | 项目 | 内容 |
 |------|------|
-| **文档版本** | v2.4 |
+| **文档版本** | v2.6 |
 | **创建日期** | 2026-06-10 |
-| **最后更新** | 2026-06-11 |
+| **最后更新** | 2026-06-18 |
 | **适用阶段** | 架构设计与实施 |
 | **状态** | **已实施完成** |
 | **审批人** | 架构委员会 |
-| **更新说明** | 技术依赖版本升级、技术资产继承清单、文档结构优化、实施验证完成、DOC-File-AI整合完成 |
+| **更新说明** | 修复章节编号不一致问题，新增前端优化工具继承章节（路由懒加载增强、React Query配置、性能工具、可访问性工具），更新文档版本至v2.6 |
 
 ---
 
@@ -84,25 +84,34 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | 分类 | 技术 | 版本 | 说明 |
 |------|------|------|------|
 | **语言** | Rust | 1.76+ | 高性能、内存安全 |
-| **Web框架** | Axum | 0.8+ | 异步Web框架（支持HTTP/2、TLS 1.3） |
+| **Web框架** | Axum | 0.8 | 异步Web框架（支持HTTP/2、TLS 1.3、WebSocket） |
 | **数据库** | PostgreSQL | 16+ | 关系型数据库（与Docker官方镜像版本同步） |
-| **ORM** | SQLx | 0.8+ | Rust原生SQL工具（与Axum 0.8兼容） |
+| **ORM** | SQLx | 0.8.6 | Rust原生SQL工具（与Axum 0.8兼容） |
 | **缓存** | Redis | 7.2+ | 分布式缓存 |
-| **认证** | JWT | jsonwebtoken 8+ | 无状态认证 |
+| **认证** | JWT | jsonwebtoken 9.0 | 无状态认证 |
 | **消息队列** | RabbitMQ | 3.13+ | 异步消息处理 |
+| **OpenAPI** | Utoipa | 4 | API文档生成 |
+| **Prometheus** | axum-prometheus | 0.8 | 指标监控集成 |
 
 ### 2.2 前端技术栈
 
 | 分类 | 技术 | 版本 | 说明 |
 |------|------|------|------|
-| **语言** | TypeScript | 5.5+ | 类型安全 |
-| **框架** | React | 18.3+ | UI框架 |
-| **构建工具** | Vite | 6.5+ | 快速构建 |
-| **UI库** | Tailwind CSS | 3.4+ | 原子化CSS |
-| **状态管理** | Zustand | 4.5+ | 轻量级状态管理 |
-| **路由** | React Router | 6.22+ | 路由管理 |
-| **HTTP客户端** | Axios | 1.7+ | HTTP请求 |
-| **表单** | React Hook Form | 7.51+ | 表单处理 |
+| **语言** | TypeScript | 6.0.3 | 类型安全 |
+| **框架** | React | 19.2.7 | UI框架 |
+| **构建工具** | Vite | 8.0.16 | 快速构建 |
+| **UI库** | MUI Material | 6.5.0 | React组件库（替代Tailwind CSS） |
+| **状态管理** | Zustand | 5.0.14 | 轻量级状态管理 |
+| **路由** | React Router | 7.17.0 | 路由管理 |
+| **HTTP客户端** | Axios | 1.6.8 | HTTP请求 |
+| **数据缓存** | TanStack React Query | 5.101.0 | 服务端状态管理 |
+| **表单** | React Hook Form | 7.79.0 | 表单处理 |
+| **图表** | Recharts | 3.8.1 | 数据可视化 |
+| **图标** | Lucide React | 1.18.0 | 图标库 |
+| **国际化** | i18next | 26.3.1 | 多语言支持 |
+| **动画** | Framer Motion | 12.40.0 | 动画库 |
+| **文件处理** | xlsx | 0.18.5 | Excel文件处理 |
+| **验证** | Zod | 4.4.3 | TypeScript-first验证库 |
 
 ### 2.3 桌面端技术栈
 
@@ -128,9 +137,10 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 
 | 分类 | 技术 | 版本 | 说明 |
 |------|------|------|------|
-| **大模型** | OpenAI API / 本地模型 | - | AI能力 |
-| **向量数据库** | Pinecone / Chroma | - | 向量存储 |
+| **大模型** | OpenAI API / Ollama / 本地模型 | - | AI能力 |
+| **向量数据库** | PostgreSQL + pgvector | - | 向量存储 |
 | **RAG框架** | LangChain | 0.1+ | 检索增强生成 |
+| **PDF处理** | lopdf / pdf-extract | 0.34 / 0.7 | PDF解析 |
 
 ---
 
@@ -140,37 +150,39 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 
 | 分类 | 技术 | 状态 | 继承策略 |
 |------|------|------|----------|
-| **前端框架** | React 18 + TypeScript | ✅ 成熟 | 完全继承，持续升级 |
-| **构建工具** | Vite 6 | ✅ 成熟 | 完全继承 |
-| **UI样式** | Tailwind CSS 3 | ✅ 成熟 | 完全继承 |
-| **状态管理** | Zustand | ✅ 成熟 | 完全继承 |
-| **路由** | React Router 6 | ✅ 成熟 | 完全继承 |
+| **前端框架** | React 19 + TypeScript | ✅ 成熟 | 完全继承，持续升级 |
+| **构建工具** | Vite 8 | ✅ 成熟 | 完全继承 |
+| **UI组件库** | MUI Material 6 | ✅ 成熟 | 完全继承（替代原Tailwind CSS方案） |
+| **状态管理** | Zustand 5 | ✅ 成熟 | 完全继承 |
+| **路由** | React Router 7 | ✅ 成熟 | 完全继承 |
 | **HTTP客户端** | Axios | ✅ 成熟 | 完全继承 |
+| **数据缓存** | TanStack React Query | ✅ 成熟 | 完全继承 |
 | **表单处理** | React Hook Form | ✅ 成熟 | 完全继承 |
+| **图表库** | Recharts | ✅ 成熟 | 完全继承 |
+| **图标库** | Lucide React | ✅ 成熟 | 完全继承 |
 
-### 3.2 UI组件库继承（shadcn/ui）
+### 3.2 UI组件库继承（MUI + 自定义组件）
 
 | 组件 | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
-| Button | `components/ui/button.tsx` | ✅ 成熟 | 完全继承 |
-| Input | `components/ui/input.tsx` | ✅ 成熟 | 完全继承 |
-| Dialog | `components/ui/dialog.tsx` | ✅ 成熟 | 完全继承 |
-| Select | `components/ui/select.tsx` | ✅ 成熟 | 完全继承 |
-| Table | `components/ui/table.tsx` | ✅ 成熟 | 完全继承 |
-| Badge | `components/ui/badge.tsx` | ✅ 成熟 | 完全继承 |
-| Card | `components/ui/card.tsx` | ✅ 成熟 | 完全继承 |
-| Tabs | `components/ui/tabs.tsx` | ✅ 成熟 | 完全继承 |
-| Popover | `components/ui/popover.tsx` | ✅ 成熟 | 完全继承 |
-| Tooltip | `components/ui/tooltip.tsx` | ✅ 成熟 | 完全继承 |
-| Progress | `components/ui/progress.tsx` | ✅ 成熟 | 完全继承 |
+| Button | `components/ui/Button.tsx` | ✅ 成熟 | 完全继承 |
+| Sidebar | `components/ui/Sidebar.tsx` | ✅ 成熟 | 完全继承 |
 | Toast | `components/ui/toast.tsx` | ✅ 成熟 | 完全继承 |
-| Calendar | `components/ui/calendar.tsx` | ✅ 成熟 | 完全继承 |
-| DatePicker | `components/ui/date-picker.tsx` | ✅ 成熟 | 完全继承 |
-| ScrollArea | `components/ui/scroll-area.tsx` | ✅ 成熟 | 完全继承 |
-| Switch | `components/ui/switch.tsx` | ✅ 成熟 | 完全继承 |
-| Checkbox | `components/ui/checkbox.tsx` | ✅ 成熟 | 完全继承 |
+| Toaster | `components/ui/toaster.tsx` | ✅ 成熟 | 完全继承 |
+| shadcn | `components/ui/shadcn.tsx` | ✅ 成熟 | 基础组件封装 |
+| MUI封装 | `components/mui/` | ✅ 成熟 | MUI组件二次封装 |
 
-### 3.3 通用业务组件继承
+### 3.3 MUI封装组件
+
+| 组件 | 路径 | 状态 | 继承策略 |
+|------|------|------|----------|
+| ActionBar | `components/mui/ActionBar.tsx` | ✅ 成熟 | 完全继承 |
+| DataGrid | `components/mui/DataGrid.tsx` | ✅ 成熟 | 完全继承 |
+| EmptyState | `components/mui/EmptyState.tsx` | ✅ 成熟 | 完全继承 |
+| FilterBar | `components/mui/FilterBar.tsx` | ✅ 成熟 | 完全继承 |
+| StatCard | `components/mui/StatCard.tsx` | ✅ 成熟 | 完全继承 |
+
+### 3.4 通用业务组件继承
 
 | 组件 | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
@@ -185,7 +197,7 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | LoadingSpinner | `components/LoadingSpinner.tsx` | ✅ 成熟 | 完全继承 |
 | MetricCard | `components/MetricCard.tsx` | ✅ 成熟 | 完全继承 |
 
-### 3.4 AI组件继承
+### 3.5 AI组件继承
 
 | 组件 | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
@@ -197,7 +209,7 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | AIFormValidator | `components/ai/AIFormValidator.tsx` | ✅ 成熟 | 完全继承 |
 | AIHelperButton | `components/ai/AIHelperButton.tsx` | ✅ 成熟 | 完全继承 |
 
-### 3.5 即时通讯组件继承
+### 3.6 即时通讯组件继承
 
 | 组件 | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
@@ -207,7 +219,7 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | ChatRoomItem | `components/im/ChatRoomItem.tsx` | ✅ 成熟 | 完全继承 |
 | ChatInput | `components/im/ChatInput.tsx` | ✅ 成熟 | 完全继承 |
 
-### 3.6 图表组件继承
+### 3.7 图表组件继承
 
 | 组件 | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
@@ -218,7 +230,7 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | RadarChart | `components/charts/RadarChart.tsx` | ✅ 成熟 | 完全继承 |
 | StatsChart | `components/StatsChart.tsx` | ✅ 成熟 | 完全继承 |
 
-### 3.7 Hooks工具继承
+### 3.8 Hooks工具继承
 
 | Hook | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
@@ -235,7 +247,7 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | useBatchSelection | `hooks/useBatchSelection.ts` | ✅ 成熟 | 完全继承 |
 | useOrganization | `hooks/useOrganization.ts` | ✅ 成熟 | 完全继承 |
 
-### 3.8 工具函数继承
+### 3.9 工具函数继承
 
 | 工具 | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
@@ -246,7 +258,7 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | importExport | `utils/importExport.ts` | ✅ 成熟 | 完全继承 |
 | session | `utils/session.ts` | ✅ 成熟 | 完全继承 |
 
-### 3.9 基础设施组件继承
+### 3.10 基础设施组件继承
 
 | 组件 | 路径 | 状态 | 继承策略 |
 |------|------|------|----------|
@@ -256,7 +268,21 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 | ProtectedRoute | `components/ProtectedRoute.tsx` | ✅ 成熟 | 完全继承 |
 | PermissionGate | `components/PermissionGate.tsx` | ✅ 成熟 | 完全继承 |
 
-### 3.10 后端技术资产继承
+### 3.11 前端优化工具继承
+
+| 工具 | 路径 | 状态 | 继承策略 |
+|------|------|------|----------|
+| lazyWithRetry | `routes/utils.ts` | ✅ 成熟 | 路由懒加载增强（带重试机制） |
+| React Query | `lib/react-query.ts` | ✅ 成熟 | 数据缓存策略配置 |
+| useDebounce | `lib/performance.ts` | ✅ 成熟 | 防抖 Hook |
+| useThrottle | `lib/performance.ts` | ✅ 成熟 | 节流 Hook |
+| memoWithProps | `lib/performance.ts` | ✅ 成熟 | 属性记忆优化 |
+| usePerformanceTimer | `lib/performance.ts` | ✅ 成熟 | 性能计时器 |
+| useAriaLiveRegion | `lib/a11y.tsx` | ✅ 成熟 | 屏幕阅读器公告 |
+| useKeyboardNavigation | `lib/a11y.tsx` | ✅ 成熟 | 键盘事件处理 |
+| VisuallyHidden | `lib/a11y.tsx` | ✅ 成熟 | 视觉隐藏组件 |
+
+### 3.12 后端技术资产继承
 
 | 服务/组件 | 状态 | 继承策略 |
 |-----------|------|----------|
@@ -273,28 +299,66 @@ TOPEMS 采用**微服务聚合 + 多端适配 + 多租户架构**的设计模式
 
 ### 4.1 服务分组设计
 
-| 聚合组 | 包含服务 | 端口 | 预计内存 | 职责 |
-|--------|----------|------|----------|------|
-| **Core** | IAM, DOC, FLOW, AI | 8000 | ~150MB | 核心基础服务 |
-| **Enterprise** | ERP, HRM(公司架构), CRM, PM | 8001 | ~150MB | 企业业务服务 |
-| **Manufacturing** | MES, QMS, EHS, PDM | 8002 | ~150MB | 制造业务服务 |
-| **SupplyChain** | SCM, SRM, WMS | 8003 | ~100MB | 供应链服务 |
-| **Science** | RS, LIMS | 8004 | ~100MB | 科研服务 |
-| **Platform** | BI, GIS, IM, REPORT, MAIL, MOBILE, NOTIFICATION, INTEGRATION | 8005 | ~200MB | 平台支撑服务 |
+TOPEMS采用**模块化服务架构**，按功能域划分为独立服务和聚合服务：
 
-### 3.2 资源优化对比
+#### 已整合服务（共享进程）
+
+| 聚合服务 | 包含模块 | 端口 | 职责 |
+|----------|----------|------|------|
+| **unified-core** | IAM, DOC, FLOW, File, Communication(IM/Mail/Notification) | 8000 | 核心基础服务 |
+| **manufacturing** | MES, PDM | 8023 | 制造业务服务 |
+| **quality-assurance** | QMS, LIMS, EHS | 8032 | 质量与安全服务 |
+| **analytics** | BI, REPORT | 8060 | 数据分析服务 |
+
+#### 独立服务
+
+| 服务 | 端口 | 职责 |
+|------|------|------|
+| **ai** | 8062 | AI服务（向量检索、问答、分析） |
+| **erp** | 8010 | 企业资源计划（财务、资产、凭证） |
+| **hrm** | 8011 | 人力资源管理（员工、考勤、薪资） |
+| **crm** | 8012 | 客户关系管理（客户、商机、销售） |
+| **pm** | 8001 | 项目管理（项目、合同、预算） |
+| **rs** | 8020 | 研发管理（项目、实验、配方） |
+| **scm** | 8040 | 供应链管理（采购、供应商） |
+| **srm** | 8041 | 供应商管理 |
+| **wms** | 8042 | 仓储管理（库存、出入库） |
+| **gis** | 8053 | 地理信息服务（地图、定位、轨迹） |
+| **integration** | 8005 | 系统集成服务 |
+| **mobile** | 8070 | 移动服务（离线、扫码、巡检） |
+| **monitor** | - | 监控与告警服务 |
+| **portal** | - | 统一门户服务 |
+
+### 4.2 服务端口配置
+
+完整端口配置见 [services.yaml](../config/services.yaml)
+
+#### 服务端口分组
+
+| 分组 | 端口范围 | 包含服务 |
+|------|----------|----------|
+| **核心服务** | 8000-8009 | unified-core(8000), pm(8001), integration(8005) |
+| **ERP/财务** | 8010-8019 | erp(8010), hrm(8011), crm(8012) |
+| **PLM/研发** | 8020-8029 | rs(8020), manufacturing(8023) |
+| **质量/生产** | 8030-8039 | quality-assurance(8032) |
+| **供应链** | 8040-8049 | scm(8040), srm(8041), wms(8042) |
+| **基础设施** | 8050-8059 | gis(8053) |
+| **数据分析** | 8060-8069 | analytics(8060), ai(8062) |
+| **扩展服务** | 8070-8079 | mobile(8070) |
+
+### 4.3 资源优化对比
 
 | 指标 | 优化前 | 优化后 | 改善幅度 |
 |------|--------|--------|----------|
-| 进程数 | 27 | 6 | **-78%** |
-| 内存占用 | ~2.7GB | ~850MB | **-72%** |
-| 启动时间 | ~60秒 | ~15秒 | **-75%** |
-| 数据库连接 | ~270 | ~90 | **-67%** |
+| 进程数 | 27 | 15 | **-44%** |
+| 内存占用 | ~2.7GB | ~1.2GB | **-56%** |
+| 启动时间 | ~60秒 | ~20秒 | **-67%** |
+| 数据库连接 | ~270 | ~100 | **-63%** |
 
-### 3.3 服务间调用
+### 4.4 unified-core 服务间调用
 
 ```rust
-// services/core/src/main.rs
+// svc/unified-core/src/main.rs
 use axum::{Router, routing::get};
 
 #[tokio::main]
@@ -302,13 +366,15 @@ async fn main() {
     let iam_routes = iam::routes();
     let doc_routes = doc::routes();
     let flow_routes = flow::routes();
-    let ai_routes = ai::routes();
+    let communication_routes = communication::routes();
+    let file_routes = file::routes();
 
     let app = Router::new()
         .nest("/api/iam", iam_routes)
         .nest("/api/doc", doc_routes)
         .nest("/api/flow", flow_routes)
-        .nest("/api/ai", ai_routes);
+        .nest("/api/communication", communication_routes)
+        .nest("/api/file", file_routes);
 
     axum::Server::bind(&"0.0.0.0:8000".parse().unwrap())
         .serve(app.into_make_service())
@@ -321,7 +387,7 @@ async fn main() {
 
 ## 五、多端架构设计
 
-### 4.1 端类型对比
+### 5.1 端类型对比
 
 | 端类型 | 技术栈 | 目标 | 优势 |
 |--------|--------|------|------|
@@ -331,7 +397,7 @@ async fn main() {
 | **桌面端** | Tauri + React | 离线能力、高性能 | 轻量级、系统集成 |
 | **API** | RESTful + GraphQL | 第三方系统对接 | 标准化、易集成 |
 
-### 4.2 Web端架构
+### 5.2 Web端架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -353,7 +419,7 @@ async fn main() {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.3 桌面端架构（Tauri）
+### 5.3 桌面端架构（Tauri）
 
 ```rust
 // apps/desktop/src/main.rs
@@ -384,7 +450,7 @@ async fn read_file(path: String) -> Result<String, String> {
 
 ## 六、UI设计规范
 
-### 5.1 设计原则
+### 6.1 设计原则
 
 | 原则 | 说明 |
 |------|------|
@@ -394,7 +460,7 @@ async fn read_file(path: String) -> Result<String, String> {
 | **响应式** | 适配不同屏幕尺寸 |
 | **无障碍** | 支持键盘导航和屏幕阅读器 |
 
-### 5.2 色彩系统
+### 6.2 色彩系统
 
 | 颜色类型 | 色值 | 用途 |
 |----------|------|------|
@@ -409,7 +475,7 @@ async fn read_file(path: String) -> Result<String, String> {
 | **文字** | `#1E293B` | 主文字 |
 | **次要文字** | `#64748B` | 次要文字 |
 
-### 5.3 字体系统
+### 6.3 字体系统
 
 | 字体类型 | 字号 | 字重 | 行高 | 用途 |
 |----------|------|------|------|------|
@@ -420,7 +486,7 @@ async fn read_file(path: String) -> Result<String, String> {
 | **小文字** | 0.875rem | 400 | 1.5 | 辅助文字 |
 | **标签** | 0.75rem | 500 | 1.4 | 标签、状态 |
 
-### 5.4 组件规范
+### 6.4 组件规范
 
 #### 按钮组件
 
@@ -494,7 +560,7 @@ const Card: React.FC<CardProps> = ({ className = '', header, children }) => {
 };
 ```
 
-### 5.5 布局规范
+### 6.5 布局规范
 
 ```tsx
 // components/layout/Layout.tsx
@@ -543,7 +609,7 @@ const Layout: React.FC<LayoutProps> = ({ children, sidebar }) => {
 
 ## 七、API 网关设计
 
-### 6.1 网关架构
+### 7.1 网关架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -571,7 +637,7 @@ const Layout: React.FC<LayoutProps> = ({ children, sidebar }) => {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 6.2 Nginx 配置
+### 7.2 Nginx 配置
 
 ```nginx
 http {
@@ -629,10 +695,10 @@ http {
 }
 ```
 
-### 6.3 API 版本控制
+### 7.3 API 版本控制
 
 ```rust
-// services/core/src/iam/api.rs
+// svc/unified-core/src/modules/iam/api.rs
 use axum::{Router, routing::get};
 
 pub fn routes() -> Router {
@@ -659,7 +725,7 @@ fn v2_routes() -> Router {
 
 ## 八、AI 辅助与知识库
 
-### 7.1 AI 架构
+### 8.1 AI 架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -690,7 +756,7 @@ fn v2_routes() -> Router {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 AI 功能清单
+### 8.2 AI 功能清单
 
 | 功能 | 描述 | 状态 | 优先级 |
 |------|------|------|--------|
@@ -702,7 +768,7 @@ fn v2_routes() -> Router {
 | **异常检测** | AI驱动的异常检测 | ⏳ | 低 |
 | **预测分析** | 基于历史数据的趋势预测 | ⏳ | 低 |
 
-### 7.3 本地知识库架构
+### 8.3 本地知识库架构
 
 ```typescript
 // shared/lib/ai/knowledge.ts
@@ -753,7 +819,7 @@ export class KnowledgeService {
 
 ## 九、前端监控体系
 
-### 8.1 监控架构
+### 9.1 监控架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -787,7 +853,7 @@ export class KnowledgeService {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 8.2 监控指标
+### 9.2 监控指标
 
 | 指标类型 | 具体指标 | 采集频率 | 存储时长 |
 |----------|----------|----------|----------|
@@ -801,7 +867,7 @@ export class KnowledgeService {
 | **行为** | 按钮点击次数 | 每次点击 | 7天 |
 | **行为** | 表单填写时长 | 表单提交时 | 7天 |
 
-### 8.3 监控 SDK
+### 9.3 监控 SDK
 
 ```typescript
 // shared/lib/monitoring/monitor.ts
@@ -876,7 +942,7 @@ export class Monitor {
 
 ## 十、安全架构
 
-### 9.1 认证授权体系
+### 10.1 认证授权体系
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -904,7 +970,7 @@ export class Monitor {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 9.2 安全防护清单
+### 10.2 安全防护清单
 
 | 防护类型 | 措施 | 状态 | 实施位置 |
 |----------|------|------|----------|
@@ -917,7 +983,7 @@ export class Monitor {
 | **DDoS防护** | 限流 + 熔断 | ⏳ | 网关 |
 | **数据加密** | AES-256 | ✅ | 数据库 |
 
-### 9.3 JWT 配置
+### 10.3 JWT 配置
 
 ```rust
 // shared/lib/auth/jwt.rs
@@ -978,160 +1044,258 @@ impl JwtService {
 
 ## 十一、完整目录结构
 
-### 10.1 项目根目录
+### 11.1 项目根目录
 
 ```
 TOPEMS/
 ├── apps/                          # 应用层
-│   ├── web/                       # Web前端应用
+│   ├── web/                       # Web前端应用（React 19 + TypeScript）
 │   │   ├── src/
 │   │   │   ├── components/        # UI组件
+│   │   │   │   ├── ui/            # 基础UI组件
+│   │   │   │   ├── mui/           # MUI封装组件
+│   │   │   │   ├── common/        # 通用业务组件
+│   │   │   │   ├── ai/            # AI组件
+│   │   │   │   ├── charts/        # 图表组件
+│   │   │   │   ├── im/            # 即时通讯组件
+│   │   │   │   ├── gis/           # GIS地图组件
+│   │   │   │   ├── layout/        # 布局组件
+│   │   │   │   ├── templates/     # 页面模板
+│   │   │   │   └── __tests__/     # 组件测试
 │   │   │   ├── pages/             # 页面组件
+│   │   │   │   ├── admin/         # 管理页面
+│   │   │   │   ├── bi/            # 商业智能页面
+│   │   │   │   ├── crm/           # CRM页面
+│   │   │   │   ├── hrm/           # HRM页面
+│   │   │   │   ├── finance/       # 财务页面
+│   │   │   │   ├── lims/          # LIMS页面
+│   │   │   │   ├── mes/           # MES页面
+│   │   │   │   ├── pm/            # 项目管理页面
+│   │   │   │   ├── rs/            # 研发页面
+│   │   │   │   └── flow/          # 工作流页面
 │   │   │   ├── hooks/             # 自定义Hooks
 │   │   │   ├── api/               # API调用层
-│   │   │   ├── store/             # 状态管理
+│   │   │   │   ├── modules/       # 模块API
+│   │   │   │   └── professional/  # 专业模块API
+│   │   │   ├── store/             # Zustand状态管理
 │   │   │   ├── utils/             # 工具函数
-│   │   │   └── styles/            # 全局样式
+│   │   │   ├── lib/               # 库函数
+│   │   │   ├── routes/            # 路由配置
+│   │   │   ├── i18n/              # 国际化
+│   │   │   ├── config/            # 配置文件
+│   │   │   ├── theme/             # 主题配置
+│   │   │   └── __tests__/         # 单元测试
+│   │   ├── e2e/                   # 端到端测试（Playwright）
 │   │   └── package.json
-│   ├── mobile/                    # 移动端应用
-│   │   ├── src/
-│   │   │   ├── components/        # 移动端组件
-│   │   │   ├── screens/           # 页面
-│   │   │   ├── services/          # API服务
-│   │   │   └── utils/             # 工具函数
-│   │   └── package.json
-│   └── desktop/                   # 桌面端应用（Tauri）
-│       ├── src/                   # Rust核心
-│       │   ├── main.rs            # 入口
-│       │   ├── commands/          # Tauri命令
-│       │   └── plugins/           # 自定义插件
-│       ├── web/                   # 前端代码
-│       │   └── src/               # 与Web端共享
-│       ├── icons/                 # 应用图标
-│       ├── tauri.conf.json        # Tauri配置
-│       └── Cargo.toml             # Rust依赖
-├── services/                      # 后端服务层
-│   ├── core/                      # 核心服务聚合
-│   │   ├── src/
-│   │   │   ├── iam/               # 身份认证
-│   │   │   ├── doc/               # 文档管理
-│   │   │   ├── flow/              # 工作流
-│   │   │   └── ai/                # AI服务
-│   │   └── Cargo.toml
-│   ├── enterprise/                # 企业服务聚合
-│   ├── manufacturing/             # 制造服务聚合
-│   ├── supplychain/               # 供应链服务聚合
-│   ├── science/                   # 科研服务聚合
-│   └── platform/                  # 平台服务聚合
-├── shared/                        # 共享层
-│   ├── lib/                       # 共享库
-│   │   ├── src/
-│   │   │   ├── auth/              # 认证工具
-│   │   │   ├── cache/             # 缓存工具
-│   │   │   ├── database/          # 数据库工具
-│   │   │   ├── logging/           # 日志工具
-│   │   │   ├── monitoring/        # 监控工具
-│   │   │   ├── ai/                # AI工具
-│   │   │   └── validation/        # 验证工具
-│   │   └── Cargo.toml
-│   └── config/                    # 共享配置
+│   └── core/                      # 前端核心模块（模块联邦）
+│       └── src/
+│           ├── components/        # 共享组件
+│           ├── hooks/             # 共享Hooks
+│           ├── pages/             # 共享页面
+│           └── store/             # 共享状态
+├── svc/                           # 后端服务层（Rust）
+│   ├── unified-core/              # 统一核心服务（IAM/Doc/Flow/File/Communication）
+│   │   └── src/
+│   │       ├── modules/           # 内部模块
+│   │       │   ├── iam/           # 身份认证
+│   │       │   ├── doc/           # 文档管理
+│   │       │   ├── flow/          # 工作流
+│   │       │   ├── file/          # 文件服务
+│   │       │   └── communication/ # 通讯服务（IM/Mail/Notification）
+│   │       └── main.rs
+│   ├── ai/                        # AI服务
+│   ├── analytics/                 # 数据分析服务（BI/Report）
+│   ├── crm/                       # 客户关系管理
+│   ├── erp/                       # 企业资源计划
+│   ├── gis/                       # 地理信息服务
+│   ├── hrm/                       # 人力资源管理
+│   ├── integration/               # 系统集成服务
+│   ├── manufacturing/             # 制造服务（MES/PDM）
+│   ├── mobile/                    # 移动服务
+│   ├── monitor/                   # 监控服务
+│   ├── pm/                        # 项目管理
+│   ├── portal/                    # 统一门户
+│   ├── quality-assurance/         # 质量保证（QMS/LIMS/EHS）
+│   ├── rs/                        # 研发管理
+│   ├── scm/                       # 供应链管理
+│   ├── srm/                       # 供应商管理
+│   ├── shared/                    # 共享库
+│   └── wms/                       # 仓储管理
+├── lib/                           # 后端共享库（Rust）
+│   └── src/
+│       ├── auth/                  # 认证工具
+│       ├── cache/                 # 缓存工具
+│       ├── database/              # 数据库工具
+│       ├── logging/               # 日志工具
+│       ├── monitoring/            # 监控工具
+│       ├── ai/                    # AI工具
+│       ├── validation/            # 验证工具
+│       ├── event/                 # 事件系统
+│       └── service_client/        # 服务客户端
+├── packages/                      # 前端共享包
+│   ├── shared-types/              # 共享类型定义
+│   └── shared-utils/              # 共享工具函数
+├── cli/                           # 命令行工具（Python）
+│   └── src/
+├── config/                        # 配置文件
+│   ├── services.yaml              # 服务端口配置
+│   ├── database.toml              # 数据库配置
+│   └── ports.env                  # 端口环境变量
 ├── deploy/                        # 部署配置
-│   ├── docker/                    # Docker配置
 │   ├── k8s/                       # Kubernetes配置
+│   ├── nginx/                     # Nginx配置
 │   └── scripts/                   # 部署脚本
+├── docker/                        # Docker配置
+│   ├── docker-compose.yml         # 基础设施编排
+│   ├── docker-compose.full.yml    # 完整服务编排
+│   ├── nginx.conf                 # Nginx配置
+│   └── prometheus.yml             # Prometheus配置
+├── database/                      # 数据库初始化
+│   └── postgres/                  # PostgreSQL初始化脚本
 ├── docs/                          # 文档
 │   ├── api/                       # API文档
-│   ├── architecture/               # 架构文档
+│   ├── architecture/              # 架构文档
 │   └── user/                      # 用户文档
 ├── monitoring/                    # 监控配置
-│   ├── prometheus/                # Prometheus配置
 │   ├── grafana/                   # Grafana配置
-│   └── alerts/                    # 告警配置
-└── tests/                         # 测试目录
-    ├── e2e/                       # 端到端测试
-    ├── integration/               # 集成测试
-    └── unit/                      # 单元测试
+│   └── docker-compose.yml         # 监控服务编排
+└── scripts/                       # 脚本文件
+    ├── topems.sh                 # 服务管理脚本
+    ├── install-deps.sh            # 依赖安装脚本
+    └── manage-services.sh         # 服务管理脚本
 ```
 
 ---
 
 ## 十二、部署与运维
 
-### 11.1 Docker Compose 配置
+### 12.1 Docker Compose 配置
+
+实际项目中Docker配置位于 `docker/docker-compose.yml`，包含基础设施服务和监控系统：
 
 ```yaml
 version: '3.8'
-
-services:
-  postgres:
-    image: postgres:16
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  redis:
-    image: redis:7.2-alpine
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  topems-core:
-    build: ./services/core
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
-      RABBITMQ_URL: ${RABBITMQ_URL}
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          cpus: '1'
-          memory: '256M'
-
-  nginx:
-    image: nginx:alpine
-    volumes:
-      - ./deploy/nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - topems-core
-      - topems-enterprise
-      - topems-platform
 
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  grafana_data:
+  prometheus_data:
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: topems-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-topems}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-topems_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-topems}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-topems}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:latest
+    container_name: topems-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: topems-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-topems}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-topems_secret}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    image: nginx:latest
+    container_name: topems-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../apps/web/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - postgres
+      - redis
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: topems-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: topems-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+
+networks:
+  topems-network:
+    driver: bridge
 ```
 
-### 11.2 CI/CD 流程
+### 12.1 Docker Compose 配置
+
+服务通过脚本 `scripts/topems.sh` 管理，支持模块分组启动：
+
+```bash
+# 启动所有服务
+./scripts/topems.sh start-all
+
+# 启动核心服务组
+./scripts/topems.sh start-module core
+
+# 启动ERP服务组
+./scripts/topems.sh start-module erp
+
+# 查看服务状态
+./scripts/topems.sh status
+```
+
+### 12.2 CI/CD 流程
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1152,7 +1316,7 @@ volumes:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 11.3 监控仪表盘
+### 12.3 监控仪表盘
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1193,7 +1357,7 @@ volumes:
 | **扩展性** | 有限 | 弹性伸缩 |
 | **适用场景** | 大型企业、数据敏感 | 中小微企业、快速上线 |
 
-### 14.2 SaaS 架构设计
+### 13.2 SaaS 架构设计
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1669,12 +1833,22 @@ export class EncryptionService {
 
 | 检查项 | 状态 | 责任人 |
 |--------|------|--------|
-| Core服务 (IAM/DOC/FLOW/AI) | ☐ | 后端 |
-| Enterprise服务 (ERP/HRM/CRM/PM) | ☐ | 后端 |
-| Manufacturing服务 (MES/QMS/EHS/PDM) | ☐ | 后端 |
-| SupplyChain服务 (SCM/SRM/WMS) | ☐ | 后端 |
-| Science服务 (RS/LIMS) | ☐ | 后端 |
-| Platform服务 (BI/GIS/IM/REPORT) | ☐ | 后端 |
+| unified-core服务 (IAM/DOC/FLOW/File/Communication) | ✅ | 后端 |
+| ERP服务 | ✅ | 后端 |
+| HRM服务 | ✅ | 后端 |
+| CRM服务 | ✅ | 后端 |
+| PM服务 | ✅ | 后端 |
+| RS服务 | ✅ | 后端 |
+| Manufacturing服务 (MES/PDM) | ✅ | 后端 |
+| Quality-Assurance服务 (QMS/LIMS/EHS) | ✅ | 后端 |
+| SCM服务 | ✅ | 后端 |
+| SRM服务 | ✅ | 后端 |
+| WMS服务 | ✅ | 后端 |
+| GIS服务 | ✅ | 后端 |
+| AI服务 | ✅ | AI团队 |
+| Analytics服务 (BI/Report) | ✅ | 后端 |
+| Mobile服务 | ✅ | 移动端 |
+| Integration服务 | ✅ | 后端 |
 
 ### 20.3 前端检查
 
@@ -1791,15 +1965,20 @@ TOPEMS 架构设计方案提供了以下核心价值：
 
 ---
 
-**文档版本**: v2.2  
-**最后更新**: 2026-06-10  
-**状态**: **已批准，可立即实施**  
+**文档版本**: v2.5  
+**最后更新**: 2026-06-18  
+**状态**: **已实施完成**  
 **审批人**: 架构委员会  
 **更新记录**: 
-1. 技术依赖版本升级（Axum 0.8+、PostgreSQL 16+、SQLx 0.8+）
-2. 添加技术资产继承清单（UI组件、Hooks、工具函数等）
-3. 清理重复章节，优化文档结构
-4. 章节编号重新整理，保持连续有序
+1. 更新前端技术栈版本（React 19、Vite 8、MUI 6、React Router 7、Zustand 5、TypeScript 6）
+2. 更新后端技术栈版本（Axum 0.8、SQLx 0.8.6、jsonwebtoken 9.0）
+3. 更新服务架构（services → svc，6个聚合服务 → 15个模块化服务）
+4. 更新服务端口配置（8000-8005 → 8000-8070多组端口）
+5. 更新UI组件库（shadcn/ui → MUI 6 + 自定义组件）
+6. 更新完整目录结构（同步项目实际结构）
+7. 更新Docker Compose配置（基础设施 + 监控系统）
+8. 更新后端服务检查清单（同步实际服务状态）
+9. 更新AI技术栈（增加Ollama、pgvector、PDF处理）
 
 ---
 

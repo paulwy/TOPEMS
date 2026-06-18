@@ -2,76 +2,93 @@
 
 | 项目 | 内容 |
 |------|------|
-| **文档版本** | v1.0.0 |
-| **创建日期** | 2026-06-15 |
-| **设计原则** | 分层导航 + 严格页面拆分 + 柔和渐变风格 |
-| **状态** | 待审批 |
+| **文档版本** | v2.0.0 |
+| **创建日期** | 2026-06-18 |
+| **设计原则** | 动态注册 + 三级导航 + 插件化架构 + 统一设计系统 |
+| **状态** | 实施中 |
+| **架构适配** | 支持插件化架构、Module Federation 微前端 |
 
 ---
 
 ## 一、设计目标
 
-1. **首页综合定位**：保持综合首页，通过分区卡片归类展示
-2. **严格页面拆分**：每个页面只展示一个核心功能
-3. **柔和渐变风格**：使用柔和渐变色，避免强烈对比
-4. **完整公共组件**：新增树状目录、进度条、甘特图、步骤器等
+1. **动态导航**：支持插件启动时动态注册导航，无需修改主应用
+2. **三级导航体系**：Header全局导航、模块Tab导航、页面内部导航
+3. **插件化适配**：每个插件独立管理自己的导航配置
+4. **权限过滤**：导航项根据用户权限动态显示/隐藏
 5. **统一布局规范**：页面必须元素、导航关系、响应式适配统一设计
+6. **独立部署支持**：插件可独立打包部署为单独产品
 
 ---
 
 ## 二、首页设计
 
-### 2.1 首页分区结构
+### 2.1 首页布局模式
 
-首页保持综合定位，通过分区卡片归类展示：
+**采用混合模式（仪表盘 + 模块入口 + 服务监控）：**
+
+| 布局区域 | 功能 | 优先级 |
+|----------|------|--------|
+| 顶部栏 | Logo、搜索、通知、主题切换、用户头像 | P0 |
+| 欢迎语区 | 动态问候语、用户名 | P1 |
+| 统计卡片区 | 待审批、待处理、在线用户、文件数量 | P0 |
+| 服务监控区 | 实时健康状态、请求数、异常服务 | P0 |
+| 模块入口区 | 已安装插件的大图标卡片网格 | P0 |
+| 待办事项区 | 审批任务、待处理任务列表 | P1 |
+
+### 2.2 首页分区结构
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  👋 欢迎回来，用户！上午好                            │
-├─────────────────────────────────────────────────────┤
-│  📊 今日概览（4个统计卡片）                          │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                    │
-│  │待审批│ │待处理│ │在线服务│ │文件数量│            │
-│  └─────┘ └─────┘ └─────┘ └─────┘                    │
-├─────────────────────────────────────────────────────┤
-│  🚀 快捷入口（可折叠）                               │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐    │
-│  │ 📄文档  │ │ 🤖AI    │ │ 🔄工作流│ │ 📋项目  │    │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘    │
-├─────────────────────────────────────────────────────┤
-│  📋 待办事项（Tab切换）                              │
-│  ┌─────────────────────────────────────────────────┐│
-│  │ 待审批 │ 待处理 │ 待跟进 │                       ││
-│  ├─────────────────────────────────────────────────┤│
-│  │ 任务列表...                                     ││
-│  └─────────────────────────────────────────────────┘│
-├─────────────────────────────────────────────────────┤
-│  🏢 模块导航（分组卡片）                             │
-│  ┌─────────────────────────────────────────────────┐│
-│  │ 核心业务: HRM │ CRM │ PM │ Finance │ Flow │ BI ││
-│  │ 运营管理: 资产 │ 设备 │ 行政 │ 车辆 │ 会议室    ││
-│  │ 研发创新: LIMS │ RS │ PDM                        ││
-│  │ 质量安全: QMS │ EHS │ GIS                        ││
-│  │ 协作沟通: IM │ Mail │ Docs │ AI                 ││
-│  │ 系统管理: 用户 │ 角色 │ 权限 │ 通知 │ 集成      ││
-│  └─────────────────────────────────────────────────┘│
-├─────────────────────────────────────────────────────┤
-│  🟢 服务状态监测（紧凑卡片）                         │
-│  ┌─────────────────────────────────────────────────┐│
-│  │ ✅IAM ✅HRM ✅CRM ✅PM ✅ERP ✅Flow ✅AI ✅Doc   ││
-│  │ ✅RS  ✅LIMS ✅QMS ✅EHS ✅GIS ✅IM  ✅Mail ✅BI  ││
-│  │ ⚠️SRM ✅PDM ✅MES ✅WMS ✅SCM ✅Portal           ││
-│  │ 🔄30秒刷新 │ 23在线 1异常                       ││
-│  └─────────────────────────────────────────────────┘│
-├─────────────────────────────────────────────────────┤
-│  📈 最近活动                                        │
-│  ┌─────────────────────────────────────────────────┐│
-│  │ 活动列表...                                     ││
-│  └─────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  TOPEMS 企业管理平台                            🔍 搜索  🔔 通知  🌙 主题 👤 │  ← 顶部栏
+├─────────────────────────────────────────────────────────────────────────┤
+│  👋 欢迎回来，管理员！上午好                                             │  ← 欢迎语
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                   │
+│  │  📋     │ │  📝     │ │  👥     │ │  📁     │                   │
+│  │ 待审批  │ │ 待处理  │ │ 在线用户 │ │ 文件数量 │                   │
+│  │   12    │ │   8     │ │   23    │ │   456   │                   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘                   │  ← 统计卡片区
+├─────────────────────────────────────────────────────────────────────────┤
+│  📊 服务状态监控                                                        │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  🟢 健康度: 98.5%    📈 请求: 12,847    ⚠️ 异常: 1 (SRM)         │  │
+│  ├───────────────────────────────────────────────────────────────────┤  │
+│  │ ✅IAM ✅HRM ✅CRM ✅PM ✅ERP ✅Flow ✅AI ✅Doc ✅RS                  │  │
+│  │ ✅LIMS ✅QMS ✅EHS ✅GIS ✅IM ✅Mail ✅BI ⚠️SRM ✅PDM               │  │
+│  │ ✅MES ✅WMS ✅SCM ✅Portal                                         │  │
+│  └───────────────────────────────────────────────────────────────────┘  │  ← 监控区
+├─────────────────────────────────────────────────────────────────────────┤
+│  🚀 模块导航                                                           │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐           │
+│  │    🏢      │ │    👥      │ │    📊      │ │    🔄      │           │
+│  │   企业资源 │ │   人力资源 │ │   客户管理 │ │   工作流   │           │
+│  │    ERP     │ │    HRM     │ │    CRM     │ │    Flow    │           │
+│  │   🟢运行中  │ │   🟢运行中  │ │   🟢运行中  │ │   🟢运行中  │           │
+│  └────────────┘ └────────────┘ └────────────┘ └────────────┘           │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐           │
+│  │    📁      │ │    💬      │ │    🤖      │ │    ⚙️      │           │
+│  │   项目管理 │ │   即时通讯 │ │   AI助手   │ │   系统管理 │           │
+│  │    PM      │ │    IM      │ │    AI      │ │    IAM     │           │
+│  │   🟢运行中  │ │   🟢运行中  │ │   🟢运行中  │ │   🟢运行中  │           │
+│  └────────────┘ └────────────┘ └────────────┘ └────────────┘           │  ← 模块入口区
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐           │
+│  │    🧪      │ │    🔧      │ │    🛡️      │ │    📍      │           │
+│  │   研发管理 │ │   质量管理 │ │   供应链   │ │   地理信息 │           │
+│  │    RS/LIMS │ │    QMS/EHS │ │    SCM/SRM │ │    GIS     │           │
+│  │   🟢运行中  │ │   🟢运行中  │ │   ⚠️异常   │ │   🟢运行中  │           │
+│  └────────────┘ └────────────┘ └────────────┘ └────────────┘           │
+├─────────────────────────────────────────────────────────────────────────┤
+│  📋 待办事项                                                           │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │ 🔄 审批任务: 员工转正审批 (张三)      截止: 今天 18:00              │  │
+│  │ 🔄 审批任务: 采购订单审批 (李四)      截止: 今天 17:00              │  │
+│  │ 🔄 审批任务: 合同续签审批 (王五)      截止: 明天 10:00              │  │
+│  └───────────────────────────────────────────────────────────────────┘  │  ← 待办事项区
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 首页入口简化
+### 2.3 首页入口简化
 
 将原来的 **6个入口** 简化为 **1个入口**：
 
@@ -84,233 +101,302 @@
 | `/dashboard/followups` | 首页内"待办事项"Tab | 合并到首页 |
 | `/flow/approvals` | 首页内"待办事项"Tab | 合并到首页 |
 
-### 2.3 服务状态监测设计
+### 2.4 统计卡片区设计
 
-**位置：** 模块导航下方，紧凑卡片形式
+四个关键指标卡片：
+
+| 卡片 | 图标 | 数据来源 | 用途 |
+|------|------|----------|------|
+| 待审批 | ClipboardList | Flow服务 | 待处理的审批任务数 |
+| 待处理 | CheckSquare | 各模块汇总 | 待处理的任务总数 |
+| 在线用户 | Users | IAM服务 | 当前在线用户数 |
+| 文件数量 | FolderOpen | File服务 | 系统文件总数 |
+
+**卡片样式：**
+- 圆角：12px
+- 背景：白色 + 科技蓝渐变边框
+- 悬停效果：轻微上移 + 阴影加深
+
+### 2.5 服务状态监测设计
+
+**位置：** 统计卡片下方，独立区块
 
 **状态指示：**
-- ✅ 正常 - 绿色柔和渐变 `#22c55e → #16a34a`
-- ⚠️ 异常 - 橙色柔和渐变 `#f59e0b → #d97706`
-- ❌ 离线 - 红色柔和渐变 `#ef4444 → #dc2626`
+- ✅ 正常 - 绿色背景 `#22c55e`
+- ⚠️ 异常 - 橙色背景 `#f59e0b`，闪烁动画
+- ❌ 离线 - 红色背景 `#ef4444`
+
+**监控信息：**
+- 健康度百分比
+- 今日请求数
+- 异常服务数量
 
 **交互功能：**
 - 自动刷新（30秒间隔）
 - 手动刷新按钮
 - 异常服务高亮提示
-- 点击服务卡片可查看详情
+- 点击服务查看详情
+
+### 2.6 模块入口区设计
+
+模块卡片网格布局：
+
+| 特性 | 说明 |
+|------|------|
+| 网格布局 | 4列（桌面端），响应式自适应 |
+| 卡片尺寸 | 180px × 140px |
+| 图标尺寸 | 48px |
+| 状态指示 | 卡片底部显示服务状态 |
+| 悬停效果 | 放大 + 阴影 + 边框高亮 |
+| 动态显示 | 根据插件安装状态显示/隐藏 |
+
+**模块卡片信息：**
+- 图标（Lucide图标）
+- 模块名称（中文）
+- 模块代码（英文缩写）
+- 服务状态（运行中/异常/离线）
+
+### 2.7 待办事项区设计
+
+显示待处理的审批任务：
+
+| 字段 | 说明 |
+|------|------|
+| 类型图标 | 审批、任务、提醒等 |
+| 标题 | 任务描述 |
+| 关联人 | 相关人员 |
+| 截止时间 | 截止日期和时间 |
 
 ---
 
-## 三、导航分组配置
+## 三、动态导航注册机制
 
-### 3.1 Header全局导航
+### 3.1 导航元数据规范
 
-```typescript
-const topNavItems = [
-  { label: "首页", path: "/dashboard" },  // 唯一入口，不展开
-  {
-    label: "人力",
-    path: "/hrm",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/hrm" },
-      { label: "人事管理", children: [
-        { label: "员工列表", path: "/hrm/employees" },
-        { label: "合同管理", path: "/hrm/contracts" },
-      ]},
-      { label: "组织管理", children: [
-        { label: "公司管理", path: "/hrm/companies" },
-        { label: "部门管理", path: "/hrm/departments" },
-        { label: "岗位管理", path: "/hrm/positions" },
-      ]},
-      { label: "考勤管理", children: [
-        { label: "考勤记录", path: "/hrm/attendance" },
-        { label: "请假管理", path: "/hrm/leave" },
-      ]},
-      { label: "薪酬绩效", children: [
-        { label: "薪酬管理", path: "/hrm/payroll" },
-        { label: "绩效管理", path: "/hrm/performance" },
-      ]},
-      { label: "人才发展", children: [
-        { label: "招聘管理", path: "/hrm/recruitment" },
-        { label: "培训管理", path: "/hrm/training" },
-      ]},
-    ],
-  },
-  {
-    label: "客户",
-    path: "/crm",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/crm" },
-      { label: "客户关系", children: [
-        { label: "客户列表", path: "/crm/customers" },
-        { label: "商机列表", path: "/crm/opportunities" },
-        { label: "联系人", path: "/crm/contacts" },
-        { label: "交互记录", path: "/crm/interactions" },
-      ]},
-      { label: "销售分析", children: [
-        { label: "客户评分", path: "/crm/scoring" },
-        { label: "销售预测", path: "/crm/forecast" },
-      ]},
-    ],
-  },
-  {
-    label: "项目",
-    path: "/pm",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/pm" },
-      { label: "项目管理", children: [
-        { label: "项目列表", path: "/pm/projects" },
-      ]},
-      { label: "合同与报表", children: [
-        { label: "合同列表", path: "/pm/contracts" },
-        { label: "模板库", path: "/pm/templates" },
-        { label: "项目报表", path: "/pm/reports" },
-      ]},
-    ],
-  },
-  {
-    label: "数据",
-    path: "/bi",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/bi/dashboard" },
-      { label: "数据可视化", children: [
-        { label: "分析仪表盘", path: "/bi/dashboard" },
-        { label: "报表中心", path: "/bi/reports" },
-        { label: "可视化编辑", path: "/bi/visualizations" },
-      ]},
-      { label: "数据管理", children: [
-        { label: "数据源", path: "/bi/datasources" },
-        { label: "对比分析", path: "/bi/comparison" },
-      ]},
-    ],
-  },
-  {
-    label: "运营",
-    path: "/assets",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/assets" },
-      { label: "资产设备", children: [
-        { label: "资产台账", path: "/assets" },
-        { label: "设备管理", path: "/equipment" },
-      ]},
-      { label: "行政综合", children: [
-        { label: "行政管理", path: "/administration" },
-        { label: "办公用品", path: "/office-supplies" },
-        { label: "车辆管理", path: "/vehicles" },
-        { label: "会议室", path: "/meeting-rooms" },
-      ]},
-    ],
-  },
-  {
-    label: "工作流",
-    path: "/flow",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/flow" },
-      { label: "流程审批", children: [
-        { label: "审批中心", path: "/flow/approvals" },
-        { label: "实例管理", path: "/flow/instances" },
-        { label: "版本历史", path: "/flow/history" },
-      ]},
-      { label: "流程统计", children: [
-        { label: "流程设计器", path: "/workflow-designer" },
-        { label: "流程统计", path: "/flow/statistics" },
-      ]},
-    ],
-  },
-  {
-    label: "协作",
-    path: "/im",
-    isGroup: true,
-    children: [
-      { label: "概览", path: "/im" },
-      { label: "沟通协作", children: [
-        { label: "即时通讯", path: "/im" },
-        { label: "邮件", path: "/mail" },
-        { label: "文件管理", path: "/docs" },
-      ]},
-      { label: "AI助手", children: [
-        { label: "AI助手", path: "/ai" },
-        { label: "知识库", path: "/knowledge-base" },
-      ]},
-    ],
-  },
-  {
-    label: "更多",
-    isGroup: true,
-    children: [
-      { label: "研发创新", children: [
-        { label: "LIMS", path: "/lims" },
-        { label: "RS研发", path: "/rs" },
-        { label: "PDM", path: "/pdm" },
-      ]},
-      { label: "质量安全", children: [
-        { label: "QMS", path: "/qms" },
-        { label: "EHS", path: "/ehs" },
-      ]},
-      { label: "供应链", children: [
-        { label: "SRM", path: "/srm" },
-      ]},
-      { label: "地理信息", children: [
-        { label: "GIS", path: "/gis" },
-      ]},
-      { label: "系统管理", children: [
-        { label: "概览", path: "/iam" },
-        { label: "用户管理", path: "/iam/users" },
-        { label: "角色管理", path: "/iam/roles" },
-        { label: "权限配置", path: "/iam/permissions" },
-        { label: "通知管理", path: "/notifications" },
-        { label: "系统集成", path: "/integration" },
-      ]},
-      { label: "帮助", children: [
-        { label: "帮助中心", path: "/help" },
-        { label: "使用文档", path: "/docs/guide" },
-      ]},
-    ],
-  },
-];
+插件通过 `plugin.yaml` 声明导航配置，导航分为两级：
+
+```yaml
+navigation:
+  top_nav:
+    - code: erp
+      label: 企业资源
+      icon: Building2
+      path: /erp
+      permission: erp:access
+      order: 6
+  
+  module_tabs:
+    - label: 概览
+      path: /erp
+      icon: LayoutDashboard
+    - label: 资产
+      path: /erp/assets
+      icon: Package
+      permission: erp:asset:read
 ```
 
-### 3.2 模块Tab配置
-
-每个模块入口页展示模块Tab，用于模块内页面切换：
+### 3.2 导航注册中心
 
 ```typescript
-const moduleTabsConfig = [
-  {
-    module: "hrm",
-    tabs: [
-      { label: "概览", path: "/hrm", pinned: true },
-      { label: "员工", path: "/hrm/employees" },
-      { label: "部门", path: "/hrm/departments" },
-      { label: "岗位", path: "/hrm/positions" },
-      { label: "考勤", path: "/hrm/attendance" },
-      { label: "薪酬", path: "/hrm/payroll" },
-      { label: "绩效", path: "/hrm/performance" },
-      { label: "招聘", path: "/hrm/recruitment" },
-      { label: "培训", path: "/hrm/training" },
-      { label: "合同", path: "/hrm/contracts" },
-    ],
-  },
-  {
-    module: "crm",
-    tabs: [
-      { label: "概览", path: "/crm", pinned: true },
-      { label: "客户", path: "/crm/customers" },
-      { label: "商机", path: "/crm/opportunities" },
-      { label: "联系人", path: "/crm/contacts" },
-      { label: "交互", path: "/crm/interactions" },
-      { label: "评分", path: "/crm/scoring" },
-      { label: "预测", path: "/crm/forecast" },
-    ],
-  },
-  // ... 其他模块
-];
+interface NavItem {
+  code: string;
+  label: string;
+  icon?: string;
+  path: string;
+  permission?: string;
+  order?: number;
+  children?: NavItem[];
+}
+
+interface PluginNavConfig {
+  top_nav?: NavItem[];
+  module_tabs?: NavItem[];
+}
+
+class NavigationRegistry {
+  private static instance: NavigationRegistry;
+  private navItems: Map<string, NavItem[]> = new Map();
+
+  static getInstance(): NavigationRegistry {
+    if (!NavigationRegistry.instance) {
+      NavigationRegistry.instance = new NavigationRegistry();
+    }
+    return NavigationRegistry.instance;
+  }
+
+  register(pluginCode: string, config: PluginNavConfig): void {
+    if (config.top_nav) {
+      this.navItems.set(`${pluginCode}:top`, config.top_nav);
+    }
+    if (config.module_tabs) {
+      this.navItems.set(`${pluginCode}:tabs`, config.module_tabs);
+    }
+  }
+
+  unregister(pluginCode: string): void {
+    this.navItems.delete(`${pluginCode}:top`);
+    this.navItems.delete(`${pluginCode}:tabs`);
+  }
+
+  getTopNavItems(): NavItem[] {
+    const items: NavItem[] = [];
+    this.navItems.forEach((navItems, key) => {
+      if (key.endsWith(':top')) {
+        items.push(...navItems);
+      }
+    });
+    return items.sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  getModuleTabs(pluginCode: string): NavItem[] | undefined {
+    return this.navItems.get(`${pluginCode}:tabs`);
+  }
+
+  getAllPluginCodes(): string[] {
+    const codes = new Set<string>();
+    this.navItems.forEach((_, key) => {
+      const parts = key.split(':');
+      codes.add(parts[0]);
+    });
+    return Array.from(codes);
+  }
+}
+```
+
+### 3.3 核心模块导航配置
+
+| 模块 | 路径 | 图标 | 权限 | 排序 |
+|------|------|------|------|------|
+| **首页** | `/dashboard` | Home | - | 0 |
+| **人力** | `/hrm` | Users | hrm:access | 1 |
+| **客户** | `/crm` | Users2 | crm:access | 2 |
+| **项目** | `/pm` | FolderKanban | pm:access | 3 |
+| **工作流** | `/flow` | GitBranch | flow:access | 4 |
+| **协作** | `/im` | MessageCircle | im:access | 5 |
+| **系统** | `/iam` | Settings | iam:access | 99 |
+
+### 3.4 插件导航配置示例
+
+#### ERP 插件
+
+```yaml
+navigation:
+  top_nav:
+    - code: erp
+      label: 企业资源
+      icon: Building2
+      path: /erp
+      permission: erp:access
+      order: 6
+  
+  module_tabs:
+    - label: 概览
+      path: /erp
+      icon: LayoutDashboard
+    - label: 资产
+      path: /erp/assets
+      icon: Package
+      permission: erp:asset:read
+    - label: 财务
+      path: /erp/finance
+      icon: DollarSign
+      permission: erp:finance:read
+    - label: 预算
+      path: /erp/budget
+      icon: PieChart
+      permission: erp:budget:read
+```
+
+#### 供应链插件
+
+```yaml
+navigation:
+  top_nav:
+    - code: scm
+      label: 供应链
+      icon: Truck
+      path: /scm
+      permission: scm:access
+      order: 7
+  
+  module_tabs:
+    - label: 概览
+      path: /scm
+      icon: LayoutDashboard
+    - label: 采购
+      path: /scm/purchasing
+      icon: ShoppingCart
+      permission: scm:purchase:read
+    - label: 库存
+      path: /scm/inventory
+      icon: Warehouse
+      permission: scm:inventory:read
+```
+
+### 3.5 模块Tab动态渲染
+
+模块Tab由插件通过 `plugin.yaml` 配置，Host 根据权限过滤后渲染：
+
+```tsx
+interface ModuleTabsProps {
+  pluginCode: string;
+  activePath: string;
+  onTabChange: (path: string) => void;
+}
+
+export const ModuleTabs: React.FC<ModuleTabsProps> = ({ 
+  pluginCode, 
+  activePath, 
+  onTabChange 
+}) => {
+  const registry = NavigationRegistry.getInstance();
+  const tabs = registry.getModuleTabs(pluginCode) || [];
+  
+  const filteredTabs = tabs.filter(tab => {
+    if (!tab.permission) return true;
+    return hasPermission(tab.permission);
+  });
+
+  if (filteredTabs.length === 0) return null;
+
+  return (
+    <Tabs 
+      variant="scrollable"
+      scrollButtons="auto"
+      sx={{ borderBottom: 1, borderColor: 'divider' }}
+      value={activePath}
+      onChange={(e, value) => onTabChange(value as string)}
+    >
+      {filteredTabs.map(tab => (
+        <Tab 
+          key={tab.path} 
+          label={tab.label}
+          value={tab.path}
+        />
+      ))}
+    </Tabs>
+  );
+};
+```
+
+### 3.6 导航权限过滤机制
+
+所有导航项必须通过权限校验才能显示：
+
+```typescript
+const hasPermission = (permissionCode: string): boolean => {
+  const userPermissions = useUserPermissions();
+  return userPermissions.includes(permissionCode);
+};
+
+const getFilteredTopNav = (): NavItem[] => {
+  const registry = NavigationRegistry.getInstance();
+  const allItems = registry.getTopNavItems();
+  return allItems.filter(item => {
+    if (!item.permission) return true;
+    return hasPermission(item.permission);
+  });
+};
 ```
 
 ---
@@ -562,47 +648,123 @@ const moduleTabsConfig = [
 | **帮助按钮** | 功能 | 页面头部右侧 | 所有页面必须有 |
 | **主题切换** | 功能 | Header右侧 | 全局必须有 |
 | **操作按钮组** | 功能 | 页面头部右侧 | 根据页面类型配置 |
-| **Tab标签页** | 导航 | 页面头部下方 | 模块入口页必须有 |
+| **动态Tab标签页** | 导航 | 页面头部下方 | 插件注册的模块Tab |
 
-### 5.2 Header导航菜单与页面关系
+### 5.2 插件化页面布局架构
+
+**首页布局：**
 
 ```
-┌─────────────────────────────────────────────────────┐
-│ [Logo] │ 首页 │ 人力 │ 客户 │ ... │ 🔔 │ 🌙 │ 👤 │  ← Header全局导航
-│                     └─────────────────── 下拉 ─────┘│
-├─────────────────────────────────────────────────────┤
-│ 首页 > 人力 > 员工管理                               │  ← 面包屑（页面级）
-├─────────────────────────────────────────────────────┤
-│ ← 返回 │ 员工列表               🔍 │ ➕ │ ❓ │      │  ← 页面头部
-├─────────────────────────────────────────────────────┤
-│ 概览 │ 员工 │ 部门 │ 岗位 │ 考勤 │ 薪酬 │ ...      │  ← 模块Tab（模块级）
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│                    页面内容                          │
-│                                                      │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│  TOPEMS 企业管理平台                            🔍 搜索  🔔 通知  🌙 主题 👤 │  ← L1: Header全局导航
+├─────────────────────────────────────────────────────────────────────────┤
+│  👋 欢迎回来，管理员！上午好                                             │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                   │
+│  │ 待审批  │ │ 待处理  │ │ 在线用户 │ │ 文件数量 │                   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│  📊 服务状态监控                                                        │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │ 🟢健康度: 98.5%  📈请求: 12,847  ⚠️异常: 1 (SRM)                   │  │
+│  │ ✅IAM ✅HRM ✅CRM ✅PM ✅ERP ✅Flow ✅AI                              │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────────────┤
+│  🚀 模块导航                                                           │
+│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐           │
+│  │ 企业资源 │ │ 人力资源 │ │ 客户管理 │ │ 工作流   │           │
+│  │   ERP     │ │   HRM     │ │   CRM     │ │   Flow    │           │
+│  └────────────┘ └────────────┘ └────────────┘ └────────────┘           │
+├─────────────────────────────────────────────────────────────────────────┤
+│  📋 待办事项                                                           │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │ 审批任务: 员工转正审批 (张三)  截止: 今天 18:00                     │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**模块内页面布局（侧边栏导航）：**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  TOPEMS 企业管理平台              🔍 搜索  🔔 通知  🌙 主题 👤 │  ← L1: Header全局导航
+├──────────────┬───────────────────────────────────────────────┤
+│              │  首页 > 企业资源 > 资产台账                   │  ← 面包屑
+│              ├───────────────────────────────────────────────┤
+│              │  ← 返回    资产台账    🔍 搜索  ➕ 新增  ❓ 帮助 │  ← 页面头部
+│              ├───────────────────────────────────────────────┤
+│    侧边栏    │                                                │
+│    导航      │                                                │
+│              │                                                │
+│  ┌────────┐  │                                                │
+│  │ 🏠 概览│  │                                                │
+│  ├────────┤  │                                                │
+│  │📦 资产 │  │              页面内容区域                        │  ← 插件页面内容
+│  ├────────┤  │                                                │     (Module Federation)
+│  │💰 财务 │  │                                                │
+│  ├────────┤  │                                                │
+│  │📊 预算 │  │                                                │
+│  ├────────┤  │                                                │
+│  │⚙️ 设置 │  │                                                │
+│  └────────┘  │                                                │
+│              │                                                │  ← L2: 侧边栏导航
+│              │                                                │     (插件注册的模块导航)
+└──────────────┴───────────────────────────────────────────────┘
 ```
 
 ### 5.3 三级导航体系
 
-| 级别 | 名称 | 位置 | 功能 |
-|------|------|------|------|
-| **L1** | Header全局导航 | 页面顶部固定 | 模块间切换、全局功能 |
-| **L2** | 模块Tab导航 | Header下方 | 模块内页面切换 |
-| **L3** | 页面内部导航 | 页面内容区 | 详情页Tab、表单步骤等 |
+| 级别 | 名称 | 位置 | 功能 | 数据源 |
+|------|------|------|------|--------|
+| **L1** | Header全局导航 | 页面顶部固定 | 模块间切换、全局功能 | 核心模块 + 插件动态注册 |
+| **L2** | 侧边栏导航 | 左侧固定（模块内） | 模块内页面切换 | 插件 `plugin.yaml` 配置 |
+| **L3** | 页面内部导航 | 页面内容区 | 详情页Tab、表单步骤等 | 插件页面内部定义 |
+
+### 5.4 侧边栏导航设计
+
+| 特性 | 说明 |
+|------|------|
+| 宽度 | 220px |
+| 固定位置 | 左侧固定 |
+| 激活状态 | 科技蓝背景 + 白色文字 |
+| 折叠功能 | 支持收起为图标模式 |
+| 动态生成 | 根据插件配置生成导航项 |
 
 ### 5.4 页面进入逻辑
 
 | 场景 | 进入方式 | 页面状态 |
 |------|----------|----------|
-| **从Header进入** | 点击模块菜单 | 进入模块仪表盘页 |
-| **从Tab进入** | 点击模块Tab | 进入对应列表页 |
+| **从Header进入核心模块** | 点击核心菜单 | 进入核心模块仪表盘页 |
+| **从Header进入插件** | 点击插件菜单 | 动态加载插件，进入插件仪表盘页 |
+| **从Tab进入** | 点击模块Tab | 进入对应列表页，权限过滤 |
 | **从列表进入详情** | 点击数据行 | 进入详情页，显示返回按钮 |
 | **从详情进入编辑** | 点击编辑按钮 | 进入编辑表单，显示返回按钮 |
 | **从列表进入创建** | 点击新建按钮 | 进入创建表单，显示返回按钮 |
 | **返回上一页** | 点击返回按钮 | 返回来源页面，保持筛选状态 |
 
-### 5.5 搜索功能规范
+### 5.5 插件动态加载流程
+
+```
+用户点击插件菜单项 (如 ERP)
+       │
+       ▼
+  检查插件是否已加载
+       │
+       ├── 已加载 → 直接导航到 /erp
+       │
+       └── 未加载 → 动态加载 remoteEntry.js
+              │
+              ▼
+        注册导航元数据
+              │
+              ▼
+        加载插件页面组件
+              │
+              ▼
+        导航到 /erp
+```
+
+### 5.6 搜索功能规范
 
 | 页面类型 | 搜索位置 | 搜索范围 |
 |----------|----------|----------|
@@ -610,21 +772,23 @@ const moduleTabsConfig = [
 | **全局搜索** | Header搜索框 | 全系统数据（快捷入口） |
 | **详情页** | 详情页内Tab | 当前详情页关联数据 |
 
-### 5.6 帮助功能规范
+### 5.7 帮助功能规范
 
 | 帮助类型 | 触发方式 | 内容 |
 |----------|----------|------|
-| **页面帮助** | 点击❓按钮 | 当前页面使用指南 |
+| **页面帮助** | 点击❓按钮 | 当前页面使用指南（插件可自定义） |
 | **字段帮助** | 字段旁Tooltip | 字段说明 |
 | **全局帮助** | Header帮助入口 | 系统帮助中心 |
+| **插件帮助** | 插件内帮助入口 | 插件专属帮助文档 |
 
-### 5.7 主题切换规范
+### 5.8 主题切换规范
 
 | 位置 | 触发方式 | 效果 |
 |------|----------|------|
 | **Header右侧** | 点击☀️/🌙图标 | 全局主题切换 |
 | **自动跟随** | 系统设置 | 跟随系统主题 |
 | **记忆保存** | localStorage | 下次访问保持选择 |
+| **插件定制** | `plugin.yaml` 配置 | 插件可覆盖主色调 |
 
 ---
 
@@ -695,11 +859,11 @@ const moduleTabsConfig = [
 |------|--------|--------|--------|
 | **Header** | 完整导航 | 折叠导航 | 汉堡菜单 |
 | **面包屑** | 完整显示 | 简化显示 | 隐藏 |
-| **模块Tab** | 横向排列 | 可滚动 | 隐藏 |
+| **侧边栏** | 固定显示（220px） | 可折叠 | 抽屉式 |
 | **搜索框** | 展开输入 | 展开输入 | 点击图标展开 |
 | **筛选栏** | 展开显示 | 折叠显示 | 抽屉显示 |
 | **表格** | 多列显示 | 关键列显示 | 卡片列表 |
-| **侧边栏** | 固定显示 | 可折叠 | 隐藏 |
+| **模块卡片** | 4列 | 3列 | 2列 |
 
 ---
 
@@ -897,28 +1061,30 @@ interface StepItem {
 
 | 阶段 | 任务 | 时间 | 优先级 |
 |------|------|------|--------|
-| **阶段1** | 导航配置更新 | Week 1 | P0 |
-| | - 首页入口简化 | | P0 |
-| | - Header导航更新 | | P0 |
-| | - 模块Tab配置 | | P0 |
-| **阶段2** | 页面布局统一 | Week 2 | P0 |
-| | - 页面头部组件 | | P0 |
-| | - 面包屑组件 | | P0 |
-| | - 响应式适配 | | P0 |
-| **阶段3** | 公共组件开发 | Week 3-4 | P1 |
-| | - TreeView组件 | | P1 |
-| | - ProgressBar组件 | | P1 |
-| | - GanttChart组件 | | P1 |
-| | - Stepper组件 | | P1 |
-| **阶段4** | 颜色系统应用 | Week 5 | P1 |
-| | - 渐变色应用 | | P1 |
-| | - 模块专属色 | | P1 |
-| | - 过渡色应用 | | P1 |
-| **阶段5** | 模块页面重构 | Week 6-10 | P2 |
-| | - HRM模块 | | P2 |
-| | - CRM模块 | | P2 |
-| | - PM模块 | | P2 |
-| | - 其他模块 | | P2 |
+| **阶段1** | 导航注册中心 | Week 1 | P0 |
+| | - NavigationRegistry 实现 | | P0 |
+| | - 插件导航元数据规范 | | P0 |
+| | - 权限过滤机制 | | P0 |
+| **阶段2** | Host Shell 基础 | Week 2 | P0 |
+| | - Header动态导航组件 | | P0 |
+| | - 侧边栏导航组件 | | P0 |
+| | - 页面布局容器 | | P0 |
+| **阶段3** | Module Federation 配置 | Week 3 | P0 |
+| | - Host配置 | | P0 |
+| | - Core Remote配置 | | P0 |
+| | - 共享依赖管理 | | P0 |
+| **阶段4** | 插件化UI框架 | Week 4 | P1 |
+| | - 插件路由动态加载 | | P1 |
+| | - 插件主题定制 | | P1 |
+| | - 插件独立部署模式 | | P1 |
+| **阶段5** | 共享设计系统 | Week 5-6 | P1 |
+| | - shared-components | | P1 |
+| | - design-tokens | | P1 |
+| | - shared-types | | P1 |
+| **阶段6** | 核心模块迁移 | Week 7-10 | P2 |
+| | - HRM插件化 | | P2 |
+| | - CRM插件化 | | P2 |
+| | - ERP/供应链插件化 | | P2 |
 
 ---
 
@@ -926,10 +1092,12 @@ interface StepItem {
 
 ### 10.1 导航验收
 
-- [ ] 首页入口简化为唯一入口
-- [ ] Header导航分组清晰
-- [ ] 模块Tab配置完整
-- [ ] 三级导航体系完整
+- [ ] 导航注册中心工作正常
+- [ ] 插件导航动态注册正常
+- [ ] 权限过滤功能正常
+- [ ] 三级导航体系完整（Header + 侧边栏 + 页面内部）
+- [ ] 侧边栏导航正常
+- [ ] 导航排序正确
 
 ### 10.2 页面布局验收
 
@@ -939,15 +1107,33 @@ interface StepItem {
 - [ ] 搜索功能正常
 - [ ] 帮助功能正常
 - [ ] 主题切换正常
+- [ ] 插件动态加载正常
 
-### 10.3 响应式验收
+### 10.3 首页混合模式验收
+
+- [ ] 顶部栏功能正常（Logo、搜索、通知、主题、用户头像）
+- [ ] 统计卡片数据正确显示（待审批、待处理、在线用户、文件数量）
+- [ ] 服务监控实时更新（健康度、请求数、异常服务）
+- [ ] 模块卡片动态生成（根据插件安装状态显示/隐藏）
+- [ ] 待办事项列表正常
+- [ ] 模块卡片悬停效果正常
+
+### 10.4 插件化验收
+
+- [ ] Module Federation配置正确
+- [ ] 共享依赖singleton模式正常
+- [ ] 插件独立部署模式可用
+- [ ] 插件主题定制可用
+- [ ] 插件导航权限控制正常
+
+### 10.5 响应式验收
 
 - [ ] 桌面端布局正常
 - [ ] 平板端布局正常
 - [ ] 移动端布局正常
 - [ ] 组件响应式适配
 
-### 10.4 公共组件验收
+### 10.6 公共组件验收
 
 - [ ] TreeView组件可用
 - [ ] ProgressBar组件可用

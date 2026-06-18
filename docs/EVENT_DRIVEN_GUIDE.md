@@ -1,8 +1,9 @@
 # TOPEMS 事件驱动架构使用指南
 
-> 文档版本: v1.0
+> 文档版本: v2.0
 > 创建日期: 2026-06-08
-> 状态: 已实现
+> 最后更新: 2026-06-18
+> 状态: 已完善
 
 ---
 
@@ -16,6 +17,8 @@
 - **EventSubscriber**: 事件订阅者，用于监听和处理事件
 - **Event**: 事件实体，包含事件类型、源、数据等信息
 - **EventPayloads**: 预定义的事件数据结构（HRM、PM 等）
+- **DeadLetterQueue**: 死信队列，处理失败事件的重试机制
+- **EventMonitor**: 事件监控，追踪事件状态和统计指标
 
 ### 1.2 架构优势
 
@@ -23,6 +26,8 @@
 - ✅ **可扩展性**: 新增订阅者不影响现有模块
 - ✅ **容错性**: 一个模块故障不影响其他模块
 - ✅ **异步处理**: 事件处理可以异步执行
+- ✅ **可靠性**: 死信队列确保事件不丢失
+- ✅ **可观测性**: 事件监控提供完整的追踪能力
 
 ---
 
@@ -172,16 +177,19 @@ async fn handle_event(event: Event) {
 | HrmEmployeeCreated | HrmEmployeeCreatedPayload | 员工创建 |
 | HrmEmployeeUpdated | HrmEmployeeUpdatedPayload | 员工更新 |
 | HrmEmployeeDeleted | (通用) | 员工删除 |
-| HrmDepartmentCreated | (待实现) | 部门创建 |
-| HrmDepartmentUpdated | (待实现) | 部门更新 |
+| HrmDepartmentCreated | HrmDepartmentCreatedPayload | 部门创建 |
+| HrmDepartmentUpdated | HrmDepartmentUpdatedPayload | 部门更新 |
+| HrmDepartmentDeleted | HrmDepartmentDeletedPayload | 部门删除 |
 
 ### 4.2 PM 事件
 
 | 事件类型 | Payload 结构 | 说明 |
 |---------|-------------|------|
 | PmProjectCreated | PmProjectCreatedPayload | 项目创建 |
-| PmProjectUpdated | (待实现) | 项目更新 |
-| PmTaskCreated | (待实现) | 任务创建 |
+| PmProjectUpdated | PmProjectUpdatedPayload | 项目更新 |
+| PmTaskCreated | PmTaskCreatedPayload | 任务创建 |
+| PmTaskUpdated | PmTaskUpdatedPayload | 任务更新 |
+| PmTaskDeleted | PmTaskDeletedPayload | 任务删除 |
 
 ### 4.3 添加新事件
 
@@ -271,7 +279,120 @@ topems:events:<EventType>
 
 ---
 
-## 7. 相关文档
+## 7. 死信队列
+
+死信队列（Dead Letter Queue）用于处理失败的事件，确保事件不会丢失。
+
+### 7.1 工作原理
+
+```
+┌──────────────┐          ┌───────────┐          ┌──────────────┐
+│  事件发布    │          │   Redis   │          │  事件处理    │
+└──────┬───────┘          └─────┬─────┘          └──────┬───────┘
+       │                        │                        │
+       │  1. 发布事件           │                        │
+       │───────────────────────>│                        │
+       │                        │  2. 事件广播          │
+       │                        │───────────────────────>│
+       │                        │                        │  3. 处理失败
+       │                        │<───────────────────────│
+       │                        │  4. 投递到死信队列    │
+       │                        │                        │
+       │                        │  5. 定时重试          │
+       │                        │───────────────────────>│
+```
+
+### 7.2 使用示例
+
+```rust
+use topems_shared::{DeadLetterQueue, Event};
+
+async fn handle_failed_event(event: Event, error: &str) {
+    let dlq = DeadLetterQueue::new().unwrap();
+
+    // 将失败事件投递到死信队列
+    dlq.push(event, error).await.unwrap();
+}
+
+// 启动死信队列重试循环（通常在后台任务中运行）
+async fn start_dlq_retry() {
+    let dlq = DeadLetterQueue::new().unwrap();
+    dlq.start_retry_loop().await.unwrap();
+}
+```
+
+### 7.3 重试策略
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| 最大重试次数 | 3 | 超过后放弃重试 |
+| 重试间隔 | 60秒 | 每分钟检查一次 |
+| 存储键前缀 | `topems:dlq` | Redis 键前缀 |
+
+---
+
+## 8. 事件监控
+
+事件监控提供事件追踪和统计功能。
+
+### 8.1 监控指标
+
+```rust
+use topems_shared::{EventMonitor, EventMetrics};
+
+async fn get_event_stats() {
+    let monitor = EventMonitor::new().unwrap();
+
+    // 获取当前指标
+    let metrics = monitor.get_metrics().await.unwrap();
+
+    println!("总事件数: {}", metrics.total_events);
+    println!("平均处理时间: {:.2}ms", metrics.avg_processing_time_ms);
+    println!("按类型统计: {:?}", metrics.events_by_type);
+    println!("错误统计: {:?}", metrics.errors_by_type);
+}
+```
+
+### 8.2 指标结构
+
+```rust
+pub struct EventMetrics {
+    pub total_events: u64,              // 总事件数
+    pub events_by_type: HashMap<String, u64>,  // 按类型统计
+    pub errors_by_type: HashMap<String, u64>,  // 错误统计
+    pub last_event_time: DateTime<Utc>, // 最后事件时间
+    pub avg_processing_time_ms: f64,    // 平均处理时间
+    pub processing_times: Vec<u64>,     // 处理时间历史
+}
+```
+
+### 8.3 事件追踪
+
+```rust
+pub struct EventTrace {
+    pub event_id: Uuid,                 // 事件ID
+    pub event_type: EventType,          // 事件类型
+    pub source: String,                 // 事件源
+    pub published_at: DateTime<Utc>,    // 发布时间
+    pub received_at: Option<DateTime<Utc>>,  // 接收时间
+    pub processed_at: Option<DateTime<Utc>>, // 处理完成时间
+    pub processing_time_ms: Option<u64>,     // 处理耗时
+    pub status: TraceStatus,            // 当前状态
+    pub error_message: Option<String>,  // 错误信息
+}
+
+pub enum TraceStatus {
+    Published,   // 已发布
+    Received,    // 已接收
+    Processing,  // 处理中
+    Completed,   // 已完成
+    Failed,      // 失败
+}
+```
+
+---
+
+## 9. 相关文档
 
 - [架构改进计划](./ARCHITECTURE_IMPROVEMENT_PLAN.md)
 - [Schema 隔离规范](./SCHEMA_ISOLATION_GUIDE.md)
@@ -279,12 +400,17 @@ topems:events:<EventType>
 
 ---
 
-## 8. 下一步
+## 10. 实施状态
 
-- ✅ 基础框架已实现
-- ⏳ 可以根据需求添加更多事件类型
-- ⏳ 可以考虑实现死信队列机制
-- ⏳ 可以添加事件监控和追踪
+| 功能 | 状态 | 完成日期 |
+|------|------|----------|
+| 基础框架（Publisher/Subscriber） | ✅ 已完成 | 2026-06-08 |
+| HRM 员工事件 | ✅ 已完成 | 2026-06-08 |
+| HRM 部门事件 | ✅ 已完成 | 2026-06-18 |
+| PM 项目事件 | ✅ 已完成 | 2026-06-18 |
+| PM 任务事件 | ✅ 已完成 | 2026-06-18 |
+| 死信队列机制 | ✅ 已完成 | 2026-06-18 |
+| 事件监控追踪 | ✅ 已完成 | 2026-06-18 |
 
 ---
 

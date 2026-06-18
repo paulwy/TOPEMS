@@ -2,10 +2,10 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-2.4.2-blue)
+![Version](https://img.shields.io/badge/version-2.5.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Rust](https://img.shields.io/badge/rust-1.70%2B-orange)
-![React](https://img.shields.io/badge/react-18-blue)
+![Rust](https://img.shields.io/badge/rust-1.76%2B-orange)
+![React](https://img.shields.io/badge/react-19-blue)
 
 ## 🌟 功能特性
 
@@ -60,51 +60,44 @@ topems/
 │   ├── guides/                   # 用户指南
 │   ├── services/                 # 服务文档
 │   └── user/                     # 用户手册
-├── apps/                          # 应用目录
-│   └── web/                     # Web 应用
-│       ├── src/
-│       │   ├── components/       # 可复用组件
-│       │   ├── pages/           # 页面组件
-│       │   ├── hooks/           # 自定义 hooks
-│       │   ├── api/             # API 客户端
-│       │   ├── config/          # 配置文件
-│       │   └── store/           # 状态管理
-│       └── vite.config.ts       # Vite 配置
-├── platform/                      # 核心平台服务
-│   ├── topems-iam/              # 身份认证服务 (8000)
-│   ├── topems-doc/              # 文档管理服务 (8001)
-│   └── topems-flow/             # 工作流服务 (8006)
-├── services/                      # 业务应用服务
-│   ├── topems-pm/               # 项目管理服务 (8002)
-│   ├── topems-integration/      # 集成服务 (8004)
-│   ├── topems-portal/           # 企业门户 (8005)
-│   ├── topems-erp/              # 企业资源计划 (8010)
-│   ├── topems-hrm/              # 人力资源管理 (8011)
-│   ├── topems-crm/              # 客户关系管理 (8012)
-│   ├── topems-ai/               # AI 知识库 (8013)
-│   ├── topems-rs/               # 研发管理系统 (8020)
-│   ├── topems-scm/              # 供应链系统 (8040)
-│   ├── topems-srm/              # 供应商管理 (8041)
-│   ├── topems-wms/              # 仓库管理系统 (8042)
-│   ├── topems-gis/              # 地理信息系统 (8053)
-│   ├── topems-mobile/           # 移动端服务 (8070)
-│   ├── communication-service/   # [已整合] 统一通讯服务 (8055)
-│   │                               # 包含: notification, im, mail
-│   ├── manufacturing-service/   # [已整合] 统一制造服务 (8030)
-│   │                               # 包含: mes, pdm
-│   ├── quality-assurance-service/ # [已整合] 统一质量服务 (8032)
-│   │                               # 包含: qms, lims, ehs
-│   └── analytics-service/       # [已整合] 统一分析服务 (8060)
-│                                   # 包含: bi, report
-├── lib/                          # 共享库 (topems-shared)
-├── docker/                       # Docker 配置
-│   ├── init-scripts/            # 数据库初始化脚本
-│   ├── rules/                   # 告警规则
-│   ├── grafana/                 # Grafana 配置
-│   └── docker-compose.yml
+├── apps/                          # 前端应用目录
+│   ├── web/                      # Host Shell 应用 (端口 3000)
+│   │   ├── src/components/       # 可复用组件
+│   │   ├── src/pages/           # 页面组件
+│   │   ├── src/hooks/           # 自定义 hooks
+│   │   ├── src/api/             # API 客户端
+│   │   └── src/store/           # 状态管理
+│   └── core/                     # Remote Module (端口 3001)
+│       └── src/                 # 可复用组件、stores、API
+├── svc/                          # 后端服务 (Rust)
+│   ├── unified-core/            # 统一核心服务 (8001)
+│   ├── ai/                      # AI 服务 (8002)
+│   ├── analytics/               # 数据分析服务 (8003)
+│   ├── manufacturing/           # 制造服务 (8004)
+│   ├── quality-assurance/       # 质量管控服务 (8005)
+│   ├── hrm/                     # 人力资源管理 (8006)
+│   ├── crm/                     # 客户关系管理 (8007)
+│   ├── pm/                      # 项目管理 (8008)
+│   ├── erp/                     # 企业资源计划 (8009)
+│   ├── gis/                     # 地理信息系统 (8010)
+│   ├── rs/                      # 研发管理 (8011)
+│   ├── scm/                     # 供应链管理 (8012)
+│   ├── wms/                     # 仓库管理 (8013)
+│   ├── mobile/                  # 移动端服务 (8014)
+│   ├── monitor/                 # 监控服务 (8015)
+│   └── portal/                  # 企业门户 (8080)
+├── lib/                          # Rust 共享库
+├── packages/                     # TypeScript 共享包
+│   ├── shared-types/            # 类型定义
+│   └── shared-utils/            # 工具函数
+├── deploy/                       # 部署配置
+│   ├── systemd/                 # systemd 服务配置
+│   ├── monitoring/              # 监控配置 (Prometheus/Grafana)
+│   ├── nginx/                   # Nginx 配置
+│   ├── env/                     # 环境变量模板
+│   └── scripts/                 # 部署脚本
 ├── scripts/                      # 管理脚本
-├── tools/                        # 开发工具
-├── templates/                    # 数据模板
+├── cli/                          # Python CLI 工具
 ├── Cargo.toml                   # Cargo Workspace 配置
 └── .env.example                 # 环境变量配置
 ```
@@ -113,10 +106,10 @@ topems/
 
 ### 系统要求
 
-- **前端**: Node.js 18+, npm 9+
-- **后端**: Rust 1.70+, Cargo
-- **数据库**: PostgreSQL 14+, Redis 7+
-- **工具**: Docker, Docker Compose
+- **前端**: Node.js 18+, pnpm 8+
+- **后端**: Rust 1.76+, Cargo
+- **数据库**: PostgreSQL 16+, Redis 7+
+- **工具**: 可选 Docker, Docker Compose（仅用于开发环境快速启动）
 
 ### 环境配置
 
@@ -131,23 +124,63 @@ openssl rand -base64 32
 
 编辑 `.env` 文件，设置必要的配置项。
 
-### 启动数据库
+### 启动数据库（方式一：本地安装，推荐）
+
+**macOS (Homebrew):**
 
 ```bash
-cd docker
-cp .env.example .env
-docker-compose up -d
+# 安装 PostgreSQL
+brew install postgresql@16
+brew services start postgresql@16
+
+# 创建数据库
+createdb topems
+
+# 安装 Redis（可选）
+brew install redis
+brew services start redis
+```
+
+**Linux (Ubuntu/Debian):**
+
+```bash
+# 安装 PostgreSQL
+sudo apt install -y postgresql postgresql-contrib
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+
+# 创建数据库用户和数据库
+sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD 'your_password';"
+sudo -u postgres psql -c "CREATE DATABASE topems OWNER topems;"
+```
+
+### 启动数据库（方式二：Docker）
+
+```bash
+cd deploy/monitoring
+docker-compose up -d postgres redis
 ```
 
 ### 前端开发
 
+**Host Shell (主应用):**
+
 ```bash
 cd apps/web
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 访问 http://localhost:3000
+
+**Remote Module (核心组件):**
+
+```bash
+cd apps/core
+pnpm install
+pnpm run dev:watch    # 自动构建模式
+pnpm run preview      # 预览服务器（端口 3001）
+```
 
 ### 后端开发
 
@@ -157,18 +190,19 @@ npm run dev
 # 编译所有服务（使用 workspace）
 cargo build --workspace
 
-# 增量编译（只编译修改的部分）
-cargo build
+# 运行统一核心服务
+cd svc/unified-core
+cargo run
 
 # 检查编译
 cargo check --workspace
 ```
 
-### 一键启动所有服务
+### 一键启动所有服务（开发环境）
 
 ```bash
-# 一键启动所有服务（包括前端）
-./scripts/start-all.sh
+# 使用 macOS 开发环境启动脚本
+./scripts/start-macos-dev.sh
 ```
 
 ## 🔌 端口配置规范
@@ -177,43 +211,41 @@ cargo check --workspace
 
 | 端口范围 | 服务类型 | 说明 |
 |---------|---------|------|
-| 8000-8009 | 平台核心服务 | IAM, DOC, PM, Notification, Integration, Portal, Flow |
-| 8010-8029 | 业务服务 | ERP, HRM, CRM, AI, RS, LIMS, PDM |
-| 8030-8039 | 制造与质量服务 | MES, QMS, EHS |
-| 8040-8049 | 供应链服务 | SCM, SRM, WMS |
-| 8050-8059 | 辅助服务 | GIS, IM, BI, Report, Mail, Mobile |
-| 3000 | 前端 | React 开发服务器 |
+| 8000-8009 | 平台核心服务 | Unified Core, AI, Analytics, Manufacturing, Quality Assurance |
+| 8010-8029 | 业务服务 | HRM, CRM, PM, ERP, GIS, RS |
+| 8030-8049 | 供应链服务 | SCM, WMS |
+| 8050-8059 | 辅助服务 | Mobile, Monitor |
+| 8080 | API 网关 | Portal 企业门户 |
+| 3000 | 前端 | Host Shell 开发服务器 |
+| 3001 | 前端 | Remote Module 开发服务器 |
 
 ### 服务端口清单
 
 | 服务名 | 端口 | 服务路径 | 说明 |
 |-------|------|---------|------|
-| iam | 8000 | platform/topems-iam/backend | 身份认证服务 |
-| doc | 8001 | platform/topems-doc/backend | 文档管理服务 |
-| pm | 8002 | services/topems-pm/backend | 项目管理服务 |
-| notification | 8003 | services/notification-service | 通知服务 |
-| integration | 8004 | services/topems-integration/backend | 集成服务 |
-| portal | 8005 | services/topems-portal/backend | 企业门户 |
-| flow | 8006 | platform/topems-flow/backend | 工作流服务 |
-| erp | 8010 | services/topems-erp/backend | 企业资源计划 |
-| hrm | 8011 | services/topems-hrm/backend | 人力资源管理 |
-| crm | 8012 | services/topems-crm/backend | 客户关系管理 |
-| ai | 8013 | services/topems-ai/backend | AI 知识库 |
-| rs | 8020 | services/topems-rs/backend | 研发管理系统 |
-| lims | 8022 | services/topems-lims/backend | 实验室系统 |
-| pdm | 8023 | services/topems-pdm/backend | 产品数据管理 |
-| mes | 8030 | services/topems-mes/backend | 制造执行系统 |
-| qms | 8031 | services/topems-qms/backend | 质量管理系统 |
-| ehs | 8032 | services/topems-ehs/backend | 安全管理系统 |
-| scm | 8040 | services/topems-scm/backend | 供应链系统 |
-| srm | 8041 | services/topems-srm/backend | 供应商管理 |
-| wms | 8042 | services/topems-wms/backend | 仓库管理系统 |
-| gis | 8050 | services/topems-gis/backend | 地理信息系统 |
-| im | 8051 | services/topems-im/backend | 即时通讯 |
-| bi | 8052 | services/topems-bi/backend | 商业智能 |
-| report | 8053 | services/report-service | 报表服务 |
-| mail | 8054 | services/topems-mail/backend | 邮件服务 |
-| mobile | 8055 | services/topems-mobile/backend | 移动端服务 |
+| unified-core | 8001 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin） |
+| ai | 8002 | svc/ai | AI 服务 |
+| analytics | 8003 | svc/analytics | 数据分析服务（BI, Report） |
+| manufacturing | 8004 | svc/manufacturing | 制造服务（MES, PDM） |
+| quality-assurance | 8005 | svc/quality-assurance | 质量管控服务（QMS, LIMS, EHS） |
+| hrm | 8006 | svc/hrm | 人力资源管理 |
+| crm | 8007 | svc/crm | 客户关系管理 |
+| pm | 8008 | svc/pm | 项目管理 |
+| erp | 8009 | svc/erp | 企业资源计划 |
+| gis | 8010 | svc/gis | 地理信息系统 |
+| rs | 8011 | svc/rs | 研发管理 |
+| scm | 8012 | svc/scm | 供应链管理（含 SRM） |
+| wms | 8013 | svc/wms | 仓库管理 |
+| mobile | 8014 | svc/mobile | 移动端服务 |
+| monitor | 8015 | svc/monitor | 监控服务 |
+| portal | 8080 | svc/portal | 企业门户（API 网关） |
+
+### 前端端口
+
+| 应用 | 端口 | 路径 | 说明 |
+|------|------|------|------|
+| Host Shell | 3000 | apps/web | 主应用 |
+| Remote Module | 3001 | apps/core | 核心组件模块 |
 
 ## 🔒 安全配置
 
@@ -544,5 +576,5 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-16
-**版本**: v2.4.2
+**最后更新**: 2026-06-18
+**版本**: v2.5.0

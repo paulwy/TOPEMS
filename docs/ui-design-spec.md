@@ -2,11 +2,12 @@
 
 | 项目 | 内容 |
 |------|------|
-| **文档版本** | v3.0.0 |
-| **创建日期** | 2026-06-15 |
-| **适用阶段** | 前端 UI 重构与迭代 |
-| **状态** | 正式发布 |
+| **文档版本** | v4.0.0 |
+| **创建日期** | 2026-06-18 |
+| **适用阶段** | 插件化架构 UI 重构 |
+| **状态** | 实施中 |
 | **维护团队** | TOPEMS 前端团队 |
+| **架构适配** | 支持插件化架构、微前端 Module Federation |
 
 ---
 
@@ -20,9 +21,10 @@
 6. [布局规范](#六布局规范)
 7. [导航系统](#七导航系统)
 8. [主题系统](#八主题系统)
-9. [性能优化](#九性能优化)
-10. [可访问性标准](#十可访问性标准)
-11. [实施检查清单](#十一实施检查清单)
+9. [插件化 UI 规范](#九插件化-ui-规范)
+10. [性能优化](#十性能优化)
+11. [可访问性标准](#十一可访问性标准)
+12. [实施检查清单](#十二实施检查清单)
 
 ---
 
@@ -32,21 +34,38 @@
 
 | 原则 | 说明 | 优先级 |
 |------|------|--------|
-| **一致性** | 统一的视觉风格和交互模式 | P0 |
+| **一致性** | 统一的视觉风格和交互模式，插件必须遵循平台设计规范 | P0 |
+| **可扩展性** | 支持插件动态注册、主题定制、导航扩展 | P0 |
 | **简洁性** | 清晰的信息层级，减少视觉噪音 | P0 |
 | **可用性** | 直观的操作流程，降低学习成本 | P0 |
 | **响应式** | 适配不同屏幕尺寸 | P0 |
+| **模块化** | 组件可独立开发、测试、部署，支持微前端架构 | P0 |
 | **无障碍** | 支持键盘导航和屏幕阅读器 | P1 |
-| **性能优先** | 首屏加载快，交互流畅 | P0 |
+| **性能优先** | 首屏加载快，交互流畅，按需加载插件 | P0 |
 
 ### 1.2 UI 决策原则
 
 ```
 1. 功能性 > 美观性：确保功能完整后再优化视觉
-2. 一致性 > 个性化：模块内保持风格统一
+2. 一致性 > 个性化：平台提供统一设计系统，插件可适度定制主题色
 3. 渐进增强 > 一步到位：分阶段迭代优化
 4. 用户测试 > 设计直觉：用数据验证设计决策
+5. 模块化 > 一体化：每个插件独立开发，通过设计系统保证统一体验
+6. 按需加载 > 全量打包：插件采用懒加载，提升首屏性能
 ```
+
+### 1.3 首页布局模式
+
+**采用混合模式（仪表盘 + 模块入口 + 服务监控）：**
+
+| 布局区域 | 功能 | 优先级 |
+|----------|------|--------|
+| 顶部栏 | Logo、搜索、通知、主题切换、用户头像 | P0 |
+| 欢迎语区 | 动态问候语、用户名 | P1 |
+| 统计卡片区 | 待审批、待处理、在线用户、文件数量 | P0 |
+| 服务监控区 | 实时健康状态、请求数、异常服务 | P0 |
+| 模块入口区 | 已安装插件的大图标卡片网格 | P0 |
+| 待办事项区 | 审批任务、待处理任务列表 | P1 |
 
 ---
 
@@ -56,11 +75,12 @@
 
 | 技术 | 版本 | 用途 | 状态 |
 |------|------|------|------|
-| **React** | 18.3+ | UI 框架 | ✅ 标准 |
+| **React** | 19.0+ | UI 框架 | ✅ 标准 |
 | **TypeScript** | 5.4+ | 类型系统 | ✅ 标准 |
 | **MUI (Material UI)** | v9.x | 主 UI 组件库 | ✅ 标准 |
 | **Vite** | 6.2+ | 构建工具 | ✅ 标准 |
-| **React Router** | 6.22+ | 路由管理 | ✅ 标准 |
+| **@module-federation/vite** | 1.0+ | 微前端模块联邦 | ✅ 标准 |
+| **React Router** | 7.0+ | 路由管理 | ✅ 标准 |
 | **React Hook Form** | 7.x | 表单处理 | ✅ 标准 |
 | **Zod** | 3.x | 数据验证 | ✅ 标准 |
 | **Lucide React** | 1.x | 图标库 | ✅ 标准 |
@@ -68,7 +88,25 @@
 | **React Query** | 5.x | 数据缓存 | ✅ 推荐 |
 | **Zustand** | 4.5+ | 状态管理 | ✅ 推荐 |
 
-### 2.2 已移除技术栈
+### 2.2 微前端架构说明
+
+采用 **Module Federation** 实现前端模块化：
+
+| 角色 | 说明 | 端口 |
+|------|------|------|
+| **Host (Portal)** | 主应用 Shell，提供布局、导航、主题 | 3000 |
+| **Remote (Core)** | 核心平台模块（IAM、Doc、Flow等） | 3001 |
+| **Remote (Plugins)** | 业务插件模块（ERP、HRM、CRM等） | 3002+ |
+
+**部署模式：**
+
+| 模式 | 说明 | 适用场景 |
+|------|------|----------|
+| **Module Federation** | 动态加载，按需拉取插件 | SaaS 多租户 |
+| **静态打包** | 一次性打包所有模块 | 本地安装版 |
+| **混合模式** | 核心静态 + 插件动态 | 私有化定制 |
+
+### 2.4 已移除技术栈
 
 | 技术 | 原用途 | 移除原因 | 完成时间 |
 |------|--------|----------|----------|
@@ -76,7 +114,7 @@
 | shadcn/ui | 组件库 | 统一使用 MUI | 2026-06 |
 | @mui/icons-material | 图标库 | 统一使用 lucide-react | 2026-06 |
 
-### 2.3 组件导入规范
+### 2.5 组件导入规范
 
 ```tsx
 // ✅ 推荐：从 @mui/material 导入所有 MUI 组件
@@ -705,70 +743,222 @@ import { Button, Card } from "@/components/ui";
 
 ## 七、导航系统
 
-### 7.1 顶部导航 TopNav
+### 7.1 导航架构设计
 
-```tsx
-<AppBar 
-  position="sticky"
-  sx={{
-    top: 0,
-    zIndex: 1300,
-    borderBottom: 1,
-    borderColor: 'divider',
-    bgcolor: 'background.paper',
-    boxShadow: 'none',
-  }}
->
-  <Container maxWidth="xl">
-    <Box display="flex" alignItems="center" justifyContent="space-between">
-      {/* Logo */}
-      <Box display="flex" alignItems="center" gap={2}>
-        <Box sx={{ width: 36, height: 36, bgcolor: 'primary.main', borderRadius: 1 }}>
-          <Building sx={{ color: 'white', width: 20, height: 20 }} />
-        </Box>
-        <Typography variant="h6" fontWeight={700}>TOPEMS</Typography>
-      </Box>
+采用 **动态注册 + 三级导航** 体系，支持插件化架构：
 
-      {/* 导航菜单 */}
-      <Box display="flex" gap={1}>
-        {navItems.map((item) => (
-          <Button
-            key={item.id}
-            onClick={() => handleNavigate(item.path)}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </Box>
-
-      {/* 右侧操作 */}
-      <Box display="flex" alignItems="center" gap={2}>
-        <IconButton onClick={toggleTheme}>
-          {mode === 'dark' ? <Sun /> : <Moon />}
-        </IconButton>
-        <IconButton><Bell /></IconButton>
-        <Avatar sx={{ bgcolor: 'secondary.main' }}><User /></Avatar>
-      </Box>
-    </Box>
-  </Container>
-</AppBar>
+```
+┌─────────────────────────────────────────────────────────┐
+│                    导航架构                              │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────────┐                                   │
+│  │  插件导航注册    │  ← 插件启动时动态注册导航元数据     │
+│  └────────┬────────┘                                   │
+│           │                                            │
+│           ▼                                            │
+│  ┌─────────────────┐                                   │
+│  │  导航配置中心    │  ← 统一管理所有导航项（核心+插件）  │
+│  └────────┬────────┘                                   │
+│           │                                            │
+│           ▼                                            │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │           三级导航渲染                           │   │
+│  │                                                 │   │
+│  │  L1: Header全局导航（核心模块+已安装插件）        │   │
+│  │  L2: 模块Tab导航（插件内页面切换）                │   │
+│  │  L3: 页面内部导航（详情页Tab、步骤器等）          │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 导航分组配置
+### 7.2 导航元数据规范
 
-| 顶部菜单 | 下拉子模块 |
-|---------|-----------|
-| **首页** | 仪表盘、最近访问、快捷入口、待办事项 |
-| **人力** | 员工、部门、考勤、薪酬、绩效、招聘、培训、合同 |
-| **客户** | 客户、商机、联系人、交互、评分、预测 |
-| **项目** | 项目列表、新建项目、合同管理、模板库、项目报表 |
-| **数据** | 分析仪表盘、报表中心、数据源管理、可视化编辑器 |
-| **运营** | 资产台账、设备管理、行政综合、办公用品、车辆、会议室 |
-| **工作流** | 审批中心、实例监控、版本管理、流程统计 |
-| **协作** | 即时通讯、邮件、文件管理、AI助手 |
-| **更多 ▾** | 研发创新(LIMS/RS/PDM)、质量安全(QMS/EHS)、供应链(SRM)、地理信息(GIS)、系统管理、帮助 |
+插件通过 `plugin.yaml` 声明导航配置：
 
-### 7.3 面包屑导航
+```yaml
+navigation:
+  # Header 菜单项（L1）
+  top_nav:
+    - code: erp
+      label: 企业资源
+      icon: Building2
+      path: /erp
+      permission: erp:access
+      order: 10
+  
+  # 模块内 Tab（L2）
+  module_tabs:
+    - label: 概览
+      path: /erp
+      icon: LayoutDashboard
+    - label: 资产
+      path: /erp/assets
+      icon: Package
+      permission: erp:asset:read
+    - label: 财务
+      path: /erp/finance
+      icon: DollarSign
+      permission: erp:finance:read
+```
+
+### 7.3 动态导航注册机制
+
+```typescript
+interface NavItem {
+  code: string;
+  label: string;
+  icon?: string;
+  path: string;
+  permission?: string;
+  order?: number;
+  children?: NavItem[];
+}
+
+interface PluginNavConfig {
+  top_nav?: NavItem[];
+  module_tabs?: NavItem[];
+}
+
+class NavigationRegistry {
+  private static instance: NavigationRegistry;
+  private navItems: Map<string, NavItem[]> = new Map();
+
+  static getInstance(): NavigationRegistry {
+    if (!NavigationRegistry.instance) {
+      NavigationRegistry.instance = new NavigationRegistry();
+    }
+    return NavigationRegistry.instance;
+  }
+
+  register(pluginCode: string, config: PluginNavConfig): void {
+    if (config.top_nav) {
+      this.navItems.set(`${pluginCode}:top`, config.top_nav);
+    }
+    if (config.module_tabs) {
+      this.navItems.set(`${pluginCode}:tabs`, config.module_tabs);
+    }
+  }
+
+  getTopNavItems(): NavItem[] {
+    const items: NavItem[] = [];
+    this.navItems.forEach((navItems, key) => {
+      if (key.endsWith(':top')) {
+        items.push(...navItems);
+      }
+    });
+    return items.sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  getModuleTabs(pluginCode: string): NavItem[] | undefined {
+    return this.navItems.get(`${pluginCode}:tabs`);
+  }
+}
+```
+
+### 7.4 Header 导航组件
+
+```tsx
+interface HeaderProps {
+  navItems: NavItem[];
+  onNavigate: (path: string) => void;
+  onToggleTheme: () => void;
+  mode: PaletteMode;
+}
+
+export const Header: React.FC<HeaderProps> = ({ 
+  navItems, 
+  onNavigate, 
+  onToggleTheme, 
+  mode 
+}) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [activeNav, setActiveNav] = useState<string>('/');
+
+  const handleNavClick = (path: string, event?: React.MouseEvent<HTMLElement>) => {
+    setActiveNav(path);
+    onNavigate(path);
+    setAnchorEl(null);
+  };
+
+  return (
+    <AppBar 
+      position="sticky"
+      sx={{
+        top: 0,
+        zIndex: 1300,
+        borderBottom: 1,
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        boxShadow: 'none',
+      }}
+    >
+      <Container maxWidth="xl">
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          {/* Logo */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box sx={{ width: 36, height: 36, bgcolor: 'primary.main', borderRadius: 1 }}>
+              <Building sx={{ color: 'white', width: 20, height: 20 }} />
+            </Box>
+            <Typography variant="h6" fontWeight={700}>TOPEMS</Typography>
+          </Box>
+
+          {/* 动态导航菜单 */}
+          <Box display="flex" gap={1}>
+            {navItems.map((item) => (
+              <Button
+                key={item.code}
+                onClick={() => handleNavClick(item.path)}
+                sx={{ 
+                  fontWeight: activeNav === item.path ? 600 : 400,
+                  color: activeNav === item.path ? 'primary.main' : 'text.primary',
+                }}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </Box>
+
+          {/* 右侧操作 */}
+          <Box display="flex" alignItems="center" gap={2}>
+            <IconButton onClick={onToggleTheme}>
+              {mode === 'dark' ? <Sun /> : <Moon />}
+            </IconButton>
+            <IconButton><Bell /></IconButton>
+            <Avatar sx={{ bgcolor: 'secondary.main' }}><User /></Avatar>
+          </Box>
+        </Box>
+      </Container>
+    </AppBar>
+  );
+};
+```
+
+### 7.5 导航权限过滤
+
+导航项必须通过权限校验才能显示：
+
+```typescript
+const filteredNavItems = navItems.filter(item => {
+  if (!item.permission) return true;
+  return hasPermission(item.permission);
+});
+```
+
+### 7.6 核心模块导航配置
+
+| 顶部菜单 | 路径 | 图标 | 权限 | 排序 |
+|---------|------|------|------|------|
+| **首页** | `/dashboard` | Home | - | 0 |
+| **人力** | `/hrm` | Users | hrm:access | 1 |
+| **客户** | `/crm` | Users2 | crm:access | 2 |
+| **项目** | `/pm` | FolderKanban | pm:access | 3 |
+| **工作流** | `/flow` | GitBranch | flow:access | 4 |
+| **协作** | `/im` | MessageCircle | im:access | 5 |
+| **系统** | `/iam` | Settings | iam:access | 99 |
+
+### 7.7 面包屑导航
 
 ```tsx
 <Breadcrumbs>
@@ -782,18 +972,45 @@ import { Button, Card } from "@/components/ui";
 </Breadcrumbs>
 ```
 
-### 7.4 Tab 标签页
+### 7.8 模块 Tab 导航
+
+模块Tab由插件动态提供：
 
 ```tsx
-<Tabs 
-  variant="scrollable"
-  scrollButtons="auto"
-  sx={{ borderBottom: 1, borderColor: 'divider' }}
->
-  <Tab label="基本信息" />
-  <Tab label="考勤记录" />
-  <Tab label="薪酬档案" />
-</Tabs>
+interface ModuleTabsProps {
+  tabs: NavItem[];
+  activePath: string;
+  onTabChange: (path: string) => void;
+}
+
+export const ModuleTabs: React.FC<ModuleTabsProps> = ({ 
+  tabs, 
+  activePath, 
+  onTabChange 
+}) => {
+  const filteredTabs = tabs.filter(tab => {
+    if (!tab.permission) return true;
+    return hasPermission(tab.permission);
+  });
+
+  return (
+    <Tabs 
+      variant="scrollable"
+      scrollButtons="auto"
+      sx={{ borderBottom: 1, borderColor: 'divider' }}
+      value={activePath}
+      onChange={(e, value) => onTabChange(value as string)}
+    >
+      {filteredTabs.map(tab => (
+        <Tab 
+          key={tab.path} 
+          label={tab.label}
+          value={tab.path}
+        />
+      ))}
+    </Tabs>
+  );
+};
 ```
 
 ---
@@ -873,11 +1090,159 @@ export const useAppTheme = () => {
 | 边框 | `#e2e8f0` | `#374151` |
 | 悬停背景 | `#f3f4f6` | `#374151` |
 
+### 8.4 插件主题定制
+
+插件可以通过 `plugin.yaml` 声明主题定制：
+
+```yaml
+theme:
+  primary: '#10b981'       # 插件专属主色调（可选）
+  accent: '#059669'        # 插件强调色（可选）
+  dark_mode: true          # 是否支持深色模式
+```
+
+**主题继承规则：**
+
+| 优先级 | 来源 | 说明 |
+|--------|------|------|
+| 1 | 插件定制 | 插件可覆盖主色调 |
+| 2 | 租户配置 | 租户级主题定制 |
+| 3 | 平台默认 | 平台统一主题 |
+
 ---
 
-## 九、性能优化
+## 九、插件化 UI 规范
 
-### 9.1 组件性能
+### 9.1 插件 UI 架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Host Shell (Portal)                   │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  布局容器、主题系统、导航框架、公共组件           │   │
+│  └─────────────────────────────────────────────────┘   │
+│                          │                              │
+│          ┌───────────────┼───────────────┐              │
+│          ▼               ▼               ▼              │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐        │
+│  │ Remote Core │ │ Remote ERP  │ │ Remote HRM  │        │
+│  │ (统一核心)   │ │ (业务插件)   │ │ (业务插件)   │        │
+│  └─────────────┘ └─────────────┘ └─────────────┘        │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 9.2 插件 UI 开发规范
+
+#### 9.2.1 目录结构
+
+```
+plugin-erp/
+├── src/
+│   ├── api/              # API 层
+│   ├── components/       # 插件专属组件
+│   ├── pages/            # 页面组件
+│   ├── store/            # 状态管理
+│   ├── types/            # 类型定义
+│   ├── utils/            # 工具函数
+│   └── index.ts          # 导出入口
+├── vite.config.ts        # Module Federation 配置
+├── plugin.yaml           # 插件元数据
+└── package.json
+```
+
+#### 9.2.2 模块联邦配置
+
+```typescript
+// vite.config.ts
+import { federation } from '@module-federation/vite';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    federation({
+      name: 'topems_erp',
+      filename: 'remoteEntry.js',
+      exposes: {
+        './pages/Dashboard': './src/pages/Dashboard',
+        './pages/AssetList': './src/pages/AssetList',
+        './pages/FinanceList': './src/pages/FinanceList',
+        './store/erpStore': './src/store/erpStore.ts',
+        './navigation': './src/navigation.ts',
+      },
+      shared: {
+        'react': { singleton: true, requiredVersion: '^19.0.0' },
+        'react-dom': { singleton: true, requiredVersion: '^19.0.0' },
+        'react-router-dom': { singleton: true, requiredVersion: '^7.0.0' },
+        '@mui/material': { singleton: true, requiredVersion: '^9.0.0' },
+        'zustand': { singleton: true },
+      },
+    }),
+  ],
+});
+```
+
+#### 9.2.3 导航导出
+
+```typescript
+// src/navigation.ts
+export const erpNavConfig: PluginNavConfig = {
+  top_nav: [
+    { code: 'erp', label: '企业资源', icon: 'Building2', path: '/erp', permission: 'erp:access', order: 6 },
+  ],
+  module_tabs: [
+    { label: '概览', path: '/erp', icon: 'LayoutDashboard' },
+    { label: '资产', path: '/erp/assets', icon: 'Package', permission: 'erp:asset:read' },
+    { label: '财务', path: '/erp/finance', icon: 'DollarSign', permission: 'erp:finance:read' },
+    { label: '预算', path: '/erp/budget', icon: 'PieChart', permission: 'erp:budget:read' },
+  ],
+};
+```
+
+### 9.3 插件 UI 约束
+
+| 约束项 | 要求 | 说明 |
+|--------|------|------|
+| **组件库** | 必须使用 `@mui/material` | 确保视觉一致性 |
+| **图标** | 必须使用 `lucide-react` | 统一图标风格 |
+| **主题** | 使用平台 ThemeProvider | 继承平台主题 |
+| **路由** | 使用 `react-router-dom` | 统一路由管理 |
+| **状态** | 使用 `zustand` | 统一状态管理 |
+| **样式** | 使用 MUI sx | 统一样式方案 |
+
+### 9.4 插件独立部署
+
+插件支持独立部署为单独产品：
+
+```typescript
+// 独立部署模式
+if (process.env.VITE_STANDALONE === 'true') {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <ThemeProvider theme={createCustomTheme('light')}>
+      <BrowserRouter>
+        <ERPApp />
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}
+```
+
+### 9.5 统一设计体系保障
+
+| 保障措施 | 说明 |
+|----------|------|
+| **共享组件库** | `@topems/shared-components` 提供公共组件 |
+| **共享设计 Token** | `@topems/design-tokens` 提供设计变量 |
+| **共享工具函数** | `@topems/shared-utils` 提供通用工具 |
+| **共享类型定义** | `@topems/shared-types` 提供类型定义 |
+| **设计系统文档** | 统一的设计规范和组件文档 |
+| **Code Review** | 插件代码必须通过设计规范审查 |
+
+---
+
+## 十、性能优化
+
+### 10.1 组件性能
 
 ```tsx
 // React.memo 优化纯展示组件
@@ -896,11 +1261,14 @@ const handleClick = useCallback((id: string) => {
 }, []);
 ```
 
-### 9.2 路由懒加载
+### 10.2 插件按需加载
 
 ```tsx
-// 路由懒加载
-const HrmEmployeePage = lazy(() => import('../pages/HrmEmployeePage'));
+// 插件模块懒加载（Module Federation）
+const loadPluginModule = async (pluginCode: string, modulePath: string) => {
+  const remote = await import(/* @mf-ignore */ `${pluginCode}/${modulePath}`);
+  return remote.default;
+};
 
 // 带错误处理的懒加载
 const lazyWithRetry = <T extends React.ComponentType<any>>(
@@ -917,7 +1285,7 @@ const lazyWithRetry = <T extends React.ComponentType<any>>(
 };
 ```
 
-### 9.3 性能指标
+### 10.3 性能指标
 
 | 指标 | 目标值 | 说明 |
 |------|--------|------|
@@ -928,9 +1296,9 @@ const lazyWithRetry = <T extends React.ComponentType<any>>(
 
 ---
 
-## 十、可访问性标准
+## 十一、可访问性标准
 
-### 10.1 ARIA 标签
+### 11.1 ARIA 标签
 
 ```tsx
 // 按钮
@@ -963,7 +1331,7 @@ const lazyWithRetry = <T extends React.ComponentType<any>>(
 </table>
 ```
 
-### 10.2 键盘导航
+### 11.2 键盘导航
 
 ```tsx
 // 对话框关闭
@@ -988,7 +1356,7 @@ useEffect(() => {
 </Box>
 ```
 
-### 10.3 颜色对比度
+### 11.3 颜色对比度
 
 | 内容类型 | 最小对比度 | WCAG 级别 |
 |----------|-----------|-----------|
@@ -998,9 +1366,9 @@ useEffect(() => {
 
 ---
 
-## 十一、实施检查清单
+## 十二、实施检查清单
 
-### 11.1 代码检查
+### 12.1 代码检查
 
 - [ ] 所有组件从 `@mui/material` 导入
 - [ ] 所有图标从 `lucide-react` 导入
@@ -1010,7 +1378,7 @@ useEffect(() => {
 - [ ] ESLint 检查通过
 - [ ] 响应式布局适配完成
 
-### 11.2 样式检查
+### 12.2 样式检查
 
 - [ ] 使用 `sx` prop 或 styled 组件
 - [ ] 颜色使用主题变量（如 `primary.main`）
@@ -1018,7 +1386,7 @@ useEffect(() => {
 - [ ] 圆角使用设计系统 token
 - [ ] 阴影使用设计系统 token
 
-### 11.3 功能检查
+### 12.3 功能检查
 
 - [ ] 表单验证正常工作
 - [ ] 搜索和筛选功能正常
@@ -1027,12 +1395,20 @@ useEffect(() => {
 - [ ] 主题切换功能正常
 - [ ] 暗黑模式显示正确
 
-### 11.4 性能检查
+### 12.4 性能检查
 
 - [ ] 首屏加载时间 < 2s
 - [ ] 无控制台错误
 - [ ] 无内存泄漏
 - [ ] 图片正确懒加载
+
+### 12.5 插件化检查
+
+- [ ] 插件通过 NavigationRegistry 注册导航
+- [ ] 插件使用共享依赖（singleton）
+- [ ] 插件遵循设计系统约束
+- [ ] 插件支持独立部署模式
+- [ ] 插件导航权限过滤正常
 
 ---
 
