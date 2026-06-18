@@ -25,6 +25,10 @@ export interface Plugin {
   runtime_url?: string;
   base_path?: string;
   last_heartbeat?: string;
+  author_name?: string;
+  is_installed?: boolean;
+  is_featured?: boolean;
+  tags?: string[];
 }
 
 export interface PluginPermission {

@@ -3,21 +3,21 @@ import { CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface ModuleStatsCardProps {
-  title: string;
-  total: number;
-  active: number;
-  icon: LucideIcon;
-  iconBgColor: string;
-  iconColor: string;
+  title?: string;
+  total?: number;
+  active?: number;
+  icon?: LucideIcon;
+  iconBgColor?: string;
+  iconColor?: string;
 }
 
 export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
-  title,
-  total,
-  active,
-  icon: Icon,
-  iconBgColor,
-  iconColor,
+  title = "系统状态",
+  total = 8,
+  active = 8,
+  icon: Icon = CheckCircle2,
+  iconBgColor = "#dcfce7",
+  iconColor = "#22c55e",
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 

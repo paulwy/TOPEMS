@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Box, Typography, Button, Chip, SvgIconProps } from "@mui/material";
 import {
   Activity,
@@ -23,8 +23,8 @@ import {
 import { ServiceStatusCard } from "./ServiceStatusCard";
 
 interface ServiceStatusMonitorProps {
-  serviceStatuses: Record<string, boolean>;
-  onRefresh: () => void;
+  serviceStatuses?: Record<string, boolean>;
+  onRefresh?: () => void;
 }
 
 const groupColors: Record<
@@ -89,11 +89,66 @@ interface ServiceItem {
   icon: React.ComponentType<SvgIconProps>;
 }
 
+const generateInitialStatuses = (): Record<string, boolean> => {
+  const statuses: Record<string, boolean> = {};
+  const allServices = [
+    "unified-core", "pm", "integration",
+    "erp", "hrm", "crm",
+    "rs", "manufacturing", "ai",
+    "quality-assurance",
+    "scm", "srm", "wms",
+    "gis", "mobile",
+  ];
+  allServices.forEach((service) => {
+    statuses[service] = Math.random() > 0.1;
+  });
+  return statuses;
+};
+
+const simulateStatusChange = (statuses: Record<string, boolean>): Record<string, boolean> => {
+  const newStatuses = { ...statuses };
+  const allServices = Object.keys(newStatuses);
+  const randomService = allServices[Math.floor(Math.random() * allServices.length)];
+  newStatuses[randomService] = !newStatuses[randomService];
+  return newStatuses;
+};
+
 export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
-  serviceStatuses,
-  onRefresh,
+  serviceStatuses: externalStatuses,
+  onRefresh = () => {},
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [internalStatuses, setInternalStatuses] = useState<Record<string, boolean>>({});
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  const hasExternalStatuses = externalStatuses && Object.keys(externalStatuses).length > 0;
+  const currentStatuses = hasExternalStatuses ? externalStatuses : internalStatuses;
+
+  useEffect(() => {
+    if (!hasExternalStatuses) {
+      setInternalStatuses(generateInitialStatuses());
+    }
+  }, [hasExternalStatuses]);
+
+  useEffect(() => {
+    if (!hasExternalStatuses) {
+      const interval = setInterval(() => {
+        setInternalStatuses((prev) => simulateStatusChange(prev));
+        setLastUpdate(new Date());
+      }, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [hasExternalStatuses]);
+
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    onRefresh();
+    if (!hasExternalStatuses) {
+      setInternalStatuses(generateInitialStatuses());
+      setLastUpdate(new Date());
+    }
+    setTimeout(() => setIsRefreshing(false), 1000);
+  }, [hasExternalStatuses, onRefresh]);
 
   const serviceGroups: { title: string; services: ServiceItem[] }[] = [
     {
@@ -143,14 +198,8 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     },
   ];
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    onRefresh();
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
-
-  const onlineCount = Object.values(serviceStatuses).filter(Boolean).length;
-  const totalCount = Object.keys(serviceStatuses).length;
+  const onlineCount = Object.values(currentStatuses).filter(Boolean).length;
+  const totalCount = Object.keys(currentStatuses).length;
   const offlineCount = totalCount - onlineCount;
 
   return (
@@ -191,6 +240,9 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
             </Typography>
             <Typography sx={{ fontSize: 12, color: "#64748b" }}>
               实时监控各服务运行状态
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "#94a3b8", mt: 0.5 }}>
+              最后更新: {lastUpdate.toLocaleTimeString("zh-CN")}
             </Typography>
           </Box>
         </Box>
@@ -315,7 +367,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
                     name={service.name}
                     service={service.service}
                     port={service.port}
-                    status={serviceStatuses[service.key]}
+                    status={currentStatuses[service.key]}
                     icon={service.icon}
                   />
                 ))}

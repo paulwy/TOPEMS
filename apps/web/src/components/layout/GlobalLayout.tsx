@@ -40,6 +40,7 @@ import { ModeToggle } from "../ModeToggle";
 import { FloatingAIHelper } from "../ai/FloatingAIHelper";
 import { ModuleTabs } from "./ModuleTabs";
 import { MobileNav } from "./MobileNav";
+import { Sidebar } from "./Sidebar";
 
 // 模块图标映射
 const moduleIcons: Record<string, React.ReactNode> = {
@@ -63,6 +64,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // 获取当前模块和Tab
   const currentModule = getModuleFromPath(location.pathname);
@@ -519,6 +521,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       </Box>
 
       {/* AI浮动助手 */}
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} pluginCode={currentModule || undefined} />
       <FloatingAIHelper />
     </Box>
   );

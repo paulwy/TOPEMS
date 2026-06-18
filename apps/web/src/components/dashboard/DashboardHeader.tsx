@@ -6,7 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useRole } from "../../hooks/useRole";
 
 interface DashboardHeaderProps {
-  onLogout: () => void;
+  onLogout?: () => void;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
