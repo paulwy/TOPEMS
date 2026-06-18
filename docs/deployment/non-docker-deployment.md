@@ -582,4 +582,115 @@ topems.target
 
 ---
 
+## macOS 开发环境
+
+### 快速启动
+
+项目提供了 macOS 开发环境一键启动脚本：
+
+```bash
+# 一键启动所有服务
+./scripts/start-macos-dev.sh
+```
+
+该脚本会自动完成以下操作：
+
+1. **环境检查**：验证 Rust、Node.js、pnpm、PostgreSQL 是否安装
+2. **数据库管理**：启动 PostgreSQL 和 Redis，创建数据库
+3. **环境配置**：生成 .env 文件和 JWT 密钥
+4. **依赖构建**：构建 shared-types 和 shared-utils 包
+5. **服务启动**：启动 unified-core、core-remote、web-shell
+
+### 手动启动步骤
+
+**1. 安装依赖**
+
+```bash
+# 安装 PostgreSQL
+brew install postgresql@16
+brew services start postgresql@16
+createdb topems
+
+# 安装 Redis
+brew install redis
+brew services start redis
+
+# 安装 Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+# 安装 Node.js 和 pnpm
+brew install node pnpm
+```
+
+**2. 配置环境**
+
+```bash
+# 复制环境变量
+cp .env.example .env
+
+# 生成 JWT 密钥
+openssl rand -base64 32
+# 将生成的密钥填入 .env 文件中的 JWT_SECRET 和 JWT_REFRESH_SECRET
+```
+
+**3. 构建共享包**
+
+```bash
+# 构建 shared-types
+cd packages/shared-types
+pnpm install
+pnpm run build
+
+# 构建 shared-utils
+cd ../shared-utils
+pnpm install
+pnpm run build
+```
+
+**4. 启动后端服务**
+
+```bash
+# 启动统一核心服务
+cd svc/unified-core
+cargo run
+```
+
+**5. 启动前端服务**
+
+```bash
+# 终端1：启动 Remote Module（自动构建）
+cd apps/core
+pnpm install
+pnpm run dev:watch
+
+# 终端2：启动 Remote Module 预览服务器
+cd apps/core
+pnpm run preview
+
+# 终端3：启动 Host Shell
+cd apps/web
+pnpm install
+pnpm run dev
+```
+
+**6. 访问应用**
+
+- Host Shell（主应用）：http://localhost:3000
+- Remote Module：http://localhost:3001
+- API 服务：http://localhost:8001
+
+### 停止服务
+
+```bash
+# 停止所有服务
+./scripts/stop-all.sh
+
+# 或手动停止
+# 停止后端服务：Ctrl+C
+# 停止前端服务：Ctrl+C
+```
+
+---
+
 如有问题，请查看项目文档或提交 Issue。
