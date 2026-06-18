@@ -91,7 +91,7 @@ class NavigationRegistry {
     return Array.from(codes);
   }
 
-  updateModuleStatus(pluginCode: string, status: "running" | "warning" | "stopped"): void {
+  updateModuleStatus(pluginCode: string, status: "online" | "warning" | "stopped"): void {
     const card = this.moduleCards.get(pluginCode);
     if (card) {
       card.status = status;
@@ -117,7 +117,7 @@ const registerDefaultModules = () => {
       name: "企业资源管理",
       icon: "Building",
       path: "/erp",
-      status: "running",
+      status: "online",
       order: 1,
     },
   });
@@ -137,7 +137,7 @@ const registerDefaultModules = () => {
       name: "项目管理",
       icon: "FolderKanban",
       path: "/pm",
-      status: "running",
+      status: "online",
       order: 2,
     },
   });
@@ -157,7 +157,7 @@ const registerDefaultModules = () => {
       name: "研发管理",
       icon: "FlaskConical",
       path: "/rs",
-      status: "running",
+      status: "online",
       order: 3,
     },
   });
@@ -177,7 +177,7 @@ const registerDefaultModules = () => {
       name: "供应链管理",
       icon: "Truck",
       path: "/scm",
-      status: "running",
+      status: "online",
       order: 4,
     },
   });
@@ -216,7 +216,7 @@ const registerDefaultModules = () => {
       name: "AI智能助手",
       icon: "Bot",
       path: "/ai",
-      status: "running",
+      status: "online",
       order: 6,
     },
   });
@@ -255,7 +255,7 @@ const registerDefaultModules = () => {
       name: "人力资源管理",
       icon: "Users",
       path: "/hrm",
-      status: "running",
+      status: "online",
       order: 8,
     },
   });

@@ -138,6 +138,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       }, 10000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [hasExternalStatuses]);
 
   const handleRefresh = useCallback(() => {
