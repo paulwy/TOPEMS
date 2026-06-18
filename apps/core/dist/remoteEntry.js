@@ -1,1 +1,1 @@
-import{n as _,t}from"./assets/virtual_mf-REMOTE_ENTRY_ID___mfe_internal__topems_core__remoteEntry_js-DxAdzIY7.js";export{t as get,_ as init};
+import{n as _,t}from"./assets/virtual_mf-REMOTE_ENTRY_ID___mfe_internal__topems_core__remoteEntry_js-D6bbwjuV.js";export{t as get,_ as init};
