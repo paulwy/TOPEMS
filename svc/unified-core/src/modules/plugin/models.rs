@@ -93,58 +93,185 @@ pub struct PluginVersion {
     #[serde(rename = "plugin_id")]
     pub plugin_id: uuid::Uuid,
     pub version: String,
-    
     #[serde(rename = "release_notes")]
     pub release_notes: Option<String>,
-    
     #[serde(rename = "is_stable")]
     pub is_stable: Option<bool>,
-    
     #[serde(rename = "is_latest")]
     pub is_latest: Option<bool>,
-    
     #[serde(rename = "download_url")]
     pub download_url: Option<String>,
-    
     pub checksum: Option<String>,
-    
     #[serde(rename = "file_size")]
     pub file_size: Option<i64>,
-    
     #[serde(rename = "min_app_version")]
     pub min_app_version: Option<String>,
-    
     #[serde(rename = "created_at")]
     pub created_at: DateTime<Utc>,
 }
 
+// ============================================================================
+// Review & Statistics Types
+// ============================================================================
+
 /// Plugin review
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginReview {
     pub id: uuid::Uuid,
     #[serde(rename = "plugin_id")]
     pub plugin_id: uuid::Uuid,
     #[serde(rename = "user_id")]
     pub user_id: uuid::Uuid,
-    
     #[serde(rename = "user_name")]
     pub user_name: Option<String>,
-    
-    pub rating: Option<i16>,
+    #[serde(rename = "user_avatar")]
+    pub user_avatar: Option<String>,
+    pub rating: i32,
     pub title: Option<String>,
     pub content: Option<String>,
-    
     #[serde(rename = "is_verified_purchase")]
     pub is_verified_purchase: Option<bool>,
-    
     #[serde(rename = "is_featured")]
     pub is_featured: Option<bool>,
-    
     #[serde(rename = "helpful_count")]
     pub helpful_count: Option<i32>,
-    
+    pub replies: Option<Vec<ReviewReply>>,
     #[serde(rename = "created_at")]
     pub created_at: DateTime<Utc>,
+    #[serde(rename = "updated_at")]
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Review reply
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewReply {
+    pub id: uuid::Uuid,
+    #[serde(rename = "review_id")]
+    pub review_id: uuid::Uuid,
+    #[serde(rename = "user_id")]
+    pub user_id: uuid::Uuid,
+    #[serde(rename = "user_name")]
+    pub user_name: Option<String>,
+    pub content: String,
+    #[serde(rename = "created_at")]
+    pub created_at: DateTime<Utc>,
+}
+
+/// Review request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewRequest {
+    pub rating: i32,
+    pub title: Option<String>,
+    pub content: Option<String>,
+}
+
+/// Review filter parameters
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewFilterParams {
+    /// Sort by field: rating, created_at, helpful_count, is_featured
+    pub sort_by: Option<String>,
+    /// Sort order: asc, desc
+    pub sort_order: Option<String>,
+    /// Filter by minimum rating (1-5)
+    pub min_rating: Option<i32>,
+    /// Filter by maximum rating (1-5)
+    pub max_rating: Option<i32>,
+    /// Filter verified purchase only
+    pub verified_only: Option<bool>,
+    /// Filter featured only
+    pub featured_only: Option<bool>,
+    /// Filter by date range start
+    pub from_date: Option<String>,
+    /// Filter by date range end
+    pub to_date: Option<String>,
+    /// Search in title and content
+    pub search: Option<String>,
+}
+
+/// Review sorting options
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ReviewSortField {
+    #[serde(rename = "rating")]
+    Rating,
+    #[serde(rename = "created_at")]
+    CreatedAt,
+    #[serde(rename = "helpful_count")]
+    HelpfulCount,
+    #[serde(rename = "is_featured")]
+    IsFeatured,
+}
+
+/// Review sorting configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewSortConfig {
+    pub field: ReviewSortField,
+    pub descending: bool,
+}
+
+/// Plugin statistics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginStatistics {
+    #[serde(rename = "plugin_id")]
+    pub plugin_id: uuid::Uuid,
+    #[serde(rename = "plugin_code")]
+    pub plugin_code: String,
+    #[serde(rename = "total_downloads")]
+    pub total_downloads: i64,
+    #[serde(rename = "monthly_downloads")]
+    pub monthly_downloads: i64,
+    #[serde(rename = "weekly_downloads")]
+    pub weekly_downloads: i64,
+    #[serde(rename = "daily_downloads")]
+    pub daily_downloads: i64,
+    #[serde(rename = "total_reviews")]
+    pub total_reviews: i64,
+    #[serde(rename = "average_rating")]
+    pub average_rating: f64,
+    #[serde(rename = "rating_distribution")]
+    pub rating_distribution: Option<serde_json::Value>,
+    #[serde(rename = "active_installs")]
+    pub active_installs: Option<i64>,
+    #[serde(rename = "trending_score")]
+    pub trending_score: Option<f64>,
+}
+
+/// Download record
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DownloadRecord {
+    pub id: uuid::Uuid,
+    #[serde(rename = "plugin_id")]
+    pub plugin_id: uuid::Uuid,
+    #[serde(rename = "user_id")]
+    pub user_id: Option<uuid::Uuid>,
+    #[serde(rename = "version")]
+    pub version: String,
+    #[serde(rename = "download_date")]
+    pub download_date: DateTime<Utc>,
+    #[serde(rename = "ip_address")]
+    pub ip_address: Option<String>,
+    #[serde(rename = "user_agent")]
+    pub user_agent: Option<String>,
+}
+
+/// Review statistics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReviewStatistics {
+    #[serde(rename = "plugin_id")]
+    pub plugin_id: uuid::Uuid,
+    #[serde(rename = "total_reviews")]
+    pub total_reviews: i64,
+    #[serde(rename = "average_rating")]
+    pub average_rating: f64,
+    #[serde(rename = "rating_5_count")]
+    pub rating_5_count: i64,
+    #[serde(rename = "rating_4_count")]
+    pub rating_4_count: i64,
+    #[serde(rename = "rating_3_count")]
+    pub rating_3_count: i64,
+    #[serde(rename = "rating_2_count")]
+    pub rating_2_count: i64,
+    #[serde(rename = "rating_1_count")]
+    pub rating_1_count: i64,
 }
 
 /// Tenant plugin installation
@@ -487,4 +614,296 @@ pub struct PluginWithRuntimeStatus {
     pub runtime_url: Option<String>,
     pub base_path: Option<String>,
     pub last_heartbeat: Option<DateTime<Utc>>,
+}
+
+// ============================================================================
+// Version Management Types
+// ============================================================================
+
+/// 版本对比请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VersionCompareRequest {
+    #[serde(rename = "from_version")]
+    pub from_version: String,
+    #[serde(rename = "to_version")]
+    pub to_version: String,
+}
+
+/// 版本对比结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VersionCompareResult {
+    #[serde(rename = "from_version")]
+    pub from_version: String,
+    #[serde(rename = "to_version")]
+    pub to_version: String,
+    pub changes: Vec<VersionChange>,
+}
+
+/// 版本变更项
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VersionChange {
+    pub change_type: String,  // 'feature' | 'bugfix' | 'improvement' | 'breaking'
+    pub description: String,
+    pub affected_components: Option<Vec<String>>,
+}
+
+/// 升级检测结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeCheckResult {
+    #[serde(rename = "current_version")]
+    pub current_version: String,
+    #[serde(rename = "latest_version")]
+    pub latest_version: String,
+    #[serde(rename = "has_update")]
+    pub has_update: bool,
+    #[serde(rename = "is_minor")]
+    pub is_minor: bool,
+    #[serde(rename = "is_major")]
+    pub is_major: bool,
+    #[serde(rename = "release_notes")]
+    pub release_notes: Option<String>,
+    #[serde(rename = "update_available_at")]
+    pub update_available_at: Option<DateTime<Utc>>,
+}
+
+/// 版本回滚请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RollbackRequest {
+    #[serde(rename = "target_version")]
+    pub target_version: String,
+    pub backup: Option<bool>,
+}
+
+/// 版本回滚结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RollbackResult {
+    #[serde(rename = "previous_version")]
+    pub previous_version: String,
+    #[serde(rename = "target_version")]
+    pub target_version: String,
+    pub success: bool,
+    #[serde(rename = "backup_created")]
+    pub backup_created: Option<bool>,
+    pub message: String,
+}
+
+// ============================================================================
+// Upgrade Task Types
+// ============================================================================
+
+/// 升级任务状态
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum UpgradeStatus {
+    Pending,
+    Downloading,
+    Downloaded,
+    Installing,
+    Installed,
+    Verifying,
+    Completed,
+    Failed,
+    Rollback,
+    RolledBack,
+}
+
+/// 升级任务
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeTask {
+    pub id: uuid::Uuid,
+    pub plugin_id: uuid::Uuid,
+    pub plugin_code: String,
+    #[serde(rename = "from_version")]
+    pub from_version: String,
+    #[serde(rename = "to_version")]
+    pub to_version: String,
+    pub status: UpgradeStatus,
+    pub progress: i32,
+    pub message: Option<String>,
+    #[serde(rename = "error_message")]
+    pub error_message: Option<String>,
+    #[serde(rename = "download_url")]
+    pub download_url: Option<String>,
+    #[serde(rename = "file_path")]
+    pub file_path: Option<String>,
+    #[serde(rename = "backup_path")]
+    pub backup_path: Option<String>,
+    #[serde(rename = "started_at")]
+    pub started_at: DateTime<Utc>,
+    #[serde(rename = "completed_at")]
+    pub completed_at: Option<DateTime<Utc>>,
+}
+
+/// 升级请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeRequest {
+    #[serde(rename = "target_version")]
+    pub target_version: String,
+    pub backup: Option<bool>,
+    #[serde(rename = "force_install")]
+    pub force_install: Option<bool>,
+}
+
+/// 升级结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeResult {
+    #[serde(rename = "task_id")]
+    pub task_id: uuid::Uuid,
+    #[serde(rename = "from_version")]
+    pub from_version: String,
+    #[serde(rename = "to_version")]
+    pub to_version: String,
+    pub success: bool,
+    pub message: String,
+    #[serde(rename = "backup_created")]
+    pub backup_created: Option<bool>,
+    #[serde(rename = "rollback_available")]
+    pub rollback_available: bool,
+}
+
+/// 验证结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerificationResult {
+    pub success: bool,
+    pub checks: Vec<VerificationCheck>,
+    pub message: String,
+}
+
+/// 验证检查项
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerificationCheck {
+    pub name: String,
+    pub passed: bool,
+    pub message: String,
+}
+
+// ============================================================================
+// Automated Upgrade Types
+// ============================================================================
+
+/// 升级策略类型
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum UpgradeStrategy {
+    /// 立即升级
+    Immediate,
+    /// 定时升级
+    Scheduled,
+    /// 维护窗口期升级
+    MaintenanceWindow,
+    /// 手动升级
+    Manual,
+}
+
+/// 升级调度配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeSchedule {
+    pub id: uuid::Uuid,
+    pub plugin_code: String,
+    pub strategy: UpgradeStrategy,
+    pub enabled: bool,
+    /// 定时升级的时间点（cron表达式）
+    pub cron_expression: Option<String>,
+    /// 维护窗口开始时间
+    pub window_start: Option<String>,
+    /// 维护窗口结束时间
+    pub window_end: Option<String>,
+    /// 允许自动升级的版本类型
+    pub allowed_upgrade_types: Vec<String>,
+    /// 是否自动回滚
+    pub auto_rollback: bool,
+    /// 回滚条件（失败后多少分钟内）
+    pub rollback_window_minutes: Option<i32>,
+    /// 创建时间
+    pub created_at: DateTime<Utc>,
+    /// 更新时间
+    pub updated_at: DateTime<Utc>,
+}
+
+/// 升级队列项
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeQueueItem {
+    pub id: uuid::Uuid,
+    pub plugin_code: String,
+    pub target_version: String,
+    pub priority: i32,
+    pub status: UpgradeQueueStatus,
+    pub scheduled_at: Option<DateTime<Utc>>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub error_message: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// 升级队列状态
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum UpgradeQueueStatus {
+    Pending,
+    Scheduled,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
+/// 批量升级请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchUpgradeRequest {
+    pub plugins: Vec<PluginUpgradeItem>,
+    pub strategy: UpgradeStrategy,
+    pub backup: Option<bool>,
+    pub force_install: Option<bool>,
+}
+
+/// 单个插件升级项
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginUpgradeItem {
+    pub plugin_code: String,
+    pub target_version: Option<String>,
+}
+
+/// 批量升级结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchUpgradeResult {
+    pub total: i32,
+    pub successful: i32,
+    pub failed: i32,
+    pub skipped: i32,
+    pub results: Vec<PluginUpgradeResult>,
+}
+
+/// 单个插件升级结果
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PluginUpgradeResult {
+    pub plugin_code: String,
+    pub success: bool,
+    pub task_id: Option<uuid::Uuid>,
+    pub message: String,
+}
+
+/// 升级策略配置请求
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeScheduleRequest {
+    pub strategy: UpgradeStrategy,
+    pub enabled: Option<bool>,
+    pub cron_expression: Option<String>,
+    pub window_start: Option<String>,
+    pub window_end: Option<String>,
+    pub allowed_upgrade_types: Option<Vec<String>>,
+    pub auto_rollback: Option<bool>,
+    pub rollback_window_minutes: Option<i32>,
+}
+
+/// 升级历史记录
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpgradeHistory {
+    pub id: uuid::Uuid,
+    pub plugin_code: String,
+    pub from_version: String,
+    pub to_version: String,
+    pub strategy: UpgradeStrategy,
+    pub status: String,
+    pub started_at: DateTime<Utc>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub duration_seconds: Option<i64>,
+    pub error_message: Option<String>,
+    pub rollback_from: Option<String>,
 }

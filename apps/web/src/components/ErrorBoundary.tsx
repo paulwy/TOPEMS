@@ -1,10 +1,15 @@
 import type { ErrorInfo, ReactNode } from "react";
 import { Component } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Code2 } from "lucide-react";
+import createLogger from "../utils/logger";
+
+const logger = createLogger("ErrorBoundary");
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  showDetails?: boolean;
 }
 
 interface ErrorBoundaryState {
@@ -13,10 +18,7 @@ interface ErrorBoundaryState {
   errorInfo?: ErrorInfo;
 }
 
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -27,7 +29,16 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught error:", error, errorInfo);
+    logger.error("ErrorBoundary caught error:", error.message, errorInfo);
+
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+
+    if (process.env.NODE_ENV === "production" && (window as any).Sentry) {
+      (window as any).Sentry.captureException(error, { extra: errorInfo });
+    }
+
     this.setState({ error, errorInfo });
   }
 
@@ -41,6 +52,8 @@ export class ErrorBoundary extends Component<
       if (this.props.fallback) {
         return this.props.fallback;
       }
+
+      const showDetails = this.props.showDetails ?? process.env.NODE_ENV !== "production";
 
       return (
         <div
@@ -59,7 +72,7 @@ export class ErrorBoundary extends Component<
               borderRadius: "12px",
               boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
               padding: "32px",
-              maxWidth: "448px",
+              maxWidth: "600px",
               width: "100%",
               textAlign: "center",
             }}
@@ -88,9 +101,40 @@ export class ErrorBoundary extends Component<
             >
               页面出现错误
             </h2>
-            <p style={{ color: "#6b7280", marginBottom: "24px" }}>
+            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
               {this.state.error?.message || "发生了未知错误，请重试"}
             </p>
+
+            {showDetails && this.state.error && this.state.errorInfo && (
+              <div
+                style={{
+                  backgroundColor: "#1f2937",
+                  color: "#f9fafb",
+                  borderRadius: "8px",
+                  padding: "16px",
+                  marginBottom: "24px",
+                  textAlign: "left",
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                  <Code2 style={{ width: 16, height: 16 }} />
+                  <span style={{ fontWeight: 600, fontSize: "14px" }}>错误详情</span>
+                </div>
+                <div style={{ marginBottom: "12px" }}>
+                  <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>错误信息</div>
+                  <div style={{ fontSize: "13px", fontFamily: "monospace" }}>{this.state.error.message}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>组件栈</div>
+                  <div style={{ fontSize: "12px", fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
+                    {this.state.errorInfo.componentStack}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <button
               onClick={this.handleRetry}
               style={{
@@ -103,6 +147,7 @@ export class ErrorBoundary extends Component<
                 border: "none",
                 cursor: "pointer",
                 transition: "background-color 0.2s",
+                fontWeight: 500,
               }}
             >
               <RefreshCw sx={{ width: 20, height: 20, marginRight: 8 }} />
@@ -118,3 +163,17 @@ export class ErrorBoundary extends Component<
 }
 
 export default ErrorBoundary;
+
+export const withErrorBoundary = <P extends object>(
+  Component: React.ComponentType<P>,
+  options?: {
+    fallback?: ReactNode;
+    onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  }
+): React.ComponentType<P> => {
+  return (props: P) => (
+    <ErrorBoundary fallback={options?.fallback} onError={options?.onError}>
+      <Component {...props} />
+    </ErrorBoundary>
+  );
+};

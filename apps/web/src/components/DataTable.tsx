@@ -1,5 +1,4 @@
 import {
-  Button,
   Box,
   Typography,
   IconButton,
@@ -13,6 +12,7 @@ import {
   TableRow,
 } from "@mui/material";
 import React from "react";
+import { Button } from "./ui/Button";
 import type {
   ColumnDef,
   SortingState,

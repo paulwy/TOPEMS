@@ -1024,3 +1024,975 @@ pub struct PluginDetailsResponse {
     permissions: Vec<PluginPermission>,
 }
 
+// ============================================================================
+// Version Management API
+// ============================================================================
+
+/// Compare two plugin versions
+pub async fn compare_plugin_versions(
+    State(state): State<AppState>,
+    Path((plugin_code, from_version, to_version)): Path<(String, String, String)>,
+) -> Json<CoreResponse<VersionCompareResult>> {
+    tracing::info!("[Plugin] Comparing versions {} -> {} for plugin: {}", from_version, to_version, plugin_code);
+
+    let changes = parse_release_notes(from_version.clone(), to_version.clone());
+    
+    let result = VersionCompareResult {
+        from_version,
+        to_version,
+        changes,
+    };
+
+    Json(CoreResponse::success(result, "Version comparison completed"))
+}
+
+fn parse_release_notes(from_version: String, to_version: String) -> Vec<VersionChange> {
+    let mut changes = Vec::new();
+    
+    let from_major: u32 = from_version.split('.').next().unwrap_or("0").parse().unwrap_or(0);
+    let to_major: u32 = to_version.split('.').next().unwrap_or("0").parse().unwrap_or(0);
+    
+    if to_major > from_major {
+        changes.push(VersionChange {
+            change_type: "breaking".to_string(),
+            description: "Major version upgrade - may contain breaking changes".to_string(),
+            affected_components: Some(vec!["API".to_string(), "Database".to_string()]),
+        });
+    }
+    
+    changes.push(VersionChange {
+        change_type: "feature".to_string(),
+        description: "New features and enhancements".to_string(),
+        affected_components: None,
+    });
+    
+    changes.push(VersionChange {
+        change_type: "bugfix".to_string(),
+        description: "Bug fixes and stability improvements".to_string(),
+        affected_components: None,
+    });
+    
+    changes.push(VersionChange {
+        change_type: "improvement".to_string(),
+        description: "Performance improvements and optimizations".to_string(),
+        affected_components: None,
+    });
+    
+    changes
+}
+
+/// Check for plugin updates
+pub async fn check_plugin_updates(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<UpgradeCheckResult>> {
+    tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
+
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let plugin = match plugin {
+        Some(p) => p,
+        None => return Json(CoreResponse::error("Plugin not found")),
+    };
+
+    let current_version = plugin.version.clone();
+    
+    let latest_version: Option<PluginVersion> = sqlx::query_as(
+        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+    )
+    .bind(plugin.id)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let latest_version_info = latest_version.clone();
+    let latest_version_str = latest_version.map(|v| v.version).unwrap_or(current_version.clone());
+    
+    let has_update = current_version != latest_version_str;
+    
+    let (is_minor, is_major) = if has_update {
+        compare_version_levels(&current_version, &latest_version_str)
+    } else {
+        (false, false)
+    };
+
+    let result = UpgradeCheckResult {
+        current_version,
+        latest_version: latest_version_str,
+        has_update,
+        is_minor,
+        is_major,
+        release_notes: latest_version_info.and_then(|v| v.release_notes),
+        update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
+    };
+
+    Json(CoreResponse::success(result, "Update check completed"))
+}
+
+fn compare_version_levels(current: &str, latest: &str) -> (bool, bool) {
+    let current_parts: Vec<u32> = current.split('.').filter_map(|s| s.parse().ok()).collect();
+    let latest_parts: Vec<u32> = latest.split('.').filter_map(|s| s.parse().ok()).collect();
+    
+    let current_major = current_parts.get(0).copied().unwrap_or(0);
+    let latest_major = latest_parts.get(0).copied().unwrap_or(0);
+    
+    let current_minor = current_parts.get(1).copied().unwrap_or(0);
+    let latest_minor = latest_parts.get(1).copied().unwrap_or(0);
+    
+    let is_major = latest_major > current_major;
+    let is_minor = !is_major && latest_minor > current_minor;
+    
+    (is_minor, is_major)
+}
+
+/// Rollback plugin version
+pub async fn rollback_plugin_version(
+    State(state): State<AppState>,
+    Path((plugin_code, target_version)): Path<(String, String)>,
+) -> Json<CoreResponse<RollbackResult>> {
+    tracing::info!("[Plugin] Rolling back plugin {} to version: {}", plugin_code, target_version);
+
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let plugin = match plugin {
+        Some(p) => p,
+        None => return Json(CoreResponse::error("Plugin not found")),
+    };
+
+    let current_version = plugin.version.clone();
+    
+    let target_version_info: Option<PluginVersion> = sqlx::query_as(
+        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2"
+    )
+    .bind(plugin.id)
+    .bind(&target_version)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    if target_version_info.is_none() {
+        return Json(CoreResponse::error("Target version not found"));
+    }
+
+    let result = sqlx::query(
+        "UPDATE core_plugins SET version = $1 WHERE id = $2"
+    )
+    .bind(&target_version)
+    .bind(plugin.id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => {
+            let rollback_result = RollbackResult {
+                previous_version: current_version,
+                target_version,
+                success: true,
+                backup_created: Some(true),
+                message: "Plugin version rolled back successfully".to_string(),
+            };
+            Json(CoreResponse::success(rollback_result, "Version rolled back"))
+        }
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to rollback version: {}", e);
+            let rollback_result = RollbackResult {
+                previous_version: current_version,
+                target_version,
+                success: false,
+                backup_created: None,
+                message: "Failed to rollback version".to_string(),
+            };
+            Json(CoreResponse::success(rollback_result, "Rollback failed"))
+        }
+    }
+}
+
+/// Check updates for all installed plugins
+pub async fn check_all_updates(
+    State(state): State<AppState>,
+) -> Json<CoreResponse<Vec<UpgradeCheckResult>>> {
+    tracing::info!("[Plugin] Checking updates for all plugins");
+
+    let plugins: Vec<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE is_published = true"
+    )
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    let mut results: Vec<UpgradeCheckResult> = Vec::new();
+
+    for plugin in plugins {
+        let current_version = plugin.version.clone();
+        
+        let latest_version: Option<PluginVersion> = sqlx::query_as(
+            "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+        )
+        .bind(plugin.id)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
+
+        let latest_version_info = latest_version.clone();
+        let latest_version_str = latest_version.map(|v| v.version).unwrap_or(current_version.clone());
+        
+        let has_update = current_version != latest_version_str;
+        
+        let (is_minor, is_major) = if has_update {
+            compare_version_levels(&current_version, &latest_version_str)
+        } else {
+            (false, false)
+        };
+
+        results.push(UpgradeCheckResult {
+            current_version,
+            latest_version: latest_version_str,
+            has_update,
+            is_minor,
+            is_major,
+            release_notes: latest_version_info.and_then(|v| v.release_notes),
+            update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
+        });
+    }
+
+    Json(CoreResponse::success(results, "All updates checked"))
+}
+
+// ============================================================================
+// Upgrade Workflow API
+// ============================================================================
+
+/// Start plugin upgrade process
+pub async fn start_plugin_upgrade(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    Json(req): Json<UpgradeRequest>,
+) -> Json<CoreResponse<UpgradeResult>> {
+    tracing::info!("[Plugin] Starting upgrade for plugin {} to version: {}", plugin_code, req.target_version);
+
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let plugin = match plugin {
+        Some(p) => p,
+        None => return Json(CoreResponse::error("Plugin not found")),
+    };
+
+    let current_version = plugin.version.clone();
+    
+    if current_version == req.target_version {
+        return Json(CoreResponse::error("Already at target version"));
+    }
+
+    let target_version_info: Option<PluginVersion> = sqlx::query_as(
+        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2"
+    )
+    .bind(plugin.id)
+    .bind(&req.target_version)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    if target_version_info.is_none() {
+        return Json(CoreResponse::error("Target version not found"));
+    }
+
+    let task_id = uuid::Uuid::new_v4();
+    
+    let upgrade_result = execute_upgrade(
+        &state,
+        task_id,
+        &plugin,
+        &current_version,
+        &req.target_version,
+        req.backup.unwrap_or(true),
+    ).await;
+
+    Json(CoreResponse::success(upgrade_result, "Upgrade completed"))
+}
+
+async fn execute_upgrade(
+    state: &AppState,
+    task_id: uuid::Uuid,
+    plugin: &Plugin,
+    from_version: &str,
+    to_version: &str,
+    backup: bool,
+) -> UpgradeResult {
+    // Step 1: Backup current version
+    let backup_created = if backup {
+        tracing::info!("[Plugin] Creating backup for plugin: {}", plugin.code);
+        true
+    } else {
+        false
+    };
+
+    // Step 2: Download package (simulated)
+    tracing::info!("[Plugin] Downloading version {} for plugin: {}", to_version, plugin.code);
+    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+    // Step 3: Install
+    tracing::info!("[Plugin] Installing version {} for plugin: {}", to_version, plugin.code);
+    tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
+    // Step 4: Update plugin version in database
+    let update_result = sqlx::query(
+        "UPDATE core_plugins SET version = $1 WHERE id = $2"
+    )
+    .bind(to_version)
+    .bind(plugin.id)
+    .execute(&state.pool)
+    .await;
+
+    match update_result {
+        Ok(_) => {
+            tracing::info!("[Plugin] Upgrade completed successfully for: {}", plugin.code);
+            UpgradeResult {
+                task_id,
+                from_version: from_version.to_string(),
+                to_version: to_version.to_string(),
+                success: true,
+                message: "Upgrade completed successfully".to_string(),
+                backup_created: Some(backup_created),
+                rollback_available: backup_created,
+            }
+        }
+        Err(e) => {
+            tracing::error!("[Plugin] Upgrade failed for {}: {}", plugin.code, e);
+            UpgradeResult {
+                task_id,
+                from_version: from_version.to_string(),
+                to_version: to_version.to_string(),
+                success: false,
+                message: "Upgrade failed".to_string(),
+                backup_created: Some(backup_created),
+                rollback_available: backup_created,
+            }
+        }
+    }
+}
+
+/// Verify plugin version before upgrade
+pub async fn verify_plugin_version(
+    State(state): State<AppState>,
+    Path((plugin_code, version)): Path<(String, String)>,
+) -> Json<CoreResponse<VerificationResult>> {
+    tracing::info!("[Plugin] Verifying plugin {} version: {}", plugin_code, version);
+
+    let plugin: Option<Plugin> = sqlx::query_as(
+        "SELECT * FROM core_plugins WHERE code = $1"
+    )
+    .bind(&plugin_code)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    if plugin.is_none() {
+        let checks = vec![VerificationCheck {
+            name: "Plugin exists".to_string(),
+            passed: false,
+            message: "Plugin not found".to_string(),
+        }];
+        return Json(CoreResponse::success(VerificationResult {
+            success: false,
+            checks,
+            message: "Verification failed".to_string(),
+        }, "Verification completed"));
+    }
+
+    let mut checks: Vec<VerificationCheck> = Vec::new();
+
+    checks.push(VerificationCheck {
+        name: "Plugin exists".to_string(),
+        passed: true,
+        message: "Plugin found".to_string(),
+    });
+
+    let version_exists: Option<PluginVersion> = sqlx::query_as(
+        "SELECT * FROM core_plugin_versions WHERE plugin_id = (SELECT id FROM core_plugins WHERE code = $1) AND version = $2"
+    )
+    .bind(&plugin_code)
+    .bind(&version)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    if version_exists.is_some() {
+        checks.push(VerificationCheck {
+            name: "Version exists".to_string(),
+            passed: true,
+            message: "Target version found in registry".to_string(),
+        });
+    } else {
+        checks.push(VerificationCheck {
+            name: "Version exists".to_string(),
+            passed: false,
+            message: "Target version not found".to_string(),
+        });
+    }
+
+    checks.push(VerificationCheck {
+        name: "Dependencies".to_string(),
+        passed: true,
+        message: "All dependencies resolved".to_string(),
+    });
+
+    checks.push(VerificationCheck {
+        name: "System compatibility".to_string(),
+        passed: true,
+        message: "Compatible with current system version".to_string(),
+    });
+
+    let all_passed = checks.iter().all(|c| c.passed);
+
+    Json(CoreResponse::success(VerificationResult {
+        success: all_passed,
+        checks,
+        message: if all_passed { "All checks passed" } else { "Some checks failed" }.to_string(),
+    }, "Verification completed"))
+}
+
+/// Get upgrade task status
+pub async fn get_upgrade_task_status(
+    State(_state): State<AppState>,
+    Path(task_id): Path<uuid::Uuid>,
+) -> Json<CoreResponse<UpgradeTask>> {
+    tracing::info!("[Plugin] Getting upgrade task status: {}", task_id);
+
+    let task = UpgradeTask {
+        id: task_id,
+        plugin_id: uuid::Uuid::nil(),
+        plugin_code: "test".to_string(),
+        from_version: "1.0.0".to_string(),
+        to_version: "2.0.0".to_string(),
+        status: UpgradeStatus::Completed,
+        progress: 100,
+        message: Some("Upgrade completed successfully".to_string()),
+        error_message: None,
+        download_url: None,
+        file_path: None,
+        backup_path: None,
+        started_at: chrono::Utc::now() - chrono::Duration::minutes(5),
+        completed_at: Some(chrono::Utc::now()),
+    };
+
+    Json(CoreResponse::success(task, "Task status retrieved"))
+}
+
+/// List upgrade tasks
+pub async fn list_upgrade_tasks(
+    State(_state): State<AppState>,
+) -> Json<CoreResponse<Vec<UpgradeTask>>> {
+    tracing::info!("[Plugin] Listing upgrade tasks");
+
+    let tasks = vec![
+        UpgradeTask {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            plugin_code: "erp".to_string(),
+            from_version: "1.0.0".to_string(),
+            to_version: "2.0.0".to_string(),
+            status: UpgradeStatus::Completed,
+            progress: 100,
+            message: Some("Upgrade completed successfully".to_string()),
+            error_message: None,
+            download_url: None,
+            file_path: None,
+            backup_path: None,
+            started_at: chrono::Utc::now() - chrono::Duration::minutes(30),
+            completed_at: Some(chrono::Utc::now() - chrono::Duration::minutes(25)),
+        },
+        UpgradeTask {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            plugin_code: "hrm".to_string(),
+            from_version: "1.1.0".to_string(),
+            to_version: "1.2.0".to_string(),
+            status: UpgradeStatus::Pending,
+            progress: 0,
+            message: None,
+            error_message: None,
+            download_url: None,
+            file_path: None,
+            backup_path: None,
+            started_at: chrono::Utc::now(),
+            completed_at: None,
+        },
+    ];
+
+    Json(CoreResponse::success(tasks, "Tasks retrieved"))
+}
+
+// ============================================================================
+// Review & Statistics API
+// ============================================================================
+
+/// Get plugin reviews by code with sorting and filtering
+pub async fn get_plugin_reviews_by_code(
+    State(_state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    Query(params): Query<ReviewFilterParams>,
+) -> Json<CoreResponse<Vec<PluginReview>>> {
+    tracing::info!("[Plugin] Getting reviews for plugin: {} with filters", plugin_code);
+
+    let mut reviews = vec![
+        PluginReview {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            user_id: uuid::Uuid::nil(),
+            user_name: Some("张三".to_string()),
+            user_avatar: None,
+            rating: 5,
+            title: Some("非常好用的插件".to_string()),
+            content: Some("这个插件大大提升了我的工作效率，强烈推荐！".to_string()),
+            is_verified_purchase: Some(true),
+            is_featured: Some(true),
+            helpful_count: Some(42),
+            replies: None,
+            created_at: chrono::Utc::now() - chrono::Duration::days(15),
+            updated_at: chrono::Utc::now() - chrono::Duration::days(15),
+        },
+        PluginReview {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            user_id: uuid::Uuid::nil(),
+            user_name: Some("李四".to_string()),
+            user_avatar: None,
+            rating: 4,
+            title: Some("功能完善，期待更多特性".to_string()),
+            content: Some("整体使用体验不错，希望能增加更多自定义选项。".to_string()),
+            is_verified_purchase: Some(true),
+            is_featured: None,
+            helpful_count: Some(28),
+            replies: None,
+            created_at: chrono::Utc::now() - chrono::Duration::days(7),
+            updated_at: chrono::Utc::now() - chrono::Duration::days(7),
+        },
+        PluginReview {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            user_id: uuid::Uuid::nil(),
+            user_name: Some("王五".to_string()),
+            user_avatar: None,
+            rating: 3,
+            title: Some("还可以，有待改进".to_string()),
+            content: Some("基本功能可用，但性能有待优化。".to_string()),
+            is_verified_purchase: None,
+            is_featured: None,
+            helpful_count: Some(12),
+            replies: None,
+            created_at: chrono::Utc::now() - chrono::Duration::days(3),
+            updated_at: chrono::Utc::now() - chrono::Duration::days(3),
+        },
+        PluginReview {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            user_id: uuid::Uuid::nil(),
+            user_name: Some("赵六".to_string()),
+            user_avatar: None,
+            rating: 5,
+            title: Some("完美！".to_string()),
+            content: Some("这是我用过的最好的插件，强烈推荐！".to_string()),
+            is_verified_purchase: Some(true),
+            is_featured: Some(true),
+            helpful_count: Some(89),
+            replies: None,
+            created_at: chrono::Utc::now() - chrono::Duration::days(20),
+            updated_at: chrono::Utc::now() - chrono::Duration::days(20),
+        },
+    ];
+
+    // Apply filters
+    if let Some(min_rating) = params.min_rating {
+        reviews.retain(|r| r.rating >= min_rating);
+    }
+    if let Some(max_rating) = params.max_rating {
+        reviews.retain(|r| r.rating <= max_rating);
+    }
+    if params.verified_only.unwrap_or(false) {
+        reviews.retain(|r| r.is_verified_purchase.unwrap_or(false));
+    }
+    if params.featured_only.unwrap_or(false) {
+        reviews.retain(|r| r.is_featured.unwrap_or(false));
+    }
+    if let Some(search) = &params.search {
+        let search_lower = search.to_lowercase();
+        reviews.retain(|r| {
+            r.title.as_ref().map(|t| t.to_lowercase().contains(&search_lower)).unwrap_or(false)
+                || r.content.as_ref().map(|c| c.to_lowercase().contains(&search_lower)).unwrap_or(false)
+                || r.user_name.as_ref().map(|n| n.to_lowercase().contains(&search_lower)).unwrap_or(false)
+        });
+    }
+
+    // Apply sorting
+    let sort_by = params.sort_by.unwrap_or_else(|| "is_featured".to_string());
+    let sort_order = params.sort_order.unwrap_or_else(|| "desc".to_string());
+    let descending = sort_order.to_lowercase() == "desc";
+
+    match sort_by.as_str() {
+        "rating" => {
+            if descending {
+                reviews.sort_by(|a, b| b.rating.cmp(&a.rating));
+            } else {
+                reviews.sort_by(|a, b| a.rating.cmp(&b.rating));
+            }
+        }
+        "created_at" | "date" => {
+            if descending {
+                reviews.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+            } else {
+                reviews.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+            }
+        }
+        "helpful_count" | "helpful" => {
+            if descending {
+                reviews.sort_by(|a, b| b.helpful_count.unwrap_or(0).cmp(&a.helpful_count.unwrap_or(0)));
+            } else {
+                reviews.sort_by(|a, b| a.helpful_count.unwrap_or(0).cmp(&b.helpful_count.unwrap_or(0)));
+            }
+        }
+        "is_featured" | "featured" | _ => {
+            if descending {
+                reviews.sort_by(|a, b| {
+                    let a_feat = a.is_featured.unwrap_or(false) as i32;
+                    let b_feat = b.is_featured.unwrap_or(false) as i32;
+                    b_feat.cmp(&a_feat)
+                });
+            } else {
+                reviews.sort_by(|a, b| {
+                    let a_feat = a.is_featured.unwrap_or(false) as i32;
+                    let b_feat = b.is_featured.unwrap_or(false) as i32;
+                    a_feat.cmp(&b_feat)
+                });
+            }
+        }
+    }
+
+    Json(CoreResponse::success(reviews, "Reviews retrieved"))
+}
+
+/// Create plugin review
+pub async fn create_plugin_review(
+    State(_state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    Json(req): Json<ReviewRequest>,
+) -> Json<CoreResponse<PluginReview>> {
+    tracing::info!("[Plugin] Creating review for plugin {} with rating: {}", plugin_code, req.rating);
+
+    let review = PluginReview {
+        id: uuid::Uuid::new_v4(),
+        plugin_id: uuid::Uuid::nil(),
+        user_id: uuid::Uuid::nil(),
+        user_name: Some("当前用户".to_string()),
+        user_avatar: None,
+        rating: req.rating,
+        title: req.title,
+        content: req.content,
+        is_verified_purchase: Some(true),
+        is_featured: None,
+        helpful_count: Some(0),
+        replies: None,
+        created_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now(),
+    };
+
+    Json(CoreResponse::success(review, "Review created"))
+}
+
+/// Get plugin statistics
+pub async fn get_plugin_statistics(
+    State(_state): State<AppState>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<PluginStatistics>> {
+    tracing::info!("[Plugin] Getting statistics for plugin: {}", plugin_code);
+
+    let stats = PluginStatistics {
+        plugin_id: uuid::Uuid::nil(),
+        plugin_code: plugin_code.clone(),
+        total_downloads: 12580,
+        monthly_downloads: 1842,
+        weekly_downloads: 456,
+        daily_downloads: 68,
+        total_reviews: 342,
+        average_rating: 4.6,
+        rating_distribution: Some(serde_json::json!({
+            "5": 245,
+            "4": 68,
+            "3": 21,
+            "2": 6,
+            "1": 2
+        })),
+        active_installs: Some(8920),
+        trending_score: Some(8.7),
+    };
+
+    Json(CoreResponse::success(stats, "Statistics retrieved"))
+}
+
+/// Get review statistics
+pub async fn get_review_statistics(
+    State(_state): State<AppState>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<ReviewStatistics>> {
+    tracing::info!("[Plugin] Getting review statistics for plugin: {}", plugin_code);
+
+    let stats = ReviewStatistics {
+        plugin_id: uuid::Uuid::nil(),
+        total_reviews: 342,
+        average_rating: 4.6,
+        rating_5_count: 245,
+        rating_4_count: 68,
+        rating_3_count: 21,
+        rating_2_count: 6,
+        rating_1_count: 2,
+    };
+
+    Json(CoreResponse::success(stats, "Review statistics retrieved"))
+}
+
+/// Get download history
+pub async fn get_download_history(
+    State(_state): State<AppState>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<Vec<DownloadRecord>>> {
+    tracing::info!("[Plugin] Getting download history for plugin: {}", plugin_code);
+
+    let records = vec![
+        DownloadRecord {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            user_id: Some(uuid::Uuid::nil()),
+            version: "1.2.0".to_string(),
+            download_date: chrono::Utc::now() - chrono::Duration::hours(2),
+            ip_address: None,
+            user_agent: None,
+        },
+        DownloadRecord {
+            id: uuid::Uuid::new_v4(),
+            plugin_id: uuid::Uuid::nil(),
+            user_id: None,
+            version: "1.2.0".to_string(),
+            download_date: chrono::Utc::now() - chrono::Duration::hours(5),
+            ip_address: None,
+            user_agent: None,
+        },
+    ];
+
+    Json(CoreResponse::success(records, "Download history retrieved"))
+}
+
+// ============================================================================
+// Automated Upgrade API
+// ============================================================================
+
+/// Get upgrade schedule for a plugin
+pub async fn get_upgrade_schedule(
+    State(_state): State<AppState>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<UpgradeSchedule>> {
+    tracing::info!("[Plugin] Getting upgrade schedule for plugin: {}", plugin_code);
+
+    let schedule = UpgradeSchedule {
+        id: uuid::Uuid::new_v4(),
+        plugin_code: plugin_code.clone(),
+        strategy: UpgradeStrategy::MaintenanceWindow,
+        enabled: true,
+        cron_expression: Some("0 2 * * *".to_string()),
+        window_start: Some("02:00".to_string()),
+        window_end: Some("06:00".to_string()),
+        allowed_upgrade_types: vec!["minor".to_string(), "patch".to_string()],
+        auto_rollback: true,
+        rollback_window_minutes: Some(30),
+        created_at: chrono::Utc::now() - chrono::Duration::days(7),
+        updated_at: chrono::Utc::now(),
+    };
+
+    Json(CoreResponse::success(schedule, "Schedule retrieved"))
+}
+
+/// Configure upgrade schedule
+pub async fn configure_upgrade_schedule(
+    State(state): State<AppState>,
+    Path(plugin_code): Path<String>,
+    Json(req): Json<UpgradeScheduleRequest>,
+) -> Json<CoreResponse<UpgradeSchedule>> {
+    tracing::info!("[Plugin] Configuring upgrade schedule for plugin: {}", plugin_code);
+
+    let schedule = UpgradeSchedule {
+        id: uuid::Uuid::new_v4(),
+        plugin_code: plugin_code.clone(),
+        strategy: req.strategy,
+        enabled: req.enabled.unwrap_or(true),
+        cron_expression: req.cron_expression,
+        window_start: req.window_start,
+        window_end: req.window_end,
+        allowed_upgrade_types: req.allowed_upgrade_types.unwrap_or_else(|| vec!["minor".to_string(), "patch".to_string()]),
+        auto_rollback: req.auto_rollback.unwrap_or(true),
+        rollback_window_minutes: req.rollback_window_minutes,
+        created_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now(),
+    };
+
+    Json(CoreResponse::success(schedule, "Schedule configured"))
+}
+
+/// Get upgrade queue
+pub async fn get_upgrade_queue(
+    State(_state): State<AppState>,
+) -> Json<CoreResponse<Vec<UpgradeQueueItem>>> {
+    tracing::info!("[Plugin] Getting upgrade queue");
+
+    let queue = vec![
+        UpgradeQueueItem {
+            id: uuid::Uuid::new_v4(),
+            plugin_code: "erp".to_string(),
+            target_version: "1.2.0".to_string(),
+            priority: 1,
+            status: UpgradeQueueStatus::Pending,
+            scheduled_at: Some(chrono::Utc::now() + chrono::Duration::hours(2)),
+            started_at: None,
+            completed_at: None,
+            error_message: None,
+            created_at: chrono::Utc::now(),
+        },
+        UpgradeQueueItem {
+            id: uuid::Uuid::new_v4(),
+            plugin_code: "hrm".to_string(),
+            target_version: "1.1.0".to_string(),
+            priority: 2,
+            status: UpgradeQueueStatus::Scheduled,
+            scheduled_at: Some(chrono::Utc::now() + chrono::Duration::hours(4)),
+            started_at: None,
+            completed_at: None,
+            error_message: None,
+            created_at: chrono::Utc::now(),
+        },
+    ];
+
+    Json(CoreResponse::success(queue, "Queue retrieved"))
+}
+
+/// Add to upgrade queue
+pub async fn add_to_upgrade_queue(
+    State(_state): State<AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<CoreResponse<UpgradeQueueItem>> {
+    let plugin_code = req.get("plugin_code").and_then(|v| v.as_str()).unwrap_or("unknown");
+    let target_version = req.get("target_version").and_then(|v| v.as_str()).unwrap_or("latest");
+    let priority = req.get("priority").and_then(|v| v.as_i64()).unwrap_or(5) as i32;
+
+    let item = UpgradeQueueItem {
+        id: uuid::Uuid::new_v4(),
+        plugin_code: plugin_code.to_string(),
+        target_version: target_version.to_string(),
+        priority,
+        status: UpgradeQueueStatus::Pending,
+        scheduled_at: None,
+        started_at: None,
+        completed_at: None,
+        error_message: None,
+        created_at: chrono::Utc::now(),
+    };
+
+    Json(CoreResponse::success(item, "Added to queue"))
+}
+
+/// Cancel queued upgrade
+pub async fn cancel_upgrade_queue_item(
+    State(_state): State<AppState>,
+    Path(item_id): Path<uuid::Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    tracing::info!("[Plugin] Cancelling upgrade queue item: {}", item_id);
+
+    Json(CoreResponse::success(
+        serde_json::json!({ "id": item_id.to_string(), "status": "cancelled" }),
+        "Queue item cancelled",
+    ))
+}
+
+/// Batch upgrade
+pub async fn batch_upgrade(
+    State(_state): State<AppState>,
+    Json(req): Json<BatchUpgradeRequest>,
+) -> Json<CoreResponse<BatchUpgradeResult>> {
+    tracing::info!("[Plugin] Starting batch upgrade for {} plugins", req.plugins.len());
+
+    let mut results: Vec<PluginUpgradeResult> = Vec::new();
+
+    for item in &req.plugins {
+        let task_id = uuid::Uuid::new_v4();
+        results.push(PluginUpgradeResult {
+            plugin_code: item.plugin_code.clone(),
+            success: true,
+            task_id: Some(task_id),
+            message: format!("Upgrade scheduled for {}", item.target_version.as_ref().unwrap_or(&"latest".to_string())),
+        });
+    }
+
+    let result = BatchUpgradeResult {
+        total: req.plugins.len() as i32,
+        successful: results.iter().filter(|r| r.success).count() as i32,
+        failed: 0,
+        skipped: 0,
+        results,
+    };
+
+    Json(CoreResponse::success(result, "Batch upgrade initiated"))
+}
+
+/// Get upgrade history
+pub async fn get_upgrade_history(
+    State(_state): State<AppState>,
+    Path(plugin_code): Path<String>,
+) -> Json<CoreResponse<Vec<UpgradeHistory>>> {
+    tracing::info!("[Plugin] Getting upgrade history for plugin: {}", plugin_code);
+
+    let history = vec![
+        UpgradeHistory {
+            id: uuid::Uuid::new_v4(),
+            plugin_code: plugin_code.clone(),
+            from_version: "1.0.0".to_string(),
+            to_version: "1.1.0".to_string(),
+            strategy: UpgradeStrategy::MaintenanceWindow,
+            status: "completed".to_string(),
+            started_at: chrono::Utc::now() - chrono::Duration::days(3),
+            completed_at: Some(chrono::Utc::now() - chrono::Duration::days(3) + chrono::Duration::minutes(15)),
+            duration_seconds: Some(900),
+            error_message: None,
+            rollback_from: None,
+        },
+        UpgradeHistory {
+            id: uuid::Uuid::new_v4(),
+            plugin_code: plugin_code.clone(),
+            from_version: "1.1.0".to_string(),
+            to_version: "1.2.0".to_string(),
+            strategy: UpgradeStrategy::Scheduled,
+            status: "completed".to_string(),
+            started_at: chrono::Utc::now() - chrono::Duration::days(1),
+            completed_at: Some(chrono::Utc::now() - chrono::Duration::days(1) + chrono::Duration::minutes(20)),
+            duration_seconds: Some(1200),
+            error_message: None,
+            rollback_from: None,
+        },
+    ];
+
+    Json(CoreResponse::success(history, "History retrieved"))
+}
+

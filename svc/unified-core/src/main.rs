@@ -316,6 +316,30 @@ async fn main() {
         .route("/api/core/plugins/{plugin_code}/uninstall", post(modules::plugin::handlers::uninstall_plugin_simple))
         .route("/api/core/plugins/{plugin_code}/enable", post(modules::plugin::handlers::enable_plugin_simple))
         .route("/api/core/plugins/{plugin_code}/disable", post(modules::plugin::handlers::disable_plugin_simple))
+        // Version management API
+        .route("/api/core/plugins/{plugin_code}/versions/compare/{from_version}/{to_version}", get(modules::plugin::handlers::compare_plugin_versions))
+        .route("/api/core/plugins/{plugin_code}/versions/updates", get(modules::plugin::handlers::check_plugin_updates))
+        .route("/api/core/plugins/{plugin_code}/versions/rollback/{target_version}", post(modules::plugin::handlers::rollback_plugin_version))
+        .route("/api/core/plugins/versions/check-all", get(modules::plugin::handlers::check_all_updates))
+        // Upgrade workflow API
+        .route("/api/core/plugins/{plugin_code}/upgrade", post(modules::plugin::handlers::start_plugin_upgrade))
+        .route("/api/core/plugins/{plugin_code}/versions/{version}/verify", get(modules::plugin::handlers::verify_plugin_version))
+        .route("/api/core/plugins/upgrade/tasks", get(modules::plugin::handlers::list_upgrade_tasks))
+        .route("/api/core/plugins/upgrade/tasks/{task_id}", get(modules::plugin::handlers::get_upgrade_task_status))
+        // Review & Statistics API
+        .route("/api/core/plugins/{plugin_code}/reviews", get(modules::plugin::handlers::get_plugin_reviews_by_code))
+        .route("/api/core/plugins/{plugin_code}/reviews", post(modules::plugin::handlers::create_plugin_review))
+        .route("/api/core/plugins/{plugin_code}/statistics", get(modules::plugin::handlers::get_plugin_statistics))
+        .route("/api/core/plugins/{plugin_code}/reviews/statistics", get(modules::plugin::handlers::get_review_statistics))
+        .route("/api/core/plugins/{plugin_code}/downloads/history", get(modules::plugin::handlers::get_download_history))
+        // Automated Upgrade API
+        .route("/api/core/plugins/{plugin_code}/upgrade/schedule", get(modules::plugin::handlers::get_upgrade_schedule))
+        .route("/api/core/plugins/{plugin_code}/upgrade/schedule", post(modules::plugin::handlers::configure_upgrade_schedule))
+        .route("/api/core/plugins/upgrade/queue", get(modules::plugin::handlers::get_upgrade_queue))
+        .route("/api/core/plugins/upgrade/queue/add", post(modules::plugin::handlers::add_to_upgrade_queue))
+        .route("/api/core/plugins/upgrade/queue/{item_id}", delete(modules::plugin::handlers::cancel_upgrade_queue_item))
+        .route("/api/core/plugins/upgrade/batch", post(modules::plugin::handlers::batch_upgrade))
+        .route("/api/core/plugins/{plugin_code}/upgrade/history", get(modules::plugin::handlers::get_upgrade_history))
 
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
