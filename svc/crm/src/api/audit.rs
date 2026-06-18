@@ -51,7 +51,7 @@ async fn list_audit_logs(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM crm.audit_logs
+        FROM plugin_crm.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id = $3)
@@ -77,7 +77,7 @@ async fn list_audit_logs(
         Ok(logs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM crm.audit_logs
+                SELECT COUNT(*) FROM plugin_crm.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
@@ -129,7 +129,7 @@ async fn get_audit_log(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM crm.audit_logs WHERE id = $1
+        FROM plugin_crm.audit_logs WHERE id = $1
         "#,
     )
     .bind(id)
@@ -173,7 +173,7 @@ pub async fn log_audit_event(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO crm.audit_logs (
+        INSERT INTO plugin_crm.audit_logs (
             action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
             status, error_message, ip_address, user_agent

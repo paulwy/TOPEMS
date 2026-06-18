@@ -50,7 +50,7 @@ async fn list_billing_records(
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
         SELECT id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
-        FROM crm.billing_records
+        FROM plugin_crm.billing_records
         WHERE ($1::uuid IS NULL OR customer_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY due_date DESC
@@ -68,7 +68,7 @@ async fn list_billing_records(
         Ok(records) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM crm.billing_records
+                SELECT COUNT(*) FROM plugin_crm.billing_records
                 WHERE ($1::uuid IS NULL OR customer_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -110,7 +110,7 @@ async fn get_billing_record(
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
         SELECT id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
-        FROM crm.billing_records WHERE id = $1
+        FROM plugin_crm.billing_records WHERE id = $1
         "#,
     )
     .bind(id)
@@ -143,7 +143,7 @@ async fn create_billing_record(
     }
 
     let customer = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM crm.customers WHERE id = $1",
+        "SELECT name FROM plugin_crm.customers WHERE id = $1",
     )
     .bind(&req.customer_id)
     .fetch_optional(&state.db)
@@ -172,7 +172,7 @@ async fn create_billing_record(
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
-        INSERT INTO crm.billing_records (
+        INSERT INTO plugin_crm.billing_records (
             id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, items, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10)
         RETURNING id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
@@ -247,7 +247,7 @@ async fn update_billing_record(
 
     let existing = sqlx::query_as::<_, BillingRecord>(
         r#"
-        SELECT id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at FROM crm.billing_records WHERE id = $1
+        SELECT id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at FROM plugin_crm.billing_records WHERE id = $1
         "#,
     )
     .bind(id)
@@ -265,7 +265,7 @@ async fn update_billing_record(
     let customer_id = req.get("customer_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
     let customer_name = if customer_id.is_some() {
         sqlx::query_scalar::<_, String>(
-            "SELECT name FROM crm.customers WHERE id = $1",
+            "SELECT name FROM plugin_crm.customers WHERE id = $1",
         )
         .bind(customer_id.as_ref())
         .fetch_optional(&state.db)
@@ -286,7 +286,7 @@ async fn update_billing_record(
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
-        UPDATE crm.billing_records SET
+        UPDATE plugin_crm.billing_records SET
             customer_id = COALESCE($2, customer_id),
             customer_name = COALESCE($3, customer_name),
             invoice_no = $4,
@@ -363,7 +363,7 @@ async fn delete_billing_record(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.billing_records WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_crm.billing_records WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -428,7 +428,7 @@ async fn mark_billing_paid(
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
-        UPDATE crm.billing_records SET
+        UPDATE plugin_crm.billing_records SET
             status = 'paid',
             paid_at = $2,
             updated_at = $2
@@ -461,7 +461,7 @@ async fn send_billing_notification(
     }
 
     let result = sqlx::query_as::<_, BillingRecord>(
-        "SELECT customer_name, invoice_no, amount FROM crm.billing_records WHERE id = $1",
+        "SELECT customer_name, invoice_no, amount FROM plugin_crm.billing_records WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)

@@ -65,7 +65,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 async fn list_contracts(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Contract>>> {
     let contracts =
-        sqlx::query_as::<_, Contract>("SELECT * FROM pm.contracts ORDER BY created_at DESC")
+        sqlx::query_as::<_, Contract>("SELECT * FROM plugin_pm.contracts ORDER BY created_at DESC")
             .fetch_all(&pool)
             .await;
 
@@ -85,7 +85,7 @@ async fn get_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
-    let contract = sqlx::query_as::<_, Contract>("SELECT * FROM pm.contracts WHERE id = $1")
+    let contract = sqlx::query_as::<_, Contract>("SELECT * FROM plugin_pm.contracts WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -114,7 +114,7 @@ async fn create_contract(
     let now = Utc::now();
 
     let contract = sqlx::query_as::<_, Contract>(
-        r#"INSERT INTO pm.contracts (
+        r#"INSERT INTO plugin_pm.contracts (
             id, project_id, contract_code, contract_name, contract_type, 
             contract_category, party_a_name, party_a_id, party_b_name, party_b_id,
             amount, currency, tax_rate, signing_date, effective_date, end_date,
@@ -164,7 +164,7 @@ async fn update_contract(
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let contract = sqlx::query_as::<_, Contract>(
-        r#"UPDATE pm.contracts SET
+        r#"UPDATE plugin_pm.contracts SET
             contract_name = COALESCE($1, contract_name),
             contract_category = COALESCE($2, contract_category),
             party_a_name = COALESCE($3, party_a_name),
@@ -221,7 +221,7 @@ async fn delete_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.contracts WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_pm.contracts WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
@@ -247,7 +247,7 @@ async fn submit_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
     let contract = sqlx::query_as::<_, Contract>(
-        "UPDATE pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE plugin_pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -275,7 +275,7 @@ async fn approve_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
     let contract = sqlx::query_as::<_, Contract>(
-        "UPDATE pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE plugin_pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -303,7 +303,7 @@ async fn reject_contract(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Contract>> {
     let contract = sqlx::query_as::<_, Contract>(
-        "UPDATE pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE plugin_pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -331,7 +331,7 @@ async fn list_contract_milestones(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractMilestone>>> {
     let milestones = sqlx::query_as::<_, ContractMilestone>(
-        "SELECT * FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date",
+        "SELECT * FROM plugin_pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -358,7 +358,7 @@ async fn create_contract_milestone(
     let now = Utc::now();
 
     let milestone = sqlx::query_as::<_, ContractMilestone>(
-        r#"INSERT INTO pm.contract_milestones (
+        r#"INSERT INTO plugin_pm.contract_milestones (
             id, contract_id, name, description, target_date, 
             payment_amount, payment_percent, project_milestone_id, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#,
@@ -394,7 +394,7 @@ async fn update_contract_milestone(
     Json(req): Json<CreateContractMilestoneRequest>,
 ) -> Json<ApiResponse<ContractMilestone>> {
     let milestone = sqlx::query_as::<_, ContractMilestone>(
-        r#"UPDATE pm.contract_milestones SET
+        r#"UPDATE plugin_pm.contract_milestones SET
             name = COALESCE($1, name),
             description = COALESCE($2, description),
             target_date = COALESCE($3, target_date),
@@ -435,7 +435,7 @@ async fn delete_contract_milestone(
     Path((id, milestone_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
     let result =
-        sqlx::query("DELETE FROM pm.contract_milestones WHERE id = $1 AND contract_id = $2")
+        sqlx::query("DELETE FROM plugin_pm.contract_milestones WHERE id = $1 AND contract_id = $2")
             .bind(milestone_id)
             .bind(id)
             .execute(&pool)
@@ -462,7 +462,7 @@ async fn list_payment_schedule(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractPaymentSchedule>>> {
     let payments = sqlx::query_as::<_, ContractPaymentSchedule>(
-        "SELECT * FROM pm.contract_payment_schedule WHERE contract_id = $1 ORDER BY payment_number",
+        "SELECT * FROM plugin_pm.contract_payment_schedule WHERE contract_id = $1 ORDER BY payment_number",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -489,7 +489,7 @@ async fn create_payment_schedule(
     let now = Utc::now();
 
     let payment = sqlx::query_as::<_, ContractPaymentSchedule>(
-        r#"INSERT INTO pm.contract_payment_schedule (
+        r#"INSERT INTO plugin_pm.contract_payment_schedule (
             id, contract_id, payment_number, payment_name, payment_percent, 
             payment_amount, due_date, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *"#,
@@ -524,7 +524,7 @@ async fn update_payment_schedule(
     Json(req): Json<CreatePaymentScheduleRequest>,
 ) -> Json<ApiResponse<ContractPaymentSchedule>> {
     let payment = sqlx::query_as::<_, ContractPaymentSchedule>(
-        r#"UPDATE pm.contract_payment_schedule SET
+        r#"UPDATE plugin_pm.contract_payment_schedule SET
             payment_name = COALESCE($1, payment_name),
             payment_percent = COALESCE($2, payment_percent),
             payment_amount = COALESCE($3, payment_amount),
@@ -563,7 +563,7 @@ async fn delete_payment_schedule(
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
     let result =
-        sqlx::query("DELETE FROM pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2")
+        sqlx::query("DELETE FROM plugin_pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2")
             .bind(payment_id)
             .bind(id)
             .execute(&pool)
@@ -587,7 +587,7 @@ async fn delete_payment_schedule(
 
 async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ContractTemplate>>> {
     let templates = sqlx::query_as::<_, ContractTemplate>(
-        "SELECT * FROM pm.contract_templates WHERE is_active = true ORDER BY name",
+        "SELECT * FROM plugin_pm.contract_templates WHERE is_active = true ORDER BY name",
     )
     .fetch_all(&pool)
     .await;
@@ -609,7 +609,7 @@ async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractTemplate>> {
     let template =
-        sqlx::query_as::<_, ContractTemplate>("SELECT * FROM pm.contract_templates WHERE id = $1")
+        sqlx::query_as::<_, ContractTemplate>("SELECT * FROM plugin_pm.contract_templates WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -638,7 +638,7 @@ async fn create_template(
     let now = Utc::now();
 
     let template = sqlx::query_as::<_, ContractTemplate>(
-        "INSERT INTO pm.contract_templates (id, name, contract_type, description, content, created_by, created_at, updated_at) 
+        "INSERT INTO plugin_pm.contract_templates (id, name, contract_type, description, content, created_by, created_at, updated_at) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
     )
     .bind(id)
@@ -670,7 +670,7 @@ async fn update_template(
     Json(req): Json<CreateContractTemplateRequest>,
 ) -> Json<ApiResponse<ContractTemplate>> {
     let template = sqlx::query_as::<_, ContractTemplate>(
-        "UPDATE pm.contract_templates SET
+        "UPDATE plugin_pm.contract_templates SET
             name = COALESCE($1, name),
             contract_type = COALESCE($2, contract_type),
             description = COALESCE($3, description),
@@ -707,7 +707,7 @@ async fn delete_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("UPDATE pm.contract_templates SET is_active = false WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_pm.contract_templates SET is_active = false WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
@@ -733,7 +733,7 @@ async fn get_project_contracts(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Contract>>> {
     let contracts = sqlx::query_as::<_, Contract>(
-        "SELECT * FROM pm.contracts WHERE project_id = $1 ORDER BY created_at DESC",
+        "SELECT * FROM plugin_pm.contracts WHERE project_id = $1 ORDER BY created_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)

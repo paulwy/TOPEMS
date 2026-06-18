@@ -163,7 +163,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO wms.warehouses (id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, address, manager, created_at, updated_at)
+            INSERT INTO plugin_wms.warehouses (id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, address, manager, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 warehouse_name = EXCLUDED.warehouse_name,
@@ -192,7 +192,7 @@ mod tests {
         let result = sqlx::query_as::<_, WarehouseRow>(
             r#"
             SELECT id, warehouse_code, warehouse_name, warehouse_type, status, address, manager, contact_person, contact_phone, total_capacity, current_capacity, created_at, updated_at
-            FROM wms.warehouses
+            FROM plugin_wms.warehouses
             WHERE status = 'active'
             ORDER BY created_at DESC
             LIMIT 10
@@ -222,7 +222,7 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO wms.warehouses (id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at)
+            INSERT INTO plugin_wms.warehouses (id, organization_id, warehouse_code, warehouse_name, warehouse_type, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             "#,
         )
@@ -241,7 +241,7 @@ mod tests {
         let location_code = format!("{}-A-01-01-01", &warehouse_code[..6]);
         sqlx::query(
             r#"
-            INSERT INTO wms.locations (id, organization_id, warehouse_id, location_code, location_name, zone, aisle, shelf, level, position, status, created_at, updated_at)
+            INSERT INTO plugin_wms.locations (id, organization_id, warehouse_id, location_code, location_name, zone, aisle, shelf, level, position, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
             "#,
         )
@@ -266,7 +266,7 @@ mod tests {
 
         let inbound_result = sqlx::query(
             r#"
-            INSERT INTO wms.inbound_orders (id, organization_id, order_number, warehouse_id, order_type, status, supplier_name, expected_arrival_date, created_at, updated_at)
+            INSERT INTO plugin_wms.inbound_orders (id, organization_id, order_number, warehouse_id, order_type, status, supplier_name, expected_arrival_date, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
@@ -284,15 +284,15 @@ mod tests {
         assert!(inbound_result.is_ok(), "入库单创建应该成功");
 
         // 清理测试数据
-        let _ = sqlx::query("DELETE FROM wms.inbound_orders WHERE id = $1")
+        let _ = sqlx::query("DELETE FROM plugin_wms.inbound_orders WHERE id = $1")
             .bind(inbound_id)
             .execute(&pool)
             .await;
-        let _ = sqlx::query("DELETE FROM wms.locations WHERE id = $1")
+        let _ = sqlx::query("DELETE FROM plugin_wms.locations WHERE id = $1")
             .bind(location_id)
             .execute(&pool)
             .await;
-        let _ = sqlx::query("DELETE FROM wms.warehouses WHERE id = $1")
+        let _ = sqlx::query("DELETE FROM plugin_wms.warehouses WHERE id = $1")
             .bind(warehouse_id)
             .execute(&pool)
             .await;

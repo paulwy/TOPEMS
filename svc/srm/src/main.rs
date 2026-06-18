@@ -247,26 +247,26 @@ fn create_statistics_routes(db: sqlx::PgPool) -> Router {
 
 async fn get_statistics(State(pool): State<sqlx::PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let total_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted'",
     )
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
 
     let active_suppliers =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'")
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
 
     let total_evaluations =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE overall_score IS NOT NULL",
     )
     .fetch_one(&pool)
     .await
@@ -274,20 +274,20 @@ async fn get_statistics(State(pool): State<sqlx::PgPool>) -> Json<ApiResponse<se
     .unwrap_or(0.0);
 
     let total_contracts =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_contracts")
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
 
     let active_contracts = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE status = 'active'",
     )
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
 
     let total_products = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE status = 'active'",
     )
     .fetch_one(&pool)
     .await
@@ -311,26 +311,26 @@ async fn get_detailed_statistics(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // 基础统计
     let total_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted'",
     )
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
 
     let active_suppliers =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE status = 'active'")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'")
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
 
     let total_evaluations =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_evaluations")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE overall_score IS NOT NULL",
     )
     .fetch_one(&pool)
     .await
@@ -338,20 +338,20 @@ async fn get_detailed_statistics(
     .unwrap_or(0.0);
 
     let total_contracts =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_contracts")
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
 
     let active_contracts = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE status = 'active'",
     )
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
 
     let total_products = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_products WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE status = 'active'",
     )
     .fetch_one(&pool)
     .await
@@ -359,7 +359,7 @@ async fn get_detailed_statistics(
 
     // 按类别统计
     let supplier_by_category = sqlx::query_as::<_, (String, i64)>(
-        "SELECT category, COUNT(*) FROM srm.suppliers WHERE status != 'deleted' GROUP BY category",
+        "SELECT category, COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted' GROUP BY category",
     )
     .fetch_all(&pool)
     .await
@@ -370,7 +370,7 @@ async fn get_detailed_statistics(
 
     // 按状态统计
     let supplier_by_status = sqlx::query_as::<_, (String, i64)>(
-        "SELECT status, COUNT(*) FROM srm.suppliers GROUP BY status",
+        "SELECT status, COUNT(*) FROM plugin_srm.suppliers GROUP BY status",
     )
     .fetch_all(&pool)
     .await
@@ -381,7 +381,7 @@ async fn get_detailed_statistics(
 
     // 合同按状态统计
     let contract_by_status = sqlx::query_as::<_, (String, i64)>(
-        "SELECT status, COUNT(*) FROM srm.supplier_contracts GROUP BY status",
+        "SELECT status, COUNT(*) FROM plugin_srm.supplier_contracts GROUP BY status",
     )
     .fetch_all(&pool)
     .await
@@ -412,7 +412,7 @@ async fn get_suppliers_with_stats(
     State(pool): State<sqlx::PgPool>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let suppliers = sqlx::query_as::<_, models::Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE status != 'deleted' ORDER BY created_at DESC"
+        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE status != 'deleted' ORDER BY created_at DESC"
     )
     .fetch_all(&pool)
     .await;
@@ -423,7 +423,7 @@ async fn get_suppliers_with_stats(
 
             for supplier in suppliers {
                 let product_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM srm.supplier_products WHERE supplier_id = $1",
+                    "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE supplier_id = $1",
                 )
                 .bind(supplier.id)
                 .fetch_one(&pool)
@@ -431,7 +431,7 @@ async fn get_suppliers_with_stats(
                 .unwrap_or(0);
 
                 let contract_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM srm.supplier_contracts WHERE supplier_id = $1",
+                    "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE supplier_id = $1",
                 )
                 .bind(supplier.id)
                 .fetch_one(&pool)
@@ -439,7 +439,7 @@ async fn get_suppliers_with_stats(
                 .unwrap_or(0);
 
                 let eval_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE supplier_id = $1",
+                    "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1",
                 )
                 .bind(supplier.id)
                 .fetch_one(&pool)
@@ -447,7 +447,7 @@ async fn get_suppliers_with_stats(
                 .unwrap_or(0);
 
                 let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-                    "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE supplier_id = $1 AND overall_score IS NOT NULL"
+                    "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1 AND overall_score IS NOT NULL"
                 )
                 .bind(supplier.id)
                 .fetch_one(&pool)

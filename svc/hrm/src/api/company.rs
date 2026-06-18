@@ -60,7 +60,7 @@ async fn list_companies(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
-        FROM "shared"."companies"
+        FROM "public"."companies"
         WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -78,7 +78,7 @@ async fn list_companies(
         Ok(companies) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM "shared"."companies"
+                SELECT COUNT(*) FROM "public"."companies"
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR registration_number ILIKE $1 OR contact_email ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -144,7 +144,7 @@ async fn create_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        INSERT INTO shared.companies (
+        INSERT INTO public.companies (
             id, organization_id, name, short_name, registration_number, tax_number, address,
             contact_phone, contact_email, website, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
@@ -222,7 +222,7 @@ async fn get_company(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
                contact_phone, contact_email as email, website, description, status, created_at, updated_at
-        FROM shared.companies WHERE id = $1
+        FROM public.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -255,7 +255,7 @@ async fn update_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM shared.companies WHERE id = $1
+               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM public.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -284,7 +284,7 @@ async fn update_company(
 
     let result = sqlx::query_as::<_, Company>(
         r#"
-        UPDATE shared.companies SET
+        UPDATE public.companies SET
             name = $2, short_name = $3, registration_number = $4, tax_number = $5,
             address = $6, contact_phone = $7, contact_email = $8, website = $9,
             description = $10, status = $11, updated_at = $12
@@ -363,7 +363,7 @@ async fn delete_company(
     let existing = sqlx::query_as::<_, Company>(
         r#"
         SELECT id, organization_id, name, short_name, registration_number, tax_number, address,
-               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM shared.companies WHERE id = $1
+               contact_phone, contact_email as email, website, description, status, created_at, updated_at FROM public.companies WHERE id = $1
         "#,
     )
     .bind(id)
@@ -372,7 +372,7 @@ async fn delete_company(
 
     match existing {
         Ok(Some(company)) => {
-            let result = sqlx::query("DELETE FROM shared.companies WHERE id = $1")
+            let result = sqlx::query("DELETE FROM public.companies WHERE id = $1")
                 .bind(id)
                 .execute(&state.db)
                 .await;

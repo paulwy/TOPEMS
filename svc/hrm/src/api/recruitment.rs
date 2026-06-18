@@ -165,26 +165,26 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/api/hrm/job-openings/{id}/close", put(close_job_opening))
         .route(
-            "/api/hrm/candidates",
+            "/api/plugin_hrm.candidates",
             get(list_candidates).post(create_candidate),
         )
         .route(
-            "/api/hrm/candidates/{id}",
+            "/api/plugin_hrm.candidates/{id}",
             get(get_candidate)
                 .put(update_candidate)
                 .delete(delete_candidate),
         )
         .route(
-            "/api/hrm/interviews",
+            "/api/plugin_hrm.interviews",
             get(list_interviews).post(create_interview),
         )
         .route(
-            "/api/hrm/interviews/{id}",
+            "/api/plugin_hrm.interviews/{id}",
             get(get_interview)
                 .put(update_interview)
                 .delete(delete_interview),
         )
-        .route("/api/hrm/interviews/{id}/complete", put(complete_interview))
+        .route("/api/plugin_hrm.interviews/{id}/complete", put(complete_interview))
 }
 
 async fn list_job_openings(
@@ -202,7 +202,7 @@ async fn list_job_openings(
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
         SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
-        FROM hrm.job_openings
+        FROM plugin_hrm.job_openings
         WHERE ($1::text IS NULL OR $1 = '' OR title ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
           AND ($3::text IS NULL OR status = $3)
@@ -222,7 +222,7 @@ async fn list_job_openings(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.job_openings
+                SELECT COUNT(*) FROM plugin_hrm.job_openings
                 WHERE ($1::text IS NULL OR $1 = '' OR title ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -270,7 +270,7 @@ async fn create_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        INSERT INTO hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at)
+        INSERT INTO plugin_hrm.job_openings (id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'draft', $12, $13)
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#
@@ -338,7 +338,7 @@ async fn get_job_opening(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<JobOpening>> {
     let result = sqlx::query_as::<_, JobOpening>(
-        "SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at FROM hrm.job_openings WHERE id = $1"
+        "SELECT id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at FROM plugin_hrm.job_openings WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -363,7 +363,7 @@ async fn update_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        UPDATE hrm.job_openings
+        UPDATE plugin_hrm.job_openings
         SET
             title = COALESCE($1, title),
             code = COALESCE($2, code),
@@ -410,7 +410,7 @@ async fn delete_job_opening(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.job_openings WHERE id = $1 AND status = 'draft'")
+    let result = sqlx::query("DELETE FROM plugin_hrm.job_openings WHERE id = $1 AND status = 'draft'")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -469,7 +469,7 @@ async fn publish_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        UPDATE hrm.job_openings
+        UPDATE plugin_hrm.job_openings
         SET status = 'published', publish_date = $2, updated_at = $2
         WHERE id = $1 AND status = 'draft'
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
@@ -501,7 +501,7 @@ async fn close_job_opening(
 
     let result = sqlx::query_as::<_, JobOpening>(
         r#"
-        UPDATE hrm.job_openings
+        UPDATE plugin_hrm.job_openings
         SET status = 'closed', close_date = $2, updated_at = $2
         WHERE id = $1 AND status = 'published'
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
@@ -540,7 +540,7 @@ async fn list_candidates(
     let result = sqlx::query_as::<_, Candidate>(
         r#"
         SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
-        FROM hrm.candidates
+        FROM plugin_hrm.candidates
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR job_opening_id = $2)
           AND ($3::text IS NULL OR status = $3)
@@ -560,7 +560,7 @@ async fn list_candidates(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.candidates
+                SELECT COUNT(*) FROM plugin_hrm.candidates
                 WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR job_opening_id = $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -608,7 +608,7 @@ async fn create_candidate(
 
     let result = sqlx::query_as::<_, Candidate>(
         r#"
-        INSERT INTO hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at)
+        INSERT INTO plugin_hrm.candidates (id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'new', $9, $10)
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         "#
@@ -673,7 +673,7 @@ async fn get_candidate(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Candidate>> {
     let result = sqlx::query_as::<_, Candidate>(
-        "SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at FROM hrm.candidates WHERE id = $1"
+        "SELECT id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at FROM plugin_hrm.candidates WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -698,7 +698,7 @@ async fn update_candidate(
 
     let result = sqlx::query_as::<_, Candidate>(
         r#"
-        UPDATE hrm.candidates
+        UPDATE plugin_hrm.candidates
         SET
             name = COALESCE($1, name),
             email = COALESCE($2, email),
@@ -741,7 +741,7 @@ async fn delete_candidate(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.candidates WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_hrm.candidates WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -806,7 +806,7 @@ async fn list_interviews(
     let result = sqlx::query_as::<_, Interview>(
         r#"
         SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
-        FROM hrm.interviews
+        FROM plugin_hrm.interviews
         WHERE ($1::uuid IS NULL OR candidate_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY scheduled_at DESC
@@ -824,7 +824,7 @@ async fn list_interviews(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.interviews
+                SELECT COUNT(*) FROM plugin_hrm.interviews
                 WHERE ($1::uuid IS NULL OR candidate_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -867,7 +867,7 @@ async fn create_interview(
 
     let result = sqlx::query_as::<_, Interview>(
         r#"
-        INSERT INTO hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at)
+        INSERT INTO plugin_hrm.interviews (id, candidate_id, interviewer_id, round, scheduled_at, duration_minutes, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8)
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#
@@ -897,7 +897,7 @@ async fn get_interview(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Interview>> {
     let result = sqlx::query_as::<_, Interview>(
-        "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM hrm.interviews WHERE id = $1"
+        "SELECT id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at FROM plugin_hrm.interviews WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -922,7 +922,7 @@ async fn update_interview(
 
     let result = sqlx::query_as::<_, Interview>(
         r#"
-        UPDATE hrm.interviews
+        UPDATE plugin_hrm.interviews
         SET
             interviewer_id = COALESCE($1, interviewer_id),
             round = COALESCE($2, round),
@@ -966,7 +966,7 @@ async fn delete_interview(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.interviews WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_hrm.interviews WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -989,7 +989,7 @@ async fn complete_interview(
 
     let result = sqlx::query_as::<_, Interview>(
         r#"
-        UPDATE hrm.interviews
+        UPDATE plugin_hrm.interviews
         SET
             actual_at = COALESCE($1, NOW()),
             status = 'completed',

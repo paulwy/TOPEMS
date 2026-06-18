@@ -20,15 +20,15 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/api/pm/projects/{project_id}/budgets",
             get(get_project_budgets).post(create_budget),
         )
-        .route("/api/pm/budgets/{id}", get(get_budget).put(update_budget))
-        .route("/api/pm/budgets/{id}/submit", post(submit_budget))
-        .route("/api/pm/budgets/{id}/approve", post(approve_budget))
+        .route("/api/plugin_pm.budgets/{id}", get(get_budget).put(update_budget))
+        .route("/api/plugin_pm.budgets/{id}/submit", post(submit_budget))
+        .route("/api/plugin_pm.budgets/{id}/approve", post(approve_budget))
         .route(
-            "/api/pm/budgets/{id}/items",
+            "/api/plugin_pm.budgets/{id}/items",
             get(get_budget_items).post(create_budget_item),
         )
         .route(
-            "/api/pm/budgets/{id}/items/{item_id}",
+            "/api/plugin_pm.budgets/{id}/items/{item_id}",
             put(update_budget_item).delete(delete_budget_item),
         )
         .with_state(pool)
@@ -39,7 +39,7 @@ async fn get_project_budgets(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Budget>>> {
     let budgets = sqlx::query_as::<_, Budget>(
-        "SELECT * FROM pm.budgets WHERE project_id = $1 ORDER BY version DESC",
+        "SELECT * FROM plugin_pm.budgets WHERE project_id = $1 ORDER BY version DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -58,7 +58,7 @@ async fn get_project_budgets(
 }
 
 async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Budget>> {
-    let budget = sqlx::query_as::<_, Budget>("SELECT * FROM pm.budgets WHERE id = $1")
+    let budget = sqlx::query_as::<_, Budget>("SELECT * FROM plugin_pm.budgets WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -87,7 +87,7 @@ async fn create_budget(
     let now = Utc::now();
 
     let budget = sqlx::query_as::<_, Budget>(
-        "INSERT INTO pm.budgets (id, project_id, budget_code, budget_name, budget_type, total_amount, status, version, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.budgets (id, project_id, budget_code, budget_name, budget_type, total_amount, status, version, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'draft', 1, $7, $8, $9) RETURNING *"
     )
     .bind(id)
@@ -120,7 +120,7 @@ async fn update_budget(
     Json(req): Json<UpdateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
     let budget = sqlx::query_as::<_, Budget>(
-        "UPDATE pm.budgets SET
+        "UPDATE plugin_pm.budgets SET
             budget_name = COALESCE($1, budget_name),
             budget_type = COALESCE($2, budget_type),
             total_amount = COALESCE($3, total_amount),
@@ -158,7 +158,7 @@ async fn submit_budget(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Budget>> {
     let budget = sqlx::query_as::<_, Budget>(
-        "UPDATE pm.budgets SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE plugin_pm.budgets SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -186,7 +186,7 @@ async fn approve_budget(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Budget>> {
     let budget = sqlx::query_as::<_, Budget>(
-        "UPDATE pm.budgets SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE plugin_pm.budgets SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
     )
     .bind(Utc::now())
     .bind(id)
@@ -214,7 +214,7 @@ async fn get_budget_items(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<BudgetItem>>> {
     let items =
-        sqlx::query_as::<_, BudgetItem>("SELECT * FROM pm.budget_items WHERE budget_id = $1")
+        sqlx::query_as::<_, BudgetItem>("SELECT * FROM plugin_pm.budget_items WHERE budget_id = $1")
             .bind(id)
             .fetch_all(&pool)
             .await;
@@ -240,7 +240,7 @@ async fn create_budget_item(
     let now = Utc::now();
 
     let item = sqlx::query_as::<_, BudgetItem>(
-        "INSERT INTO pm.budget_items (id, budget_id, item_code, item_name, category, subcategory, budget_amount, created_at, updated_at)
+        "INSERT INTO plugin_pm.budget_items (id, budget_id, item_code, item_name, category, subcategory, budget_amount, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *"
     )
     .bind(item_id)
@@ -273,7 +273,7 @@ async fn update_budget_item(
     Json(req): Json<UpdateBudgetItemRequest>,
 ) -> Json<ApiResponse<BudgetItem>> {
     let item = sqlx::query_as::<_, BudgetItem>(
-        "UPDATE pm.budget_items SET
+        "UPDATE plugin_pm.budget_items SET
             item_name = COALESCE($1, item_name),
             category = COALESCE($2, category),
             subcategory = COALESCE($3, subcategory),
@@ -313,7 +313,7 @@ async fn delete_budget_item(
     State(pool): State<PgPool>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.budget_items WHERE id = $1 AND budget_id = $2")
+    let result = sqlx::query("DELETE FROM plugin_pm.budget_items WHERE id = $1 AND budget_id = $2")
         .bind(item_id)
         .bind(id)
         .execute(&pool)

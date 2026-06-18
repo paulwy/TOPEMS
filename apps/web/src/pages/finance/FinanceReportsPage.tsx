@@ -66,9 +66,9 @@ import {
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from "@/components/ui/OrganizationFilter";
-import { BarChart } from "@/components/charts/BarChart";
-import { LineChart } from "@/components/charts/LineChart";
-import { PieChart as RechartsPieChart } from "@/components/charts/PieChart";
+import BarChart from "@/components/charts/BarChart";
+import LineChart from "@/components/charts/LineChart";
+import RechartsPieChart from "@/components/charts/PieChart";
 import {
   formatCurrency,
   formatPercent,

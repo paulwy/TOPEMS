@@ -122,7 +122,7 @@ async fn list_scopes(
 
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        SELECT * FROM erp.consolidation_scopes
+        SELECT * FROM plugin_erp.consolidation_scopes
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -140,7 +140,7 @@ async fn list_scopes(
         Ok(scopes) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.consolidation_scopes
+                SELECT COUNT(*) FROM plugin_erp.consolidation_scopes
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -168,7 +168,7 @@ async fn get_scope(
     Path(scope_id): Path<Uuid>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     match sqlx::query_as::<_, ConsolidationScope>(
-        "SELECT * FROM erp.consolidation_scopes WHERE id = $1",
+        "SELECT * FROM plugin_erp.consolidation_scopes WHERE id = $1",
     )
     .bind(scope_id)
     .fetch_optional(&state.db)
@@ -191,7 +191,7 @@ async fn create_scope(
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        INSERT INTO erp.consolidation_scopes (id, code, name, description, consolidation_method)
+        INSERT INTO plugin_erp.consolidation_scopes (id, code, name, description, consolidation_method)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
         "#,
@@ -230,7 +230,7 @@ async fn update_scope(
 ) -> Json<ApiResponse<ConsolidationScope>> {
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
-        UPDATE erp.consolidation_scopes
+        UPDATE plugin_erp.consolidation_scopes
         SET name = COALESCE($2, name),
             description = COALESCE($3, description),
             consolidation_method = COALESCE($4, consolidation_method),
@@ -271,7 +271,7 @@ async fn delete_scope(
     Path(scope_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM erp.consolidation_scopes WHERE id = $1")
+    match sqlx::query("DELETE FROM plugin_erp.consolidation_scopes WHERE id = $1")
         .bind(scope_id)
         .execute(&state.db)
         .await
@@ -305,7 +305,7 @@ async fn list_scope_companies(
 ) -> Json<ApiResponse<Vec<ConsolidationScopeCompany>>> {
     match sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        SELECT * FROM erp.consolidation_scope_companies
+        SELECT * FROM plugin_erp.consolidation_scope_companies
         WHERE scope_id = $1
         ORDER BY is_parent DESC, company_name ASC
         "#,
@@ -330,7 +330,7 @@ async fn add_scope_company(
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        INSERT INTO erp.consolidation_scope_companies
+        INSERT INTO plugin_erp.consolidation_scope_companies
         (id, scope_id, company_id, is_parent, control_type, ownership_percentage, consolidation_percentage, minority_interest, effective_date)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
@@ -374,7 +374,7 @@ async fn update_scope_company(
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
-        UPDATE erp.consolidation_scope_companies
+        UPDATE plugin_erp.consolidation_scope_companies
         SET control_type = COALESCE($2, control_type),
             ownership_percentage = COALESCE($3, ownership_percentage),
             consolidation_percentage = COALESCE($4, consolidation_percentage),
@@ -416,7 +416,7 @@ async fn remove_scope_company(
     Path(company_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM erp.consolidation_scope_companies WHERE id = $1")
+    match sqlx::query("DELETE FROM plugin_erp.consolidation_scope_companies WHERE id = $1")
         .bind(company_id)
         .execute(&state.db)
         .await
@@ -459,7 +459,7 @@ async fn list_elimination_rules(
 
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"
-        SELECT * FROM erp.elimination_rules
+        SELECT * FROM plugin_erp.elimination_rules
         WHERE scope_id = $1
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -479,7 +479,7 @@ async fn list_elimination_rules(
         Ok(rules) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.elimination_rules
+                SELECT COUNT(*) FROM plugin_erp.elimination_rules
                 WHERE scope_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -508,7 +508,7 @@ async fn get_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
 ) -> Json<ApiResponse<EliminationRule>> {
-    match sqlx::query_as::<_, EliminationRule>("SELECT * FROM erp.elimination_rules WHERE id = $1")
+    match sqlx::query_as::<_, EliminationRule>("SELECT * FROM plugin_erp.elimination_rules WHERE id = $1")
         .bind(rule_id)
         .fetch_optional(&state.db)
         .await
@@ -537,7 +537,7 @@ async fn create_elimination_rule(
 
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"
-        INSERT INTO erp.elimination_rules
+        INSERT INTO plugin_erp.elimination_rules
         (id, scope_id, code, name, type, description, status, direction, debit_account_codes, credit_account_codes, company_pairs, auto_elimination, priority)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
@@ -586,7 +586,7 @@ async fn update_elimination_rule(
 
     let result = sqlx::query_as::<_, EliminationRule>(
         r#"
-        UPDATE erp.elimination_rules
+        UPDATE plugin_erp.elimination_rules
         SET name = COALESCE($2, name),
             description = COALESCE($3, description),
             status = COALESCE($4, status),
@@ -637,7 +637,7 @@ async fn delete_elimination_rule(
     Path(rule_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM erp.elimination_rules WHERE id = $1")
+    match sqlx::query("DELETE FROM plugin_erp.elimination_rules WHERE id = $1")
         .bind(rule_id)
         .execute(&state.db)
         .await
@@ -675,7 +675,7 @@ async fn list_internal_transactions(
 
     let result = sqlx::query_as::<_, InternalTransaction>(
         r#"
-        SELECT * FROM erp.internal_transactions
+        SELECT * FROM plugin_erp.internal_transactions
         WHERE ($1::text IS NULL OR period >= $1)
           AND ($2::text IS NULL OR period <= $2)
         ORDER BY transaction_date DESC
@@ -693,7 +693,7 @@ async fn list_internal_transactions(
         Ok(transactions) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.internal_transactions
+                SELECT COUNT(*) FROM plugin_erp.internal_transactions
                 WHERE ($1::text IS NULL OR period >= $1)
                   AND ($2::text IS NULL OR period <= $2)
                 "#,
@@ -724,7 +724,7 @@ async fn execute_elimination(
     // 获取抵消规则
     let rules: Vec<EliminationRule> = if let Some(rule_ids) = req.rule_ids {
         sqlx::query_as::<_, EliminationRule>(
-            "SELECT * FROM erp.elimination_rules WHERE id = ANY($1) AND scope_id = $2 AND status = 'active' ORDER BY priority ASC",
+            "SELECT * FROM plugin_erp.elimination_rules WHERE id = ANY($1) AND scope_id = $2 AND status = 'active' ORDER BY priority ASC",
         )
         .bind(&rule_ids)
         .bind(req.scope_id)
@@ -733,7 +733,7 @@ async fn execute_elimination(
         .unwrap_or_default()
     } else {
         sqlx::query_as::<_, EliminationRule>(
-            "SELECT * FROM erp.elimination_rules WHERE scope_id = $1 AND status = 'active' ORDER BY priority ASC",
+            "SELECT * FROM plugin_erp.elimination_rules WHERE scope_id = $1 AND status = 'active' ORDER BY priority ASC",
         )
         .bind(req.scope_id)
         .fetch_all(&state.db)
@@ -749,7 +749,7 @@ async fn execute_elimination(
         // 获取待抵消交易
         let transactions: Vec<InternalTransaction> = sqlx::query_as::<_, InternalTransaction>(
             r#"
-            SELECT * FROM erp.internal_transactions
+            SELECT * FROM plugin_erp.internal_transactions
             WHERE elimination_status = 'pending'
               AND period = $1
             "#,
@@ -771,7 +771,7 @@ async fn execute_elimination(
         for tx in &transactions {
             sqlx::query(
                 r#"
-                UPDATE erp.internal_transactions
+                UPDATE plugin_erp.internal_transactions
                 SET elimination_status = 'eliminated', eliminated_amount = amount
                 WHERE id = $1
                 "#,
@@ -824,8 +824,8 @@ async fn list_reports(
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
-        FROM erp.consolidation_reports cr
-        LEFT JOIN erp.consolidation_scopes cs ON cs.id = cr.scope_id
+        FROM plugin_erp.consolidation_reports cr
+        LEFT JOIN plugin_erp.consolidation_scopes cs ON cs.id = cr.scope_id
         WHERE ($1::uuid IS NULL OR cr.scope_id = $1)
           AND ($2::text IS NULL OR cr.report_type = $2)
           AND ($3::text IS NULL OR cr.period >= $3)
@@ -847,7 +847,7 @@ async fn list_reports(
         Ok(reports) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM erp.consolidation_reports
+                SELECT COUNT(*) FROM plugin_erp.consolidation_reports
                 WHERE ($1::uuid IS NULL OR scope_id = $1)
                   AND ($2::text IS NULL OR report_type = $2)
                   AND ($3::text IS NULL OR period >= $3)
@@ -881,8 +881,8 @@ async fn get_report(
     match sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
-        FROM erp.consolidation_reports cr
-        LEFT JOIN erp.consolidation_scopes cs ON cs.id = cr.scope_id
+        FROM plugin_erp.consolidation_reports cr
+        LEFT JOIN plugin_erp.consolidation_scopes cs ON cs.id = cr.scope_id
         WHERE cr.id = $1
         "#,
     )
@@ -917,7 +917,7 @@ async fn generate_report(
 
     // 获取合并范围内公司数量
     let company_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM erp.consolidation_scope_companies WHERE scope_id = $1",
+        "SELECT COUNT(*) FROM plugin_erp.consolidation_scope_companies WHERE scope_id = $1",
     )
     .bind(req.scope_id)
     .fetch_one(&state.db)
@@ -926,7 +926,7 @@ async fn generate_report(
 
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        INSERT INTO erp.consolidation_reports
+        INSERT INTO plugin_erp.consolidation_reports
         (id, report_no, report_type, scope_id, period, year, quarter, month, status, company_count)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'calculating', $9)
         RETURNING *
@@ -959,7 +959,7 @@ async fn generate_report(
 
     let updated_report = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        UPDATE erp.consolidation_reports
+        UPDATE plugin_erp.consolidation_reports
         SET status = 'completed',
             total_assets = $2,
             total_liabilities = $3,
@@ -1005,7 +1005,7 @@ async fn get_report_lines(
     Path(report_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ConsolidationReportLine>>> {
     match sqlx::query_as::<_, ConsolidationReportLine>(
-        "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
+        "SELECT * FROM plugin_erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
     .bind(report_id)
     .fetch_all(&state.db)
@@ -1026,7 +1026,7 @@ async fn approve_report(
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        UPDATE erp.consolidation_reports
+        UPDATE plugin_erp.consolidation_reports
         SET approval_status = 'approved', approved_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -1061,7 +1061,7 @@ async fn publish_report(
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
-        UPDATE erp.consolidation_reports
+        UPDATE plugin_erp.consolidation_reports
         SET status = 'published', published_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -1094,7 +1094,7 @@ async fn delete_report(
     Path(report_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM erp.consolidation_reports WHERE id = $1")
+    match sqlx::query("DELETE FROM plugin_erp.consolidation_reports WHERE id = $1")
         .bind(report_id)
         .execute(&state.db)
         .await
@@ -1128,7 +1128,7 @@ async fn list_company_relations(
 ) -> Json<ApiResponse<Vec<CompanyRelation>>> {
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
-        SELECT * FROM erp.company_relations
+        SELECT * FROM plugin_erp.company_relations
         WHERE ($1::uuid IS NULL OR parent_company_id = $1 OR child_company_id = $1)
           AND ($2::text IS NULL OR relation_type = $2)
           AND status = 'active'
@@ -1154,7 +1154,7 @@ async fn get_company_tree(
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
     // 获取所有公司关系
     let relations: Vec<CompanyRelation> = sqlx::query_as::<_, CompanyRelation>(
-        "SELECT * FROM erp.company_relations WHERE status = 'active'",
+        "SELECT * FROM plugin_erp.company_relations WHERE status = 'active'",
     )
     .fetch_all(&state.db)
     .await
@@ -1199,7 +1199,7 @@ async fn create_company_relation(
 
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
-        INSERT INTO erp.company_relations
+        INSERT INTO plugin_erp.company_relations
         (id, parent_company_id, child_company_id, relation_type, ownership_percentage, control_percentage, effective_date, expiry_date)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
@@ -1236,7 +1236,7 @@ async fn update_company_relation(
 ) -> Json<ApiResponse<CompanyRelation>> {
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
-        UPDATE erp.company_relations
+        UPDATE plugin_erp.company_relations
         SET ownership_percentage = COALESCE($2, ownership_percentage),
             control_percentage = COALESCE($3, control_percentage),
             expiry_date = COALESCE($4, expiry_date),
@@ -1281,7 +1281,7 @@ async fn delete_company_relation(
     Path(relation_id): Path<Uuid>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
-    match sqlx::query("DELETE FROM erp.company_relations WHERE id = $1")
+    match sqlx::query("DELETE FROM plugin_erp.company_relations WHERE id = $1")
         .bind(relation_id)
         .execute(&state.db)
         .await

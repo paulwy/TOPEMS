@@ -129,7 +129,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
+            INSERT INTO plugin_crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -159,7 +159,7 @@ mod tests {
         let result = sqlx::query_as::<_, CustomerRow>(
             r#"
             SELECT id, code, name, customer_type, industry, phone, email, address, status, created_at, updated_at
-            FROM crm.customers
+            FROM plugin_crm.customers
             WHERE status = 'active'
             ORDER BY created_at DESC
             LIMIT 10
@@ -189,7 +189,7 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
+            INSERT INTO plugin_crm.customers (id, organization_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             "#,
         )
@@ -209,7 +209,7 @@ mod tests {
         // 更新状态为 inactive
         let update_result = sqlx::query(
             r#"
-            UPDATE crm.customers SET status = 'inactive', updated_at = NOW()
+            UPDATE plugin_crm.customers SET status = 'inactive', updated_at = NOW()
             WHERE id = $1
             "#,
         )
@@ -221,7 +221,7 @@ mod tests {
 
         // 验证状态已更新
         let check_result =
-            sqlx::query_scalar::<_, String>("SELECT status FROM crm.customers WHERE id = $1")
+            sqlx::query_scalar::<_, String>("SELECT status FROM plugin_crm.customers WHERE id = $1")
                 .bind(customer_id)
                 .fetch_one(&pool)
                 .await;
@@ -236,7 +236,7 @@ mod tests {
         }
 
         // 清理测试数据
-        let _ = sqlx::query("DELETE FROM crm.customers WHERE id = $1")
+        let _ = sqlx::query("DELETE FROM plugin_crm.customers WHERE id = $1")
             .bind(customer_id)
             .execute(&pool)
             .await;
@@ -253,7 +253,7 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, organization_id, code, name, customer_type, industry, status, created_at, updated_at)
+            INSERT INTO plugin_crm.customers (id, organization_id, code, name, customer_type, industry, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
@@ -272,7 +272,7 @@ mod tests {
         let opportunity_id = Uuid::new_v4();
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.opportunities (id, organization_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
+            INSERT INTO plugin_crm.opportunities (id, organization_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
@@ -290,11 +290,11 @@ mod tests {
         assert!(result.is_ok(), "商机创建应该成功");
 
         // 清理测试数据
-        let _ = sqlx::query("DELETE FROM crm.opportunities WHERE id = $1")
+        let _ = sqlx::query("DELETE FROM plugin_crm.opportunities WHERE id = $1")
             .bind(opportunity_id)
             .execute(&pool)
             .await;
-        let _ = sqlx::query("DELETE FROM crm.customers WHERE id = $1")
+        let _ = sqlx::query("DELETE FROM plugin_crm.customers WHERE id = $1")
             .bind(customer_id)
             .execute(&pool)
             .await;

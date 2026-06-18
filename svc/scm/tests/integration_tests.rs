@@ -108,7 +108,7 @@ mod tests {
         let supplier_no = format!("SUP-{}", &supplier_id.to_string()[..8]);
         sqlx::query(
             r#"
-            INSERT INTO scm.suppliers (id, supplier_no, name, category, status, risk_level, created_at, updated_at)
+            INSERT INTO plugin_scm.suppliers (id, supplier_no, name, category, status, risk_level, created_at, updated_at)
             VALUES ($1, $2, $3, $4, 'active', 'low', NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
             "#,
@@ -174,7 +174,7 @@ mod tests {
         let supplier_no = format!("SUP-{}", &supplier_id.to_string()[..8]);
         sqlx::query(
             r#"
-            INSERT INTO scm.suppliers (id, supplier_no, name, category, status, risk_level, created_at, updated_at)
+            INSERT INTO plugin_scm.suppliers (id, supplier_no, name, category, status, risk_level, created_at, updated_at)
             VALUES ($1, $2, $3, $4, 'active', 'low', NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET updated_at = NOW()
             "#,
@@ -251,7 +251,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO scm.suppliers (id, supplier_no, name, category, status, risk_level, contact_person, phone, email, address, created_at, updated_at)
+            INSERT INTO plugin_scm.suppliers (id, supplier_no, name, category, status, risk_level, contact_person, phone, email, address, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,

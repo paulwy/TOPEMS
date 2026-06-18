@@ -72,11 +72,11 @@ pub struct QueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/hrm/positions",
+            "/api/plugin_hrm.positions",
             get(list_positions).post(create_position),
         )
         .route(
-            "/api/hrm/positions/{id}",
+            "/api/plugin_hrm.positions/{id}",
             get(get_position)
                 .put(update_position)
                 .delete(delete_position),
@@ -99,7 +99,7 @@ async fn list_positions(
     let result = sqlx::query_as::<_, Position>(
         r#"
         SELECT id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
-        FROM hrm.positions
+        FROM plugin_hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
           AND ($3::uuid IS NULL OR company_id = $3)
@@ -121,7 +121,7 @@ async fn list_positions(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.positions
+                SELECT COUNT(*) FROM plugin_hrm.positions
                 WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
                   AND ($3::uuid IS NULL OR company_id = $3)
@@ -166,7 +166,7 @@ async fn create_position(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        INSERT INTO hrm.positions (id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
+        INSERT INTO plugin_hrm.positions (id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
         RETURNING id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at
         "#
@@ -234,7 +234,7 @@ async fn get_position(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Position>> {
     let result = sqlx::query_as::<_, Position>(
-        "SELECT id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE id = $1"
+        "SELECT id, organization_id, company_id, department_id, name, code, level, min_salary, max_salary, description, requirements, status, created_at, updated_at FROM plugin_hrm.positions WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -259,7 +259,7 @@ async fn update_position(
 
     let result = sqlx::query_as::<_, Position>(
         r#"
-        UPDATE hrm.positions
+        UPDATE plugin_hrm.positions
         SET
             company_id = COALESCE($1, company_id),
             department_id = COALESCE($2, department_id),
@@ -306,7 +306,7 @@ async fn delete_position(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.positions WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_hrm.positions WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

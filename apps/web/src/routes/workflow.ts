@@ -6,6 +6,7 @@ import { lazyWithRetry } from "./utils";
 const lazy = lazyWithRetry;
 
 const FlowWorkflowPage = lazy(() => import("../pages/workflow/FlowWorkflowPage"));
+const WorkflowDashboardPage = lazy(() => import("../pages/workflow/DashboardPage"));
 const WorkflowDesignerPage = lazy(
   () => import("../pages/templates/WorkflowDesignerPage"),
 );
@@ -30,10 +31,7 @@ const FlowVersionHistoryPage = lazy(
 export const workflowRoutes: RouteConfig[] = [
   {
     path: "/flow",
-    element: React.createElement(Navigate, {
-      to: "/flow/approvals",
-      replace: true,
-    }),
+    element: WorkflowDashboardPage,
     requiredPermissions: ["workflow:read"],
     module: "workflow",
     action: "read",

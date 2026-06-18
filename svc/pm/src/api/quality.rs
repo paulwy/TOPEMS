@@ -40,7 +40,7 @@ async fn get_project_quality_checks(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<QualityCheck>>> {
     let checks = sqlx::query_as::<_, QualityCheck>(
-        "SELECT * FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC",
+        "SELECT * FROM plugin_pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -62,7 +62,7 @@ async fn get_quality_check(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityCheck>> {
-    let check = sqlx::query_as::<_, QualityCheck>("SELECT * FROM pm.quality_checks WHERE id = $1")
+    let check = sqlx::query_as::<_, QualityCheck>("SELECT * FROM plugin_pm.quality_checks WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -92,7 +92,7 @@ async fn create_quality_check(
     let now = Utc::now();
 
     let check = sqlx::query_as::<_, QualityCheck>(
-        "INSERT INTO pm.quality_checks (id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.quality_checks (id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12) RETURNING *"
     )
     .bind(id)
@@ -128,7 +128,7 @@ async fn update_quality_check(
     Json(req): Json<UpdateQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityCheck>> {
     let check = sqlx::query_as::<_, QualityCheck>(
-        "UPDATE pm.quality_checks SET
+        "UPDATE plugin_pm.quality_checks SET
             check_name = COALESCE($1, check_name),
             check_type = COALESCE($2, check_type),
             check_criteria = COALESCE($3, check_criteria),
@@ -180,7 +180,7 @@ async fn get_project_defects(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Defect>>> {
     let defects = sqlx::query_as::<_, Defect>(
-        "SELECT * FROM pm.defects WHERE project_id = $1 ORDER BY severity DESC, priority DESC",
+        "SELECT * FROM plugin_pm.defects WHERE project_id = $1 ORDER BY severity DESC, priority DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -199,7 +199,7 @@ async fn get_project_defects(
 }
 
 async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Defect>> {
-    let defect = sqlx::query_as::<_, Defect>("SELECT * FROM pm.defects WHERE id = $1")
+    let defect = sqlx::query_as::<_, Defect>("SELECT * FROM plugin_pm.defects WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await;
@@ -229,7 +229,7 @@ async fn create_defect(
     let now = Utc::now();
 
     let defect = sqlx::query_as::<_, Defect>(
-        "INSERT INTO pm.defects (id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.defects (id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13) RETURNING *"
     )
     .bind(id)
@@ -266,7 +266,7 @@ async fn update_defect(
     Json(req): Json<UpdateDefectRequest>,
 ) -> Json<ApiResponse<Defect>> {
     let defect = sqlx::query_as::<_, Defect>(
-        "UPDATE pm.defects SET
+        "UPDATE plugin_pm.defects SET
             defect_name = COALESCE($1, defect_name),
             defect_description = COALESCE($2, defect_description),
             severity = COALESCE($3, severity),
@@ -309,7 +309,7 @@ async fn update_defect(
 }
 
 async fn delete_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.defects WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_pm.defects WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;

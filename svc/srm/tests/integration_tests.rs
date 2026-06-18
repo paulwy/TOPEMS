@@ -38,7 +38,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO srm.suppliers (id, supplier_no, name, category, status, created_at, updated_at)
+            INSERT INTO plugin_srm.suppliers (id, supplier_no, name, category, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
@@ -71,7 +71,7 @@ mod tests {
             .unwrap();
 
         let result = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE status != 'deleted'",
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted'",
         )
         .fetch_one(&pool)
         .await;
@@ -94,7 +94,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, status)
+            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, status)
             VALUES ($1, $2, $3, $4, $5)
             "#,
         )
@@ -123,7 +123,7 @@ mod tests {
             .unwrap();
 
         let result = sqlx::query_as::<_, (String, i64)>(
-            "SELECT category, COUNT(*) FROM srm.suppliers WHERE status != 'deleted' GROUP BY category"
+            "SELECT category, COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted' GROUP BY category"
         )
         .fetch_all(&pool)
         .await;

@@ -185,10 +185,10 @@ async fn get_employee_details(
             d.name as department_name,
             c.name as company_name,
             p.name as position_name
-        FROM shared.employees e
-        LEFT JOIN shared.departments d ON e.department_id = d.id
-        LEFT JOIN shared.companies c ON e.company_id = c.id
-        LEFT JOIN hrm.positions p ON e.position_id = p.id
+        FROM public.employees e
+        LEFT JOIN public.departments d ON e.department_id = d.id
+        LEFT JOIN public.companies c ON e.company_id = c.id
+        LEFT JOIN plugin_hrm.positions p ON e.position_id = p.id
         WHERE e.id = $1
         "#,
         id
@@ -443,7 +443,7 @@ async fn export_employees(
                        employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
-                FROM shared.employees
+                FROM public.employees
                 WHERE id = ANY($1)
                 "#,
             )
@@ -458,7 +458,7 @@ async fn export_employees(
                        employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
-                FROM shared.employees
+                FROM public.employees
                 "#,
             )
             .fetch_all(&state.db)

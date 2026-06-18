@@ -107,7 +107,7 @@ async fn list_suppliers(
     let query = format!(
         r#"
         SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM srm.suppliers
+        FROM plugin_srm.suppliers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR category = $3)
@@ -130,7 +130,7 @@ async fn list_suppliers(
         Ok(suppliers) => {
             let count_query = format!(
                 r#"
-                SELECT COUNT(*) FROM srm.suppliers
+                SELECT COUNT(*) FROM plugin_srm.suppliers
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR category = $3)
@@ -186,7 +186,7 @@ async fn create_supplier(
 
     // 检查供应商编号是否已存在
     let existing =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE supplier_no = $1")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE supplier_no = $1")
             .bind(&req.supplier_no)
             .fetch_one(&state.db)
             .await;
@@ -201,7 +201,7 @@ async fn create_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         r#"
-        INSERT INTO srm.suppliers (id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
+        INSERT INTO plugin_srm.suppliers (id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         "#,
@@ -262,7 +262,7 @@ async fn get_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         r#"
         SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM srm.suppliers WHERE id = $1
+        FROM plugin_srm.suppliers WHERE id = $1
         "#,
     )
     .bind(id)
@@ -291,7 +291,7 @@ async fn update_supplier(
     }
 
     let existing = sqlx::query_as::<_, Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1",
+        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -328,7 +328,7 @@ async fn update_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         r#"
-        UPDATE srm.suppliers SET
+        UPDATE plugin_srm.suppliers SET
             supplier_no = $2, name = $3, legal_name = $4, category = $5, status = $6, tax_id = $7, address = $8, contact_person = $9, phone = $10, email = $11, website = $12, credit_rating = $13, risk_level = $14, updated_at = $15
         WHERE id = $1
         RETURNING id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
@@ -387,7 +387,7 @@ async fn delete_supplier(
 
     // 获取供应商信息用于审计日志
     let existing = sqlx::query_as::<_, Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1",
+        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -401,7 +401,7 @@ async fn delete_supplier(
 
     // 软删除：更新状态为deleted
     let result =
-        sqlx::query("UPDATE srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1")
+        sqlx::query("UPDATE plugin_srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1")
             .bind(id)
             .bind(Utc::now())
             .execute(&state.db)
@@ -446,7 +446,7 @@ async fn get_supplier_products(
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
         SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        FROM srm.supplier_products
+        FROM plugin_srm.supplier_products
         WHERE supplier_id = $1
         ORDER BY created_at DESC
         "#,
@@ -482,7 +482,7 @@ async fn get_supplier_contracts(
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
         SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM srm.supplier_contracts
+        FROM plugin_srm.supplier_contracts
         WHERE supplier_id = $1
         ORDER BY created_at DESC
         "#,
@@ -517,7 +517,7 @@ async fn get_supplier_performance(
 
     // 获取供应商基本信息
     let supplier = sqlx::query_as::<_, Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1",
+        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -576,7 +576,7 @@ async fn get_supplier_performance(
             AVG(overall_score) as avg_overall,
             COUNT(*) as eval_count,
             MAX(evaluation_date) as last_eval_date
-        FROM srm.supplier_evaluations
+        FROM plugin_srm.supplier_evaluations
         WHERE supplier_id = $1
         "#,
     )
@@ -628,7 +628,7 @@ async fn record_audit_log(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO srm.audit_logs (id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
+        INSERT INTO public.audit_logs (id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
     )

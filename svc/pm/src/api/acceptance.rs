@@ -53,7 +53,7 @@ async fn get_project_plans(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptancePlan>>> {
     let plans = sqlx::query_as::<_, AcceptancePlan>(
-        "SELECT * FROM pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date",
+        "SELECT * FROM plugin_pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -76,7 +76,7 @@ async fn get_plan(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
     let plan =
-        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM pm.acceptance_plans WHERE id = $1")
+        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -106,7 +106,7 @@ async fn create_plan(
     let now = Utc::now();
 
     let plan = sqlx::query_as::<_, AcceptancePlan>(
-        "INSERT INTO pm.acceptance_plans (id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.acceptance_plans (id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14) RETURNING *"
     )
     .bind(id)
@@ -144,7 +144,7 @@ async fn update_plan(
     Json(req): Json<UpdateAcceptancePlanRequest>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
     let plan = sqlx::query_as::<_, AcceptancePlan>(
-        "UPDATE pm.acceptance_plans SET
+        "UPDATE plugin_pm.acceptance_plans SET
             plan_name = COALESCE($1, plan_name),
             acceptance_type = COALESCE($2, acceptance_type),
             acceptance_criteria = COALESCE($3, acceptance_criteria),
@@ -188,7 +188,7 @@ async fn get_plan_items(
     Path(plan_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceItem>>> {
     let items = sqlx::query_as::<_, AcceptanceItem>(
-        "SELECT * FROM pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at",
+        "SELECT * FROM plugin_pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at",
     )
     .bind(plan_id)
     .fetch_all(&pool)
@@ -215,7 +215,7 @@ async fn create_plan_item(
     let now = Utc::now();
 
     let item = sqlx::query_as::<_, AcceptanceItem>(
-        "INSERT INTO pm.acceptance_items (id, plan_id, item_code, item_name, item_description, required_standard, created_at, updated_at)
+        "INSERT INTO plugin_pm.acceptance_items (id, plan_id, item_code, item_name, item_description, required_standard, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
     )
     .bind(id)
@@ -247,7 +247,7 @@ async fn update_plan_item(
     Json(req): Json<UpdateAcceptanceItemRequest>,
 ) -> Json<ApiResponse<AcceptanceItem>> {
     let item = sqlx::query_as::<_, AcceptanceItem>(
-        "UPDATE pm.acceptance_items SET
+        "UPDATE plugin_pm.acceptance_items SET
             actual_result = COALESCE($1, actual_result),
             is_passed = COALESCE($2, is_passed),
             comments = COALESCE($3, comments),
@@ -282,7 +282,7 @@ async fn delete_plan_item(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.acceptance_items WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_pm.acceptance_items WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;
@@ -308,7 +308,7 @@ async fn get_project_records(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceRecord>>> {
     let records = sqlx::query_as::<_, AcceptanceRecord>(
-        "SELECT * FROM pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC",
+        "SELECT * FROM plugin_pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -331,7 +331,7 @@ async fn get_record(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
     let record =
-        sqlx::query_as::<_, AcceptanceRecord>("SELECT * FROM pm.acceptance_records WHERE id = $1")
+        sqlx::query_as::<_, AcceptanceRecord>("SELECT * FROM plugin_pm.acceptance_records WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -358,7 +358,7 @@ async fn create_record(
     Json(req): Json<CreateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
     let plan =
-        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM pm.acceptance_plans WHERE id = $1")
+        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1")
             .bind(plan_id)
             .fetch_one(&pool)
             .await;
@@ -385,7 +385,7 @@ async fn create_record(
     let acceptance_date = parse_date_opt(&Some(req.acceptance_date.clone())).unwrap_or(now);
 
     let record = sqlx::query_as::<_, AcceptanceRecord>(
-        "INSERT INTO pm.acceptance_records (id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.acceptance_records (id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *"
     )
     .bind(id)
@@ -423,7 +423,7 @@ async fn update_record(
     Json(req): Json<UpdateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
     let record = sqlx::query_as::<_, AcceptanceRecord>(
-        "UPDATE pm.acceptance_records SET
+        "UPDATE plugin_pm.acceptance_records SET
             status = COALESCE($1, status),
             conclusion = COALESCE($2, conclusion),
             score = COALESCE($3, score),

@@ -109,7 +109,7 @@ pub async fn batch_upload_positions(
     // 使用批量插入优化性能
     let mut query_builder: sqlx::QueryBuilder<sqlx::Postgres> =
         sqlx::QueryBuilder::new(
-            "INSERT INTO gis.device_location_records (device_id, organization_id, position, altitude, speed, direction, accuracy, battery_level, recorded_at)"
+            "INSERT INTO plugin_gis.device_location_records (device_id, organization_id, position, altitude, speed, direction, accuracy, battery_level, recorded_at)"
         );
 
     query_builder.push_values(positions.iter(), |mut b, pos| {
@@ -162,7 +162,7 @@ pub async fn batch_upload_evidence(
     for evidence in &payload.evidence_list {
         match sqlx::query_as::<_, EvidenceRecord>(
             r#"
-            INSERT INTO gis.evidence_records
+            INSERT INTO plugin_gis.evidence_records
             (tenant_id, title, evidence_type, position, file_url, thumbnail_url,
              duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -239,7 +239,7 @@ pub async fn download_offline_data(
     // 下载设备数据
     if payload.include_devices {
         match sqlx::query_as::<_, DeviceLocation>(
-            "SELECT * FROM gis.device_locations WHERE organization_id = $1 ORDER BY created_at DESC",
+            "SELECT * FROM plugin_gis.device_locations WHERE organization_id = $1 ORDER BY created_at DESC",
         )
         .bind(ctx.tenant_id)
         .fetch_all(&pool)
@@ -257,7 +257,7 @@ pub async fn download_offline_data(
 
     // 下载轨迹数据
     if payload.include_tracks {
-        let mut query = "SELECT * FROM gis.track_records WHERE tenant_id = $1".to_string();
+        let mut query = "SELECT * FROM plugin_gis.track_records WHERE tenant_id = $1".to_string();
 
         if payload.track_date_from.is_some() {
             query.push_str(" AND start_time >= $2");
@@ -284,7 +284,7 @@ pub async fn download_offline_data(
         if !tracks.is_empty() {
             let track_ids: Vec<Uuid> = tracks.iter().map(|t| t.id).collect();
             match sqlx::query_as::<_, TrackPosition>(
-                "SELECT * FROM gis.track_positions WHERE track_id = ANY($1) ORDER BY timestamp ASC",
+                "SELECT * FROM plugin_gis.track_positions WHERE track_id = ANY($1) ORDER BY timestamp ASC",
             )
             .bind(&track_ids)
             .fetch_all(&pool)
@@ -304,7 +304,7 @@ pub async fn download_offline_data(
     // 下载取证数据
     if payload.include_evidence {
         match sqlx::query_as::<_, EvidenceRecord>(
-            "SELECT * FROM gis.evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC",
+            "SELECT * FROM plugin_gis.evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC",
         )
         .bind(ctx.tenant_id)
         .fetch_all(&pool)
@@ -343,7 +343,7 @@ pub async fn get_sync_status(
     // 统计待处理的数据量（最近24小时内的位置记录）
     let result = sqlx::query_as::<_, (i64,)>(
         r#"
-        SELECT COUNT(*) FROM gis.device_location_records
+        SELECT COUNT(*) FROM plugin_gis.device_location_records
         WHERE tenant_id = $1 AND recorded_at > NOW() - INTERVAL '24 hours'
         "#,
     )

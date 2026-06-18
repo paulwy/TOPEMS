@@ -84,7 +84,7 @@ async fn create_phase(
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        INSERT INTO pm.project_phases (
+        INSERT INTO plugin_pm.project_phases (
             id, project_id, name, description, sequence_number,
             start_date, end_date, progress, status, predecessor_ids,
             created_at, updated_at
@@ -169,7 +169,7 @@ async fn update_phase(
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        UPDATE pm.project_phases
+        UPDATE plugin_pm.project_phases
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             sequence_number = COALESCE($3, sequence_number),

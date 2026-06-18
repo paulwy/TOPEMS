@@ -60,7 +60,7 @@ async fn list_contacts(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
-        FROM crm.contacts
+        FROM plugin_crm.contacts
         WHERE ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR customer_id = $3)
@@ -80,7 +80,7 @@ async fn list_contacts(
         Ok(contacts) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM crm.contacts
+                SELECT COUNT(*) FROM plugin_crm.contacts
                 WHERE ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR customer_id = $3)
@@ -131,7 +131,7 @@ async fn create_contact(
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        INSERT INTO crm.contacts (
+        INSERT INTO plugin_crm.contacts (
             id, customer_id, first_name, last_name, email, phone, position, notes, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
         RETURNING id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
@@ -205,7 +205,7 @@ async fn get_contact(
     let result = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
-        FROM crm.contacts WHERE id = $1
+        FROM plugin_crm.contacts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -236,7 +236,7 @@ async fn update_contact(
 
     let existing = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at FROM crm.contacts WHERE id = $1
+        SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at FROM plugin_crm.contacts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -263,7 +263,7 @@ async fn update_contact(
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        UPDATE crm.contacts SET
+        UPDATE plugin_crm.contacts SET
             first_name = $2, last_name = $3, email = $4, phone = $5, position = $6,
             customer_id = $7, status = $8, notes = $9, updated_at = $10
         WHERE id = $1
@@ -335,7 +335,7 @@ async fn delete_contact(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.contacts WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_crm.contacts WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -401,7 +401,7 @@ async fn batch_delete_contacts(
         return Json(api_error(400, "请选择要删除的联系人"));
     }
 
-    let result = sqlx::query("DELETE FROM crm.contacts WHERE id = ANY($1)")
+    let result = sqlx::query("DELETE FROM plugin_crm.contacts WHERE id = ANY($1)")
         .bind(&req.ids)
         .execute(&state.db)
         .await;

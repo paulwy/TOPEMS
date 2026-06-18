@@ -83,7 +83,7 @@ async fn submit_approval(
 
     let result = sqlx::query_as::<_, ProjectApproval>(
         r#"
-        INSERT INTO pm.project_approvals (
+        INSERT INTO plugin_pm.project_approvals (
             id, project_id, status, current_step, total_steps,
             approvals, comments, created_by, created_at, updated_at
         )
@@ -174,7 +174,7 @@ async fn handle_approval_action(
 
         let update_result = sqlx::query_as::<_, ProjectApproval>(
             r#"
-            UPDATE pm.project_approvals
+            UPDATE plugin_pm.project_approvals
             SET status = $1, approvals = $2, comments = $3, updated_at = $4
             WHERE id = $5
             RETURNING *
@@ -260,7 +260,7 @@ async fn handle_approval_action(
 
         let update_result = sqlx::query_as::<_, ProjectApproval>(
             r#"
-            UPDATE pm.project_approvals
+            UPDATE plugin_pm.project_approvals
             SET status = $1, current_step = $2, approvals = $3, comments = $4, updated_at = $5
             WHERE id = $6
             RETURNING *
@@ -297,7 +297,7 @@ async fn update_project_status(
     project_id: Uuid,
     status: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("UPDATE pm.projects SET status = $1, updated_at = $2 WHERE id = $3")
+    sqlx::query("UPDATE plugin_pm.projects SET status = $1, updated_at = $2 WHERE id = $3")
         .bind(status)
         .bind(Utc::now())
         .bind(project_id)

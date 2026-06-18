@@ -20,6 +20,9 @@ import { ServiceStatusMonitor } from "./ServiceStatusMonitor";
 import { RecentActivities } from "./RecentActivities";
 import { ModuleStatsCard } from "./ModuleStatsCard";
 import { DashboardHeader } from "./DashboardHeader";
+import BarChartComponent from "../../components/charts/BarChart";
+import PieChartComponent from "../../components/charts/PieChart";
+import LineChartComponent from "../../components/charts/LineChart";
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -102,6 +105,32 @@ const descriptionMap: Record<string, string> = {
   hrm: "人力资源与培训管理",
 };
 
+const homeBarData = [
+  { name: "ERP", value: 120 },
+  { name: "PM", value: 85 },
+  { name: "SCM", value: 95 },
+  { name: "CRM", value: 110 },
+  { name: "AI", value: 75 },
+  { name: "HRM", value: 65 },
+];
+
+const homePieData = [
+  { name: "生产", value: 30 },
+  { name: "销售", value: 25 },
+  { name: "研发", value: 20 },
+  { name: "财务", value: 15 },
+  { name: "其他", value: 10 },
+];
+
+const homeLineData = [
+  { name: "1月", value: 200 },
+  { name: "2月", value: 250 },
+  { name: "3月", value: 220 },
+  { name: "4月", value: 300 },
+  { name: "5月", value: 280 },
+  { name: "6月", value: 350 },
+];
+
 export const HybridDashboard: React.FC = () => {
   const [moduleCards, setModuleCards] = useState<any[]>([]);
   useEffect(() => {
@@ -137,6 +166,39 @@ export const HybridDashboard: React.FC = () => {
       </Box>
       <Box sx={{ mt: 8 }}>
         <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+          业务分析
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={8}>
+            <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                模块使用量
+              </Typography>
+              <BarChartComponent data={homeBarData} xKey="name" yKey="value" />
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                业务分布
+              </Typography>
+              <PieChartComponent data={homePieData} />
+            </Paper>
+          </Grid>
+        </Grid>
+        <Grid container spacing={3} sx={{ mt: 3 }}>
+          <Grid item xs={12}>
+            <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+                月度活跃趋势
+              </Typography>
+              <LineChartComponent data={homeLineData} xKey="name" yKey="value" />
+            </Paper>
+          </Grid>
+        </Grid>
+      </Box>
+      <Box sx={{ mt: 8 }}>
+        <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
           服务监控
         </Typography>
         <ServiceStatusMonitor />
@@ -151,16 +213,16 @@ export const HybridDashboard: React.FC = () => {
           </Grid>))}
         </Grid>
       </Box>
-      <Box sx={{ mt: 8 }}>
-        <Grid container spacing={6}>
-          <Grid item xs={12} lg={8}>
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+      <Box sx={{ mt: { xs: 4, sm: 6, lg: 8 } }}>
+        <Grid container spacing={{ xs: 3, sm: 4, lg: 6 }}>
+          <Grid item xs={12} md={8} lg={8}>
+            <Typography variant="h5" fontWeight={600} sx={{ mb: { xs: 2, sm: 3, lg: 4 } }}>
               待办事项
             </Typography>
             <RecentActivities />
           </Grid>
-          <Grid item xs={12} lg={4}>
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+          <Grid item xs={12} md={4} lg={4}>
+            <Typography variant="h5" fontWeight={600} sx={{ mb: { xs: 2, sm: 3, lg: 4 } }}>
               系统状态
             </Typography>
             <ModuleStatsCard />

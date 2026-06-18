@@ -85,7 +85,7 @@ pub async fn buffer_analysis(
     // Save analysis result
     let analysis = sqlx::query_as::<_, SpatialAnalysis>(
         r#"
-        INSERT INTO gis.spatial_analysis (analysis_type, input_data, parameters, result_geometry, execution_time_ms, created_by)
+        INSERT INTO plugin_gis.spatial_analysis (analysis_type, input_data, parameters, result_geometry, execution_time_ms, created_by)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         "#,
@@ -171,7 +171,7 @@ pub async fn intersect_analysis(
 
     let _ = sqlx::query_as::<_, SpatialAnalysis>(
         r#"
-        INSERT INTO gis.spatial_analysis (analysis_type, input_data, result_data, execution_time_ms, created_by)
+        INSERT INTO plugin_gis.spatial_analysis (analysis_type, input_data, result_data, execution_time_ms, created_by)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
         "#,
@@ -254,7 +254,7 @@ pub async fn union_analysis(
 
     let _ = sqlx::query_as::<_, SpatialAnalysis>(
         r#"
-        INSERT INTO gis.spatial_analysis (analysis_type, input_data, result_geometry, execution_time_ms, created_by)
+        INSERT INTO plugin_gis.spatial_analysis (analysis_type, input_data, result_geometry, execution_time_ms, created_by)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
         "#,
@@ -433,7 +433,7 @@ pub async fn nearest_query(
 
     // Query features from geodata
     match sqlx::query_as::<_, crate::models::GeoFeature>(
-        "SELECT * FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC LIMIT $2",
+        "SELECT * FROM plugin_gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC LIMIT $2",
     )
     .bind(&payload.geodata_id)
     .bind(payload.limit.unwrap_or(10))

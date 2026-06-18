@@ -99,7 +99,7 @@ async fn create_document(
     let now = Utc::now();
 
     let document = sqlx::query_as::<_, ProjectDocument>(
-        "INSERT INTO pm.project_documents (id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.project_documents (id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, 'active', $9, $10, $11, $12, $13) RETURNING *"
     )
     .bind(id)
@@ -136,7 +136,7 @@ async fn update_document(
     Json(req): Json<UpdateDocumentRequest>,
 ) -> Json<ApiResponse<ProjectDocument>> {
     let document = sqlx::query_as::<_, ProjectDocument>(
-        "UPDATE pm.project_documents SET
+        "UPDATE plugin_pm.project_documents SET
             document_name = COALESCE($1, document_name),
             document_type = COALESCE($2, document_type),
             status = COALESCE($3, status),
@@ -201,7 +201,7 @@ async fn get_document_versions(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentVersion>>> {
     let versions = sqlx::query_as::<_, DocumentVersion>(
-        "SELECT * FROM pm.document_versions WHERE document_id = $1 ORDER BY version DESC",
+        "SELECT * FROM plugin_pm.document_versions WHERE document_id = $1 ORDER BY version DESC",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -253,7 +253,7 @@ async fn create_document_version(
     let file_hash = req.file_hash.clone();
 
     let version = sqlx::query_as::<_, DocumentVersion>(
-        "INSERT INTO pm.document_versions (id, document_id, version, file_path, file_hash, change_note, created_by, created_at)
+        "INSERT INTO plugin_pm.document_versions (id, document_id, version, file_path, file_hash, change_note, created_by, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
     )
     .bind(version_id)
@@ -268,7 +268,7 @@ async fn create_document_version(
     .await;
 
     if version.is_ok() {
-        let _ = sqlx::query("UPDATE pm.project_documents SET version = $1, file_path = $2, file_hash = $3, updated_at = $4 WHERE id = $5")
+        let _ = sqlx::query("UPDATE plugin_pm.project_documents SET version = $1, file_path = $2, file_hash = $3, updated_at = $4 WHERE id = $5")
             .bind(new_version)
             .bind(&req.file_path)
             .bind(file_hash)
@@ -295,7 +295,7 @@ async fn get_project_folders(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentFolder>>> {
     let folders = sqlx::query_as::<_, DocumentFolder>(
-        "SELECT * FROM pm.document_folders WHERE project_id = $1 ORDER BY folder_name",
+        "SELECT * FROM plugin_pm.document_folders WHERE project_id = $1 ORDER BY folder_name",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -318,7 +318,7 @@ async fn get_folder(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DocumentFolder>> {
     let folder =
-        sqlx::query_as::<_, DocumentFolder>("SELECT * FROM pm.document_folders WHERE id = $1")
+        sqlx::query_as::<_, DocumentFolder>("SELECT * FROM plugin_pm.document_folders WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -348,7 +348,7 @@ async fn create_folder(
     let now = Utc::now();
 
     let folder = sqlx::query_as::<_, DocumentFolder>(
-        "INSERT INTO pm.document_folders (id, project_id, parent_id, folder_name, description, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.document_folders (id, project_id, parent_id, folder_name, description, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *"
     )
     .bind(id)
@@ -380,7 +380,7 @@ async fn update_folder(
     Json(req): Json<CreateFolderRequest>,
 ) -> Json<ApiResponse<DocumentFolder>> {
     let folder = sqlx::query_as::<_, DocumentFolder>(
-        "UPDATE pm.document_folders SET
+        "UPDATE plugin_pm.document_folders SET
             folder_name = COALESCE($1, folder_name),
             description = COALESCE($2, description),
             updated_at = $3
@@ -410,7 +410,7 @@ async fn update_folder(
 }
 
 async fn delete_folder(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM pm.document_folders WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_pm.document_folders WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;

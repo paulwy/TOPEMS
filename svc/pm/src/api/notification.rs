@@ -21,10 +21,10 @@ pub fn create_routes(pool: PgPool) -> Router {
             get(get_project_notifications).post(create_notification),
         )
         .route(
-            "/api/pm/notifications/{id}",
+            "/api/plugin_pm.notifications/{id}",
             get(get_notification).put(update_notification),
         )
-        .route("/api/pm/notifications/{id}/read", post(mark_as_read))
+        .route("/api/plugin_pm.notifications/{id}/read", post(mark_as_read))
         .route(
             "/api/pm/projects/{project_id}/notification-settings",
             get(get_project_settings).post(create_setting),
@@ -39,7 +39,7 @@ async fn get_project_notifications(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Notification>>> {
     let notifications = sqlx::query_as::<_, Notification>(
-        "SELECT * FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC",
+        "SELECT * FROM plugin_pm.notifications WHERE project_id = $1 ORDER BY created_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -62,7 +62,7 @@ async fn get_notification(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Notification>> {
     let notification =
-        sqlx::query_as::<_, Notification>("SELECT * FROM pm.notifications WHERE id = $1")
+        sqlx::query_as::<_, Notification>("SELECT * FROM plugin_pm.notifications WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -91,7 +91,7 @@ async fn create_notification(
     let now = Utc::now();
 
     let notification = sqlx::query_as::<_, Notification>(
-        "INSERT INTO pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at)
+        "INSERT INTO plugin_pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11) RETURNING *"
     )
     .bind(id)
@@ -126,7 +126,7 @@ async fn update_notification(
     Json(req): Json<UpdateNotificationRequest>,
 ) -> Json<ApiResponse<Notification>> {
     let notification = sqlx::query_as::<_, Notification>(
-        "UPDATE pm.notifications SET
+        "UPDATE plugin_pm.notifications SET
             status = COALESCE($1, status),
             read_at = COALESCE($2, read_at),
             updated_at = $3
@@ -160,7 +160,7 @@ async fn mark_as_read(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Notification>> {
     let notification = sqlx::query_as::<_, Notification>(
-        "UPDATE pm.notifications SET
+        "UPDATE plugin_pm.notifications SET
             status = 'read',
             read_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
@@ -191,7 +191,7 @@ async fn get_project_settings(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<NotificationSetting>>> {
     let settings = sqlx::query_as::<_, NotificationSetting>(
-        "SELECT * FROM pm.notification_settings WHERE project_id = $1",
+        "SELECT * FROM plugin_pm.notification_settings WHERE project_id = $1",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -218,7 +218,7 @@ async fn create_setting(
     let now = Utc::now();
 
     let setting = sqlx::query_as::<_, NotificationSetting>(
-        "INSERT INTO pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at)
+        "INSERT INTO plugin_pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at)
         VALUES ($1, $2, 'system', $3, $4, $5, $6, $7, $8) RETURNING *"
     )
     .bind(id)
@@ -250,7 +250,7 @@ async fn update_setting(
     Json(req): Json<CreateNotificationSettingRequest>,
 ) -> Json<ApiResponse<NotificationSetting>> {
     let setting = sqlx::query_as::<_, NotificationSetting>(
-        "UPDATE pm.notification_settings SET
+        "UPDATE plugin_pm.notification_settings SET
             enabled = COALESCE($1, enabled),
             notify_before_days = COALESCE($2, notify_before_days),
             preferred_channel = COALESCE($3, preferred_channel),

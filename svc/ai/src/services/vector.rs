@@ -69,7 +69,7 @@ impl VectorService {
     pub async fn create_document(&self, doc: &CreateDocumentRequest) -> Result<Uuid, sqlx::Error> {
         let id: Uuid = sqlx::query_scalar(
             r#"
-            INSERT INTO ai.documents (title, file_name, file_path, file_size, mime_type, category, tags, description, status)
+            INSERT INTO plugin_ai.documents (title, file_name, file_path, file_size, mime_type, category, tags, description, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING id
             "#,
@@ -98,7 +98,7 @@ impl VectorService {
     ) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
-            UPDATE ai.documents
+            UPDATE plugin_ai.documents
             SET status = $1, error_message = $2
             WHERE id = $3
             "#,
@@ -119,7 +119,7 @@ impl VectorService {
             SELECT id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM ai.documents WHERE id = $1
+            FROM plugin_ai.documents WHERE id = $1
             "#,
         )
         .bind(id)
@@ -136,7 +136,7 @@ impl VectorService {
             SELECT id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM ai.documents
+            FROM plugin_ai.documents
             ORDER BY created_at DESC
             "#,
         )
@@ -148,7 +148,7 @@ impl VectorService {
 
     /// 删除文档（级联删除向量）
     pub async fn delete_document(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM ai.documents WHERE id = $1")
+        let result = sqlx::query("DELETE FROM plugin_ai.documents WHERE id = $1")
             .bind(id)
             .execute(self.db.pool())
             .await?;
@@ -160,7 +160,7 @@ impl VectorService {
     pub async fn save_chunk(&self, chunk: &SaveChunkRequest) -> Result<Uuid, sqlx::Error> {
         let id: Uuid = sqlx::query_scalar(
             r#"
-            INSERT INTO ai.document_chunks (document_id, chunk_index, content, metadata)
+            INSERT INTO plugin_ai.document_chunks (document_id, chunk_index, content, metadata)
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
@@ -180,7 +180,7 @@ impl VectorService {
         for vector in vectors {
             sqlx::query(
                 r#"
-                UPDATE ai.document_chunks
+                UPDATE plugin_ai.document_chunks
                 SET embedding = $1
                 WHERE document_id = $2 AND chunk_index = $3
                 "#,
@@ -218,8 +218,8 @@ impl VectorService {
                 c.content,
                 1 - (c.embedding <=> $1::vector) AS similarity,
                 d.title AS document_title
-            FROM ai.document_chunks c
-            JOIN ai.documents d ON c.document_id = d.id
+            FROM plugin_ai.document_chunks c
+            JOIN plugin_ai.documents d ON c.document_id = d.id
             WHERE c.embedding <=> $1::vector < 0.5
             ORDER BY c.embedding <=> $1::vector
             LIMIT $2
@@ -246,22 +246,22 @@ impl VectorService {
 
     /// 获取统计信息
     pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
-        let doc_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ai.documents")
+        let doc_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plugin_ai.documents")
             .fetch_one(self.db.pool())
             .await?;
 
-        let chunk_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ai.document_chunks")
+        let chunk_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plugin_ai.document_chunks")
             .fetch_one(self.db.pool())
             .await?;
 
         let vector_count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM ai.document_chunks WHERE embedding IS NOT NULL",
+            "SELECT COUNT(*) FROM plugin_ai.document_chunks WHERE embedding IS NOT NULL",
         )
         .fetch_one(self.db.pool())
         .await?;
 
         let dimension: Option<i64> = sqlx::query_scalar(
-            "SELECT vector_dimensions FROM ai.document_chunks WHERE embedding IS NOT NULL LIMIT 1",
+            "SELECT vector_dimensions FROM plugin_ai.document_chunks WHERE embedding IS NOT NULL LIMIT 1",
         )
         .fetch_optional(self.db.pool())
         .await?;
@@ -276,7 +276,7 @@ impl VectorService {
 
     /// 清空所有向量数据
     pub async fn clear_all(&self) -> Result<(), sqlx::Error> {
-        sqlx::query("TRUNCATE ai.document_chunks, ai.documents CASCADE")
+        sqlx::query("TRUNCATE plugin_ai.document_chunks, plugin_ai.documents CASCADE")
             .execute(self.db.pool())
             .await?;
         Ok(())
@@ -296,8 +296,8 @@ impl VectorService {
                 c.content,
                 ts_rank_cd(to_tsvector('simple', c.content), query) AS similarity,
                 d.title AS document_title
-            FROM ai.document_chunks c
-            JOIN ai.documents d ON c.document_id = d.id,
+            FROM plugin_ai.document_chunks c
+            JOIN plugin_ai.documents d ON c.document_id = d.id,
                  to_tsquery('simple', $1) query
             WHERE to_tsvector('simple', c.content) @@ query
             ORDER BY similarity DESC
@@ -402,7 +402,7 @@ impl VectorService {
         let chunks = sqlx::query_as::<_, DocumentChunkRow>(
             r#"
             SELECT id, document_id, chunk_index, content, metadata, created_at
-            FROM ai.document_chunks
+            FROM plugin_ai.document_chunks
             WHERE document_id = $1
             ORDER BY chunk_index
             "#,
@@ -419,7 +419,7 @@ impl VectorService {
         let row = sqlx::query(
             r#"
             SELECT id, document_id, chunk_index, content, embedding
-            FROM ai.document_chunks
+            FROM plugin_ai.document_chunks
             WHERE id = $1
             "#,
         )
@@ -444,7 +444,7 @@ impl VectorService {
 
     /// 删除向量记录
     pub async fn delete_vector(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query("DELETE FROM ai.document_chunks WHERE id = $1")
+        let result = sqlx::query("DELETE FROM plugin_ai.document_chunks WHERE id = $1")
             .bind(id)
             .execute(self.db.pool())
             .await?;

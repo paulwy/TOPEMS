@@ -4,7 +4,7 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const PmDashboardPage = lazy(() => import("../pages/pm/PmDashboardPage"));
+const PmDashboardPage = lazy(() => import("../pages/pm/DashboardPage"));
 const PmProjectListPage = lazy(() => import("../pages/pm/PmProjectListPage"));
 const PmProjectDetailPage = lazy(() => import("../pages/pm/PmProjectDetailPage"));
 const PmProjectCreatePage = lazy(() => import("../pages/pm/PmProjectCreatePage"));

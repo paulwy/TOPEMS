@@ -143,7 +143,7 @@ async fn list_reviews(
     let result = sqlx::query_as::<_, PerformanceReview>(
         r#"
         SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
-        FROM hrm.performance_reviews
+        FROM plugin_hrm.performance_reviews
         WHERE ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR $2 = '' OR review_period ILIKE '%' || $2 || '%')
           AND ($3::text IS NULL OR status = $3)
@@ -163,7 +163,7 @@ async fn list_reviews(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.performance_reviews
+                SELECT COUNT(*) FROM plugin_hrm.performance_reviews
                 WHERE ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR $2 = '' OR review_period ILIKE '%' || $2 || '%')
                   AND ($3::text IS NULL OR status = $3)
@@ -215,7 +215,7 @@ async fn create_review(
 
     let result = sqlx::query_as::<_, PerformanceReview>(
         r#"
-        INSERT INTO hrm.performance_reviews (id, employee_id, review_period, reviewer_id, status, created_at, updated_at)
+        INSERT INTO plugin_hrm.performance_reviews (id, employee_id, review_period, reviewer_id, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, 'draft', $5, $6)
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#
@@ -276,7 +276,7 @@ async fn get_review(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceReview>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
-        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE id = $1"
+        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM plugin_hrm.performance_reviews WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -307,7 +307,7 @@ async fn update_review(
 
     let result = sqlx::query_as::<_, PerformanceReview>(
         r#"
-        UPDATE hrm.performance_reviews
+        UPDATE plugin_hrm.performance_reviews
         SET
             reviewer_id = COALESCE($1, reviewer_id),
             status = COALESCE($2, status),
@@ -355,7 +355,7 @@ async fn delete_review(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let result =
-        sqlx::query("DELETE FROM hrm.performance_reviews WHERE id = $1 AND status = 'draft'")
+        sqlx::query("DELETE FROM plugin_hrm.performance_reviews WHERE id = $1 AND status = 'draft'")
             .bind(id)
             .execute(&state.db)
             .await;
@@ -414,7 +414,7 @@ async fn submit_review(
 
     let result = sqlx::query_as::<_, PerformanceReview>(
         r#"
-        UPDATE hrm.performance_reviews
+        UPDATE plugin_hrm.performance_reviews
         SET status = 'submitted', updated_at = $2
         WHERE id = $1 AND status = 'draft'
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
@@ -449,7 +449,7 @@ async fn approve_review(
 
     let result = sqlx::query_as::<_, PerformanceReview>(
         r#"
-        UPDATE hrm.performance_reviews
+        UPDATE plugin_hrm.performance_reviews
         SET status = 'approved', updated_at = $2
         WHERE id = $1 AND status = 'submitted'
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
@@ -490,7 +490,7 @@ async fn list_goals(
     let result = sqlx::query_as::<_, PerformanceGoal>(
         r#"
         SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
-        FROM hrm.performance_goals
+        FROM plugin_hrm.performance_goals
         WHERE ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -508,7 +508,7 @@ async fn list_goals(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.performance_goals
+                SELECT COUNT(*) FROM plugin_hrm.performance_goals
                 WHERE ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -558,7 +558,7 @@ async fn create_goal(
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
         r#"
-        INSERT INTO hrm.performance_goals (id, employee_id, title, description, target, weight, status, due_date, created_at, updated_at)
+        INSERT INTO plugin_hrm.performance_goals (id, employee_id, title, description, target, weight, status, due_date, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
         RETURNING id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at
         "#
@@ -622,7 +622,7 @@ async fn get_goal(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PerformanceGoal>> {
     let result = sqlx::query_as::<_, PerformanceGoal>(
-        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE id = $1"
+        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM plugin_hrm.performance_goals WHERE id = $1"
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -650,7 +650,7 @@ async fn update_goal(
 
     let result = sqlx::query_as::<_, PerformanceGoal>(
         r#"
-        UPDATE hrm.performance_goals
+        UPDATE plugin_hrm.performance_goals
         SET
             title = COALESCE($1, title),
             description = COALESCE($2, description),
@@ -694,7 +694,7 @@ async fn delete_goal(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.performance_goals WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_hrm.performance_goals WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -750,7 +750,7 @@ async fn get_employee_reviews(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PerformanceReview>(
-        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM hrm.performance_reviews WHERE employee_id = $1 ORDER BY created_at DESC"
+        "SELECT id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at FROM plugin_hrm.performance_reviews WHERE employee_id = $1 ORDER BY created_at DESC"
     )
     .bind(id)
     .fetch_all(&state.db)
@@ -779,7 +779,7 @@ async fn get_employee_goals(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, PerformanceGoal>(
-        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM hrm.performance_goals WHERE employee_id = $1 ORDER BY created_at DESC"
+        "SELECT id, employee_id, title, description, target, weight, achieved, status, due_date, created_at, updated_at FROM plugin_hrm.performance_goals WHERE employee_id = $1 ORDER BY created_at DESC"
     )
     .bind(id)
     .fetch_all(&state.db)

@@ -169,7 +169,7 @@ async fn create_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        INSERT INTO pm.projects (
+        INSERT INTO plugin_pm.projects (
             id, name, code, description, project_type, status, leader,
             start_date, end_date, budget, progress, project_config, benefit_target,
             risk_level, priority, tags, parent_id, workspace_id, created_by,
@@ -263,7 +263,7 @@ async fn update_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        UPDATE pm.projects
+        UPDATE plugin_pm.projects
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             status = COALESCE($3, status),

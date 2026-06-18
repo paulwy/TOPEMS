@@ -1,128 +1,59 @@
-import {
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  Cell,
-} from "recharts";
-import { getChartColor } from "./chartTheme";
-import { CustomTooltip } from "./CustomTooltip";
+import React from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface BarChartProps {
   data: any[];
-  xKey: string;
-  yKeys: { key: string; name: string; color?: string }[];
+  title?: string;
+  xKey?: string;
+  yKey?: string;
+  yKeys?: { key: string; name: string; color?: string }[];
+  color?: string;
   height?: number;
-  showLegend?: boolean;
-  stacked?: boolean;
-  horizontal?: boolean;
-  onBarClick?: (data: any) => void;
-  animate?: boolean;
-  showGrid?: boolean;
-  showValue?: boolean;
   barRadius?: number | [number, number, number, number];
-  barWidth?: number;
+  animate?: boolean;
 }
 
-export const BarChart: React.FC<BarChartProps> = ({
+export const BarChartComponent: React.FC<BarChartProps> = ({
   data,
-  xKey,
+  title,
+  xKey = "name",
+  yKey = "value",
   yKeys,
-  height = 300,
-  showLegend = true,
-  stacked = false,
-  horizontal = false,
-  onBarClick,
-  animate = true,
-  showGrid = true,
-  showValue = false,
-  barRadius = 4,
-  barWidth,
+  color = "#3b82f6",
+  height = 200,
+  barRadius = [4, 4, 0, 0],
 }) => {
-  const handleClick = (data: any) => {
-    onBarClick?.(data);
-  };
+  const series = yKeys || [{ key: yKey, name: yKey, color }];
 
   return (
-    <div style={{ height }}>
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        minWidth={0}
-        minHeight={0}
-      >
-        <RechartsBarChart
-          data={data}
-          layout={horizontal ? "vertical" : "horizontal"}
-        >
-          {showGrid && (
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#E2E8F0"
-              vertical={horizontal}
-              horizontal={!horizontal}
+    <div>
+      {title && <h4 style={{ marginBottom: "16px", color: "#1e293b", fontWeight: 600 }}>{title}</h4>}
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <XAxis dataKey={xKey} tick={{ fill: "#64748b", fontSize: 12 }} />
+          <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: "white", 
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+              padding: "12px",
+            }}
+          />
+          {series.map((item) => (
+            <Bar 
+              key={item.key} 
+              dataKey={item.key} 
+              name={item.name}
+              fill={item.color || color} 
+              radius={Array.isArray(barRadius) ? barRadius : [barRadius, barRadius, 0, 0]} 
             />
-          )}
-          <XAxis
-            type={horizontal ? "number" : "category"}
-            dataKey={horizontal ? undefined : xKey}
-            tick={{ fill: "#64748B", fontSize: 12 }}
-            axisLine={{ stroke: "#E2E8F0" }}
-            tickLine={{ stroke: "#E2E8F0" }}
-          />
-          <YAxis
-            type={horizontal ? "category" : "number"}
-            dataKey={horizontal ? xKey : undefined}
-            tick={{ fill: "#64748B", fontSize: 12 }}
-            axisLine={{ stroke: "#E2E8F0" }}
-            tickLine={{ stroke: "#E2E8F0" }}
-            width={50}
-          />
-          <Tooltip
-            content={<CustomTooltip />}
-            cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
-          />
-          {showLegend && (
-            <Legend
-              wrapperStyle={{ paddingTop: "20px" }}
-              iconType="circle"
-              iconSize={8}
-              formatter={(value) => (
-                <span className="text-sm text-slate-600">{value}</span>
-              )}
-            />
-          )}
-          {yKeys.map((yKey, index) => (
-            <Bar
-              key={yKey.key}
-              dataKey={yKey.key}
-              name={yKey.name}
-              fill={yKey.color || getChartColor(index)}
-              stackId={stacked ? "a" : undefined}
-              onClick={handleClick}
-              cursor={onBarClick ? "pointer" : "default"}
-              radius={barRadius}
-              maxBarSize={barWidth || 40}
-              animationDuration={animate ? 800 + index * 100 : 0}
-              animationEasing="ease-out"
-            >
-              {showValue &&
-                data.map((_, i) => (
-                  <Cell
-                    key={`cell-${i}`}
-                    fill={yKey.color || getChartColor(index)}
-                  />
-                ))}
-            </Bar>
           ))}
-        </RechartsBarChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
 };
 
-export default BarChart;
+export default BarChartComponent;

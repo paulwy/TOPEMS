@@ -76,7 +76,7 @@ async fn create_milestone(
 
     let result = sqlx::query_as::<_, ProjectMilestone>(
         r#"
-        INSERT INTO pm.project_milestones (
+        INSERT INTO plugin_pm.project_milestones (
             id, project_id, name, description, date, status,
             phase_id, acceptance_criteria, created_at, updated_at
         )
@@ -158,7 +158,7 @@ async fn update_milestone(
 
     let result = sqlx::query_as::<_, ProjectMilestone>(
         r#"
-        UPDATE pm.project_milestones
+        UPDATE plugin_pm.project_milestones
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
             date = COALESCE($3, date),

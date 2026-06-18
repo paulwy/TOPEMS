@@ -73,7 +73,7 @@ async fn create_member(
 
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
-        INSERT INTO pm.project_members (
+        INSERT INTO plugin_pm.project_members (
             id, project_id, user_id, role, responsibilities,
             start_date, end_date, created_at, updated_at
         )
@@ -156,7 +156,7 @@ async fn update_member(
 
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
-        UPDATE pm.project_members
+        UPDATE plugin_pm.project_members
         SET role = COALESCE($1, role),
             responsibilities = COALESCE($2, responsibilities),
             start_date = COALESCE($3, start_date),

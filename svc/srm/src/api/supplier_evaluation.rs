@@ -93,7 +93,7 @@ async fn list_evaluations(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
         SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        FROM srm.supplier_evaluations
+        FROM plugin_srm.supplier_evaluations
         WHERE ($1::text IS NULL OR evaluation_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -117,7 +117,7 @@ async fn list_evaluations(
         Ok(evaluations) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM srm.supplier_evaluations
+                SELECT COUNT(*) FROM plugin_srm.supplier_evaluations
                 WHERE ($1::text IS NULL OR evaluation_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -186,7 +186,7 @@ async fn create_evaluation(
 
     // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
     )
     .bind(supplier_id)
     .fetch_one(&state.db)
@@ -201,7 +201,7 @@ async fn create_evaluation(
 
     // 检查评估编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_evaluations WHERE evaluation_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE evaluation_no = $1",
     )
     .bind(&req.evaluation_no)
     .fetch_one(&state.db)
@@ -246,7 +246,7 @@ async fn create_evaluation(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        INSERT INTO srm.supplier_evaluations (id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at)
+        INSERT INTO plugin_srm.supplier_evaluations (id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         "#,
@@ -294,7 +294,7 @@ async fn get_evaluation(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
         SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        FROM srm.supplier_evaluations WHERE id = $1
+        FROM plugin_srm.supplier_evaluations WHERE id = $1
         "#,
     )
     .bind(id)
@@ -329,7 +329,7 @@ async fn update_evaluation(
     }
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        "SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM srm.supplier_evaluations WHERE id = $1",
+        "SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM plugin_srm.supplier_evaluations WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -364,7 +364,7 @@ async fn update_evaluation(
         let supplier_uuid_val = supplier_uuid.unwrap();
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
         )
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
@@ -421,7 +421,7 @@ async fn update_evaluation(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        UPDATE srm.supplier_evaluations SET
+        UPDATE plugin_srm.supplier_evaluations SET
             supplier_id = $2, evaluation_no = $3, evaluator = $4, overall_score = $5, quality_score = $6, delivery_score = $7, service_score = $8, price_score = $9, comments = $10, status = $11, updated_at = $12
         WHERE id = $1
         RETURNING id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
@@ -464,7 +464,7 @@ async fn delete_evaluation(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM srm.supplier_evaluations WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_srm.supplier_evaluations WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -495,7 +495,7 @@ async fn get_evaluation_history(
 
     // 验证供应商是否存在
     let supplier_exists =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.suppliers WHERE id = $1")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1")
             .bind(id)
             .fetch_one(&state.db)
             .await;
@@ -510,7 +510,7 @@ async fn get_evaluation_history(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
         SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        FROM srm.supplier_evaluations
+        FROM plugin_srm.supplier_evaluations
         WHERE supplier_id = $1
         ORDER BY evaluation_date DESC
         "#,

@@ -120,7 +120,7 @@ async fn get_init_progress(
     let steps = sqlx::query_as::<_, InitializationStatus>(
         r#"
         SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
-        FROM hrm.initialization_status
+        FROM plugin_hrm.initialization_status
         WHERE organization_id = $1
         ORDER BY step_order
         "#,
@@ -139,7 +139,7 @@ async fn get_init_progress(
                 .unwrap_or(5);
 
             let company_result = sqlx::query_scalar::<_, Uuid>(
-                "SELECT id FROM shared.companies WHERE organization_id = $1 AND name != '我的公司' LIMIT 1"
+                "SELECT id FROM public.companies WHERE organization_id = $1 AND name != '我的公司' LIMIT 1"
             )
             .bind(org_id)
             .fetch_optional(&state.db)
@@ -191,7 +191,7 @@ async fn setup_company_info(
     // 更新公司信息
     let result = sqlx::query_as::<_, Company>(
         r#"
-        UPDATE shared.companies SET
+        UPDATE public.companies SET
             name = $2,
             short_name = COALESCE($3, short_name),
             registration_number = COALESCE($4, registration_number),
@@ -226,7 +226,7 @@ async fn setup_company_info(
             // 更新初始化状态
             let _ = sqlx::query(
                 r#"
-                UPDATE hrm.initialization_status
+                UPDATE plugin_hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'company_info'
                 "#,
@@ -239,7 +239,7 @@ async fn setup_company_info(
             // 记录日志
             let _ = sqlx::query(
                 r#"
-                INSERT INTO hrm.initialization_logs (id, organization_id, step_name, action, new_data, created_at)
+                INSERT INTO plugin_hrm.initialization_logs (id, organization_id, step_name, action, new_data, created_at)
                 VALUES ($1, $2, 'company_info', 'update', $3, $4)
                 "#
             )
@@ -311,7 +311,7 @@ async fn setup_departments(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Department>(
             r#"
-            INSERT INTO shared.departments (id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
+            INSERT INTO public.departments (id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
             "#,
@@ -348,7 +348,7 @@ async fn setup_departments(
     // 更新初始化状态
     let _ = sqlx::query(
         r#"
-        UPDATE hrm.initialization_status
+        UPDATE plugin_hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'departments'
         "#,
@@ -413,7 +413,7 @@ async fn setup_positions(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Position>(
             r#"
-            INSERT INTO hrm.positions (id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at)
+            INSERT INTO plugin_hrm.positions (id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, organization_id, company_id, department_id, name, code, level, description, status, created_at, updated_at
             "#,
@@ -450,7 +450,7 @@ async fn setup_positions(
     // 更新初始化状态
     let _ = sqlx::query(
         r#"
-        UPDATE hrm.initialization_status
+        UPDATE plugin_hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'positions'
         "#,
@@ -520,7 +520,7 @@ async fn setup_admin_user(
 
     let result = sqlx::query_as::<_, Employee>(
         r#"
-        INSERT INTO shared.employees (
+        INSERT INTO public.employees (
             id, organization_id, company_id, department_id, position_id,
             employee_number, name, gender, birth_date, hire_date,
             id_card_number, email, phone,
@@ -560,7 +560,7 @@ async fn setup_admin_user(
             // 更新初始化状态
             let _ = sqlx::query(
                 r#"
-                UPDATE hrm.initialization_status
+                UPDATE plugin_hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'admin_user'
                 "#,
@@ -617,7 +617,7 @@ async fn complete_initialization(
     let steps = sqlx::query_as::<_, InitializationStatus>(
         r#"
         SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
-        FROM hrm.initialization_status
+        FROM plugin_hrm.initialization_status
         WHERE organization_id = $1 AND step_name != 'completion'
         ORDER BY step_order
         "#,
@@ -644,7 +644,7 @@ async fn complete_initialization(
             // 更新完成状态
             let _ = sqlx::query(
                 r#"
-                UPDATE hrm.initialization_status
+                UPDATE plugin_hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'completion'
                 "#,

@@ -84,7 +84,7 @@ async fn create_risk(
     let now = Utc::now();
 
     let risk = sqlx::query_as::<_, ProjectRisk>(
-        "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *"
     )
     .bind(id)
@@ -127,7 +127,7 @@ async fn update_risk(
     Json(req): Json<UpdateRiskRequest>,
 ) -> Json<ApiResponse<ProjectRisk>> {
     let risk = sqlx::query_as::<_, ProjectRisk>(
-        "UPDATE pm.project_risks SET
+        "UPDATE plugin_pm.project_risks SET
             risk_name = COALESCE($1, risk_name),
             risk_description = COALESCE($2, risk_description),
             risk_category = COALESCE($3, risk_category),
@@ -185,7 +185,7 @@ async fn get_risk_events(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<RiskEvent>>> {
     let events = sqlx::query_as::<_, RiskEvent>(
-        "SELECT * FROM pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC",
+        "SELECT * FROM plugin_pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC",
     )
     .bind(id)
     .fetch_all(&pool)
@@ -212,7 +212,7 @@ async fn create_risk_event(
     let now = Utc::now();
 
     let event = sqlx::query_as::<_, RiskEvent>(
-        "INSERT INTO pm.risk_events (id, risk_id, event_type, event_description, occurred_at, reported_by, created_at)
+        "INSERT INTO plugin_pm.risk_events (id, risk_id, event_type, event_description, occurred_at, reported_by, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $5) RETURNING *"
     )
     .bind(event_id)
