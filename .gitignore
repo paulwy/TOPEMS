@@ -24,6 +24,16 @@ frontend/build/
 frontend/.vite/
 frontend/test-results/
 
+# Apps
+apps/core/dist/
+apps/core/.vite/
+apps/web/dist/
+apps/web/.vite/
+
+# Packages
+packages/**/dist/
+packages/**/.vite/
+
 # Backend Rust
 **/target/
 **/Cargo.lock
