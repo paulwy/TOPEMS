@@ -111,9 +111,9 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
           left: 0,
           right: 0,
           height: "3px",
-          background: item.status === "running" 
+          background: item.status === "online" 
             ? "linear-gradient(90deg, #22c55e, #16a34a)"
-            : item.status === "warning"
+            : item.status === "beta"
             ? "linear-gradient(90deg, #f59e0b, #ca8a04)"
             : "linear-gradient(90deg, #94a3b8, #64748b)",
           transition: "opacity 0.3s ease",
@@ -137,7 +137,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({
             boxShadow: isHovered
               ? `0 8px 24px ${colorToGradient[item.color] || "#3b82f6"}40`
               : "0 4px 12px rgba(0,0,0,0.15)",
-            animation: item.status === "running" ? "glow 2s ease-in-out infinite" : "none",
+            animation: item.status === "online" ? "glow 2s ease-in-out infinite" : "none",
           }}
         >
           <Icon

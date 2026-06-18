@@ -15,7 +15,7 @@ export interface ModuleCardConfig {
   icon: string;
   path: string;
   permission?: string;
-  status?: 'running' | 'warning' | 'stopped';
+  status?: 'online' | 'beta' | 'plan' | 'new';
 }
 
 export interface PluginNavConfig {
@@ -197,7 +197,7 @@ const registerDefaultModules = () => {
       name: "客户关系管理",
       icon: "Users",
       path: "/crm",
-      status: "warning",
+      status: "beta",
       order: 5,
     },
   });
@@ -235,7 +235,7 @@ const registerDefaultModules = () => {
       name: "地理信息系统",
       icon: "Map",
       path: "/gis",
-      status: "stopped",
+      status: "plan",
       order: 7,
     },
   });
