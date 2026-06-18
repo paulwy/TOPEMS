@@ -160,16 +160,142 @@ pub async fn login(
     }))
 }
 
+#[derive(Debug, Clone, Deserialize)]
+struct RegisterRequest {
+    username: String,
+    email: String,
+    password: String,
+    full_name: Option<String>,
+}
+
 pub async fn register(
-    State(_state): State<crate::AppState>,
+    State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM auth register called with: {:?}", payload);
-    Json(serde_json::json!({
-        "success": true,
-        "message": "register success",
-        "data": null
-    }))
+    let username = payload.get("username").and_then(|v| v.as_str()).unwrap_or("");
+    let email = payload.get("email").and_then(|v| v.as_str()).unwrap_or("");
+    let password = payload.get("password").and_then(|v| v.as_str()).unwrap_or("");
+    let full_name = payload.get("full_name").and_then(|v| v.as_str()).map(|s| s.to_string());
+
+    tracing::info!("IAM auth register called with username: {}", username);
+
+    // 验证必填字段
+    if username.is_empty() || email.is_empty() || password.is_empty() {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "用户名、邮箱和密码不能为空",
+            "data": null,
+            "code": 400
+        }));
+    }
+
+    // 检查用户名是否已存在
+    match sqlx::query_as::<_, UserRow>(
+        "SELECT id, username, password_hash, email, full_name, status, is_superuser FROM core_users WHERE username = $1",
+    )
+    .bind(username)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(_)) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "用户名已存在",
+                "data": null,
+                "code": 409
+            }));
+        }
+        Ok(None) => {}
+        Err(e) => {
+            tracing::error!("查询用户失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    }
+
+    // 检查邮箱是否已存在
+    match sqlx::query_as::<_, UserRow>(
+        "SELECT id, username, password_hash, email, full_name, status, is_superuser FROM core_users WHERE email = $1",
+    )
+    .bind(email)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(_)) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "邮箱已被注册",
+                "data": null,
+                "code": 409
+            }));
+        }
+        Ok(None) => {}
+        Err(e) => {
+            tracing::error!("查询用户失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    }
+
+    // 哈希密码
+    let password_hash = match bcrypt::hash(password, bcrypt::DEFAULT_COST) {
+        Ok(h) => h,
+        Err(e) => {
+            tracing::error!("密码哈希失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
+    // 创建用户
+    let user_id = Uuid::new_v4();
+    match sqlx::query(
+        r#"
+        INSERT INTO core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, 'active', false, NOW(), NOW())
+        "#,
+    )
+    .bind(user_id)
+    .bind(username)
+    .bind(email)
+    .bind(&password_hash)
+    .bind(&full_name)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(_) => {
+            tracing::info!("用户注册成功: {}", username);
+            Json(serde_json::json!({
+                "success": true,
+                "message": "注册成功",
+                "data": {
+                    "user_id": user_id.to_string(),
+                    "username": username
+                }
+            }))
+        }
+        Err(e) => {
+            tracing::error!("创建用户失败: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": "注册失败",
+                "data": null,
+                "code": 500
+            }))
+        }
+    }
 }
 
 pub async fn refresh_token(
