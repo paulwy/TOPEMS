@@ -179,6 +179,105 @@ pluginAxios.interceptors.request.use((config) => {
   return config;
 });
 
+// Plugin Category type
+export interface PluginCategory {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+  icon?: string;
+  sort_order?: number;
+  plugin_count?: number;
+  is_active?: boolean;
+}
+
+// Plugin Version type
+export interface PluginVersion {
+  id: string;
+  plugin_id: string;
+  version: string;
+  release_notes?: string;
+  is_stable?: boolean;
+  is_latest?: boolean;
+  download_url?: string;
+  checksum?: string;
+  file_size?: number;
+  min_app_version?: string;
+  created_at: string;
+}
+
+// Plugin Review type
+export interface PluginReview {
+  id: string;
+  plugin_id: string;
+  user_id: string;
+  user_name?: string;
+  rating?: number;
+  title?: string;
+  content?: string;
+  is_verified_purchase?: boolean;
+  is_featured?: boolean;
+  helpful_count?: number;
+  created_at: string;
+}
+
+// Marketplace Summary type
+export interface MarketplaceSummary {
+  total_plugins: number;
+  categories: PluginCategory[];
+  featured_plugins: Plugin[];
+  new_plugins: Plugin[];
+  top_rated: Plugin[];
+}
+
+// Plugin List Response
+export interface PluginListResponse {
+  plugins: Plugin[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+// Marketplace API
+const MARKETPLACE_API = '/api/core/plugin/marketplace';
+
+export const getMarketplaceSummary = async (): Promise<ApiResponse<MarketplaceSummary>> => {
+  const response = await pluginAxios.get(MARKETPLACE_API);
+  return response.data;
+};
+
+export const getPluginCategories = async (): Promise<ApiResponse<PluginCategory[]>> => {
+  const response = await pluginAxios.get(`${MARKETPLACE_API}/categories`);
+  return response.data;
+};
+
+export const listPlugins = async (params?: {
+  search?: string;
+  category?: string;
+  sort_by?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<ApiResponse<PluginListResponse>> => {
+  const response = await pluginAxios.get(`${MARKETPLACE_API}/list`, { params });
+  return response.data;
+};
+
+export const getPlugin = async (code: string): Promise<ApiResponse<Plugin>> => {
+  const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}`);
+  return response.data;
+};
+
+export const getPluginVersions = async (code: string): Promise<ApiResponse<PluginVersion[]>> => {
+  const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/versions`);
+  return response.data;
+};
+
+export const getPluginReviews = async (code: string): Promise<ApiResponse<PluginReview[]>> => {
+  const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/reviews`);
+  return response.data;
+};
+
 // Plugin API
 export const pluginApi = {
   /**

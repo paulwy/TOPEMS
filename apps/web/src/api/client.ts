@@ -57,12 +57,35 @@ type TypedAxiosInstance = Omit<
 };
 
 const AI_TIMEOUT = 120000;
+const DEFAULT_TIMEOUT = 60000;
 
-// 禁用 Axios 的自动错误日志
-axios.interceptors.request.use((config) => {
-  // 不做任何事情，只是为了确保拦截器被注册
-  return config;
-});
+const isTimeoutError = (error: any): boolean => {
+  return (
+    error.code === "ECONNABORTED" ||
+    (error.response?.statusText || "").toLowerCase() === "timeout" ||
+    error.message?.includes("timeout")
+  );
+};
+
+const handleTimeoutError = (url: string): void => {
+  logger.error(`Request timeout: ${url}`);
+};
+
+const handleNetworkError = (url: string): void => {
+  logger.error(`Network error: ${url}`);
+};
+
+const handleAuthError = (): void => {
+  if (localStorage.getItem("token")) {
+    logger.warn("Unauthorized, clearing invalid token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("roles");
+    localStorage.removeItem("permissions");
+    apiClient.clearAuthToken();
+    window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+  }
+};
 
 // 判断是否是不需要认证的路径
 const isPublicPath = (url: string): boolean => {
@@ -254,7 +277,6 @@ class ApiClient {
 
       client.interceptors.response.use(
         (response: AxiosResponse) => {
-          // Debug log for hrm responses
           const url = response.config?.url || "";
           const baseURL = response.config?.baseURL || "";
           if (
@@ -272,9 +294,9 @@ class ApiClient {
           return response.data;
         },
         (error) => {
-          // Debug log for hrm errors
           const url = error.config?.url || "";
           const baseURL = error.config?.baseURL || "";
+
           if (
             baseURL.includes("/hrm") ||
             url.includes("/hrm") ||
@@ -292,33 +314,34 @@ class ApiClient {
             });
           }
 
-          // 处理请求取消或中止的情况
           if (
             error.code === "ERR_CANCELED" ||
-            error.code === "ECONNABORTED" ||
             error.name === "AbortError"
           ) {
-            logger.debug("Request was canceled or aborted:", error.config?.url);
+            logger.debug("Request was canceled or aborted:", url);
+            return Promise.reject(error);
+          }
+
+          if (isTimeoutError(error)) {
+            handleTimeoutError(url);
             return Promise.reject(error);
           }
 
           if (!error.response || error.code === "ERR_NETWORK") {
+            handleNetworkError(url);
             return Promise.reject(error);
           }
 
           if (error.response?.status === 401) {
             const currentPath = window.location.pathname;
-            // Skip token clearing for notification service - it may return 401
-            // even with a valid IAM token (separate user database)
             const isNotificationService =
               error.config?.baseURL?.includes("8002") ||
               error.config?.baseURL?.startsWith("notification");
-            // Skip unauthorized handling for notification service
+
             if (isNotificationService) {
               logger.debug(
                 "Notification service returned 401, skipping auth cleanup",
               );
-              // Return a successful response instead of rejecting to prevent logout
               return Promise.resolve({
                 code: 0,
                 success: true,
@@ -327,31 +350,21 @@ class ApiClient {
                 timestamp: new Date().toISOString(),
               });
             }
+
             if (
               currentPath !== "/login" &&
               currentPath !== "/register" &&
               !isNotificationService
             ) {
-              if (localStorage.getItem("token")) {
-                logger.warn("Unauthorized, clearing invalid token");
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                localStorage.removeItem("roles");
-                localStorage.removeItem("permissions");
-                apiClient.clearAuthToken();
-                // Dispatch custom event to notify AuthProvider to update React state
-                window.dispatchEvent(new CustomEvent("auth:unauthorized"));
-              }
+              handleAuthError();
             }
           }
 
-          // 减少健康检查错误和 404 错误在开发环境的日志输出
-          const isHealthCheck = error.config?.url?.includes("/health");
+          const isHealthCheck = url.includes("/health");
           const isNotFound = error.response?.status === 404;
           const isServiceUnavailable = error.response?.status === 503;
           const isServerError = error.response?.status === 500;
 
-          // 只在生产环境或者不是健康检查/404/503的情况下才记录错误
           if (
             isProduction() ||
             !(
