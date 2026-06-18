@@ -15,7 +15,7 @@ export interface ModuleCardConfig {
   icon: string;
   path: string;
   permission?: string;
-  status?: 'online' | 'beta' | 'plan' | 'new';
+  status?: "online" | "beta" | "plan" | "new";
 }
 
 export interface PluginNavConfig {
@@ -91,7 +91,7 @@ class NavigationRegistry {
     return Array.from(codes);
   }
 
-  updateModuleStatus(pluginCode: string, status: "online" | "warning" | "stopped"): void {
+  updateModuleStatus(pluginCode: string, status: "online" | "beta" | "plan" | "new"): void {
     const card = this.moduleCards.get(pluginCode);
     if (card) {
       card.status = status;
