@@ -1030,7 +1030,7 @@ pub struct PluginDetailsResponse {
 
 /// Compare two plugin versions
 pub async fn compare_plugin_versions(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Path((plugin_code, from_version, to_version)): Path<(String, String, String)>,
 ) -> Json<CoreResponse<VersionCompareResult>> {
     tracing::info!("[Plugin] Comparing versions {} -> {} for plugin: {}", from_version, to_version, plugin_code);
@@ -1128,7 +1128,7 @@ pub async fn check_plugin_updates(
         has_update,
         is_minor,
         is_major,
-        release_notes: latest_version_info.and_then(|v| v.release_notes),
+        release_notes: latest_version_info.as_ref().and_then(|v| v.release_notes.clone()),
         update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
     };
 
@@ -1262,7 +1262,7 @@ pub async fn check_all_updates(
             has_update,
             is_minor,
             is_major,
-            release_notes: latest_version_info.and_then(|v| v.release_notes),
+            release_notes: latest_version_info.as_ref().and_then(|v| v.release_notes.clone()),
             update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
         });
     }
@@ -1829,7 +1829,7 @@ pub async fn get_upgrade_schedule(
 
 /// Configure upgrade schedule
 pub async fn configure_upgrade_schedule(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
     Json(req): Json<UpgradeScheduleRequest>,
 ) -> Json<CoreResponse<UpgradeSchedule>> {

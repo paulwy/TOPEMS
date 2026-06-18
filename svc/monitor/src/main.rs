@@ -29,8 +29,6 @@ use topems_shared::{
 mod api;
 mod models;
 mod plugin;
-mod repositories;
-mod services;
 
 use api::ApiState;
 

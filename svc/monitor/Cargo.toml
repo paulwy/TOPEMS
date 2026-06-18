@@ -24,6 +24,7 @@ topems-shared = { path = "../../lib" }
 utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
+reqwest.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true
