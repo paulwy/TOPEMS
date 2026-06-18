@@ -5,7 +5,7 @@ import { lazyWithRetry } from "./utils";
 const lazy = lazyWithRetry;
 
 // RS 研发管理页面组件
-const RsDashboardPage = lazy(() => import("../pages/rs/RsDashboardPage"));
+const RsDashboardPage = lazy(() => import("../pages/rs/DashboardPage"));
 const RsProjectListPage = lazy(() => import("../pages/rs/RsProjectListPage"));
 const RsProjectDetailPage = lazy(
   () => import("../pages/rs/RsProjectDetailPage"),

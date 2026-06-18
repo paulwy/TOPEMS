@@ -27,7 +27,7 @@ impl SrmAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -60,7 +60,7 @@ impl SrmAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -93,7 +93,7 @@ impl SrmAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -126,7 +126,7 @@ impl SrmAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -159,7 +159,7 @@ impl SrmAuditService {
 
         sqlx::query(
             r#"
-            INSERT INTO shared.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
+            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, details, status, error_message)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
@@ -191,7 +191,7 @@ impl SrmAuditService {
                 id, action, resource as entity_type, resource_id as entity_id,
                 user_id::text, details as request_details, status, error_message,
                 ip_address, user_agent, created_at
-            FROM shared.audit_logs
+            FROM public.audit_logs
             WHERE ($1::text IS NULL OR action = $1)
               AND ($2::text IS NULL OR resource = $2)
               AND ($3::text IS NULL OR user_id::text = $3)

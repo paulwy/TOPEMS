@@ -10,7 +10,7 @@ import {
   ArrowUpRight,
   RefreshCw,
 } from "lucide-react";
-import { BarChart } from "@/components/charts/BarChart";
+import BarChart from "@/components/charts/BarChart";
 import {
   Bar,
   XAxis,

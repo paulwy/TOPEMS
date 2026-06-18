@@ -199,7 +199,7 @@ async fn calculate_benefits(
 
     let result = sqlx::query_as::<_, ProjectBenefit>(
         r#"
-        INSERT INTO pm.project_benefits (
+        INSERT INTO plugin_pm.project_benefits (
             id, project_id, period_type, period_date,
             planned_cost, actual_cost, planned_progress, actual_progress,
             planned_value, earned_value, actual_cost_eva,

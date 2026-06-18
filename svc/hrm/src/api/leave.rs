@@ -93,7 +93,7 @@ async fn list_leaves(
     let result = sqlx::query_as::<_, LeaveRequest>(
         r#"
         SELECT id, employee_id, leave_type, start_date, end_date, days, reason, status, approver_id, approved_at, rejection_reason, created_at, updated_at
-        FROM hrm.leave_requests
+        FROM plugin_hrm.leave_requests
         WHERE ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC

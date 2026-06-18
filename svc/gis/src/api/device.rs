@@ -61,7 +61,7 @@ pub async fn register_device(
 
     match sqlx::query_as::<_, Device>(
         r#"
-        INSERT INTO gis.devices (device_code, device_name, device_type, description, properties, registered_by)
+        INSERT INTO plugin_gis.devices (device_code, device_name, device_type, description, properties, registered_by)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         "#,
@@ -82,7 +82,7 @@ pub async fn register_device(
 
 /// 获取设备列表
 pub async fn list_devices(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices ORDER BY created_at DESC")
+    match sqlx::query_as::<_, Device>("SELECT * FROM plugin_gis.devices ORDER BY created_at DESC")
         .fetch_all(&pool)
         .await
     {
@@ -102,7 +102,7 @@ pub async fn get_device(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Device>> {
-    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices WHERE id = $1")
+    match sqlx::query_as::<_, Device>("SELECT * FROM plugin_gis.devices WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -158,7 +158,7 @@ pub async fn delete_device(
         return e;
     }
 
-    match sqlx::query("DELETE FROM gis.devices WHERE id = $1")
+    match sqlx::query("DELETE FROM plugin_gis.devices WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -186,7 +186,7 @@ pub async fn update_device_location(
     }
 
     // Verify device exists
-    match sqlx::query_as::<_, Device>("SELECT * FROM gis.devices WHERE id = $1")
+    match sqlx::query_as::<_, Device>("SELECT * FROM plugin_gis.devices WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -195,7 +195,7 @@ pub async fn update_device_location(
             // Insert location record
             match sqlx::query_as::<_, DeviceLocationRecord>(
                 r#"
-                INSERT INTO gis.device_location_records 
+                INSERT INTO plugin_gis.device_location_records 
                 (device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING *
@@ -229,13 +229,13 @@ pub async fn get_device_tracking(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Build query based on time range
     let sql = if query.start_time.is_some() && query.end_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
+        "SELECT * FROM plugin_gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
     } else if query.start_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 ORDER BY recorded_at DESC LIMIT $3"
+        "SELECT * FROM plugin_gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 ORDER BY recorded_at DESC LIMIT $3"
     } else if query.end_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at <= $2 ORDER BY recorded_at DESC LIMIT $3"
+        "SELECT * FROM plugin_gis.device_location_records WHERE device_id = $1 AND recorded_at <= $2 ORDER BY recorded_at DESC LIMIT $3"
     } else {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
+        "SELECT * FROM plugin_gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
     };
 
     let limit = query.limit.unwrap_or(100);
@@ -326,9 +326,9 @@ pub async fn get_device_history(
     let limit = query.limit.unwrap_or(50);
 
     let sql = if query.start_time.is_some() && query.end_time.is_some() {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
+        "SELECT * FROM plugin_gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
     } else {
-        "SELECT * FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
+        "SELECT * FROM plugin_gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
     };
 
     match if query.start_time.is_some() && query.end_time.is_some() {

@@ -15,14 +15,12 @@ const WorkStationPage = lazy(() => import("../pages/mes/WorkStationPage"));
 const ProductionRecordPage = lazy(
   () => import("../pages/mes/ProductionRecordPage"),
 );
+const MesDashboardPage = lazy(() => import("../pages/mes/DashboardPage"));
 
 export const mesRoutes: RouteConfig[] = [
   {
     path: "/mes",
-    element: React.createElement(Navigate, {
-      to: "/mes/orders",
-      replace: true,
-    }),
+    element: MesDashboardPage,
     requiredPermissions: ["mes:read"],
     module: "mes",
     action: "read",

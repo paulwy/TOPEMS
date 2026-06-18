@@ -14,6 +14,13 @@ const BIModuleDetailPage = lazy(() => import("../pages/bi/BIModuleDetailPage"));
 
 export const biRoutes: RouteConfig[] = [
   {
+    path: "/bi",
+    element: BIDashboardPage,
+    requiredPermissions: [],
+    module: "bi",
+    action: "read",
+  },
+  {
     path: "/bi/dashboard",
     element: BIDashboardPage,
     requiredPermissions: [],

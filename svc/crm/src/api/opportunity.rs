@@ -68,7 +68,7 @@ async fn list_opportunities(
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
-        FROM crm.opportunities
+        FROM plugin_crm.opportunities
         WHERE ($1::text IS NULL OR name ILIKE $1)
           AND ($2::text IS NULL OR stage = $2)
           AND ($3::uuid IS NULL OR customer_id = $3)
@@ -88,7 +88,7 @@ async fn list_opportunities(
         Ok(opportunities) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM crm.opportunities
+                SELECT COUNT(*) FROM plugin_crm.opportunities
                 WHERE ($1::text IS NULL OR name ILIKE $1)
                   AND ($2::text IS NULL OR stage = $2)
                   AND ($3::uuid IS NULL OR customer_id = $3)
@@ -139,7 +139,7 @@ async fn create_opportunity(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        INSERT INTO crm.opportunities (
+        INSERT INTO plugin_crm.opportunities (
             id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'prospecting', $5, $6, $7, $8, $9)
         RETURNING id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
@@ -215,7 +215,7 @@ async fn get_opportunity(
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
-        FROM crm.opportunities WHERE id = $1
+        FROM plugin_crm.opportunities WHERE id = $1
         "#,
     )
     .bind(id)
@@ -246,7 +246,7 @@ async fn update_opportunity(
 
     let existing = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM crm.opportunities WHERE id = $1
+        SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM plugin_crm.opportunities WHERE id = $1
         "#,
     )
     .bind(id)
@@ -272,7 +272,7 @@ async fn update_opportunity(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        UPDATE crm.opportunities SET
+        UPDATE plugin_crm.opportunities SET
             name = $2, customer_id = $3, value = $4, stage = $5, probability = $6, 
             close_date = $7, notes = $8, updated_at = $9
         WHERE id = $1
@@ -346,7 +346,7 @@ async fn delete_opportunity(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.opportunities WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_crm.opportunities WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -412,7 +412,7 @@ async fn batch_delete_opportunities(
         return Json(api_error(400, "请选择要删除的销售机会"));
     }
 
-    let result = sqlx::query("DELETE FROM crm.opportunities WHERE id = ANY($1)")
+    let result = sqlx::query("DELETE FROM plugin_crm.opportunities WHERE id = ANY($1)")
         .bind(&req.ids)
         .execute(&state.db)
         .await;

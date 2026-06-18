@@ -66,7 +66,7 @@ pub async fn create_location(
 
     match sqlx::query_as::<_, Location>(
         r#"
-        INSERT INTO gis.locations (name, code, location_type, position, address, description, properties)
+        INSERT INTO plugin_gis.locations (name, code, location_type, position, address, description, properties)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#,
@@ -88,7 +88,7 @@ pub async fn create_location(
 
 /// 获取位置列表
 pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Location>("SELECT * FROM gis.locations ORDER BY created_at DESC")
+    match sqlx::query_as::<_, Location>("SELECT * FROM plugin_gis.locations ORDER BY created_at DESC")
         .fetch_all(&pool)
         .await
     {
@@ -108,7 +108,7 @@ pub async fn get_location(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Location>> {
-    match sqlx::query_as::<_, Location>("SELECT * FROM gis.locations WHERE id = $1")
+    match sqlx::query_as::<_, Location>("SELECT * FROM plugin_gis.locations WHERE id = $1")
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -132,7 +132,7 @@ pub async fn update_location(
 
     match sqlx::query_as::<_, Location>(
         r#"
-        UPDATE gis.locations 
+        UPDATE plugin_gis.locations 
         SET name = $1, location_type = $2, position = $3, address = $4, 
             description = $5, properties = $6, status = COALESCE($7, status), updated_at = NOW()
         WHERE id = $8
@@ -166,7 +166,7 @@ pub async fn delete_location(
         return e;
     }
 
-    match sqlx::query("DELETE FROM gis.locations WHERE id = $1")
+    match sqlx::query("DELETE FROM plugin_gis.locations WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await
@@ -190,9 +190,9 @@ pub async fn search_locations(
     let search_pattern = format!("%{}%", payload.query);
 
     let query = if payload.location_type.is_some() {
-        "SELECT * FROM gis.locations WHERE (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
+        "SELECT * FROM plugin_gis.locations WHERE (name ILIKE $1 OR code ILIKE $1) AND location_type = $2 ORDER BY created_at DESC"
     } else {
-        "SELECT * FROM gis.locations WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
+        "SELECT * FROM plugin_gis.locations WHERE name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
     };
 
     match if payload.location_type.is_some() {
@@ -225,7 +225,7 @@ pub async fn nearby_locations(
     Json(payload): Json<NearbyRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Get all locations and filter by distance
-    match sqlx::query_as::<_, Location>("SELECT * FROM gis.locations WHERE status = 'active'")
+    match sqlx::query_as::<_, Location>("SELECT * FROM plugin_gis.locations WHERE status = 'active'")
         .fetch_all(&pool)
         .await
     {

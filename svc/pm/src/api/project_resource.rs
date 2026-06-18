@@ -41,7 +41,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM pm.project_resources WHERE project_id = $1 ORDER BY resource_type ASC",
+        "SELECT * FROM plugin_pm.project_resources WHERE project_id = $1 ORDER BY resource_type ASC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -76,7 +76,7 @@ async fn add_resource(
 
     let result = sqlx::query_as::<_, ProjectResource>(
         r#"
-        INSERT INTO pm.project_resources (
+        INSERT INTO plugin_pm.project_resources (
             id, project_id, resource_type, resource_id, resource_service,
             role, start_date, end_date, allocation_percent, actual_hours,
             actual_cost, status, created_by, created_at, updated_at
@@ -127,7 +127,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        "SELECT * FROM pm.project_resources WHERE project_id = $1 AND id = $2",
+        "SELECT * FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2",
     )
     .bind(project_id)
     .bind(id)
@@ -164,7 +164,7 @@ async fn update_resource(
 
     let result = sqlx::query_as::<_, ProjectResource>(
         r#"
-        UPDATE pm.project_resources
+        UPDATE plugin_pm.project_resources
         SET role = COALESCE($1, role),
             start_date = COALESCE($2, start_date),
             end_date = COALESCE($3, end_date),
@@ -214,7 +214,7 @@ async fn remove_resource(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pm.project_resources WHERE project_id = $1 AND id = $2")
+    let result = sqlx::query("DELETE FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2")
         .bind(project_id)
         .bind(id)
         .execute(&pool)

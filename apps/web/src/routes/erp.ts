@@ -65,7 +65,15 @@ const CompanyStructurePage = lazy(
 );
 const OpeningBalancePage = lazy(() => import("../pages/finance/OpeningBalancePage"));
 
+  const ERPHomePage = lazy(() => import("../pages/erp/DashboardPage"));
 export const erpRoutes: RouteConfig[] = [
+  {
+    path: "/erp",
+    element: ERPHomePage,
+    requiredPermissions: ["erp:read"],
+    module: "erp",
+    action: "read",
+  },
   {
     path: "/assets",
     element: AssetManagementPage,

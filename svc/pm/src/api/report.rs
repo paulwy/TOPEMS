@@ -42,7 +42,7 @@ async fn get_project_reports(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectReport>>> {
     let reports = sqlx::query_as::<_, ProjectReport>(
-        "SELECT * FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC",
+        "SELECT * FROM plugin_pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -65,7 +65,7 @@ async fn get_report(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectReport>> {
     let report =
-        sqlx::query_as::<_, ProjectReport>("SELECT * FROM pm.project_reports WHERE id = $1")
+        sqlx::query_as::<_, ProjectReport>("SELECT * FROM plugin_pm.project_reports WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -95,7 +95,7 @@ async fn create_report(
     let now = Utc::now();
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9) RETURNING *"
     )
     .bind(id)
@@ -130,7 +130,7 @@ async fn generate_report(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let project_data = sqlx::query("SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1")
+    let project_data = sqlx::query("SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM plugin_pm.projects WHERE id = $1")
         .bind(project_id)
         .fetch_one(&pool)
         .await;
@@ -149,7 +149,7 @@ async fn generate_report(
         Err(_) => serde_json::json!({}),
     };
 
-    let phases_data = sqlx::query("SELECT name, sequence_number, progress, status FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number")
+    let phases_data = sqlx::query("SELECT name, sequence_number, progress, status FROM plugin_pm.project_phases WHERE project_id = $1 ORDER BY sequence_number")
         .bind(project_id)
         .fetch_all(&pool)
         .await;
@@ -170,7 +170,7 @@ async fn generate_report(
     };
 
     let milestones_data = sqlx::query(
-        "SELECT name, date, status FROM pm.project_milestones WHERE project_id = $1 ORDER BY date",
+        "SELECT name, date, status FROM plugin_pm.project_milestones WHERE project_id = $1 ORDER BY date",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -191,7 +191,7 @@ async fn generate_report(
     };
 
     let budget_data = sqlx::query(
-        "SELECT total_amount, allocated_amount, spent_amount FROM pm.budgets WHERE project_id = $1",
+        "SELECT total_amount, allocated_amount, spent_amount FROM plugin_pm.budgets WHERE project_id = $1",
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -221,7 +221,7 @@ async fn generate_report(
     let summary = generate_summary(&report_data);
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, generated_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, generated_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'generated', $7, $8, $9, $10, $11, $12) RETURNING *"
     )
     .bind(id)
@@ -272,7 +272,7 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
 
 async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let templates = sqlx::query_as::<_, ReportTemplate>(
-        "SELECT * FROM pm.report_templates WHERE is_active = true ORDER BY template_name",
+        "SELECT * FROM plugin_pm.report_templates WHERE is_active = true ORDER BY template_name",
     )
     .fetch_all(&pool)
     .await;
@@ -294,7 +294,7 @@ async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ReportTemplate>> {
     let template =
-        sqlx::query_as::<_, ReportTemplate>("SELECT * FROM pm.report_templates WHERE id = $1")
+        sqlx::query_as::<_, ReportTemplate>("SELECT * FROM plugin_pm.report_templates WHERE id = $1")
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -323,7 +323,7 @@ async fn create_template(
     let now = Utc::now();
 
     let template = sqlx::query_as::<_, ReportTemplate>(
-        "INSERT INTO pm.report_templates (id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at)
+        "INSERT INTO plugin_pm.report_templates (id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8) RETURNING *"
     )
     .bind(id)
@@ -355,7 +355,7 @@ async fn update_template(
     Json(req): Json<CreateReportTemplateRequest>,
 ) -> Json<ApiResponse<ReportTemplate>> {
     let template = sqlx::query_as::<_, ReportTemplate>(
-        "UPDATE pm.report_templates SET
+        "UPDATE plugin_pm.report_templates SET
             template_name = COALESCE($1, template_name),
             content = COALESCE($2, content),
             updated_at = $3
@@ -388,7 +388,7 @@ async fn delete_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("UPDATE pm.report_templates SET is_active = false WHERE id = $1")
+    let result = sqlx::query("UPDATE plugin_pm.report_templates SET is_active = false WHERE id = $1")
         .bind(id)
         .execute(&pool)
         .await;

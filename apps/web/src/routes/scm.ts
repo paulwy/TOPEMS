@@ -1,10 +1,10 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
 import type { RouteConfig } from "./utils";
 import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
+const ScmDashboardPage = lazy(() => import("../pages/scm/DashboardPage"));
 const ScmSupplierPage = lazy(() => import("../pages/scm/ScmSupplierPage"));
 const ScmPurchaseOrderPage = lazy(
   () => import("../pages/scm/ScmPurchaseOrderPage"),
@@ -20,10 +20,7 @@ const SupplierDetailPage = lazy(
 export const scmRoutes: RouteConfig[] = [
   {
     path: "/scm",
-    element: React.createElement(Navigate, {
-      to: "/scm/suppliers",
-      replace: true,
-    }),
+    element: ScmDashboardPage,
     requiredPermissions: ["scm:read"],
     module: "scm",
     action: "read",

@@ -238,7 +238,7 @@ impl AnalysisService {
             sqlx::query(
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at
-                FROM ai.analysis_results
+                FROM plugin_ai.analysis_results
                 WHERE analysis_type = $1
                 ORDER BY created_at DESC
                 LIMIT $2
@@ -250,7 +250,7 @@ impl AnalysisService {
             sqlx::query(
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at
-                FROM ai.analysis_results
+                FROM plugin_ai.analysis_results
                 ORDER BY created_at DESC
                 LIMIT $1
                 "#,
@@ -362,7 +362,7 @@ impl AnalysisService {
     ) -> Result<(), String> {
         sqlx::query(
             r#"
-            INSERT INTO ai.analysis_results (analysis_type, input_text, result, confidence)
+            INSERT INTO plugin_ai.analysis_results (analysis_type, input_text, result, confidence)
             VALUES ($1, $2, $3, $4)
             "#,
         )

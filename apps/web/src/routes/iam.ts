@@ -2,6 +2,7 @@ import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
 const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
+const IamDashboardPage = lazy(() => import("../pages/iam/DashboardPage"));
 const RoleManagementPage = lazy(() => import("../pages/admin/RoleManagementPage"));
 const PermissionManagementPage = lazy(
   () => import("../pages/admin/PermissionManagementPage"),
@@ -23,6 +24,13 @@ const PluginMarketplacePage = lazy(
 );
 
 export const iamRoutes: RouteConfig[] = [
+  {
+    path: "/iam",
+    element: IamDashboardPage,
+    requiredPermissions: ["iam:users_read"],
+    module: "iam",
+    action: "read",
+  },
   {
     path: "/iam/users",
     element: UserManagementPage,

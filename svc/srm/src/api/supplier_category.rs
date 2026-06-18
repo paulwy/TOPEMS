@@ -75,7 +75,7 @@ async fn list_categories(
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
         SELECT id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
-        FROM srm.supplier_categories
+        FROM plugin_srm.supplier_categories
         WHERE ($1::text IS NULL OR name ILIKE $1 OR category_no ILIKE $1)
           AND ($2::boolean IS NULL OR is_active = $2)
           AND ($3::uuid IS NULL OR parent_id = $3)
@@ -95,7 +95,7 @@ async fn list_categories(
         Ok(categories) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM srm.supplier_categories
+                SELECT COUNT(*) FROM plugin_srm.supplier_categories
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR category_no ILIKE $1)
                   AND ($2::boolean IS NULL OR is_active = $2)
                   AND ($3::uuid IS NULL OR parent_id = $3)
@@ -156,7 +156,7 @@ async fn create_category(
 
     // 检查分类编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_categories WHERE category_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE category_no = $1",
     )
     .bind(&req.category_no)
     .fetch_one(&state.db)
@@ -180,7 +180,7 @@ async fn create_category(
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.supplier_categories WHERE id = $1 AND is_active = true",
+            "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE id = $1 AND is_active = true",
         )
         .bind(parent_uuid.unwrap())
         .fetch_one(&state.db)
@@ -201,7 +201,7 @@ async fn create_category(
 
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
-        INSERT INTO srm.supplier_categories (id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at)
+        INSERT INTO plugin_srm.supplier_categories (id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
         "#,
@@ -244,7 +244,7 @@ async fn get_category(
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
         SELECT id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
-        FROM srm.supplier_categories WHERE id = $1
+        FROM plugin_srm.supplier_categories WHERE id = $1
         "#,
     )
     .bind(id)
@@ -279,7 +279,7 @@ async fn update_category(
     }
 
     let existing = sqlx::query_as::<_, SupplierCategory>(
-        "SELECT id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM srm.supplier_categories WHERE id = $1",
+        "SELECT id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM plugin_srm.supplier_categories WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -330,7 +330,7 @@ async fn update_category(
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.supplier_categories WHERE id = $1 AND is_active = true",
+            "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE id = $1 AND is_active = true",
         )
         .bind(parent_uuid.unwrap())
         .fetch_one(&state.db)
@@ -357,7 +357,7 @@ async fn update_category(
 
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
-        UPDATE srm.supplier_categories SET
+        UPDATE plugin_srm.supplier_categories SET
             category_no = $2, name = $3, description = $4, parent_id = $5, level = $6, is_active = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
@@ -398,7 +398,7 @@ async fn delete_category(
 
     // 检查是否有子分类
     let child_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_categories WHERE parent_id = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE parent_id = $1",
     )
     .bind(id)
     .fetch_one(&state.db)
@@ -413,7 +413,7 @@ async fn delete_category(
 
     // 检查是否有供应商使用该分类
     let supplier_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE category = (SELECT category_no FROM srm.supplier_categories WHERE id = $1)"
+        "SELECT COUNT(*) FROM srm.suppliers WHERE category = (SELECT category_no FROM plugin_srm.supplier_categories WHERE id = $1)"
     )
     .bind(id)
     .fetch_one(&state.db)
@@ -426,7 +426,7 @@ async fn delete_category(
         ));
     }
 
-    let result = sqlx::query("DELETE FROM srm.supplier_categories WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_srm.supplier_categories WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

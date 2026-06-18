@@ -66,7 +66,7 @@ async fn list_customers(
     let result = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
-        FROM crm.customers
+        FROM plugin_crm.customers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -84,7 +84,7 @@ async fn list_customers(
         Ok(customers) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM crm.customers
+                SELECT COUNT(*) FROM plugin_crm.customers
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -133,7 +133,7 @@ async fn create_customer(
 
     let result = sqlx::query_as::<_, Customer>(
         r#"
-        INSERT INTO crm.customers (
+        INSERT INTO plugin_crm.customers (
             id, name, code, industry, website, email, phone, address, notes, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
         RETURNING id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
@@ -208,7 +208,7 @@ async fn get_customer(
     let result = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
-        FROM crm.customers WHERE id = $1
+        FROM plugin_crm.customers WHERE id = $1
         "#,
     )
     .bind(id)
@@ -239,7 +239,7 @@ async fn update_customer(
 
     let existing = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at FROM crm.customers WHERE id = $1
+        SELECT id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at FROM plugin_crm.customers WHERE id = $1
         "#,
     )
     .bind(id)
@@ -267,7 +267,7 @@ async fn update_customer(
 
     let result = sqlx::query_as::<_, Customer>(
         r#"
-        UPDATE crm.customers SET
+        UPDATE plugin_crm.customers SET
             name = $2, code = $3, industry = $4, website = $5, email = $6, phone = $7, address = $8,
             status = $9, notes = $10, updated_at = $11
         WHERE id = $1
@@ -340,7 +340,7 @@ async fn delete_customer(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.customers WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_crm.customers WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -406,7 +406,7 @@ async fn batch_delete_customers(
         return Json(api_error(400, "请选择要删除的客户"));
     }
 
-    let result = sqlx::query("DELETE FROM crm.customers WHERE id = ANY($1)")
+    let result = sqlx::query("DELETE FROM plugin_crm.customers WHERE id = ANY($1)")
         .bind(&req.ids)
         .execute(&state.db)
         .await;

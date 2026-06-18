@@ -73,7 +73,7 @@ async fn list_products(
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
         SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        FROM srm.supplier_products
+        FROM plugin_srm.supplier_products
         WHERE ($1::text IS NULL OR name ILIKE $1 OR product_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -95,7 +95,7 @@ async fn list_products(
         Ok(products) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM srm.supplier_products
+                SELECT COUNT(*) FROM plugin_srm.supplier_products
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR product_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -162,7 +162,7 @@ async fn create_product(
 
     // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
     )
     .bind(supplier_id)
     .fetch_one(&state.db)
@@ -177,7 +177,7 @@ async fn create_product(
 
     // 检查产品编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_products WHERE product_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE product_no = $1",
     )
     .bind(&req.product_no)
     .fetch_one(&state.db)
@@ -220,7 +220,7 @@ async fn create_product(
 
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
-        INSERT INTO srm.supplier_products (id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at)
+        INSERT INTO plugin_srm.supplier_products (id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         "#,
@@ -269,7 +269,7 @@ async fn get_product(
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
         SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        FROM srm.supplier_products WHERE id = $1
+        FROM plugin_srm.supplier_products WHERE id = $1
         "#,
     )
     .bind(id)
@@ -304,7 +304,7 @@ async fn update_product(
     }
 
     let existing = sqlx::query_as::<_, SupplierProduct>(
-        "SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM srm.supplier_products WHERE id = $1",
+        "SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM plugin_srm.supplier_products WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -339,7 +339,7 @@ async fn update_product(
         let supplier_uuid_val = supplier_uuid.unwrap();
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
         )
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
@@ -399,7 +399,7 @@ async fn update_product(
 
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
-        UPDATE srm.supplier_products SET
+        UPDATE plugin_srm.supplier_products SET
             product_no = $2, supplier_id = $3, name = $4, description = $5, category = $6, unit = $7, unit_price = $8, currency = $9, min_order_qty = $10, lead_time_days = $11, status = $12, specifications = $13, updated_at = $14
         WHERE id = $1
         RETURNING id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
@@ -444,7 +444,7 @@ async fn delete_product(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM srm.supplier_products WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_srm.supplier_products WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

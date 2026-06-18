@@ -81,7 +81,7 @@ async fn list_contracts(
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
         SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM srm.supplier_contracts
+        FROM plugin_srm.supplier_contracts
         WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -103,7 +103,7 @@ async fn list_contracts(
         Ok(contracts) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM srm.supplier_contracts
+                SELECT COUNT(*) FROM plugin_srm.supplier_contracts
                 WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR supplier_id = $3)
@@ -170,7 +170,7 @@ async fn create_contract(
 
     // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
     )
     .bind(supplier_id)
     .fetch_one(&state.db)
@@ -185,7 +185,7 @@ async fn create_contract(
 
     // 检查合同编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.supplier_contracts WHERE contract_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE contract_no = $1",
     )
     .bind(&req.contract_no)
     .fetch_one(&state.db)
@@ -243,7 +243,7 @@ async fn create_contract(
 
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
-        INSERT INTO srm.supplier_contracts (id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at)
+        INSERT INTO plugin_srm.supplier_contracts (id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         "#,
@@ -292,7 +292,7 @@ async fn get_contract(
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
         SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM srm.supplier_contracts WHERE id = $1
+        FROM plugin_srm.supplier_contracts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -327,7 +327,7 @@ async fn update_contract(
     }
 
     let existing = sqlx::query_as::<_, SupplierContract>(
-        "SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM srm.supplier_contracts WHERE id = $1",
+        "SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM plugin_srm.supplier_contracts WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -362,7 +362,7 @@ async fn update_contract(
         let supplier_uuid_val = supplier_uuid.unwrap();
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
         )
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
@@ -417,7 +417,7 @@ async fn update_contract(
 
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
-        UPDATE srm.supplier_contracts SET
+        UPDATE plugin_srm.supplier_contracts SET
             contract_no = $2, supplier_id = $3, supplier_name = $4, title = $5, contract_type = $6, total_amount = $7, currency = $8, sign_date = $9, start_date = $10, end_date = $11, status = $12, remarks = $13, updated_at = $14
         WHERE id = $1
         RETURNING id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
@@ -462,7 +462,7 @@ async fn delete_contract(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM srm.supplier_contracts WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_srm.supplier_contracts WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -493,7 +493,7 @@ async fn get_contract_terms(
 
     // 验证合同是否存在
     let contract_exists =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM srm.supplier_contracts WHERE id = $1")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE id = $1")
             .bind(id)
             .fetch_one(&state.db)
             .await;
@@ -505,7 +505,7 @@ async fn get_contract_terms(
     let result = sqlx::query_as::<_, ContractTerm>(
         r#"
         SELECT id, contract_id, term_type, title, content, sort_order, created_at, updated_at
-        FROM srm.contract_terms
+        FROM plugin_srm.contract_terms
         WHERE contract_id = $1
         ORDER BY sort_order
         "#,

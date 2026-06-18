@@ -35,8 +35,11 @@ mod plugin_tests {
     }
 
     // ============ 插件接口测试 ============
+    // 注意: 这些测试需要 HRM 服务运行在 localhost:8011
+    // 使用 `cargo test -- --ignored` 运行这些集成测试
 
     #[tokio::test]
+    #[ignore]
     async fn test_plugin_info_endpoint() {
         let client = Client::new();
         let response = client
@@ -51,6 +54,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_plugin_info_structure() {
         let client = Client::new();
         let response = client

@@ -121,7 +121,7 @@ impl QAService {
         let rows = sqlx::query(
             r#"
             SELECT id, question, answer, context, sources, feedback, rating, created_at
-            FROM ai.qa_history
+            FROM plugin_ai.qa_history
             ORDER BY created_at DESC
             LIMIT $1
             "#,
@@ -161,7 +161,7 @@ impl QAService {
     ) -> Result<(), String> {
         sqlx::query(
             r#"
-            UPDATE ai.qa_history
+            UPDATE plugin_ai.qa_history
             SET feedback = $1, rating = $2
             WHERE id = $3
             "#,
@@ -284,7 +284,7 @@ impl QAService {
     ) -> Result<Uuid, String> {
         let id: Uuid = sqlx::query_scalar(
             r#"
-            INSERT INTO ai.qa_history (question, answer, context, sources)
+            INSERT INTO plugin_ai.qa_history (question, answer, context, sources)
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,

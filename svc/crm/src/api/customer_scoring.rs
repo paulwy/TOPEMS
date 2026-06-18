@@ -61,7 +61,7 @@ async fn list_customer_scores(
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
         SELECT id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
-        FROM crm.customer_scores
+        FROM plugin_crm.customer_scores
         WHERE ($1::uuid IS NULL OR customer_id = $1)
           AND ($2::text IS NULL OR score_level = $2)
         ORDER BY scoring_date DESC
@@ -79,7 +79,7 @@ async fn list_customer_scores(
         Ok(scores) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM crm.customer_scores
+                SELECT COUNT(*) FROM plugin_crm.customer_scores
                 WHERE ($1::uuid IS NULL OR customer_id = $1)
                   AND ($2::text IS NULL OR score_level = $2)
                 "#,
@@ -121,7 +121,7 @@ async fn get_customer_score(
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
         SELECT id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
-        FROM crm.customer_scores WHERE id = $1
+        FROM plugin_crm.customer_scores WHERE id = $1
         "#,
     )
     .bind(id)
@@ -150,7 +150,7 @@ async fn create_customer_score(
     }
 
     let customer = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM crm.customers WHERE id = $1",
+        "SELECT name FROM plugin_crm.customers WHERE id = $1",
     )
     .bind(&req.customer_id)
     .fetch_optional(&state.db)
@@ -178,7 +178,7 @@ async fn create_customer_score(
     });
 
     let last_score = sqlx::query_scalar::<_, Option<i32>>(
-        "SELECT score FROM crm.customer_scores WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1",
+        "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1",
     )
     .bind(&req.customer_id)
     .fetch_optional(&state.db)
@@ -196,7 +196,7 @@ async fn create_customer_score(
 
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
-        INSERT INTO crm.customer_scores (
+        INSERT INTO plugin_crm.customer_scores (
             id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
@@ -272,7 +272,7 @@ async fn update_customer_score(
 
     let existing = sqlx::query_as::<_, CustomerScore>(
         r#"
-        SELECT id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at FROM crm.customer_scores WHERE id = $1
+        SELECT id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at FROM plugin_crm.customer_scores WHERE id = $1
         "#,
     )
     .bind(id)
@@ -294,7 +294,7 @@ async fn update_customer_score(
 
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
-        UPDATE crm.customer_scores SET
+        UPDATE plugin_crm.customer_scores SET
             score = $2, score_level = $3, factors = $4, updated_at = $5
         WHERE id = $1
         RETURNING id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
@@ -360,7 +360,7 @@ async fn delete_customer_score(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.customer_scores WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_crm.customer_scores WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -430,7 +430,7 @@ async fn batch_calculate(
 
     for customer_id in &req.customer_ids {
         let customer_name = sqlx::query_scalar::<_, String>(
-            "SELECT name FROM crm.customers WHERE id = $1",
+            "SELECT name FROM plugin_crm.customers WHERE id = $1",
         )
         .bind(customer_id)
         .fetch_optional(&state.db)
@@ -448,7 +448,7 @@ async fn batch_calculate(
             };
 
             let last_score = sqlx::query_scalar::<_, Option<i32>>(
-                "SELECT score FROM crm.customer_scores WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1",
+                "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1",
             )
             .bind(customer_id)
             .fetch_optional(&state.db)
@@ -471,7 +471,7 @@ async fn batch_calculate(
 
             let result = sqlx::query_as::<_, CustomerScore>(
                 r#"
-                INSERT INTO crm.customer_scores (
+                INSERT INTO plugin_crm.customer_scores (
                     id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                 RETURNING id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at

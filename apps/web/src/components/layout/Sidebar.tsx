@@ -1,8 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Collapse, Typography, Divider } from "@mui/material";
-import { ChevronRight, ChevronDown, Home } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronDown,
+  Home,
+  Building,
+  Users,
+  Calendar,
+  FileText,
+  ShoppingCart,
+  MessageCircle,
+  Brain,
+  Map,
+  Factory,
+  Warehouse,
+  BarChart3,
+  GitBranch,
+  Settings,
+  FlaskConical,
+  CheckCircle,
+  Shield,
+  Package,
+} from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { navigationRegistry, type NavItem } from "../../lib/NavigationRegistry";
+import { usePermission } from "../../hooks/usePermission";
+
+const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
+  Building,
+  Users,
+  Calendar,
+  FileText,
+  ShoppingCart,
+  MessageCircle,
+  Brain,
+  Map,
+  Factory,
+  Warehouse,
+  BarChart3,
+  GitBranch,
+  Settings,
+  FlaskConical,
+  CheckCircle,
+  Shield,
+  Package,
+};
 
 interface SidebarProps {
   open: boolean;
@@ -15,15 +57,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const { checkPermission, isSuperuser } = usePermission();
+
+  const hasNavPermission = (permission?: string): boolean => {
+    if (isSuperuser) return true;
+    if (!permission) return true;
+    return checkPermission(permission);
+  };
 
   useEffect(() => {
     if (pluginCode) {
       const tabs = navigationRegistry.getModuleTabs(pluginCode);
-      setNavItems(tabs || []);
+      const filteredTabs = tabs?.filter((tab) => hasNavPermission(tab.permission)) || [];
+      setNavItems(filteredTabs);
     } else {
-      setNavItems(navigationRegistry.getTopNavItems());
+      const items = navigationRegistry.getTopNavItems();
+      const filteredItems = items.filter((item) => hasNavPermission(item.permission));
+      setNavItems(filteredItems);
     }
-  }, [pluginCode]);
+  }, [pluginCode, checkPermission, isSuperuser]);
 
   const toggleExpand = (code: string) => {
     setExpandedItems((prev) => {
@@ -68,7 +120,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
           }}
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
-            {hasChildren ? (isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />) : <ChevronRight size={18} />}
+            {hasChildren ? (
+              isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />
+            ) : item.icon ? (
+              iconMap[item.icon] ? React.createElement(iconMap[item.icon], { size: 18 }) : <ChevronRight size={18} />
+            ) : (
+              <ChevronRight size={18} />
+            )}
           </ListItemIcon>
           <ListItemText primary={item.label} />
         </ListItem>
@@ -91,7 +149,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
       variant="temporary"
       sx={{
         "& .MuiDrawer-paper": {
-          width: 220,
+          width: { xs: "85vw", sm: 220, md: 240 },
+          maxWidth: 280,
           paddingTop: 3,
         },
       }}

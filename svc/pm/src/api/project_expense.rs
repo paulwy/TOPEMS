@@ -72,7 +72,7 @@ async fn add_expense(
 
     let result = sqlx::query_as::<_, ProjectExpense>(
         r#"
-        INSERT INTO pm.project_expenses (
+        INSERT INTO plugin_pm.project_expenses (
             id, project_id, phase_id, expense_type, category,
             subcategory, description, amount, currency, incurred_date,
             reported_date, paid_date, budget_item_id, resource_id,
@@ -168,7 +168,7 @@ async fn update_expense(
 
     let result = sqlx::query_as::<_, ProjectExpense>(
         r#"
-        UPDATE pm.project_expenses
+        UPDATE plugin_pm.project_expenses
         SET expense_type = COALESCE($1, expense_type),
             category = COALESCE($2, category),
             subcategory = COALESCE($3, subcategory),

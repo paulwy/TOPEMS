@@ -1,6 +1,6 @@
-export { BarChart } from "./BarChart";
-export { LineChart } from "./LineChart";
-export { PieChart } from "./PieChart";
+export { default as BarChart } from "./BarChart";
+export { default as LineChart } from "./LineChart";
+export { default as PieChart } from "./PieChart";
 export { AreaChart } from "./AreaChart";
 export { RadarChart } from "./RadarChart";
 export {

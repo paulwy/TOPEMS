@@ -49,7 +49,7 @@ async fn list_departments(
     let result = sqlx::query_as::<_, Department>(
         r#"
         SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
-        FROM shared.departments
+        FROM public.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::uuid IS NULL OR company_id = $3)
@@ -69,7 +69,7 @@ async fn list_departments(
         Ok(departments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM shared.departments
+                SELECT COUNT(*) FROM public.departments
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::uuid IS NULL OR company_id = $3)
@@ -114,7 +114,7 @@ async fn create_department(
 
     let result = sqlx::query_as::<_, Department>(
         r#"
-        INSERT INTO shared.departments (
+        INSERT INTO public.departments (
             id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
         RETURNING id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
@@ -149,7 +149,7 @@ async fn get_department(
     let result = sqlx::query_as::<_, Department>(
         r#"
         SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
-        FROM shared.departments WHERE id = $1
+        FROM public.departments WHERE id = $1
         "#,
     )
     .bind(id)
@@ -172,7 +172,7 @@ async fn update_department(
     Json(req): Json<UpdateDepartmentRequest>,
 ) -> Json<ApiResponse<Department>> {
     let existing = sqlx::query_as::<_, Department>(
-        "SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM shared.departments WHERE id = $1",
+        "SELECT id, organization_id, company_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM public.departments WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -199,7 +199,7 @@ async fn update_department(
 
     let result = sqlx::query_as::<_, Department>(
         r#"
-        UPDATE shared.departments SET
+        UPDATE public.departments SET
             organization_id = $2, company_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
             description = $8, status = $9, updated_at = $10
         WHERE id = $1
@@ -232,7 +232,7 @@ async fn delete_department(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM shared.departments WHERE id = $1")
+    let result = sqlx::query("DELETE FROM public.departments WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

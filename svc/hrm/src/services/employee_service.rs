@@ -31,7 +31,7 @@ impl EmployeeService {
             SELECT id, company_id, department_id, position_id,
                    employee_number, name, gender, hire_date, email, phone, status,
                    created_at, updated_at
-            FROM shared.employees
+            FROM public.employees
             WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
               AND ($2::text IS NULL OR status = $2)
               AND ($3::uuid IS NULL OR department_id = $3)
@@ -53,7 +53,7 @@ impl EmployeeService {
             Ok(employees) => {
                 let total = sqlx::query_scalar::<_, i64>(
                     r#"
-                    SELECT COUNT(*) FROM shared.employees AS e
+                    SELECT COUNT(*) FROM public.employees AS e
                     WHERE ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
                       AND ($2::text IS NULL OR e.status = $2)
                       AND ($3::uuid IS NULL OR e.department_id = $3)
@@ -91,7 +91,7 @@ impl EmployeeService {
             SELECT id, company_id, department_id, position_id,
                    employee_number, name, gender, hire_date, email, phone, status,
                    created_at, updated_at
-            FROM shared.employees WHERE id = $1
+            FROM public.employees WHERE id = $1
             "#,
         )
         .bind(id)
@@ -118,7 +118,7 @@ impl EmployeeService {
         }
 
         let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM shared.employees WHERE employee_number = $1)",
+            "SELECT EXISTS(SELECT 1 FROM public.employees WHERE employee_number = $1)",
         )
         .bind(&req.employee_number)
         .fetch_one(&self.db)
@@ -134,7 +134,7 @@ impl EmployeeService {
 
         let result = sqlx::query_as::<_, Employee>(
             r#"
-            INSERT INTO shared.employees (
+            INSERT INTO public.employees (
                 id, company_id, department_id, position_id,
                 employee_number, name, gender, hire_date, email, phone,
                 status, created_at, updated_at
@@ -177,7 +177,7 @@ impl EmployeeService {
             r#"
             SELECT id, company_id, department_id, position_id,
                    employee_number, name, gender, hire_date, email, phone, status,
-                   created_at, updated_at FROM shared.employees WHERE id = $1
+                   created_at, updated_at FROM public.employees WHERE id = $1
             "#,
         )
         .bind(id)
@@ -203,7 +203,7 @@ impl EmployeeService {
 
         let result = sqlx::query_as::<_, Employee>(
             r#"
-            UPDATE shared.employees SET
+            UPDATE public.employees SET
                 company_id = $2, department_id = $3, position_id = $4,
                 name = $5, gender = $6, hire_date = $7, email = $8, phone = $9,
                 status = $10, updated_at = $11
@@ -237,7 +237,7 @@ impl EmployeeService {
     }
 
     pub async fn delete_employee(&self, id: &Uuid) -> ApiResponse<String> {
-        let result = sqlx::query("DELETE FROM shared.employees WHERE id = $1")
+        let result = sqlx::query("DELETE FROM public.employees WHERE id = $1")
             .bind(id)
             .execute(&self.db)
             .await;

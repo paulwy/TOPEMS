@@ -68,9 +68,9 @@ async fn list_salary_adjustments(
             sa.rejection_reason,
             sa.created_at, 
             sa.updated_at
-        FROM hrm.salary_adjustments sa
-        LEFT JOIN shared.employees e ON sa.employee_id = e.id
-        LEFT JOIN shared.departments d ON e.department_id = d.id
+        FROM plugin_hrm.salary_adjustments sa
+        LEFT JOIN public.employees e ON sa.employee_id = e.id
+        LEFT JOIN public.departments d ON e.department_id = d.id
         WHERE ($1::uuid IS NULL OR sa.employee_id = $1)
           AND ($2::text IS NULL OR sa.status = $2)
         ORDER BY sa.created_at DESC
@@ -88,7 +88,7 @@ async fn list_salary_adjustments(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.salary_adjustments sa
+                SELECT COUNT(*) FROM plugin_hrm.salary_adjustments sa
                 WHERE ($1::uuid IS NULL OR sa.employee_id = $1)
                   AND ($2::text IS NULL OR sa.status = $2)
                 "#,
@@ -140,9 +140,9 @@ async fn get_salary_adjustment(
             sa.rejection_reason,
             sa.created_at, 
             sa.updated_at
-        FROM hrm.salary_adjustments sa
-        LEFT JOIN shared.employees e ON sa.employee_id = e.id
-        LEFT JOIN shared.departments d ON e.department_id = d.id
+        FROM plugin_hrm.salary_adjustments sa
+        LEFT JOIN public.employees e ON sa.employee_id = e.id
+        LEFT JOIN public.departments d ON e.department_id = d.id
         WHERE sa.id = $1
         "#,
     )
@@ -172,7 +172,7 @@ async fn create_salary_adjustment(
 
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        INSERT INTO hrm.salary_adjustments (
+        INSERT INTO plugin_hrm.salary_adjustments (
             id, employee_id, adjustment_type, old_salary, new_salary, adjustment_amount, reason, effective_date, status
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
         RETURNING id, employee_id, NULL as employee_name, NULL as department,
@@ -225,7 +225,7 @@ async fn update_salary_adjustment(
             sa.rejection_reason,
             sa.created_at, 
             sa.updated_at
-        FROM hrm.salary_adjustments sa WHERE sa.id = $1
+        FROM plugin_hrm.salary_adjustments sa WHERE sa.id = $1
         "#,
     )
     .bind(id)
@@ -250,7 +250,7 @@ async fn update_salary_adjustment(
 
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        UPDATE hrm.salary_adjustments
+        UPDATE plugin_hrm.salary_adjustments
         SET 
             adjustment_type = COALESCE($1, adjustment_type),
             old_salary = COALESCE($2, old_salary),
@@ -294,7 +294,7 @@ async fn approve_salary_adjustment(
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        UPDATE hrm.salary_adjustments
+        UPDATE plugin_hrm.salary_adjustments
         SET 
             status = 'approved',
             approver_id = $1,
@@ -328,7 +328,7 @@ async fn reject_salary_adjustment(
 ) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
     let result = sqlx::query_as::<_, SalaryAdjustment>(
         r#"
-        UPDATE hrm.salary_adjustments
+        UPDATE plugin_hrm.salary_adjustments
         SET 
             status = 'rejected',
             approver_id = $1,

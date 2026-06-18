@@ -54,30 +54,30 @@ async fn employee_summary(
     let _start_date = params.start_date.clone();
     let _end_date = params.end_date.clone();
 
-    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM shared.employees"#)
+    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM public.employees"#)
         .fetch_one(&state.db)
         .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM shared.employees WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM public.employees WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let inactive_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM shared.employees WHERE status = 'inactive'"#,
+        r#"SELECT COUNT(*) FROM public.employees WHERE status = 'inactive'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let male_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM shared.employees WHERE gender = 'male'"#,
+        r#"SELECT COUNT(*) FROM public.employees WHERE gender = 'male'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let female_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM shared.employees WHERE gender = 'female'"#,
+        r#"SELECT COUNT(*) FROM public.employees WHERE gender = 'female'"#,
     )
     .fetch_one(&state.db)
     .await;
@@ -85,7 +85,7 @@ async fn employee_summary(
     let tenure_result = sqlx::query_scalar::<_, f64>(
         r#"
         SELECT AVG(EXTRACT(DAY FROM CURRENT_DATE - hire_date)) 
-        FROM shared.employees 
+        FROM public.employees 
         WHERE hire_date IS NOT NULL AND status = 'active'
         "#,
     )
@@ -97,7 +97,7 @@ async fn employee_summary(
 
     let new_hires_result = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM shared.employees 
+        SELECT COUNT(*) FROM public.employees 
         WHERE TO_CHAR(hire_date, 'YYYY-MM') = $1
         "#,
     )
@@ -107,7 +107,7 @@ async fn employee_summary(
 
     let terminations_result = sqlx::query_scalar::<_, i64>(
         r#"
-        SELECT COUNT(*) FROM shared.employees 
+        SELECT COUNT(*) FROM public.employees 
         WHERE status = 'inactive' 
         AND TO_CHAR(updated_at, 'YYYY-MM') = $1
         "#,
@@ -180,8 +180,8 @@ async fn department_summary(State(state): State<ApiState>) -> Json<ApiResponse<s
             d.name as department_name,
             COUNT(e.id) as employee_count,
             SUM(CASE WHEN e.status = 'active' THEN 1 ELSE 0 END) as active_count
-        FROM shared.departments d
-        LEFT JOIN shared.employees e ON d.id = e.department_id
+        FROM public.departments d
+        LEFT JOIN public.employees e ON d.id = e.department_id
         GROUP BY d.id, d.name
         ORDER BY d.name
         "#,
@@ -232,31 +232,31 @@ async fn contract_summary(State(state): State<ApiState>) -> Json<ApiResponse<ser
         .format("%Y-%m")
         .to_string();
 
-    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.contracts"#)
+    let total_result = sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM plugin_hrm.contracts"#)
         .fetch_one(&state.db)
         .await;
 
     let active_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date > CURRENT_DATE"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.contracts WHERE end_date > CURRENT_DATE"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let expired_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE end_date <= CURRENT_DATE"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.contracts WHERE end_date <= CURRENT_DATE"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let expiring_this_month_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1 AND end_date > CURRENT_DATE"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1 AND end_date > CURRENT_DATE"#,
     )
     .bind(&current_month)
     .fetch_one(&state.db)
     .await;
 
     let expiring_next_month_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.contracts WHERE TO_CHAR(end_date, 'YYYY-MM') = $1"#,
     )
     .bind(&next_month)
     .fetch_one(&state.db)
@@ -302,34 +302,34 @@ pub struct TrainingSummaryResponse {
 
 async fn training_summary(State(state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
     let total_plans_result =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_plans"#)
+        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM plugin_hrm.training_plans"#)
             .fetch_one(&state.db)
             .await;
 
     let active_plans_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_plans WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.training_plans WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let total_courses_result =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_courses"#)
+        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM plugin_hrm.training_courses"#)
             .fetch_one(&state.db)
             .await;
 
     let completed_courses_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_courses WHERE status = 'completed'"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.training_courses WHERE status = 'completed'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let total_records_result =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.training_records"#)
+        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM plugin_hrm.training_records"#)
             .fetch_one(&state.db)
             .await;
 
     let completed_records_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.training_records WHERE status = 'completed'"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.training_records WHERE status = 'completed'"#,
     )
     .fetch_one(&state.db)
     .await;
@@ -402,7 +402,7 @@ async fn attendance_summary(
         .unwrap_or_else(|| Utc::now().format("%Y-%m-%d").to_string());
 
     let total_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.attendance_records WHERE date BETWEEN $1 AND $2"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -410,7 +410,7 @@ async fn attendance_summary(
     .await;
 
     let on_time_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'on_time'"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'on_time'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -418,7 +418,7 @@ async fn attendance_summary(
     .await;
 
     let late_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'late'"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'late'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -426,7 +426,7 @@ async fn attendance_summary(
     .await;
 
     let absent_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'absent'"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.attendance_records WHERE date BETWEEN $1 AND $2 AND status = 'absent'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -434,7 +434,7 @@ async fn attendance_summary(
     .await;
 
     let leave_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.leave_requests WHERE start_date <= $2 AND end_date >= $1 AND status = 'approved'"#,
+        r#"SELECT COUNT(*) FROM plugin_hrm.leave_requests WHERE start_date <= $2 AND end_date >= $1 AND status = 'approved'"#,
     )
     .bind(&start_date)
     .bind(&end_date)
@@ -495,37 +495,37 @@ async fn payroll_summary(
     let _end_date = params.end_date.clone();
 
     let total_payroll_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(SUM(net_amount), 0) FROM hrm.payroll_items"#,
+        r#"SELECT COALESCE(SUM(net_amount), 0) FROM plugin_hrm.payroll_items"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let avg_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(AVG(salary), 0) FROM hrm.contracts WHERE status = 'active'"#,
+        r#"SELECT COALESCE(AVG(salary), 0) FROM plugin_hrm.contracts WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let min_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(MIN(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
+        r#"SELECT COALESCE(MIN(salary), 0) FROM plugin_hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let max_salary_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(MAX(salary), 0) FROM hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
+        r#"SELECT COALESCE(MAX(salary), 0) FROM plugin_hrm.contracts WHERE status = 'active' AND salary IS NOT NULL"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let employee_count_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM shared.employees WHERE status = 'active'"#,
+        r#"SELECT COUNT(*) FROM public.employees WHERE status = 'active'"#,
     )
     .fetch_one(&state.db)
     .await;
 
     let bonus_total_result = sqlx::query_scalar::<_, Option<bigdecimal::BigDecimal>>(
-        r#"SELECT COALESCE(SUM(CASE WHEN item_type = 'bonus' THEN amount ELSE 0 END), 0) FROM hrm.payroll_details"#,
+        r#"SELECT COALESCE(SUM(CASE WHEN item_type = 'bonus' THEN amount ELSE 0 END), 0) FROM plugin_hrm.payroll_details"#,
     )
     .fetch_one(&state.db)
     .await;

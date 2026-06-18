@@ -11,14 +11,12 @@ const WarehouseManagementPage = lazy(
 const InventoryPage = lazy(() => import("../pages/wms/InventoryPage"));
 const InboundOrderPage = lazy(() => import("../pages/wms/InboundOrderPage"));
 const OutboundOrderPage = lazy(() => import("../pages/wms/OutboundOrderPage"));
+const WmsDashboardPage = lazy(() => import("../pages/wms/DashboardPage"));
 
 export const wmsRoutes: RouteConfig[] = [
   {
     path: "/wms",
-    element: React.createElement(Navigate, {
-      to: "/wms/warehouses",
-      replace: true,
-    }),
+    element: WmsDashboardPage,
     requiredPermissions: ["wms:read"],
     module: "wms",
     action: "read",

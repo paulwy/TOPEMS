@@ -5,6 +5,7 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
+const HrmDashboardPage = lazy(() => import("../pages/hrm/DashboardPage"));
 const HrmCompanyPage = lazy(() => import("../pages/hrm/HrmCompanyPage"));
 const HrmDepartmentPage = lazy(() => import("../pages/hrm/HrmDepartmentPage"));
 const HrmOrganizationPage = lazy(() => import("../pages/hrm/HrmOrganizationPage"));
@@ -25,10 +26,7 @@ const HrmReportsPage = lazy(() => import("../pages/hrm/HrmReportsPage"));
 export const hrmRoutes: RouteConfig[] = [
   {
     path: "/hrm",
-    element: React.createElement(Navigate, {
-      to: "/hrm/employees",
-      replace: true,
-    }),
+    element: HrmDashboardPage,
     requiredPermissions: ["hrm:read"],
     module: "hrm",
     action: "read",

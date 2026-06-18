@@ -19,17 +19,17 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/hrm/contracts",
+            "/api/plugin_hrm.contracts",
             get(list_contracts).post(create_contract),
         )
         .route(
-            "/api/hrm/contracts/{id}",
+            "/api/plugin_hrm.contracts/{id}",
             get(get_contract)
                 .put(update_contract)
                 .delete(delete_contract),
         )
-        .route("/api/hrm/contracts/expiring", get(list_expiring_contracts))
-        .route("/api/hrm/contracts/{id}/renew", post(create_renewal))
+        .route("/api/plugin_hrm.contracts/expiring", get(list_expiring_contracts))
+        .route("/api/plugin_hrm.contracts/{id}/renew", post(create_renewal))
         .route("/api/hrm/contract-renewals", get(list_renewals))
         .route(
             "/api/hrm/contract-renewals/{id}",
@@ -63,7 +63,7 @@ async fn list_contracts(
         SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
-        FROM hrm.contracts
+        FROM plugin_hrm.contracts
         WHERE ($1::uuid IS NULL OR employee_id = $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR contract_type = $3)
@@ -83,7 +83,7 @@ async fn list_contracts(
         Ok(contracts) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.contracts
+                SELECT COUNT(*) FROM plugin_hrm.contracts
                 WHERE ($1::uuid IS NULL OR employee_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR contract_type = $3)
@@ -133,7 +133,7 @@ async fn list_expiring_contracts(
         SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
-        FROM hrm.contracts
+        FROM plugin_hrm.contracts
         WHERE end_date IS NOT NULL
           AND end_date <= $1
           AND status = 'active'
@@ -151,7 +151,7 @@ async fn list_expiring_contracts(
         Ok(contracts) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.contracts
+                SELECT COUNT(*) FROM plugin_hrm.contracts
                 WHERE end_date IS NOT NULL
                   AND end_date <= $1
                   AND status = 'active'
@@ -218,7 +218,7 @@ async fn create_contract(
 
     let result = sqlx::query_as::<_, Contract>(
         r#"
-        INSERT INTO hrm.contracts (
+        INSERT INTO plugin_hrm.contracts (
             id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
             contract_file_path, reminder_days, status, notes, created_at, updated_at
@@ -297,7 +297,7 @@ async fn get_contract(
         SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
-        FROM hrm.contracts WHERE id = $1
+        FROM plugin_hrm.contracts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -311,7 +311,7 @@ async fn get_contract(
                 SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                        new_start_date, new_end_date, new_salary, status, approver_id,
                        approved_at, rejection_reason, created_at, updated_at
-                FROM hrm.contract_renewals
+                FROM plugin_hrm.contract_renewals
                 WHERE contract_id = $1
                 ORDER BY created_at DESC
                 "#,
@@ -348,7 +348,7 @@ async fn update_contract(
         SELECT id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
                party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
                contract_file_path, reminder_days, status, notes, created_at, updated_at
-        FROM hrm.contracts WHERE id = $1
+        FROM plugin_hrm.contracts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -366,7 +366,7 @@ async fn update_contract(
 
     let result = sqlx::query_as::<_, Contract>(
         r#"
-        UPDATE hrm.contracts SET
+        UPDATE plugin_hrm.contracts SET
             contract_no = COALESCE($2, contract_no),
             contract_type = COALESCE($3, contract_type),
             party_a_name = COALESCE($4, party_a_name),
@@ -453,7 +453,7 @@ async fn delete_contract(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM hrm.contracts WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_hrm.contracts WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -514,7 +514,7 @@ async fn create_renewal(
 
     let result = sqlx::query_as::<_, ContractRenewal>(
         r#"
-        INSERT INTO hrm.contract_renewals (
+        INSERT INTO plugin_hrm.contract_renewals (
             id, contract_id, previous_contract_id, renewal_type, renewal_reason,
             new_start_date, new_end_date, new_salary, status, created_at, updated_at
         ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, 'pending', $8, $9)
@@ -563,7 +563,7 @@ async fn list_renewals(
         SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
-        FROM hrm.contract_renewals
+        FROM plugin_hrm.contract_renewals
         WHERE ($1::uuid IS NULL OR contract_id = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY created_at DESC
@@ -581,7 +581,7 @@ async fn list_renewals(
         Ok(renewals) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM hrm.contract_renewals
+                SELECT COUNT(*) FROM plugin_hrm.contract_renewals
                 WHERE ($1::uuid IS NULL OR contract_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -630,7 +630,7 @@ async fn get_renewal(
         SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
-        FROM hrm.contract_renewals WHERE id = $1
+        FROM plugin_hrm.contract_renewals WHERE id = $1
         "#,
     )
     .bind(id)
@@ -659,7 +659,7 @@ async fn update_renewal(
 
     let result = sqlx::query_as::<_, ContractRenewal>(
         r#"
-        UPDATE hrm.contract_renewals SET
+        UPDATE plugin_hrm.contract_renewals SET
             renewal_type = COALESCE($2, renewal_type),
             renewal_reason = COALESCE($3, renewal_reason),
             new_start_date = COALESCE($4, new_start_date),
@@ -703,7 +703,7 @@ async fn delete_renewal(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     let result =
-        sqlx::query("DELETE FROM hrm.contract_renewals WHERE id = $1 AND status = 'pending'")
+        sqlx::query("DELETE FROM plugin_hrm.contract_renewals WHERE id = $1 AND status = 'pending'")
             .bind(id)
             .execute(&state.db)
             .await;
@@ -731,7 +731,7 @@ async fn approve_renewal(
 
     let result = sqlx::query_as::<_, ContractRenewal>(
         r#"
-        UPDATE hrm.contract_renewals SET
+        UPDATE plugin_hrm.contract_renewals SET
             status = 'approved',
             approved_at = $2,
             updated_at = $2
@@ -771,7 +771,7 @@ async fn reject_renewal(
 
     let result = sqlx::query_as::<_, ContractRenewal>(
         r#"
-        UPDATE hrm.contract_renewals SET
+        UPDATE plugin_hrm.contract_renewals SET
             status = 'rejected',
             rejection_reason = $2,
             updated_at = $3
@@ -817,7 +817,7 @@ async fn execute_renewal(
         SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
-        FROM hrm.contract_renewals WHERE id = $1
+        FROM plugin_hrm.contract_renewals WHERE id = $1
         "#,
     )
     .bind(id)
@@ -851,7 +851,7 @@ async fn execute_renewal(
 
     let update_result = sqlx::query(
         r#"
-        UPDATE hrm.contracts SET
+        UPDATE plugin_hrm.contracts SET
             start_date = $2,
             end_date = $3,
             salary = COALESCE($4, salary),
@@ -871,7 +871,7 @@ async fn execute_renewal(
     match update_result {
         Ok(_) => {
             let _ = sqlx::query(
-                "UPDATE hrm.contract_renewals SET status = 'executed', updated_at = $2 WHERE id = $1"
+                "UPDATE plugin_hrm.contract_renewals SET status = 'executed', updated_at = $2 WHERE id = $1"
             )
             .bind(id)
             .bind(now)

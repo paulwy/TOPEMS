@@ -1,487 +1,133 @@
-# 统一数据库架构设计
+# 统一数据库架构设计（已过时）
 
-## 1. 当前问题分析
+## ⚠️ 重要通知
 
-### 1.1 重复表问题
-当前系统存在 **67 个重复表名**，分布在多个 schema 中，主要问题包括：
+**本文档已过时，请参考最新版本：**
 
-| 表名 | 重复次数 | 涉及 Schema |
-|------|----------|-------------|
-| audit_logs | 16 | 几乎所有服务 |
-| notifications | 5 | crm, flow, im, mobile, portal |
-| companies | 2 | erp, hrm |
-| employees | 2 | erp, hrm |
-| departments | 2 | erp, hrm |
-| users | 2 | iam, rs |
-
-### 1.2 连接池配置不一致
-- 各服务使用不同的 search_path 配置
-- HRM 服务使用 `after_connect` 钩子设置 search_path
-- 部分服务使用共享库的 `create_database_pool` 函数
-- 默认 search_path 为 `"rs, erp, public"`，导致 HRM 服务访问错误的表
-
-### 1.3 共享库重复
-存在两个共享库：
-- `<项目目录>/lib` - 主共享库
-- `<项目目录>/shared/lib` - 重复的共享库（建议删除）
+- **最新文档**: [database.md](./database.md) v2.0.0
+- **更新日期**: 2026-06-18
+- **变更原因**: 完全重构数据库架构，对齐产品架构计划
 
 ---
 
-## 2. 统一架构设计
+## 文档历史
 
-### 2.1 Schema 分层策略
+### v1.0 (2026-06-10) - 已废弃
+
+本文档描述了第一次数据库架构统一的设计方案，包括：
+- 将 `shared` schema 用于共享实体
+- 迁移 `companies`, `departments`, `employees` 到 `shared` schema
+- 解决重复表问题
+
+### v2.0 (2026-06-18) - 当前版本
+
+根据产品架构计划，完全重构数据库架构：
+- 采用 `unified_core + plugin_*` 架构
+- 共享实体迁移到 `public` schema
+- 核心平台整合到 `unified_core` schema
+- 业务插件使用 `plugin_` 前缀
+
+---
+
+## 架构对比
+
+### 旧架构 (v1.0)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    PostgreSQL 数据库                        │
-├─────────────────────────────────────────────────────────────┤
-│  Layer 1: 核心共享层 (shared)                              │
-│    ├── users              # 统一用户表                      │
-│    ├── roles              # 角色定义                        │
-│    ├── permissions        # 权限定义                        │
-│    ├── companies          # 公司信息 (统一)                 │
-│    ├── departments        # 部门信息 (统一)                 │
-│    ├── employees          # 员工信息 (统一)                 │
-│    └── audit_logs         # 统一审计日志                    │
-├─────────────────────────────────────────────────────────────┤
-│  Layer 2: 业务域层                                         │
-│    ├── iam.*             # 身份认证与授权                   │
-│    ├── hrm.*             # 人力资源管理                     │
-│    ├── erp.*             # 企业资源计划                     │
-│    ├── crm.*             # 客户关系管理                     │
-│    ├── mes.*             # 制造执行系统                     │
-│    ├── wms.*             # 仓储管理系统                     │
-│    ├── qms.*             # 质量管理系统                     │
-│    ├── lims.*            # 实验室信息管理                   │
-│    └── ...               # 其他业务域                      │
-├─────────────────────────────────────────────────────────────┤
-│  Layer 3: 基础设施层                                       │
-│    ├── public.*          # 公共配置与共享数据               │
-│    ├── flow.*            # 工作流引擎                      │
-│    ├── notification.*    # 通知服务                        │
-│    └── ai.*              # AI 服务                         │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│         PostgreSQL 数据库                │
+├─────────────────────────────────────────┤
+│  shared (共享实体)                       │
+│    ├── companies                        │
+│    ├── departments                      │
+│    ├── employees                        │
+│    └── audit_logs                       │
+├─────────────────────────────────────────┤
+│  iam, doc, flow, notification           │
+│  erp, hrm, crm, ai, ...                 │
+└─────────────────────────────────────────┘
 ```
 
-### 2.2 Schema 命名规范
+### 新架构 (v2.0)
 
-| Schema | 用途 | 说明 |
+```
+┌─────────────────────────────────────────┐
+│         PostgreSQL 数据库                │
+├─────────────────────────────────────────┤
+│  public (共享实体 + 租户管理)            │
+│    ├── tenants                          │
+│    ├── companies                        │
+│    ├── departments                      │
+│    ├── employees                        │
+│    └── audit_logs                       │
+├─────────────────────────────────────────┤
+│  unified_core (核心平台)                 │
+│    ├── users, roles, permissions        │
+│    ├── documents, workflows             │
+│    ├── messages, notifications          │
+│    └── plugins                          │
+├─────────────────────────────────────────┤
+│  plugin_* (业务插件)                     │
+│    ├── plugin_erp                       │
+│    ├── plugin_hrm                       │
+│    ├── plugin_crm                       │
+│    ├── plugin_ai                        │
+│    └── ...                              │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 迁移路径
+
+### 从 v1.0 到 v2.0
+
+如果您当前使用的是 v1.0 架构，请按照以下步骤迁移：
+
+1. **阅读新文档**
+   - [database.md](./database.md) - 新的数据库设计规范
+   - [数据库重建指南](../../database/init/README.md) - 执行步骤
+
+2. **备份数据**
+   ```bash
+   pg_dump -h localhost -U topems -d topems -F c -f backup_v1.dump
+   ```
+
+3. **执行重建脚本**
+   ```bash
+   psql -h localhost -U topems -d topems -f database/init/01_rebuild_database.sql
+   psql -h localhost -U topems -d topems -f database/init/02_create_plugin_tables.sql
+   ```
+
+4. **更新服务配置**
+   - 更新 `SEARCH_PATH` 环境变量
+   - 更新代码中的 Schema 引用
+
+---
+
+## 关键变更
+
+| 变更项 | v1.0 | v2.0 |
 |--------|------|------|
-| `shared` | 跨域共享数据 | 用户、公司、部门、员工等核心实体 |
-| `iam` | 身份与访问管理 | 用户认证、授权、权限管理 |
-| `hrm` | 人力资源管理 | 招聘、考勤、绩效、薪酬等 HR 专用功能 |
-| `erp` | 企业资源计划 | 财务、采购、销售、资产等 |
-| `crm` | 客户关系管理 | 客户、商机、销售漏斗等 |
-| `mes` | 制造执行系统 | 生产订单、设备、工艺等 |
-| `wms` | 仓储管理系统 | 库存、出入库、库位等 |
-| `qms` | 质量管理系统 | 质检、质量标准、纠正措施等 |
-| `lims` | 实验室管理 | 样品、试剂、仪器、检测等 |
-| `scm` | 供应链管理 | 供应商、采购等 |
-| `rs` | 研发管理 | 项目、配方、实验等 |
-| `flow` | 工作流引擎 | 审批流程、工作流定义等 |
-| `notification` | 通知服务 | 统一消息推送 |
-| `ai` | AI 服务 | 分析、文档处理等 |
-| `public` | 公共配置 | 系统配置、字典数据等 |
-
-### 2.3 核心实体归属
-
-| 实体 | 归属 Schema | 说明 |
-|------|-------------|------|
-| User | `shared` | 统一用户实体 |
-| Company | `shared` | 统一公司实体 |
-| Department | `shared` | 统一部门实体 |
-| Employee | `shared` | 统一员工实体 |
-| Role | `iam` | 角色定义 |
-| Permission | `iam` | 权限定义 |
-| AuditLog | `shared` | 统一审计日志 |
-| Notification | `notification` | 统一通知 |
-
-### 2.4 HRM 与 ERP 的关系
-
-```
-┌──────────────────┐       ┌──────────────────┐
-│      HRM         │       │       ERP        │
-│  (人力资源管理)  │       │  (企业资源计划)  │
-└────────┬─────────┘       └────────┬─────────┘
-         │                          │
-         │  读取                    │  读取
-         │  ──────────────────────▶ │
-         │  Company/Department      │
-         │  Employee                │
-         │                          │
-         │  写入                    │  写入
-         │  ◀────────────────────── │
-         │  Payroll → Expense       │
-         │                          │
-         └──────────┬───────────────┘
-                    │
-                    ▼
-         ┌──────────────────┐
-         │     shared       │
-         │ (共享数据层)     │
-         │                  │
-         │  • companies    │
-         │  • departments  │
-         │  • employees    │
-         │  • audit_logs   │
-         └──────────────────┘
-```
-
-**关系规则：**
-
-1. **共享实体**：`companies`、`departments`、`employees` 只在 `shared` schema 中维护
-2. **HRM 职责**：员工入职、离职、考勤、绩效、薪酬计算
-3. **ERP 职责**：员工费用报销、资产分配、成本核算
-4. **数据流向**：HRM 写入员工主数据 → ERP 读取用于费用核算 → ERP 写入费用记录 → HRM 读取用于薪酬计算
+| 共享实体 Schema | `shared` | `public` |
+| 核心平台 Schema | `iam`, `doc`, `flow` | `unified_core` |
+| 插件 Schema 命名 | `erp`, `hrm` | `plugin_erp`, `plugin_hrm` |
+| 租户管理 | 无 | `public.tenants` |
+| 多租户隔离 | 无 | 租户上下文函数 |
+| AI 知识库 | `ai` schema | `plugin_ai` + pgvector |
 
 ---
 
-## 3. 连接池统一配置
+## 相关文档
 
-### 3.1 统一数据库连接 URL 格式
-
-```bash
-# 生产环境
-DATABASE_URL=postgres://<user>:<password>@<host>:<port>/<database>?options=-c%20search_path=shared,iam,public
-
-# 开发环境
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems?options=-c%20search_path=shared,iam,public
-```
-
-### 3.2 服务特定 search_path 配置
-
-| 服务 | Search Path | 环境变量 |
-|------|-------------|----------|
-| IAM | `iam, shared, public` | `SEARCH_PATH=iam,shared,public` |
-| HRM | `hrm, shared, public` | `SEARCH_PATH=hrm,shared,public` |
-| ERP | `erp, shared, public` | `SEARCH_PATH=erp,shared,public` |
-| CRM | `crm, shared, public` | `SEARCH_PATH=crm,shared,public` |
-| MES | `mes, shared, public` | `SEARCH_PATH=mes,shared,public` |
-| WMS | `wms, shared, public` | `SEARCH_PATH=wms,shared,public` |
-| QMS | `qms, shared, public` | `SEARCH_PATH=qms,shared,public` |
-| LIMS | `lims, shared, public` | `SEARCH_PATH=lims,shared,public` |
-
-### 3.3 共享库数据库连接池实现
-
-修改 `<项目目录>/lib/src/database.rs`：
-
-```rust
-pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
-    let service_name = std::env::var("SERVICE_NAME").unwrap_or_else(|_| "unknown".to_string());
-    
-    let default_search_path = match service_name.as_str() {
-        "topems-iam" => "iam, shared, public",
-        "topems-hrm" => "hrm, shared, public",
-        "topems-erp" => "erp, shared, public",
-        "topems-crm" => "crm, shared, public",
-        "topems-mes" => "mes, shared, public",
-        "topems-wms" => "wms, shared, public",
-        "topems-qms" => "qms, shared, public",
-        "topems-lims" => "lims, shared, public",
-        _ => "public",
-    };
-    
-    let search_path = std::env::var("SEARCH_PATH").unwrap_or_else(|_| default_search_path.to_string());
-    
-    let options = PgPoolOptions::new()
-        .max_connections(config.pool_max_size)
-        .min_connections(config.pool_min_size)
-        .acquire_timeout(Duration::from_secs(config.connect_timeout))
-        .idle_timeout(Duration::from_secs(config.idle_timeout))
-        .max_lifetime(Duration::from_secs(1800))
-        .test_before_acquire(true)
-        .after_connect(move |conn, _meta| {
-            let search_path = search_path.clone();
-            Box::pin(async move {
-                let query = format!("SET search_path TO {}", search_path);
-                let result = sqlx::query(&query)
-                    .execute(conn)
-                    .await;
-                result.map_err(|e| {
-                    error!("Failed to set search path: {}", e);
-                    e
-                })?;
-                Ok(())
-            })
-        });
-
-    let pool = options
-        .connect(&config.url)
-        .await
-        .map_err(|e| TopemsError::Database(format!("Failed to create database pool: {}", e)))?;
-
-    info!("✅ 数据库连接池创建成功 (service: {}, search_path: {})", service_name, search_path);
-    Ok(pool)
-}
-```
+- **最新文档**: [database.md](./database.md)
+- **产品架构**: [product-architecture-plan.md](../product-architecture-plan.md)
+- **重建指南**: [database/init/README.md](../../database/init/README.md)
+- **重建脚本**: [database/init/01_rebuild_database.sql](../../database/init/01_rebuild_database.sql)
 
 ---
 
-## 4. 数据迁移计划
-
-### 4.1 迁移步骤
-
-```
-Phase 1: 创建 shared schema 和核心表
-    ├── 创建 shared.companies
-    ├── 创建 shared.departments
-    ├── 创建 shared.employees
-    └── 创建 shared.audit_logs
-
-Phase 2: 数据迁移
-    ├── 从 erp.companies → shared.companies
-    ├── 从 hrm.companies → shared.companies (去重)
-    ├── 从 erp.departments → shared.departments
-    ├── 从 hrm.departments → shared.departments (去重)
-    ├── 从 erp.employees → shared.employees
-    └── 从 hrm.employees → shared.employees (去重)
-
-Phase 3: 更新服务配置
-    ├── 更新 HRM 服务使用 shared schema
-    ├── 更新 ERP 服务使用 shared schema
-    └── 更新其他相关服务
-
-Phase 4: 清理旧表
-    ├── 删除 erp.companies, erp.departments, erp.employees
-    └── 删除 hrm.companies, hrm.departments, hrm.employees
-```
-
-### 4.2 迁移 SQL 脚本示例
-
-```sql
--- 创建 shared schema
-CREATE SCHEMA IF NOT EXISTS shared;
-
--- 创建 shared.companies 表
-CREATE TABLE IF NOT EXISTS shared.companies (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organization_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001',
-    name VARCHAR(255) NOT NULL,
-    short_name VARCHAR(100),
-    registration_number VARCHAR(100),
-    tax_number VARCHAR(100),
-    address VARCHAR(500),
-    contact_phone VARCHAR(50),
-    email VARCHAR(255),
-    website VARCHAR(500),
-    description TEXT,
-    status VARCHAR(20) DEFAULT 'active',
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
--- 迁移数据 (保留 hrm 中的数据作为主数据源)
-INSERT INTO shared.companies 
-SELECT * FROM hrm.companies
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    short_name = EXCLUDED.short_name,
-    updated_at = EXCLUDED.updated_at;
-
--- 补充 erp 中独有的数据
-INSERT INTO shared.companies 
-SELECT * FROM erp.companies
-WHERE id NOT IN (SELECT id FROM shared.companies);
-```
-
----
-
-## 5. 共享库清理计划
-
-### 5.1 删除重复的共享库
-
-```bash
-# 删除重复的共享库
-rm -rf <项目目录>/shared/lib
-
-# 更新 Cargo.toml 中的依赖路径
-# 将所有 shared/lib 路径更新为 lib
-```
-
-### 5.2 统一共享库结构
-
-```
-lib/
-├── Cargo.toml              # 共享库配置
-└── src/
-    ├── lib.rs              # 导出模块
-    ├── auth.rs             # 认证与授权
-    ├── database.rs         # 数据库连接池
-    ├── error.rs            # 错误处理
-    ├── logging.rs          # 日志系统
-    ├── response.rs         # API 响应封装
-    ├── validation.rs       # 数据验证
-    └── utils.rs            # 工具函数
-```
-
----
-
-## 6. 实施检查清单
-
-| 步骤 | 状态 | 责任人 | 截止日期 | 备注 |
-|------|------|--------|----------|------|
-| 创建 shared schema | ✅ | DBA | T+1 | |
-| 创建共享表结构 | ✅ | DBA | T+1 | |
-| 数据迁移（companies/departments/employees） | ✅ | DBA | T+2 | |
-| 更新 HRM 服务使用 shared schema | ✅ | Dev | T+2 | 已修复shared.companies访问问题 |
-| 更新 ERP 服务使用 shared schema | ✅ | Dev | T+3 | |
-| 更新外键约束指向 shared schema | ✅ | DBA | T+4 | 已更新hrm和erp的外键 |
-| 删除旧的重复表（companies/departments/employees） | ✅ | DBA | T+4 | hrm/erp表已删除 |
-| 删除重复共享库 | ✅ | Dev | T+4 | |
-| 更新其他服务配置 | ✅ | Dev | T+5 | CRM、MES、WMS已更新 |
-| 回归测试 | ✅ | QA | T+5 | 公司(7条)、部门(5条)、员工(5条) - API验证通过 |
-
----
-
-## 8. 迁移完成记录 (2026-06-10)
-
-### 8.1 数据迁移结果
-
-| 表 | 数据量 | 状态 |
-|----|--------|------|
-| shared.companies | 7条 | ✅ 迁移完成 |
-| shared.departments | 5条 | ✅ 迁移完成 |
-| shared.employees | 5条 | ✅ 迁移完成 |
-
-### 8.2 服务配置更新
-
-所有服务已配置使用 shared schema：
-
-| 服务 | 端口 | Search Path | 状态 |
-|------|------|-------------|------|
-| IAM | 8000 | iam, shared, public | ✅ 运行正常 |
-| HRM | 8011 | shared, hrm, public | ✅ 运行正常 |
-| ERP | 8010 | erp, shared, public | ✅ 运行正常 |
-| CRM | 8012 | crm, shared, public | ✅ 运行正常 |
-| MES | 8030 | mes, shared, public | ✅ 运行正常 |
-| WMS | 8042 | wms, shared, public | ✅ 运行正常 |
-| LIMS | 8022 | lims, shared, public | ✅ 运行正常 |
-| SCM | 8040 | scm, shared, public | ✅ 运行正常 |
-| SRM | 8041 | srm, shared, public | ✅ 运行正常 |
-| PM | 8024 | pm, shared, public | ✅ 运行正常 |
-| BI | 8052 | bi, shared, public | ✅ 运行正常 |
-
-### 8.3 外键约束更新
-
-已更新以下外键约束指向 shared schema：
-
-**HRM Schema:**
-- attendance_records.company_id → shared.companies
-- attendance_records.department_id → shared.departments
-- contracts.employee_id → shared.employees
-- leave_records.employee_id → shared.employees
-- payroll_records.employee_id → shared.employees
-- performance_records.employee_id → shared.employees
-- recruitment_applications.department_id → shared.departments
-- salary_adjustments.employee_id → shared.employees
-- training_participants.employee_id → shared.employees
-
-**ERP Schema:**
-- assets.company_id → shared.companies
-
-### 8.4 旧表清理
-
-以下旧表已删除：
-- hrm.companies (已删除)
-- hrm.departments (已删除)
-- hrm.employees (已删除)
-- erp.companies (已删除)
-- erp.departments (已删除)
-- erp.employees (已删除)
-
-### 8.5 代码修复记录
-
-1. **Employee模型日期字段修复**
-   - 问题：birth_date和hire_date使用DateTime<Utc>类型，但数据库是DATE类型
-   - 修复：改为NaiveDate类型
-
-2. **SQL查询更新**
-   - 所有HRM API查询已更新使用shared schema表
-   - 添加表别名避免字段歧义
-
-3. **前端错误处理**
-   - 添加422错误处理case
-
----
-
-## 7. 后续维护规则
-
-### 7.1 Schema 使用规则
-
-1. **禁止跨 Schema 查询**：各服务只查询自己的 schema 和 shared schema
-2. **禁止重复定义**：核心实体（公司、部门、员工、用户）只在 shared 中定义
-3. **审计日志统一**：所有服务的审计日志写入 `shared.audit_logs`
-
-### 7.2 连接池配置规则
-
-1. **服务必须设置 SERVICE_NAME 环境变量**
-2. **使用共享库的 create_database_pool 函数**
-3. **禁止直接使用 PgPoolOptions 创建连接池**
-
-### 7.3 代码审查检查项
-
-- [ ] 是否正确设置了 SERVICE_NAME
-- [ ] 是否使用了共享库的数据库连接池
-- [ ] 是否查询了正确的 schema
-- [ ] 是否有重复的实体定义
-
----
-
-## 9. 迁移总结与最佳实践
-
-### 9.1 迁移经验总结
-
-**成功因素：**
-1. **充分规划**：提前制定详细的迁移计划和检查清单
-2. **分阶段实施**：按Phase逐步推进，每个阶段验证通过后再进行下一阶段
-3. **数据去重**：迁移前确保源数据的唯一性，避免冲突
-4. **外键处理**：先更新外键约束再删除旧表，避免数据完整性问题
-5. **服务隔离**：使用search_path实现服务间的schema隔离
-
-**遇到的挑战：**
-1. **类型不匹配**：Employee模型中birth_date和hire_date使用DateTime<Utc>而非NaiveDate
-2. **编译空间不足**：Rust编译需要大量磁盘空间，需定期清理缓存
-3. **认证问题**：API测试需要有效的JWT令牌，需通过IAM服务获取
-4. **服务配置不一致**：各服务使用不同的DatabaseConfig结构，需要统一
-
-### 9.2 问题解决方案
-
-| 问题 | 原因 | 解决方案 |
-|------|------|----------|
-| API返回500错误 | Employee模型日期字段类型不匹配 | 将DateTime<Utc>改为NaiveDate |
-| 外键约束阻止删除 | 多个表依赖旧表 | 逐一更新外键指向shared schema |
-| 磁盘空间不足 | Cargo编译缓存过大 | 运行`cargo clean`清理缓存 |
-| 编译错误 | DatabaseConfig类型不匹配 | 使用共享库的DatabaseConfig |
-| 认证失败 | JWT令牌无效 | 通过IAM服务获取有效令牌 |
-
-### 9.3 最佳实践建议
-
-1. **Schema设计原则**
-   - 核心实体（公司、部门、员工、用户）统一放在shared schema
-   - 业务实体放在各自服务的schema中
-   - 使用search_path控制schema访问顺序
-
-2. **连接池配置**
-   - 统一使用共享库的`create_database_pool`函数
-   - 设置正确的`SERVICE_NAME`环境变量
-   - 通过`SEARCH_PATH`环境变量覆盖默认配置
-
-3. **代码规范**
-   - SQL查询使用明确的schema前缀（如`shared.companies`）
-   - 添加表别名避免字段歧义
-   - 使用`sqlx::FromRow`派生宏时注意字段类型匹配
-
-### 9.4 后续改进建议
-
-1. **自动化迁移脚本**：编写自动迁移脚本，支持回滚
-2. **监控告警**：添加schema变更监控和告警机制
-3. **CI/CD集成**：在CI流程中添加schema验证步骤
-4. **文档自动化**：根据数据库schema自动生成文档
-5. **性能优化**：针对shared schema添加索引优化
-
----
-
-**文档版本**: v1.0  
+**版本**: v1.0 (已废弃)  
 **创建日期**: 2026-06-10  
-**最后更新**: 2026-06-10  
-**状态**: 已完成
+**废弃日期**: 2026-06-18  
+**替代版本**: v2.0.0

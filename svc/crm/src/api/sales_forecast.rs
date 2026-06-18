@@ -52,7 +52,7 @@ async fn list_sales_forecasts(
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         SELECT id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
-        FROM crm.sales_forecasts
+        FROM plugin_crm.sales_forecasts
         WHERE ($1::text IS NULL OR period_type = $1)
           AND ($2::text IS NULL OR status = $2)
         ORDER BY period DESC
@@ -70,7 +70,7 @@ async fn list_sales_forecasts(
         Ok(forecasts) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM crm.sales_forecasts
+                SELECT COUNT(*) FROM plugin_crm.sales_forecasts
                 WHERE ($1::text IS NULL OR period_type = $1)
                   AND ($2::text IS NULL OR status = $2)
                 "#,
@@ -112,7 +112,7 @@ async fn get_sales_forecast(
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         SELECT id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
-        FROM crm.sales_forecasts WHERE id = $1
+        FROM plugin_crm.sales_forecasts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -156,7 +156,7 @@ async fn create_sales_forecast(
 
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
-        INSERT INTO crm.sales_forecasts (
+        INSERT INTO plugin_crm.sales_forecasts (
             id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
         ) VALUES ($1, $2, $3, 0, 'stable', 0.7, $4, 'draft', $5, $6)
         RETURNING id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
@@ -247,7 +247,7 @@ async fn generate_forecast(
 
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
-        INSERT INTO crm.sales_forecasts (
+        INSERT INTO plugin_crm.sales_forecasts (
             id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'generated', $8, $9)
         RETURNING id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
@@ -288,7 +288,7 @@ async fn update_sales_forecast(
 
     let existing = sqlx::query_as::<_, SalesForecast>(
         r#"
-        SELECT id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at FROM crm.sales_forecasts WHERE id = $1
+        SELECT id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at FROM plugin_crm.sales_forecasts WHERE id = $1
         "#,
     )
     .bind(id)
@@ -313,7 +313,7 @@ async fn update_sales_forecast(
 
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
-        UPDATE crm.sales_forecasts SET
+        UPDATE plugin_crm.sales_forecasts SET
             predicted_amount = $2, actual_amount = $3, accuracy = $4, trend = $5, confidence_level = $6, status = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
@@ -382,7 +382,7 @@ async fn delete_sales_forecast(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.sales_forecasts WHERE id = $1")
+    let result = sqlx::query("DELETE FROM plugin_crm.sales_forecasts WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;

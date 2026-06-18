@@ -5,7 +5,7 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const CRMDashboardPage = lazy(() => import("../pages/crm/CRMDashboardPage"));
+const CRMDashboardPage = lazy(() => import("../pages/crm/DashboardPage"));
 const CustomerManagementPage = lazy(
   () => import("../pages/crm/CustomerManagementPage"),
 );

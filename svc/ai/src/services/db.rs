@@ -49,7 +49,7 @@ impl Database {
         // 创建文档表
         sqlx::query(
             r#"
-            CREATE TABLE IF NOT EXISTS ai.documents (
+            CREATE TABLE IF NOT EXISTS plugin_ai.documents (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
                 knowledge_base_id UUID,
@@ -77,30 +77,30 @@ impl Database {
         .await?;
 
         // 创建文档表索引
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_organization_id ON ai.documents(organization_id);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_organization_id ON plugin_ai.documents(organization_id);"#)
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON ai.documents(status);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON plugin_ai.documents(status);"#)
             .execute(&self.pool)
             .await?;
 
         sqlx::query(
-            r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON ai.documents(category);"#,
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON plugin_ai.documents(category);"#,
         )
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_created_at ON ai.documents(created_at DESC);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_created_at ON plugin_ai.documents(created_at DESC);"#)
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_title ON ai.documents(title);"#)
+        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_title ON plugin_ai.documents(title);"#)
             .execute(&self.pool)
             .await?;
 
         sqlx::query(
-            r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON ai.documents(deleted_at);"#,
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON plugin_ai.documents(deleted_at);"#,
         )
         .execute(&self.pool)
         .await?;
@@ -111,7 +111,7 @@ impl Database {
             CREATE TABLE IF NOT EXISTS ai.document_chunks (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 organization_id UUID NOT NULL DEFAULT gen_random_uuid(),
-                document_id UUID NOT NULL REFERENCES ai.documents(id) ON DELETE CASCADE,
+                document_id UUID NOT NULL REFERENCES plugin_ai.documents(id) ON DELETE CASCADE,
                 knowledge_base_id UUID,
                 chunk_index INTEGER NOT NULL DEFAULT 0,
                 content TEXT NOT NULL,
@@ -170,14 +170,14 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"DROP TRIGGER IF EXISTS update_documents_updated_at ON ai.documents;"#)
+        sqlx::query(r#"DROP TRIGGER IF EXISTS update_documents_updated_at ON plugin_ai.documents;"#)
             .execute(&self.pool)
             .await?;
 
         sqlx::query(
             r#"
             CREATE TRIGGER update_documents_updated_at
-                BEFORE UPDATE ON ai.documents
+                BEFORE UPDATE ON plugin_ai.documents
                 FOR EACH ROW
                 EXECUTE FUNCTION ai.update_documents_timestamp();
             "#,
