@@ -91,7 +91,7 @@ pub struct RuleAction {
     pub config: serde_json::Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AlertRuleRequest {
     pub name: String,
     pub description: Option<String>,

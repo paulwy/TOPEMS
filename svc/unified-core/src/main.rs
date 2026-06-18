@@ -28,7 +28,7 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
-use axum::http::{StatusCode, Request, Uri};
+use axum::http::{StatusCode, Request};
 use axum::response::Response;
 use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;

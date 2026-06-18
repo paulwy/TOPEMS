@@ -115,30 +115,40 @@ pub struct PluginVersion {
 // ============================================================================
 
 /// Plugin review
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct PluginReview {
     pub id: uuid::Uuid,
     #[serde(rename = "plugin_id")]
+    #[sqlx(rename = "plugin_id")]
     pub plugin_id: uuid::Uuid,
     #[serde(rename = "user_id")]
+    #[sqlx(rename = "user_id")]
     pub user_id: uuid::Uuid,
     #[serde(rename = "user_name")]
+    #[sqlx(rename = "user_name")]
     pub user_name: Option<String>,
     #[serde(rename = "user_avatar")]
+    #[sqlx(rename = "user_avatar")]
     pub user_avatar: Option<String>,
     pub rating: i32,
     pub title: Option<String>,
     pub content: Option<String>,
     #[serde(rename = "is_verified_purchase")]
+    #[sqlx(rename = "is_verified_purchase")]
     pub is_verified_purchase: Option<bool>,
     #[serde(rename = "is_featured")]
+    #[sqlx(rename = "is_featured")]
     pub is_featured: Option<bool>,
     #[serde(rename = "helpful_count")]
+    #[sqlx(rename = "helpful_count")]
     pub helpful_count: Option<i32>,
+    #[sqlx(skip)]
     pub replies: Option<Vec<ReviewReply>>,
     #[serde(rename = "created_at")]
+    #[sqlx(rename = "created_at")]
     pub created_at: DateTime<Utc>,
     #[serde(rename = "updated_at")]
+    #[sqlx(rename = "updated_at")]
     pub updated_at: DateTime<Utc>,
 }
 
