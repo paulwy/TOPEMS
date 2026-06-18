@@ -53,7 +53,14 @@ import {
   Calendar,
   Shield,
 } from "lucide-react";
-import { pluginApi, type Plugin } from "@/api/plugin";
+import {
+  pluginApi,
+  type Plugin,
+  fetchAllPluginInfo,
+  checkPluginHealth,
+  PLUGIN_REGISTRY,
+  type PluginRuntimeInfo,
+} from "@/api/plugin";
 
 // Marketplace plugin type (available plugins)
 interface MarketplacePlugin {
@@ -70,145 +77,48 @@ interface MarketplacePlugin {
   permissions: Array<{ code: string; name: string }>;
 }
 
-// Mock marketplace data
-const MOCK_MARKETPLACE: MarketplacePlugin[] = [
-  {
-    code: "erp",
-    name: "企业资源计划",
-    version: "1.0.0",
-    latest_version: "1.2.0",
-    description: "ERP 企业资源计划系统，包含采购、销售、库存、财务等模块",
-    author: "TOPEMS",
-    published_at: "2024-01-15",
-    downloads: 1250,
-    category: "Business",
-    plugin_type: "business",
-    permissions: [
-      { code: "erp:purchase:read", name: "查看采购" },
-      { code: "erp:sale:read", name: "查看销售" },
-    ],
-  },
-  {
-    code: "hrm",
-    name: "人力资源管理",
-    version: "1.0.0",
-    latest_version: "1.1.0",
-    description: "HRM 人力资源管理系统，包含组织架构、招聘、考勤、薪酬、绩效等模块",
-    author: "TOPEMS",
-    published_at: "2024-01-20",
-    downloads: 980,
-    category: "Business",
-    plugin_type: "business",
-    permissions: [
-      { code: "hrm:employee:read", name: "查看员工" },
-    ],
-  },
-  {
-    code: "crm",
-    name: "客户关系管理",
-    version: "1.0.0",
-    latest_version: "1.0.5",
-    description: "CRM 客户关系管理系统，包含客户、联系人、商机、合同等模块",
-    author: "TOPEMS",
-    published_at: "2024-02-01",
-    downloads: 756,
-    category: "Business",
-    plugin_type: "business",
-    permissions: [
-      { code: "crm:customer:read", name: "查看客户" },
-    ],
-  },
-  {
-    code: "scm",
-    name: "供应链管理",
-    version: "1.0.0",
-    latest_version: "1.0.0",
-    description: "SCM 供应链管理系统，包含供应商管理、采购订单管理等模块",
-    author: "TOPEMS",
-    published_at: "2024-02-10",
-    downloads: 432,
-    category: "Business",
-    plugin_type: "business",
-    permissions: [
-      { code: "scm:supplier:read", name: "查看供应商" },
-    ],
-  },
-  {
-    code: "wms",
-    name: "仓储管理",
-    version: "1.0.0",
-    latest_version: "1.0.0",
-    description: "WMS 仓储管理系统，包含仓库管理、库存管理、入库出库等模块",
-    author: "TOPEMS",
-    published_at: "2024-02-15",
-    downloads: 389,
-    category: "Business",
-    plugin_type: "business",
-    permissions: [
-      { code: "wms:warehouse:read", name: "查看仓库" },
-    ],
-  },
-  {
-    code: "mes",
-    name: "制造执行系统",
-    version: "1.0.0",
-    latest_version: "1.0.0",
-    description: "MES 制造执行系统，包含生产工单、生产工艺、设备管理等模块",
-    author: "TOPEMS",
-    published_at: "2024-02-20",
-    downloads: 287,
-    category: "Business",
-    plugin_type: "business",
-    permissions: [
-      { code: "mes:production_order:read", name: "查看生产工单" },
-    ],
-  },
-  {
-    code: "pm",
-    name: "项目管理",
-    version: "1.0.0",
-    latest_version: "1.0.0",
-    description: "PM 项目管理系统，包含项目、任务、甘特图、预算等模块",
-    author: "TOPEMS",
-    published_at: "2024-03-01",
-    downloads: 312,
-    category: "Business",
-    plugin_type: "business",
-    permissions: [
-      { code: "pm:project:read", name: "查看项目" },
-    ],
-  },
-  {
-    code: "bi",
-    name: "商业智能",
-    version: "1.0.0",
-    latest_version: "1.0.0",
-    description: "BI 商业智能系统，包含数据分析、仪表盘、报表等模块",
-    author: "TOPEMS",
-    published_at: "2024-03-10",
-    downloads: 198,
-    category: "Analytics",
-    plugin_type: "business",
-    permissions: [
-      { code: "bi:analysis:read", name: "查看分析" },
-    ],
-  },
-  {
-    code: "workflow",
-    name: "工作流引擎",
-    version: "1.0.0",
-    latest_version: "1.0.0",
-    description: "Workflow 工作流引擎，包含流程设计、审批等模块",
-    author: "TOPEMS",
-    published_at: "2024-03-15",
-    downloads: 156,
-    category: "System",
-    plugin_type: "core",
-    permissions: [
-      { code: "workflow:instance:read", name: "查看流程实例" },
-    ],
-  },
-];
+// Plugin registry map for display names
+const PLUGIN_DISPLAY_NAMES: Record<string, string> = {
+  workflow: "工作流引擎",
+  erp: "企业资源计划",
+  hrm: "人力资源管理",
+  crm: "客户关系管理",
+  mes: "制造执行系统",
+  qa: "质量管理与安全",
+  scm: "供应链管理",
+  wms: "仓储管理",
+  bi: "商业智能",
+  pm: "项目管理",
+  ai: "AI 智能服务",
+  gis: "地理信息服务",
+  mobile: "移动端服务",
+  rs: "研发管理",
+  srm: "供应商管理",
+  monitor: "监控告警",
+  portal: "企业门户",
+  integration: "系统集成",
+};
+
+const PLUGIN_CATEGORIES: Record<string, string> = {
+  workflow: "System",
+  erp: "Business",
+  hrm: "Business",
+  crm: "Business",
+  mes: "Manufacturing",
+  qa: "Quality",
+  scm: "Supply Chain",
+  wms: "Warehouse",
+  bi: "Analytics",
+  pm: "Project",
+  ai: "AI",
+  gis: "IoT",
+  mobile: "System",
+  rs: "R&D",
+  srm: "Business",
+  monitor: "System",
+  portal: "System",
+  integration: "System",
+};
 
 export const PluginManagementPage: React.FC = () => {
   const [plugins, setPlugins] = useState<Plugin[]>([]);
@@ -238,11 +148,35 @@ export const PluginManagementPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await pluginApi.listInstalled();
-      if (response.success && response.data) {
-        setPlugins(response.data);
+
+      // Fetch plugin info directly from all running plugins
+      const pluginInfoList = await fetchAllPluginInfo();
+
+      if (pluginInfoList.length > 0) {
+        // Convert runtime info to Plugin format
+        const runtimePlugins: Plugin[] = pluginInfoList.map((info, index) => ({
+          id: String(index + 1),
+          code: info.code,
+          name: PLUGIN_DISPLAY_NAMES[info.code] || info.name,
+          description: info.description,
+          version: info.version,
+          plugin_type: info.plugin_type,
+          is_published: true,
+          category: info.category,
+          runtime_status: 'running',
+          runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
+          base_path: `/api/${info.code}`,
+        }));
+
+        setPlugins(runtimePlugins);
       } else {
-        setError(response.message || "Failed to load plugins");
+        // Fallback to API
+        const response = await pluginApi.listInstalled();
+        if (response.success && response.data) {
+          setPlugins(response.data);
+        } else {
+          setError(response.message || "Failed to load plugins");
+        }
       }
     } catch (err: any) {
       setError(err.message || "Network error");
@@ -373,7 +307,22 @@ export const PluginManagementPage: React.FC = () => {
     }
   };
 
-  const filteredMarketplace = MOCK_MARKETPLACE.filter((plugin) => {
+  // Get all available plugins from registry
+  const allMarketplacePlugins: MarketplacePlugin[] = Object.entries(PLUGIN_REGISTRY).map(([code, config]) => ({
+    code,
+    name: PLUGIN_DISPLAY_NAMES[code] || code.toUpperCase(),
+    version: "1.0.0",
+    latest_version: "1.0.0",
+    description: `${PLUGIN_DISPLAY_NAMES[code] || code} 服务运行在端口 ${config.port}`,
+    author: "TOPEMS",
+    published_at: "2024-01-01",
+    downloads: 0,
+    category: PLUGIN_CATEGORIES[code] || "Business",
+    plugin_type: code === "workflow" ? "core" : "business",
+    permissions: [],
+  }));
+
+  const filteredMarketplace = allMarketplacePlugins.filter((plugin) => {
     const searchLower = marketplaceSearch.toLowerCase();
     return (
       plugin.name.toLowerCase().includes(searchLower) ||

@@ -60,6 +60,102 @@ export interface PluginWithStatus {
   tenant_plugin?: TenantPlugin;
 }
 
+// Plugin runtime info from /api/plugins/info endpoint
+export interface PluginRuntimeInfo {
+  code: string;
+  name: string;
+  version: string;
+  description: string;
+  author: string;
+  category: string;
+  plugin_type: string;
+  permissions: Array<{ code: string; name: string; description: string }>;
+}
+
+// Plugin runtime configuration
+export interface PluginRuntimeConfig {
+  port: number;
+  health_endpoint: string;
+  base_path: string;
+}
+
+// Plugin registry - maps plugin code to runtime URL
+export const PLUGIN_REGISTRY: Record<string, { url: string; port: number }> = {
+  workflow: { url: 'http://localhost:8000', port: 8000 },
+  erp: { url: 'http://localhost:8010', port: 8010 },
+  hrm: { url: 'http://localhost:8011', port: 8011 },
+  crm: { url: 'http://localhost:8012', port: 8012 },
+  mes: { url: 'http://localhost:8030', port: 8030 },
+  qa: { url: 'http://localhost:8032', port: 8032 },
+  scm: { url: 'http://localhost:8040', port: 8040 },
+  wms: { url: 'http://localhost:8042', port: 8042 },
+  bi: { url: 'http://localhost:8044', port: 8044 },
+  pm: { url: 'http://localhost:8046', port: 8046 },
+  ai: { url: 'http://localhost:8050', port: 8050 },
+  gis: { url: 'http://localhost:8054', port: 8054 },
+  mobile: { url: 'http://localhost:8056', port: 8056 },
+  rs: { url: 'http://localhost:8058', port: 8058 },
+  srm: { url: 'http://localhost:8060', port: 8060 },
+  monitor: { url: 'http://localhost:8064', port: 8064 },
+  portal: { url: 'http://localhost:8066', port: 8066 },
+  integration: { url: 'http://localhost:8068', port: 8068 },
+};
+
+// Axios instance for plugin runtime API
+const runtimeAxios = axios.create({
+  timeout: 5000,
+});
+
+// Fetch plugin info directly from plugin runtime
+export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo | null> => {
+  const config = PLUGIN_REGISTRY[code];
+  if (!config) return null;
+
+  try {
+    const response = await runtimeAxios.get(`${config.url}/api/plugins/info`);
+    if (response.data?.data) {
+      return response.data.data;
+    }
+    return null;
+  } catch (error) {
+    console.warn(`Failed to fetch plugin info for ${code}:`, error);
+    return null;
+  }
+};
+
+// Fetch all plugin runtime info
+export const fetchAllPluginInfo = async (): Promise<PluginRuntimeInfo[]> => {
+  const results = await Promise.allSettled(
+    Object.keys(PLUGIN_REGISTRY).map(code => fetchPluginInfo(code))
+  );
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<PluginRuntimeInfo> => r.status === 'fulfilled' && r.value !== null)
+    .map(r => r.value);
+};
+
+// Check plugin health
+export const checkPluginHealth = async (code: string): Promise<{ healthy: boolean; status?: string }> => {
+  const config = PLUGIN_REGISTRY[code];
+  if (!config) return { healthy: false };
+
+  try {
+    const response = await runtimeAxios.get(`${config.url}/api/plugins/health`);
+    if (response.data?.data?.status) {
+      return { healthy: true, status: response.data.data.status };
+    }
+    return { healthy: true, status: 'running' };
+  } catch (error) {
+    // Try basic health endpoint
+    try {
+      const response = await runtimeAxios.get(`${config.url}/health`);
+      return { healthy: true, status: 'running' };
+    } catch {
+      return { healthy: false };
+    }
+  }
+};
+
 // API base path
 const API_BASE = '/api/core/plugins';
 
