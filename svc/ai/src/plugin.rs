@@ -1,9 +1,9 @@
 // AI Service Plugin Interface
 // AI 插件接口实现
 
+use crate::AppState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,10 +30,6 @@ pub struct PluginHealth {
     pub status: String,
     pub database: bool,
     pub vector_service: bool,
-}
-
-pub struct PluginState {
-    pub db: PgPool,
 }
 
 // Plugin info endpoint
@@ -114,8 +110,9 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 // Plugin health check endpoint
-pub async fn plugin_health_check(State(state): State<PluginState>) -> Json<ApiResponse<PluginHealth>> {
-    let db_status = match sqlx::query("SELECT 1").fetch_one(&state.db).await {
+pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
+    let pool = state.document_service.pool().await;
+    let db_status = match sqlx::query("SELECT 1").fetch_one(&pool).await {
         Ok(_) => true,
         Err(_) => false,
     };
@@ -126,12 +123,11 @@ pub async fn plugin_health_check(State(state): State<PluginState>) -> Json<ApiRe
         vector_service: true, // Vector service is in-memory, always healthy if db is ok
     };
 
-    let status_code = if db_status { 200 } else { 503 };
-    Json(ApiResponse::with_status(status_code, health, "AI plugin health check"))
+    Json(ApiResponse::success(health, "AI plugin health check"))
 }
 
 // Create plugin routes
-pub fn create_routes() -> Router<PluginState> {
+pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
