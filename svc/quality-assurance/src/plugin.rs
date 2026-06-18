@@ -80,8 +80,7 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiRespo
         database: db_status,
     };
 
-    let status_code = if db_status { 200 } else { 503 };
-    Json(ApiResponse::with_status(status_code, health, "QA plugin health check"))
+    Json(ApiResponse::success(health, "QA plugin health check"))
 }
 
 // Create plugin routes
