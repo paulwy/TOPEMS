@@ -1,3 +1,4 @@
+use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
 use futures_util::StreamExt;
@@ -6,7 +7,7 @@ use std::env;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 /// 事件处理器回调类型
 pub type EventHandler =
@@ -68,6 +69,7 @@ impl EventSubscriber {
         }
 
         let handlers = Arc::new(self.handlers);
+        let dlq = DeadLetterQueue::new()?;
         let mut stream = pubsub.on_message();
 
         // 持续监听
@@ -95,10 +97,16 @@ impl EventSubscriber {
                 if event_types.contains(&event.event_type) {
                     let event_clone = event.clone();
                     let handler_clone = handler.clone();
+                    let dlq_clone = dlq.clone();
 
-                    // 异步处理事件
                     tokio::spawn(async move {
-                        handler_clone(event_clone).await;
+                        match tokio::time::timeout(tokio::time::Duration::from_secs(30), handler_clone(event_clone.clone())).await {
+                            Ok(_) => {}
+                            Err(e) => {
+                                warn!("事件处理超时: {:?}, 事件ID: {}", e, event_clone.event_id);
+                                let _ = dlq_clone.push(event_clone, "处理超时").await;
+                            }
+                        }
                     });
                 }
             }
