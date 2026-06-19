@@ -205,9 +205,9 @@ async fn main() {
         .with_state(state);
 
     let port = std::env::var("QUALITY_ASSURANCE_PORT")
-        .unwrap_or_else(|_| "8032".to_string())
+        .unwrap_or_else(|_| "8052".to_string())
         .parse()
-        .unwrap_or(8032);
+        .unwrap_or(8052);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ Quality Assurance Service is running at http://{}", addr);
 

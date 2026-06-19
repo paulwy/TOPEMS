@@ -10,11 +10,11 @@
 export const consolidationScopeApiContract = {
   /**
    * 获取合并范围列表
-   * GET /api/v1/consolidation/scopes
+   * GET /api/consolidation/scopes
    */
   list: {
     method: "GET",
-    path: "/api/v1/consolidation/scopes",
+    path: "/api/consolidation/scopes",
     queryParams: {
       keyword: "string? 关键字搜索(名称/编码)",
       status: "string? 状态筛选",
@@ -48,11 +48,11 @@ export const consolidationScopeApiContract = {
 
   /**
    * 获取合并范围详情
-   * GET /api/v1/consolidation/scopes/:scopeId
+   * GET /api/consolidation/scopes/:scopeId
    */
   get: {
     method: "GET",
-    path: "/api/v1/consolidation/scopes/:scopeId",
+    path: "/api/consolidation/scopes/:scopeId",
     pathParams: {
       scopeId: "uuid 合并范围ID",
     },
@@ -74,11 +74,11 @@ export const consolidationScopeApiContract = {
 
   /**
    * 创建合并范围
-   * POST /api/v1/consolidation/scopes
+   * POST /api/consolidation/scopes
    */
   create: {
     method: "POST",
-    path: "/api/v1/consolidation/scopes",
+    path: "/api/consolidation/scopes",
     body: {
       code: "string 合并范围编码(必填,唯一)",
       name: "string 合并范围名称(必填)",
@@ -101,11 +101,11 @@ export const consolidationScopeApiContract = {
 
   /**
    * 更新合并范围
-   * PUT /api/v1/consolidation/scopes/:scopeId
+   * PUT /api/consolidation/scopes/:scopeId
    */
   update: {
     method: "PUT",
-    path: "/api/v1/consolidation/scopes/:scopeId",
+    path: "/api/consolidation/scopes/:scopeId",
     pathParams: {
       scopeId: "uuid 合并范围ID",
     },
@@ -130,11 +130,11 @@ export const consolidationScopeApiContract = {
 
   /**
    * 删除合并范围
-   * DELETE /api/v1/consolidation/scopes/:scopeId
+   * DELETE /api/consolidation/scopes/:scopeId
    */
   delete: {
     method: "DELETE",
-    path: "/api/v1/consolidation/scopes/:scopeId",
+    path: "/api/consolidation/scopes/:scopeId",
     pathParams: {
       scopeId: "uuid 合并范围ID",
     },
@@ -151,11 +151,11 @@ export const consolidationScopeApiContract = {
 export const consolidationScopeCompanyApiContract = {
   /**
    * 获取合并范围内的公司列表
-   * GET /api/v1/consolidation/scopes/:scopeId/companies
+   * GET /api/consolidation/scopes/:scopeId/companies
    */
   list: {
     method: "GET",
-    path: "/api/v1/consolidation/scopes/:scopeId/companies",
+    path: "/api/consolidation/scopes/:scopeId/companies",
     pathParams: {
       scopeId: "uuid 合并范围ID",
     },
@@ -182,11 +182,11 @@ export const consolidationScopeCompanyApiContract = {
 
   /**
    * 添加公司到合并范围
-   * POST /api/v1/consolidation/scopes/companies
+   * POST /api/consolidation/scopes/companies
    */
   add: {
     method: "POST",
-    path: "/api/v1/consolidation/scopes/companies",
+    path: "/api/consolidation/scopes/companies",
     body: {
       scope_id: "uuid 合并范围ID(必填)",
       company_id: "uuid 公司ID(必填)",
@@ -214,11 +214,11 @@ export const consolidationScopeCompanyApiContract = {
 
   /**
    * 更新合并范围公司
-   * PUT /api/v1/consolidation/scopes/companies/:companyId
+   * PUT /api/consolidation/scopes/companies/:companyId
    */
   update: {
     method: "PUT",
-    path: "/api/v1/consolidation/scopes/companies/:companyId",
+    path: "/api/consolidation/scopes/companies/:companyId",
     pathParams: {
       companyId: "uuid 合并范围公司ID",
     },
@@ -243,11 +243,11 @@ export const consolidationScopeCompanyApiContract = {
 
   /**
    * 从合并范围移除公司
-   * DELETE /api/v1/consolidation/scopes/companies/:companyId
+   * DELETE /api/consolidation/scopes/companies/:companyId
    */
   remove: {
     method: "DELETE",
-    path: "/api/v1/consolidation/scopes/companies/:companyId",
+    path: "/api/consolidation/scopes/companies/:companyId",
     pathParams: {
       companyId: "uuid 合并范围公司ID",
     },
@@ -264,11 +264,11 @@ export const consolidationScopeCompanyApiContract = {
 export const eliminationRuleApiContract = {
   /**
    * 获取抵消规则列表
-   * GET /api/v1/consolidation/elimination-rules
+   * GET /api/consolidation/elimination-rules
    */
   list: {
     method: "GET",
-    path: "/api/v1/consolidation/elimination-rules",
+    path: "/api/consolidation/elimination-rules",
     queryParams: {
       scope_id: "uuid 合并范围ID(必填)",
       type: "string? 规则类型",
@@ -305,11 +305,11 @@ export const eliminationRuleApiContract = {
 
   /**
    * 获取抵消规则详情
-   * GET /api/v1/consolidation/elimination-rules/:ruleId
+   * GET /api/consolidation/elimination-rules/:ruleId
    */
   get: {
     method: "GET",
-    path: "/api/v1/consolidation/elimination-rules/:ruleId",
+    path: "/api/consolidation/elimination-rules/:ruleId",
     pathParams: {
       ruleId: "uuid 抵消规则ID",
     },
@@ -337,11 +337,11 @@ export const eliminationRuleApiContract = {
 
   /**
    * 创建抵消规则
-   * POST /api/v1/consolidation/elimination-rules
+   * POST /api/consolidation/elimination-rules
    */
   create: {
     method: "POST",
-    path: "/api/v1/consolidation/elimination-rules",
+    path: "/api/consolidation/elimination-rules",
     body: {
       scope_id: "uuid 合并范围ID(必填)",
       code: "string 规则编码(必填,唯一)",
@@ -371,11 +371,11 @@ export const eliminationRuleApiContract = {
 
   /**
    * 更新抵消规则
-   * PUT /api/v1/consolidation/elimination-rules/:ruleId
+   * PUT /api/consolidation/elimination-rules/:ruleId
    */
   update: {
     method: "PUT",
-    path: "/api/v1/consolidation/elimination-rules/:ruleId",
+    path: "/api/consolidation/elimination-rules/:ruleId",
     pathParams: {
       ruleId: "uuid 抵消规则ID",
     },
@@ -401,11 +401,11 @@ export const eliminationRuleApiContract = {
 
   /**
    * 删除抵消规则
-   * DELETE /api/v1/consolidation/elimination-rules/:ruleId
+   * DELETE /api/consolidation/elimination-rules/:ruleId
    */
   delete: {
     method: "DELETE",
-    path: "/api/v1/consolidation/elimination-rules/:ruleId",
+    path: "/api/consolidation/elimination-rules/:ruleId",
     pathParams: {
       ruleId: "uuid 抵消规则ID",
     },
@@ -422,11 +422,11 @@ export const eliminationRuleApiContract = {
 export const internalTransactionApiContract = {
   /**
    * 获取内部交易列表
-   * GET /api/v1/consolidation/internal-transactions
+   * GET /api/consolidation/internal-transactions
    */
   list: {
     method: "GET",
-    path: "/api/v1/consolidation/internal-transactions",
+    path: "/api/consolidation/internal-transactions",
     queryParams: {
       scope_id: "uuid? 合并范围ID",
       from_company_id: "uuid? 交易方公司ID",
@@ -471,11 +471,11 @@ export const internalTransactionApiContract = {
 
   /**
    * 执行内部交易抵消
-   * POST /api/v1/consolidation/execute-elimination
+   * POST /api/consolidation/execute-elimination
    */
   executeElimination: {
     method: "POST",
-    path: "/api/v1/consolidation/execute-elimination",
+    path: "/api/consolidation/execute-elimination",
     body: {
       scope_id: "uuid 合并范围ID(必填)",
       period: "string 会计期间(必填,YYYY-MM)",
@@ -509,11 +509,11 @@ export const internalTransactionApiContract = {
 export const consolidationReportApiContract = {
   /**
    * 获取合并报表列表
-   * GET /api/v1/consolidation/reports
+   * GET /api/consolidation/reports
    */
   list: {
     method: "GET",
-    path: "/api/v1/consolidation/reports",
+    path: "/api/consolidation/reports",
     queryParams: {
       scope_id: "uuid? 合并范围ID",
       report_type: "string? 报表类型",
@@ -554,11 +554,11 @@ export const consolidationReportApiContract = {
 
   /**
    * 获取合并报表详情
-   * GET /api/v1/consolidation/reports/:reportId
+   * GET /api/consolidation/reports/:reportId
    */
   get: {
     method: "GET",
-    path: "/api/v1/consolidation/reports/:reportId",
+    path: "/api/consolidation/reports/:reportId",
     pathParams: {
       reportId: "uuid 报表ID",
     },
@@ -600,11 +600,11 @@ export const consolidationReportApiContract = {
 
   /**
    * 生成合并报表
-   * POST /api/v1/consolidation/reports/generate
+   * POST /api/consolidation/reports/generate
    */
   generate: {
     method: "POST",
-    path: "/api/v1/consolidation/reports/generate",
+    path: "/api/consolidation/reports/generate",
     body: {
       scope_id: "uuid 合并范围ID(必填)",
       report_type: "string 报表类型(必填)",
@@ -637,11 +637,11 @@ export const consolidationReportApiContract = {
 
   /**
    * 获取合并报表行项目
-   * GET /api/v1/consolidation/reports/:reportId/lines
+   * GET /api/consolidation/reports/:reportId/lines
    */
   getLines: {
     method: "GET",
-    path: "/api/v1/consolidation/reports/:reportId/lines",
+    path: "/api/consolidation/reports/:reportId/lines",
     pathParams: {
       reportId: "uuid 报表ID",
     },
@@ -668,11 +668,11 @@ export const consolidationReportApiContract = {
 
   /**
    * 审批合并报表
-   * POST /api/v1/consolidation/reports/:reportId/approve
+   * POST /api/consolidation/reports/:reportId/approve
    */
   approve: {
     method: "POST",
-    path: "/api/v1/consolidation/reports/:reportId/approve",
+    path: "/api/consolidation/reports/:reportId/approve",
     pathParams: {
       reportId: "uuid 报表ID",
     },
@@ -689,11 +689,11 @@ export const consolidationReportApiContract = {
 
   /**
    * 发布合并报表
-   * POST /api/v1/consolidation/reports/:reportId/publish
+   * POST /api/consolidation/reports/:reportId/publish
    */
   publish: {
     method: "POST",
-    path: "/api/v1/consolidation/reports/:reportId/publish",
+    path: "/api/consolidation/reports/:reportId/publish",
     pathParams: {
       reportId: "uuid 报表ID",
     },
@@ -710,11 +710,11 @@ export const consolidationReportApiContract = {
 
   /**
    * 删除合并报表
-   * DELETE /api/v1/consolidation/reports/:reportId
+   * DELETE /api/consolidation/reports/:reportId
    */
   delete: {
     method: "DELETE",
-    path: "/api/v1/consolidation/reports/:reportId",
+    path: "/api/consolidation/reports/:reportId",
     pathParams: {
       reportId: "uuid 报表ID",
     },
@@ -725,11 +725,11 @@ export const consolidationReportApiContract = {
 
   /**
    * 导出合并报表
-   * GET /api/v1/consolidation/reports/:reportId/export
+   * GET /api/consolidation/reports/:reportId/export
    */
   export: {
     method: "GET",
-    path: "/api/v1/consolidation/reports/:reportId/export",
+    path: "/api/consolidation/reports/:reportId/export",
     pathParams: {
       reportId: "uuid 报表ID",
     },
@@ -751,11 +751,11 @@ export const consolidationReportApiContract = {
 export const companyRelationApiContract = {
   /**
    * 获取公司关系列表
-   * GET /api/v1/consolidation/company-relations
+   * GET /api/consolidation/company-relations
    */
   list: {
     method: "GET",
-    path: "/api/v1/consolidation/company-relations",
+    path: "/api/consolidation/company-relations",
     queryParams: {
       company_id: "uuid? 公司ID(获取直接或间接关联的公司)",
       relation_type: "string? 关系类型",
@@ -783,11 +783,11 @@ export const companyRelationApiContract = {
 
   /**
    * 获取公司架构树
-   * GET /api/v1/consolidation/company-tree
+   * GET /api/consolidation/company-tree
    */
   getTree: {
     method: "GET",
-    path: "/api/v1/consolidation/company-tree",
+    path: "/api/consolidation/company-tree",
     response: {
       code: 200,
       data: {
@@ -803,11 +803,11 @@ export const companyRelationApiContract = {
 
   /**
    * 创建公司关系
-   * POST /api/v1/consolidation/company-relations
+   * POST /api/consolidation/company-relations
    */
   create: {
     method: "POST",
-    path: "/api/v1/consolidation/company-relations",
+    path: "/api/consolidation/company-relations",
     body: {
       parent_company_id: "uuid 母公司ID(必填)",
       child_company_id: "uuid 子公司ID(必填)",
@@ -832,11 +832,11 @@ export const companyRelationApiContract = {
 
   /**
    * 更新公司关系
-   * PUT /api/v1/consolidation/company-relations/:relationId
+   * PUT /api/consolidation/company-relations/:relationId
    */
   update: {
     method: "PUT",
-    path: "/api/v1/consolidation/company-relations/:relationId",
+    path: "/api/consolidation/company-relations/:relationId",
     pathParams: {
       relationId: "uuid 公司关系ID",
     },
@@ -857,11 +857,11 @@ export const companyRelationApiContract = {
 
   /**
    * 删除公司关系
-   * DELETE /api/v1/consolidation/company-relations/:relationId
+   * DELETE /api/consolidation/company-relations/:relationId
    */
   delete: {
     method: "DELETE",
-    path: "/api/v1/consolidation/company-relations/:relationId",
+    path: "/api/consolidation/company-relations/:relationId",
     pathParams: {
       relationId: "uuid 公司关系ID",
     },
@@ -872,11 +872,11 @@ export const companyRelationApiContract = {
 
   /**
    * 获取公司财务数据
-   * GET /api/v1/consolidation/companies/:companyId/financial-data
+   * GET /api/consolidation/companies/:companyId/financial-data
    */
   getFinancialData: {
     method: "GET",
-    path: "/api/v1/consolidation/companies/:companyId/financial-data",
+    path: "/api/consolidation/companies/:companyId/financial-data",
     pathParams: {
       companyId: "uuid 公司ID",
     },

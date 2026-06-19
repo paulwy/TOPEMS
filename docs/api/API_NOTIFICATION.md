@@ -2,9 +2,11 @@
 
 **服务**: notification-service
 **端口**: 待定
-**版本**: v1
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/notification/` (例如 `/api/notification/notifications`)
 
 ## 1. 概述
 
@@ -14,13 +16,13 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 获取通知列表 | /api/v1/notifications | GET |
-| 获取未读通知 | /api/v1/notifications/unread | GET |
-| 获取未读数量 | /api/v1/notifications/unread-count | GET |
-| 标记已读 | /api/v1/notifications/{id}/read | PUT |
-| 全部标记已读 | /api/v1/notifications/read-all | PUT |
-| 删除通知 | /api/v1/notifications/{id} | DELETE |
-| 创建通知 | /api/v1/notifications | POST |
+| 获取通知列表 | /api/notification/notifications | GET |
+| 获取未读通知 | /api/notification/notifications/unread | GET |
+| 获取未读数量 | /api/notification/notifications/unread-count | GET |
+| 标记已读 | /api/notification/notifications/{id}/read | PUT |
+| 全部标记已读 | /api/notification/notifications/read-all | PUT |
+| 删除通知 | /api/notification/notifications/{id} | DELETE |
+| 创建通知 | /api/notification/notifications | POST |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -77,7 +79,7 @@
 
 ### 3.1 获取通知列表
 
-**端点**: `GET /api/v1/notifications`
+**端点**: `GET /api/notification/notifications`
 
 **描述**: 获取当前用户的通知列表
 
@@ -93,7 +95,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8012/api/v1/notifications?page=1&pageSize=20&notificationType=workflow" \
+curl -X GET "http://localhost:8012/api/notification/notifications?page=1&pageSize=20&notificationType=workflow" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -162,7 +164,7 @@ curl -X GET "http://localhost:8012/api/v1/notifications?page=1&pageSize=20&notif
 
 ### 3.2 获取未读通知
 
-**端点**: `GET /api/v1/notifications/unread`
+**端点**: `GET /api/notification/notifications/unread`
 
 **描述**: 获取当前用户的所有未读通知
 
@@ -171,7 +173,7 @@ curl -X GET "http://localhost:8012/api/v1/notifications?page=1&pageSize=20&notif
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8012/api/v1/notifications/unread \
+curl -X GET http://localhost:8012/api/notification/notifications/unread \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -219,7 +221,7 @@ curl -X GET http://localhost:8012/api/v1/notifications/unread \
 
 ### 3.3 获取未读数量
 
-**端点**: `GET /api/v1/notifications/unread-count`
+**端点**: `GET /api/notification/notifications/unread-count`
 
 **描述**: 获取当前用户的未读通知数量
 
@@ -228,7 +230,7 @@ curl -X GET http://localhost:8012/api/v1/notifications/unread \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8012/api/v1/notifications/unread-count \
+curl -X GET http://localhost:8012/api/notification/notifications/unread-count \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -248,7 +250,7 @@ curl -X GET http://localhost:8012/api/v1/notifications/unread-count \
 
 ### 3.4 标记已读
 
-**端点**: `PUT /api/v1/notifications/{id}/read`
+**端点**: `PUT /api/notification/notifications/{id}/read`
 
 **描述**: 将指定通知标记为已读
 
@@ -262,7 +264,7 @@ curl -X GET http://localhost:8012/api/v1/notifications/unread-count \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8012/api/v1/notifications/notif-001/read \
+curl -X PUT http://localhost:8012/api/notification/notifications/notif-001/read \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -292,7 +294,7 @@ curl -X PUT http://localhost:8012/api/v1/notifications/notif-001/read \
 
 ### 3.5 全部标记已读
 
-**端点**: `PUT /api/v1/notifications/read-all`
+**端点**: `PUT /api/notification/notifications/read-all`
 
 **描述**: 将所有未读通知标记为已读
 
@@ -301,7 +303,7 @@ curl -X PUT http://localhost:8012/api/v1/notifications/notif-001/read \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8012/api/v1/notifications/read-all \
+curl -X PUT http://localhost:8012/api/notification/notifications/read-all \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -321,7 +323,7 @@ curl -X PUT http://localhost:8012/api/v1/notifications/read-all \
 
 ### 3.6 删除通知
 
-**端点**: `DELETE /api/v1/notifications/{id}`
+**端点**: `DELETE /api/notification/notifications/{id}`
 
 **描述**: 删除指定通知
 
@@ -335,7 +337,7 @@ curl -X PUT http://localhost:8012/api/v1/notifications/read-all \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8012/api/v1/notifications/notif-001 \
+curl -X DELETE http://localhost:8012/api/notification/notifications/notif-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -355,7 +357,7 @@ curl -X DELETE http://localhost:8012/api/v1/notifications/notif-001 \
 
 ### 3.7 创建通知
 
-**端点**: `POST /api/v1/notifications`
+**端点**: `POST /api/notification/notifications`
 
 **描述**: 创建新的通知（通常由系统内部调用）
 
@@ -397,7 +399,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8012/api/v1/notifications \
+curl -X POST http://localhost:8012/api/notification/notifications \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{

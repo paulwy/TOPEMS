@@ -4,7 +4,7 @@ version: "1.0.0"
 description: "PM 项目管理系统，包含项目、任务、甘特图、合同、预算、风险、质量、验收、结算等模块"
 
 deployment:
-  port: 8046
+  port: 8001
   base_path: /api/pm
 
 permissions:

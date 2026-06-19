@@ -100,7 +100,7 @@ const codeApi = {
   }): Promise<GenerateCodeResponse> => {
     const { default: client } = await import("../api/client");
     const response = await client.master.post(
-      "/api/v1/master/codes/generate",
+      "/api/master/codes/generate",
       params,
     );
     return response.data;
@@ -118,7 +118,7 @@ const codeApi = {
   ): Promise<BatchGenerateCodeResponse> => {
     const { default: client } = await import("../api/client");
     const response = await client.master.post(
-      "/api/v1/master/codes/batch-generate",
+      "/api/master/codes/batch-generate",
       {
         requests,
       },
@@ -135,7 +135,7 @@ const codeApi = {
   }): Promise<{ valid: boolean; message?: string }> => {
     const { default: client } = await import("../api/client");
     const response = await client.master.post(
-      "/api/v1/master/codes/validate",
+      "/api/master/codes/validate",
       params,
     );
     return response.data;
@@ -151,7 +151,7 @@ const codeApi = {
   }): Promise<{ reservation_id: string; codes: string[] }> => {
     const { default: client } = await import("../api/client");
     const response = await client.master.post(
-      "/api/v1/master/codes/reserve",
+      "/api/master/codes/reserve",
       params,
     );
     return response.data;
@@ -162,7 +162,7 @@ const codeApi = {
    */
   releaseCodes: async (reservationId: string): Promise<void> => {
     const { default: client } = await import("../api/client");
-    await client.master.delete(`/api/v1/master/codes/reserve/${reservationId}`);
+    await client.master.delete(`/api/master/codes/reserve/${reservationId}`);
   },
 
   /**
@@ -173,7 +173,7 @@ const codeApi = {
     entity_type?: EntityType;
   }): Promise<CodeRule[]> => {
     const { default: client } = await import("../api/client");
-    const response = await client.master.get("/api/v1/master/code-rules", {
+    const response = await client.master.get("/api/master/code-rules", {
       params,
     });
     return response.data.items || [];
@@ -184,7 +184,7 @@ const codeApi = {
    */
   getRule: async (id: string): Promise<CodeRule> => {
     const { default: client } = await import("../api/client");
-    const response = await client.master.get(`/api/v1/master/code-rules/${id}`);
+    const response = await client.master.get(`/api/master/code-rules/${id}`);
     return response.data;
   },
 
@@ -197,7 +197,7 @@ const codeApi = {
   ): Promise<string> => {
     const { default: client } = await import("../api/client");
     const response = await client.master.post(
-      `/api/v1/master/code-rules/${ruleId}/preview`,
+      `/api/master/code-rules/${ruleId}/preview`,
       { variables },
     );
     return response.data.code;

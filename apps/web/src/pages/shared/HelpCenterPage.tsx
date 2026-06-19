@@ -398,7 +398,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: 1, md: 3 },
+            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
             gap: 2,
           }}
         >
@@ -527,7 +527,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: 1, lg: 3 },
+              gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
               gap: 3,
             }}
           >
@@ -768,7 +768,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: 1, md: 2, lg: 3 },
+              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
               gap: 3,
             }}
           >

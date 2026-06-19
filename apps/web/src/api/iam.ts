@@ -163,14 +163,14 @@ export const authApi = {
     password: string;
     full_name?: string;
   }): Promise<ApiResponse<AuthTokens>> => {
-    return apiClient.iam.post<AuthTokens>("/api/v1/auth/register", data);
+    return apiClient.iam.post<AuthTokens>("/api/iam/auth/register", data);
   },
 
   login: async (data: {
     username: string;
     password: string;
   }): Promise<ApiResponse<any>> => {
-    const response = await apiClient.iam.post<any>("/api/v1/auth/login", data);
+    const response = await apiClient.iam.post<any>("/api/iam/auth/login", data);
 
     if (response.success && response.data) {
       localStorage.setItem("token", response.data.access_token);
@@ -189,12 +189,12 @@ export const authApi = {
   },
 
   getCurrentUser: async (): Promise<ApiResponse<User>> => {
-    return apiClient.iam.get<User>("/api/v1/users/me");
+    return apiClient.iam.get<User>("/api/iam/users/me");
   },
 
   getMyPermissions: async (): Promise<ApiResponse<UserWithPermissions>> => {
     return apiClient.iam.get<UserWithPermissions>(
-      "/api/v1/users/me/permissions",
+      "/api/iam/users/me/permissions",
     );
   },
 
@@ -202,13 +202,13 @@ export const authApi = {
     permission: string,
   ): Promise<ApiResponse<PermissionCheckResponse>> => {
     return apiClient.iam.post<PermissionCheckResponse>(
-      "/api/v1/users/me/permissions/check",
+      "/api/iam/users/me/permissions/check",
       { permission },
     );
   },
 
   refreshToken: async (token: string): Promise<ApiResponse<any>> => {
-    const response = await apiClient.iam.post<any>("/api/v1/auth/refresh", {
+    const response = await apiClient.iam.post<any>("/api/iam/auth/refresh", {
       refresh_token: token,
     });
 
@@ -224,36 +224,36 @@ export const authApi = {
   },
 
   listRoles: async (): Promise<ApiResponse<Role[]>> => {
-    return apiClient.iam.get<Role[]>("/api/v1/roles");
+    return apiClient.iam.get<Role[]>("/api/iam/roles");
   },
 
   getRole: async (id: string): Promise<ApiResponse<Role>> => {
-    return apiClient.iam.get<Role>(`/api/v1/roles/${id}`);
+    return apiClient.iam.get<Role>(`/api/iam/roles/${id}`);
   },
 
   createRole: async (data: {
     name: string;
     description?: string;
   }): Promise<ApiResponse<Role>> => {
-    return apiClient.iam.post<Role>("/api/v1/roles", data);
+    return apiClient.iam.post<Role>("/api/iam/roles", data);
   },
 
   updateRole: async (
     roleId: string,
     data: UpdateRoleRequest,
   ): Promise<ApiResponse<Role>> => {
-    return apiClient.iam.put<Role>(`/api/v1/roles/${roleId}`, data);
+    return apiClient.iam.put<Role>(`/api/iam/roles/${roleId}`, data);
   },
 
   deleteRole: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.delete<string>(`/api/v1/roles/${id}`);
+    return apiClient.iam.delete<string>(`/api/iam/roles/${id}`);
   },
 
   getRolePermissions: async (
     roleId: string,
   ): Promise<ApiResponse<Permission[]>> => {
     return apiClient.iam.get<Permission[]>(
-      `/api/v1/roles/${roleId}/permissions`,
+      `/api/iam/roles/${roleId}/permissions`,
     );
   },
 
@@ -261,7 +261,7 @@ export const authApi = {
     roleId: string,
     permissionId: string,
   ): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>(`/api/v1/roles/${roleId}/permissions`, {
+    return apiClient.iam.post<string>(`/api/iam/roles/${roleId}/permissions`, {
       permission_ids: [permissionId],
     });
   },
@@ -271,18 +271,18 @@ export const authApi = {
     permissionId: string,
   ): Promise<ApiResponse<string>> => {
     return apiClient.iam.delete<string>(
-      `/api/v1/roles/${roleId}/permissions/${permissionId}`,
+      `/api/iam/roles/${roleId}/permissions/${permissionId}`,
     );
   },
 
   listPermissions: async (): Promise<ApiResponse<Permission[]>> => {
-    return apiClient.iam.get<Permission[]>("/api/v1/permissions");
+    return apiClient.iam.get<Permission[]>("/api/iam/permissions");
   },
 
   createPermission: async (
     data: CreatePermissionRequest,
   ): Promise<ApiResponse<Permission>> => {
-    return apiClient.iam.post<Permission>("/api/v1/permissions", data);
+    return apiClient.iam.post<Permission>("/api/iam/permissions", data);
   },
 
   updatePermission: async (
@@ -290,7 +290,7 @@ export const authApi = {
     data: UpdatePermissionRequest,
   ): Promise<ApiResponse<Permission>> => {
     return apiClient.iam.put<Permission>(
-      `/api/v1/permissions/${permissionId}`,
+      `/api/iam/permissions/${permissionId}`,
       data,
     );
   },
@@ -298,19 +298,19 @@ export const authApi = {
   deletePermission: async (
     permissionId: string,
   ): Promise<ApiResponse<string>> => {
-    return apiClient.iam.delete<string>(`/api/v1/permissions/${permissionId}`);
+    return apiClient.iam.delete<string>(`/api/iam/permissions/${permissionId}`);
   },
 
   getUserPermissions: async (
     userId: string,
   ): Promise<ApiResponse<UserWithPermissions>> => {
     return apiClient.iam.get<UserWithPermissions>(
-      `/api/v1/users/${userId}/permissions`,
+      `/api/iam/users/${userId}/permissions`,
     );
   },
 
   getUserRoles: async (userId: string): Promise<ApiResponse<any[]>> => {
-    return apiClient.iam.get<any[]>(`/api/v1/users/${userId}/roles`);
+    return apiClient.iam.get<any[]>(`/api/iam/users/${userId}/roles`);
   },
 
   addUserRole: async (
@@ -318,7 +318,7 @@ export const authApi = {
     roleId: string,
   ): Promise<ApiResponse<string>> => {
     return apiClient.iam.post<string>(
-      `/api/v1/users/${userId}/roles/${roleId}`,
+      `/api/iam/users/${userId}/roles/${roleId}`,
     );
   },
 
@@ -327,7 +327,7 @@ export const authApi = {
     roleId: string,
   ): Promise<ApiResponse<string>> => {
     return apiClient.iam.delete<string>(
-      `/api/v1/users/${userId}/roles/${roleId}`,
+      `/api/iam/users/${userId}/roles/${roleId}`,
     );
   },
 
@@ -338,7 +338,7 @@ export const authApi = {
     const params = new URLSearchParams();
     if (limit) params.append("limit", limit.toString());
     if (offset) params.append("offset", offset.toString());
-    return apiClient.iam.get<AccessLog[]>(`/api/v1/access-logs?${params}`);
+    return apiClient.iam.get<AccessLog[]>(`/api/iam/access-logs?${params}`);
   },
 
   getUserAccessLogs: async (
@@ -350,14 +350,14 @@ export const authApi = {
     if (limit) params.append("limit", limit.toString());
     if (offset) params.append("offset", offset.toString());
     return apiClient.iam.get<AccessLog[]>(
-      `/api/v1/access-logs/user/${userId}?${params}`,
+      `/api/iam/access-logs/user/${userId}?${params}`,
     );
   },
 
   createAccessLog: async (
     data: CreateAccessLogRequest,
   ): Promise<ApiResponse<AccessLog>> => {
-    return apiClient.iam.post<AccessLog>("/api/v1/access-logs", data);
+    return apiClient.iam.post<AccessLog>("/api/iam/access-logs", data);
   },
 
   listUsers: async (params?: {
@@ -371,43 +371,43 @@ export const authApi = {
       queryParams.append("page_size", params.page_size.toString());
     if (params?.search) queryParams.append("search", params.search);
     return apiClient.iam.get<{ users: User[]; total: number }>(
-      `/api/v1/users?${queryParams}`,
+      `/api/iam/users?${queryParams}`,
     );
   },
 
   getUser: async (userId: string): Promise<ApiResponse<User>> => {
-    return apiClient.iam.get<User>(`/api/v1/users/${userId}`);
+    return apiClient.iam.get<User>(`/api/iam/users/${userId}`);
   },
 
   updateUser: async (
     userId: string,
     data: UpdateUserRequest,
   ): Promise<ApiResponse<User>> => {
-    return apiClient.iam.put<User>(`/api/v1/users/${userId}`, data);
+    return apiClient.iam.put<User>(`/api/iam/users/${userId}`, data);
   },
 
   updateCurrentUser: async (data: {
     full_name?: string;
     email?: string;
   }): Promise<ApiResponse<User>> => {
-    return apiClient.iam.put<User>("/api/v1/users/me", data);
+    return apiClient.iam.put<User>("/api/iam/users/me", data);
   },
 
   changePassword: async (data: {
     current_password: string;
     new_password: string;
   }): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>("/api/v1/users/me/password", data);
+    return apiClient.iam.post<string>("/api/iam/users/me/password", data);
   },
 
   updateAvatar: async (data: {
     avatar_url: string;
   }): Promise<ApiResponse<User>> => {
-    return apiClient.iam.post<User>("/api/v1/users/me/avatar", data);
+    return apiClient.iam.post<User>("/api/iam/users/me/avatar", data);
   },
 
   getPreferences: async (): Promise<ApiResponse<UserPreferences>> => {
-    return apiClient.iam.get<UserPreferences>("/api/v1/users/me/preferences");
+    return apiClient.iam.get<UserPreferences>("/api/iam/users/me/preferences");
   },
 
   updatePreferences: async (data: {
@@ -417,13 +417,13 @@ export const authApi = {
     timezone?: string;
   }): Promise<ApiResponse<UserPreferences>> => {
     return apiClient.iam.put<UserPreferences>(
-      "/api/v1/users/me/preferences",
+      "/api/iam/users/me/preferences",
       data,
     );
   },
 
   deleteUser: async (userId: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.delete<string>(`/api/v1/users/${userId}`);
+    return apiClient.iam.delete<string>(`/api/iam/users/${userId}`);
   },
 
   createUser: async (data: {
@@ -432,21 +432,21 @@ export const authApi = {
     password: string;
     full_name?: string;
   }): Promise<ApiResponse<User>> => {
-    return apiClient.iam.post<User>("/api/v1/users", data);
+    return apiClient.iam.post<User>("/api/iam/users", data);
   },
 
   // 密码重置请求
   requestPasswordReset: async (
     data: ResetPasswordRequest,
   ): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>("/api/v1/auth/reset-password", data);
+    return apiClient.iam.post<string>("/api/iam/auth/reset-password", data);
   },
 
   // 确认密码重置（设置新密码）
   confirmPasswordReset: async (
     data: SetNewPasswordRequest,
   ): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>("/api/v1/auth/set-new-password", data);
+    return apiClient.iam.post<string>("/api/iam/auth/set-new-password", data);
   },
 
   // 获取用户有效权限（角色权限 + 直接权限）
@@ -460,7 +460,7 @@ export const authApi = {
       total: number;
     }>
   > => {
-    return apiClient.iam.get(`/api/v1/users/${userId}/effective-permissions`);
+    return apiClient.iam.get(`/api/iam/users/${userId}/effective-permissions`);
   },
 
   // 批量删除用户
@@ -468,7 +468,7 @@ export const authApi = {
     data: BatchOperationRequest,
   ): Promise<ApiResponse<BatchDeleteResponse>> => {
     return apiClient.iam.post<BatchDeleteResponse>(
-      "/api/v1/users/batch-delete",
+      "/api/iam/users/batch-delete",
       data,
     );
   },
@@ -478,7 +478,7 @@ export const authApi = {
     data: BatchUpdateUsersRequest,
   ): Promise<ApiResponse<{ updated_count: number }>> => {
     return apiClient.iam.put<{ updated_count: number }>(
-      "/api/v1/users/batch-update",
+      "/api/iam/users/batch-update",
       data,
     );
   },
@@ -488,7 +488,7 @@ export const authApi = {
     email: string,
   ): Promise<ApiResponse<{ available: boolean }>> => {
     return apiClient.iam.get<{ available: boolean }>(
-      `/api/v1/users/check-email?email=${encodeURIComponent(email)}`,
+      `/api/iam/users/check-email?email=${encodeURIComponent(email)}`,
     );
   },
 
@@ -497,7 +497,7 @@ export const authApi = {
     username: string,
   ): Promise<ApiResponse<{ available: boolean }>> => {
     return apiClient.iam.get<{ available: boolean }>(
-      `/api/v1/users/check-username?username=${encodeURIComponent(username)}`,
+      `/api/iam/users/check-username?username=${encodeURIComponent(username)}`,
     );
   },
 
@@ -513,7 +513,7 @@ export const authApi = {
       prevent_reuse: number;
     }>
   > => {
-    return apiClient.iam.get("/api/v1/auth/password-policy");
+    return apiClient.iam.get("/api/iam/auth/password-policy");
   },
 
   // 更新密码策略
@@ -526,7 +526,7 @@ export const authApi = {
     max_age_days?: number;
     prevent_reuse?: number;
   }): Promise<ApiResponse<any>> => {
-    return apiClient.iam.put("/api/v1/auth/password-policy", data);
+    return apiClient.iam.put("/api/iam/auth/password-policy", data);
   },
 
   // 获取用户登录历史
@@ -546,7 +546,7 @@ export const authApi = {
     }>
   > => {
     const params = limit ? `?limit=${limit}` : "";
-    return apiClient.iam.get(`/api/v1/users/${userId}/login-history${params}`);
+    return apiClient.iam.get(`/api/iam/users/${userId}/login-history${params}`);
   },
 
   // 获取活跃会话列表
@@ -563,12 +563,12 @@ export const authApi = {
       total: number;
     }>
   > => {
-    return apiClient.iam.get("/api/v1/auth/sessions");
+    return apiClient.iam.get("/api/iam/auth/sessions");
   },
 
   // 撤销会话
   revokeSession: async (sessionId: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.delete(`/api/v1/auth/sessions/${sessionId}`);
+    return apiClient.iam.delete(`/api/iam/auth/sessions/${sessionId}`);
   },
 
   // 撤销所有其他会话
@@ -576,7 +576,7 @@ export const authApi = {
     ApiResponse<{ revoked_count: number }>
   > => {
     return apiClient.iam.post<{ revoked_count: number }>(
-      "/api/v1/auth/sessions/revoke-all",
+      "/api/iam/auth/sessions/revoke-all",
     );
   },
 
@@ -589,7 +589,7 @@ export const authApi = {
       session_timeout_minutes: number;
     }>
   > => {
-    return apiClient.iam.get("/api/v1/auth/security-settings");
+    return apiClient.iam.get("/api/iam/auth/security-settings");
   },
 
   // 更新安全设置
@@ -599,6 +599,6 @@ export const authApi = {
     ip_whitelist?: string[];
     session_timeout_minutes?: number;
   }): Promise<ApiResponse<any>> => {
-    return apiClient.iam.put("/api/v1/auth/security-settings", data);
+    return apiClient.iam.put("/api/iam/auth/security-settings", data);
   },
 };

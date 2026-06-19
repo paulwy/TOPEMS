@@ -89,23 +89,23 @@ export interface PerformanceReport {
 export const monitorApi = {
   getSystemMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
     return apiClient.master.get<SystemMetrics>(
-      "/api/v1/monitor/metrics/system",
+      "/api/monitor/metrics/system",
     );
   },
 
   getServiceHealth: async (): Promise<ApiResponse<ServiceHealth[]>> => {
-    return apiClient.master.get<ServiceHealth[]>("/api/v1/monitor/health");
+    return apiClient.master.get<ServiceHealth[]>("/api/monitor/health");
   },
 
   getApiPerformance: async (): Promise<ApiResponse<ApiPerformance[]>> => {
     return apiClient.master.get<ApiPerformance[]>(
-      "/api/v1/monitor/performance/api",
+      "/api/monitor/performance/api",
     );
   },
 
   getDatabaseMetrics: async (): Promise<ApiResponse<DatabaseMetrics>> => {
     return apiClient.master.get<DatabaseMetrics>(
-      "/api/v1/monitor/metrics/database",
+      "/api/monitor/metrics/database",
     );
   },
 
@@ -122,22 +122,22 @@ export const monitorApi = {
       queryParams.append("service_name", params.service_name);
 
     return apiClient.master.get<PaginatedResponse<Alert>>(
-      `/api/v1/monitor/alerts?${queryParams.toString()}`,
+      `/api/monitor/alerts?${queryParams.toString()}`,
     );
   },
 
   getAlert: async (id: string): Promise<ApiResponse<Alert>> => {
-    return apiClient.master.get<Alert>(`/api/v1/monitor/alerts/${id}`);
+    return apiClient.master.get<Alert>(`/api/monitor/alerts/${id}`);
   },
 
   acknowledgeAlert: async (id: string): Promise<ApiResponse<Alert>> => {
     return apiClient.master.put<Alert>(
-      `/api/v1/monitor/alerts/${id}/acknowledge`,
+      `/api/monitor/alerts/${id}/acknowledge`,
     );
   },
 
   resolveAlert: async (id: string): Promise<ApiResponse<Alert>> => {
-    return apiClient.master.put<Alert>(`/api/v1/monitor/alerts/${id}/resolve`);
+    return apiClient.master.put<Alert>(`/api/monitor/alerts/${id}/resolve`);
   },
 
   getPerformanceReport: async (
@@ -149,13 +149,13 @@ export const monitorApi = {
     if (period) queryParams.append("period", period);
 
     return apiClient.master.get<PerformanceReport>(
-      `/api/v1/monitor/reports/performance?${queryParams.toString()}`,
+      `/api/monitor/reports/performance?${queryParams.toString()}`,
     );
   },
 
   getRealtimeMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
     return apiClient.master.get<SystemMetrics>(
-      "/api/v1/monitor/metrics/realtime",
+      "/api/monitor/metrics/realtime",
     );
   },
 

@@ -1,10 +1,12 @@
 # TOPEMS-HRM 人力资源管理服务 API 文档
 
-**版本**: v1
-**更新日期**: 2026-06-10
+**版本**: v2
+**更新日期**: 2026-06-20
 **服务地址**: `http://localhost:8011`
 
 ---
+
+> **API 路径**: `/api/hrm/` (例如 `/api/hrm/employees`)
 
 ## 目录
 
@@ -14,8 +16,9 @@
 4. [部门管理 API](#4-部门管理-api)
 5. [职位管理 API](#5-职位管理-api)
 6. [员工管理 API](#6-员工管理-api)
-7. [健康检查 API](#7-健康检查-api)
-8. [数据模型](#8-数据模型)
+7. [合同管理 API](#7-合同管理-api)
+8. [健康检查 API](#7-健康检查-api)
+9. [数据模型](#8-数据模型)
 
 ---
 
@@ -58,7 +61,7 @@ Authorization: Bearer <token>
 ### 2.1 获取初始化进度
 
 ```
-GET /api/v1/hrm/setup/progress
+GET /api/hrm/setup/progress
 ```
 
 **响应示例**：
@@ -83,7 +86,7 @@ GET /api/v1/hrm/setup/progress
 ### 2.2 更新公司信息
 
 ```
-POST /api/v1/hrm/setup/company
+POST /api/hrm/setup/company
 ```
 
 **请求体**：
@@ -104,7 +107,7 @@ POST /api/v1/hrm/setup/company
 ### 2.3 批量创建部门
 
 ```
-POST /api/v1/hrm/setup/departments
+POST /api/hrm/setup/departments
 ```
 
 **请求体**：
@@ -121,7 +124,7 @@ POST /api/v1/hrm/setup/departments
 ### 2.4 批量创建职位
 
 ```
-POST /api/v1/hrm/setup/positions
+POST /api/hrm/setup/positions
 ```
 
 **请求体**：
@@ -137,7 +140,7 @@ POST /api/v1/hrm/setup/positions
 ### 2.5 创建管理员账户
 
 ```
-POST /api/v1/hrm/setup/admin
+POST /api/hrm/setup/admin
 ```
 
 **请求体**：
@@ -158,7 +161,7 @@ POST /api/v1/hrm/setup/admin
 ### 2.6 完成初始化
 
 ```
-POST /api/v1/hrm/setup/complete
+POST /api/hrm/setup/complete
 ```
 
 **请求体**：
@@ -175,19 +178,19 @@ POST /api/v1/hrm/setup/complete
 ### 3.1 获取公司列表
 
 ```
-GET /api/v1/hrm/companies?page=1&page_size=20&search=关键词
+GET /api/hrm/companies?page=1&page_size=20&search=关键词
 ```
 
 ### 3.2 获取公司详情
 
 ```
-GET /api/v1/hrm/companies/{id}
+GET /api/hrm/companies/{id}
 ```
 
 ### 3.3 创建公司
 
 ```
-POST /api/v1/hrm/companies
+POST /api/hrm/companies
 ```
 
 **请求体**：
@@ -204,13 +207,13 @@ POST /api/v1/hrm/companies
 ### 3.4 更新公司
 
 ```
-PUT /api/v1/hrm/companies/{id}
+PUT /api/hrm/companies/{id}
 ```
 
 ### 3.5 删除公司
 
 ```
-DELETE /api/v1/hrm/companies/{id}
+DELETE /api/hrm/companies/{id}
 ```
 
 ---
@@ -220,19 +223,19 @@ DELETE /api/v1/hrm/companies/{id}
 ### 4.1 获取部门列表
 
 ```
-GET /api/v1/hrm/departments?page=1&page_size=20&company_id=uuid&status=active
+GET /api/hrm/departments?page=1&page_size=20&company_id=uuid&status=active
 ```
 
 ### 4.2 获取部门详情
 
 ```
-GET /api/v1/hrm/departments/{id}
+GET /api/hrm/departments/{id}
 ```
 
 ### 4.3 创建部门
 
 ```
-POST /api/v1/hrm/departments
+POST /api/hrm/departments
 ```
 
 **请求体**：
@@ -252,13 +255,13 @@ POST /api/v1/hrm/departments
 ### 4.4 更新部门
 
 ```
-PUT /api/v1/hrm/departments/{id}
+PUT /api/hrm/departments/{id}
 ```
 
 ### 4.5 删除部门
 
 ```
-DELETE /api/v1/hrm/departments/{id}
+DELETE /api/hrm/departments/{id}
 ```
 
 ---
@@ -268,19 +271,19 @@ DELETE /api/v1/hrm/departments/{id}
 ### 5.1 获取职位列表
 
 ```
-GET /api/v1/hrm/positions?page=1&page_size=20&company_id=uuid&department_id=uuid
+GET /api/hrm/positions?page=1&page_size=20&company_id=uuid&department_id=uuid
 ```
 
 ### 5.2 获取职位详情
 
 ```
-GET /api/v1/hrm/positions/{id}
+GET /api/hrm/positions/{id}
 ```
 
 ### 5.3 创建职位
 
 ```
-POST /api/v1/hrm/positions
+POST /api/hrm/positions
 ```
 
 **请求体**：
@@ -302,13 +305,13 @@ POST /api/v1/hrm/positions
 ### 5.4 更新职位
 
 ```
-PUT /api/v1/hrm/positions/{id}
+PUT /api/hrm/positions/{id}
 ```
 
 ### 5.5 删除职位
 
 ```
-DELETE /api/v1/hrm/positions/{id}
+DELETE /api/hrm/positions/{id}
 ```
 
 ---
@@ -318,19 +321,19 @@ DELETE /api/v1/hrm/positions/{id}
 ### 6.1 获取员工列表
 
 ```
-GET /api/v1/hrm/employees?page=1&page_size=20&company_id=uuid&department_id=uuid&status=active
+GET /api/hrm/employees?page=1&page_size=20&company_id=uuid&department_id=uuid&status=active
 ```
 
 ### 6.2 获取员工详情
 
 ```
-GET /api/v1/hrm/employees/{id}
+GET /api/hrm/employees/{id}
 ```
 
 ### 6.3 创建员工
 
 ```
-POST /api/v1/hrm/employees
+POST /api/hrm/employees
 ```
 
 **请求体**：
@@ -355,29 +358,157 @@ POST /api/v1/hrm/employees
 ### 6.4 更新员工
 
 ```
-PUT /api/v1/hrm/employees/{id}
+PUT /api/hrm/employees/{id}
 ```
 
 ### 6.5 删除员工
 
 ```
-DELETE /api/v1/hrm/employees/{id}
+DELETE /api/hrm/employees/{id}
 ```
 
 ---
 
-## 7. 健康检查 API
+## 7. 合同管理 API
 
-### 7.1 基础健康检查
+### 7.1 获取合同列表
+
+```
+GET /api/hrm/contracts
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | int | 否 | 页码，默认1 |
+| page_size | int | 否 | 每页数量，默认20 |
+| search | string | 否 | 搜索关键词 |
+| status | string | 否 | 合同状态 |
+
+**响应示例**：
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "items": [
+      {
+        "id": "uuid",
+        "contract_number": "HT20240001",
+        "employee_id": "uuid",
+        "employee_name": "张三",
+        "contract_type": "固定期限",
+        "start_date": "2024-01-01",
+        "end_date": "2026-12-31",
+        "status": "active",
+        "monthly_salary": 15000.00
+      }
+    ],
+    "total": 100,
+    "page": 1,
+    "page_size": 20
+  }
+}
+```
+
+### 7.2 获取单个合同
+
+```
+GET /api/hrm/contracts/{id}
+```
+
+### 7.3 创建合同
+
+```
+POST /api/hrm/contracts
+```
+
+**请求体**：
+```json
+{
+  "employee_id": "uuid",
+  "contract_type": "固定期限",
+  "start_date": "2024-01-01",
+  "end_date": "2026-12-31",
+  "monthly_salary": 15000.00,
+  "signing_date": "2024-01-01",
+  "remarks": "备注信息"
+}
+```
+
+### 7.4 更新合同
+
+```
+PUT /api/hrm/contracts/{id}
+```
+
+### 7.5 删除合同
+
+```
+DELETE /api/hrm/contracts/{id}
+```
+
+### 7.6 获取即将到期合同
+
+```
+GET /api/hrm/contracts/expiring
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| days | int | 否 | 到期天数，默认30天 |
+| page | int | 否 | 页码 |
+| page_size | int | 否 | 每页数量 |
+
+### 7.7 合同续签
+
+```
+POST /api/hrm/contracts/{id}/renew
+```
+
+**请求体**：
+```json
+{
+  "new_end_date": "2027-12-31",
+  "new_monthly_salary": 18000.00,
+  "renewal_type": "续签",
+  "remarks": "续签备注"
+}
+```
+
+### 7.8 获取续签记录列表
+
+```
+GET /api/hrm/contract-renewals
+```
+
+### 7.9 审批续签记录
+
+```
+PUT /api/hrm/contract-renewals/{id}/approve
+```
+
+### 7.10 拒绝续签记录
+
+```
+PUT /api/hrm/contract-renewals/{id}/reject
+```
+
+---
+
+## 8. 健康检查 API
+
+### 8.1 基础健康检查
 
 ```
 GET /api/v1/health
 ```
 
-### 7.2 详细健康检查
+### 8.2 详细健康检查
 
 ```
-GET /api/v1/health/detailed
+GET /health/detailed
 ```
 
 **响应示例**：
@@ -480,6 +611,46 @@ GET /api/v1/metrics
 | phone | VARCHAR(20) | 手机号 |
 | address | TEXT | 住址 |
 | status | VARCHAR(20) | 状态 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+### 8.5 Contract (合同)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| organization_id | UUID | 组织ID |
+| company_id | UUID | 公司ID |
+| employee_id | UUID | 员工ID |
+| employee_name | VARCHAR(100) | 员工姓名 |
+| contract_number | VARCHAR(50) | 合同编号 |
+| contract_type | VARCHAR(50) | 合同类型（固定期限/无固定期限/临时工） |
+| start_date | DATE | 开始日期 |
+| end_date | DATE | 结束日期 |
+| signing_date | DATE | 签订日期 |
+| monthly_salary | DECIMAL | 月薪 |
+| status | VARCHAR(20) | 状态（draft/active/expired/terminated） |
+| remarks | TEXT | 备注 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+### 8.6 ContractRenewal (合同续签)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| organization_id | UUID | 组织ID |
+| contract_id | UUID | 合同ID |
+| renewal_type | VARCHAR(50) | 续签类型 |
+| previous_end_date | DATE | 原结束日期 |
+| new_end_date | DATE | 新结束日期 |
+| previous_salary | DECIMAL | 原薪资 |
+| new_salary | DECIMAL | 新薪资 |
+| status | VARCHAR(20) | 状态（pending/approved/rejected/executed） |
+| approved_by | UUID | 审批人ID |
+| approved_at | TIMESTAMP | 审批时间 |
+| executed_at | TIMESTAMP | 执行时间 |
+| remarks | TEXT | 备注 |
 | created_at | TIMESTAMP | 创建时间 |
 | updated_at | TIMESTAMP | 更新时间 |
 

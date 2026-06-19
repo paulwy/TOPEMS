@@ -187,7 +187,7 @@ const customerApi = {
   list: async (
     params?: PaginationParams,
   ): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
-    return apiClient.crm.get("/api/v1/customers", { params });
+    return apiClient.crm.get("/api/crm/customers", { params });
   },
 
   /**
@@ -196,14 +196,14 @@ const customerApi = {
   create: async (
     data: CreateCustomerRequest,
   ): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.post("/api/v1/customers", data);
+    return apiClient.crm.post("/api/crm/customers", data);
   },
 
   /**
    * 获取客户详情
    */
   get: async (id: string): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.get(`/api/plugins/crm/api/crm/customers/${id}`);
+    return apiClient.crm.get(`/api/crm/customers/${id}`);
   },
 
   /**
@@ -213,21 +213,21 @@ const customerApi = {
     id: string,
     data: UpdateCustomerRequest,
   ): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.put(`/api/plugins/crm/api/crm/customers/${id}`, data);
+    return apiClient.crm.put(`/api/crm/customers/${id}`, data);
   },
 
   /**
    * 删除客户
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/plugins/crm/api/crm/customers/${id}`);
+    return apiClient.crm.delete(`/api/crm/customers/${id}`);
   },
 
   /**
    * 批量删除客户
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post("/api/v1/customers/batch-delete", { ids });
+    return apiClient.crm.post("/api/crm/customers/batch-delete", { ids });
   },
 };
 
@@ -240,21 +240,21 @@ const contactApi = {
   list: async (
     params?: ContactQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<Contact>>> => {
-    return apiClient.crm.get("/api/v1/contacts", { params });
+    return apiClient.crm.get("/api/crm/contacts", { params });
   },
 
   /**
    * 创建联系人
    */
   create: async (data: CreateContactRequest): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.post("/api/v1/contacts", data);
+    return apiClient.crm.post("/api/crm/contacts", data);
   },
 
   /**
    * 获取联系人详情
    */
   get: async (id: string): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.get(`/api/plugins/crm/api/crm/contacts/${id}`);
+    return apiClient.crm.get(`/api/crm/contacts/${id}`);
   },
 
   /**
@@ -264,21 +264,21 @@ const contactApi = {
     id: string,
     data: UpdateContactRequest,
   ): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.put(`/api/plugins/crm/api/crm/contacts/${id}`, data);
+    return apiClient.crm.put(`/api/crm/contacts/${id}`, data);
   },
 
   /**
    * 删除联系人
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/plugins/crm/api/crm/contacts/${id}`);
+    return apiClient.crm.delete(`/api/crm/contacts/${id}`);
   },
 
   /**
    * 批量删除联系人
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post("/api/v1/contacts/batch-delete", { ids });
+    return apiClient.crm.post("/api/crm/contacts/batch-delete", { ids });
   },
 };
 
@@ -291,7 +291,7 @@ const opportunityApi = {
   list: async (
     params?: OpportunityQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<Opportunity>>> => {
-    return apiClient.crm.get("/api/v1/opportunities", { params });
+    return apiClient.crm.get("/api/crm/opportunities", { params });
   },
 
   /**
@@ -300,14 +300,14 @@ const opportunityApi = {
   create: async (
     data: CreateOpportunityRequest,
   ): Promise<ApiResponse<Opportunity>> => {
-    return apiClient.crm.post("/api/v1/opportunities", data);
+    return apiClient.crm.post("/api/crm/opportunities", data);
   },
 
   /**
    * 获取商机详情
    */
   get: async (id: string): Promise<ApiResponse<Opportunity>> => {
-    return apiClient.crm.get(`/api/plugins/crm/api/crm/opportunities/${id}`);
+    return apiClient.crm.get(`/api/crm/opportunities/${id}`);
   },
 
   /**
@@ -317,21 +317,21 @@ const opportunityApi = {
     id: string,
     data: UpdateOpportunityRequest,
   ): Promise<ApiResponse<Opportunity>> => {
-    return apiClient.crm.put(`/api/plugins/crm/api/crm/opportunities/${id}`, data);
+    return apiClient.crm.put(`/api/crm/opportunities/${id}`, data);
   },
 
   /**
    * 删除商机
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/plugins/crm/api/crm/opportunities/${id}`);
+    return apiClient.crm.delete(`/api/crm/opportunities/${id}`);
   },
 
   /**
    * 批量删除商机
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post("/api/v1/opportunities/batch-delete", { ids });
+    return apiClient.crm.post("/api/crm/opportunities/batch-delete", { ids });
   },
 };
 
@@ -344,7 +344,7 @@ const interactionApi = {
   list: async (
     params?: InteractionQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<Interaction>>> => {
-    return apiClient.crm.get("/api/v1/interactions", { params });
+    return apiClient.crm.get("/api/crm/interactions", { params });
   },
 
   /**
@@ -353,14 +353,14 @@ const interactionApi = {
   create: async (
     data: CreateInteractionRequest,
   ): Promise<ApiResponse<Interaction>> => {
-    return apiClient.crm.post("/api/v1/interactions", data);
+    return apiClient.crm.post("/api/crm/interactions", data);
   },
 
   /**
    * 获取交互记录详情
    */
   get: async (id: string): Promise<ApiResponse<Interaction>> => {
-    return apiClient.crm.get(`/api/plugins/crm/api/crm/interactions/${id}`);
+    return apiClient.crm.get(`/api/crm/interactions/${id}`);
   },
 
   /**
@@ -370,21 +370,21 @@ const interactionApi = {
     id: string,
     data: UpdateInteractionRequest,
   ): Promise<ApiResponse<Interaction>> => {
-    return apiClient.crm.put(`/api/plugins/crm/api/crm/interactions/${id}`, data);
+    return apiClient.crm.put(`/api/crm/interactions/${id}`, data);
   },
 
   /**
    * 删除交互记录
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/plugins/crm/api/crm/interactions/${id}`);
+    return apiClient.crm.delete(`/api/crm/interactions/${id}`);
   },
 
   /**
    * 批量删除交互记录
    */
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post("/api/v1/interactions/batch-delete", { ids });
+    return apiClient.crm.post("/api/crm/interactions/batch-delete", { ids });
   },
 };
 
@@ -429,14 +429,14 @@ const customerScoringApi = {
   list: async (
     params?: CustomerScoringQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<CustomerScore>>> => {
-    return apiClient.crm.get("/api/v1/customer-scoring", { params });
+    return apiClient.crm.get("/api/crm/customer-scoring", { params });
   },
 
   /**
    * 获取客户评分详情
    */
   get: async (id: string): Promise<ApiResponse<CustomerScore>> => {
-    return apiClient.crm.get(`/api/plugins/crm/api/crm/customer-scoring/${id}`);
+    return apiClient.crm.get(`/api/crm/customer-scoring/${id}`);
   },
 
   /**
@@ -445,7 +445,7 @@ const customerScoringApi = {
   create: async (
     data: CreateCustomerScoreRequest,
   ): Promise<ApiResponse<CustomerScore>> => {
-    return apiClient.crm.post("/api/v1/customer-scoring", data);
+    return apiClient.crm.post("/api/crm/customer-scoring", data);
   },
 
   /**
@@ -455,14 +455,14 @@ const customerScoringApi = {
     id: string,
     data: Partial<CreateCustomerScoreRequest>,
   ): Promise<ApiResponse<CustomerScore>> => {
-    return apiClient.crm.put(`/api/plugins/crm/api/crm/customer-scoring/${id}`, data);
+    return apiClient.crm.put(`/api/crm/customer-scoring/${id}`, data);
   },
 
   /**
    * 删除客户评分
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/plugins/crm/api/crm/customer-scoring/${id}`);
+    return apiClient.crm.delete(`/api/crm/customer-scoring/${id}`);
   },
 
   /**
@@ -471,7 +471,7 @@ const customerScoringApi = {
   calculateBatch: async (
     customerIds: string[],
   ): Promise<ApiResponse<CustomerScore[]>> => {
-    return apiClient.crm.post("/api/v1/customer-scoring/calculate", {
+    return apiClient.crm.post("/api/crm/customer-scoring/calculate", {
       customer_ids: customerIds,
     });
   },
@@ -517,14 +517,14 @@ const salesForecastApi = {
   list: async (
     params?: SalesForecastQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<SalesForecast>>> => {
-    return apiClient.crm.get("/api/v1/sales-forecast", { params });
+    return apiClient.crm.get("/api/crm/sales-forecast", { params });
   },
 
   /**
    * 获取销售预测详情
    */
   get: async (id: string): Promise<ApiResponse<SalesForecast>> => {
-    return apiClient.crm.get(`/api/plugins/crm/api/crm/sales-forecast/${id}`);
+    return apiClient.crm.get(`/api/crm/sales-forecast/${id}`);
   },
 
   /**
@@ -533,7 +533,7 @@ const salesForecastApi = {
   create: async (
     data: CreateSalesForecastRequest,
   ): Promise<ApiResponse<SalesForecast>> => {
-    return apiClient.crm.post("/api/v1/sales-forecast", data);
+    return apiClient.crm.post("/api/crm/sales-forecast", data);
   },
 
   /**
@@ -543,14 +543,14 @@ const salesForecastApi = {
     id: string,
     data: Partial<SalesForecast>,
   ): Promise<ApiResponse<SalesForecast>> => {
-    return apiClient.crm.put(`/api/plugins/crm/api/crm/sales-forecast/${id}`, data);
+    return apiClient.crm.put(`/api/crm/sales-forecast/${id}`, data);
   },
 
   /**
    * 删除销售预测
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/plugins/crm/api/crm/sales-forecast/${id}`);
+    return apiClient.crm.delete(`/api/crm/sales-forecast/${id}`);
   },
 
   /**
@@ -559,7 +559,7 @@ const salesForecastApi = {
   generate: async (
     data: CreateSalesForecastRequest,
   ): Promise<ApiResponse<SalesForecast>> => {
-    return apiClient.crm.post("/api/v1/sales-forecast/generate", data);
+    return apiClient.crm.post("/api/crm/sales-forecast/generate", data);
   },
 };
 
@@ -609,14 +609,14 @@ const billingApi = {
   list: async (
     params?: BillingQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<BillingRecord>>> => {
-    return apiClient.crm.get("/api/v1/billing", { params });
+    return apiClient.crm.get("/api/crm/billing", { params });
   },
 
   /**
    * 获取账单详情
    */
   get: async (id: string): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.get(`/api/plugins/crm/api/crm/billing/${id}`);
+    return apiClient.crm.get(`/api/crm/billing/${id}`);
   },
 
   /**
@@ -625,7 +625,7 @@ const billingApi = {
   create: async (
     data: CreateBillingRequest,
   ): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.post("/api/v1/billing", data);
+    return apiClient.crm.post("/api/crm/billing", data);
   },
 
   /**
@@ -635,28 +635,28 @@ const billingApi = {
     id: string,
     data: Partial<BillingRecord>,
   ): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.put(`/api/plugins/crm/api/crm/billing/${id}`, data);
+    return apiClient.crm.put(`/api/crm/billing/${id}`, data);
   },
 
   /**
    * 删除账单
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/plugins/crm/api/crm/billing/${id}`);
+    return apiClient.crm.delete(`/api/crm/billing/${id}`);
   },
 
   /**
    * 标记账单已支付
    */
   markPaid: async (id: string): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.post(`/api/plugins/crm/api/crm/billing/${id}/paid`);
+    return apiClient.crm.post(`/api/crm/billing/${id}/paid`);
   },
 
   /**
    * 发送账单通知
    */
   sendNotification: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post(`/api/plugins/crm/api/crm/billing/${id}/notify`);
+    return apiClient.crm.post(`/api/crm/billing/${id}/notify`);
   },
 };
 

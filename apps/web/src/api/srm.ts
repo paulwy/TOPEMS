@@ -181,44 +181,44 @@ export interface SrmDetailedStatistics {
 export const srmApi = {
   // Suppliers
   listSuppliers: async (): Promise<ApiResponse<Supplier[]>> => {
-    return apiClient.srm.get<Supplier[]>("/api/v1/suppliers");
+    return apiClient.srm.get<Supplier[]>("/api/srm/suppliers");
   },
   getSupplier: async (id: string): Promise<ApiResponse<Supplier>> => {
-    return apiClient.srm.get<Supplier>(`/api/v1/suppliers/${id}`);
+    return apiClient.srm.get<Supplier>(`/api/srm/suppliers/${id}`);
   },
   createSupplier: async (
     data: CreateSupplierRequest,
   ): Promise<ApiResponse<Supplier>> => {
-    return apiClient.srm.post<Supplier>("/api/v1/suppliers", data);
+    return apiClient.srm.post<Supplier>("/api/srm/suppliers", data);
   },
   updateSupplier: async (
     id: string,
     data: CreateSupplierRequest,
   ): Promise<ApiResponse<Supplier>> => {
-    return apiClient.srm.put<Supplier>(`/api/v1/suppliers/${id}`, data);
+    return apiClient.srm.put<Supplier>(`/api/srm/suppliers/${id}`, data);
   },
   deleteSupplier: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.srm.delete<boolean>(`/api/v1/suppliers/${id}`);
+    return apiClient.srm.delete<boolean>(`/api/srm/suppliers/${id}`);
   },
 
   // Supplier Evaluations
   listEvaluations: async (): Promise<ApiResponse<SupplierEvaluation[]>> => {
     return apiClient.srm.get<SupplierEvaluation[]>(
-      "/api/v1/supplier-evaluations",
+      "/api/srm/supplier-evaluations",
     );
   },
   getEvaluation: async (
     id: string,
   ): Promise<ApiResponse<SupplierEvaluation>> => {
     return apiClient.srm.get<SupplierEvaluation>(
-      `/api/v1/supplier-evaluations/${id}`,
+      `/api/srm/supplier-evaluations/${id}`,
     );
   },
   createEvaluation: async (
     data: CreateSupplierEvaluationRequest,
   ): Promise<ApiResponse<SupplierEvaluation>> => {
     return apiClient.srm.post<SupplierEvaluation>(
-      "/api/v1/supplier-evaluations",
+      "/api/srm/supplier-evaluations",
       data,
     );
   },
@@ -227,53 +227,53 @@ export const srmApi = {
     data: CreateSupplierEvaluationRequest,
   ): Promise<ApiResponse<SupplierEvaluation>> => {
     return apiClient.srm.put<SupplierEvaluation>(
-      `/api/v1/supplier-evaluations/${id}`,
+      `/api/srm/supplier-evaluations/${id}`,
       data,
     );
   },
   deleteEvaluation: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.srm.delete<boolean>(`/api/v1/supplier-evaluations/${id}`);
+    return apiClient.srm.delete<boolean>(`/api/srm/supplier-evaluations/${id}`);
   },
 
   // Purchase Orders
   listPurchaseOrders: async (): Promise<ApiResponse<PurchaseOrder[]>> => {
-    return apiClient.srm.get<PurchaseOrder[]>("/api/v1/purchase-orders");
+    return apiClient.srm.get<PurchaseOrder[]>("/api/srm/purchase-orders");
   },
   getPurchaseOrder: async (id: string): Promise<ApiResponse<PurchaseOrder>> => {
-    return apiClient.srm.get<PurchaseOrder>(`/api/v1/purchase-orders/${id}`);
+    return apiClient.srm.get<PurchaseOrder>(`/api/srm/purchase-orders/${id}`);
   },
   createPurchaseOrder: async (
     data: CreatePurchaseOrderRequest,
   ): Promise<ApiResponse<PurchaseOrder>> => {
-    return apiClient.srm.post<PurchaseOrder>("/api/v1/purchase-orders", data);
+    return apiClient.srm.post<PurchaseOrder>("/api/srm/purchase-orders", data);
   },
   updatePurchaseOrder: async (
     id: string,
     data: CreatePurchaseOrderRequest,
   ): Promise<ApiResponse<PurchaseOrder>> => {
     return apiClient.srm.put<PurchaseOrder>(
-      `/api/v1/purchase-orders/${id}`,
+      `/api/srm/purchase-orders/${id}`,
       data,
     );
   },
   deletePurchaseOrder: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.srm.delete<boolean>(`/api/v1/purchase-orders/${id}`);
+    return apiClient.srm.delete<boolean>(`/api/srm/purchase-orders/${id}`);
   },
 
   // Supplier Contracts
   listContracts: async (): Promise<ApiResponse<SupplierContract[]>> => {
-    return apiClient.srm.get<SupplierContract[]>("/api/v1/supplier-contracts");
+    return apiClient.srm.get<SupplierContract[]>("/api/srm/supplier-contracts");
   },
   getContract: async (id: string): Promise<ApiResponse<SupplierContract>> => {
     return apiClient.srm.get<SupplierContract>(
-      `/api/v1/supplier-contracts/${id}`,
+      `/api/srm/supplier-contracts/${id}`,
     );
   },
   createContract: async (
     data: CreateSupplierContractRequest,
   ): Promise<ApiResponse<SupplierContract>> => {
     return apiClient.srm.post<SupplierContract>(
-      "/api/v1/supplier-contracts",
+      "/api/srm/supplier-contracts",
       data,
     );
   },
@@ -282,30 +282,30 @@ export const srmApi = {
     data: CreateSupplierContractRequest,
   ): Promise<ApiResponse<SupplierContract>> => {
     return apiClient.srm.put<SupplierContract>(
-      `/api/v1/supplier-contracts/${id}`,
+      `/api/srm/supplier-contracts/${id}`,
       data,
     );
   },
   deleteContract: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.srm.delete<boolean>(`/api/v1/supplier-contracts/${id}`);
+    return apiClient.srm.delete<boolean>(`/api/srm/supplier-contracts/${id}`);
   },
 
   // Statistics
   getStatistics: async (): Promise<ApiResponse<SrmStatistics>> => {
-    return apiClient.srm.get<SrmStatistics>("/api/v1/statistics");
+    return apiClient.srm.get<SrmStatistics>("/api/srm/statistics");
   },
   getDetailedStatistics: async (): Promise<
     ApiResponse<SrmDetailedStatistics>
   > => {
     return apiClient.srm.get<SrmDetailedStatistics>(
-      "/api/v1/statistics/detailed",
+      "/api/srm/statistics/detailed",
     );
   },
   getSuppliersWithStats: async (): Promise<
     ApiResponse<SupplierWithStats[]>
   > => {
     return apiClient.srm.get<SupplierWithStats[]>(
-      "/api/v1/suppliers-with-stats",
+      "/api/srm/suppliers-with-stats",
     );
   },
 

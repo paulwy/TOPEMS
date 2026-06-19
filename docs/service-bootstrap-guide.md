@@ -182,7 +182,7 @@ use topems_shared::quick_bootstrap_with_db;
 
 quick_bootstrap_with_db(
     "your-service-name",
-    8080,
+    8000,
     routes,
     None,
 ).await?;
@@ -198,7 +198,7 @@ use topems_shared::{
 
 let config = BootstrapConfig {
     service_name: "your-service",
-    default_port: 8080,
+    default_port: 8000,
     database: DatabaseConfig {
         url: "postgres://user:pass@localhost/db".to_string(),
         max_connections: 20,
@@ -221,7 +221,7 @@ use topems_shared::quick_bootstrap;
 
 quick_bootstrap(
     "your-service",
-    8080,
+    8000,
     routes,
 ).await?;
 ```

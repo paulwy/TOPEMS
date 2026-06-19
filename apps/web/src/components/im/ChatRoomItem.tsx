@@ -32,7 +32,7 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
       for (const memberId of members.slice(0, 5)) {
         try {
           const response = await fetch(
-            `/im/api/v1/users/${memberId}/online-status`,
+            `/im/api/users/${memberId}/online-status`,
           );
           const data = await response.json();
           status[memberId] = data.data?.is_online || false;

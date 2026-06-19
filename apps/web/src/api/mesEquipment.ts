@@ -97,7 +97,7 @@ export interface PaginatedResult<T> {
 
 export const mesEquipmentApi = {
   async getStatistics(): Promise<ApiResponse<EquipmentStatistics>> {
-    return apiClient.mes.get("/api/v1/equipment/statistics");
+    return apiClient.mes.get("/api/mes/equipment/statistics");
   },
 
   async listInspections(
@@ -112,14 +112,14 @@ export const mesEquipmentApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/inspections${queryString ? "?" + queryString : ""}`,
+      `/api/mes/inspections${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async createInspection(
     data: CreateInspectionRecord,
   ): Promise<ApiResponse<InspectionRecord>> {
-    return apiClient.mes.post("/api/v1/inspections", data);
+    return apiClient.mes.post("/api/mes/inspections", data);
   },
 
   async listMaintenances(
@@ -134,20 +134,20 @@ export const mesEquipmentApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/v1/maintenances${queryString ? "?" + queryString : ""}`,
+      `/api/mes/maintenances${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async createMaintenance(
     data: CreateMaintenanceRecord,
   ): Promise<ApiResponse<MaintenanceRecord>> {
-    return apiClient.mes.post("/api/v1/maintenances", data);
+    return apiClient.mes.post("/api/mes/maintenances", data);
   },
 
   async updateMaintenanceStatus(
     id: string,
     data: UpdateMaintenanceStatus,
   ): Promise<ApiResponse<MaintenanceRecord>> {
-    return apiClient.mes.put(`/api/v1/maintenances/${id}/status`, data);
+    return apiClient.mes.put(`/api/mes/maintenances/${id}/status`, data);
   },
 };

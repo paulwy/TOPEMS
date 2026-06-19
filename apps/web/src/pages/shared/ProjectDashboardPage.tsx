@@ -83,11 +83,11 @@ const ProjectDashboardPage: React.FC = () => {
     try {
       const [summaryRes, typeRes, trendsRes, perfRes, projectsRes] =
         await Promise.all([
-          apiClient.rs.get("/api/v1/reports/projects/summary"),
-          apiClient.rs.get("/api/v1/reports/projects/types"),
-          apiClient.rs.get("/api/v1/reports/projects/trends"),
-          apiClient.rs.get("/api/v1/reports/projects/performance"),
-          apiClient.rs.get("/api/v1/projects"),
+          apiClient.rs.get("/api/rs/reports/projects/summary"),
+          apiClient.rs.get("/api/rs/reports/projects/types"),
+          apiClient.rs.get("/api/rs/reports/projects/trends"),
+          apiClient.rs.get("/api/rs/reports/projects/performance"),
+          apiClient.rs.get("/api/rs/projects"),
         ]);
 
       if (summaryRes.success) setSummary(summaryRes.data);

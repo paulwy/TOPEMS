@@ -194,7 +194,7 @@ const warehouseApi = {
   list: async (
     params?: PaginationParams,
   ): Promise<ApiResponse<PaginatedResponse<Warehouse>>> => {
-    return apiClient.wms.get("/api/plugins/wms/api/wms/warehouses", { params });
+    return apiClient.wms.get("/api/wms/warehouses", { params });
   },
 
   /**
@@ -203,14 +203,14 @@ const warehouseApi = {
   create: async (
     data: CreateWarehouseRequest,
   ): Promise<ApiResponse<Warehouse>> => {
-    return apiClient.wms.post("/api/plugins/wms/api/wms/warehouses", data);
+    return apiClient.wms.post("/api/wms/warehouses", data);
   },
 
   /**
    * 获取仓库详情
    */
   get: async (id: string): Promise<ApiResponse<Warehouse>> => {
-    return apiClient.wms.get(`/api/plugins/wms/api/wms/warehouses/${id}`);
+    return apiClient.wms.get(`/api/wms/warehouses/${id}`);
   },
 
   /**
@@ -220,14 +220,14 @@ const warehouseApi = {
     id: string,
     data: UpdateWarehouseRequest,
   ): Promise<ApiResponse<Warehouse>> => {
-    return apiClient.wms.put(`/api/plugins/wms/api/wms/warehouses/${id}`, data);
+    return apiClient.wms.put(`/api/wms/warehouses/${id}`, data);
   },
 
   /**
    * 删除仓库
    */
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.wms.delete(`/api/plugins/wms/api/wms/warehouses/${id}`);
+    return apiClient.wms.delete(`/api/wms/warehouses/${id}`);
   },
 };
 
@@ -240,7 +240,7 @@ const inventoryApi = {
   list: async (
     params?: InventoryQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<InventoryItem>>> => {
-    return apiClient.wms.get("/api/plugins/wms/api/wms/inventory", { params });
+    return apiClient.wms.get("/api/wms/inventory", { params });
   },
 
   /**
@@ -249,14 +249,14 @@ const inventoryApi = {
   create: async (
     data: CreateInventoryItemRequest,
   ): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.wms.post("/api/plugins/wms/api/wms/inventory", data);
+    return apiClient.wms.post("/api/wms/inventory", data);
   },
 
   /**
    * 获取库存项详情
    */
   get: async (id: string): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.wms.get(`/api/plugins/wms/api/wms/inventory/${id}`);
+    return apiClient.wms.get(`/api/wms/inventory/${id}`);
   },
 
   /**
@@ -266,14 +266,14 @@ const inventoryApi = {
     id: string,
     data: UpdateInventoryItemRequest,
   ): Promise<ApiResponse<InventoryItem>> => {
-    return apiClient.wms.put(`/api/plugins/wms/api/wms/inventory/${id}`, data);
+    return apiClient.wms.put(`/api/wms/inventory/${id}`, data);
   },
 
   /**
    * 删除库存项
    */
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.wms.delete(`/api/plugins/wms/api/wms/inventory/${id}`);
+    return apiClient.wms.delete(`/api/wms/inventory/${id}`);
   },
 };
 
@@ -286,7 +286,7 @@ const inboundOrderApi = {
   list: async (
     params?: PaginationParams,
   ): Promise<ApiResponse<PaginatedResponse<InboundOrder>>> => {
-    return apiClient.wms.get("/api/plugins/wms/api/wms/inbound-orders", { params });
+    return apiClient.wms.get("/api/wms/inbound-orders", { params });
   },
 
   /**
@@ -295,14 +295,14 @@ const inboundOrderApi = {
   create: async (
     data: CreateInboundOrderRequest,
   ): Promise<ApiResponse<InboundOrder>> => {
-    return apiClient.wms.post("/api/plugins/wms/api/wms/inbound-orders", data);
+    return apiClient.wms.post("/api/wms/inbound-orders", data);
   },
 
   /**
    * 获取入库订单详情
    */
   get: async (id: string): Promise<ApiResponse<InboundOrder>> => {
-    return apiClient.wms.get(`/api/plugins/wms/api/wms/inbound-orders/${id}`);
+    return apiClient.wms.get(`/api/wms/inbound-orders/${id}`);
   },
 
   /**
@@ -312,14 +312,14 @@ const inboundOrderApi = {
     id: string,
     data: UpdateInboundOrderRequest,
   ): Promise<ApiResponse<InboundOrder>> => {
-    return apiClient.wms.put(`/api/plugins/wms/api/wms/inbound-orders/${id}`, data);
+    return apiClient.wms.put(`/api/wms/inbound-orders/${id}`, data);
   },
 
   /**
    * 删除入库订单
    */
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.wms.delete(`/api/plugins/wms/api/wms/inbound-orders/${id}`);
+    return apiClient.wms.delete(`/api/wms/inbound-orders/${id}`);
   },
 };
 
@@ -332,7 +332,7 @@ const outboundOrderApi = {
   list: async (
     params?: PaginationParams,
   ): Promise<ApiResponse<PaginatedResponse<OutboundOrder>>> => {
-    return apiClient.wms.get("/api/plugins/wms/api/wms/outbound-orders", { params });
+    return apiClient.wms.get("/api/wms/outbound-orders", { params });
   },
 
   /**
@@ -341,14 +341,14 @@ const outboundOrderApi = {
   create: async (
     data: CreateOutboundOrderRequest,
   ): Promise<ApiResponse<OutboundOrder>> => {
-    return apiClient.wms.post("/api/plugins/wms/api/wms/outbound-orders", data);
+    return apiClient.wms.post("/api/wms/outbound-orders", data);
   },
 
   /**
    * 获取出库订单详情
    */
   get: async (id: string): Promise<ApiResponse<OutboundOrder>> => {
-    return apiClient.wms.get(`/api/plugins/wms/api/wms/outbound-orders/${id}`);
+    return apiClient.wms.get(`/api/wms/outbound-orders/${id}`);
   },
 
   /**
@@ -358,14 +358,14 @@ const outboundOrderApi = {
     id: string,
     data: UpdateOutboundOrderRequest,
   ): Promise<ApiResponse<OutboundOrder>> => {
-    return apiClient.wms.put(`/api/plugins/wms/api/wms/outbound-orders/${id}`, data);
+    return apiClient.wms.put(`/api/wms/outbound-orders/${id}`, data);
   },
 
   /**
    * 删除出库订单
    */
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.wms.delete(`/api/plugins/wms/api/wms/outbound-orders/${id}`);
+    return apiClient.wms.delete(`/api/wms/outbound-orders/${id}`);
   },
 };
 

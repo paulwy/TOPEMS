@@ -381,8 +381,8 @@ export function useOfflineManager(
         try {
           const endpoint =
             item.type === "evidence"
-              ? "/api/v1/evidence"
-              : "/api/v1/tracks/positions";
+              ? "/gis/api/gis/evidence"
+              : "/gis/api/gis/tracks/positions";
 
           const response = await fetch(endpoint, {
             method: "POST",

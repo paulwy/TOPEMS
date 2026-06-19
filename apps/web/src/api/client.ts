@@ -89,7 +89,7 @@ const handleAuthError = (): void => {
 
 // 判断是否是不需要认证的路径
 const isPublicPath = (url: string): boolean => {
-  return url === "/health" || url.startsWith("/api/v1/auth/");
+  return url === "/health" || url.startsWith("/api/iam/auth/");
 };
 
 export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
@@ -249,7 +249,7 @@ class ApiClient {
           // Debug log for notification requests
           if (
             baseURL.includes("notification") ||
-            url.includes("/api/v1/notifications")
+            url.includes("/api/notifications")
           ) {
             console.debug(`[Notification API Request]`, {
               url: `${baseURL}${url}`,

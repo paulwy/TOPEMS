@@ -404,7 +404,7 @@ const QmsInspectionPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: 1, md: 4 },
+            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
             gap: 2,
             mb: 4,
           }}

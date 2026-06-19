@@ -6,7 +6,7 @@ plugin_type: business
 
 deployment:
   type: standalone
-  port: 8030
+  port: 8023
   base_path: /api/mfg
 
 permissions:

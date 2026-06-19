@@ -1,10 +1,13 @@
 # TOPEMS 供应商管理系统 API
 
 **服务**: topems-srm
-**端口**: 待定
-**版本**: v1
+**端口**: 8041
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/srm/` (例如 `/api/srm/suppliers`)
+> **实际访问地址**: `http://localhost:8041/api/srm/`
 
 ## 1. 概述
 
@@ -14,21 +17,21 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 供应商列表 | /api/v1/suppliers | GET |
-| 供应商详情 | /api/v1/suppliers/{id} | GET |
-| 创建供应商 | /api/v1/suppliers | POST |
-| 更新供应商 | /api/v1/suppliers/{id} | PUT |
-| 删除供应商 | /api/v1/suppliers/{id} | DELETE |
-| 供应商评估列表 | /api/v1/supplier-evaluations | GET |
-| 供应商评估详情 | /api/v1/supplier-evaluations/{id} | GET |
-| 创建供应商评估 | /api/v1/supplier-evaluations | POST |
-| 更新供应商评估 | /api/v1/supplier-evaluations/{id} | PUT |
-| 删除供应商评估 | /api/v1/supplier-evaluations/{id} | DELETE |
-| 采购订单列表 | /api/v1/purchase-orders | GET |
-| 采购订单详情 | /api/v1/purchase-orders/{id} | GET |
-| 创建采购订单 | /api/v1/purchase-orders | POST |
-| 更新采购订单 | /api/v1/purchase-orders/{id} | PUT |
-| 删除采购订单 | /api/v1/purchase-orders/{id} | DELETE |
+| 供应商列表 | /api/srm/suppliers | GET |
+| 供应商详情 | /api/srm/suppliers/{id} | GET |
+| 创建供应商 | /api/srm/suppliers | POST |
+| 更新供应商 | /api/srm/suppliers/{id} | PUT |
+| 删除供应商 | /api/srm/suppliers/{id} | DELETE |
+| 供应商评估列表 | /api/srm/supplier-evaluations | GET |
+| 供应商评估详情 | /api/srm/supplier-evaluations/{id} | GET |
+| 创建供应商评估 | /api/srm/supplier-evaluations | POST |
+| 更新供应商评估 | /api/srm/supplier-evaluations/{id} | PUT |
+| 删除供应商评估 | /api/srm/supplier-evaluations/{id} | DELETE |
+| 采购订单列表 | /api/srm/purchase-orders | GET |
+| 采购订单详情 | /api/srm/purchase-orders/{id} | GET |
+| 创建采购订单 | /api/srm/purchase-orders | POST |
+| 更新采购订单 | /api/srm/purchase-orders/{id} | PUT |
+| 删除采购订单 | /api/srm/purchase-orders/{id} | DELETE |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -102,7 +105,7 @@
 
 ### 2.1 获取供应商列表
 
-**端点**: `GET /api/v1/suppliers`
+**端点**: `GET /api/srm/suppliers`
 
 **描述**: 获取所有供应商
 
@@ -120,7 +123,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8009/api/v1/suppliers?status=approved&category=原材料供应商" \
+curl -X GET "http://localhost:8041/api/srm/suppliers?status=approved&category=原材料供应商" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -165,7 +168,7 @@ curl -X GET "http://localhost:8009/api/v1/suppliers?status=approved&category=原
 
 ### 2.2 获取供应商详情
 
-**端点**: `GET /api/v1/suppliers/{id}`
+**端点**: `GET /api/srm/suppliers/{id}`
 
 **描述**: 获取指定供应商的详细信息
 
@@ -179,7 +182,7 @@ curl -X GET "http://localhost:8009/api/v1/suppliers?status=approved&category=原
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8009/api/v1/suppliers/supplier-001 \
+curl -X GET http://localhost:8041/api/srm/suppliers/supplier-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -214,7 +217,7 @@ curl -X GET http://localhost:8009/api/v1/suppliers/supplier-001 \
 
 ### 2.3 创建供应商
 
-**端点**: `POST /api/v1/suppliers`
+**端点**: `POST /api/srm/suppliers`
 
 **描述**: 创建新的供应商记录
 
@@ -267,7 +270,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8009/api/v1/suppliers \
+curl -X POST http://localhost:8041/api/srm/suppliers \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -289,7 +292,7 @@ curl -X POST http://localhost:8009/api/v1/suppliers \
 
 ### 2.4 更新供应商
 
-**端点**: `PUT /api/v1/suppliers/{id}`
+**端点**: `PUT /api/srm/suppliers/{id}`
 
 **描述**: 更新指定供应商信息
 
@@ -321,7 +324,7 @@ curl -X POST http://localhost:8009/api/v1/suppliers \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8009/api/v1/suppliers/supplier-001 \
+curl -X PUT http://localhost:8041/api/srm/suppliers/supplier-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -358,7 +361,7 @@ curl -X PUT http://localhost:8009/api/v1/suppliers/supplier-001 \
 
 ### 2.5 删除供应商
 
-**端点**: `DELETE /api/v1/suppliers/{id}`
+**端点**: `DELETE /api/srm/suppliers/{id}`
 
 **描述**: 删除指定供应商
 
@@ -374,7 +377,7 @@ curl -X PUT http://localhost:8009/api/v1/suppliers/supplier-001 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8009/api/v1/suppliers/supplier-001 \
+curl -X DELETE http://localhost:8041/api/srm/suppliers/supplier-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -394,7 +397,7 @@ curl -X DELETE http://localhost:8009/api/v1/suppliers/supplier-001 \
 
 ### 3.1 获取供应商评估列表
 
-**端点**: `GET /api/v1/supplier-evaluations`
+**端点**: `GET /api/srm/supplier-evaluations`
 
 **描述**: 获取所有供应商评估记录
 
@@ -411,7 +414,7 @@ curl -X DELETE http://localhost:8009/api/v1/suppliers/supplier-001 \
 
 ### 3.2 获取供应商评估详情
 
-**端点**: `GET /api/v1/supplier-evaluations/{id}`
+**端点**: `GET /api/srm/supplier-evaluations/{id}`
 
 **描述**: 获取指定供应商评估的详细信息
 
@@ -426,7 +429,7 @@ curl -X DELETE http://localhost:8009/api/v1/suppliers/supplier-001 \
 
 ### 3.3 创建供应商评估
 
-**端点**: `POST /api/v1/supplier-evaluations`
+**端点**: `POST /api/srm/supplier-evaluations`
 
 **描述**: 创建新的供应商评估记录
 
@@ -473,7 +476,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8009/api/v1/supplier-evaluations \
+curl -X POST http://localhost:8041/api/srm/supplier-evaluations \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -494,7 +497,7 @@ curl -X POST http://localhost:8009/api/v1/supplier-evaluations \
 
 ### 3.4 更新供应商评估
 
-**端点**: `PUT /api/v1/supplier-evaluations/{id}`
+**端点**: `PUT /api/srm/supplier-evaluations/{id}`
 
 **描述**: 更新指定供应商评估
 
@@ -520,7 +523,7 @@ curl -X POST http://localhost:8009/api/v1/supplier-evaluations \
 
 ### 3.5 删除供应商评估
 
-**端点**: `DELETE /api/v1/supplier-evaluations/{id}`
+**端点**: `DELETE /api/srm/supplier-evaluations/{id}`
 
 **描述**: 删除指定供应商评估
 
@@ -534,7 +537,7 @@ curl -X POST http://localhost:8009/api/v1/supplier-evaluations \
 
 ### 4.1 获取采购订单列表
 
-**端点**: `GET /api/v1/purchase-orders`
+**端点**: `GET /api/srm/purchase-orders`
 
 **描述**: 获取所有采购订单
 
@@ -551,7 +554,7 @@ curl -X POST http://localhost:8009/api/v1/supplier-evaluations \
 
 ### 4.2 获取采购订单详情
 
-**端点**: `GET /api/v1/purchase-orders/{id}`
+**端点**: `GET /api/srm/purchase-orders/{id}`
 
 **描述**: 获取指定采购订单的详细信息
 
@@ -566,7 +569,7 @@ curl -X POST http://localhost:8009/api/v1/supplier-evaluations \
 
 ### 4.3 创建采购订单
 
-**端点**: `POST /api/v1/purchase-orders`
+**端点**: `POST /api/srm/purchase-orders`
 
 **描述**: 创建新的采购订单
 
@@ -607,7 +610,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8009/api/v1/purchase-orders \
+curl -X POST http://localhost:8041/api/srm/purchase-orders \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -625,7 +628,7 @@ curl -X POST http://localhost:8009/api/v1/purchase-orders \
 
 ### 4.4 更新采购订单
 
-**端点**: `PUT /api/v1/purchase-orders/{id}`
+**端点**: `PUT /api/srm/purchase-orders/{id}`
 
 **描述**: 更新指定采购订单
 
@@ -651,7 +654,7 @@ curl -X POST http://localhost:8009/api/v1/purchase-orders \
 
 ### 4.5 删除采购订单
 
-**端点**: `DELETE /api/v1/purchase-orders/{id}`
+**端点**: `DELETE /api/srm/purchase-orders/{id}`
 
 **描述**: 删除指定采购订单
 
@@ -674,7 +677,7 @@ curl -X POST http://localhost:8009/api/v1/purchase-orders \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8009/health
+curl -X GET http://localhost:8041/health
 ```
 
 **成功响应** (200 OK):

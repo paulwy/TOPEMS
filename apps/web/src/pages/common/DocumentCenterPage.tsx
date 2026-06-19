@@ -484,7 +484,7 @@ const DocumentCenterPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)", lg: "repeat(6, 1fr)" },
                 gap: 2,
               }}
             >
@@ -573,7 +573,7 @@ const DocumentCenterPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, sm: 2, md: 4, lg: 6 },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)", lg: "repeat(6, 1fr)" },
                 gap: 2,
                 p: 3,
               }}

@@ -366,7 +366,7 @@ const CRMSalesForecastPage: React.FC = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: 1, lg: 2 },
+              gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
               gap: 3,
             }}
           >

@@ -15,57 +15,46 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # ================================================
-# [已整合] 新统一服务配置
+# 统一服务配置
 # ================================================
-# 整合服务：notification + im + mail → communication
-# 整合服务：mes + pdm → manufacturing
-# 整合服务：qms + lims + ehs → quality-assurance
-# 整合服务：bi + report → analytics
+# 服务配置已移至 services.conf 文件
+# 格式: 服务名 服务路径 二进制名 端口
+# 核心服务 (必须先启动): iam
+# 端口信息来源于各服务的 plugin.yaml
 
-# 服务配置 (使用空格分隔，格式: 服务名 路径 端口)
-SERVICES_CONFIG="
-iam platform/topems-iam/backend 8000
-doc platform/topems-doc/backend 8001
-pm services/topems-pm/backend 8002
-# [已整合] 通讯服务 (notification + im + mail)
-communication services/communication-service 8055
-# [已整合] 制造服务 (mes + pdm)
-manufacturing services/manufacturing-service 8030
-integration services/topems-integration/backend 8004
-portal services/topems-portal/backend 8005
-flow platform/topems-flow/backend 8006
-erp services/topems-erp/backend 8010
-hrm services/topems-hrm/backend 8011
-crm services/topems-crm/backend 8012
-ai services/topems-ai/backend 8013
-rs services/topems-rs/backend 8020
-# [已整合] 质量管控服务 (qms + lims + ehs)
-quality-assurance services/quality-assurance-service 8032
-scm services/topems-scm/backend 8040
-srm services/topems-srm/backend 8041
-wms services/topems-wms/backend 8042
-gis services/topems-gis/backend 8053
-mobile services/topems-mobile/backend 8070
-# [已整合] 分析服务 (bi + report)
-analytics services/analytics-service 8060
+# 加载服务配置
+load_services_config() {
+    local config_file="$SCRIPT_DIR/services.conf"
+    if [ -f "$config_file" ]; then
+        SERVICES_CONFIG=$(grep -v "^#" "$config_file" | grep -v "^$" | grep -v "CORE_SERVICES")
+        CORE_SERVICES=$(grep "CORE_SERVICES" "$config_file" | cut -d'=' -f2 | tr -d ' ')
+    else
+        SERVICES_CONFIG="
+iam svc/unified-core unified-core-service 8000
+pm svc/pm topems-pm 8001
+manufacturing svc/manufacturing topems-manufacturing 8023
+quality-assurance svc/quality-assurance topems-quality-assurance 8032
+analytics svc/analytics topems-analytics 8060
+integration svc/integration topems-integration 8005
+portal svc/portal topems-portal 8066
+erp svc/erp topems-erp 8010
+hrm svc/hrm topems-hrm 8011
+crm svc/crm topems-crm 8012
+ai svc/ai topems-ai 8062
+rs svc/rs topems-rs 8020
+scm svc/scm topems-scm 8040
+srm svc/srm topems-srm 8041
+wms svc/wms topems-wms 8042
+gis svc/gis topems-gis 8053
+mobile svc/mobile topems-mobile 8070
+monitor svc/monitor topems-monitor 8064
 "
+        CORE_SERVICES="iam"
+    fi
+}
 
-# ================================================
-# [已下线] 旧服务（仅供参考，不再使用）
-# ================================================
-# notification (8002) → communication (8055)
-# im (8051) → communication (8055)
-# mail (8054) → communication (8055)
-# mes (8030) → manufacturing (8030)
-# pdm (8023) → manufacturing (8030)
-# qms (8031) → quality-assurance (8032)
-# lims (8022) → quality-assurance (8032)
-# ehs (8032) → quality-assurance (8032)
-# bi (8052) → analytics (8060)
-# report (8053) → analytics (8060)
-
-# 核心服务列表（必须先启动的服务）
-CORE_SERVICES="iam doc communication"
+# 初始化配置
+load_services_config
 
 # 获取服务路径
 get_service_path() {
@@ -76,7 +65,7 @@ get_service_path() {
 # 获取服务端口
 get_service_port() {
     local service_name=$1
-    echo "$SERVICES_CONFIG" | grep "^${service_name} " | awk '{print $3}'
+    echo "$SERVICES_CONFIG" | grep "^${service_name} " | awk '{print $4}'
 }
 
 # 获取所有服务名
@@ -124,7 +113,8 @@ check_port() {
 get_service_pid() {
     local service_name=$1
     local port=$2
-    lsof -ti:${port} 2>/dev/null || ps aux | grep -v grep | grep "topems-${service_name}" | awk '{print $2}' 2>/dev/null
+    local executable_name=$(get_executable_name "$service_name")
+    lsof -ti:${port} 2>/dev/null || ps aux | grep -v grep | grep "$executable_name" | awk '{print $2}' 2>/dev/null
 }
 
 # 强制清理端口
@@ -153,10 +143,11 @@ force_clean_port() {
 # 获取可执行文件名
 get_executable_name() {
     local service_name=$1
-    if [ "$service_name" = "notification" ]; then
-        echo "notification-service"
-    else
+    local binary_name=$(echo "$SERVICES_CONFIG" | grep "^${service_name} " | awk '{print $3}')
+    if [ -z "$binary_name" ]; then
         echo "topems-${service_name}"
+    else
+        echo "$binary_name"
     fi
 }
 
@@ -284,7 +275,7 @@ start_service() {
     fi
 
     local executable_name=$(get_executable_name "$service_name")
-    local executable_path="$PROJECT_ROOT/$service_path/target/release/${executable_name}"
+    local executable_path="$PROJECT_ROOT/target/release/${executable_name}"
     if [ ! -f "$executable_path" ]; then
         log_warning "可执行文件不存在，开始编译..."
         build_service "$service_name" || return 1
@@ -573,7 +564,7 @@ case "$1" in
             show_help
             exit 1
         fi
-        local force="false"
+        force="false"
         if [ "$3" = "--force" ]; then
             force="true"
         fi
@@ -593,7 +584,7 @@ case "$1" in
             show_help
             exit 1
         fi
-        local force="false"
+        force="false"
         if [ "$3" = "--force" ]; then
             force="true"
         fi

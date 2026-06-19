@@ -107,77 +107,77 @@ export interface SyncStats {
 export const integrationApi = {
   // 同步统计
   getSyncStats: async (): Promise<ApiResponse<SyncStats>> => {
-    return apiClient.integration.get("/api/v1/integration/stats");
+    return apiClient.integration.get("/api/integration/stats");
   },
 
   // 集成事件
   listEvents: async (): Promise<ApiResponse<IntegrationEvent[]>> => {
-    return apiClient.integration.get("/api/v1/integration/events");
+    return apiClient.integration.get("/api/integration/events");
   },
 
   createEvent: async (
     data: CreateIntegrationEventRequest,
   ): Promise<ApiResponse<IntegrationEvent>> => {
-    return apiClient.integration.post("/api/v1/integration/events", data);
+    return apiClient.integration.post("/api/integration/events", data);
   },
 
   // LIMS-QMS 同步
   listLimsQmsSyncs: async (): Promise<ApiResponse<LimsQmsSync[]>> => {
-    return apiClient.integration.get("/api/v1/integration/lims-qms");
+    return apiClient.integration.get("/api/integration/lims-qms");
   },
 
   getLimsQmsSync: async (id: string): Promise<ApiResponse<LimsQmsSync>> => {
-    return apiClient.integration.get(`/api/v1/integration/lims-qms/${id}`);
+    return apiClient.integration.get(`/api/integration/lims-qms/${id}`);
   },
 
   createLimsQmsSync: async (
     data: CreateLimsQmsSyncRequest,
   ): Promise<ApiResponse<LimsQmsSync>> => {
-    return apiClient.integration.post("/api/v1/integration/lims-qms", data);
+    return apiClient.integration.post("/api/integration/lims-qms", data);
   },
 
   syncLimsQms: async (id: string): Promise<ApiResponse<LimsQmsSync>> => {
     return apiClient.integration.post(
-      `/api/v1/integration/lims-qms/${id}/sync`,
+      `/api/integration/lims-qms/${id}/sync`,
     );
   },
 
   // MES-ERP 同步
   listMesErpSyncs: async (): Promise<ApiResponse<MesErpSync[]>> => {
-    return apiClient.integration.get("/api/v1/integration/mes-erp");
+    return apiClient.integration.get("/api/integration/mes-erp");
   },
 
   getMesErpSync: async (id: string): Promise<ApiResponse<MesErpSync>> => {
-    return apiClient.integration.get(`/api/v1/integration/mes-erp/${id}`);
+    return apiClient.integration.get(`/api/integration/mes-erp/${id}`);
   },
 
   createMesErpSync: async (
     data: CreateMesErpSyncRequest,
   ): Promise<ApiResponse<MesErpSync>> => {
-    return apiClient.integration.post("/api/v1/integration/mes-erp", data);
+    return apiClient.integration.post("/api/integration/mes-erp", data);
   },
 
   syncMesErp: async (id: string): Promise<ApiResponse<MesErpSync>> => {
-    return apiClient.integration.post(`/api/v1/integration/mes-erp/${id}/sync`);
+    return apiClient.integration.post(`/api/integration/mes-erp/${id}/sync`);
   },
 
   // WMS-SCM 同步
   listWmsScmSyncs: async (): Promise<ApiResponse<WmsScmSync[]>> => {
-    return apiClient.integration.get("/api/v1/integration/wms-scm");
+    return apiClient.integration.get("/api/integration/wms-scm");
   },
 
   getWmsScmSync: async (id: string): Promise<ApiResponse<WmsScmSync>> => {
-    return apiClient.integration.get(`/api/v1/integration/wms-scm/${id}`);
+    return apiClient.integration.get(`/api/integration/wms-scm/${id}`);
   },
 
   createWmsScmSync: async (
     data: CreateWmsScmSyncRequest,
   ): Promise<ApiResponse<WmsScmSync>> => {
-    return apiClient.integration.post("/api/v1/integration/wms-scm", data);
+    return apiClient.integration.post("/api/integration/wms-scm", data);
   },
 
   syncWmsScm: async (id: string): Promise<ApiResponse<WmsScmSync>> => {
-    return apiClient.integration.post(`/api/v1/integration/wms-scm/${id}/sync`);
+    return apiClient.integration.post(`/api/integration/wms-scm/${id}/sync`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {

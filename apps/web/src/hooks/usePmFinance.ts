@@ -14,7 +14,7 @@ export const useProjectFinance = (projectId: string) => {
     queryKey: ["project-finance", projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{ data: ProjectFinance }>(
-        `/api/v1/pm/projects/${projectId}/finance`,
+        `/api/pm/projects/${projectId}/finance`,
       );
       return response.data;
     },
@@ -30,7 +30,7 @@ export const useProjectBudgetItems = (projectId: string) => {
     queryKey: ["project-budget-items", projectId],
     queryFn: async () => {
       const response = await apiClient.pm.get<{ data: ProjectBudgetItem[] }>(
-        `/api/v1/pm/projects/${projectId}/budget-items`,
+        `/api/pm/projects/${projectId}/budget-items`,
       );
       return response.data;
     },
@@ -52,7 +52,7 @@ export const useProjectCostPerformance = (projectId: string) => {
           cv: number; // 成本差异
           sv: number; // 进度差异
         };
-      }>(`/api/v1/pm/projects/${projectId}/cost-performance`);
+      }>(`/api/pm/projects/${projectId}/cost-performance`);
       return response.data;
     },
     enabled: !!projectId,

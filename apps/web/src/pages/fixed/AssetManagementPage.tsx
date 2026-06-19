@@ -657,7 +657,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
                   gap: 2,
                 }}
               >
@@ -684,7 +684,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
                   gap: 2,
                 }}
               >
@@ -717,7 +717,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
                   gap: 2,
                 }}
               >
@@ -753,7 +753,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                  gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
                   gap: 2,
                 }}
               >
@@ -801,7 +801,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
                   gap: 2,
                 }}
               >
@@ -847,7 +847,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: 1, md: 2 },
+                  gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
                   gap: 2,
                 }}
               >
@@ -925,7 +925,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
                     gap: 2,
                   }}
                 >
@@ -958,7 +958,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                    gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
                     gap: 2,
                   }}
                 >
@@ -1000,7 +1000,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                    gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
                     gap: 2,
                   }}
                 >
@@ -1042,7 +1042,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: 1, sm: 2, md: 3 },
+                    gridTemplateColumns: { xs: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
                     gap: 2,
                   }}
                 >
@@ -1090,7 +1090,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
                     gap: 2,
                   }}
                 >
@@ -1139,7 +1139,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
                     gap: 2,
                   }}
                 >

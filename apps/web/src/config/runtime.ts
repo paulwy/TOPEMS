@@ -87,6 +87,7 @@ const config: RuntimeConfig = {
     // bi, report -> analytics
     bi: getEnv("VITE_BI_SERVICE_URL", "/bi"),
     report: getEnv("VITE_REPORT_SERVICE_URL", "/report"),
+    master: getEnv("VITE_MASTER_SERVICE_URL", "/master"),
   },
   features: {
     debugMode: getEnvBool("VITE_ENABLE_DEBUG_MODE", false),

@@ -1,10 +1,13 @@
 # TOPEMS 工作流系统 API
 
-**服务**: topems-flow
-**端口**: 8004
-**版本**: v1
+**服务**: topems-flow (集成在 unified-core)
+**端口**: 8000
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/workflow/` (例如 `/api/workflow/workflows`)
+> **实际访问地址**: `http://localhost:8000/api/workflow/`
 
 ## 1. 概述
 
@@ -14,28 +17,28 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 工作流列表 | /api/v1/workflows | GET |
-| 工作流详情 | /api/v1/workflows/{id} | GET |
-| 创建工作流 | /api/v1/workflows | POST |
-| 更新工作流 | /api/v1/workflows/{id} | PUT |
-| 删除工作流 | /api/v1/workflows/{id} | DELETE |
-| 流程实例列表 | /api/v1/instances | GET |
-| 流程实例详情 | /api/v1/instances/{id} | GET |
-| 创建流程实例 | /api/v1/instances | POST |
-| 更新实例状态 | /api/v1/instances/{id}/status | PATCH |
-| 审批任务列表 | /api/v1/approvals | GET |
-| 审批任务详情 | /api/v1/approvals/{id} | GET |
-| 创建审批任务 | /api/v1/approvals | POST |
-| 审批通过 | /api/v1/approvals/{id}/action | POST |
-| 审批拒绝 | /api/v1/approvals/{id}/action | POST |
-| 审批转交 | /api/v1/approvals/{id}/delegate | POST |
-| 添加审批意见 | /api/v1/approvals/{id}/comment | POST |
-| 获取审批意见 | /api/v1/approvals/{id}/comments | GET |
-| 待我审批 | /api/v1/approvals/pending | GET |
-| 我已审批 | /api/v1/approvals/completed | GET |
-| 处理超时 | /api/v1/approvals/{id}/timeout | POST |
-| 审批记录列表 | /api/v1/records | GET |
-| 审批记录详情 | /api/v1/records/{approvalId} | GET |
+| 工作流列表 | /api/workflow/workflows | GET |
+| 工作流详情 | /api/workflow/workflows/{id} | GET |
+| 创建工作流 | /api/workflow/workflows | POST |
+| 更新工作流 | /api/workflow/workflows/{id} | PUT |
+| 删除工作流 | /api/workflow/workflows/{id} | DELETE |
+| 流程实例列表 | /api/workflow/instances | GET |
+| 流程实例详情 | /api/workflow/instances/{id} | GET |
+| 创建流程实例 | /api/workflow/instances | POST |
+| 更新实例状态 | /api/workflow/instances/{id}/status | PATCH |
+| 审批任务列表 | /api/workflow/approvals | GET |
+| 审批任务详情 | /api/workflow/approvals/{id} | GET |
+| 创建审批任务 | /api/workflow/approvals | POST |
+| 审批通过 | /api/workflow/approvals/{id}/action | POST |
+| 审批拒绝 | /api/workflow/approvals/{id}/action | POST |
+| 审批转交 | /api/workflow/approvals/{id}/delegate | POST |
+| 添加审批意见 | /api/workflow/approvals/{id}/comment | POST |
+| 获取审批意见 | /api/workflow/approvals/{id}/comments | GET |
+| 待我审批 | /api/workflow/approvals/pending | GET |
+| 我已审批 | /api/workflow/approvals/completed | GET |
+| 处理超时 | /api/workflow/approvals/{id}/timeout | POST |
+| 审批记录列表 | /api/workflow/records | GET |
+| 审批记录详情 | /api/workflow/records/{approvalId} | GET |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -136,7 +139,7 @@
 
 ### 2.1 获取工作流列表
 
-**端点**: `GET /api/v1/workflows`
+**端点**: `GET /api/workflow/workflows`
 
 **描述**: 获取所有工作流定义
 
@@ -150,7 +153,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8004/api/v1/workflows?is_active=true" \
+curl -X GET "http://localhost:8000/api/workflow/workflows?is_active=true" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -177,7 +180,7 @@ curl -X GET "http://localhost:8004/api/v1/workflows?is_active=true" \
 
 ### 2.2 获取工作流详情
 
-**端点**: `GET /api/v1/workflows/{id}`
+**端点**: `GET /api/workflow/workflows/{id}`
 
 **描述**: 获取指定工作流的详细信息
 
@@ -192,7 +195,7 @@ curl -X GET "http://localhost:8004/api/v1/workflows?is_active=true" \
 
 ### 2.3 创建工作流
 
-**端点**: `POST /api/v1/workflows`
+**端点**: `POST /api/workflow/workflows`
 
 **描述**: 创建新的工作流定义
 
@@ -268,7 +271,7 @@ Authorization: Bearer {token}
 
 ### 2.4 更新工作流
 
-**端点**: `PUT /api/v1/workflows/{id}`
+**端点**: `PUT /api/workflow/workflows/{id}`
 
 **描述**: 更新指定工作流
 
@@ -280,7 +283,7 @@ Authorization: Bearer {token}
 
 ### 2.5 删除工作流
 
-**端点**: `DELETE /api/v1/workflows/{id}`
+**端点**: `DELETE /api/workflow/workflows/{id}`
 
 **描述**: 删除指定工作流
 
@@ -294,7 +297,7 @@ Authorization: Bearer {token}
 
 ### 3.1 获取流程实例列表
 
-**端点**: `GET /api/v1/instances`
+**端点**: `GET /api/workflow/instances`
 
 **描述**: 获取所有流程实例
 
@@ -311,7 +314,7 @@ Authorization: Bearer {token}
 
 ### 3.2 获取流程实例详情
 
-**端点**: `GET /api/v1/instances/{id}`
+**端点**: `GET /api/workflow/instances/{id}`
 
 **描述**: 获取指定流程实例的详细信息
 
@@ -321,7 +324,7 @@ Authorization: Bearer {token}
 
 ### 3.3 创建流程实例
 
-**端点**: `POST /api/v1/instances`
+**端点**: `POST /api/workflow/instances`
 
 **描述**: 创建新的流程实例（发起审批流程）
 
@@ -358,7 +361,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8004/api/v1/instances \
+curl -X POST http://localhost:8000/api/workflow/instances \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -400,7 +403,7 @@ curl -X POST http://localhost:8004/api/v1/instances \
 
 ### 3.4 更新流程实例状态
 
-**端点**: `PATCH /api/v1/instances/{id}/status`
+**端点**: `PATCH /api/workflow/instances/{id}/status`
 
 **描述**: 更新流程实例状态
 
@@ -422,7 +425,7 @@ curl -X POST http://localhost:8004/api/v1/instances \
 
 ### 4.1 获取审批任务列表
 
-**端点**: `GET /api/v1/approvals`
+**端点**: `GET /api/workflow/approvals`
 
 **描述**: 获取审批任务列表
 
@@ -438,7 +441,7 @@ curl -X POST http://localhost:8004/api/v1/instances \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8004/api/v1/approvals?status=pending" \
+curl -X GET "http://localhost:8000/api/workflow/approvals?status=pending" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -446,7 +449,7 @@ curl -X GET "http://localhost:8004/api/v1/approvals?status=pending" \
 
 ### 4.2 获取审批任务详情
 
-**端点**: `GET /api/v1/approvals/{id}`
+**端点**: `GET /api/workflow/approvals/{id}`
 
 **描述**: 获取指定审批任务的详细信息
 
@@ -456,7 +459,7 @@ curl -X GET "http://localhost:8004/api/v1/approvals?status=pending" \
 
 ### 4.3 创建审批任务
 
-**端点**: `POST /api/v1/approvals`
+**端点**: `POST /api/workflow/approvals`
 
 **描述**: 创建新的审批任务
 
@@ -481,7 +484,7 @@ curl -X GET "http://localhost:8004/api/v1/approvals?status=pending" \
 
 ### 4.4 审批通过
 
-**端点**: `POST /api/v1/approvals/{id}/action`
+**端点**: `POST /api/workflow/approvals/{id}/action`
 
 **描述**: 审批通过
 
@@ -514,7 +517,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8004/api/v1/approvals/approval-001/action \
+curl -X POST http://localhost:8000/api/workflow/approvals/approval-001/action \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -549,7 +552,7 @@ curl -X POST http://localhost:8004/api/v1/approvals/approval-001/action \
 
 ### 4.5 审批拒绝
 
-**端点**: `POST /api/v1/approvals/{id}/action`
+**端点**: `POST /api/workflow/approvals/{id}/action`
 
 **描述**: 审批拒绝
 
@@ -572,7 +575,7 @@ curl -X POST http://localhost:8004/api/v1/approvals/approval-001/action \
 
 ### 4.6 审批转交
 
-**端点**: `POST /api/v1/approvals/{id}/delegate`
+**端点**: `POST /api/workflow/approvals/{id}/delegate`
 
 **描述**: 将审批任务转交给其他人
 
@@ -610,7 +613,7 @@ Authorization: Bearer {token}
 
 ### 4.7 添加审批意见
 
-**端点**: `POST /api/v1/approvals/{id}/comment`
+**端点**: `POST /api/workflow/approvals/{id}/comment`
 
 **描述**: 添加审批意见
 
@@ -630,7 +633,7 @@ Authorization: Bearer {token}
 
 ### 4.8 获取审批意见
 
-**端点**: `GET /api/v1/approvals/{id}/comments`
+**端点**: `GET /api/workflow/approvals/{id}/comments`
 
 **描述**: 获取审批任务的意见列表
 
@@ -645,7 +648,7 @@ Authorization: Bearer {token}
 
 ### 4.9 获取待我审批
 
-**端点**: `GET /api/v1/approvals/pending`
+**端点**: `GET /api/workflow/approvals/pending`
 
 **描述**: 获取当前用户待审批的任务列表
 
@@ -654,7 +657,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8004/api/v1/approvals/pending \
+curl -X GET http://localhost:8000/api/workflow/approvals/pending \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -662,7 +665,7 @@ curl -X GET http://localhost:8004/api/v1/approvals/pending \
 
 ### 4.10 获取我已审批
 
-**端点**: `GET /api/v1/approvals/completed`
+**端点**: `GET /api/workflow/approvals/completed`
 
 **描述**: 获取当前用户已完成的审批任务列表
 
@@ -672,7 +675,7 @@ curl -X GET http://localhost:8004/api/v1/approvals/pending \
 
 ### 4.11 处理超时
 
-**端点**: `POST /api/v1/approvals/{id}/timeout`
+**端点**: `POST /api/workflow/approvals/{id}/timeout`
 
 **描述**: 处理审批超时
 
@@ -686,7 +689,7 @@ curl -X GET http://localhost:8004/api/v1/approvals/pending \
 
 ### 5.1 获取审批记录列表
 
-**端点**: `GET /api/v1/records`
+**端点**: `GET /api/workflow/records`
 
 **描述**: 获取所有审批记录
 
@@ -702,7 +705,7 @@ curl -X GET http://localhost:8004/api/v1/approvals/pending \
 
 ### 5.2 获取审批记录详情
 
-**端点**: `GET /api/v1/records/{approvalId}`
+**端点**: `GET /api/workflow/records/{approvalId}`
 
 **描述**: 获取指定审批任务的所有记录
 
@@ -728,7 +731,7 @@ curl -X GET http://localhost:8004/api/v1/approvals/pending \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8004/health
+curl -X GET http://localhost:8000/health
 ```
 
 **成功响应** (200 OK):

@@ -714,16 +714,16 @@ POST /api/v1/backup/{id}/restore
 
 ```bash
 # 登录
-curl -X POST http://localhost:8080/api/v1/iam/auth/login \
+curl -X POST http://localhost:8000/api/v1/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@example.com", "password": "password"}'
 
 # 获取项目列表
-curl -X GET http://localhost:8080/api/v1/rs/projects \
+curl -X GET http://localhost:8000/api/v1/rs/projects \
   -H "Authorization: Bearer <token>"
 
 # 创建项目
-curl -X POST http://localhost:8080/api/v1/rs/projects \
+curl -X POST http://localhost:8000/api/v1/rs/projects \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{

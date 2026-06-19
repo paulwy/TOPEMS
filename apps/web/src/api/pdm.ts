@@ -137,19 +137,19 @@ export const pdmApi = {
   // Production Processes
   listProcesses: async (): Promise<ApiResponse<ProductionProcess[]>> => {
     return apiClient.pdm.get<ProductionProcess[]>(
-      "/api/v1/production-processes",
+      "/api/pdm/production-processes",
     );
   },
   getProcess: async (id: string): Promise<ApiResponse<ProductionProcess>> => {
     return apiClient.pdm.get<ProductionProcess>(
-      `/api/v1/production-processes/${id}`,
+      `/api/pdm/production-processes/${id}`,
     );
   },
   createProcess: async (
     data: CreateProductionProcessRequest,
   ): Promise<ApiResponse<ProductionProcess>> => {
     return apiClient.pdm.post<ProductionProcess>(
-      "/api/v1/production-processes",
+      "/api/pdm/production-processes",
       data,
     );
   },
@@ -158,55 +158,55 @@ export const pdmApi = {
     data: CreateProductionProcessRequest,
   ): Promise<ApiResponse<ProductionProcess>> => {
     return apiClient.pdm.put<ProductionProcess>(
-      `/api/v1/production-processes/${id}`,
+      `/api/pdm/production-processes/${id}`,
       data,
     );
   },
   deleteProcess: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/v1/production-processes/${id}`);
+    return apiClient.pdm.delete<boolean>(`/api/pdm/production-processes/${id}`);
   },
 
   // Production Steps
   listSteps: async (): Promise<ApiResponse<ProductionStep[]>> => {
-    return apiClient.pdm.get<ProductionStep[]>("/api/v1/production-steps");
+    return apiClient.pdm.get<ProductionStep[]>("/api/pdm/production-steps");
   },
   getStep: async (id: string): Promise<ApiResponse<ProductionStep>> => {
-    return apiClient.pdm.get<ProductionStep>(`/api/v1/production-steps/${id}`);
+    return apiClient.pdm.get<ProductionStep>(`/api/pdm/production-steps/${id}`);
   },
   createStep: async (
     data: CreateProductionStepRequest,
   ): Promise<ApiResponse<ProductionStep>> => {
-    return apiClient.pdm.post<ProductionStep>("/api/v1/production-steps", data);
+    return apiClient.pdm.post<ProductionStep>("/api/pdm/production-steps", data);
   },
   updateStep: async (
     id: string,
     data: UpdateProductionStepRequest,
   ): Promise<ApiResponse<ProductionStep>> => {
     return apiClient.pdm.put<ProductionStep>(
-      `/api/v1/production-steps/${id}`,
+      `/api/pdm/production-steps/${id}`,
       data,
     );
   },
   deleteStep: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/v1/production-steps/${id}`);
+    return apiClient.pdm.delete<boolean>(`/api/pdm/production-steps/${id}`);
   },
 
   // Production Formulas
   listFormulas: async (): Promise<ApiResponse<ProductionFormula[]>> => {
     return apiClient.pdm.get<ProductionFormula[]>(
-      "/api/v1/production-formulas",
+      "/api/pdm/production-formulas",
     );
   },
   getFormula: async (id: string): Promise<ApiResponse<ProductionFormula>> => {
     return apiClient.pdm.get<ProductionFormula>(
-      `/api/v1/production-formulas/${id}`,
+      `/api/pdm/production-formulas/${id}`,
     );
   },
   createFormula: async (
     data: CreateProductionFormulaRequest,
   ): Promise<ApiResponse<ProductionFormula>> => {
     return apiClient.pdm.post<ProductionFormula>(
-      "/api/v1/production-formulas",
+      "/api/pdm/production-formulas",
       data,
     );
   },
@@ -215,28 +215,28 @@ export const pdmApi = {
     data: CreateProductionFormulaRequest,
   ): Promise<ApiResponse<ProductionFormula>> => {
     return apiClient.pdm.put<ProductionFormula>(
-      `/api/v1/production-formulas/${id}`,
+      `/api/pdm/production-formulas/${id}`,
       data,
     );
   },
   deleteFormula: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/v1/production-formulas/${id}`);
+    return apiClient.pdm.delete<boolean>(`/api/pdm/production-formulas/${id}`);
   },
 
   // Production Batches
   listBatches: async (): Promise<ApiResponse<ProductionBatch[]>> => {
-    return apiClient.pdm.get<ProductionBatch[]>("/api/v1/production-batches");
+    return apiClient.pdm.get<ProductionBatch[]>("/api/pdm/production-batches");
   },
   getBatch: async (id: string): Promise<ApiResponse<ProductionBatch>> => {
     return apiClient.pdm.get<ProductionBatch>(
-      `/api/v1/production-batches/${id}`,
+      `/api/pdm/production-batches/${id}`,
     );
   },
   createBatch: async (
     data: CreateProductionBatchRequest,
   ): Promise<ApiResponse<ProductionBatch>> => {
     return apiClient.pdm.post<ProductionBatch>(
-      "/api/v1/production-batches",
+      "/api/pdm/production-batches",
       data,
     );
   },
@@ -245,23 +245,23 @@ export const pdmApi = {
     data: CreateProductionBatchRequest,
   ): Promise<ApiResponse<ProductionBatch>> => {
     return apiClient.pdm.put<ProductionBatch>(
-      `/api/v1/production-batches/${id}`,
+      `/api/pdm/production-batches/${id}`,
       data,
     );
   },
   deleteBatch: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/v1/production-batches/${id}`);
+    return apiClient.pdm.delete<boolean>(`/api/pdm/production-batches/${id}`);
   },
 
   // Production Statistics
   listStatistics: async (): Promise<ApiResponse<ProductionStatistics[]>> => {
     return apiClient.pdm.get<ProductionStatistics[]>(
-      "/api/v1/production-statistics",
+      "/api/pdm/production-statistics",
     );
   },
 
   getStatistics: async (): Promise<ApiResponse<PdmStatistics>> => {
-    return apiClient.pdm.get<PdmStatistics>("/api/v1/statistics");
+    return apiClient.pdm.get<PdmStatistics>("/api/pdm/statistics");
   },
 
   health: async (): Promise<ApiResponse<string>> => {
@@ -272,7 +272,7 @@ export const pdmApi = {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", type);
-    return apiClient.pdm.post<any>("/api/v1/import", formData, {
+    return apiClient.pdm.post<any>("/api/pdm/import", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },

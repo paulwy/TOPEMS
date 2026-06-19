@@ -104,7 +104,7 @@ async fn main() -> Result<()> {
         .layer(cors)
         .with_state(api_state.clone());
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8020".to_string());
+    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8064".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-Monitor 系统监控服务启动中...");

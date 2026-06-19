@@ -175,61 +175,61 @@ export const aiApi = {
 
     const queryString = searchParams.toString();
     return apiClient.ai.get(
-      `/api/v1/documents${queryString ? "?" + queryString : ""}`,
+      `/api/ai/documents${queryString ? "?" + queryString : ""}`,
     );
   },
 
   getDocument: async (id: string): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.get(`/api/v1/documents/${id}`);
+    return apiClient.ai.get(`/api/ai/documents/${id}`);
   },
 
   createDocument: async (
     data: Partial<Document>,
   ): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.post("/api/v1/documents", data);
+    return apiClient.ai.post("/api/ai/documents", data);
   },
 
   updateDocument: async (
     id: string,
     data: Partial<Document>,
   ): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.put(`/api/v1/documents/${id}`, data);
+    return apiClient.ai.put(`/api/ai/documents/${id}`, data);
   },
 
   deleteDocument: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/v1/documents/${id}`);
+    return apiClient.ai.delete(`/api/ai/documents/${id}`);
   },
 
   chat: async (data: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
-    return apiClient.ai.post<ChatResponse>("/api/v1/ai/chat", data);
+    return apiClient.ai.post<ChatResponse>("/api/ai/ai/chat", data);
   },
 
   search: async (data: SearchRequest): Promise<ApiResponse<SearchResult>> => {
-    return apiClient.ai.post<SearchResult>("/api/v1/ai/search", data);
+    return apiClient.ai.post<SearchResult>("/api/ai/ai/search", data);
   },
 
   generate: async (
     data: AIGenerateRequest,
   ): Promise<ApiResponse<AIGenerateResponse>> => {
-    return apiClient.ai.post<AIGenerateResponse>("/api/v1/ai/generate", data);
+    return apiClient.ai.post<AIGenerateResponse>("/api/ai/ai/generate", data);
   },
 
   listConversations: async (): Promise<ApiResponse<Conversation[]>> => {
-    return apiClient.ai.get<Conversation[]>("/api/v1/conversations");
+    return apiClient.ai.get<Conversation[]>("/api/ai/conversations");
   },
 
   getConversation: async (id: string): Promise<ApiResponse<Conversation>> => {
-    return apiClient.ai.get(`/api/v1/conversations/${id}`);
+    return apiClient.ai.get(`/api/ai/conversations/${id}`);
   },
 
   createConversation: async (
     title?: string,
   ): Promise<ApiResponse<Conversation>> => {
-    return apiClient.ai.post("/api/v1/conversations", { title });
+    return apiClient.ai.post("/api/ai/conversations", { title });
   },
 
   deleteConversation: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/v1/conversations/${id}`);
+    return apiClient.ai.delete(`/api/ai/conversations/${id}`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {
@@ -239,23 +239,23 @@ export const aiApi = {
   validate: async (
     data: ValidateRequest,
   ): Promise<ApiResponse<ValidateResponse>> => {
-    return apiClient.ai.post<ValidateResponse>("/api/v1/ai/validate", data);
+    return apiClient.ai.post<ValidateResponse>("/api/ai/ai/validate", data);
   },
 
   complete: async (
     data: CompleteRequest,
   ): Promise<ApiResponse<CompleteResponse>> => {
-    return apiClient.ai.post<CompleteResponse>("/api/v1/ai/complete", data);
+    return apiClient.ai.post<CompleteResponse>("/api/ai/ai/complete", data);
   },
 
   summarize: async (
     data: SummarizeRequest,
   ): Promise<ApiResponse<SummarizeResponse>> => {
-    return apiClient.ai.post<SummarizeResponse>("/api/v1/ai/summarize", data);
+    return apiClient.ai.post<SummarizeResponse>("/api/ai/ai/summarize", data);
   },
 
   listTemplates: async (): Promise<ApiResponse<AITemplate[]>> => {
-    return apiClient.ai.get<AITemplate[]>("/api/v1/ai/templates");
+    return apiClient.ai.get<AITemplate[]>("/api/ai/ai/templates");
   },
 
   // 分析相关接口
@@ -263,7 +263,7 @@ export const aiApi = {
     data: SentimentAnalysisRequest,
   ): Promise<ApiResponse<SentimentAnalysisResponse>> => {
     return apiClient.ai.post<SentimentAnalysisResponse>(
-      "/api/v1/analysis/sentiment",
+      "/api/ai/analysis/sentiment",
       data,
     );
   },
@@ -272,7 +272,7 @@ export const aiApi = {
     data: ClassifyTextRequest,
   ): Promise<ApiResponse<ClassifyTextResponse>> => {
     return apiClient.ai.post<ClassifyTextResponse>(
-      "/api/v1/analysis/classify",
+      "/api/ai/analysis/classify",
       data,
     );
   },
@@ -281,7 +281,7 @@ export const aiApi = {
     data: ExtractEntitiesRequest,
   ): Promise<ApiResponse<ExtractEntitiesResponse>> => {
     return apiClient.ai.post<ExtractEntitiesResponse>(
-      "/api/v1/analysis/entities",
+      "/api/ai/analysis/entities",
       data,
     );
   },
@@ -290,7 +290,7 @@ export const aiApi = {
     data: ExtractKeywordsRequest,
   ): Promise<ApiResponse<ExtractKeywordsResponse>> => {
     return apiClient.ai.post<ExtractKeywordsResponse>(
-      "/api/v1/analysis/keywords",
+      "/api/ai/analysis/keywords",
       data,
     );
   },

@@ -209,29 +209,31 @@ sudo vim /opt/topems/config/.env
 
 | 服务 | 默认端口 | 说明 |
 |------|----------|------|
-| Portal | 8080 | API 网关 |
-| Unified Core | 8001 | IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin |
-| AI | 8002 | AI 服务 |
-| Analytics | 8003 | BI, Report |
-| Manufacturing | 8004 | MES, PDM |
-| Quality Assurance | 8005 | QMS, LIMS, EHS |
-| HRM | 8006 | 人力资源管理 |
-| CRM | 8007 | 客户关系管理 |
-| PM | 8008 | 项目管理 |
-| ERP | 8009 | 企业资源计划 |
-| GIS | 8010 | 地理信息系统 |
-| RS | 8011 | 研发管理 |
-| SCM | 8012 | 供应链管理 |
-| WMS | 8013 | 仓库管理 |
-| Mobile | 8014 | 移动服务 |
-| Monitor | 8015 | 监控服务 |
+| Unified Core | 8000 | IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin |
+| ERP | 8010 | 企业资源计划 |
+| HRM | 8011 | 人力资源管理 |
+| CRM | 8012 | 客户关系管理 |
+| Manufacturing | 8030 | MES, PDM |
+| SCM | 8040 | 供应链管理 |
+| WMS | 8042 | 仓库管理 |
+| PM | 8046 | 项目管理 |
+| Analytics | 8044 | BI, Report |
+| AI | 8050 | AI 服务 |
+| Quality Assurance | 8052 | QMS, LIMS, EHS |
+| GIS | 8054 | 地理信息系统 |
+| Mobile | 8056 | 移动服务 |
+| RS | 8058 | 研发管理 |
+| SRM | 8060 | 供应商关系管理 |
+| Monitor | 8064 | 监控服务 |
+| Portal | 8066 | 企业门户 |
+| Integration | 8068 | 集成服务 |
 
 ### Nginx 反向代理配置
 
 ```nginx
 # /etc/nginx/sites-available/topems.conf
 upstream topems_portal {
-    server localhost:8080;
+    server localhost:8066;
 }
 
 server {
@@ -493,7 +495,7 @@ sudo nginx -t
 ls -la /opt/topems/web/
 
 # 检查 Portal 服务
-curl http://localhost:8080/health
+curl http://localhost:8066/health
 ```
 
 ### 性能问题

@@ -1,10 +1,13 @@
 # TOPEMS 生产管理系统 API
 
-**服务**: topems-pdm
-**端口**: 待定
-**版本**: v1
+**服务**: topems-pdm (集成在 manufacturing)
+**端口**: 8023
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/pdm/` (例如 `/api/pdm/production-processes`)
+> **实际访问地址**: `http://localhost:8023/api/pdm/`
 
 ## 1. 概述
 
@@ -14,25 +17,25 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 生产工艺列表 | /api/v1/production-processes | GET |
-| 生产工艺详情 | /api/v1/production-processes/{id} | GET |
-| 创建生产工艺 | /api/v1/production-processes | POST |
-| 更新生产工艺 | /api/v1/production-processes/{id} | PUT |
-| 删除生产工艺 | /api/v1/production-processes/{id} | DELETE |
-| 生产工序列表 | /api/v1/production-steps | GET |
-| 创建生产工序 | /api/v1/production-steps | POST |
-| 删除生产工序 | /api/v1/production-steps/{id} | DELETE |
-| 生产配方列表 | /api/v1/production-formulas | GET |
-| 生产配方详情 | /api/v1/production-formulas/{id} | GET |
-| 创建生产配方 | /api/v1/production-formulas | POST |
-| 更新生产配方 | /api/v1/production-formulas/{id} | PUT |
-| 删除生产配方 | /api/v1/production-formulas/{id} | DELETE |
-| 生产批次列表 | /api/v1/production-batches | GET |
-| 生产批次详情 | /api/v1/production-batches/{id} | GET |
-| 创建生产批次 | /api/v1/production-batches | POST |
-| 更新生产批次 | /api/v1/production-batches/{id} | PUT |
-| 删除生产批次 | /api/v1/production-batches/{id} | DELETE |
-| 生产统计列表 | /api/v1/production-statistics | GET |
+| 生产工艺列表 | /api/pdm/production-processes | GET |
+| 生产工艺详情 | /api/pdm/production-processes/{id} | GET |
+| 创建生产工艺 | /api/pdm/production-processes | POST |
+| 更新生产工艺 | /api/pdm/production-processes/{id} | PUT |
+| 删除生产工艺 | /api/pdm/production-processes/{id} | DELETE |
+| 生产工序列表 | /api/pdm/production-steps | GET |
+| 创建生产工序 | /api/pdm/production-steps | POST |
+| 删除生产工序 | /api/pdm/production-steps/{id} | DELETE |
+| 生产配方列表 | /api/pdm/production-formulas | GET |
+| 生产配方详情 | /api/pdm/production-formulas/{id} | GET |
+| 创建生产配方 | /api/pdm/production-formulas | POST |
+| 更新生产配方 | /api/pdm/production-formulas/{id} | PUT |
+| 删除生产配方 | /api/pdm/production-formulas/{id} | DELETE |
+| 生产批次列表 | /api/pdm/production-batches | GET |
+| 生产批次详情 | /api/pdm/production-batches/{id} | GET |
+| 创建生产批次 | /api/pdm/production-batches | POST |
+| 更新生产批次 | /api/pdm/production-batches/{id} | PUT |
+| 删除生产批次 | /api/pdm/production-batches/{id} | DELETE |
+| 生产统计列表 | /api/pdm/production-statistics | GET |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -129,7 +132,7 @@
 
 ### 2.1 获取生产工艺列表
 
-**端点**: `GET /api/v1/production-processes`
+**端点**: `GET /api/pdm/production-processes`
 
 **描述**: 获取所有生产工艺
 
@@ -145,7 +148,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8010/api/v1/production-processes?status=active" \
+curl -X GET "http://localhost:8023/api/pdm/production-processes?status=active" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -184,7 +187,7 @@ curl -X GET "http://localhost:8010/api/v1/production-processes?status=active" \
 
 ### 2.2 获取生产工艺详情
 
-**端点**: `GET /api/v1/production-processes/{id}`
+**端点**: `GET /api/pdm/production-processes/{id}`
 
 **描述**: 获取指定生产工艺的详细信息
 
@@ -198,7 +201,7 @@ curl -X GET "http://localhost:8010/api/v1/production-processes?status=active" \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8010/api/v1/production-processes/process-001 \
+curl -X GET http://localhost:8023/api/pdm/production-processes/process-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -225,7 +228,7 @@ curl -X GET http://localhost:8010/api/v1/production-processes/process-001 \
 
 ### 2.3 创建生产工艺
 
-**端点**: `POST /api/v1/production-processes`
+**端点**: `POST /api/pdm/production-processes`
 
 **描述**: 创建新的生产工艺
 
@@ -262,7 +265,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8010/api/v1/production-processes \
+curl -X POST http://localhost:8023/api/pdm/production-processes \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -278,7 +281,7 @@ curl -X POST http://localhost:8010/api/v1/production-processes \
 
 ### 2.4 更新生产工艺
 
-**端点**: `PUT /api/v1/production-processes/{id}`
+**端点**: `PUT /api/pdm/production-processes/{id}`
 
 **描述**: 更新指定生产工艺
 
@@ -307,7 +310,7 @@ curl -X POST http://localhost:8010/api/v1/production-processes \
 
 ### 2.5 删除生产工艺
 
-**端点**: `DELETE /api/v1/production-processes/{id}`
+**端点**: `DELETE /api/pdm/production-processes/{id}`
 
 **描述**: 删除指定生产工艺
 
@@ -321,7 +324,7 @@ curl -X POST http://localhost:8010/api/v1/production-processes \
 
 ### 3.1 获取生产工序列表
 
-**端点**: `GET /api/v1/production-steps`
+**端点**: `GET /api/pdm/production-steps`
 
 **描述**: 获取所有生产工序
 
@@ -336,7 +339,7 @@ curl -X POST http://localhost:8010/api/v1/production-processes \
 
 ### 3.2 创建生产工序
 
-**端点**: `POST /api/v1/production-steps`
+**端点**: `POST /api/pdm/production-steps`
 
 **描述**: 创建新的生产工序
 
@@ -377,7 +380,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8010/api/v1/production-steps \
+curl -X POST http://localhost:8023/api/pdm/production-steps \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -395,7 +398,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 3.3 删除生产工序
 
-**端点**: `DELETE /api/v1/production-steps/{id}`
+**端点**: `DELETE /api/pdm/production-steps/{id}`
 
 **描述**: 删除指定生产工序
 
@@ -409,7 +412,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 4.1 获取生产配方列表
 
-**端点**: `GET /api/v1/production-formulas`
+**端点**: `GET /api/pdm/production-formulas`
 
 **描述**: 获取所有生产配方
 
@@ -425,7 +428,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 4.2 获取生产配方详情
 
-**端点**: `GET /api/v1/production-formulas/{id}`
+**端点**: `GET /api/pdm/production-formulas/{id}`
 
 **描述**: 获取指定生产配方的详细信息
 
@@ -435,7 +438,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 4.3 创建生产配方
 
-**端点**: `POST /api/v1/production-formulas`
+**端点**: `POST /api/pdm/production-formulas`
 
 **描述**: 创建新的生产配方
 
@@ -469,7 +472,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 4.4 更新生产配方
 
-**端点**: `PUT /api/v1/production-formulas/{id}`
+**端点**: `PUT /api/pdm/production-formulas/{id}`
 
 **描述**: 更新指定生产配方
 
@@ -481,7 +484,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 4.5 删除生产配方
 
-**端点**: `DELETE /api/v1/production-formulas/{id}`
+**端点**: `DELETE /api/pdm/production-formulas/{id}`
 
 **描述**: 删除指定生产配方
 
@@ -495,7 +498,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 5.1 获取生产批次列表
 
-**端点**: `GET /api/v1/production-batches`
+**端点**: `GET /api/pdm/production-batches`
 
 **描述**: 获取所有生产批次
 
@@ -513,7 +516,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 5.2 获取生产批次详情
 
-**端点**: `GET /api/v1/production-batches/{id}`
+**端点**: `GET /api/pdm/production-batches/{id}`
 
 **描述**: 获取指定生产批次的详细信息
 
@@ -523,7 +526,7 @@ curl -X POST http://localhost:8010/api/v1/production-steps \
 
 ### 5.3 创建生产批次
 
-**端点**: `POST /api/v1/production-batches`
+**端点**: `POST /api/pdm/production-batches`
 
 **描述**: 创建新的生产批次
 
@@ -568,7 +571,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8010/api/v1/production-batches \
+curl -X POST http://localhost:8023/api/pdm/production-batches \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -588,7 +591,7 @@ curl -X POST http://localhost:8010/api/v1/production-batches \
 
 ### 5.4 更新生产批次
 
-**端点**: `PUT /api/v1/production-batches/{id}`
+**端点**: `PUT /api/pdm/production-batches/{id}`
 
 **描述**: 更新指定生产批次
 
@@ -619,7 +622,7 @@ curl -X POST http://localhost:8010/api/v1/production-batches \
 
 ### 5.5 删除生产批次
 
-**端点**: `DELETE /api/v1/production-batches/{id}`
+**端点**: `DELETE /api/pdm/production-batches/{id}`
 
 **描述**: 删除指定生产批次
 
@@ -633,7 +636,7 @@ curl -X POST http://localhost:8010/api/v1/production-batches \
 
 ### 6.1 获取生产统计列表
 
-**端点**: `GET /api/v1/production-statistics`
+**端点**: `GET /api/pdm/production-statistics`
 
 **描述**: 获取所有生产统计数据
 
@@ -650,7 +653,7 @@ curl -X POST http://localhost:8010/api/v1/production-batches \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8010/api/v1/production-statistics?start_date=2026-05-01&end_date=2026-05-31" \
+curl -X GET "http://localhost:8023/api/pdm/production-statistics?start_date=2026-05-01&end_date=2026-05-31" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -692,7 +695,7 @@ curl -X GET "http://localhost:8010/api/v1/production-statistics?start_date=2026-
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8010/health
+curl -X GET http://localhost:8023/health
 ```
 
 **成功响应** (200 OK):

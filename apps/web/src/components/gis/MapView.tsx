@@ -1,4 +1,11 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useId,
+} from "react";
 import {
   MapContainer,
   TileLayer,
@@ -42,6 +49,7 @@ import DeviceTrackPanel from "./DeviceTrackPanel";
 import HeatmapLayer, { HeatmapLegend } from "./HeatmapLayer";
 import Map3DView from "./Map3DView";
 import AmapLayer from "./AmapLayer";
+
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 
@@ -328,6 +336,22 @@ const MapView: React.FC<MapViewProps> = ({
   const _mapRef = useRef<any>(null);
   const leafletMapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mapKey, setMapKey] = useState(0);
+  const renderCountRef = useRef(0);
+  const stableId = useId();
+
+  // Force new key when map type changes to ensure proper remount
+  const handleSetMapType = (type: "osm" | "amap") => {
+    if (type !== mapType) {
+      renderCountRef.current = 0;
+      setMapKey((prev) => prev + 1);
+      setMapType(type);
+    }
+  };
+
+  // Generate unique key that changes on each render to handle StrictMode
+  // Using useId for stability + renderCountRef for uniqueness across mounts
+  const currentMapKey = `${stableId}-${mapKey}-${renderCountRef.current++}`;
 
   const calculateDistance = (
     lat1: number,
@@ -727,6 +751,7 @@ const MapView: React.FC<MapViewProps> = ({
           zoom={zoom}
           style={{ height: "100%", width: "100%" }}
           ref={leafletMapRef}
+          key={currentMapKey}
         >
           <MapEventHandler
             toolMode={toolMode}
@@ -1123,7 +1148,7 @@ const MapView: React.FC<MapViewProps> = ({
           </button>
           <div className="border-t border-gray-100 my-2" />
           <button
-            onClick={() => setMapType(mapType === "osm" ? "amap" : "osm")}
+            onClick={() => handleSetMapType(mapType === "osm" ? "amap" : "osm")}
             className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
               mapType === "amap"
                 ? "bg-blue-500 text-white"

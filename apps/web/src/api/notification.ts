@@ -124,7 +124,7 @@ export const getNotifications = async (
     }
 
     const response = await apiClient.notification.get<NotificationListResponse>(
-      "/api/v1/notifications",
+      "/api/notifications",
       { params },
     );
 
@@ -155,7 +155,7 @@ export const getUnreadNotifications = async (): Promise<
   ApiResponse<Notification[]>
 > => {
   const response = await apiClient.notification.get<Notification[]>(
-    "/api/v1/notifications/unread",
+    "/api/notifications/unread",
   );
 
   return response;
@@ -164,7 +164,7 @@ export const getUnreadNotifications = async (): Promise<
 export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
   try {
     const response = await apiClient.notification.get<number>(
-      "/api/v1/notifications/unread-count",
+      "/api/notifications/unread-count",
     );
     return response;
   } catch (error: any) {
@@ -202,13 +202,13 @@ export const markAsRead = async (
   id: string,
 ): Promise<ApiResponse<Notification>> => {
   return await apiClient.notification.put<Notification>(
-    `/api/v1/notifications/${id}`,
+    `/api/notifications/${id}`,
   );
 };
 
 export const markAllAsRead = async (): Promise<ApiResponse<number>> => {
   return await apiClient.notification.put<number>(
-    "/api/v1/notifications/read-all",
+    "/api/notifications/read-all",
   );
 };
 
@@ -216,7 +216,7 @@ export const deleteNotification = async (
   id: string,
 ): Promise<ApiResponse<boolean>> => {
   return await apiClient.notification.delete<boolean>(
-    `/api/v1/notifications/${id}`,
+    `/api/notifications/${id}`,
   );
 };
 
@@ -224,7 +224,7 @@ export const createNotification = async (
   notification: CreateNotificationRequest,
 ): Promise<ApiResponse<Notification>> => {
   return await apiClient.notification.post<Notification>(
-    "/api/v1/notifications",
+    "/api/notifications",
     notification,
   );
 };
@@ -239,7 +239,7 @@ export const getArchivedNotifications = async (
   };
   const response = await apiClient.notification.get<
     NotificationListResponse<ArchivedNotification>
-  >("/api/v1/notifications/archived", { params });
+  >("/api/notifications/archived", { params });
   return response;
 };
 
@@ -247,7 +247,7 @@ export const getArchiveConfig = async (): Promise<
   ApiResponse<ArchiveConfig>
 > => {
   const response = await apiClient.notification.get<ArchiveConfig>(
-    "/api/v1/notifications/archive/config",
+    "/api/notifications/archive/config",
   );
   return response;
 };
@@ -256,7 +256,7 @@ export const updateArchiveConfig = async (
   config: ArchiveConfig,
 ): Promise<ApiResponse<ArchiveConfig>> => {
   const response = await apiClient.notification.put<ArchiveConfig>(
-    "/api/v1/notifications/archive/config",
+    "/api/notifications/archive/config",
     config,
   );
   return response;
@@ -270,7 +270,7 @@ export const runAutoArchive = async (): Promise<
   ApiResponse<AutoArchiveResponse>
 > => {
   const response = await apiClient.notification.post<AutoArchiveResponse>(
-    "/api/v1/notifications/archive/run",
+    "/api/notifications/archive/run",
   );
   return response;
 };
@@ -279,7 +279,7 @@ export const getMyNotificationStats = async (): Promise<
   ApiResponse<NotificationStats>
 > => {
   const response =
-    await apiClient.notification.get<NotificationStats>("/api/v1/stats/me");
+    await apiClient.notification.get<NotificationStats>("/api/notifications/stats/me");
   return response;
 };
 
@@ -304,7 +304,7 @@ export const getTemplates = async (
   }
   const response =
     await apiClient.notification.get<NotificationTemplateListResponse>(
-      "/api/v1/notification-templates",
+      "/api/notification-templates",
       { params },
     );
   return response;
@@ -314,7 +314,7 @@ export const getTemplate = async (
   id: string,
 ): Promise<ApiResponse<NotificationTemplate>> => {
   const response = await apiClient.notification.get<NotificationTemplate>(
-    `/api/v1/notification-templates/${id}`,
+    `/api/notification-templates/${id}`,
   );
   return response;
 };
@@ -323,7 +323,7 @@ export const createTemplate = async (
   template: CreateTemplateRequest,
 ): Promise<ApiResponse<NotificationTemplate>> => {
   const response = await apiClient.notification.post<NotificationTemplate>(
-    "/api/v1/notification-templates",
+    "/api/notification-templates",
     template,
   );
   return response;
@@ -334,7 +334,7 @@ export const updateTemplate = async (
   template: UpdateTemplateRequest,
 ): Promise<ApiResponse<NotificationTemplate>> => {
   const response = await apiClient.notification.put<NotificationTemplate>(
-    `/api/v1/notification-templates/${id}`,
+    `/api/notification-templates/${id}`,
     template,
   );
   return response;
@@ -344,7 +344,7 @@ export const deleteTemplate = async (
   id: string,
 ): Promise<ApiResponse<boolean>> => {
   const response = await apiClient.notification.delete<boolean>(
-    `/api/v1/notification-templates/${id}`,
+    `/api/notification-templates/${id}`,
   );
   return response;
 };
@@ -356,7 +356,7 @@ export const renderTemplate = async (
   const response = await apiClient.notification.post<{
     title: string;
     content: string;
-  }>(`/api/v1/notification-templates/${id}/render`, data);
+  }>(`/api/notification-templates/${id}/render`, data);
   return response;
 };
 
@@ -364,7 +364,7 @@ export const bulkMarkAsRead = async (
   ids: string[],
 ): Promise<ApiResponse<number>> => {
   const response = await apiClient.notification.put<number>(
-    "/api/v1/notifications/bulk-read",
+    "/api/notifications/bulk-read",
     { ids },
   );
   return response;
@@ -374,7 +374,7 @@ export const bulkDeleteNotifications = async (
   ids: string[],
 ): Promise<ApiResponse<number>> => {
   const response = await apiClient.notification.delete<number>(
-    "/api/v1/notifications/bulk",
+    "/api/notifications/bulk",
     { data: { ids } },
   );
   return response;
@@ -399,7 +399,7 @@ export const notificationServiceApi = {
   createNotification,
   health: async (): Promise<ApiResponse<HealthResponse>> => {
     const response = await apiClient.notification.get<HealthResponse>(
-      "/api/v1/health/detailed",
+      "/api/notifications/health/detailed",
     );
     return response;
   },

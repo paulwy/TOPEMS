@@ -137,27 +137,27 @@ export const templateApi = {
 
     const queryString = searchParams.toString();
     return await apiClient.doc.get(
-      `/api/v1/templates${queryString ? "?" + queryString : ""}`,
+      `/api/templates${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.get(`/api/v1/templates/${id}`);
+    return await apiClient.doc.get(`/api/templates/${id}`);
   },
 
   async create(data: CreateTemplateRequest): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.post("/api/v1/templates", data);
+    return await apiClient.doc.post("/api/templates", data);
   },
 
   async update(
     id: string,
     data: Partial<CreateTemplateRequest>,
   ): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.put(`/api/v1/templates/${id}`, data);
+    return await apiClient.doc.put(`/api/templates/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return await apiClient.doc.delete(`/api/v1/templates/${id}`);
+    return await apiClient.doc.delete(`/api/templates/${id}`);
   },
 
   async listCategories(
@@ -170,7 +170,7 @@ export const templateApi = {
 
     const queryString = searchParams.toString();
     return await apiClient.doc.get(
-      `/api/v1/templates/categories${queryString ? "?" + queryString : ""}`,
+      `/api/templates/categories${queryString ? "?" + queryString : ""}`,
     );
   },
 
@@ -178,16 +178,16 @@ export const templateApi = {
     id: string,
     variables: Record<string, any>,
   ): Promise<ApiResponse<RenderTemplateResponse>> {
-    return await apiClient.doc.post(`/api/v1/templates/${id}/render`, {
+    return await apiClient.doc.post(`/api/templates/${id}/render`, {
       variables,
     });
   },
 
   async duplicate(id: string): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.post(`/api/v1/templates/${id}/duplicate`);
+    return await apiClient.doc.post(`/api/templates/${id}/duplicate`);
   },
 
   async toggleStatus(id: string): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.put(`/api/v1/templates/${id}/toggle-status`);
+    return await apiClient.doc.put(`/api/templates/${id}/toggle-status`);
   },
 };

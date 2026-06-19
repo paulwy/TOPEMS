@@ -305,7 +305,7 @@ export interface GeoJSON {
 export const gisApi = {
   // 统计数据
   getStatistics: async (): Promise<ApiResponse<GisStatistics>> => {
-    return apiClient.gis.get<GisStatistics>("/api/v1/statistics");
+    return apiClient.gis.get<GisStatistics>("/api/gis/statistics");
   },
 
   // 设备点位
@@ -320,7 +320,7 @@ export const gisApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/device-locations?${queryParams.toString()}`,
+      `/api/gis/device-locations?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<DevicePoint>(response.data, "device_locations");
@@ -328,7 +328,7 @@ export const gisApi = {
     return response as ApiResponse<PaginatedResponse<DevicePoint>>;
   },
   getDevicePoint: async (id: string): Promise<ApiResponse<DevicePoint>> => {
-    return apiClient.gis.get<DevicePoint>(`/api/v1/device-locations/${id}`);
+    return apiClient.gis.get<DevicePoint>(`/api/gis/device-locations/${id}`);
   },
   listDevicePointsByMap: async (
     mapId: string,
@@ -340,25 +340,25 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
 
     return apiClient.gis.get<PaginatedResponse<DevicePoint>>(
-      `/api/v1/device-locations/map/${mapId}?${queryParams.toString()}`,
+      `/api/gis/device-locations/map/${mapId}?${queryParams.toString()}`,
     );
   },
   createDevicePoint: async (
     data: CreateDevicePointRequest,
   ): Promise<ApiResponse<DevicePoint>> => {
-    return apiClient.gis.post<DevicePoint>("/api/v1/device-locations", data);
+    return apiClient.gis.post<DevicePoint>("/api/gis/device-locations", data);
   },
   updateDevicePoint: async (
     id: string,
     data: Partial<CreateDevicePointRequest>,
   ): Promise<ApiResponse<DevicePoint>> => {
     return apiClient.gis.put<DevicePoint>(
-      `/api/v1/device-locations/${id}`,
+      `/api/gis/device-locations/${id}`,
       data,
     );
   },
   deleteDevicePoint: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/v1/device-locations/${id}`);
+    return apiClient.gis.delete<void>(`/api/gis/device-locations/${id}`);
   },
 
   // 管线
@@ -373,7 +373,7 @@ export const gisApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/pipelines?${queryParams.toString()}`,
+      `/api/gis/pipelines?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<Pipeline>(response.data, "pipelines");
@@ -381,7 +381,7 @@ export const gisApi = {
     return response as ApiResponse<PaginatedResponse<Pipeline>>;
   },
   getPipeline: async (id: string): Promise<ApiResponse<Pipeline>> => {
-    return apiClient.gis.get<Pipeline>(`/api/v1/pipelines/${id}`);
+    return apiClient.gis.get<Pipeline>(`/api/gis/pipelines/${id}`);
   },
   listPipelinesByMap: async (
     mapId: string,
@@ -393,22 +393,22 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
 
     return apiClient.gis.get<PaginatedResponse<Pipeline>>(
-      `/api/v1/pipelines/map/${mapId}?${queryParams.toString()}`,
+      `/api/gis/pipelines/map/${mapId}?${queryParams.toString()}`,
     );
   },
   createPipeline: async (
     data: CreatePipelineRequest,
   ): Promise<ApiResponse<Pipeline>> => {
-    return apiClient.gis.post<Pipeline>("/api/v1/pipelines", data);
+    return apiClient.gis.post<Pipeline>("/api/gis/pipelines", data);
   },
   updatePipeline: async (
     id: string,
     data: Partial<CreatePipelineRequest>,
   ): Promise<ApiResponse<Pipeline>> => {
-    return apiClient.gis.put<Pipeline>(`/api/v1/pipelines/${id}`, data);
+    return apiClient.gis.put<Pipeline>(`/api/gis/pipelines/${id}`, data);
   },
   deletePipeline: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/v1/pipelines/${id}`);
+    return apiClient.gis.delete<void>(`/api/gis/pipelines/${id}`);
   },
 
   // 仓储位置
@@ -423,7 +423,7 @@ export const gisApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/warehouse-locations?${queryParams.toString()}`,
+      `/api/gis/warehouse-locations?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<StorageLocation>(response.data, "warehouse_locations");
@@ -434,7 +434,7 @@ export const gisApi = {
     id: string,
   ): Promise<ApiResponse<StorageLocation>> => {
     return apiClient.gis.get<StorageLocation>(
-      `/api/v1/warehouse-locations/${id}`,
+      `/api/gis/warehouse-locations/${id}`,
     );
   },
   listStorageLocationsByMap: async (
@@ -447,14 +447,14 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
 
     return apiClient.gis.get<PaginatedResponse<StorageLocation>>(
-      `/api/v1/warehouse-locations/map/${mapId}?${queryParams.toString()}`,
+      `/api/gis/warehouse-locations/map/${mapId}?${queryParams.toString()}`,
     );
   },
   createStorageLocation: async (
     data: CreateStorageLocationRequest,
   ): Promise<ApiResponse<StorageLocation>> => {
     return apiClient.gis.post<StorageLocation>(
-      "/api/v1/warehouse-locations",
+      "/api/gis/warehouse-locations",
       data,
     );
   },
@@ -463,12 +463,12 @@ export const gisApi = {
     data: Partial<CreateStorageLocationRequest>,
   ): Promise<ApiResponse<StorageLocation>> => {
     return apiClient.gis.put<StorageLocation>(
-      `/api/v1/warehouse-locations/${id}`,
+      `/api/gis/warehouse-locations/${id}`,
       data,
     );
   },
   deleteStorageLocation: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/v1/warehouse-locations/${id}`);
+    return apiClient.gis.delete<void>(`/api/gis/warehouse-locations/${id}`);
   },
 
   // 现场取证
@@ -482,7 +482,7 @@ export const gisApi = {
     if (params?.search) queryParams.append("search", params.search);
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/location-photos?${queryParams.toString()}`,
+      `/api/gis/location-photos?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<EvidenceRecord>(response.data, "location_photos");
@@ -492,7 +492,7 @@ export const gisApi = {
   getEvidenceRecord: async (
     id: string,
   ): Promise<ApiResponse<LocationPhoto>> => {
-    return apiClient.gis.get<LocationPhoto>(`/api/v1/location-photos/${id}`);
+    return apiClient.gis.get<LocationPhoto>(`/api/gis/location-photos/${id}`);
   },
   listEvidenceRecordsByMap: async (
     mapId: string,
@@ -504,16 +504,16 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
 
     return apiClient.gis.get<PaginatedResponse<EvidenceRecord>>(
-      `/api/v1/location-photos/map/${mapId}?${queryParams.toString()}`,
+      `/api/gis/location-photos/map/${mapId}?${queryParams.toString()}`,
     );
   },
   createEvidenceRecord: async (
     data: CreateEvidenceRecordRequest,
   ): Promise<ApiResponse<EvidenceRecord>> => {
-    return apiClient.gis.post<EvidenceRecord>("/api/v1/location-photos", data);
+    return apiClient.gis.post<EvidenceRecord>("/api/gis/location-photos", data);
   },
   deleteEvidenceRecord: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/v1/location-photos/${id}`);
+    return apiClient.gis.delete<void>(`/api/gis/location-photos/${id}`);
   },
 
   // 厂区地图
@@ -527,7 +527,7 @@ export const gisApi = {
     if (params?.search) queryParams.append("search", params.search);
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/factory-maps?${queryParams.toString()}`,
+      `/api/gis/factory-maps?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<FactoryMap>(response.data, "factory_maps");
@@ -535,21 +535,21 @@ export const gisApi = {
     return response as ApiResponse<PaginatedResponse<FactoryMap>>;
   },
   getFactoryMap: async (id: string): Promise<ApiResponse<FactoryMap>> => {
-    return apiClient.gis.get<FactoryMap>(`/api/v1/factory-maps/${id}`);
+    return apiClient.gis.get<FactoryMap>(`/api/gis/factory-maps/${id}`);
   },
   createFactoryMap: async (
     data: CreateFactoryMapRequest,
   ): Promise<ApiResponse<FactoryMap>> => {
-    return apiClient.gis.post<FactoryMap>("/api/v1/factory-maps", data);
+    return apiClient.gis.post<FactoryMap>("/api/gis/factory-maps", data);
   },
   updateFactoryMap: async (
     id: string,
     data: Partial<CreateFactoryMapRequest>,
   ): Promise<ApiResponse<FactoryMap>> => {
-    return apiClient.gis.put<FactoryMap>(`/api/v1/factory-maps/${id}`, data);
+    return apiClient.gis.put<FactoryMap>(`/api/gis/factory-maps/${id}`, data);
   },
   deleteFactoryMap: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/v1/factory-maps/${id}`);
+    return apiClient.gis.delete<void>(`/api/gis/factory-maps/${id}`);
   },
 
   // 业务位置
@@ -564,7 +564,7 @@ export const gisApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/business-locations?${queryParams.toString()}`,
+      `/api/gis/business-locations?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<BusinessLocation>(response.data, "business_locations");
@@ -575,7 +575,7 @@ export const gisApi = {
     id: string,
   ): Promise<ApiResponse<BusinessLocation>> => {
     return apiClient.gis.get<BusinessLocation>(
-      `/api/v1/business-locations/${id}`,
+      `/api/gis/business-locations/${id}`,
     );
   },
   listBusinessLocationsByType: async (
@@ -588,7 +588,7 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/business-locations/type/${type}?${queryParams.toString()}`,
+      `/api/gis/business-locations/type/${type}?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<BusinessLocation>(response.data, "business_locations");
@@ -599,7 +599,7 @@ export const gisApi = {
     data: CreateBusinessLocationRequest,
   ): Promise<ApiResponse<BusinessLocation>> => {
     return apiClient.gis.post<BusinessLocation>(
-      "/api/v1/business-locations",
+      "/api/gis/business-locations",
       data,
     );
   },
@@ -608,12 +608,12 @@ export const gisApi = {
     data: Partial<CreateBusinessLocationRequest>,
   ): Promise<ApiResponse<BusinessLocation>> => {
     return apiClient.gis.put<BusinessLocation>(
-      `/api/v1/business-locations/${id}`,
+      `/api/gis/business-locations/${id}`,
       data,
     );
   },
   deleteBusinessLocation: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/v1/business-locations/${id}`);
+    return apiClient.gis.delete<void>(`/api/gis/business-locations/${id}`);
   },
 
   // 地图标记
@@ -627,7 +627,7 @@ export const gisApi = {
     if (params?.search) queryParams.append("search", params.search);
 
     const response = await apiClient.gis.get<any>(
-      `/api/v1/map-markers?${queryParams.toString()}`,
+      `/api/gis/map-markers?${queryParams.toString()}`,
     );
     if (response.success && response.data) {
       response.data = adaptResponse<MapMarker>(response.data, "map_markers");
@@ -637,28 +637,28 @@ export const gisApi = {
   createMapMarker: async (
     data: CreateMapMarkerRequest,
   ): Promise<ApiResponse<MapMarker>> => {
-    return apiClient.gis.post<MapMarker>("/api/v1/map-markers", data);
+    return apiClient.gis.post<MapMarker>("/api/gis/map-markers", data);
   },
   updateMapMarker: async (
     id: string,
     data: Partial<CreateMapMarkerRequest>,
   ): Promise<ApiResponse<MapMarker>> => {
-    return apiClient.gis.put<MapMarker>(`/api/v1/map-markers/${id}`, data);
+    return apiClient.gis.put<MapMarker>(`/api/gis/map-markers/${id}`, data);
   },
   deleteMapMarker: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/v1/map-markers/${id}`);
+    return apiClient.gis.delete<void>(`/api/gis/map-markers/${id}`);
   },
 
   // 搜索
   search: async (query: string, type?: string): Promise<ApiResponse<any>> => {
     const params = new URLSearchParams({ q: query });
     if (type) params.append("type", type);
-    return apiClient.gis.get<any>(`/api/v1/search?${params.toString()}`);
+    return apiClient.gis.get<any>(`/api/gis/search?${params.toString()}`);
   },
 
   // GeoJSON 导出
   exportGeoJSON: async (): Promise<ApiResponse<GeoJSON>> => {
-    return apiClient.gis.get<GeoJSON>("/api/v1/geojson/export");
+    return apiClient.gis.get<GeoJSON>("/api/gis/geojson/export");
   },
 
   // 健康检查
@@ -671,7 +671,7 @@ export const gisApi = {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", type);
-    return apiClient.gis.post<any>("/api/v1/import", formData, {
+    return apiClient.gis.post<any>("/api/gis/import", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
@@ -689,7 +689,7 @@ export const gisApi = {
       queryParams.append("page_size", params.page_size.toString());
 
     return apiClient.gis.get<PaginatedResponse<DeviceLocationRecord>>(
-      `/api/v1/device-tracks?${queryParams.toString()}`,
+      `/api/gis/device-tracks?${queryParams.toString()}`,
     );
   },
   getDeviceTrackStatistics: async (
@@ -711,9 +711,9 @@ export const gisApi = {
       track_points: number;
       start_time: string;
       end_time: string;
-    }>(`/api/v1/device-tracks/${device_id}/statistics`);
+    }>(`/api/gis/device-tracks/${device_id}/statistics`);
   },
   listDevicesWithTracks: async (): Promise<ApiResponse<DevicePoint[]>> => {
-    return apiClient.gis.get<DevicePoint[]>("/api/v1/device-tracks/devices");
+    return apiClient.gis.get<DevicePoint[]>("/api/gis/device-tracks/devices");
   },
 };

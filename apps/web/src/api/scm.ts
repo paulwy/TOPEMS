@@ -181,7 +181,7 @@ const supplierApi = {
   list: async (
     params?: PaginationParams,
   ): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
-    return apiClient.scm.get("/api/plugins/scm/api/scm/suppliers", { params });
+    return apiClient.scm.get("/api/scm/suppliers", { params });
   },
 
   /**
@@ -190,14 +190,14 @@ const supplierApi = {
   create: async (
     data: CreateSupplierRequest,
   ): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.post("/api/plugins/scm/api/scm/suppliers", data);
+    return apiClient.scm.post("/api/scm/suppliers", data);
   },
 
   /**
    * 获取供应商详情
    */
   get: async (id: string): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.get(`/api/plugins/scm/api/scm/suppliers/${id}`);
+    return apiClient.scm.get(`/api/scm/suppliers/${id}`);
   },
 
   /**
@@ -207,14 +207,14 @@ const supplierApi = {
     id: string,
     data: UpdateSupplierRequest,
   ): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.put(`/api/plugins/scm/api/scm/suppliers/${id}`, data);
+    return apiClient.scm.put(`/api/scm/suppliers/${id}`, data);
   },
 
   /**
    * 删除供应商
    */
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.scm.delete(`/api/plugins/scm/api/scm/suppliers/${id}`);
+    return apiClient.scm.delete(`/api/scm/suppliers/${id}`);
   },
 };
 
@@ -227,7 +227,7 @@ const purchaseOrderApi = {
   list: async (
     params?: PaginationParams,
   ): Promise<ApiResponse<PaginatedResponse<PurchaseOrder>>> => {
-    return apiClient.scm.get("/api/plugins/scm/api/scm/purchase-orders", { params });
+    return apiClient.scm.get("/api/scm/purchase-orders", { params });
   },
 
   /**
@@ -236,14 +236,14 @@ const purchaseOrderApi = {
   create: async (
     data: CreatePurchaseOrderRequest,
   ): Promise<ApiResponse<PurchaseOrder>> => {
-    return apiClient.scm.post("/api/plugins/scm/api/scm/purchase-orders", data);
+    return apiClient.scm.post("/api/scm/purchase-orders", data);
   },
 
   /**
    * 获取采购订单详情
    */
   get: async (id: string): Promise<ApiResponse<PurchaseOrder>> => {
-    return apiClient.scm.get(`/api/plugins/scm/api/scm/purchase-orders/${id}`);
+    return apiClient.scm.get(`/api/scm/purchase-orders/${id}`);
   },
 
   /**
@@ -253,7 +253,7 @@ const purchaseOrderApi = {
     id: string,
     data: UpdatePurchaseOrderRequest,
   ): Promise<ApiResponse<PurchaseOrder>> => {
-    return apiClient.scm.put(`/api/plugins/scm/api/scm/purchase-orders/${id}`, data);
+    return apiClient.scm.put(`/api/scm/purchase-orders/${id}`, data);
   },
 };
 
@@ -266,7 +266,7 @@ const purchaseItemApi = {
   list: async (
     params?: PurchaseItemQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<PurchaseItem>>> => {
-    return apiClient.scm.get("/api/plugins/scm/api/scm/purchase-items", { params });
+    return apiClient.scm.get("/api/scm/purchase-items", { params });
   },
 
   /**
@@ -275,14 +275,14 @@ const purchaseItemApi = {
   create: async (
     data: CreatePurchaseItemRequest,
   ): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.post("/api/plugins/scm/api/scm/purchase-items", data);
+    return apiClient.scm.post("/api/scm/purchase-items", data);
   },
 
   /**
    * 获取采购明细详情
    */
   get: async (id: string): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.get(`/api/plugins/scm/api/scm/purchase-items/${id}`);
+    return apiClient.scm.get(`/api/scm/purchase-items/${id}`);
   },
 
   /**
@@ -292,7 +292,7 @@ const purchaseItemApi = {
     id: string,
     data: UpdatePurchaseItemRequest,
   ): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.put(`/api/plugins/scm/api/scm/purchase-items/${id}`, data);
+    return apiClient.scm.put(`/api/scm/purchase-items/${id}`, data);
   },
 };
 
@@ -305,7 +305,7 @@ const supplierEvaluationApi = {
   list: async (
     params?: SupplierEvaluationQueryParams,
   ): Promise<ApiResponse<PaginatedResponse<SupplierEvaluation>>> => {
-    return apiClient.scm.get("/api/plugins/scm/api/scm/evaluations", { params });
+    return apiClient.scm.get("/api/scm/evaluations", { params });
   },
 
   /**
@@ -314,14 +314,14 @@ const supplierEvaluationApi = {
   create: async (
     data: CreateSupplierEvaluationRequest,
   ): Promise<ApiResponse<SupplierEvaluation>> => {
-    return apiClient.scm.post("/api/plugins/scm/api/scm/evaluations", data);
+    return apiClient.scm.post("/api/scm/evaluations", data);
   },
 
   /**
    * 获取供应商评估详情
    */
   get: async (id: string): Promise<ApiResponse<SupplierEvaluation>> => {
-    return apiClient.scm.get(`/api/plugins/scm/api/scm/evaluations/${id}`);
+    return apiClient.scm.get(`/api/scm/evaluations/${id}`);
   },
 
   /**
@@ -331,7 +331,7 @@ const supplierEvaluationApi = {
     id: string,
     data: UpdateSupplierEvaluationRequest,
   ): Promise<ApiResponse<SupplierEvaluation>> => {
-    return apiClient.scm.put(`/api/plugins/scm/api/scm/evaluations/${id}`, data);
+    return apiClient.scm.put(`/api/scm/evaluations/${id}`, data);
   },
 };
 

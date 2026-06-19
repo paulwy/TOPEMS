@@ -196,7 +196,7 @@ export const ChatInterface: React.FC = () => {
 
     try {
       const response = await fetch(
-        `/im/api/v1/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`,
+        `/im/api/chat-rooms/${selectedRoom.id}/messages/search?keyword=${encodeURIComponent(keyword)}`,
       );
       const data = await response.json();
       if (data.success && data.data) {

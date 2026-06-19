@@ -70,22 +70,22 @@ topems/
 │   └── core/                     # Remote Module (端口 3001)
 │       └── src/                 # 可复用组件、stores、API
 ├── svc/                          # 后端服务 (Rust)
-│   ├── unified-core/            # 统一核心服务 (8001)
-│   ├── ai/                      # AI 服务 (8002)
-│   ├── analytics/               # 数据分析服务 (8003)
-│   ├── manufacturing/           # 制造服务 (8004)
-│   ├── quality-assurance/       # 质量管控服务 (8005)
-│   ├── hrm/                     # 人力资源管理 (8006)
-│   ├── crm/                     # 客户关系管理 (8007)
-│   ├── pm/                      # 项目管理 (8008)
-│   ├── erp/                     # 企业资源计划 (8009)
-│   ├── gis/                     # 地理信息系统 (8010)
-│   ├── rs/                      # 研发管理 (8011)
-│   ├── scm/                     # 供应链管理 (8012)
-│   ├── wms/                     # 仓库管理 (8013)
-│   ├── mobile/                  # 移动端服务 (8014)
-│   ├── monitor/                 # 监控服务 (8015)
-│   └── portal/                  # 企业门户 (8080)
+│   ├── unified-core/            # 统一核心服务 (8000)
+│   ├── ai/                      # AI 服务 (8050)
+│   ├── analytics/               # 数据分析服务 (8044)
+│   ├── manufacturing/           # 制造服务 (8030)
+│   ├── quality-assurance/       # 质量管控服务 (8052)
+│   ├── hrm/                     # 人力资源管理 (8011)
+│   ├── crm/                     # 客户关系管理 (8012)
+│   ├── pm/                      # 项目管理 (8046)
+│   ├── erp/                     # 企业资源计划 (8010)
+│   ├── gis/                     # 地理信息系统 (8054)
+│   ├── rs/                      # 研发管理 (8058)
+│   ├── scm/                     # 供应链管理 (8040)
+│   ├── wms/                     # 仓库管理 (8042)
+│   ├── mobile/                  # 移动端服务 (8056)
+│   ├── monitor/                 # 监控服务 (8064)
+│   └── portal/                  # 企业门户 (8066)
 ├── lib/                          # Rust 共享库
 ├── packages/                     # TypeScript 共享包
 │   ├── shared-types/            # 类型定义
@@ -212,10 +212,12 @@ cargo check --workspace
 | 端口范围 | 服务类型 | 说明 |
 |---------|---------|------|
 | 8000-8009 | 平台核心服务 | Unified Core, AI, Analytics, Manufacturing, Quality Assurance |
-| 8010-8029 | 业务服务 | HRM, CRM, PM, ERP, GIS, RS |
-| 8030-8049 | 供应链服务 | SCM, WMS |
-| 8050-8059 | 辅助服务 | Mobile, Monitor |
-| 8080 | API 网关 | Portal 企业门户 |
+| 8010-8019 | 业务服务 | ERP, HRM, CRM |
+| 8030-8039 | 制造服务 | Manufacturing |
+| 8040-8049 | 供应链服务 | SCM, WMS |
+| 8050-8059 | 辅助服务 | AI, GIS, Mobile, Quality-Assurance |
+| 8060-8069 | 扩展服务 | Analytics, Monitor, Portal, Integration, SRM |
+| 8000 | 核心服务 | Unified-Core (IAM) |
 | 3000 | 前端 | Host Shell 开发服务器 |
 | 3001 | 前端 | Remote Module 开发服务器 |
 
@@ -223,22 +225,24 @@ cargo check --workspace
 
 | 服务名 | 端口 | 服务路径 | 说明 |
 |-------|------|---------|------|
-| unified-core | 8001 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin） |
-| ai | 8002 | svc/ai | AI 服务 |
-| analytics | 8003 | svc/analytics | 数据分析服务（BI, Report） |
-| manufacturing | 8004 | svc/manufacturing | 制造服务（MES, PDM） |
-| quality-assurance | 8005 | svc/quality-assurance | 质量管控服务（QMS, LIMS, EHS） |
-| hrm | 8006 | svc/hrm | 人力资源管理 |
-| crm | 8007 | svc/crm | 客户关系管理 |
-| pm | 8008 | svc/pm | 项目管理 |
-| erp | 8009 | svc/erp | 企业资源计划 |
-| gis | 8010 | svc/gis | 地理信息系统 |
-| rs | 8011 | svc/rs | 研发管理 |
-| scm | 8012 | svc/scm | 供应链管理（含 SRM） |
-| wms | 8013 | svc/wms | 仓库管理 |
-| mobile | 8014 | svc/mobile | 移动端服务 |
-| monitor | 8015 | svc/monitor | 监控服务 |
-| portal | 8080 | svc/portal | 企业门户（API 网关） |
+| unified-core | 8000 | svc/unified-core | 统一核心服务（IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin） |
+| erp | 8010 | svc/erp | 企业资源计划 |
+| hrm | 8011 | svc/hrm | 人力资源管理 |
+| crm | 8012 | svc/crm | 客户关系管理 |
+| manufacturing | 8030 | svc/manufacturing | 制造服务（MES, PDM） |
+| scm | 8040 | svc/scm | 供应链管理 |
+| wms | 8042 | svc/wms | 仓库管理 |
+| pm | 8046 | svc/pm | 项目管理 |
+| analytics | 8044 | svc/analytics | 数据分析服务（BI, Report） |
+| ai | 8050 | svc/ai | AI 服务 |
+| quality-assurance | 8052 | svc/quality-assurance | 质量管控服务（QMS, LIMS, EHS） |
+| gis | 8054 | svc/gis | 地理信息系统 |
+| mobile | 8056 | svc/mobile | 移动端服务 |
+| srm | 8060 | svc/srm | 供应商关系管理 |
+| monitor | 8064 | svc/monitor | 监控服务 |
+| portal | 8066 | svc/portal | 企业门户 |
+| integration | 8068 | svc/integration | 集成服务 |
+| rs | 8058 | svc/rs | 研发管理 |
 
 ### 前端端口
 

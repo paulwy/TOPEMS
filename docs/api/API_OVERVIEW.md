@@ -1,8 +1,23 @@
 # TOPEMS API 接口文档汇总
 
-**版本**: v1  
-**更新日期**: 2026-06-01  
-**服务总数**: 12
+**版本**: v2  
+**更新日期**: 2026-06-20  
+**服务总数**: 15
+
+---
+
+> **API 路径格式变更 (v2)**
+> 
+> 新格式: `/api/{service}/{resource}`  
+> 例如: `/api/iam/auth/login`, `/api/hrm/employees`, `/api/pm/projects`
+> 
+> 各服务路径前缀:
+> - IAM: `/api/iam/` | HRM: `/api/hrm/` | CRM: `/api/crm/` | ERP: `/api/erp/`
+> - PM: `/api/pm/` | SCM: `/api/scm/` | SRM: `/api/srm/` | WMS: `/api/wms/`
+> - RS: `/api/rs/` | AI: `/api/ai/` | EHS: `/api/ehs/` | QMS: `/api/qms/`
+> - LIMS: `/api/lims/` | MES: `/api/mes/` | BI: `/api/bi/` | Report: `/api/report/`
+> - Mail: `/api/mail/` | Notification: `/api/notification/` | Integration: `/api/integration/`
+> - GIS: `/api/gis/` | PDM: `/api/pdm/` | Mobile: `/api/mobile/` | Master: `/api/master/`
 
 ---
 
@@ -40,7 +55,7 @@
 
 ### 1.1 IAM 认证服务 (topems-iam)
 
-**服务地址**: `http://localhost:8000`
+**服务地址**: `http://localhost:8020`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -88,7 +103,7 @@
 
 ### 1.3 AI服务 (topems-ai)
 
-**服务地址**: `http://localhost:8003`
+**服务地址**: `http://localhost:8062`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -108,7 +123,7 @@
 
 ### 1.4 工作流服务 (topems-flow)
 
-**服务地址**: `http://localhost:8004`
+**服务地址**: `http://localhost:8000`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -171,7 +186,7 @@
 
 ### 2.2 研发管理服务 (topems-rs)
 
-**服务地址**: `http://localhost:8000`
+**服务地址**: `http://localhost:8020`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -208,7 +223,7 @@
 
 ### 2.3 实验室管理服务 (topems-lims)
 
-**服务地址**: `http://localhost:8022`
+**服务地址**: `http://localhost:8032`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -244,7 +259,7 @@
 
 ### 2.4 质量管理服务 (topems-qms)
 
-**服务地址**: `http://localhost:8031`
+**服务地址**: `http://localhost:8032`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -378,7 +393,7 @@
 
 ### 3.1 报表服务 (topems-report)
 
-**服务地址**: `http://localhost:8061`
+**服务地址**: `http://localhost:8060`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -397,7 +412,7 @@
 
 ### 3.2 通知服务
 
-**服务地址**: `http://localhost:8023`
+**服务地址**: `http://localhost:8000`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -416,7 +431,7 @@
 
 ### 3.3 邮件服务 (topems-mail)
 
-**服务地址**: `http://localhost:8054`
+**服务地址**: `http://localhost:8000`
 
 | API端点 | HTTP方法 | 功能描述 |
 |---------|---------|---------|
@@ -452,7 +467,7 @@
 
 **请求示例 - 发送邮件**:
 ```bash
-curl -X POST http://localhost:8054/api/v1/mail/emails \
+curl -X POST http://localhost:8000/api/v1/mail/emails \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -466,7 +481,7 @@ curl -X POST http://localhost:8054/api/v1/mail/emails \
 
 **请求示例 - 使用模板发送**:
 ```bash
-curl -X POST http://localhost:8054/api/v1/mail/emails/send-with-template \
+curl -X POST http://localhost:8000/api/v1/mail/emails/send-with-template \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -495,7 +510,7 @@ curl -X POST http://localhost:8054/api/v1/mail/emails/send-with-template \
 
 **JWT Token 认证**:
 ```bash
-curl -X GET "http://localhost:8005/api/v1/projects" \
+curl -X GET "http://localhost:8020/api/v1/projects" \
   -H "Authorization: Bearer <your-token>"
 ```
 

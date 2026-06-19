@@ -21,7 +21,7 @@ use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use uuid::Uuid;
 
 use topems_shared::{
-    auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
+    auth_middleware, build_health_response, create_cors_layer,
     init_logging, ApiResponse, AuthState, ServiceHealth,
 };
 
@@ -191,8 +191,8 @@ async fn main() {
     };
 
     let lims_url =
-        std::env::var("LIMS_URL").unwrap_or_else(|_| "http://localhost:8022".to_string());
-    let qms_url = std::env::var("QMS_URL").unwrap_or_else(|_| "http://localhost:8031".to_string());
+        std::env::var("QUALITY_ASSURANCE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
+    let qms_url = std::env::var("QUALITY_ASSURANCE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
     let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://localhost:8030".to_string());
     let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
     let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8042".to_string());
@@ -249,9 +249,9 @@ async fn main() {
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8005".to_string())
+        .unwrap_or_else(|_| "8068".to_string())
         .parse()
-        .unwrap_or(8005);
+        .unwrap_or(8068);
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     tracing::info!(
