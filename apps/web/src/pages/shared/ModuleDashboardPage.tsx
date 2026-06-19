@@ -105,7 +105,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
       <Box sx={{ padding: "24px 32px" }}>
         <Grid container spacing={3}>
           {defaultStats.map((stat, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
+            <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
               <Card sx={{ borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                 <CardContent sx={{ padding: "20px" }}>
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -139,7 +139,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
             </Typography>
             <Grid container spacing={3}>
               {quickActions.map((action, index) => (
-                <Grid item xs={12} sm={6} md={3} key={index}>
+                <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
                   <Button
                     variant="outlined"
                     fullWidth

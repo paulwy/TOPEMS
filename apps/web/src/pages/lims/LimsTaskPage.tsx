@@ -569,7 +569,7 @@ const LimsTaskPage: React.FC = () => {
           loading={loading}
         />
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="样品总数"
               value={stats.total_samples}
@@ -579,7 +579,7 @@ const LimsTaskPage: React.FC = () => {
               trend={stats.pending_samples > 0 ? "up" : "neutral"}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="检验任务"
               value={stats.total_tasks}
@@ -589,7 +589,7 @@ const LimsTaskPage: React.FC = () => {
               trend={stats.in_progress_tasks > 0 ? "up" : "neutral"}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="检验流程"
               value={stats.total_processes}
@@ -598,7 +598,7 @@ const LimsTaskPage: React.FC = () => {
               trend="neutral"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="已完成样品"
               value={stats.completed_samples}
@@ -607,7 +607,7 @@ const LimsTaskPage: React.FC = () => {
               trend="up"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="测试中样品"
               value={stats.testing_samples}
@@ -616,7 +616,7 @@ const LimsTaskPage: React.FC = () => {
               trend="neutral"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="仪器设备"
               value={stats.total_instruments}
@@ -629,7 +629,7 @@ const LimsTaskPage: React.FC = () => {
         </Grid>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box
@@ -668,7 +668,7 @@ const LimsTaskPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box
@@ -707,7 +707,7 @@ const LimsTaskPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box
@@ -750,7 +750,7 @@ const LimsTaskPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box
@@ -1167,7 +1167,7 @@ const LimsTaskPage: React.FC = () => {
                   spacing={2}
                   sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}
                 >
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1182,7 +1182,7 @@ const LimsTaskPage: React.FC = () => {
                       {selectedTask.id}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1194,7 +1194,7 @@ const LimsTaskPage: React.FC = () => {
                       {selectedTask.inspector}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1208,7 +1208,7 @@ const LimsTaskPage: React.FC = () => {
                       )}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"

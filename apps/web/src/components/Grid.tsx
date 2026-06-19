@@ -19,7 +19,7 @@ interface GridProps extends BoxProps {
   item?: boolean;
   container?: boolean;
   spacing?: number;
-  size?: GridSizeProps;
+  size?: number | GridSizeProps;
 }
 
 export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
@@ -36,12 +36,27 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   sx,
   ...props
 }) => {
-  // 支持 size 属性（Grid2 风格）
-  const effectiveXs = size?.xs ?? xs;
-  const effectiveSm = size?.sm ?? sm;
-  const effectiveMd = size?.md ?? md;
-  const effectiveLg = size?.lg ?? lg;
-  const effectiveXl = size?.xl ?? xl;
+  // 支持 size 属性（MUI v7 风格）
+  // size 可以是数字或对象
+  let effectiveXs: number | undefined = xs;
+  let effectiveSm: number | undefined = sm;
+  let effectiveMd: number | undefined = md;
+  let effectiveLg: number | undefined = lg;
+  let effectiveXl: number | undefined = xl;
+
+  if (size !== undefined) {
+    if (typeof size === "number") {
+      // size 是数字时，应用到 xs
+      effectiveXs = size;
+    } else {
+      // size 是对象时，提取各个断点
+      effectiveXs = size.xs ?? xs;
+      effectiveSm = size.sm ?? sm;
+      effectiveMd = size.md ?? md;
+      effectiveLg = size.lg ?? lg;
+      effectiveXl = size.xl ?? xl;
+    }
+  }
 
   if (container) {
     return (
@@ -59,10 +74,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
     );
   }
 
-  const getWidth = (
-    breakpoint: number | undefined,
-    defaultVal: number = effectiveXs,
-  ) => {
+  const getWidth = (breakpoint: number | undefined) => {
     if (breakpoint === undefined) return undefined;
     return `${(breakpoint / 12) * 100}%`;
   };

@@ -1,14 +1,7 @@
+import { Button, TextField, Dialog, DialogContent, DialogTitle, DialogActions, Tabs, Tab, Box } from "@mui/material";
 import React, { useState } from "react";
 import { X, Users, User, Save, MessageSquare } from "lucide-react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogActions from "@mui/material/DialogActions";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import Box from "@mui/material/Box";
+
 import {
   imApi,
   type CreateChatRoomRequest,

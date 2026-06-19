@@ -3,23 +3,12 @@
  * 包含往来单位选择器、项目选择器、组织架构选择器、会计科目选择器等
  */
 
+import { Dialog, DialogContent, DialogTitle, Button, TextField, Tabs, Tab, Box, Chip, FormControl, InputLabel, Select, MenuItem, CircularProgress } from "@mui/material";
 import React, { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
+
 import { Search, X, Check } from "lucide-react";
-import CircularProgress from "@mui/material/CircularProgress";
+
 import { crmApi } from "@/api/crm";
 import { srmApi } from "@/api/srm";
 import { hrmApi } from "@/api/hrm";

@@ -6,11 +6,11 @@ import {
   Box,
   Typography,
   IconButton,
-  Grid,
   Card,
   CardContent,
   Chip,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import { CheckCircle, AlertTriangle, XCircle, RefreshCw } from "lucide-react";
 
 interface ServiceStatus {

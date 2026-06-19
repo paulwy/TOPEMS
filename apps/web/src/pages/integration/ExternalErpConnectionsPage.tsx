@@ -18,11 +18,9 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import Button from "@mui/material/Button";
-import { Card as MuiCard, CardContent, CardHeader, Box } from "@mui/material";
-import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
-import Chip from "@mui/material/Chip";
+
+import { Card as MuiCard, CardContent, CardHeader, Box, Button, Typography, TextField, Chip } from "@mui/material";
+
 import {
   useErpConnections,
   useCreateErpConnection,

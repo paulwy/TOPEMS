@@ -1,14 +1,7 @@
+import { Button, TextField, Select, FormControl, InputLabel, MenuItem, Card, CardContent, Box } from "@mui/material";
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check } from "lucide-react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Select from "@mui/material/Select";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Box from "@mui/material/Box";
+
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import { AI_TEMPLATES, getAITemplatesList } from "../../config/ai-templates";

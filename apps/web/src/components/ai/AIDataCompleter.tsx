@@ -1,11 +1,7 @@
+import { Button, Card, CardContent, FormControlLabel, Box, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import { Sparkles, Check } from "lucide-react";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type { CompleteRequest, CompletionItem } from "@/types/ai";

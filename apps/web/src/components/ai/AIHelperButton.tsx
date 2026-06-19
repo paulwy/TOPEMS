@@ -1,5 +1,6 @@
+import { Button } from "@mui/material";
 import { Sparkles, Loader2 } from "lucide-react";
-import Button from "@mui/material/Button";
+
 import type { ButtonProps } from "@mui/material/Button";
 
 export interface AIHelperButtonProps {

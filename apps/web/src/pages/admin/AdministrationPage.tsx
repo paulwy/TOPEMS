@@ -399,7 +399,7 @@ const AdministrationPage: React.FC = () => {
             bg: "#fee2e2",
           },
         ].map((stat) => (
-          <Grid item xs={6} sm={4} md={2} key={stat.label}>
+          <Grid key={stat.label} size={{ xs: 6, sm: 4, md: 2 }}>
             <Card
               sx={{
                 boxShadow: 1,
@@ -449,7 +449,7 @@ const AdministrationPage: React.FC = () => {
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} lg={6}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
             <CardContent>
               <Box
@@ -545,7 +545,7 @@ const AdministrationPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={6}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
             <CardContent>
               <Box
@@ -730,7 +730,7 @@ const AdministrationPage: React.FC = () => {
         <Grid container spacing={2}>
           {paginatedData.length > 0 ? (
             paginatedData.map((supply) => (
-              <Grid item xs={12} md={6} lg={4} key={supply.id}>
+              <Grid key={supply.id} size={{ xs: 12, md: 6, lg: 4 }}>
                 <Card
                   sx={{
                     p: 2.5,
@@ -850,7 +850,7 @@ const AdministrationPage: React.FC = () => {
               </Grid>
             ))
           ) : (
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Box sx={{ textAlign: "center", py: 8 }}>
                 <Avatar
                   sx={{
@@ -958,7 +958,7 @@ const AdministrationPage: React.FC = () => {
 
       <Grid container spacing={2}>
         {meetingRooms.map((room) => (
-          <Grid item xs={12} sm={6} md={3} key={room.id}>
+          <Grid key={room.id} size={{ xs: 12, sm: 6, md: 3 }}>
             <Card
               sx={{
                 p: 2.5,
@@ -1148,7 +1148,7 @@ const AdministrationPage: React.FC = () => {
       </Box>
       <Grid container spacing={2}>
         {vehicles.map((vehicle) => (
-          <Grid item xs={12} md={6} lg={4} key={vehicle.id}>
+          <Grid key={vehicle.id} size={{ xs: 12, md: 6, lg: 4 }}>
             <Card
               sx={{
                 p: 2.5,
@@ -1275,7 +1275,7 @@ const AdministrationPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: "hidden" }}>
             <TableContainer component={Box} sx={{ overflowX: "auto" }}>
               <Table>
@@ -1353,7 +1353,7 @@ const AdministrationPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
@@ -1502,7 +1502,7 @@ const AdministrationPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: "hidden" }}>
             <TableContainer sx={{ overflowX: "auto" }}>
               <Table>
@@ -1606,7 +1606,7 @@ const AdministrationPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography
@@ -1777,7 +1777,7 @@ const AdministrationPage: React.FC = () => {
       </Box>
       <Grid container spacing={2}>
         {announcements.map((announcement) => (
-          <Grid item xs={12} md={6} lg={4} key={announcement.id}>
+          <Grid key={announcement.id} size={{ xs: 12, md: 6, lg: 4 }}>
             <Card
               sx={{
                 p: 2.5,
@@ -1912,7 +1912,7 @@ const AdministrationPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: "hidden" }}>
             <TableContainer sx={{ overflowX: "auto" }}>
               <Table>
@@ -1996,7 +1996,7 @@ const AdministrationPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Stack spacing={2}>
             <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
               <Typography

@@ -337,7 +337,7 @@ const LimsProcessPage: React.FC = () => {
 
       <Container maxWidth="xl" sx={{ py: 4, px: { xs: 2, sm: 3 } }}>
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="样品总数"
               value={stats.total_samples}
@@ -347,7 +347,7 @@ const LimsProcessPage: React.FC = () => {
               trend={stats.pending_samples > 0 ? "up" : "neutral"}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="检验任务"
               value={stats.total_tasks}
@@ -357,7 +357,7 @@ const LimsProcessPage: React.FC = () => {
               trend={stats.in_progress_tasks > 0 ? "up" : "neutral"}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="检验流程"
               value={stats.total_processes}
@@ -366,7 +366,7 @@ const LimsProcessPage: React.FC = () => {
               trend="neutral"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="已完成样品"
               value={stats.completed_samples}
@@ -375,7 +375,7 @@ const LimsProcessPage: React.FC = () => {
               trend="up"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="测试中样品"
               value={stats.testing_samples}
@@ -384,7 +384,7 @@ const LimsProcessPage: React.FC = () => {
               trend="neutral"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="仪器设备"
               value={stats.total_instruments}
@@ -397,7 +397,7 @@ const LimsProcessPage: React.FC = () => {
         </Grid>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box

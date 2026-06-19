@@ -221,7 +221,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         <CardHeader title="预算基本信息" />
         <CardContent>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <DollarSign
                   sx={{ width: 32, height: 32, color: "primary.main", mb: 1 }}
@@ -237,7 +237,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <TrendingUp
                   sx={{ width: 32, height: 32, color: "warning.main", mb: 1 }}
@@ -253,7 +253,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <CheckCircle2
                   sx={{ width: 32, height: 32, color: "success.main", mb: 1 }}
@@ -269,7 +269,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Box sx={{ textAlign: "center", p: 2 }}>
                 <Chip
                   label={getStatusConfig(budget.status).label}
@@ -391,7 +391,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         <CardHeader title="执行进度分析" />
         <CardContent>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
                 <Box
                   sx={{
@@ -421,7 +421,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
                 <Box
                   sx={{
@@ -452,7 +452,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1 }}>
                 <Box
                   sx={{
@@ -507,7 +507,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ p: 2, bgcolor: "blue.50", borderRadius: 1 }}>
                 <AlertCircle
                   sx={{ width: 24, height: 24, color: "blue.600", mb: 1 }}
@@ -520,7 +520,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ p: 2, bgcolor: "green.50", borderRadius: 1 }}>
                 <CheckCircle2
                   sx={{ width: 24, height: 24, color: "green.600", mb: 1 }}

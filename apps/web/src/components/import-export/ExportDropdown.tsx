@@ -1,7 +1,6 @@
+import { Button, Box } from "@mui/material";
 import React from "react";
 import { Download } from "lucide-react";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
 
 export interface ExportDropdownProps {
   onExport: (format: string, columns?: string[]) => void;

@@ -1,15 +1,6 @@
+import { Button, Dialog, DialogContent, DialogActions, TextField, Select, MenuItem, Switch, FormLabel, Typography, Box } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import Switch from "@mui/material/Switch";
-import FormLabel from "@mui/material/FormLabel";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
+
 import {
   Plus,
   Trash2,

@@ -524,7 +524,7 @@ const LimsInstrumentPage: React.FC = () => {
           loading={loading}
         />
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="样品总数"
               value={stats.total_samples}
@@ -534,7 +534,7 @@ const LimsInstrumentPage: React.FC = () => {
               trend={stats.pending_samples > 0 ? "up" : "neutral"}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="检验任务"
               value={stats.total_tasks}
@@ -544,7 +544,7 @@ const LimsInstrumentPage: React.FC = () => {
               trend={stats.in_progress_tasks > 0 ? "up" : "neutral"}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="检验流程"
               value={stats.total_processes}
@@ -553,7 +553,7 @@ const LimsInstrumentPage: React.FC = () => {
               trend="neutral"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="仪器设备"
               value={stats.total_instruments}
@@ -563,7 +563,7 @@ const LimsInstrumentPage: React.FC = () => {
               trend="neutral"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="已完成样品"
               value={stats.completed_samples}
@@ -572,7 +572,7 @@ const LimsInstrumentPage: React.FC = () => {
               trend="up"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="测试中样品"
               value={stats.testing_samples}
@@ -584,7 +584,7 @@ const LimsInstrumentPage: React.FC = () => {
         </Grid>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} lg={6}>
+          <Grid size={{ xs: 12, sm: 6, lg: 6 }}>
             <StatsChart
               title="仪器状态分布"
               type="pie"
@@ -614,7 +614,7 @@ const LimsInstrumentPage: React.FC = () => {
               nameKey="name"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={6}>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Typography
@@ -625,7 +625,7 @@ const LimsInstrumentPage: React.FC = () => {
                   仪器概览
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography variant="h4" fontWeight="bold">
                       {safeInstruments.length}
                     </Typography>
@@ -633,7 +633,7 @@ const LimsInstrumentPage: React.FC = () => {
                       仪器总数
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="h4"
                       fontWeight="bold"
@@ -648,7 +648,7 @@ const LimsInstrumentPage: React.FC = () => {
                       正常运行
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="h4"
                       fontWeight="bold"
@@ -663,7 +663,7 @@ const LimsInstrumentPage: React.FC = () => {
                       校准中
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="h4"
                       fontWeight="bold"
@@ -685,7 +685,7 @@ const LimsInstrumentPage: React.FC = () => {
         </Grid>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={6}>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box
@@ -724,7 +724,7 @@ const LimsInstrumentPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box
@@ -770,7 +770,7 @@ const LimsInstrumentPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Card sx={{ borderRadius: 2 }} variant="outlined">
               <CardContent>
                 <Box
@@ -1042,7 +1042,7 @@ const LimsInstrumentPage: React.FC = () => {
         <DialogContent dividers sx={{ maxHeight: "70vh" }}>
           <Stack spacing={3}>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="仪器名称"
                   required
@@ -1057,7 +1057,7 @@ const LimsInstrumentPage: React.FC = () => {
                   placeholder="请输入仪器名称"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="仪器编号"
                   required
@@ -1074,7 +1074,7 @@ const LimsInstrumentPage: React.FC = () => {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth required>
                   <InputLabel>仪器类型</InputLabel>
                   <Select
@@ -1095,7 +1095,7 @@ const LimsInstrumentPage: React.FC = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>仪器状态</InputLabel>
                   <Select
@@ -1117,7 +1117,7 @@ const LimsInstrumentPage: React.FC = () => {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="制造商"
                   fullWidth
@@ -1131,7 +1131,7 @@ const LimsInstrumentPage: React.FC = () => {
                   placeholder="请输入制造商"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="型号"
                   fullWidth
@@ -1147,7 +1147,7 @@ const LimsInstrumentPage: React.FC = () => {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="序列号"
                   fullWidth
@@ -1161,7 +1161,7 @@ const LimsInstrumentPage: React.FC = () => {
                   placeholder="请输入序列号"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="存放位置"
                   fullWidth
@@ -1177,7 +1177,7 @@ const LimsInstrumentPage: React.FC = () => {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="购买日期"
                   type="date"
@@ -1192,7 +1192,7 @@ const LimsInstrumentPage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="上次校准日期"
                   type="date"
@@ -1209,7 +1209,7 @@ const LimsInstrumentPage: React.FC = () => {
               </Grid>
             </Grid>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="下次校准日期"
                   type="date"
@@ -1224,7 +1224,7 @@ const LimsInstrumentPage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="负责人"
                   fullWidth
@@ -1370,7 +1370,7 @@ const LimsInstrumentPage: React.FC = () => {
                   spacing={2}
                   sx={{ p: 2, bgcolor: "grey.50", borderRadius: 1.5 }}
                 >
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1382,7 +1382,7 @@ const LimsInstrumentPage: React.FC = () => {
                       {selectedInstrument.manufacturer || "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1394,7 +1394,7 @@ const LimsInstrumentPage: React.FC = () => {
                       {selectedInstrument.model || "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1409,7 +1409,7 @@ const LimsInstrumentPage: React.FC = () => {
                       {selectedInstrument.serial_number || "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1421,7 +1421,7 @@ const LimsInstrumentPage: React.FC = () => {
                       {selectedInstrument.location || "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1433,7 +1433,7 @@ const LimsInstrumentPage: React.FC = () => {
                       {selectedInstrument.responsible_person || "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1449,7 +1449,7 @@ const LimsInstrumentPage: React.FC = () => {
                         : "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1465,7 +1465,7 @@ const LimsInstrumentPage: React.FC = () => {
                         : "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1488,7 +1488,7 @@ const LimsInstrumentPage: React.FC = () => {
                         : "-"}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1502,7 +1502,7 @@ const LimsInstrumentPage: React.FC = () => {
                       )}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid size={6}>
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -1695,7 +1695,7 @@ const LimsInstrumentPage: React.FC = () => {
                 placeholder="请输入维护描述"
               />
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     label="执行人"
                     required
@@ -1710,7 +1710,7 @@ const LimsInstrumentPage: React.FC = () => {
                     placeholder="请输入执行人"
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     label="执行日期"
                     type="date"
@@ -1728,7 +1728,7 @@ const LimsInstrumentPage: React.FC = () => {
                 </Grid>
               </Grid>
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     label="下次维护日期"
                     type="date"
@@ -1743,7 +1743,7 @@ const LimsInstrumentPage: React.FC = () => {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     label="费用（元）"
                     type="number"

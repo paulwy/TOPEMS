@@ -1,3 +1,4 @@
+import { Button, TextField, InputLabel, Box, Card, CardContent, Select, MenuItem } from "@mui/material";
 import { useState, useEffect } from "react";
 import {
   RefreshCw,
@@ -8,14 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import InputLabel from "@mui/material/InputLabel";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
+
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type { TextOptimizeContext } from "@/types/ai";

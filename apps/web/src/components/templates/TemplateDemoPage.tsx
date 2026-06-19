@@ -1,16 +1,6 @@
+import { Button, Card, CardContent, CardHeader, Tabs, Tab, Box, TextField, FormControl, FormLabel, Typography, Chip } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
-import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
+
 import {
   Download,
   Play,

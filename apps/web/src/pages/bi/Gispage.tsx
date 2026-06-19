@@ -1074,7 +1074,7 @@ const GisContent: React.FC = () => {
         </Snackbar>
 
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="设备点位"
               value={statistics?.device_points || 0}
@@ -1083,7 +1083,7 @@ const GisContent: React.FC = () => {
               subtitle={`启用: ${statistics?.active_devices || 0}`}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="管线管理"
               value={statistics?.pipelines || 0}
@@ -1092,7 +1092,7 @@ const GisContent: React.FC = () => {
               subtitle={`启用: ${statistics?.active_pipelines || 0}`}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="仓储位置"
               value={statistics?.storage_locations || 0}
@@ -1100,7 +1100,7 @@ const GisContent: React.FC = () => {
               gradient={["#F59E0B", "#D97706"]}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="现场取证"
               value={statistics?.evidence_records || 0}
@@ -1108,7 +1108,7 @@ const GisContent: React.FC = () => {
               gradient={["#EC4899", "#DB2777"]}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="厂区地图"
               value={statistics?.factory_maps || 0}
@@ -1116,7 +1116,7 @@ const GisContent: React.FC = () => {
               gradient={["#8B5CF6", "#7C3AED"]}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
             <MetricCard
               title="业务位置"
               value={statistics?.business_locations || 0}
@@ -1127,7 +1127,7 @@ const GisContent: React.FC = () => {
         </Grid>
 
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
             <StatsChart
               title="业务类型分布"
               type="pie"
@@ -1162,7 +1162,7 @@ const GisContent: React.FC = () => {
               nameKey="name"
             />
           </Grid>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
             <StatsChart
               title="启用状态对比"
               type="bar"
@@ -1433,7 +1433,7 @@ const GisContent: React.FC = () => {
                     required
                   />
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="纬度"
                         name="latitude"
@@ -1446,7 +1446,7 @@ const GisContent: React.FC = () => {
                         required
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="经度"
                         name="longitude"
@@ -1490,7 +1490,7 @@ const GisContent: React.FC = () => {
                     required
                   />
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="起点纬度"
                         name="start_lat"
@@ -1503,7 +1503,7 @@ const GisContent: React.FC = () => {
                         required
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="起点经度"
                         name="start_lng"
@@ -1518,7 +1518,7 @@ const GisContent: React.FC = () => {
                     </Grid>
                   </Grid>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="终点纬度"
                         name="end_lat"
@@ -1531,7 +1531,7 @@ const GisContent: React.FC = () => {
                         required
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="终点经度"
                         name="end_lng"
@@ -1568,7 +1568,7 @@ const GisContent: React.FC = () => {
                     required
                   />
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="纬度"
                         name="latitude"
@@ -1581,7 +1581,7 @@ const GisContent: React.FC = () => {
                         required
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="经度"
                         name="longitude"
@@ -1596,7 +1596,7 @@ const GisContent: React.FC = () => {
                     </Grid>
                   </Grid>
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="容量"
                         name="capacity"
@@ -1607,7 +1607,7 @@ const GisContent: React.FC = () => {
                         }
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="当前用量"
                         name="current_usage"
@@ -1642,7 +1642,7 @@ const GisContent: React.FC = () => {
                     required
                   />
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="纬度"
                         name="latitude"
@@ -1655,7 +1655,7 @@ const GisContent: React.FC = () => {
                         required
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="经度"
                         name="longitude"
@@ -1738,7 +1738,7 @@ const GisContent: React.FC = () => {
                     required
                   />
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="纬度"
                         name="lat"
@@ -1749,7 +1749,7 @@ const GisContent: React.FC = () => {
                         required
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="经度"
                         name="lng"
@@ -1768,7 +1768,7 @@ const GisContent: React.FC = () => {
                     onChange={(v) => setFormData({ ...formData, address: v })}
                   />
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="联系人"
                         name="contact_person"
@@ -1778,7 +1778,7 @@ const GisContent: React.FC = () => {
                         }
                       />
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={6}>
                       <InputField
                         label="联系电话"
                         name="contact_phone"

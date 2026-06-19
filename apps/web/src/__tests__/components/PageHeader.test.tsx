@@ -1,8 +1,9 @@
+import { CssBaseline } from "@mui/material";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
+
 import { Settings, Plus, Download, Upload, BarChart3 } from "lucide-react";
 import { PageHeader, PageHeaderProps } from "../../components/templates/PageHeader";
 
