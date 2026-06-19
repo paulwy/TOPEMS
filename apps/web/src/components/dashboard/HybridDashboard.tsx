@@ -159,7 +159,7 @@ export const HybridDashboard: React.FC = () => {
           数据概览
         </Typography>
         <Grid container spacing={3}>
-          {stats.map((stat, index) => (<Grid key={index} item xs={12} sm={6} md={3}>
+          {stats.map((stat, index) => (<Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard {...stat} />
           </Grid>))}
         </Grid>
@@ -169,7 +169,7 @@ export const HybridDashboard: React.FC = () => {
           业务分析
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
               <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
                 模块使用量
@@ -177,7 +177,7 @@ export const HybridDashboard: React.FC = () => {
               <BarChartComponent data={homeBarData} xKey="name" yKey="value" />
             </Paper>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
               <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
                 业务分布
@@ -187,7 +187,7 @@ export const HybridDashboard: React.FC = () => {
           </Grid>
         </Grid>
         <Grid container spacing={3} sx={{ mt: 3 }}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
               <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
                 月度活跃趋势
@@ -208,20 +208,20 @@ export const HybridDashboard: React.FC = () => {
           模块入口
         </Typography>
         <Grid container spacing={3}>
-          {moduleCards.map((card) => (<Grid key={card.path} item xs={12} sm={6} md={4} lg={3}>
+          {moduleCards.map((card) => (<Grid key={card.path} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <ModuleCard item={card} onClick={() => {}} />
           </Grid>))}
         </Grid>
       </Box>
       <Box sx={{ mt: { xs: 4, sm: 6, lg: 8 } }}>
         <Grid container spacing={{ xs: 3, sm: 4, lg: 6 }}>
-          <Grid item xs={12} md={8} lg={8}>
+          <Grid size={{ xs: 12, md: 8, lg: 8 }}>
             <Typography variant="h5" fontWeight={600} sx={{ mb: { xs: 2, sm: 3, lg: 4 } }}>
               待办事项
             </Typography>
             <RecentActivities />
           </Grid>
-          <Grid item xs={12} md={4} lg={4}>
+          <Grid size={{ xs: 12, md: 4, lg: 4 }}>
             <Typography variant="h5" fontWeight={600} sx={{ mb: { xs: 2, sm: 3, lg: 4 } }}>
               系统状态
             </Typography>

@@ -1,16 +1,6 @@
+import { Button, Dialog, DialogContent, DialogActions, TextField, InputLabel, Card, CardContent, CardHeader, Typography, Chip, Box } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import TextField from "@mui/material/TextField";
-import InputLabel from "@mui/material/InputLabel";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
-import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
-import Box from "@mui/material/Box";
+
 import {
   Search,
   FileText,

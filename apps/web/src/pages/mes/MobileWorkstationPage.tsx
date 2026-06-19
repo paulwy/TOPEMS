@@ -238,7 +238,7 @@ const MobileWorkstationPage: React.FC = () => {
                 实时统计
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box
                     sx={{
                       bgcolor: "rgba(255,255,255,0.2)",
@@ -260,7 +260,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box
                     sx={{
                       bgcolor: "rgba(255,255,255,0.2)",
@@ -282,7 +282,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box
                     sx={{
                       bgcolor: "rgba(255,255,255,0.2)",
@@ -304,7 +304,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Box
                     sx={{
                       bgcolor: "rgba(255,255,255,0.2)",
@@ -334,7 +334,7 @@ const MobileWorkstationPage: React.FC = () => {
                 快捷操作
               </Typography>
               <Grid container spacing={1.5}>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Button
                     fullWidth
                     onClick={handleCreatePatrol}
@@ -370,7 +370,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Typography>
                   </Button>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Button
                     fullWidth
                     onClick={handleScan}
@@ -406,7 +406,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Typography>
                   </Button>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Button
                     fullWidth
                     onClick={() => setActiveTab("media")}
@@ -442,7 +442,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Typography>
                   </Button>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={6}>
                   <Button
                     fullWidth
                     onClick={() => setActiveTab("task")}
@@ -871,7 +871,7 @@ const MobileWorkstationPage: React.FC = () => {
             ) : (
               <Grid container spacing={1.5}>
                 {media.map((item) => (
-                  <Grid item xs={6} key={item.id}>
+                  <Grid key={item.id} size={6}>
                     <Paper sx={{ borderRadius: 1.5, overflow: "hidden" }}>
                       <Box
                         sx={{

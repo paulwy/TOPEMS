@@ -1,7 +1,6 @@
+import { Button, TextField } from "@mui/material";
 import React, { useState, useRef } from "react";
 import { Send, Paperclip, Image, FileText } from "lucide-react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
 
 interface ChatInputProps {
   onSendMessage: (

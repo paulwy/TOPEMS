@@ -1,10 +1,6 @@
+import { Card, CardContent, CardHeader, Button, Typography, Chip } from "@mui/material";
 import React from "react";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
+
 import { Clock, Tag, ArrowRight } from "lucide-react";
 
 export interface ProjectTemplate {

@@ -263,7 +263,7 @@ const OperationDashboardPage: React.FC = () => {
       {/* 主要内容区域 */}
       <Grid container spacing={3}>
         {/* 最近资产动态 */}
-        <Grid xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box
               sx={{
@@ -348,7 +348,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 设备状态 */}
-        <Grid xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box
               sx={{
@@ -428,7 +428,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 车辆使用情况 */}
-        <Grid xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box
               sx={{
@@ -520,7 +520,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 会议室使用情况 */}
-        <Grid xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: "100%" }}>
             <Box
               sx={{
@@ -615,7 +615,7 @@ const OperationDashboardPage: React.FC = () => {
         </Grid>
 
         {/* 库存预警 */}
-        <Grid xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Box
               sx={{
@@ -638,7 +638,7 @@ const OperationDashboardPage: React.FC = () => {
             </Box>
             <Grid container spacing={2}>
               {mockLowStockSupplies.map((supply) => (
-                <Grid xs={12} sm={4} key={supply.id}>
+                <Grid key={supply.id} size={{ xs: 12, sm: 4 }}>
                   <Box
                     sx={{
                       p: 2,

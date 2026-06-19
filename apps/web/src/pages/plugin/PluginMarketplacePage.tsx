@@ -264,7 +264,7 @@ export default function PluginMarketplacePage() {
       <Box sx={{ maxWidth: 1400, mx: "auto", px: 3, py: 4 }}>
         <Grid container spacing={3}>
           {/* Sidebar */}
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ p: 2 }}>
               <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
                 Categories
@@ -334,7 +334,7 @@ export default function PluginMarketplacePage() {
           </Grid>
 
           {/* Main Content */}
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             {/* Search Bar */}
             <Card sx={{ p: 2, mb: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -389,7 +389,7 @@ export default function PluginMarketplacePage() {
                     </Box>
                     <Grid container spacing={2}>
                       {state.summary.featured_plugins.map((plugin) => (
-                        <Grid item xs={12} sm={6} md={4} key={plugin.id}>
+                        <Grid key={plugin.id} size={{ xs: 12, sm: 6, md: 4 }}>
                           <PluginCard
                             plugin={plugin}
                             onClick={() => loadPluginDetails(plugin.code)}
@@ -419,7 +419,7 @@ export default function PluginMarketplacePage() {
                     </Box>
                     <Grid container spacing={2}>
                       {state.summary.new_plugins.map((plugin) => (
-                        <Grid item xs={12} sm={6} md={4} key={plugin.id}>
+                        <Grid key={plugin.id} size={{ xs: 12, sm: 6, md: 4 }}>
                           <PluginCard
                             plugin={plugin}
                             onClick={() => loadPluginDetails(plugin.code)}
@@ -446,7 +446,7 @@ export default function PluginMarketplacePage() {
               {state.loading ? (
                 <Grid container spacing={2}>
                   {[...Array(6)].map((_, i) => (
-                    <Grid item xs={12} sm={6} md={4} key={i}>
+                    <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
                       <Card sx={{ p: 2 }}>
                         <Skeleton
                           variant="rectangular"
@@ -474,7 +474,7 @@ export default function PluginMarketplacePage() {
               ) : (
                 <Grid container spacing={2}>
                   {state.plugins.map((plugin) => (
-                    <Grid item xs={12} sm={6} md={4} key={plugin.id}>
+                    <Grid key={plugin.id} size={{ xs: 12, sm: 6, md: 4 }}>
                       <PluginCard
                         plugin={plugin}
                         onClick={() => loadPluginDetails(plugin.code)}
@@ -753,7 +753,7 @@ function PluginDetailModal({
 
             {/* Stats */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={3}>
+              <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
                   <Typography variant="h6" fontWeight="bold">
                     {plugin.install_count || 0}
@@ -763,7 +763,7 @@ function PluginDetailModal({
                   </Typography>
                 </Card>
               </Grid>
-              <Grid item xs={3}>
+              <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
                   <Typography variant="h6" fontWeight="bold">
                     {plugin.rating?.toFixed(1) || "N/A"}
@@ -773,7 +773,7 @@ function PluginDetailModal({
                   </Typography>
                 </Card>
               </Grid>
-              <Grid item xs={3}>
+              <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
                   <Typography variant="h6" fontWeight="bold">
                     {plugin.rating_count || 0}
@@ -783,7 +783,7 @@ function PluginDetailModal({
                   </Typography>
                 </Card>
               </Grid>
-              <Grid item xs={3}>
+              <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
                   <Typography variant="h6" fontWeight="bold">
                     {versions.length}

@@ -1,5 +1,5 @@
+import { Chip } from "@mui/material";
 import React from "react";
-import Chip from "@mui/material/Chip";
 
 const colorMap: Record<string, { bg: string; color: string }> = {
   "bg-red-100": { bg: "#fee2e2", color: "#dc2626" },

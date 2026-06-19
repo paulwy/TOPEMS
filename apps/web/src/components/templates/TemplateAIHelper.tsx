@@ -1,12 +1,6 @@
+import { Button, TextField, FormLabel, Card, CardContent, CardHeader, Typography, CircularProgress } from "@mui/material";
 import React, { useState } from "react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import FormLabel from "@mui/material/FormLabel";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
-import Typography from "@mui/material/Typography";
-import CircularProgress from "@mui/material/CircularProgress";
+
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from "lucide-react";
 
 interface TemplateAIHelperProps {

@@ -117,7 +117,7 @@ export const DashboardPage: React.FC = () => {
           {stats.map((stat, index) => {
             const IconComponent = iconMap[stat.icon] || Clock;
             return (
-              <Grid item xs={12} sm={6} md={3} key={index}>
+              <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
                 <Card
                   sx={{
                     borderRadius: "12px",
@@ -187,7 +187,7 @@ export const DashboardPage: React.FC = () => {
         </Grid>
 
         <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Card
               sx={{
                 borderRadius: "12px",
@@ -257,7 +257,7 @@ export const DashboardPage: React.FC = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
                 borderRadius: "12px",
@@ -276,7 +276,7 @@ export const DashboardPage: React.FC = () => {
         </Grid>
 
         <Grid container spacing={3} sx={{ mt: 2 }}>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Card
               sx={{
                 borderRadius: "12px",
@@ -302,7 +302,7 @@ export const DashboardPage: React.FC = () => {
         </Typography>
         <Grid container spacing={2}>
           {quickActions.map((action, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
+            <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
               <Button
                 fullWidth
                 variant="outlined"

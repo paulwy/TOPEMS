@@ -1,13 +1,7 @@
+import { Button, Card, CardContent, Select, MenuItem, FormLabel, Typography, Box } from "@mui/material";
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check, Quote } from "lucide-react";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import FormLabel from "@mui/material/FormLabel";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
+
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type { SummarizeRequest, SummarizeResponse } from "@/types/ai";

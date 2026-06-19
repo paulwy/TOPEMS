@@ -1,13 +1,6 @@
+import { Button, TextField, Box, Chip, FormControl, InputLabel, Select, MenuItem, Popover } from "@mui/material";
 import { useState, type Key } from "react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import Popover from "@mui/material/Popover";
+
 import { Filter, X, Plus } from "lucide-react";
 import dayjs from "dayjs";
 

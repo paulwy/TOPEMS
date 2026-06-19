@@ -17,11 +17,11 @@ import {
   FormControl,
   FormLabel,
   FormHelperText,
-  Grid,
   Snackbar,
   Alert as MuiAlert,
   Slide,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   Save,
   X,
@@ -843,12 +843,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             {loading ? (
               <Grid container spacing={2}>
                 {section.fields.map((field) => (
-                  <Grid
-                    key={field.name}
-                    xs={12}
-                    sm={6}
-                    md={Math.floor(12 / columns) * (field.span || 1)}
-                  >
+                  <Grid key={field.name} md={Math.floor(12 / columns) * (field.span || 1)} size={{ xs: 12, sm: 6 }}>
                     <Skeleton
                       variant="rectangular"
                       height={56}
@@ -860,12 +855,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             ) : (
               <Grid container spacing={2}>
                 {section.fields.map((field) => (
-                  <Grid
-                    key={field.name}
-                    xs={12}
-                    sm={6}
-                    md={Math.floor(12 / columns) * (field.span || 1)}
-                  >
+                  <Grid key={field.name} md={Math.floor(12 / columns) * (field.span || 1)} size={{ xs: 12, sm: 6 }}>
                     {renderField(field)}
                   </Grid>
                 ))}
