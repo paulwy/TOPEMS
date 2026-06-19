@@ -232,7 +232,7 @@ const RsBuildPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             构建管理
           </Typography>
           <Button
@@ -246,19 +246,21 @@ const RsBuildPage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
             <TextField
               size="small"
               placeholder="搜索构建编号、任务..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ width: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -403,7 +405,7 @@ const RsBuildPage: React.FC = () => {
         <DialogContent>
           {selectedBuild && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {selectedBuild.build_no} - {selectedBuild.build_task}
               </Typography>
               <Paper

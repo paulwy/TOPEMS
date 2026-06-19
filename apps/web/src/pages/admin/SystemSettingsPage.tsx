@@ -347,7 +347,7 @@ export default function SystemSettingsPage() {
         }
         fullWidth
         size="small"
-        inputProps={{ min: 1, max: 365 }}
+        slotProps={{ htmlInput: { min: 1, max: 365 } }}
       />
       <FormControlLabel
         control={
@@ -468,12 +468,14 @@ export default function SystemSettingsPage() {
                       </ListItemIcon>
                       <ListItemText
                         primary={group.label}
-                        primaryTypographyProps={{
-                          fontWeight: activeGroup === group.id ? 600 : 400,
-                          color:
-                            activeGroup === group.id
-                              ? "primary.main"
-                              : "text.primary",
+                        sx={{
+                          "& .MuiListItemText-primary": {
+                            fontWeight: activeGroup === group.id ? 600 : 400,
+                            color:
+                              activeGroup === group.id
+                                ? "primary.main"
+                                : "text.primary",
+                          },
                         }}
                       />
                     </ListItem>

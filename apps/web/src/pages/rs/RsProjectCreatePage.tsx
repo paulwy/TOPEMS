@@ -228,7 +228,7 @@ const RsProjectCreatePage: React.FC = () => {
               onChange={(e) => handleInputChange("start_date", e.target.value)}
               error={Boolean(errors.start_date)}
               helperText={errors.start_date}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
 
@@ -239,7 +239,7 @@ const RsProjectCreatePage: React.FC = () => {
               type="date"
               value={formData.end_date}
               onChange={(e) => handleInputChange("end_date", e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
 

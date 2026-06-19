@@ -320,8 +320,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       }}
     >
       <Box
-        maxWidth={maxWidth || false}
-        sx={{ mx: "auto", px: { xs: 2, sm: 3 }, py: compact ? 1.5 : 3 }}
+        sx={{ maxWidth: maxWidth || false, mx: "auto", px: { xs: 2, sm: 3 }, py: compact ? 1.5 : 3 }}
       >
         {/* 面包屑导航 */}
         {renderBreadcrumbs()}

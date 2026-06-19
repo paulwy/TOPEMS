@@ -509,14 +509,16 @@ const FinancePaymentPage: React.FC = () => {
               placeholder="搜索付款单号、供应商..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search
-                      sx={{ width: 16, height: 16, color: "text.secondary" }}
-                    />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search
+                        sx={{ width: 16, height: 16, color: "text.secondary" }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
               }}
               sx={{ width: 280 }}
             />

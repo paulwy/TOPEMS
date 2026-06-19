@@ -286,15 +286,12 @@ const GisContent: React.FC = () => {
       <Box sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 3 }, py: 4 }}>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={4}
-          flexWrap="wrap"
           spacing={2}
+          sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', mb: 4 }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <Box>
-              <Typography variant="h4" fontWeight={700}>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 GIS地图
               </Typography>
               <Typography color="text.secondary">
@@ -302,7 +299,7 @@ const GisContent: React.FC = () => {
               </Typography>
             </Box>
           </Stack>
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <button
               onClick={() => loadAllData(true)}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

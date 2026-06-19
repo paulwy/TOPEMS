@@ -940,7 +940,7 @@ const GisContent: React.FC = () => {
     required?: boolean;
   }> = ({ label, type = "text", value, onChange, error, required }) => (
     <Box>
-      <Typography variant="body2" fontWeight={500} mb={0.5}>
+      <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
         {label} {required && <span style={{ color: "#ef4444" }}>*</span>}
       </Typography>
       <TextField
@@ -962,7 +962,7 @@ const GisContent: React.FC = () => {
     rows?: number;
   }> = ({ label, value, onChange, rows = 3 }) => (
     <Box>
-      <Typography variant="body2" fontWeight={500} mb={0.5}>
+      <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
         {label}
       </Typography>
       <TextField
@@ -986,18 +986,15 @@ const GisContent: React.FC = () => {
       <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3 }, py: 4 }}>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={4}
-          flexWrap="wrap"
           spacing={2}
+          sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', mb: 4 }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <IconButton onClick={() => navigate("/dashboard")}>
               <ChevronRight style={{ transform: "rotate(180deg)" }} />
             </IconButton>
             <Box>
-              <Typography variant="h4" fontWeight={700}>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 厂区空间数字化
               </Typography>
               <Typography color="text.secondary">
@@ -1005,7 +1002,7 @@ const GisContent: React.FC = () => {
               </Typography>
             </Box>
           </Stack>
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <Button
               variant="contained"
               color="success"
@@ -1266,9 +1263,8 @@ const GisContent: React.FC = () => {
             >
               <Stack
                 direction="row"
-                justifyContent="space-between"
-                alignItems="center"
                 spacing={2}
+                sx={{ justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <TextField
                   size="small"
@@ -1394,15 +1390,14 @@ const GisContent: React.FC = () => {
           onClose={resetModal}
           maxWidth="md"
           fullWidth
-          PaperProps={{ sx: { borderRadius: 2 } }}
+          slotProps={{ paper: { sx: { borderRadius: 2 } } }}
         >
           <DialogTitle>
             <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Typography variant="h6" fontWeight={600}>
+                  direction="row"
+                  sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 {modalType === "create" ? "新建" : "编辑"}
               </Typography>
               <IconButton onClick={resetModal} size="small">
@@ -1820,15 +1815,14 @@ const GisContent: React.FC = () => {
           }}
           maxWidth="sm"
           fullWidth
-          PaperProps={{ sx: { borderRadius: 2 } }}
+          slotProps={{ paper: { sx: { borderRadius: 2 } } }}
         >
           <DialogTitle>
             <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Typography variant="h6" fontWeight={600}>
+                  direction="row"
+                  sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 导入数据
               </Typography>
               <IconButton
@@ -1847,7 +1841,7 @@ const GisContent: React.FC = () => {
           <DialogContent dividers>
             <Stack spacing={3} sx={{ pt: 1 }}>
               <Box>
-                <Typography variant="body2" fontWeight={500} mb={1}>
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
                   选择CSV文件
                 </Typography>
                 <Box
@@ -1879,7 +1873,7 @@ const GisContent: React.FC = () => {
                   <Typography color="text.secondary">
                     点击或拖拽文件到此处
                   </Typography>
-                  <Typography variant="caption" color="text.disabled" mt={1}>
+                  <Typography variant="caption" color="text.disabled" sx={{ mt: 1 }}>
                     支持CSV格式文件
                   </Typography>
                 </Box>
@@ -1888,13 +1882,12 @@ const GisContent: React.FC = () => {
                 <Paper sx={{ p: 1.5, bgcolor: "grey.50", borderRadius: 1.5 }}>
                   <Stack
                     direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
+                    sx={{ justifyContent: 'space-between', alignItems: 'center' }}
                   >
-                    <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                       <FileText size={32} color="#6b7280" />
                       <Box>
-                        <Typography variant="body2" fontWeight={500}>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {importFile.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -1917,7 +1910,7 @@ const GisContent: React.FC = () => {
               )}
               {importPreview && (
                 <Box>
-                  <Typography variant="body2" fontWeight={500} mb={1}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
                     文件预览（前10行）
                   </Typography>
                   <TableContainer

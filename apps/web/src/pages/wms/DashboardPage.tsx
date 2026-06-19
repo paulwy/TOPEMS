@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
   Button,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   Warehouse,
   Package,
@@ -104,7 +104,7 @@ export const DashboardPage: React.FC = () => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
-        <Typography variant="h4" fontWeight={600} sx={{ color: "#1e293b" }}>
+        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
           仓储管理
         </Typography>
         <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
@@ -147,8 +147,8 @@ export const DashboardPage: React.FC = () => {
                         </Typography>
                         <Typography
                           variant="h4"
-                          fontWeight={600}
-                          sx={{ color: "#1e293b" }}
+                          sx={{  color: "#1e293b" , fontWeight: 600 }}
+                          
                         >
                           {stat.value}
                         </Typography>
@@ -196,7 +196,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
                   各仓库库存分布
                 </Typography>
                 <BarChartComponent data={barData} xKey="name" yKey="value" />
@@ -212,7 +212,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
                   库存类型分布
                 </Typography>
                 <PieChartComponent data={pieData} />
@@ -230,7 +230,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
                   每日出入库趋势
                 </Typography>
                 <LineChartComponent data={lineData} xKey="name" yKey="value" />
@@ -241,8 +241,8 @@ export const DashboardPage: React.FC = () => {
 
         <Typography
           variant="h6"
-          fontWeight={600}
-          sx={{ mt: 4, mb: 2, color: "#1e293b" }}
+          sx={{  mt: 4, mb: 2, color: "#1e293b" , fontWeight: 600 }}
+          
         >
           快速操作
         </Typography>

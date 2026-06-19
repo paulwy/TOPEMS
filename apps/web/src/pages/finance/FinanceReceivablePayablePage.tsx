@@ -1145,7 +1145,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   setFormData({ ...formData, invoice_date: e.target.value })
                 }
                 size="small"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
                 label="到期日期"
@@ -1155,7 +1155,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                   setFormData({ ...formData, due_date: e.target.value })
                 }
                 size="small"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Box>
             <FormControl fullWidth size="small">

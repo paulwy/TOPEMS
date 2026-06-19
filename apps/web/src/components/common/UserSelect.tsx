@@ -111,20 +111,22 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         placeholder={placeholder}
         onClick={handleClick}
         disabled={disabled}
-        InputProps={{
-          readOnly: true,
-          endAdornment: (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {allowClear && value && (
-                <Chip
-                  size="small"
-                  label="清除"
-                  onDelete={handleClear}
-                  sx={{ minWidth: 0, height: 24 }}
-                />
-              )}
-            </Box>
-          ),
+        slotProps={{
+          input: {
+            readOnly: true,
+            endAdornment: (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {allowClear && value && (
+                  <Chip
+                    size="small"
+                    label="清除"
+                    onDelete={handleClear}
+                    sx={{ minWidth: 0, height: 24 }}
+                  />
+                )}
+              </Box>
+            ),
+          },
         }}
       />
 
@@ -132,7 +134,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        PaperProps={{ sx: { maxHeight: 400, width: "400px" } }}
+        slotProps={{ paper: { sx: { maxHeight: 400, width: "400px" } } }}
       >
         <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
           <TextField
@@ -140,12 +142,14 @@ export const UserSelect: React.FC<UserSelectProps> = ({
             placeholder="搜索用户..."
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <Box sx={{ mr: 1 }}>
-                  <Search size={16} />
-                </Box>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <Box sx={{ mr: 1 }}>
+                    <Search size={16} />
+                  </Box>
+                ),
+              },
             }}
             fullWidth
           />

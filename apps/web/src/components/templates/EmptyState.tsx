@@ -226,7 +226,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             <Stack
               direction="row"
               spacing={1}
-              justifyContent={centered ? "center" : "flex-start"}
+              sx={{ justifyContent: centered ? "center" : "flex-start" }}
             >
               {actions.map((action, index) => (
                 <Button

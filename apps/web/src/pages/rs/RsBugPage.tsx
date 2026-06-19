@@ -287,7 +287,7 @@ const RsBugPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             缺陷管理
           </Typography>
           <Button
@@ -304,8 +304,7 @@ const RsBugPage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-            alignItems="center"
-            flexWrap="wrap"
+            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
           >
             <TextField
               size="small"
@@ -313,12 +312,14 @@ const RsBugPage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ width: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <FormControl size="small" sx={{ minWidth: 100 }}>
@@ -594,7 +595,7 @@ const RsBugPage: React.FC = () => {
         <DialogContent>
           {selectedBug && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {selectedBug.bug_no} - {selectedBug.bug_title}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
@@ -619,7 +620,7 @@ const RsBugPage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     指派人
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {selectedBug.assignee}
                   </Typography>
                 </Box>
@@ -627,7 +628,7 @@ const RsBugPage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     创建时间
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {selectedBug.create_time}
                   </Typography>
                 </Box>

@@ -193,11 +193,13 @@ const EnhancedExportModal: React.FC<EnhancedExportModalProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 2,
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          maxHeight: "90vh",
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+            maxHeight: "90vh",
+          },
         },
       }}
     >

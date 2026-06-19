@@ -204,7 +204,7 @@ const MobileWorkstationPage: React.FC = () => {
           justifyContent: "center",
         }}
       >
-        <Stack alignItems="center" spacing={2}>
+        <Stack spacing={2} sx={{ alignItems: 'center' }}>
           <CircularProgress />
           <Typography color="text.secondary">加载中...</Typography>
         </Stack>
@@ -228,7 +228,7 @@ const MobileWorkstationPage: React.FC = () => {
                 mb: 3,
               }}
             >
-              <Typography variant="h5" fontWeight={700} mb={1}>
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                 今日工作概览
               </Typography>
               <Typography
@@ -248,14 +248,13 @@ const MobileWorkstationPage: React.FC = () => {
                   >
                     <Stack
                       direction="row"
-                      alignItems="center"
                       spacing={1}
-                      mb={0.5}
+                      sx={{ alignItems: "center", mb: 0.5 }}
                     >
                       <MapPin size={16} />
                       <Typography variant="body2">巡检</Typography>
                     </Stack>
-                    <Typography variant="h5" fontWeight={700}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
                       {stats.today_patrols}
                     </Typography>
                   </Box>
@@ -270,14 +269,13 @@ const MobileWorkstationPage: React.FC = () => {
                   >
                     <Stack
                       direction="row"
-                      alignItems="center"
                       spacing={1}
-                      mb={0.5}
+                      sx={{ alignItems: "center", mb: 0.5 }}
                     >
                       <QrCode size={16} />
                       <Typography variant="body2">扫码</Typography>
                     </Stack>
-                    <Typography variant="h5" fontWeight={700}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
                       {stats.today_scans}
                     </Typography>
                   </Box>
@@ -292,14 +290,13 @@ const MobileWorkstationPage: React.FC = () => {
                   >
                     <Stack
                       direction="row"
-                      alignItems="center"
                       spacing={1}
-                      mb={0.5}
+                      sx={{ alignItems: "center", mb: 0.5 }}
                     >
                       <Clock size={16} />
                       <Typography variant="body2">待处理</Typography>
                     </Stack>
-                    <Typography variant="h5" fontWeight={700}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
                       {stats.pending_tasks}
                     </Typography>
                   </Box>
@@ -314,14 +311,13 @@ const MobileWorkstationPage: React.FC = () => {
                   >
                     <Stack
                       direction="row"
-                      alignItems="center"
                       spacing={1}
-                      mb={0.5}
+                      sx={{ alignItems: "center", mb: 0.5 }}
                     >
                       <CheckCircle size={16} />
                       <Typography variant="body2">已完成</Typography>
                     </Stack>
-                    <Typography variant="h5" fontWeight={700}>
+                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
                       {stats.completed_tasks}
                     </Typography>
                   </Box>
@@ -330,7 +326,7 @@ const MobileWorkstationPage: React.FC = () => {
             </Paper>
 
             <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" fontWeight={600} mb={1.5}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5 }}>
                 快捷操作
               </Typography>
               <Grid container spacing={1.5}>
@@ -363,7 +359,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Box>
                     <Typography
                       variant="body2"
-                      fontWeight={500}
+                      sx={{ fontWeight: 500 }}
                       color="text.primary"
                     >
                       巡检打卡
@@ -399,7 +395,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Box>
                     <Typography
                       variant="body2"
-                      fontWeight={500}
+                      sx={{ fontWeight: 500 }}
                       color="text.primary"
                     >
                       扫码入库
@@ -435,7 +431,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Box>
                     <Typography
                       variant="body2"
-                      fontWeight={500}
+                      sx={{ fontWeight: 500 }}
                       color="text.primary"
                     >
                       拍照记录
@@ -471,7 +467,7 @@ const MobileWorkstationPage: React.FC = () => {
                     </Box>
                     <Typography
                       variant="body2"
-                      fontWeight={500}
+                      sx={{ fontWeight: 500 }}
                       color="text.primary"
                     >
                       处理任务
@@ -482,7 +478,7 @@ const MobileWorkstationPage: React.FC = () => {
             </Box>
 
             <Box>
-              <Typography variant="h6" fontWeight={600} mb={1.5}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1.5 }}>
                 最近巡检
               </Typography>
               {patrols.length === 0 ? (
@@ -499,15 +495,13 @@ const MobileWorkstationPage: React.FC = () => {
                   {patrols.slice(0, 3).map((patrol) => (
                     <Paper key={patrol.id} sx={{ p: 2, borderRadius: 1.5 }}>
                       <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="flex-start"
-                        mb={1}
-                      >
-                        <Typography fontWeight={500}>{patrol.title}</Typography>
+                      direction="row"
+                      sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
+                    >
+                        <Typography sx={{ fontWeight: 500 }}>{patrol.title}</Typography>
                         <StatusChip status={patrol.status} />
                       </Stack>
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         <MapPin size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           {patrol.address || "未知位置"}
@@ -517,7 +511,7 @@ const MobileWorkstationPage: React.FC = () => {
                         <Typography
                           variant="caption"
                           color="text.disabled"
-                          mt={0.5}
+                          sx={{ mt: 0.5 }}
                         >
                           {new Date(patrol.checked_at).toLocaleString("zh-CN")}
                         </Typography>
@@ -534,11 +528,10 @@ const MobileWorkstationPage: React.FC = () => {
           <Box sx={{ p: 2 }}>
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={2}
+              spacing={2}
+              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
             >
-              <Typography variant="h5" fontWeight={700}>
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 巡检记录
               </Typography>
               <Button
@@ -558,7 +551,7 @@ const MobileWorkstationPage: React.FC = () => {
                   color="#cbd5e1"
                   style={{ margin: "0 auto 12px" }}
                 />
-                <Typography color="text.secondary" mb={2}>
+                <Typography color="text.secondary" sx={{ mb: 2 }}>
                   暂无巡检记录
                 </Typography>
                 <Button
@@ -575,16 +568,15 @@ const MobileWorkstationPage: React.FC = () => {
                   <Paper key={patrol.id} sx={{ p: 2, borderRadius: 1.5 }}>
                     <Stack
                       direction="row"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                      mb={1}
+                      spacing={2}
+                      sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
                     >
                       <Box>
-                        <Typography fontWeight={500}>{patrol.title}</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>{patrol.title}</Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
-                          mt={0.5}
+                          sx={{ mt: 0.5 }}
                         >
                           {patrol.description}
                         </Typography>
@@ -594,21 +586,15 @@ const MobileWorkstationPage: React.FC = () => {
                     <Stack
                       direction="row"
                       spacing={2}
-                      alignItems="center"
-                      sx={{
-                        mt: 1.5,
-                        pt: 1.5,
-                        borderTop: 1,
-                        borderColor: "divider",
-                      }}
+                      sx={{ alignItems: 'center', mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}
                     >
-                      <Stack direction="row" spacing={0.5} alignItems="center">
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                         <MapPin size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           {patrol.address || "未知"}
                         </Typography>
                       </Stack>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                         <Clock size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           {patrol.checked_at
@@ -628,7 +614,7 @@ const MobileWorkstationPage: React.FC = () => {
 
         {activeTab === "task" && (
           <Box sx={{ p: 2 }}>
-            <Typography variant="h5" fontWeight={700} mb={2}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
               任务中心
             </Typography>
 
@@ -666,36 +652,35 @@ const MobileWorkstationPage: React.FC = () => {
                   <Paper key={task.id} sx={{ p: 2, borderRadius: 1.5 }}>
                     <Stack
                       direction="row"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                      mb={1}
+                      spacing={2}
+                      sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
                     >
-                      <Box flex={1}>
-                        <Typography fontWeight={500}>{task.title}</Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontWeight: 500 }}>{task.title}</Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
-                          mt={0.5}
+                          sx={{ mt: 0.5 }}
                         >
                           {task.description}
                         </Typography>
                       </Box>
-                      <Box ml={1.5}>
+                      <Box sx={{ ml: 1.5 }}>
                         <StatusChip status={task.status} />
                       </Box>
                     </Stack>
                     <Stack
                       direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
                       sx={{
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                         mt: 1.5,
                         pt: 1.5,
                         borderTop: 1,
                         borderColor: "divider",
                       }}
                     >
-                      <Stack direction="row" spacing={0.5} alignItems="center">
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                         <AlertCircle size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           优先级: {task.priority || "中"}
@@ -716,11 +701,10 @@ const MobileWorkstationPage: React.FC = () => {
           <Box sx={{ p: 2 }}>
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={2}
+              spacing={2}
+              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
             >
-              <Typography variant="h5" fontWeight={700}>
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 扫码记录
               </Typography>
               <Button
@@ -743,7 +727,7 @@ const MobileWorkstationPage: React.FC = () => {
                   color="#cbd5e1"
                   style={{ margin: "0 auto 12px" }}
                 />
-                <Typography color="text.secondary" mb={2}>
+                <Typography color="text.secondary" sx={{ mb: 2 }}>
                   暂无扫码记录
                 </Typography>
                 <Button
@@ -764,7 +748,7 @@ const MobileWorkstationPage: React.FC = () => {
                     <Stack
                       direction="row"
                       spacing={1.5}
-                      alignItems="flex-start"
+                      sx={{ alignItems: 'flex-start' }}
                     >
                       <Box
                         sx={{
@@ -779,19 +763,19 @@ const MobileWorkstationPage: React.FC = () => {
                       >
                         <QrCode size={20} color="#a855f7" />
                       </Box>
-                      <Box flex={1}>
-                        <Typography fontWeight={500}>{scan.barcode}</Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography sx={{ fontWeight: 500 }}>{scan.barcode}</Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
-                          mt={0.5}
+                          sx={{ mt: 0.5 }}
                         >
                           类型: {scan.item_type}
                         </Typography>
                         <Typography
                           variant="caption"
                           color="text.disabled"
-                          mt={0.5}
+                          sx={{ mt: 0.5 }}
                         >
                           {scan.scanned_at
                             ? new Date(scan.scanned_at).toLocaleString("zh-CN")
@@ -810,11 +794,10 @@ const MobileWorkstationPage: React.FC = () => {
           <Box sx={{ p: 2 }}>
             <Stack
               direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={2}
+              spacing={2}
+              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
             >
-              <Typography variant="h5" fontWeight={700}>
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 媒体记录
               </Typography>
               <Stack direction="row" spacing={1}>
@@ -864,7 +847,7 @@ const MobileWorkstationPage: React.FC = () => {
                   color="#cbd5e1"
                   style={{ margin: "0 auto 12px" }}
                 />
-                <Typography color="text.secondary" mb={2}>
+                <Typography color="text.secondary" sx={{ mb: 2 }}>
                   暂无媒体记录
                 </Typography>
               </Paper>
@@ -908,7 +891,7 @@ const MobileWorkstationPage: React.FC = () => {
                         <Typography
                           variant="caption"
                           color="text.disabled"
-                          mt={0.5}
+                          sx={{ mt: 0.5 }}
                         >
                           {item.created_at
                             ? new Date(item.created_at).toLocaleDateString(

@@ -182,7 +182,7 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               }
               size="small"
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               id="hire_date"
@@ -197,7 +197,7 @@ const CreateEmployeeForm: React.FC<CreateEmployeeFormProps> = ({
               }
               size="small"
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Box>
 

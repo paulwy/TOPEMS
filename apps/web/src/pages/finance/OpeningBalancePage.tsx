@@ -254,7 +254,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <FormControl size="small" fullWidth>
               <InputLabel>科目类别</InputLabel>
@@ -617,7 +617,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={carryForwardFrom}
               onChange={(e) => setCarryForwardFrom(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               label="到期间"
@@ -625,7 +625,7 @@ export default function OpeningBalancePage() {
               size="small"
               value={carryForwardTo}
               onChange={(e) => setCarryForwardTo(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <Box
               sx={{

@@ -18,7 +18,7 @@ interface GridProps extends BoxProps {
   xl?: number;
   item?: boolean;
   container?: boolean;
-  spacing?: number;
+  spacing?: number | GridSizeProps;
   size?: number | GridSizeProps;
 }
 
@@ -59,13 +59,42 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   }
 
   if (container) {
+    const spacingStyles: Record<string, unknown> = {
+      display: "flex",
+      flexWrap: "wrap",
+    };
+
+    if (typeof spacing === "number") {
+      spacingStyles.gap = spacing * 8;
+    } else {
+      spacingStyles.gap = spacing?.xs !== undefined ? spacing.xs * 8 : 0;
+      if (spacing?.sm !== undefined) {
+        spacingStyles["@media (min-width:600px)"] = {
+          gap: spacing.sm * 8,
+        };
+      }
+      if (spacing?.md !== undefined) {
+        spacingStyles["@media (min-width:900px)"] = {
+          gap: spacing.md * 8,
+        };
+      }
+      if (spacing?.lg !== undefined) {
+        spacingStyles["@media (min-width:1200px)"] = {
+          gap: spacing.lg * 8,
+        };
+      }
+      if (spacing?.xl !== undefined) {
+        spacingStyles["@media (min-width:1536px)"] = {
+          gap: spacing.xl * 8,
+        };
+      }
+    }
+
     return (
       <Box
         {...props}
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: spacing * 8,
+          ...spacingStyles,
           ...sx,
         }}
       >

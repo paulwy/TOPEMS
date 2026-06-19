@@ -246,7 +246,7 @@ const RsDeployPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             部署管理
           </Typography>
           <Button
@@ -263,8 +263,7 @@ const RsDeployPage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-            alignItems="center"
-            flexWrap="wrap"
+            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
           >
             <TextField
               size="small"
@@ -272,12 +271,14 @@ const RsDeployPage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ width: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -441,7 +442,7 @@ const RsDeployPage: React.FC = () => {
         <DialogContent>
           {selectedDeploy && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {selectedDeploy.deploy_no}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
@@ -459,7 +460,7 @@ const RsDeployPage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     应用名称
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {selectedDeploy.app_name}
                   </Typography>
                 </Box>
@@ -467,7 +468,7 @@ const RsDeployPage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     版本
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {selectedDeploy.version}
                   </Typography>
                 </Box>
@@ -475,7 +476,7 @@ const RsDeployPage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     操作人
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {selectedDeploy.operator}
                   </Typography>
                 </Box>

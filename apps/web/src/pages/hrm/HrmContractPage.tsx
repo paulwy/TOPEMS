@@ -1016,7 +1016,7 @@ export default function ContractManagementPage() {
                       start_date: e.target.value,
                     }))
                   }
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <TextField
                   label="结束日期"
@@ -1031,7 +1031,7 @@ export default function ContractManagementPage() {
                     }))
                   }
                   placeholder="无固定期限"
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Stack>
 
@@ -1474,7 +1474,7 @@ export default function ContractManagementPage() {
                     new_start_date: e.target.value,
                   }))
                 }
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
                 label="新合同结束日期"
@@ -1489,7 +1489,7 @@ export default function ContractManagementPage() {
                   }))
                 }
                 placeholder="无固定期限"
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Stack>
 

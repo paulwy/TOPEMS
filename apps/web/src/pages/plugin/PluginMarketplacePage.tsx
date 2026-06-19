@@ -14,7 +14,6 @@ import {
   CardContent,
   CardActions,
   Modal,
-  Grid,
   Avatar,
   Rating,
   Skeleton,
@@ -23,6 +22,7 @@ import {
   Badge as MuiBadge,
   IconButton,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   Search,
   Filter,
@@ -244,7 +244,7 @@ export default function PluginMarketplacePage() {
             }}
           >
             <Box>
-              <Typography variant="h4" fontWeight="bold" color="text.primary">
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="text.primary">
                 Plugin Marketplace
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -266,7 +266,7 @@ export default function PluginMarketplacePage() {
           {/* Sidebar */}
           <Grid size={{ xs: 12, md: 3 }}>
             <Card sx={{ p: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="subtitle1"  sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}>
                 Categories
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
@@ -306,8 +306,8 @@ export default function PluginMarketplacePage() {
 
               <Typography
                 variant="subtitle1"
-                fontWeight="bold"
-                sx={{ mt: 4, mb: 2 }}
+                
+                sx={{ ...{ mt: 4, mb: 2 }, fontWeight: 'bold' }}
               >
                 Sort By
               </Typography>
@@ -344,10 +344,12 @@ export default function PluginMarketplacePage() {
                   onChange={(e) => handleSearch(e.target.value)}
                   size="small"
                   sx={{ flex: 1 }}
-                  InputProps={{
-                    startAdornment: (
-                      <Search size={20} style={{ marginRight: 8 }} />
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Search size={20} style={{ marginRight: 8 }} />
+                      ),
+                    },
                   }}
                 />
                 <IconButton
@@ -383,7 +385,7 @@ export default function PluginMarketplacePage() {
                       }}
                     >
                       <Sparkles size={20} color="#eab308" />
-                      <Typography variant="h6" fontWeight="bold">
+                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                         Featured Plugins
                       </Typography>
                     </Box>
@@ -413,7 +415,7 @@ export default function PluginMarketplacePage() {
                       }}
                     >
                       <Zap size={20} color="#22c55e" />
-                      <Typography variant="h6" fontWeight="bold">
+                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                         New Releases
                       </Typography>
                     </Box>
@@ -436,7 +438,7 @@ export default function PluginMarketplacePage() {
 
             {/* All Plugins */}
             <Box>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+              <Typography variant="h6"  sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}>
                 {state.selectedCategory
                   ? state.categories.find(
                       (c) => c.code === state.selectedCategory,
@@ -581,7 +583,7 @@ function PluginCard({
             mb: 1,
           }}
         >
-          <Typography variant="subtitle1" fontWeight="bold">
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
             {plugin.name}
           </Typography>
           <Chip
@@ -594,7 +596,7 @@ function PluginCard({
             size="small"
           />
         </Box>
-        <Typography variant="caption" color="text.secondary" display="block">
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
           by {plugin.author_name || "Unknown"}
         </Typography>
         <Typography
@@ -710,7 +712,7 @@ function PluginDetailModal({
               }}
             >
               <Box>
-                <Typography variant="h5" fontWeight="bold">
+                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                   {plugin.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -743,7 +745,7 @@ function PluginDetailModal({
 
             {/* Description */}
             <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }} gutterBottom>
                 Description
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -755,7 +757,7 @@ function PluginDetailModal({
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" fontWeight="bold">
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                     {plugin.install_count || 0}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -765,7 +767,7 @@ function PluginDetailModal({
               </Grid>
               <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" fontWeight="bold">
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                     {plugin.rating?.toFixed(1) || "N/A"}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -775,7 +777,7 @@ function PluginDetailModal({
               </Grid>
               <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" fontWeight="bold">
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                     {plugin.rating_count || 0}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -785,7 +787,7 @@ function PluginDetailModal({
               </Grid>
               <Grid size={3}>
                 <Card sx={{ p: 2, textAlign: "center", bgcolor: "grey.50" }}>
-                  <Typography variant="h6" fontWeight="bold">
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                     {versions.length}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -798,7 +800,7 @@ function PluginDetailModal({
             {/* Tags */}
             {plugin.tags && plugin.tags.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }} gutterBottom>
                   Tags
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -812,7 +814,7 @@ function PluginDetailModal({
             {/* Versions */}
             {versions.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }} gutterBottom>
                   Versions
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -828,7 +830,7 @@ function PluginDetailModal({
                         <Box
                           sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
-                          <Typography variant="body2" fontFamily="monospace">
+                          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                             v{v.version}
                           </Typography>
                           {v.is_latest && (
@@ -851,7 +853,7 @@ function PluginDetailModal({
             {/* Reviews */}
             {reviews.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }} gutterBottom>
                   Reviews
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -865,13 +867,13 @@ function PluginDetailModal({
                           mb: 1,
                         }}
                       >
-                        <Typography variant="body2" fontWeight="medium">
+                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                           {r.user_name || "Anonymous"}
                         </Typography>
                         <Rating value={r.rating || 0} readOnly size="small" />
                       </Box>
                       {r.title && (
-                        <Typography variant="body2" fontWeight="medium">
+                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                           {r.title}
                         </Typography>
                       )}
