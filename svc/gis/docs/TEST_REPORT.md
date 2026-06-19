@@ -9,7 +9,7 @@
 - **操作系统**: macOS
 - **Rust版本**: 1.74+
 - **PostgreSQL**: 14+ (with PostGIS)
-- **服务端口**: 8080
+- **服务端口**: 8054
 
 ## 测试结果总览
 
@@ -87,7 +87,7 @@
 ### 健康检查
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8054/health
 ```
 
 **响应**:
@@ -104,7 +104,7 @@ curl http://localhost:8080/health
 ### GIS统计
 
 ```bash
-curl http://localhost:8080/api/gis/statistics
+curl http://localhost:8054/api/gis/statistics
 ```
 
 **响应**:
@@ -129,7 +129,7 @@ curl http://localhost:8080/api/gis/statistics
 ### Prometheus监控
 
 ```bash
-curl http://localhost:8080/metrics
+curl http://localhost:8054/metrics
 ```
 
 **监控指标**:

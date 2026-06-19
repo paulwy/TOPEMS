@@ -230,22 +230,22 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 }
 
 export const instrumentApi = {
-  ...createCrudApi<Instrument>("/api/v1/instruments"),
+  ...createCrudApi<Instrument>("/api/lims/instruments"),
 
   listInstruments: (params?: ListParams) =>
-    createCrudApi<Instrument>("/api/v1/instruments").list(params),
+    createCrudApi<Instrument>("/api/lims/instruments").list(params),
 
   getInstrument: (id: string) =>
-    createCrudApi<Instrument>("/api/v1/instruments").get(id),
+    createCrudApi<Instrument>("/api/lims/instruments").get(id),
 
   createInstrument: (data: CreateInstrumentRequest) =>
-    createCrudApi<Instrument>("/api/v1/instruments").create(data),
+    createCrudApi<Instrument>("/api/lims/instruments").create(data),
 
   updateInstrument: (id: string, data: CreateInstrumentRequest) =>
-    createCrudApi<Instrument>("/api/v1/instruments").update(id, data),
+    createCrudApi<Instrument>("/api/lims/instruments").update(id, data),
 
   deleteInstrument: (id: string) =>
-    createCrudApi<Instrument>("/api/v1/instruments").delete(id),
+    createCrudApi<Instrument>("/api/lims/instruments").delete(id),
 };
 
 export const maintenanceApi = {
@@ -253,70 +253,70 @@ export const maintenanceApi = {
     instrumentId: string,
   ): Promise<ApiResponse<MaintenanceRecord[]>> => {
     return apiClient.lims.get(
-      `/api/v1/instruments/${instrumentId}/maintenance`,
+      `/api/lims/instruments/${instrumentId}/maintenance`,
     );
   },
 
   create: async (
     data: CreateMaintenanceRecordRequest,
   ): Promise<ApiResponse<MaintenanceRecord>> => {
-    return apiClient.lims.post("/api/v1/maintenance", data);
+    return apiClient.lims.post("/api/lims/maintenance", data);
   },
 
   update: async (
     id: string,
     data: Partial<CreateMaintenanceRecordRequest>,
   ): Promise<ApiResponse<MaintenanceRecord>> => {
-    return apiClient.lims.put(`/api/v1/maintenance/${id}`, data);
+    return apiClient.lims.put(`/api/lims/maintenance/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.lims.delete(`/api/v1/maintenance/${id}`);
+    return apiClient.lims.delete(`/api/lims/maintenance/${id}`);
   },
 };
 
 // ========== LIMS API 模块 ==========
 
 export const sampleApi = {
-  ...createCrudApi<Sample>("/api/v1/samples"),
+  ...createCrudApi<Sample>("/api/lims/samples"),
 
   listSamples: (params?: ListParams) =>
-    createCrudApi<Sample>("/api/v1/samples").list(params),
+    createCrudApi<Sample>("/api/lims/samples").list(params),
 
-  getSample: (id: string) => createCrudApi<Sample>("/api/v1/samples").get(id),
+  getSample: (id: string) => createCrudApi<Sample>("/api/lims/samples").get(id),
 
   createSample: (data: CreateSampleRequest) =>
-    createCrudApi<Sample>("/api/v1/samples").create(data),
+    createCrudApi<Sample>("/api/lims/samples").create(data),
 
   updateSample: (id: string, data: CreateSampleRequest) =>
-    createCrudApi<Sample>("/api/v1/samples").update(id, data),
+    createCrudApi<Sample>("/api/lims/samples").update(id, data),
 
   deleteSample: (id: string) =>
-    createCrudApi<Sample>("/api/v1/samples").delete(id),
+    createCrudApi<Sample>("/api/lims/samples").delete(id),
 
   batchCreateSamples: async (
     data: BatchCreateSamplesRequest,
   ): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.lims.post("/api/v1/samples/batch", data);
+    return apiClient.lims.post("/api/lims/samples/batch", data);
   },
 
   batchDeleteSamples: async (
     data: BatchDeleteSamplesRequest,
   ): Promise<ApiResponse<BatchOperationResult>> => {
-    return apiClient.lims.delete("/api/v1/samples/batch", { data });
+    return apiClient.lims.delete("/api/lims/samples/batch", { data });
   },
 
   exportSamples: async (): Promise<Blob> => {
     const baseURL =
       (apiClient.lims as any).defaults?.baseURL || config.services.lims;
-    return downloadBlob(baseURL, "/api/v1/samples/export");
+    return downloadBlob(baseURL, "/api/lims/samples/export");
   },
 
   importSamples: async (
     file: File,
   ): Promise<ApiResponse<BatchOperationResult>> => {
     const content = await file.text();
-    return apiClient.lims.post("/api/v1/samples/import", content, {
+    return apiClient.lims.post("/api/lims/samples/import", content, {
       headers: {
         "Content-Type": "text/csv",
       },
@@ -325,41 +325,41 @@ export const sampleApi = {
 };
 
 export const processApi = {
-  ...createCrudApi<InspectionProcess>("/api/v1/processes"),
+  ...createCrudApi<InspectionProcess>("/api/lims/processes"),
 
   listProcesses: (params?: ListParams) =>
-    createCrudApi<InspectionProcess>("/api/v1/processes").list(params),
+    createCrudApi<InspectionProcess>("/api/lims/processes").list(params),
 
   getProcess: (id: string) =>
-    createCrudApi<InspectionProcess>("/api/v1/processes").get(id),
+    createCrudApi<InspectionProcess>("/api/lims/processes").get(id),
 };
 
 export const taskApi = {
-  ...createCrudApi<InspectionTask>("/api/v1/tasks"),
+  ...createCrudApi<InspectionTask>("/api/lims/tasks"),
 
   listTasks: (params?: ListParams) =>
-    createCrudApi<InspectionTask>("/api/v1/tasks").list(params),
+    createCrudApi<InspectionTask>("/api/lims/tasks").list(params),
 
   createTask: (data: CreateInspectionTaskRequest) =>
-    createCrudApi<InspectionTask>("/api/v1/tasks").create(data),
+    createCrudApi<InspectionTask>("/api/lims/tasks").create(data),
 
   getTask: (id: string) =>
-    createCrudApi<InspectionTask>("/api/v1/tasks").get(id),
+    createCrudApi<InspectionTask>("/api/lims/tasks").get(id),
 
   updateTask: (id: string, data: CreateInspectionTaskRequest) =>
-    createCrudApi<InspectionTask>("/api/v1/tasks").update(id, data),
+    createCrudApi<InspectionTask>("/api/lims/tasks").update(id, data),
 
   listTasksBySample: async (
     sampleId: string,
   ): Promise<ApiResponse<InspectionTask[]>> => {
-    return apiClient.lims.get(`/api/v1/tasks/sample/${sampleId}`);
+    return apiClient.lims.get(`/api/lims/tasks/sample/${sampleId}`);
   },
 
   completeStep: async (
     id: string,
     data: Omit<CreateInspectionRecordRequest, "task_id">,
   ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.post(`/api/v1/tasks/${id}/complete_step`, {
+    return apiClient.lims.post(`/api/lims/tasks/${id}/complete_step`, {
       ...data,
       task_id: id,
     });
@@ -367,18 +367,18 @@ export const taskApi = {
 };
 
 export const recordApi = {
-  ...createCrudApi<InspectionRecord>("/api/v1/records"),
+  ...createCrudApi<InspectionRecord>("/api/lims/records"),
 
   listRecords: (params?: ListParams) =>
-    createCrudApi<InspectionRecord>("/api/v1/records").list(params),
+    createCrudApi<InspectionRecord>("/api/lims/records").list(params),
 
   createRecord: (data: CreateInspectionRecordRequest) =>
-    createCrudApi<InspectionRecord>("/api/v1/records").create(data),
+    createCrudApi<InspectionRecord>("/api/lims/records").create(data),
 
   listRecordsByTask: async (
     taskId: string,
   ): Promise<ApiResponse<InspectionRecord[]>> => {
-    return apiClient.lims.get(`/api/v1/records/task/${taskId}`);
+    return apiClient.lims.get(`/api/lims/records/task/${taskId}`);
   },
 };
 
@@ -433,7 +433,7 @@ export const auditLimsApi = {
   listAuditLogs: async (
     params?: AuditLogQueryParams,
   ): Promise<ApiResponse<{ audit_logs: AuditLog[]; total: number }>> => {
-    let url = "/api/v1/audit-logs";
+    let url = "/api/lims/audit-logs";
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -450,7 +450,7 @@ export const auditLimsApi = {
   },
 
   getAuditLog: async (id: string): Promise<ApiResponse<AuditLog>> => {
-    return apiClient.lims.get(`/api/v1/audit-logs/${id}`);
+    return apiClient.lims.get(`/api/lims/audit-logs/${id}`);
   },
 };
 
@@ -501,7 +501,7 @@ export const limsApi = {
   deleteMaintenance: maintenanceApi.delete,
 
   getStatistics: async (): Promise<ApiResponse<LimsStatistics>> => {
-    return apiClient.lims.get("/api/v1/statistics");
+    return apiClient.lims.get("/api/lims/statistics");
   },
 
   health: async (): Promise<ApiResponse<string>> => {

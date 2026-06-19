@@ -101,36 +101,36 @@ export const emailApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mail.get(
-      `/api/v1/mail/emails${queryString ? "?" + queryString : ""}`,
+      `/api/mail/emails${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<Email>> {
-    return apiClient.mail.get(`/api/v1/mail/emails/${id}`);
+    return apiClient.mail.get(`/api/mail/emails/${id}`);
   },
 
   async send(data: SendEmailRequest): Promise<ApiResponse<Email>> {
-    return apiClient.mail.post("/api/v1/mail/emails", data);
+    return apiClient.mail.post("/api/mail/emails", data);
   },
 
   async sendWithTemplate(
     data: SendEmailWithTemplateRequest,
   ): Promise<ApiResponse<Email>> {
-    return apiClient.mail.post("/api/v1/mail/emails/send-with-template", data);
+    return apiClient.mail.post("/api/mail/emails/send-with-template", data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mail.delete(`/api/v1/mail/emails/${id}`);
+    return apiClient.mail.delete(`/api/mail/emails/${id}`);
   },
 
   async resend(emailIds: string[]): Promise<ApiResponse<ResendResult>> {
-    return apiClient.mail.post("/api/v1/mail/emails/resend", {
+    return apiClient.mail.post("/api/mail/emails/resend", {
       email_ids: emailIds,
     });
   },
 
   async getStats(): Promise<ApiResponse<EmailStats>> {
-    return apiClient.mail.get("/api/v1/mail/emails/stats");
+    return apiClient.mail.get("/api/mail/emails/stats");
   },
 };
 
@@ -148,36 +148,36 @@ export const templateApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mail.get(
-      `/api/v1/mail/templates${queryString ? "?" + queryString : ""}`,
+      `/api/mail/templates${queryString ? "?" + queryString : ""}`,
     );
   },
 
   async get(id: string): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.get(`/api/v1/mail/templates/${id}`);
+    return apiClient.mail.get(`/api/mail/templates/${id}`);
   },
 
   async create(
     data: Partial<EmailTemplate>,
   ): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.post("/api/v1/mail/templates", data);
+    return apiClient.mail.post("/api/mail/templates", data);
   },
 
   async update(
     id: string,
     data: Partial<EmailTemplate>,
   ): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.put(`/api/v1/mail/templates/${id}`, data);
+    return apiClient.mail.put(`/api/mail/templates/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mail.delete(`/api/v1/mail/templates/${id}`);
+    return apiClient.mail.delete(`/api/mail/templates/${id}`);
   },
 
   async updateStatus(
     id: string,
     status: string,
   ): Promise<ApiResponse<EmailTemplate>> {
-    return apiClient.mail.put(`/api/v1/mail/templates/${id}/status`, {
+    return apiClient.mail.put(`/api/mail/templates/${id}/status`, {
       status,
     });
   },
@@ -188,7 +188,7 @@ export const templateApi = {
   ): Promise<
     ApiResponse<{ subject: string; body: string; body_html?: string }>
   > {
-    return apiClient.mail.post("/api/v1/mail/templates/render", {
+    return apiClient.mail.post("/api/mail/templates/render", {
       template_code: templateCode,
       data,
     });

@@ -44,6 +44,7 @@ export interface ServicesConfig {
   pdm: string;
   qms: string;
   mes: string;
+  master: string;
 }
 
 export interface FeaturesConfig {

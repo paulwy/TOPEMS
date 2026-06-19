@@ -40,7 +40,7 @@ export const externalErpApi = {
     page?: number;
     page_size?: number;
   }) =>
-    apiClient.integration.get("/api/v1/integration/external-erp/connections", {
+    apiClient.integration.get("/api/integration/external-erp/connections", {
       params,
     }),
 
@@ -49,7 +49,7 @@ export const externalErpApi = {
    */
   getConnection: (id: string) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${id}`,
+      `/api/integration/external-erp/connections/${id}`,
     ),
 
   /**
@@ -66,7 +66,7 @@ export const externalErpApi = {
     company_mappings?: CompanyMapping[];
   }) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/connections",
+      "/api/integration/external-erp/connections",
       data,
     ),
 
@@ -80,7 +80,7 @@ export const externalErpApi = {
     >,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${id}`,
+      `/api/integration/external-erp/connections/${id}`,
       data,
     ),
 
@@ -89,7 +89,7 @@ export const externalErpApi = {
    */
   deleteConnection: (id: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${id}`,
+      `/api/integration/external-erp/connections/${id}`,
     ),
 
   /**
@@ -97,7 +97,7 @@ export const externalErpApi = {
    */
   toggleConnection: (id: string, enabled: boolean) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${id}/toggle`,
+      `/api/integration/external-erp/connections/${id}/toggle`,
       { enabled },
     ),
 
@@ -106,7 +106,7 @@ export const externalErpApi = {
    */
   testConnection: (data: ConnectionTestRequest) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/connections/test",
+      "/api/integration/external-erp/connections/test",
       data,
     ),
 
@@ -115,7 +115,7 @@ export const externalErpApi = {
    */
   syncConnectionStatus: (id: string) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${id}/sync-status`,
+      `/api/integration/external-erp/connections/${id}/sync-status`,
       {},
     ),
 
@@ -126,7 +126,7 @@ export const externalErpApi = {
    */
   getCompanyMappings: (configId: string) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/company-mappings`,
+      `/api/integration/external-erp/connections/${configId}/company-mappings`,
     ),
 
   /**
@@ -134,7 +134,7 @@ export const externalErpApi = {
    */
   addCompanyMapping: (configId: string, mapping: CompanyMapping) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/company-mappings`,
+      `/api/integration/external-erp/connections/${configId}/company-mappings`,
       mapping,
     ),
 
@@ -147,7 +147,7 @@ export const externalErpApi = {
     mapping: Partial<CompanyMapping>,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`,
       mapping,
     ),
 
@@ -156,7 +156,7 @@ export const externalErpApi = {
    */
   deleteCompanyMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`,
     ),
 
   // -------- 科目映射 --------
@@ -172,7 +172,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/account-mappings`,
+      `/api/integration/external-erp/connections/${configId}/account-mappings`,
       { params },
     ),
 
@@ -184,7 +184,7 @@ export const externalErpApi = {
     data: Partial<AccountMappingRule>[],
   ) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/account-mappings/batch`,
+      `/api/integration/external-erp/connections/${configId}/account-mappings/batch`,
       { mappings: data },
     ),
 
@@ -197,7 +197,7 @@ export const externalErpApi = {
     data: Partial<AccountMappingRule>,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${configId}/account-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/account-mappings/${mappingId}`,
       data,
     ),
 
@@ -206,7 +206,7 @@ export const externalErpApi = {
    */
   deleteAccountMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${configId}/account-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/account-mappings/${mappingId}`,
     ),
 
   /**
@@ -214,7 +214,7 @@ export const externalErpApi = {
    */
   autoMatchAccountMappings: (configId: string) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/account-mappings/auto-match`,
+      `/api/integration/external-erp/connections/${configId}/account-mappings/auto-match`,
       {},
     ),
 
@@ -231,7 +231,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/customer-mappings`,
+      `/api/integration/external-erp/connections/${configId}/customer-mappings`,
       { params },
     ),
 
@@ -243,7 +243,7 @@ export const externalErpApi = {
     data: Partial<CustomerMappingRule>[],
   ) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/customer-mappings/batch`,
+      `/api/integration/external-erp/connections/${configId}/customer-mappings/batch`,
       { mappings: data },
     ),
 
@@ -256,7 +256,7 @@ export const externalErpApi = {
     data: Partial<CustomerMappingRule>,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${configId}/customer-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/customer-mappings/${mappingId}`,
       data,
     ),
 
@@ -265,7 +265,7 @@ export const externalErpApi = {
    */
   deleteCustomerMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${configId}/customer-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/customer-mappings/${mappingId}`,
     ),
 
   // -------- 供应商映射 --------
@@ -281,7 +281,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/supplier-mappings`,
+      `/api/integration/external-erp/connections/${configId}/supplier-mappings`,
       { params },
     ),
 
@@ -293,7 +293,7 @@ export const externalErpApi = {
     data: Partial<SupplierMappingRule>[],
   ) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/supplier-mappings/batch`,
+      `/api/integration/external-erp/connections/${configId}/supplier-mappings/batch`,
       { mappings: data },
     ),
 
@@ -306,7 +306,7 @@ export const externalErpApi = {
     data: Partial<SupplierMappingRule>,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${configId}/supplier-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/supplier-mappings/${mappingId}`,
       data,
     ),
 
@@ -315,7 +315,7 @@ export const externalErpApi = {
    */
   deleteSupplierMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${configId}/supplier-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/supplier-mappings/${mappingId}`,
     ),
 
   // -------- 项目映射 --------
@@ -331,7 +331,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/project-mappings`,
+      `/api/integration/external-erp/connections/${configId}/project-mappings`,
       { params },
     ),
 
@@ -343,7 +343,7 @@ export const externalErpApi = {
     data: Partial<ProjectMappingRule>[],
   ) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/project-mappings/batch`,
+      `/api/integration/external-erp/connections/${configId}/project-mappings/batch`,
       { mappings: data },
     ),
 
@@ -356,7 +356,7 @@ export const externalErpApi = {
     data: Partial<ProjectMappingRule>,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${configId}/project-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/project-mappings/${mappingId}`,
       data,
     ),
 
@@ -365,7 +365,7 @@ export const externalErpApi = {
    */
   deleteProjectMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${configId}/project-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/project-mappings/${mappingId}`,
     ),
 
   // -------- 部门映射 --------
@@ -381,7 +381,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/department-mappings`,
+      `/api/integration/external-erp/connections/${configId}/department-mappings`,
       { params },
     ),
 
@@ -393,7 +393,7 @@ export const externalErpApi = {
     data: Partial<DepartmentMappingRule>[],
   ) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/department-mappings/batch`,
+      `/api/integration/external-erp/connections/${configId}/department-mappings/batch`,
       { mappings: data },
     ),
 
@@ -406,7 +406,7 @@ export const externalErpApi = {
     data: Partial<DepartmentMappingRule>,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${configId}/department-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/department-mappings/${mappingId}`,
       data,
     ),
 
@@ -415,7 +415,7 @@ export const externalErpApi = {
    */
   deleteDepartmentMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${configId}/department-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/department-mappings/${mappingId}`,
     ),
 
   // -------- 员工映射 --------
@@ -431,7 +431,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/employee-mappings`,
+      `/api/integration/external-erp/connections/${configId}/employee-mappings`,
       { params },
     ),
 
@@ -443,7 +443,7 @@ export const externalErpApi = {
     data: Partial<EmployeeMappingRule>[],
   ) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/connections/${configId}/employee-mappings/batch`,
+      `/api/integration/external-erp/connections/${configId}/employee-mappings/batch`,
       { mappings: data },
     ),
 
@@ -456,7 +456,7 @@ export const externalErpApi = {
     data: Partial<EmployeeMappingRule>,
   ) =>
     apiClient.integration.put(
-      `/api/v1/integration/external-erp/connections/${configId}/employee-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/employee-mappings/${mappingId}`,
       data,
     ),
 
@@ -465,7 +465,7 @@ export const externalErpApi = {
    */
   deleteEmployeeMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/v1/integration/external-erp/connections/${configId}/employee-mappings/${mappingId}`,
+      `/api/integration/external-erp/connections/${configId}/employee-mappings/${mappingId}`,
     ),
 
   // ============================================
@@ -477,7 +477,7 @@ export const externalErpApi = {
    */
   syncAccounts: (data: AccountSyncRequest) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/accounts",
+      "/api/integration/external-erp/sync/accounts",
       data,
     ),
 
@@ -486,7 +486,7 @@ export const externalErpApi = {
    */
   syncCustomers: (data: CustomerSyncRequest) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/customers",
+      "/api/integration/external-erp/sync/customers",
       data,
     ),
 
@@ -495,7 +495,7 @@ export const externalErpApi = {
    */
   syncSuppliers: (data: SupplierSyncRequest) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/suppliers",
+      "/api/integration/external-erp/sync/suppliers",
       data,
     ),
 
@@ -509,7 +509,7 @@ export const externalErpApi = {
     force_sync?: boolean;
   }) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/projects",
+      "/api/integration/external-erp/sync/projects",
       data,
     ),
 
@@ -523,7 +523,7 @@ export const externalErpApi = {
     force_sync?: boolean;
   }) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/departments",
+      "/api/integration/external-erp/sync/departments",
       data,
     ),
 
@@ -537,7 +537,7 @@ export const externalErpApi = {
     force_sync?: boolean;
   }) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/employees",
+      "/api/integration/external-erp/sync/employees",
       data,
     ),
 
@@ -546,7 +546,7 @@ export const externalErpApi = {
    */
   syncVouchers: (data: VoucherSyncRequest) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/vouchers",
+      "/api/integration/external-erp/sync/vouchers",
       data,
     ),
 
@@ -555,7 +555,7 @@ export const externalErpApi = {
    */
   syncInvoices: (data: InvoiceSyncRequest) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/invoices",
+      "/api/integration/external-erp/sync/invoices",
       data,
     ),
 
@@ -568,7 +568,7 @@ export const externalErpApi = {
     sync_modules?: string[];
   }) =>
     apiClient.integration.post(
-      "/api/v1/integration/external-erp/sync/full",
+      "/api/integration/external-erp/sync/full",
       data,
     ),
 
@@ -577,7 +577,7 @@ export const externalErpApi = {
    */
   cancelSync: (logId: string) =>
     apiClient.integration.post(
-      `/api/v1/integration/external-erp/sync/${logId}/cancel`,
+      `/api/integration/external-erp/sync/${logId}/cancel`,
       {},
     ),
 
@@ -597,7 +597,7 @@ export const externalErpApi = {
     page?: number;
     page_size?: number;
   }) =>
-    apiClient.integration.get("/api/v1/integration/external-erp/sync-logs", {
+    apiClient.integration.get("/api/integration/external-erp/sync-logs", {
       params,
     }),
 
@@ -606,7 +606,7 @@ export const externalErpApi = {
    */
   getSyncLog: (logId: string) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/sync-logs/${logId}`,
+      `/api/integration/external-erp/sync-logs/${logId}`,
     ),
 
   /**
@@ -620,7 +620,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/sync-statistics`,
+      `/api/integration/external-erp/connections/${configId}/sync-statistics`,
       { params },
     ),
 
@@ -640,7 +640,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/preview/accounts`,
+      `/api/integration/external-erp/connections/${configId}/preview/accounts`,
       { params },
     ),
 
@@ -656,7 +656,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/preview/customers`,
+      `/api/integration/external-erp/connections/${configId}/preview/customers`,
       { params },
     ),
 
@@ -672,7 +672,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/preview/suppliers`,
+      `/api/integration/external-erp/connections/${configId}/preview/suppliers`,
       { params },
     ),
 
@@ -689,7 +689,7 @@ export const externalErpApi = {
     },
   ) =>
     apiClient.integration.get(
-      `/api/v1/integration/external-erp/connections/${configId}/preview/vouchers`,
+      `/api/integration/external-erp/connections/${configId}/preview/vouchers`,
       { params },
     ),
 
@@ -713,7 +713,7 @@ export const externalErpApi = {
       config.services.integration;
     return downloadBlob(
       baseURL,
-      "/api/v1/integration/external-erp/export/sync-logs",
+      "/api/integration/external-erp/export/sync-logs",
       { params },
     );
   },
@@ -737,7 +737,7 @@ export const externalErpApi = {
       config.services.integration;
     return downloadBlob(
       baseURL,
-      "/api/v1/integration/external-erp/export/mappings",
+      "/api/integration/external-erp/export/mappings",
       { params },
     );
   },

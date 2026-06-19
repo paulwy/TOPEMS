@@ -19,17 +19,17 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/plugin_hrm.contracts",
+            "/api/hrm/contracts",
             get(list_contracts).post(create_contract),
         )
         .route(
-            "/api/plugin_hrm.contracts/{id}",
+            "/api/hrm/contracts/{id}",
             get(get_contract)
                 .put(update_contract)
                 .delete(delete_contract),
         )
-        .route("/api/plugin_hrm.contracts/expiring", get(list_expiring_contracts))
-        .route("/api/plugin_hrm.contracts/{id}/renew", post(create_renewal))
+        .route("/api/hrm/contracts/expiring", get(list_expiring_contracts))
+        .route("/api/hrm/contracts/{id}/renew", post(create_renewal))
         .route("/api/hrm/contract-renewals", get(list_renewals))
         .route(
             "/api/hrm/contract-renewals/{id}",

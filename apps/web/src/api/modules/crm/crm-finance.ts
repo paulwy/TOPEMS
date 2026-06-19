@@ -190,7 +190,7 @@ export const crmFinanceApi = {
    * 获取客户财务信息
    */
   getCustomerFinanceInfo: (customerId: string) =>
-    apiClient.crm.get(`/api/v1/crm/customers/${customerId}/finance`),
+    apiClient.crm.get(`/api/crm/customers/${customerId}/finance`),
 
   /**
    * 更新客户财务信息
@@ -198,7 +198,7 @@ export const crmFinanceApi = {
   updateCustomerFinanceInfo: (
     customerId: string,
     data: Partial<CustomerFinanceInfo>,
-  ) => apiClient.crm.put(`/api/v1/crm/customers/${customerId}/finance`, data),
+  ) => apiClient.crm.put(`/api/crm/customers/${customerId}/finance`, data),
 
   /**
    * 获取客户列表（带财务信息）
@@ -207,7 +207,7 @@ export const crmFinanceApi = {
     status?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.crm.get("/api/v1/crm/customers/with-finance", { params }),
+  }) => apiClient.crm.get("/api/crm/customers/with-finance", { params }),
 
   // -------- 信用管理 --------
 
@@ -219,13 +219,13 @@ export const crmFinanceApi = {
     adjustment_type: "increase" | "decrease" | "set";
     amount: number;
     reason: string;
-  }) => apiClient.crm.post("/api/v1/crm/credit-adjustments", data),
+  }) => apiClient.crm.post("/api/crm/credit-adjustments", data),
 
   /**
    * 审批信用调整
    */
   approveCreditAdjustment: (id: string, approved: boolean, remark?: string) =>
-    apiClient.crm.post(`/api/v1/crm/credit-adjustments/${id}/approve`, {
+    apiClient.crm.post(`/api/crm/credit-adjustments/${id}/approve`, {
       approved,
       remark,
     }),
@@ -238,7 +238,7 @@ export const crmFinanceApi = {
     status?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.crm.get("/api/v1/crm/credit-adjustments", { params }),
+  }) => apiClient.crm.get("/api/crm/credit-adjustments", { params }),
 
   // -------- 销售发票 --------
 
@@ -252,55 +252,55 @@ export const crmFinanceApi = {
     end_date?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.crm.get("/api/v1/crm/invoices", { params }),
+  }) => apiClient.crm.get("/api/crm/invoices", { params }),
 
   /**
    * 获取销售发票详情
    */
   getSalesInvoice: (id: string) =>
-    apiClient.crm.get(`/api/v1/crm/invoices/${id}`),
+    apiClient.crm.get(`/api/crm/invoices/${id}`),
 
   /**
    * 创建销售发票
    */
   createSalesInvoice: (data: Partial<SalesInvoice>) =>
-    apiClient.crm.post("/api/v1/crm/invoices", data),
+    apiClient.crm.post("/api/crm/invoices", data),
 
   /**
    * 更新销售发票
    */
   updateSalesInvoice: (id: string, data: Partial<SalesInvoice>) =>
-    apiClient.crm.put(`/api/v1/crm/invoices/${id}`, data),
+    apiClient.crm.put(`/api/crm/invoices/${id}`, data),
 
   /**
    * 删除销售发票
    */
   deleteSalesInvoice: (id: string) =>
-    apiClient.crm.delete(`/api/v1/crm/invoices/${id}`),
+    apiClient.crm.delete(`/api/crm/invoices/${id}`),
 
   /**
    * 审核销售发票
    */
   approveSalesInvoice: (id: string) =>
-    apiClient.crm.post(`/api/v1/crm/invoices/${id}/approve`, {}),
+    apiClient.crm.post(`/api/crm/invoices/${id}/approve`, {}),
 
   /**
    * 开具发票
    */
   issueSalesInvoice: (id: string) =>
-    apiClient.crm.post(`/api/v1/crm/invoices/${id}/issue`, {}),
+    apiClient.crm.post(`/api/crm/invoices/${id}/issue`, {}),
 
   /**
    * 作废发票
    */
   cancelSalesInvoice: (id: string, reason: string) =>
-    apiClient.crm.post(`/api/v1/crm/invoices/${id}/cancel`, { reason }),
+    apiClient.crm.post(`/api/crm/invoices/${id}/cancel`, { reason }),
 
   /**
    * 红冲发票
    */
   redFlushSalesInvoice: (id: string, reason?: string) =>
-    apiClient.crm.post(`/api/v1/crm/invoices/${id}/red-flush`, { reason }),
+    apiClient.crm.post(`/api/crm/invoices/${id}/red-flush`, { reason }),
 
   // -------- 收款管理 --------
 
@@ -314,31 +314,31 @@ export const crmFinanceApi = {
     status?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.crm.get("/api/v1/crm/collections", { params }),
+  }) => apiClient.crm.get("/api/crm/collections", { params }),
 
   /**
    * 获取收款记录详情
    */
   getCollectionRecord: (id: string) =>
-    apiClient.crm.get(`/api/v1/crm/collections/${id}`),
+    apiClient.crm.get(`/api/crm/collections/${id}`),
 
   /**
    * 创建收款记录
    */
   createCollectionRecord: (data: Partial<CollectionRecord>) =>
-    apiClient.crm.post("/api/v1/crm/collections", data),
+    apiClient.crm.post("/api/crm/collections", data),
 
   /**
    * 确认收款
    */
   confirmCollection: (id: string) =>
-    apiClient.crm.post(`/api/v1/crm/collections/${id}/confirm`, {}),
+    apiClient.crm.post(`/api/crm/collections/${id}/confirm`, {}),
 
   /**
    * 批量确认收款
    */
   batchConfirmCollections: (ids: string[]) =>
-    apiClient.crm.post("/api/v1/crm/collections/batch-confirm", { ids }),
+    apiClient.crm.post("/api/crm/collections/batch-confirm", { ids }),
 
   /**
    * 核销发票
@@ -347,7 +347,7 @@ export const crmFinanceApi = {
     collection_id: string;
     invoice_ids: string[];
     amounts: number[];
-  }) => apiClient.crm.post("/api/v1/crm/collections/reconcile", data),
+  }) => apiClient.crm.post("/api/crm/collections/reconcile", data),
 
   // -------- 收款计划 --------
 
@@ -361,19 +361,19 @@ export const crmFinanceApi = {
     end_date?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.crm.get("/api/v1/crm/collection-plans", { params }),
+  }) => apiClient.crm.get("/api/crm/collection-plans", { params }),
 
   /**
    * 创建收款计划
    */
   createCollectionPlan: (data: Partial<CollectionPlan>) =>
-    apiClient.crm.post("/api/v1/crm/collection-plans", data),
+    apiClient.crm.post("/api/crm/collection-plans", data),
 
   /**
    * 更新收款计划
    */
   updateCollectionPlan: (id: string, data: Partial<CollectionPlan>) =>
-    apiClient.crm.put(`/api/v1/crm/collection-plans/${id}`, data),
+    apiClient.crm.put(`/api/crm/collection-plans/${id}`, data),
 
   /**
    * 完成收款计划
@@ -383,7 +383,7 @@ export const crmFinanceApi = {
     actual_amount: number,
     actual_date: string,
   ) =>
-    apiClient.crm.post(`/api/v1/crm/collection-plans/${id}/complete`, {
+    apiClient.crm.post(`/api/crm/collection-plans/${id}/complete`, {
       actual_amount,
       actual_date,
     }),
@@ -397,7 +397,7 @@ export const crmFinanceApi = {
     company_id?: string;
     customer_ids?: string[];
     as_of_date: string;
-  }) => apiClient.crm.get("/api/v1/crm/reports/receivable-aging", { params }),
+  }) => apiClient.crm.get("/api/crm/reports/receivable-aging", { params }),
 
   /**
    * 获取逾期应收账款列表
@@ -409,13 +409,13 @@ export const crmFinanceApi = {
     page?: number;
     page_size?: number;
   }) =>
-    apiClient.crm.get("/api/v1/crm/reports/overdue-receivables", { params }),
+    apiClient.crm.get("/api/crm/reports/overdue-receivables", { params }),
 
   /**
    * 获取应收账款汇总
    */
   getReceivableSummary: (customerId?: string) =>
-    apiClient.crm.get("/api/v1/crm/reports/receivable-summary", {
+    apiClient.crm.get("/api/crm/reports/receivable-summary", {
       params: { customer_id: customerId },
     }),
 
@@ -427,7 +427,7 @@ export const crmFinanceApi = {
     end_date: string;
     group_by: "customer" | "salesperson" | "month";
   }) =>
-    apiClient.crm.get("/api/v1/crm/reports/collection-statistics", { params }),
+    apiClient.crm.get("/api/crm/reports/collection-statistics", { params }),
 
   // -------- 导出 --------
 
@@ -443,7 +443,7 @@ export const crmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.crm as any).defaults?.baseURL || config.services.crm;
-    return downloadBlob(baseURL, "/api/v1/crm/exports/invoices", { params });
+    return downloadBlob(baseURL, "/api/crm/exports/invoices", { params });
   },
 
   /**
@@ -457,7 +457,7 @@ export const crmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.crm as any).defaults?.baseURL || config.services.crm;
-    return downloadBlob(baseURL, "/api/v1/crm/exports/collections", {
+    return downloadBlob(baseURL, "/api/crm/exports/collections", {
       params,
     });
   },
@@ -473,7 +473,7 @@ export const crmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.crm as any).defaults?.baseURL || config.services.crm;
-    return downloadBlob(baseURL, "/api/v1/crm/exports/receivable-aging", {
+    return downloadBlob(baseURL, "/api/crm/exports/receivable-aging", {
       params,
     });
   },

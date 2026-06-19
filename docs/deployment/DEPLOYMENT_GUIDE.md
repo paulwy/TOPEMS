@@ -118,10 +118,10 @@ REFRESH_SECRET=<your-secure-refresh-secret-at-least-32-characters>
 JWT_EXPIRES_IN=7200
 
 # 服务端口配置
-IAM_PORT=8080
-PORTAL_PORT=3000
-RS_PORT=8081
-LIMS_PORT=8082
+IAM_PORT=8000
+PORTAL_PORT=8066
+RS_PORT=8058
+QUALITY_ASSURANCE_PORT=8052
 ```
 
 ⚠️ **安全警告**：
@@ -629,10 +629,10 @@ let pool = PgPoolOptions::new()
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| IAM | 8080 | 身份认证服务 |
-| Portal | 3000 | 前端门户 |
-| RS | 8081 | 研发管理 |
-| LIMS | 8082 | 实验室管理 |
+| Unified Core (IAM) | 8000 | 身份认证服务 |
+| Portal | 8066 | 企业门户 |
+| RS | 8058 | 研发管理 |
+| Quality Assurance | 8052 | 质量管控服务 |
 | PostgreSQL | 5432 | 数据库 |
 | Redis | 6379 | 缓存 |
 | Nginx | 80/443 | 反向代理 |

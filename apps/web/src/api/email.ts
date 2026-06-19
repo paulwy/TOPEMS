@@ -100,7 +100,7 @@ export const getEmailLogs = async (
     params.append("to_email", toEmail);
   }
   return apiClient.notification.get<EmailLogListResponse>(
-    `/api/v1/email-logs?${params.toString()}`,
+    `/api/email/email-logs?${params.toString()}`,
   );
 };
 
@@ -108,7 +108,7 @@ export const resendEmail = async (
   id: string,
 ): Promise<ApiResponse<{ id: string; status: string }>> => {
   return apiClient.notification.post<{ id: string; status: string }>(
-    `/api/v1/email-logs/${id}/resend`,
+    `/api/email/email-logs/${id}/resend`,
   );
 };
 
@@ -116,7 +116,7 @@ export const batchSendEmail = async (
   request: BatchSendEmailRequest,
 ): Promise<ApiResponse<BatchSendEmailResponse>> => {
   return apiClient.notification.post<BatchSendEmailResponse>(
-    "/api/v1/email/batch-send",
+    "/api/email/batch-send",
     {
       to_emails: request.toEmails,
       cc_email: request.ccEmail,
@@ -132,25 +132,25 @@ export const batchSendEmail = async (
 export const getEmailStats = async (): Promise<
   ApiResponse<EmailStatsResponse>
 > => {
-  return apiClient.notification.get<EmailStatsResponse>("/api/v1/email/stats");
+  return apiClient.notification.get<EmailStatsResponse>("/api/email/stats");
 };
 
 export const getEmailLog = async (
   id: string,
 ): Promise<ApiResponse<EmailLog>> => {
-  return apiClient.notification.get<EmailLog>(`/api/v1/email-logs/${id}`);
+  return apiClient.notification.get<EmailLog>(`/api/email/email-logs/${id}`);
 };
 
 export const deleteEmailLog = async (
   id: string,
 ): Promise<ApiResponse<string>> => {
-  return apiClient.notification.delete<string>(`/api/v1/email-logs/${id}`);
+  return apiClient.notification.delete<string>(`/api/email/email-logs/${id}`);
 };
 
 export const sendEmail = async (
   request: SendEmailRequest,
 ): Promise<ApiResponse<EmailLog>> => {
-  return apiClient.notification.post<EmailLog>("/api/v1/email/send", {
+  return apiClient.notification.post<EmailLog>("/api/email/send", {
     to_email: request.toEmail,
     cc_email: request.ccEmail,
     bcc_email: request.bccEmail,
@@ -165,7 +165,7 @@ export const sendEmailWithTemplate = async (
   request: SendEmailWithTemplateRequest,
 ): Promise<ApiResponse<EmailLog>> => {
   return apiClient.notification.post<EmailLog>(
-    "/api/v1/email/send-with-template",
+    "/api/email/send-with-template",
     {
       to_email: request.toEmail,
       cc_email: request.ccEmail,
@@ -181,7 +181,7 @@ export const getEmailTemplates = async (): Promise<
   ApiResponse<{ items: EmailTemplate[]; total: number }>
 > => {
   return apiClient.notification.get<{ items: EmailTemplate[]; total: number }>(
-    "/api/v1/email-templates",
+    "/api/email/email-templates",
   );
 };
 
@@ -189,14 +189,14 @@ export const getEmailTemplate = async (
   id: string,
 ): Promise<ApiResponse<EmailTemplate>> => {
   return apiClient.notification.get<EmailTemplate>(
-    `/api/v1/email-templates/${id}`,
+    `/api/email/email-templates/${id}`,
   );
 };
 
 export const createEmailTemplate = async (
   template: Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">,
 ): Promise<ApiResponse<EmailTemplate>> => {
-  return apiClient.notification.post<EmailTemplate>("/api/v1/email-templates", {
+  return apiClient.notification.post<EmailTemplate>("/api/email/email-templates", {
     template_name: template.templateName,
     subject: template.subject,
     body: template.body,
@@ -209,7 +209,7 @@ export const updateEmailTemplate = async (
   template: Omit<EmailTemplate, "id" | "createdAt" | "updatedAt">,
 ): Promise<ApiResponse<EmailTemplate>> => {
   return apiClient.notification.put<EmailTemplate>(
-    `/api/v1/email-templates/${id}`,
+    `/api/email/email-templates/${id}`,
     {
       template_name: template.templateName,
       subject: template.subject,
@@ -222,5 +222,5 @@ export const updateEmailTemplate = async (
 export const deleteEmailTemplate = async (
   id: string,
 ): Promise<ApiResponse<string>> => {
-  return apiClient.notification.delete<string>(`/api/v1/email-templates/${id}`);
+  return apiClient.notification.delete<string>(`/api/email/email-templates/${id}`);
 };

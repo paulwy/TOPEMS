@@ -188,14 +188,14 @@ const exchangeApi = {
   sendMessage: (topic: string, message: any) =>
     import("../api/client").then((c) =>
       c.apiClient.integration.post(
-        `/api/v1/exchange/messages/${topic}`,
+        `/api/integration/messages/${topic}`,
         message,
       ),
     ),
 
   publishEvent: (eventType: string, payload: any) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.post("/api/v1/exchange/events", {
+      c.apiClient.integration.post("/api/integration/events", {
         event_type: eventType,
         payload,
       }),
@@ -204,13 +204,13 @@ const exchangeApi = {
   // 同步任务
   getSyncTasks: () =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/v1/exchange/sync/tasks"),
+      c.apiClient.integration.get("/api/integration/sync/tasks"),
     ),
 
   triggerSync: (taskId: string, params?: { full_sync?: boolean }) =>
     import("../api/client").then((c) =>
       c.apiClient.integration.post(
-        `/api/v1/exchange/sync/tasks/${taskId}/trigger`,
+        `/api/integration/sync/tasks/${taskId}/trigger`,
         params,
       ),
     ),
@@ -223,34 +223,34 @@ const exchangeApi = {
     page_size?: number;
   }) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/v1/exchange/sync/history", { params }),
+      c.apiClient.integration.get("/api/integration/sync/history", { params }),
     ),
 
   // 订阅管理
   getSubscriptions: (params?: { event_type?: string; status?: string }) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/v1/exchange/subscriptions", { params }),
+      c.apiClient.integration.get("/api/integration/subscriptions", { params }),
     ),
 
   createSubscription: (data: Partial<Subscription>) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.post("/api/v1/exchange/subscriptions", data),
+      c.apiClient.integration.post("/api/integration/subscriptions", data),
     ),
 
   updateSubscription: (id: string, data: Partial<Subscription>) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.put(`/api/v1/exchange/subscriptions/${id}`, data),
+      c.apiClient.integration.put(`/api/integration/subscriptions/${id}`, data),
     ),
 
   deleteSubscription: (id: string) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.delete(`/api/v1/exchange/subscriptions/${id}`),
+      c.apiClient.integration.delete(`/api/integration/subscriptions/${id}`),
     ),
 
   // 事件定义
   getEventDefinitions: () =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/v1/exchange/events/definitions"),
+      c.apiClient.integration.get("/api/integration/events/definitions"),
     ),
 
   // 消息监控
@@ -263,18 +263,18 @@ const exchangeApi = {
     page_size?: number;
   }) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/v1/exchange/messages", { params }),
+      c.apiClient.integration.get("/api/integration/messages", { params }),
     ),
 
   getDeadLetterMessages: (params?: { page?: number; page_size?: number }) =>
     import("../api/client").then((c) =>
-      c.apiClient.integration.get("/api/v1/exchange/dead-letter", { params }),
+      c.apiClient.integration.get("/api/integration/dead-letter", { params }),
     ),
 
   retryDeadLetter: (messageId: string) =>
     import("../api/client").then((c) =>
       c.apiClient.integration.post(
-        `/api/v1/exchange/dead-letter/${messageId}/retry`,
+        `/api/integration/dead-letter/${messageId}/retry`,
         {},
       ),
     ),

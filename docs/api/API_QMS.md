@@ -1,10 +1,13 @@
 # TOPEMS 质量管理系统 API
 
-**服务**: topems-qms
-**端口**: 待定
-**版本**: v1
+**服务**: topems-qms (集成在 quality-assurance)
+**端口**: 8032
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/qms/` (例如 `/api/qms/standards`)
+> **实际访问地址**: `http://localhost:8032/api/qms/`
 
 ## 1. 概述
 
@@ -14,26 +17,26 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 质量标准列表 | /api/v1/standards | GET |
-| 质量标准详情 | /api/v1/standards/{id} | GET |
-| 创建质量标准 | /api/v1/standards | POST |
-| 更新质量标准 | /api/v1/standards/{id} | PUT |
-| 删除质量标准 | /api/v1/standards/{id} | DELETE |
-| 质量检查列表 | /api/v1/checks | GET |
-| 质量检查详情 | /api/v1/checks/{id} | GET |
-| 创建质量检查 | /api/v1/checks | POST |
-| 更新质量检查 | /api/v1/checks/{id} | PUT |
-| 删除质量检查 | /api/v1/checks/{id} | DELETE |
-| 质量问题列表 | /api/v1/issues | GET |
-| 质量问题详情 | /api/v1/issues/{id} | GET |
-| 创建质量问题 | /api/v1/issues | POST |
-| 更新质量问题 | /api/v1/issues/{id} | PUT |
-| 删除质量问题 | /api/v1/issues/{id} | DELETE |
-| 质量改进列表 | /api/v1/improvements | GET |
-| 质量改进详情 | /api/v1/improvements/{id} | GET |
-| 创建质量改进 | /api/v1/improvements | POST |
-| 更新质量改进 | /api/v1/improvements/{id} | PUT |
-| 删除质量改进 | /api/v1/improvements/{id} | DELETE |
+| 质量标准列表 | /api/qms/standards | GET |
+| 质量标准详情 | /api/qms/standards/{id} | GET |
+| 创建质量标准 | /api/qms/standards | POST |
+| 更新质量标准 | /api/qms/standards/{id} | PUT |
+| 删除质量标准 | /api/qms/standards/{id} | DELETE |
+| 质量检查列表 | /api/qms/checks | GET |
+| 质量检查详情 | /api/qms/checks/{id} | GET |
+| 创建质量检查 | /api/qms/checks | POST |
+| 更新质量检查 | /api/qms/checks/{id} | PUT |
+| 删除质量检查 | /api/qms/checks/{id} | DELETE |
+| 质量问题列表 | /api/qms/issues | GET |
+| 质量问题详情 | /api/qms/issues/{id} | GET |
+| 创建质量问题 | /api/qms/issues | POST |
+| 更新质量问题 | /api/qms/issues/{id} | PUT |
+| 删除质量问题 | /api/qms/issues/{id} | DELETE |
+| 质量改进列表 | /api/qms/improvements | GET |
+| 质量改进详情 | /api/qms/improvements/{id} | GET |
+| 创建质量改进 | /api/qms/improvements | POST |
+| 更新质量改进 | /api/qms/improvements/{id} | PUT |
+| 删除质量改进 | /api/qms/improvements/{id} | DELETE |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -119,7 +122,7 @@
 
 ### 2.1 获取质量标准列表
 
-**端点**: `GET /api/v1/standards`
+**端点**: `GET /api/qms/standards`
 
 **描述**: 获取所有质量标准
 
@@ -136,7 +139,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8007/api/v1/standards?page=1&page_size=20&status=active" \
+curl -X GET "http://localhost:8032/api/qms/standards?page=1&page_size=20&status=active" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -178,7 +181,7 @@ curl -X GET "http://localhost:8007/api/v1/standards?page=1&page_size=20&status=a
 
 ### 2.2 获取质量标准详情
 
-**端点**: `GET /api/v1/standards/{id}`
+**端点**: `GET /api/qms/standards/{id}`
 
 **描述**: 获取指定质量标准的详细信息
 
@@ -192,7 +195,7 @@ curl -X GET "http://localhost:8007/api/v1/standards?page=1&page_size=20&status=a
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8007/api/v1/standards/std-001 \
+curl -X GET http://localhost:8032/api/qms/standards/std-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -223,7 +226,7 @@ curl -X GET http://localhost:8007/api/v1/standards/std-001 \
 
 ### 2.3 创建质量标准
 
-**端点**: `POST /api/v1/standards`
+**端点**: `POST /api/qms/standards`
 
 **描述**: 创建新的质量标准
 
@@ -264,7 +267,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8007/api/v1/standards \
+curl -X POST http://localhost:8032/api/qms/standards \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -304,7 +307,7 @@ curl -X POST http://localhost:8007/api/v1/standards \
 
 ### 2.4 更新质量标准
 
-**端点**: `PUT /api/v1/standards/{id}`
+**端点**: `PUT /api/qms/standards/{id}`
 
 **描述**: 更新指定质量标准
 
@@ -334,7 +337,7 @@ curl -X POST http://localhost:8007/api/v1/standards \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8007/api/v1/standards/std-001 \
+curl -X PUT http://localhost:8032/api/qms/standards/std-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -371,7 +374,7 @@ curl -X PUT http://localhost:8007/api/v1/standards/std-001 \
 
 ### 2.5 删除质量标准
 
-**端点**: `DELETE /api/v1/standards/{id}`
+**端点**: `DELETE /api/qms/standards/{id}`
 
 **描述**: 删除指定质量标准
 
@@ -382,7 +385,7 @@ curl -X PUT http://localhost:8007/api/v1/standards/std-001 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8007/api/v1/standards/std-001 \
+curl -X DELETE http://localhost:8032/api/qms/standards/std-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -402,7 +405,7 @@ curl -X DELETE http://localhost:8007/api/v1/standards/std-001 \
 
 ### 3.1 获取质量检查列表
 
-**端点**: `GET /api/v1/checks`
+**端点**: `GET /api/qms/checks`
 
 **描述**: 获取所有质量检查记录
 
@@ -419,7 +422,7 @@ curl -X DELETE http://localhost:8007/api/v1/standards/std-001 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8007/api/v1/checks?page=1&page_size=20&status=completed" \
+curl -X GET "http://localhost:8032/api/qms/checks?page=1&page_size=20&status=completed" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -451,7 +454,7 @@ curl -X GET "http://localhost:8007/api/v1/checks?page=1&page_size=20&status=comp
 
 ### 3.2 获取质量检查详情
 
-**端点**: `GET /api/v1/checks/{id}`
+**端点**: `GET /api/qms/checks/{id}`
 
 **描述**: 获取指定质量检查的详细信息
 
@@ -465,7 +468,7 @@ curl -X GET "http://localhost:8007/api/v1/checks?page=1&page_size=20&status=comp
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8007/api/v1/checks/check-001 \
+curl -X GET http://localhost:8032/api/qms/checks/check-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -473,7 +476,7 @@ curl -X GET http://localhost:8007/api/v1/checks/check-001 \
 
 ### 3.3 创建质量检查
 
-**端点**: `POST /api/v1/checks`
+**端点**: `POST /api/qms/checks`
 
 **描述**: 创建新的质量检查记录
 
@@ -516,7 +519,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8007/api/v1/checks \
+curl -X POST http://localhost:8032/api/qms/checks \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -535,7 +538,7 @@ curl -X POST http://localhost:8007/api/v1/checks \
 
 ### 3.4 更新质量检查
 
-**端点**: `PUT /api/v1/checks/{id}`
+**端点**: `PUT /api/qms/checks/{id}`
 
 **描述**: 更新指定质量检查
 
@@ -562,7 +565,7 @@ curl -X POST http://localhost:8007/api/v1/checks \
 
 ### 3.5 删除质量检查
 
-**端点**: `DELETE /api/v1/checks/{id}`
+**端点**: `DELETE /api/qms/checks/{id}`
 
 **描述**: 删除指定质量检查
 
@@ -573,7 +576,7 @@ curl -X POST http://localhost:8007/api/v1/checks \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8007/api/v1/checks/check-001 \
+curl -X DELETE http://localhost:8032/api/qms/checks/check-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -583,7 +586,7 @@ curl -X DELETE http://localhost:8007/api/v1/checks/check-001 \
 
 ### 4.1 获取质量问题列表
 
-**端点**: `GET /api/v1/issues`
+**端点**: `GET /api/qms/issues`
 
 **描述**: 获取所有质量问题
 
@@ -598,7 +601,7 @@ curl -X DELETE http://localhost:8007/api/v1/checks/check-001 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
+curl -X GET "http://localhost:8032/api/qms/issues?status=open" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -632,7 +635,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 4.2 获取质量问题详情
 
-**端点**: `GET /api/v1/issues/{id}`
+**端点**: `GET /api/qms/issues/{id}`
 
 **描述**: 获取指定质量问题的详细信息
 
@@ -647,7 +650,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 4.3 创建质量问题
 
-**端点**: `POST /api/v1/issues`
+**端点**: `POST /api/qms/issues`
 
 **描述**: 创建新的质量问题
 
@@ -685,7 +688,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 4.4 更新质量问题
 
-**端点**: `PUT /api/v1/issues/{id}`
+**端点**: `PUT /api/qms/issues/{id}`
 
 **描述**: 更新指定质量问题
 
@@ -712,7 +715,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 4.5 删除质量问题
 
-**端点**: `DELETE /api/v1/issues/{id}`
+**端点**: `DELETE /api/qms/issues/{id}`
 
 **描述**: 删除指定质量问题
 
@@ -726,7 +729,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 5.1 获取质量改进列表
 
-**端点**: `GET /api/v1/improvements`
+**端点**: `GET /api/qms/improvements`
 
 **描述**: 获取所有质量改进建议
 
@@ -741,7 +744,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 5.2 获取质量改进详情
 
-**端点**: `GET /api/v1/improvements/{id}`
+**端点**: `GET /api/qms/improvements/{id}`
 
 **描述**: 获取指定质量改进的详细信息
 
@@ -751,7 +754,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 5.3 创建质量改进
 
-**端点**: `POST /api/v1/improvements`
+**端点**: `POST /api/qms/improvements`
 
 **描述**: 创建新的质量改进建议
 
@@ -777,7 +780,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 5.4 更新质量改进
 
-**端点**: `PUT /api/v1/improvements/{id}`
+**端点**: `PUT /api/qms/improvements/{id}`
 
 **描述**: 更新指定质量改进
 
@@ -789,7 +792,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 
 ### 5.5 删除质量改进
 
-**端点**: `DELETE /api/v1/improvements/{id}`
+**端点**: `DELETE /api/qms/improvements/{id}`
 
 **描述**: 删除指定质量改进
 
@@ -812,7 +815,7 @@ curl -X GET "http://localhost:8007/api/v1/issues?status=open" \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8007/health
+curl -X GET http://localhost:8032/health
 ```
 
 **成功响应** (200 OK):

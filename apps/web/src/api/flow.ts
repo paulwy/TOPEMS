@@ -278,64 +278,64 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 // ========== 工作流 API ==========
 
 export const workflowApi = {
-  ...createCrudApi<Workflow>("/api/plugins/workflow/api/flow/workflows"),
+  ...createCrudApi<Workflow>("/api/flow/workflows"),
 
   listWorkflows: (params?: ListParams) =>
-    createCrudApi<Workflow>("/api/plugins/workflow/api/flow/workflows").list(params),
+    createCrudApi<Workflow>("/api/flow/workflows").list(params),
 
   getWorkflow: (id: string) =>
-    createCrudApi<Workflow>("/api/plugins/workflow/api/flow/workflows").get(id),
+    createCrudApi<Workflow>("/api/flow/workflows").get(id),
 
   createWorkflow: (data: CreateWorkflowRequest) =>
-    createCrudApi<Workflow>("/api/plugins/workflow/api/flow/workflows").create(data),
+    createCrudApi<Workflow>("/api/flow/workflows").create(data),
 
   updateWorkflow: (id: string, data: UpdateWorkflowRequest) =>
-    createCrudApi<Workflow>("/api/plugins/workflow/api/flow/workflows").update(id, data),
+    createCrudApi<Workflow>("/api/flow/workflows").update(id, data),
 
   deleteWorkflow: (id: string) =>
-    createCrudApi<Workflow>("/api/plugins/workflow/api/flow/workflows").delete(id),
+    createCrudApi<Workflow>("/api/flow/workflows").delete(id),
 
   getVersions: (workflowId: string, params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/workflows/${workflowId}/versions`, {
+    return apiClient.flow.get(`/api/flow/workflows/${workflowId}/versions`, {
       params,
     });
   },
 
   createVersion: (workflowId: string, data: CreateVersionRequest) => {
     return apiClient.flow.post(
-      `/api/plugins/workflow/api/flow/workflows/${workflowId}/versions`,
+      `/api/flow/workflows/${workflowId}/versions`,
       data,
     );
   },
 
   getVersion: (workflowId: string, versionId: string) => {
     return apiClient.flow.get(
-      `/api/plugins/workflow/api/flow/workflows/${workflowId}/versions/${versionId}`,
+      `/api/flow/workflows/${workflowId}/versions/${versionId}`,
     );
   },
 
   activateVersion: (workflowId: string, versionId: string) => {
     return apiClient.flow.post(
-      `/api/plugins/workflow/api/flow/workflows/${workflowId}/versions/${versionId}/activate`,
+      `/api/flow/workflows/${workflowId}/versions/${versionId}/activate`,
     );
   },
 
   rollback: (workflowId: string, data: RollbackRequest) => {
     return apiClient.flow.post(
-      `/api/plugins/workflow/api/flow/workflows/${workflowId}/rollback`,
+      `/api/flow/workflows/${workflowId}/rollback`,
       data,
     );
   },
 
   compareVersions: (workflowId: string, version1: string, version2: string) => {
     return apiClient.flow.get(
-      `/api/plugins/workflow/api/flow/workflows/${workflowId}/compare/${version1}/${version2}`,
+      `/api/flow/workflows/${workflowId}/compare/${version1}/${version2}`,
     );
   },
 
   deleteVersion: (workflowId: string, versionId: string) => {
     return apiClient.flow.delete(
-      `/api/plugins/workflow/api/flow/workflows/${workflowId}/versions/${versionId}`,
+      `/api/flow/workflows/${workflowId}/versions/${versionId}`,
     );
   },
 };
@@ -344,23 +344,23 @@ export const workflowApi = {
 
 export const instanceApi = {
   list: (params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/instances`, { params });
+    return apiClient.flow.get(`/api/flow/instances`, { params });
   },
 
   start: (data: CreateWorkflowInstanceRequest) => {
-    return apiClient.flow.post("/api/plugins/workflow/api/flow/instances", data);
+    return apiClient.flow.post("/api/flow/instances", data);
   },
 
   get: (id: string) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/instances/${id}`);
+    return apiClient.flow.get(`/api/flow/instances/${id}`);
   },
 
   getDetails: (id: string) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/instances/${id}/details`);
+    return apiClient.flow.get(`/api/flow/instances/${id}/details`);
   },
 
   listInstances: (params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/instances`, { params });
+    return apiClient.flow.get(`/api/flow/instances`, { params });
   },
 };
 
@@ -368,31 +368,31 @@ export const instanceApi = {
 
 export const approvalApi = {
   list: (params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/approvals`, { params });
+    return apiClient.flow.get(`/api/flow/approvals`, { params });
   },
 
   create: (data: CreateApprovalRequest) => {
-    return apiClient.flow.post("/api/plugins/workflow/api/flow/approvals", data);
+    return apiClient.flow.post("/api/flow/approvals", data);
   },
 
   get: (id: string) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/approvals/${id}`);
+    return apiClient.flow.get(`/api/flow/approvals/${id}`);
   },
 
   process: (id: string, data: ProcessApprovalRequest) => {
-    return apiClient.flow.post(`/api/plugins/workflow/api/flow/approvals/${id}/process`, data);
+    return apiClient.flow.post(`/api/flow/approvals/${id}/process`, data);
   },
 
   listApprovals: (params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/approvals`, { params });
+    return apiClient.flow.get(`/api/flow/approvals`, { params });
   },
 
   getRecords: (params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/records`, { params });
+    return apiClient.flow.get(`/api/flow/records`, { params });
   },
 
   getRecordsByApproval: (approvalId: string) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/records/${approvalId}`);
+    return apiClient.flow.get(`/api/flow/records/${approvalId}`);
   },
 };
 
@@ -400,23 +400,23 @@ export const approvalApi = {
 
 export const notificationApi = {
   list: (userId: string, params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/notifications/${userId}`, { params });
+    return apiClient.flow.get(`/api/flow/notifications/${userId}`, { params });
   },
 
   getCount: (userId: string) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/notifications/${userId}/count`);
+    return apiClient.flow.get(`/api/flow/notifications/${userId}/count`);
   },
 
   markAsRead: (userId: string) => {
-    return apiClient.flow.post(`/api/plugins/workflow/api/flow/notifications/${userId}/read`);
+    return apiClient.flow.post(`/api/flow/notifications/${userId}/read`);
   },
 
   create: (data: CreateNotificationRequest) => {
-    return apiClient.flow.post("/api/plugins/workflow/api/flow/notifications", data);
+    return apiClient.flow.post("/api/flow/notifications", data);
   },
 
   listNotifications: (userId: string, params?: ListParams) => {
-    return apiClient.flow.get(`/api/plugins/workflow/api/flow/notifications/${userId}`, { params });
+    return apiClient.flow.get(`/api/flow/notifications/${userId}`, { params });
   },
 };
 
@@ -461,15 +461,15 @@ export const flowApi = {
   deleteVersion: workflowApi.deleteVersion,
 
   getStatistics: async (): Promise<ApiResponse<StatisticsResponse>> => {
-    return apiClient.flow.get("/api/plugins/workflow/api/flow/statistics");
+    return apiClient.flow.get("/api/flow/statistics");
   },
 
   getPerformance: async (): Promise<ApiResponse<PerformanceStats>> => {
-    return apiClient.flow.get("/api/plugins/workflow/api/flow/performance");
+    return apiClient.flow.get("/api/flow/performance");
   },
 
   resetPerformance: async (): Promise<ApiResponse<string>> => {
-    return apiClient.flow.post("/api/plugins/workflow/api/flow/performance/reset");
+    return apiClient.flow.post("/api/flow/performance/reset");
   },
 
   health: async (): Promise<ApiResponse<string>> => {

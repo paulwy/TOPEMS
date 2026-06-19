@@ -526,7 +526,7 @@ const CustomerDetailPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, lg: "repeat(2, 1fr)" },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
                 gap: 3,
               }}
             >

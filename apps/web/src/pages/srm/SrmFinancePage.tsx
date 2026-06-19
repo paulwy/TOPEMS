@@ -431,7 +431,7 @@ const SrmFinancePage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: 1, md: 2, lg: 3, xl: 6 },
+            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" },
             gap: 2,
             mb: 4,
           }}
@@ -489,7 +489,7 @@ const SrmFinancePage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: 1, lg: 2 },
+            gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
             gap: 4,
             mb: 4,
           }}

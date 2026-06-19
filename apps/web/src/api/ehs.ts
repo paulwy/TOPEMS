@@ -265,25 +265,25 @@ export const ehsApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     return apiClient.ehs.get<PaginatedResponse<SafetyHazard>>(
-      `/api/v1/hazards?${queryParams.toString()}`,
+      `/api/ehs/hazards?${queryParams.toString()}`,
     );
   },
   getHazard: async (id: string): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.get<SafetyHazard>(`/api/v1/hazards/${id}`);
+    return apiClient.ehs.get<SafetyHazard>(`/api/ehs/hazards/${id}`);
   },
   createHazard: async (
     data: CreateSafetyHazardRequest,
   ): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.post<SafetyHazard>("/api/v1/hazards", data);
+    return apiClient.ehs.post<SafetyHazard>("/api/ehs/hazards", data);
   },
   updateHazard: async (
     id: string,
     data: Partial<CreateSafetyHazardRequest>,
   ): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.put<SafetyHazard>(`/api/v1/hazards/${id}`, data);
+    return apiClient.ehs.put<SafetyHazard>(`/api/ehs/hazards/${id}`, data);
   },
   deleteHazard: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/v1/hazards/${id}`);
+    return apiClient.ehs.delete<void>(`/api/ehs/hazards/${id}`);
   },
 
   // Risk Assessments
@@ -291,7 +291,7 @@ export const ehsApi = {
     hazardId: string,
   ): Promise<ApiResponse<PaginatedResponse<RiskAssessment>>> => {
     return apiClient.ehs.get<PaginatedResponse<RiskAssessment>>(
-      `/api/v1/hazards/${hazardId}/assessments`,
+      `/api/ehs/hazards/${hazardId}/assessments`,
     );
   },
   createRiskAssessment: async (
@@ -299,7 +299,7 @@ export const ehsApi = {
     data: CreateRiskAssessmentRequest,
   ): Promise<ApiResponse<RiskAssessment>> => {
     return apiClient.ehs.post<RiskAssessment>(
-      `/api/v1/hazards/${hazardId}/assessments`,
+      `/api/ehs/hazards/${hazardId}/assessments`,
       data,
     );
   },
@@ -309,7 +309,7 @@ export const ehsApi = {
     data: Partial<CreateRiskAssessmentRequest>,
   ): Promise<ApiResponse<RiskAssessment>> => {
     return apiClient.ehs.put<RiskAssessment>(
-      `/api/v1/hazards/${hazardId}/assessments/${assessmentId}`,
+      `/api/ehs/hazards/${hazardId}/assessments/${assessmentId}`,
       data,
     );
   },
@@ -319,7 +319,7 @@ export const ehsApi = {
     hazardId: string,
   ): Promise<ApiResponse<PaginatedResponse<ControlMeasure>>> => {
     return apiClient.ehs.get<PaginatedResponse<ControlMeasure>>(
-      `/api/v1/hazards/${hazardId}/controls`,
+      `/api/ehs/hazards/${hazardId}/controls`,
     );
   },
   createControlMeasure: async (
@@ -327,7 +327,7 @@ export const ehsApi = {
     data: CreateControlMeasureRequest,
   ): Promise<ApiResponse<ControlMeasure>> => {
     return apiClient.ehs.post<ControlMeasure>(
-      `/api/v1/hazards/${hazardId}/controls`,
+      `/api/ehs/hazards/${hazardId}/controls`,
       data,
     );
   },
@@ -337,7 +337,7 @@ export const ehsApi = {
     data: Partial<CreateControlMeasureRequest>,
   ): Promise<ApiResponse<ControlMeasure>> => {
     return apiClient.ehs.put<ControlMeasure>(
-      `/api/v1/hazards/${hazardId}/controls/${measureId}`,
+      `/api/ehs/hazards/${hazardId}/controls/${measureId}`,
       data,
     );
   },
@@ -346,7 +346,7 @@ export const ehsApi = {
     measureId: string,
   ): Promise<ApiResponse<void>> => {
     return apiClient.ehs.delete<void>(
-      `/api/v1/hazards/${hazardId}/controls/${measureId}`,
+      `/api/ehs/hazards/${hazardId}/controls/${measureId}`,
     );
   },
 
@@ -362,25 +362,25 @@ export const ehsApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     return apiClient.ehs.get<PaginatedResponse<SafetyCheck>>(
-      `/api/v1/checks?${queryParams.toString()}`,
+      `/api/ehs/checks?${queryParams.toString()}`,
     );
   },
   getCheck: async (id: string): Promise<ApiResponse<SafetyCheck>> => {
-    return apiClient.ehs.get<SafetyCheck>(`/api/v1/checks/${id}`);
+    return apiClient.ehs.get<SafetyCheck>(`/api/ehs/checks/${id}`);
   },
   createCheck: async (
     data: CreateSafetyCheckRequest,
   ): Promise<ApiResponse<SafetyCheck>> => {
-    return apiClient.ehs.post<SafetyCheck>("/api/v1/checks", data);
+    return apiClient.ehs.post<SafetyCheck>("/api/ehs/checks", data);
   },
   updateCheck: async (
     id: string,
     data: Partial<CreateSafetyCheckRequest>,
   ): Promise<ApiResponse<SafetyCheck>> => {
-    return apiClient.ehs.put<SafetyCheck>(`/api/v1/checks/${id}`, data);
+    return apiClient.ehs.put<SafetyCheck>(`/api/ehs/checks/${id}`, data);
   },
   deleteCheck: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/v1/checks/${id}`);
+    return apiClient.ehs.delete<void>(`/api/ehs/checks/${id}`);
   },
 
   // Emergency Plans
@@ -395,25 +395,25 @@ export const ehsApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     return apiClient.ehs.get<PaginatedResponse<EmergencyPlan>>(
-      `/api/v1/plans?${queryParams.toString()}`,
+      `/api/ehs/plans?${queryParams.toString()}`,
     );
   },
   getPlan: async (id: string): Promise<ApiResponse<EmergencyPlan>> => {
-    return apiClient.ehs.get<EmergencyPlan>(`/api/v1/plans/${id}`);
+    return apiClient.ehs.get<EmergencyPlan>(`/api/ehs/plans/${id}`);
   },
   createPlan: async (
     data: CreateEmergencyPlanRequest,
   ): Promise<ApiResponse<EmergencyPlan>> => {
-    return apiClient.ehs.post<EmergencyPlan>("/api/v1/plans", data);
+    return apiClient.ehs.post<EmergencyPlan>("/api/ehs/plans", data);
   },
   updatePlan: async (
     id: string,
     data: Partial<CreateEmergencyPlanRequest>,
   ): Promise<ApiResponse<EmergencyPlan>> => {
-    return apiClient.ehs.put<EmergencyPlan>(`/api/v1/plans/${id}`, data);
+    return apiClient.ehs.put<EmergencyPlan>(`/api/ehs/plans/${id}`, data);
   },
   deletePlan: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/v1/plans/${id}`);
+    return apiClient.ehs.delete<void>(`/api/ehs/plans/${id}`);
   },
 
   // Drill Records
@@ -427,25 +427,25 @@ export const ehsApi = {
     if (params?.search) queryParams.append("search", params.search);
 
     return apiClient.ehs.get<PaginatedResponse<DrillRecord>>(
-      `/api/v1/drills?${queryParams.toString()}`,
+      `/api/ehs/drills?${queryParams.toString()}`,
     );
   },
   getDrill: async (id: string): Promise<ApiResponse<DrillRecord>> => {
-    return apiClient.ehs.get<DrillRecord>(`/api/v1/drills/${id}`);
+    return apiClient.ehs.get<DrillRecord>(`/api/ehs/drills/${id}`);
   },
   createDrill: async (
     data: CreateDrillRecordRequest,
   ): Promise<ApiResponse<DrillRecord>> => {
-    return apiClient.ehs.post<DrillRecord>("/api/v1/drills", data);
+    return apiClient.ehs.post<DrillRecord>("/api/ehs/drills", data);
   },
   updateDrill: async (
     id: string,
     data: Partial<CreateDrillRecordRequest>,
   ): Promise<ApiResponse<DrillRecord>> => {
-    return apiClient.ehs.put<DrillRecord>(`/api/v1/drills/${id}`, data);
+    return apiClient.ehs.put<DrillRecord>(`/api/ehs/drills/${id}`, data);
   },
   deleteDrill: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/v1/drills/${id}`);
+    return apiClient.ehs.delete<void>(`/api/ehs/drills/${id}`);
   },
 
   // Incidents
@@ -460,25 +460,25 @@ export const ehsApi = {
     if (params?.status) queryParams.append("status", params.status);
 
     return apiClient.ehs.get<PaginatedResponse<Incident>>(
-      `/api/v1/incidents?${queryParams.toString()}`,
+      `/api/ehs/incidents?${queryParams.toString()}`,
     );
   },
   getIncident: async (id: string): Promise<ApiResponse<Incident>> => {
-    return apiClient.ehs.get<Incident>(`/api/v1/incidents/${id}`);
+    return apiClient.ehs.get<Incident>(`/api/ehs/incidents/${id}`);
   },
   createIncident: async (
     data: CreateIncidentRequest,
   ): Promise<ApiResponse<Incident>> => {
-    return apiClient.ehs.post<Incident>("/api/v1/incidents", data);
+    return apiClient.ehs.post<Incident>("/api/ehs/incidents", data);
   },
   updateIncident: async (
     id: string,
     data: Partial<CreateIncidentRequest>,
   ): Promise<ApiResponse<Incident>> => {
-    return apiClient.ehs.put<Incident>(`/api/v1/incidents/${id}`, data);
+    return apiClient.ehs.put<Incident>(`/api/ehs/incidents/${id}`, data);
   },
   deleteIncident: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/v1/incidents/${id}`);
+    return apiClient.ehs.delete<void>(`/api/ehs/incidents/${id}`);
   },
 
   // Incident Actions
@@ -486,7 +486,7 @@ export const ehsApi = {
     incidentId: string,
   ): Promise<ApiResponse<PaginatedResponse<IncidentAction>>> => {
     return apiClient.ehs.get<PaginatedResponse<IncidentAction>>(
-      `/api/v1/incidents/${incidentId}/actions`,
+      `/api/ehs/incidents/${incidentId}/actions`,
     );
   },
   createIncidentAction: async (
@@ -494,7 +494,7 @@ export const ehsApi = {
     data: CreateIncidentActionRequest,
   ): Promise<ApiResponse<IncidentAction>> => {
     return apiClient.ehs.post<IncidentAction>(
-      `/api/v1/incidents/${incidentId}/actions`,
+      `/api/ehs/incidents/${incidentId}/actions`,
       data,
     );
   },
@@ -504,7 +504,7 @@ export const ehsApi = {
     data: Partial<CreateIncidentActionRequest>,
   ): Promise<ApiResponse<IncidentAction>> => {
     return apiClient.ehs.put<IncidentAction>(
-      `/api/v1/incidents/${incidentId}/actions/${actionId}`,
+      `/api/ehs/incidents/${incidentId}/actions/${actionId}`,
       data,
     );
   },

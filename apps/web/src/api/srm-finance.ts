@@ -212,7 +212,7 @@ export const srmFinanceApi = {
    * 获取供应商财务信息
    */
   getSupplierFinanceInfo: (supplierId: string) =>
-    apiClient.srm.get(`/api/v1/srm/suppliers/${supplierId}/finance`),
+    apiClient.srm.get(`/api/srm/suppliers/${supplierId}/finance`),
 
   /**
    * 更新供应商财务信息
@@ -220,7 +220,7 @@ export const srmFinanceApi = {
   updateSupplierFinanceInfo: (
     supplierId: string,
     data: Partial<SupplierFinanceInfo>,
-  ) => apiClient.srm.put(`/api/v1/srm/suppliers/${supplierId}/finance`, data),
+  ) => apiClient.srm.put(`/api/srm/suppliers/${supplierId}/finance`, data),
 
   /**
    * 获取供应商列表（带财务信息）
@@ -229,7 +229,7 @@ export const srmFinanceApi = {
     status?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.srm.get("/api/v1/srm/suppliers/with-finance", { params }),
+  }) => apiClient.srm.get("/api/srm/suppliers/with-finance", { params }),
 
   // -------- 采购发票 --------
 
@@ -243,49 +243,49 @@ export const srmFinanceApi = {
     end_date?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.srm.get("/api/v1/srm/invoices", { params }),
+  }) => apiClient.srm.get("/api/srm/invoices", { params }),
 
   /**
    * 获取采购发票详情
    */
   getPurchaseInvoice: (id: string) =>
-    apiClient.srm.get(`/api/v1/srm/invoices/${id}`),
+    apiClient.srm.get(`/api/srm/invoices/${id}`),
 
   /**
    * 创建采购发票
    */
   createPurchaseInvoice: (data: Partial<PurchaseInvoice>) =>
-    apiClient.srm.post("/api/v1/srm/invoices", data),
+    apiClient.srm.post("/api/srm/invoices", data),
 
   /**
    * 更新采购发票
    */
   updatePurchaseInvoice: (id: string, data: Partial<PurchaseInvoice>) =>
-    apiClient.srm.put(`/api/v1/srm/invoices/${id}`, data),
+    apiClient.srm.put(`/api/srm/invoices/${id}`, data),
 
   /**
    * 删除采购发票
    */
   deletePurchaseInvoice: (id: string) =>
-    apiClient.srm.delete(`/api/v1/srm/invoices/${id}`),
+    apiClient.srm.delete(`/api/srm/invoices/${id}`),
 
   /**
    * 审核采购发票
    */
   approvePurchaseInvoice: (id: string) =>
-    apiClient.srm.post(`/api/v1/srm/invoices/${id}/approve`, {}),
+    apiClient.srm.post(`/api/srm/invoices/${id}/approve`, {}),
 
   /**
    * 确认收到发票
    */
   confirmPurchaseInvoice: (id: string) =>
-    apiClient.srm.post(`/api/v1/srm/invoices/${id}/confirm`, {}),
+    apiClient.srm.post(`/api/srm/invoices/${id}/confirm`, {}),
 
   /**
    * 验证发票
    */
   verifyPurchaseInvoice: (id: string) =>
-    apiClient.srm.post(`/api/v1/srm/invoices/${id}/verify`, {}),
+    apiClient.srm.post(`/api/srm/invoices/${id}/verify`, {}),
 
   /**
    * 匹配发票与入库单
@@ -294,13 +294,13 @@ export const srmFinanceApi = {
     invoice_id: string;
     receive_id: string;
     amount: number;
-  }) => apiClient.srm.post("/api/v1/srm/invoices/match", data),
+  }) => apiClient.srm.post("/api/srm/invoices/match", data),
 
   /**
    * 作废发票
    */
   cancelPurchaseInvoice: (id: string, reason: string) =>
-    apiClient.srm.post(`/api/v1/srm/invoices/${id}/cancel`, { reason }),
+    apiClient.srm.post(`/api/srm/invoices/${id}/cancel`, { reason }),
 
   // -------- 付款管理 --------
 
@@ -314,19 +314,19 @@ export const srmFinanceApi = {
     status?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.srm.get("/api/v1/srm/payments", { params }),
+  }) => apiClient.srm.get("/api/srm/payments", { params }),
 
   /**
    * 创建付款记录
    */
   createPaymentRecord: (data: Partial<PaymentRecord>) =>
-    apiClient.srm.post("/api/v1/srm/payments", data),
+    apiClient.srm.post("/api/srm/payments", data),
 
   /**
    * 审核付款记录
    */
   approvePayment: (id: string, approved: boolean, remark?: string) =>
-    apiClient.srm.post(`/api/v1/srm/payments/${id}/approve`, {
+    apiClient.srm.post(`/api/srm/payments/${id}/approve`, {
       approved,
       remark,
     }),
@@ -335,7 +335,7 @@ export const srmFinanceApi = {
    * 确认付款
    */
   confirmPayment: (id: string, bank_reference?: string) =>
-    apiClient.srm.post(`/api/v1/srm/payments/${id}/confirm`, {
+    apiClient.srm.post(`/api/srm/payments/${id}/confirm`, {
       bank_reference,
     }),
 
@@ -351,43 +351,43 @@ export const srmFinanceApi = {
     end_date?: string;
     page?: number;
     page_size?: number;
-  }) => apiClient.srm.get("/api/v1/srm/payment-requests", { params }),
+  }) => apiClient.srm.get("/api/srm/payment-requests", { params }),
 
   /**
    * 获取付款申请详情
    */
   getPaymentRequest: (id: string) =>
-    apiClient.srm.get(`/api/v1/srm/payment-requests/${id}`),
+    apiClient.srm.get(`/api/srm/payment-requests/${id}`),
 
   /**
    * 创建付款申请
    */
   createPaymentRequest: (data: Partial<PaymentRequest>) =>
-    apiClient.srm.post("/api/v1/srm/payment-requests", data),
+    apiClient.srm.post("/api/srm/payment-requests", data),
 
   /**
    * 更新付款申请
    */
   updatePaymentRequest: (id: string, data: Partial<PaymentRequest>) =>
-    apiClient.srm.put(`/api/v1/srm/payment-requests/${id}`, data),
+    apiClient.srm.put(`/api/srm/payment-requests/${id}`, data),
 
   /**
    * 删除付款申请
    */
   deletePaymentRequest: (id: string) =>
-    apiClient.srm.delete(`/api/v1/srm/payment-requests/${id}`),
+    apiClient.srm.delete(`/api/srm/payment-requests/${id}`),
 
   /**
    * 提交付款申请
    */
   submitPaymentRequest: (id: string) =>
-    apiClient.srm.post(`/api/v1/srm/payment-requests/${id}/submit`, {}),
+    apiClient.srm.post(`/api/srm/payment-requests/${id}/submit`, {}),
 
   /**
    * 审批付款申请
    */
   approvePaymentRequest: (id: string, approved: boolean, remark?: string) =>
-    apiClient.srm.post(`/api/v1/srm/payment-requests/${id}/approve`, {
+    apiClient.srm.post(`/api/srm/payment-requests/${id}/approve`, {
       approved,
       remark,
     }),
@@ -401,7 +401,7 @@ export const srmFinanceApi = {
     company_id?: string;
     supplier_ids?: string[];
     as_of_date: string;
-  }) => apiClient.srm.get("/api/v1/srm/reports/payable-aging", { params }),
+  }) => apiClient.srm.get("/api/srm/reports/payable-aging", { params }),
 
   /**
    * 获取逾期应付款汇总
@@ -409,7 +409,7 @@ export const srmFinanceApi = {
   getOverduePayables: (params?: {
     company_id?: string;
     supplier_ids?: string[];
-  }) => apiClient.srm.get("/api/v1/srm/reports/overdue-payables", { params }),
+  }) => apiClient.srm.get("/api/srm/reports/overdue-payables", { params }),
 
   /**
    * 获取到期应付列表
@@ -420,7 +420,7 @@ export const srmFinanceApi = {
     due_within_days?: number;
     page?: number;
     page_size?: number;
-  }) => apiClient.srm.get("/api/v1/srm/reports/due-payables", { params }),
+  }) => apiClient.srm.get("/api/srm/reports/due-payables", { params }),
 
   /**
    * 获取供应商应付汇总
@@ -429,7 +429,7 @@ export const srmFinanceApi = {
     company_id?: string;
     supplier_ids?: string[];
     as_of_date?: string;
-  }) => apiClient.srm.get("/api/v1/srm/reports/payable-summary", { params }),
+  }) => apiClient.srm.get("/api/srm/reports/payable-summary", { params }),
 
   // -------- 报表 --------
 
@@ -440,7 +440,7 @@ export const srmFinanceApi = {
     start_date: string;
     end_date: string;
     group_by?: "supplier" | "category" | "month";
-  }) => apiClient.srm.get("/api/v1/srm/reports/payment-statistics", { params }),
+  }) => apiClient.srm.get("/api/srm/reports/payment-statistics", { params }),
 
   // -------- 导出 --------
 
@@ -456,7 +456,7 @@ export const srmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.srm as any).defaults?.baseURL || config.services.srm;
-    return downloadBlob(baseURL, "/api/v1/srm/exports/invoices", { params });
+    return downloadBlob(baseURL, "/api/srm/exports/invoices", { params });
   },
 
   /**
@@ -471,7 +471,7 @@ export const srmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.srm as any).defaults?.baseURL || config.services.srm;
-    return downloadBlob(baseURL, "/api/v1/srm/exports/payment-requests", {
+    return downloadBlob(baseURL, "/api/srm/exports/payment-requests", {
       params,
     });
   },
@@ -487,7 +487,7 @@ export const srmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.srm as any).defaults?.baseURL || config.services.srm;
-    return downloadBlob(baseURL, "/api/v1/srm/exports/payable-aging", {
+    return downloadBlob(baseURL, "/api/srm/exports/payable-aging", {
       params,
     });
   },

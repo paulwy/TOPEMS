@@ -70,7 +70,7 @@ echo
 
 # 确认操作
 read -p "确认重置密码? (yes/no): " confirm
-if [ "$confirm" != "yes" ]; then
+if [ "$confirm" != "yes" ] && [ "$confirm" != "y" ] && [ "$confirm" != "Y" ] && [ "$confirm" != "YES" ] && [ "$confirm" != "Yes" ]; then
     echo "已取消"
     unset PGPASSWORD
     exit 0

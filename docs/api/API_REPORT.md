@@ -2,9 +2,11 @@
 
 **服务**: report-service
 **端口**: 待定
-**版本**: v1
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/report/` (例如 `/api/report/reports`)
 
 ## 1. 概述
 
@@ -14,14 +16,14 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 报表列表 | /api/v1/reports | GET |
-| 报表详情 | /api/v1/reports/{id} | GET |
-| 创建报表 | /api/v1/reports | POST |
-| 删除报表 | /api/v1/reports/{id} | DELETE |
-| 导出报表 | /api/v1/reports/{id}/export | POST |
-| 报表模板列表 | /api/v1/templates | GET |
-| 创建报表模板 | /api/v1/templates | POST |
-| 报表类型列表 | /api/v1/report-types | GET |
+| 报表列表 | /api/report/reports | GET |
+| 报表详情 | /api/report/reports/{id} | GET |
+| 创建报表 | /api/report/reports | POST |
+| 删除报表 | /api/report/reports/{id} | DELETE |
+| 导出报表 | /api/report/reports/{id}/export | POST |
+| 报表模板列表 | /api/report/templates | GET |
+| 创建报表模板 | /api/report/templates | POST |
+| 报表类型列表 | /api/report/report-types | GET |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -97,7 +99,7 @@
   "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "row_count": 15,
   "report_type": "rs_project_progress",
-  "download_url": "/api/v1/reports/report-001/download/report_2026-05-22.xlsx"
+  "download_url": "/api/report/reports/report-001/download/report_2026-05-22.xlsx"
 }
 ```
 
@@ -136,7 +138,7 @@
 
 ### 3.1 获取报表列表
 
-**端点**: `GET /api/v1/reports`
+**端点**: `GET /api/report/reports`
 
 **描述**: 获取所有已生成的报表
 
@@ -152,7 +154,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8011/api/v1/reports?page=1&page_size=20&report_type=rs_project_progress" \
+curl -X GET "http://localhost:8011/api/report/reports?page=1&page_size=20&report_type=rs_project_progress" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -193,7 +195,7 @@ curl -X GET "http://localhost:8011/api/v1/reports?page=1&page_size=20&report_typ
 
 ### 3.2 获取报表详情
 
-**端点**: `GET /api/v1/reports/{id}`
+**端点**: `GET /api/report/reports/{id}`
 
 **描述**: 获取指定报表的详细信息，包括数据内容
 
@@ -207,7 +209,7 @@ curl -X GET "http://localhost:8011/api/v1/reports?page=1&page_size=20&report_typ
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8011/api/v1/reports/report-001 \
+curl -X GET http://localhost:8011/api/report/reports/report-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -265,7 +267,7 @@ curl -X GET http://localhost:8011/api/v1/reports/report-001 \
 
 ### 3.3 创建报表
 
-**端点**: `POST /api/v1/reports`
+**端点**: `POST /api/report/reports`
 
 **描述**: 创建新的报表
 
@@ -316,7 +318,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8011/api/v1/reports \
+curl -X POST http://localhost:8011/api/report/reports \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -372,7 +374,7 @@ curl -X POST http://localhost:8011/api/v1/reports \
 
 ### 3.4 删除报表
 
-**端点**: `DELETE /api/v1/reports/{id}`
+**端点**: `DELETE /api/report/reports/{id}`
 
 **描述**: 删除指定报表
 
@@ -388,7 +390,7 @@ curl -X POST http://localhost:8011/api/v1/reports \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8011/api/v1/reports/report-001 \
+curl -X DELETE http://localhost:8011/api/report/reports/report-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -408,7 +410,7 @@ curl -X DELETE http://localhost:8011/api/v1/reports/report-001 \
 
 ### 4.1 导出报表
 
-**端点**: `POST /api/v1/reports/{id}/export`
+**端点**: `POST /api/report/reports/{id}/export`
 
 **描述**: 导出报表为指定格式
 
@@ -444,7 +446,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8011/api/v1/reports/report-001/export \
+curl -X POST http://localhost:8011/api/report/reports/report-001/export \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -464,7 +466,7 @@ curl -X POST http://localhost:8011/api/v1/reports/report-001/export \
     "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "row_count": 15,
     "report_type": "rs_project_progress",
-    "download_url": "/api/v1/reports/report-001/download/项目进度_2026年5月.xlsx"
+    "download_url": "/api/report/reports/report-001/download/项目进度_2026年5月.xlsx"
   },
   "error": null
 }
@@ -476,7 +478,7 @@ curl -X POST http://localhost:8011/api/v1/reports/report-001/export \
 
 ### 5.1 获取报表模板列表
 
-**端点**: `GET /api/v1/templates`
+**端点**: `GET /api/report/templates`
 
 **描述**: 获取所有报表模板
 
@@ -491,7 +493,7 @@ curl -X POST http://localhost:8011/api/v1/reports/report-001/export \
 
 ### 5.2 创建报表模板
 
-**端点**: `POST /api/v1/templates`
+**端点**: `POST /api/report/templates`
 
 **描述**: 创建新的报表模板
 
@@ -529,7 +531,7 @@ Authorization: Bearer {token}
 
 ### 6.1 获取报表类型列表
 
-**端点**: `GET /api/v1/report-types`
+**端点**: `GET /api/report/report-types`
 
 **描述**: 获取所有可用的报表类型
 
@@ -538,7 +540,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8011/api/v1/report-types \
+curl -X GET http://localhost:8011/api/report/report-types \
   -H "Authorization: Bearer {token}"
 ```
 

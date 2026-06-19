@@ -181,7 +181,7 @@ const KnowledgeBasePage: React.FC = () => {
         formData.append("file", file);
 
         // 使用 fetch 直接上传，因为 aiApi 可能不支持 FormData
-        const response = await fetch("/api/v1/documents/upload", {
+        const response = await fetch("/ai/api/ai/documents/upload", {
           method: "POST",
           body: formData,
         });

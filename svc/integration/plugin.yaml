@@ -5,7 +5,7 @@ description: "Integration 系统集成中间件 - 第三方系统对接"
 category: "System"
 plugin_type: "system"
 deployment:
-  port: 8068
+  port: 8005
   base_path: "/api/integration"
 permissions:
   - code: "connector"

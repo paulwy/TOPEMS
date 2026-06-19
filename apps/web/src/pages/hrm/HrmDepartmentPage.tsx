@@ -748,7 +748,7 @@ const HrmDepartmentPage: React.FC = () => {
                     <Box
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: { xs: 2, md: 4 },
+                        gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
                         gap: 2,
                         mb: 3,
                       }}

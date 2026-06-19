@@ -211,7 +211,7 @@ const HrmReportsPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: 2, md: 3, lg: 6 },
+            gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(3, 1fr)", lg: "repeat(6, 1fr)" },
             gap: 2,
             mb: 3,
           }}
@@ -428,7 +428,7 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, lg: 3 },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
                 gap: 3,
               }}
             >
@@ -594,7 +594,7 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, lg: 2 },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
                 gap: 3,
               }}
             >
@@ -824,7 +824,7 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, lg: 2 },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
                 gap: 3,
               }}
             >
@@ -1025,7 +1025,7 @@ const HrmReportsPage: React.FC = () => {
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: 1, md: 2 },
+                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
                     gap: 3,
                   }}
                 >
@@ -1128,7 +1128,7 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, lg: 3 },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
                 gap: 3,
               }}
             >
@@ -1365,7 +1365,7 @@ const HrmReportsPage: React.FC = () => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: 1, lg: 4 },
+                gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(4, 1fr)" },
                 gap: 2,
               }}
             >

@@ -165,26 +165,26 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/api/hrm/job-openings/{id}/close", put(close_job_opening))
         .route(
-            "/api/plugin_hrm.candidates",
+            "/api/hrm/candidates",
             get(list_candidates).post(create_candidate),
         )
         .route(
-            "/api/plugin_hrm.candidates/{id}",
+            "/api/hrm/candidates/{id}",
             get(get_candidate)
                 .put(update_candidate)
                 .delete(delete_candidate),
         )
         .route(
-            "/api/plugin_hrm.interviews",
+            "/api/hrm/interviews",
             get(list_interviews).post(create_interview),
         )
         .route(
-            "/api/plugin_hrm.interviews/{id}",
+            "/api/hrm/interviews/{id}",
             get(get_interview)
                 .put(update_interview)
                 .delete(delete_interview),
         )
-        .route("/api/plugin_hrm.interviews/{id}/complete", put(complete_interview))
+        .route("/api/hrm/interviews/{id}/complete", put(complete_interview))
 }
 
 async fn list_job_openings(

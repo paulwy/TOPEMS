@@ -14,6 +14,9 @@ import { GlobalLayout } from "./components/layout";
 import { DynamicRouter } from "./modules/loader/DynamicRouter";
 import { eventBus, ModuleEvents } from "./modules/loader/EventBus";
 
+// Check if we're in static mode (Module Federation disabled)
+const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== "module-federation";
+
 import {
   authRoutes,
   dashboardRoutes,
@@ -111,9 +114,22 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
+  const renderElement = (route: RouteConfig) => {
+    const { element } = route;
+    
+    // Use React.isValidElement to check if it's a React element (from React.createElement)
+    // vs a component type (including LazyExoticComponent from React.lazy)
+    if (React.isValidElement(element)) {
+      return element;
+    }
+    
+    // It's a component type (including LazyExoticComponent from React.lazy), render as Element
+    const Element = element as React.ComponentType;
+    return <Element />;
+  };
+
   const renderRoutes = (routes: RouteConfig[]) => {
     return routes.map((route) => {
-      const Element = route.element as React.ComponentType;
       return (
         <Route
           key={route.path}
@@ -121,7 +137,7 @@ const AppContent: React.FC = () => {
           element={
             <ProtectedRouteWrapper route={route}>
               <Suspense fallback={<PageLoader />}>
-                <Element />
+                {renderElement(route)}
               </Suspense>
             </ProtectedRouteWrapper>
           }
@@ -186,16 +202,40 @@ const AppContent: React.FC = () => {
         {renderRoutes(wmsRoutes)}
         {renderRoutes(gisRoutes)}
 
-        <Route
-          path="/core/*"
-          element={
-            <ProtectedRoute>
-              <GlobalLayout>
-                <DynamicRouter />
-              </GlobalLayout>
-            </ProtectedRoute>
-          }
-        />
+        {/* Core module routes - only load via Module Federation when not in static mode */}
+        {!IS_STATIC_MODE && (
+          <Route
+            path="/core/*"
+            element={
+              <ProtectedRoute>
+                <GlobalLayout>
+                  <DynamicRouter />
+                </GlobalLayout>
+              </ProtectedRoute>
+            }
+          />
+        )}
+        {IS_STATIC_MODE && (
+          <Route
+            path="/core/*"
+            element={
+              <ProtectedRoute>
+                <GlobalLayout>
+                  <div style={{ padding: "20px" }}>
+                    <h2>核心模块</h2>
+                    <p>核心模块在静态模式下不可用。请设置 VITE_DEPLOYMENT_MODE=module-federation 启用 Module Federation。</p>
+                    <p>或者访问其他模块：</p>
+                    <ul>
+                      <li><a href="/hrm">人力资源管理</a></li>
+                      <li><a href="/crm">客户关系管理</a></li>
+                      <li><a href="/dashboard">仪表盘</a></li>
+                    </ul>
+                  </div>
+                </GlobalLayout>
+              </ProtectedRoute>
+            }
+          />
+        )}
 
         <Route
           path="/departments"

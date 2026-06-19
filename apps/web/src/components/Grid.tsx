@@ -59,42 +59,27 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   }
 
   if (container) {
-    const spacingStyles: Record<string, unknown> = {
-      display: "flex",
-      flexWrap: "wrap",
+    // Parse spacing value
+    const getSpacing = (s: number | GridSizeProps | undefined): number => {
+      if (typeof s === "number") return s * 8;
+      if (s && typeof s === "object") return (s.xs || s.sm || s.md || 2) * 8;
+      return 16;
     };
 
-    if (typeof spacing === "number") {
-      spacingStyles.gap = spacing * 8;
-    } else {
-      spacingStyles.gap = spacing?.xs !== undefined ? spacing.xs * 8 : 0;
-      if (spacing?.sm !== undefined) {
-        spacingStyles["@media (min-width:600px)"] = {
-          gap: spacing.sm * 8,
-        };
-      }
-      if (spacing?.md !== undefined) {
-        spacingStyles["@media (min-width:900px)"] = {
-          gap: spacing.md * 8,
-        };
-      }
-      if (spacing?.lg !== undefined) {
-        spacingStyles["@media (min-width:1200px)"] = {
-          gap: spacing.lg * 8,
-        };
-      }
-      if (spacing?.xl !== undefined) {
-        spacingStyles["@media (min-width:1536px)"] = {
-          gap: spacing.xl * 8,
-        };
-      }
-    }
+    const gapValue = getSpacing(spacing);
 
+    // Use CSS Grid with responsive column count
+    // Default to 12-column grid, but children control their own span
     return (
       <Box
         {...props}
         sx={{
-          ...spacingStyles,
+          display: "grid",
+          gridAutoColumns: "1fr",
+          gap: gapValue,
+          "@media (min-width:600px)": { gap: getSpacing(spacing) },
+          "@media (min-width:900px)": { gap: getSpacing(spacing) },
+          "@media (min-width:1200px)": { gap: getSpacing(spacing) },
           ...sx,
         }}
       >
@@ -103,9 +88,64 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
     );
   }
 
-  const getWidth = (breakpoint: number | undefined) => {
+  const getColumnWidth = (breakpoint: number | undefined) => {
     if (breakpoint === undefined) return undefined;
+    // Convert MUI grid columns to fraction
     return `${(breakpoint / 12) * 100}%`;
+  };
+
+  // Calculate grid-column span based on breakpoints
+  const getGridColumnSpan = () => {
+    const spans: string[] = [];
+    
+    if (effectiveXs !== undefined) {
+      spans.push(`span ${effectiveXs}`);
+    }
+    if (effectiveSm !== undefined) {
+      spans.push(`span ${Math.floor(effectiveSm * 8.33)}`);
+    }
+    if (effectiveMd !== undefined) {
+      spans.push(`span ${Math.floor(effectiveMd * 8.33)}`);
+    }
+    if (effectiveLg !== undefined) {
+      spans.push(`span ${Math.floor(effectiveLg * 8.33)}`);
+    }
+    if (effectiveXl !== undefined) {
+      spans.push(`span ${Math.floor(effectiveXl * 8.33)}`);
+    }
+    
+    return spans.length > 0 ? spans.join(" / ") : undefined;
+  };
+
+  // For responsive grid items, calculate proper column spans
+  const getResponsiveColumnSpan = () => {
+    const styles: Record<string, unknown> = {};
+    
+    if (effectiveXs !== undefined) {
+      styles.gridColumn = `span ${effectiveXs}`;
+    }
+    if (effectiveSm !== undefined) {
+      styles["@media (min-width:600px)"] = {
+        gridColumn: `span ${effectiveSm}`,
+      };
+    }
+    if (effectiveMd !== undefined) {
+      styles["@media (min-width:900px)"] = {
+        gridColumn: `span ${effectiveMd}`,
+      };
+    }
+    if (effectiveLg !== undefined) {
+      styles["@media (min-width:1200px)"] = {
+        gridColumn: `span ${effectiveLg}`,
+      };
+    }
+    if (effectiveXl !== undefined) {
+      styles["@media (min-width:1536px)"] = {
+        gridColumn: `span ${effectiveXl}`,
+      };
+    }
+    
+    return Object.keys(styles).length > 0 ? styles : undefined;
   };
 
   return (
@@ -113,24 +153,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
       {...props}
       sx={{
         boxSizing: "border-box",
-        flex: item ? `0 0 auto` : undefined,
-        width: item ? getWidth(effectiveXs) : undefined,
-        "@media (min-width:600px)":
-          effectiveSm !== undefined
-            ? { width: getWidth(effectiveSm) }
-            : undefined,
-        "@media (min-width:900px)":
-          effectiveMd !== undefined
-            ? { width: getWidth(effectiveMd) }
-            : undefined,
-        "@media (min-width:1200px)":
-          effectiveLg !== undefined
-            ? { width: getWidth(effectiveLg) }
-            : undefined,
-        "@media (min-width:1536px)":
-          effectiveXl !== undefined
-            ? { width: getWidth(effectiveXl) }
-            : undefined,
+        ...(getResponsiveColumnSpan() || { gridColumn: "span 12" }),
         ...sx,
       }}
     >

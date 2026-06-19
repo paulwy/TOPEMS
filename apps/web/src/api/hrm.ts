@@ -375,86 +375,86 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 export const companyApi: CrudOperations<Company> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.hrm.get(`/api/plugins/hrm/api/hrm/companies${queryString}`);
+    return await apiClient.hrm.get(`/api/hrm/companies${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/companies/${id}`);
+    return apiClient.hrm.get(`/api/hrm/companies/${id}`);
   },
 
   create: (data: Partial<Company>) => {
-    return apiClient.hrm.post("/api/v1/companies", data);
+    return apiClient.hrm.post("/api/hrm/companies", data);
   },
 
   update: (id: string, data: Partial<Company>) => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/companies/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/companies/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/companies/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/companies/${id}`);
   },
 };
 
 export const departmentApi: CrudOperations<Department> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.hrm.get(`/api/plugins/hrm/api/hrm/departments${queryString}`);
+    return await apiClient.hrm.get(`/api/hrm/departments${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/departments/${id}`);
+    return apiClient.hrm.get(`/api/hrm/departments/${id}`);
   },
 
   create: (data: Partial<Department>) => {
-    return apiClient.hrm.post("/api/v1/departments", data);
+    return apiClient.hrm.post("/api/hrm/departments", data);
   },
 
   update: (id: string, data: Partial<Department>) => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/departments/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/departments/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/departments/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/departments/${id}`);
   },
 };
 
 export const employeeApi: CrudOperations<Employee> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.hrm.get(`/api/plugins/hrm/api/hrm/employees${queryString}`);
+    return await apiClient.hrm.get(`/api/hrm/employees${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/employees/${id}`);
+    return apiClient.hrm.get(`/api/hrm/employees/${id}`);
   },
 
   create: (data: Partial<Employee>) => {
-    return apiClient.hrm.post("/api/v1/employees", data);
+    return apiClient.hrm.post("/api/hrm/employees", data);
   },
 
   update: (id: string, data: Partial<Employee>) => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/employees/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/employees/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/employees/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/employees/${id}`);
   },
 };
 
 export const roleApi: CrudOperations<Role> =
-  createCrudApi<Role>("/api/v1/roles");
+  createCrudApi<Role>("/api/hrm/roles");
 
 export const positionApi: CrudOperations<Position> =
-  createCrudApi<Position>("/api/v1/positions");
+  createCrudApi<Position>("/api/hrm/positions");
 
 export const candidateApi: CrudOperations<Candidate> =
-  createCrudApi<Candidate>("/api/v1/candidates");
+  createCrudApi<Candidate>("/api/hrm/candidates");
 
 export const leaveApi = {
-  ...createCrudApi<LeaveRequest>("/api/v1/leaves"),
+  ...createCrudApi<LeaveRequest>("/api/hrm/leaves"),
 
   approve(id: string, approver_id: string): Promise<ApiResponse<LeaveRequest>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/leaves/${id}/approve`, { approver_id });
+    return apiClient.hrm.put(`/api/hrm/leaves/${id}/approve`, { approver_id });
   },
 
   reject(
@@ -462,7 +462,7 @@ export const leaveApi = {
     approver_id: string,
     reason: string,
   ): Promise<ApiResponse<LeaveRequest>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/leaves/${id}/reject`, {
+    return apiClient.hrm.put(`/api/hrm/leaves/${id}/reject`, {
       approver_id,
       reason,
     });
@@ -470,83 +470,83 @@ export const leaveApi = {
 };
 
 export const attendanceApi = {
-  ...createCrudApi<AttendanceRecord>("/api/v1/attendance"),
+  ...createCrudApi<AttendanceRecord>("/api/hrm/attendance"),
 
   list(
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<AttendanceRecord>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/attendance${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/attendance${queryString}`);
   },
 
   checkIn(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
-    return apiClient.hrm.post("/api/v1/attendance/check-in", { employee_id });
+    return apiClient.hrm.post("/api/hrm/attendance/check-in", { employee_id });
   },
 
   checkOut(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
-    return apiClient.hrm.post("/api/v1/attendance/check-out", { employee_id });
+    return apiClient.hrm.post("/api/hrm/attendance/check-out", { employee_id });
   },
 };
 
 export const jobOpeningApi = {
-  ...createCrudApi<JobOpening>("/api/v1/job-openings"),
+  ...createCrudApi<JobOpening>("/api/hrm/job-openings"),
 
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<JobOpening>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/job-openings${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/job-openings${queryString}`);
   },
 
   publish(id: string): Promise<ApiResponse<JobOpening>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/job-openings/${id}/publish`);
+    return apiClient.hrm.put(`/api/hrm/job-openings/${id}/publish`);
   },
 
   close(id: string): Promise<ApiResponse<JobOpening>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/job-openings/${id}/close`);
+    return apiClient.hrm.put(`/api/hrm/job-openings/${id}/close`);
   },
 };
 
 export const interviewApi = {
-  ...createCrudApi<Interview>("/api/v1/interviews"),
+  ...createCrudApi<Interview>("/api/hrm/interviews"),
 
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<Interview>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/interviews${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/interviews${queryString}`);
   },
 
   complete(
     id: string,
     data: Partial<Interview>,
   ): Promise<ApiResponse<Interview>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/interviews/${id}/complete`, data);
+    return apiClient.hrm.put(`/api/hrm/interviews/${id}/complete`, data);
   },
 };
 
 export const payrollApi = {
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<PayrollRun>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/payroll-runs${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/payroll-runs${queryString}`);
   },
 
   get(
     id: string,
   ): Promise<ApiResponse<{ run: PayrollRun; items: PayrollItem[] }>> {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/payroll-runs/${id}`);
+    return apiClient.hrm.get(`/api/hrm/payroll-runs/${id}`);
   },
 
   create(data: { pay_period: string }): Promise<ApiResponse<PayrollRun>> {
-    return apiClient.hrm.post("/api/v1/payroll-runs", data);
+    return apiClient.hrm.post("/api/hrm/payroll-runs", data);
   },
 
   delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/payroll-runs/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/payroll-runs/${id}`);
   },
 
   calculate(id: string): Promise<ApiResponse<PayrollRun>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/payroll-runs/${id}/calculate`);
+    return apiClient.hrm.put(`/api/hrm/payroll-runs/${id}/calculate`);
   },
 
   pay(id: string): Promise<ApiResponse<PayrollRun>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/payroll-runs/${id}/pay`);
+    return apiClient.hrm.put(`/api/hrm/payroll-runs/${id}/pay`);
   },
 };
 
@@ -555,42 +555,42 @@ export const payrollItemApi = {
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<PayrollItem>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/payroll-items${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/payroll-items${queryString}`);
   },
 
   get(id: string): Promise<ApiResponse<{ item: PayrollItem; details: any[] }>> {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/payroll-items/${id}`);
+    return apiClient.hrm.get(`/api/hrm/payroll-items/${id}`);
   },
 };
 
 export const performanceReviewApi = {
-  ...createCrudApi<PerformanceReview>("/api/v1/performance-reviews"),
+  ...createCrudApi<PerformanceReview>("/api/hrm/performance-reviews"),
 
   list(
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<PerformanceReview>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/performance-reviews${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/performance-reviews${queryString}`);
   },
 
   submit(id: string): Promise<ApiResponse<PerformanceReview>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/performance-reviews/${id}/submit`);
+    return apiClient.hrm.put(`/api/hrm/performance-reviews/${id}/submit`);
   },
 
   approve(id: string): Promise<ApiResponse<PerformanceReview>> {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/performance-reviews/${id}/approve`);
+    return apiClient.hrm.put(`/api/hrm/performance-reviews/${id}/approve`);
   },
 };
 
 export const performanceGoalApi: CrudOperations<PerformanceGoal> =
-  createCrudApi<PerformanceGoal>("/api/v1/performance-goals");
+  createCrudApi<PerformanceGoal>("/api/hrm/performance-goals");
 
 export const employeePerformanceApi = {
   getReviews(
     employee_id: string,
   ): Promise<ApiResponse<{ items: PerformanceReview[]; total: number }>> {
     return apiClient.hrm.get(
-      `/api/plugins/hrm/api/hrm/employees/${employee_id}/performance-reviews`,
+      `/api/hrm/employees/${employee_id}/performance-reviews`,
     );
   },
 
@@ -598,7 +598,7 @@ export const employeePerformanceApi = {
     employee_id: string,
   ): Promise<ApiResponse<{ items: PerformanceGoal[]; total: number }>> {
     return apiClient.hrm.get(
-      `/api/plugins/hrm/api/hrm/employees/${employee_id}/performance-goals`,
+      `/api/hrm/employees/${employee_id}/performance-goals`,
     );
   },
 };
@@ -627,30 +627,30 @@ export const salaryAdjustmentApi = {
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<SalaryAdjustment>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/salary-adjustments${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/salary-adjustments${queryString}`);
   },
   get: async (id: string): Promise<ApiResponse<SalaryAdjustment>> => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/salary-adjustments/${id}`);
+    return apiClient.hrm.get(`/api/hrm/salary-adjustments/${id}`);
   },
   create: async (
     data: Partial<SalaryAdjustment>,
   ): Promise<ApiResponse<SalaryAdjustment>> => {
-    return apiClient.hrm.post("/api/v1/salary-adjustments", data);
+    return apiClient.hrm.post("/api/hrm/salary-adjustments", data);
   },
   update: async (
     id: string,
     data: Partial<SalaryAdjustment>,
   ): Promise<ApiResponse<SalaryAdjustment>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/salary-adjustments/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/salary-adjustments/${id}`, data);
   },
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/salary-adjustments/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/salary-adjustments/${id}`);
   },
   approve: async (
     id: string,
     approverId: string,
   ): Promise<ApiResponse<SalaryAdjustment>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/salary-adjustments/${id}/approve`, {
+    return apiClient.hrm.put(`/api/hrm/salary-adjustments/${id}/approve`, {
       approver_id: approverId,
     });
   },
@@ -659,7 +659,7 @@ export const salaryAdjustmentApi = {
     approverId: string,
     reason: string,
   ): Promise<ApiResponse<SalaryAdjustment>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/salary-adjustments/${id}/reject`, {
+    return apiClient.hrm.put(`/api/hrm/salary-adjustments/${id}/reject`, {
       approver_id: approverId,
       reason,
     });
@@ -671,7 +671,7 @@ export const contractApi = {
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<Contract>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/contracts${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/contracts${queryString}`);
   },
 
   get: async (
@@ -679,22 +679,22 @@ export const contractApi = {
   ): Promise<
     ApiResponse<{ contract: Contract; renewals: ContractRenewal[] }>
   > => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/contracts/${id}`);
+    return apiClient.hrm.get(`/api/hrm/contracts/${id}`);
   },
 
   create: async (data: Partial<Contract>): Promise<ApiResponse<Contract>> => {
-    return apiClient.hrm.post("/api/v1/contracts", data);
+    return apiClient.hrm.post("/api/hrm/contracts", data);
   },
 
   update: async (
     id: string,
     data: Partial<Contract>,
   ): Promise<ApiResponse<Contract>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/contracts/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/contracts/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/contracts/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/contracts/${id}`);
   },
 
   getExpiring: async (params?: {
@@ -703,14 +703,14 @@ export const contractApi = {
     page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<Contract>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/contracts/expiring${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/contracts/expiring${queryString}`);
   },
 
   renew: async (
     contract_id: string,
     data: Partial<ContractRenewal>,
   ): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.post(`/api/plugins/hrm/api/hrm/contracts/${contract_id}/renew`, data);
+    return apiClient.hrm.post(`/api/hrm/contracts/${contract_id}/renew`, data);
   },
 };
 
@@ -719,39 +719,39 @@ export const contractRenewalApi = {
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<ContractRenewal>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/contract-renewals${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/contract-renewals${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/contract-renewals/${id}`);
+    return apiClient.hrm.get(`/api/hrm/contract-renewals/${id}`);
   },
 
   update: async (
     id: string,
     data: Partial<ContractRenewal>,
   ): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/contract-renewals/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/contract-renewals/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/contract-renewals/${id}`);
   },
 
   approve: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/contract-renewals/${id}/approve`);
+    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}/approve`);
   },
 
   reject: async (
     id: string,
     reason: string,
   ): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/contract-renewals/${id}/reject`, {
+    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}/reject`, {
       reason,
     });
   },
 
   execute: async (id: string): Promise<ApiResponse<any>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/contract-renewals/${id}/execute`);
+    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}/execute`);
   },
 };
 
@@ -760,36 +760,36 @@ export const trainingPlanApi = {
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<TrainingPlan>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/training-plans${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/training-plans${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<TrainingPlan>> => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/training-plans/${id}`);
+    return apiClient.hrm.get(`/api/hrm/training-plans/${id}`);
   },
 
   create: async (
     data: Partial<TrainingPlan>,
   ): Promise<ApiResponse<TrainingPlan>> => {
-    return apiClient.hrm.post("/api/v1/training-plans", data);
+    return apiClient.hrm.post("/api/hrm/training-plans", data);
   },
 
   update: async (
     id: string,
     data: Partial<TrainingPlan>,
   ): Promise<ApiResponse<TrainingPlan>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/training-plans/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/training-plans/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/training-plans/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/training-plans/${id}`);
   },
 
   activate: async (id: string): Promise<ApiResponse<TrainingPlan>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/training-plans/${id}/activate`);
+    return apiClient.hrm.put(`/api/hrm/training-plans/${id}/activate`);
   },
 
   deactivate: async (id: string): Promise<ApiResponse<TrainingPlan>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/training-plans/${id}/deactivate`);
+    return apiClient.hrm.put(`/api/hrm/training-plans/${id}/deactivate`);
   },
 };
 
@@ -798,28 +798,28 @@ export const trainingCourseApi = {
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<TrainingCourse>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/training-courses${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/training-courses${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<TrainingCourse>> => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/training-courses/${id}`);
+    return apiClient.hrm.get(`/api/hrm/training-courses/${id}`);
   },
 
   create: async (
     data: Partial<TrainingCourse>,
   ): Promise<ApiResponse<TrainingCourse>> => {
-    return apiClient.hrm.post("/api/v1/training-courses", data);
+    return apiClient.hrm.post("/api/hrm/training-courses", data);
   },
 
   update: async (
     id: string,
     data: Partial<TrainingCourse>,
   ): Promise<ApiResponse<TrainingCourse>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/training-courses/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/training-courses/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/training-courses/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/training-courses/${id}`);
   },
 };
 
@@ -828,35 +828,35 @@ export const trainingRecordApi = {
     params?: ListParams,
   ): Promise<ApiResponse<PaginatedResult<TrainingRecord>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/training-records${queryString}`);
+    return apiClient.hrm.get(`/api/hrm/training-records${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<TrainingRecord>> => {
-    return apiClient.hrm.get(`/api/plugins/hrm/api/hrm/training-records/${id}`);
+    return apiClient.hrm.get(`/api/hrm/training-records/${id}`);
   },
 
   create: async (
     data: Partial<TrainingRecord>,
   ): Promise<ApiResponse<TrainingRecord>> => {
-    return apiClient.hrm.post("/api/v1/training-records", data);
+    return apiClient.hrm.post("/api/hrm/training-records", data);
   },
 
   update: async (
     id: string,
     data: Partial<TrainingRecord>,
   ): Promise<ApiResponse<TrainingRecord>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/training-records/${id}`, data);
+    return apiClient.hrm.put(`/api/hrm/training-records/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/plugins/hrm/api/hrm/training-records/${id}`);
+    return apiClient.hrm.delete(`/api/hrm/training-records/${id}`);
   },
 
   enroll: async (
     course_id: string,
     employee_id: string,
   ): Promise<ApiResponse<TrainingRecord>> => {
-    return apiClient.hrm.post("/api/v1/training-records/enroll", {
+    return apiClient.hrm.post("/api/hrm/training-records/enroll", {
       course_id,
       employee_id,
     });
@@ -866,7 +866,7 @@ export const trainingRecordApi = {
     id: string,
     data: Partial<TrainingRecord>,
   ): Promise<ApiResponse<TrainingRecord>> => {
-    return apiClient.hrm.put(`/api/plugins/hrm/api/hrm/training-records/${id}/complete`, data);
+    return apiClient.hrm.put(`/api/hrm/training-records/${id}/complete`, data);
   },
 };
 

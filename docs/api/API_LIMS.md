@@ -1,10 +1,13 @@
 # TOPEMS 实验室管理系统 API
 
-**服务**: topems-lims
-**端口**: 8006
-**版本**: v1
+**服务**: topems-lims (集成在 quality-assurance)
+**端口**: 8032
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/lims/` (例如 `/api/lims/samples`)
+> **实际访问地址**: `http://localhost:8032/api/lims/`
 
 ## 1. 概述
 
@@ -14,21 +17,21 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 样品列表 | /api/v1/samples | GET |
-| 样品详情 | /api/v1/samples/{id} | GET |
-| 创建样品 | /api/v1/samples | POST |
-| 更新样品 | /api/v1/samples/{id} | PUT |
-| 删除样品 | /api/v1/samples/{id} | DELETE |
-| 检验流程列表 | /api/v1/processes | GET |
-| 检验流程详情 | /api/v1/processes/{id} | GET |
-| 检验任务列表 | /api/v1/tasks | GET |
-| 检验任务详情 | /api/v1/tasks/{id} | GET |
-| 创建检验任务 | /api/v1/tasks | POST |
-| 更新检验任务 | /api/v1/tasks/{id} | PUT |
-| 完成检验步骤 | /api/v1/tasks/{id}/complete_step | POST |
-| 检验记录列表 | /api/v1/records | GET |
-| 创建检验记录 | /api/v1/records | POST |
-| 任务检验记录 | /api/v1/records/task/{taskId} | GET |
+| 样品列表 | /api/lims/samples | GET |
+| 样品详情 | /api/lims/samples/{id} | GET |
+| 创建样品 | /api/lims/samples | POST |
+| 更新样品 | /api/lims/samples/{id} | PUT |
+| 删除样品 | /api/lims/samples/{id} | DELETE |
+| 检验流程列表 | /api/lims/processes | GET |
+| 检验流程详情 | /api/lims/processes/{id} | GET |
+| 检验任务列表 | /api/lims/tasks | GET |
+| 检验任务详情 | /api/lims/tasks/{id} | GET |
+| 创建检验任务 | /api/lims/tasks | POST |
+| 更新检验任务 | /api/lims/tasks/{id} | PUT |
+| 完成检验步骤 | /api/lims/tasks/{id}/complete_step | POST |
+| 检验记录列表 | /api/lims/records | GET |
+| 创建检验记录 | /api/lims/records | POST |
+| 任务检验记录 | /api/lims/records/task/{taskId} | GET |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -116,7 +119,7 @@
 
 ### 2.1 获取样品列表
 
-**端点**: `GET /api/v1/samples`
+**端点**: `GET /api/lims/samples`
 
 **描述**: 获取所有样品列表
 
@@ -132,7 +135,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8006/api/v1/samples?page=1&page_size=20&status=received" \
+curl -X GET "http://localhost:8032/api/lims/samples?page=1&page_size=20&status=received" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -171,7 +174,7 @@ curl -X GET "http://localhost:8006/api/v1/samples?page=1&page_size=20&status=rec
 
 ### 2.2 获取样品详情
 
-**端点**: `GET /api/v1/samples/{id}`
+**端点**: `GET /api/lims/samples/{id}`
 
 **描述**: 获取指定样品的详细信息
 
@@ -185,7 +188,7 @@ curl -X GET "http://localhost:8006/api/v1/samples?page=1&page_size=20&status=rec
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8006/api/v1/samples/sample-001 \
+curl -X GET http://localhost:8032/api/lims/samples/sample-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -212,7 +215,7 @@ curl -X GET http://localhost:8006/api/v1/samples/sample-001 \
 
 ### 2.3 创建样品
 
-**端点**: `POST /api/v1/samples`
+**端点**: `POST /api/lims/samples`
 
 **描述**: 创建新的样品记录
 
@@ -245,7 +248,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8006/api/v1/samples \
+curl -X POST http://localhost:8032/api/lims/samples \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -277,7 +280,7 @@ curl -X POST http://localhost:8006/api/v1/samples \
 
 ### 2.4 更新样品
 
-**端点**: `PUT /api/v1/samples/{id}`
+**端点**: `PUT /api/lims/samples/{id}`
 
 **描述**: 更新指定样品信息
 
@@ -303,7 +306,7 @@ curl -X POST http://localhost:8006/api/v1/samples \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8006/api/v1/samples/sample-001 \
+curl -X PUT http://localhost:8032/api/lims/samples/sample-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -334,7 +337,7 @@ curl -X PUT http://localhost:8006/api/v1/samples/sample-001 \
 
 ### 2.5 删除样品
 
-**端点**: `DELETE /api/v1/samples/{id}`
+**端点**: `DELETE /api/lims/samples/{id}`
 
 **描述**: 删除指定样品
 
@@ -345,7 +348,7 @@ curl -X PUT http://localhost:8006/api/v1/samples/sample-001 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8006/api/v1/samples/sample-001 \
+curl -X DELETE http://localhost:8032/api/lims/samples/sample-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -365,7 +368,7 @@ curl -X DELETE http://localhost:8006/api/v1/samples/sample-001 \
 
 ### 3.1 获取检验流程列表
 
-**端点**: `GET /api/v1/processes`
+**端点**: `GET /api/lims/processes`
 
 **描述**: 获取所有检验流程
 
@@ -374,7 +377,7 @@ curl -X DELETE http://localhost:8006/api/v1/samples/sample-001 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8006/api/v1/processes \
+curl -X GET http://localhost:8032/api/lims/processes \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -415,7 +418,7 @@ curl -X GET http://localhost:8006/api/v1/processes \
 
 ### 3.2 获取检验流程详情
 
-**端点**: `GET /api/v1/processes/{id}`
+**端点**: `GET /api/lims/processes/{id}`
 
 **描述**: 获取指定检验流程的详细信息
 
@@ -429,7 +432,7 @@ curl -X GET http://localhost:8006/api/v1/processes \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8006/api/v1/processes/process-001 \
+curl -X GET http://localhost:8032/api/lims/processes/process-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -479,7 +482,7 @@ curl -X GET http://localhost:8006/api/v1/processes/process-001 \
 
 ### 4.1 获取检验任务列表
 
-**端点**: `GET /api/v1/tasks`
+**端点**: `GET /api/lims/tasks`
 
 **描述**: 获取所有检验任务
 
@@ -493,7 +496,7 @@ curl -X GET http://localhost:8006/api/v1/processes/process-001 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8006/api/v1/tasks?status=in_progress" \
+curl -X GET "http://localhost:8032/api/lims/tasks?status=in_progress" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -524,7 +527,7 @@ curl -X GET "http://localhost:8006/api/v1/tasks?status=in_progress" \
 
 ### 4.2 获取检验任务详情
 
-**端点**: `GET /api/v1/tasks/{id}`
+**端点**: `GET /api/lims/tasks/{id}`
 
 **描述**: 获取指定检验任务的详细信息
 
@@ -538,7 +541,7 @@ curl -X GET "http://localhost:8006/api/v1/tasks?status=in_progress" \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8006/api/v1/tasks/task-001 \
+curl -X GET http://localhost:8032/api/lims/tasks/task-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -567,7 +570,7 @@ curl -X GET http://localhost:8006/api/v1/tasks/task-001 \
 
 ### 4.3 创建检验任务
 
-**端点**: `POST /api/v1/tasks`
+**端点**: `POST /api/lims/tasks`
 
 **描述**: 创建新的检验任务
 
@@ -600,7 +603,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8006/api/v1/tasks \
+curl -X POST http://localhost:8032/api/lims/tasks \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -635,7 +638,7 @@ curl -X POST http://localhost:8006/api/v1/tasks \
 
 ### 4.4 更新检验任务
 
-**端点**: `PUT /api/v1/tasks/{id}`
+**端点**: `PUT /api/lims/tasks/{id}`
 
 **描述**: 更新检验任务信息
 
@@ -661,7 +664,7 @@ curl -X POST http://localhost:8006/api/v1/tasks \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8006/api/v1/tasks/task-001 \
+curl -X PUT http://localhost:8032/api/lims/tasks/task-001 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -693,7 +696,7 @@ curl -X PUT http://localhost:8006/api/v1/tasks/task-001 \
 
 ### 4.5 完成检验步骤
 
-**端点**: `POST /api/v1/tasks/{id}/complete_step`
+**端点**: `POST /api/lims/tasks/{id}/complete_step`
 
 **描述**: 完成检验任务的一个步骤
 
@@ -731,7 +734,7 @@ curl -X PUT http://localhost:8006/api/v1/tasks/task-001 \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8006/api/v1/tasks/task-001/complete_step \
+curl -X POST http://localhost:8032/api/lims/tasks/task-001/complete_step \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -771,7 +774,7 @@ curl -X POST http://localhost:8006/api/v1/tasks/task-001/complete_step \
 
 ### 5.1 获取检验记录列表
 
-**端点**: `GET /api/v1/records`
+**端点**: `GET /api/lims/records`
 
 **描述**: 获取所有检验记录
 
@@ -785,7 +788,7 @@ curl -X POST http://localhost:8006/api/v1/tasks/task-001/complete_step \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8006/api/v1/records?conclusion=通过" \
+curl -X GET "http://localhost:8032/api/lims/records?conclusion=通过" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -815,7 +818,7 @@ curl -X GET "http://localhost:8006/api/v1/records?conclusion=通过" \
 
 ### 5.2 创建检验记录
 
-**端点**: `POST /api/v1/records`
+**端点**: `POST /api/lims/records`
 
 **描述**: 创建新的检验记录
 
@@ -845,7 +848,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8006/api/v1/records \
+curl -X POST http://localhost:8032/api/lims/records \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -882,7 +885,7 @@ curl -X POST http://localhost:8006/api/v1/records \
 
 ### 5.3 获取任务的检验记录
 
-**端点**: `GET /api/v1/records/task/{taskId}`
+**端点**: `GET /api/lims/records/task/{taskId}`
 
 **描述**: 获取指定任务的所有检验记录
 
@@ -896,7 +899,7 @@ curl -X POST http://localhost:8006/api/v1/records \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8006/api/v1/records/task/task-001 \
+curl -X GET http://localhost:8032/api/lims/records/task/task-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -948,7 +951,7 @@ curl -X GET http://localhost:8006/api/v1/records/task/task-001 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8006/health
+curl -X GET http://localhost:8032/health
 ```
 
 **成功响应** (200 OK):

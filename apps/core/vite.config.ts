@@ -52,10 +52,6 @@ export default defineConfig({
           singleton: true,
           strictVersion: true,
         },
-        'react-i18next': {
-          singleton: true,
-          strictVersion: true,
-        },
         dayjs: {
           singleton: true,
           requiredVersion: '^1.11.0',

@@ -55,48 +55,24 @@ export interface ModuleRoute {
 // Core Modules (Remote modules loaded via Module Federation)
 // ============================================================================
 
-export const CORE_MODULES: ModuleConfig[] = [
-  {
-    id: "topems_core",
-    name: "Core",
-    description: "核心模块 - 认证、组织架构、工作流",
-    category: "core",
-    version: "1.0.0",
-    entry: "topems_core",
-    remoteEntry: "http://localhost:3001/assets/remoteEntry.js",
-    routes: [
-      {
-        path: "/core/users",
-        name: "用户管理",
-        component: () => import("topems_core/pages/UserManagement"),
-        componentName: "UserManagement",
-        componentPath: "./pages/UserManagement",
-        icon: "User",
-        permissions: ["iam.user.read"],
-      },
-      {
-        path: "/core/roles",
-        name: "角色管理",
-        component: () => import("topems_core/pages/RoleManagement"),
-        componentName: "RoleManagement",
-        componentPath: "./pages/RoleManagement",
-        icon: "Shield",
-        permissions: ["iam.role.read"],
-      },
-      {
-        path: "/core/org",
-        name: "组织架构",
-        component: () => import("topems_core/pages/OrgChart"),
-        componentName: "OrgChart",
-        componentPath: "./pages/OrgChart",
-        icon: "Building",
-        permissions: ["iam.org.read"],
-      },
-    ],
-    isDefault: true,
-    icon: "Layers",
-  },
-];
+// In static mode, CORE_MODULES is empty to avoid Module Federation imports
+const isStaticMode = import.meta.env.VITE_DEPLOYMENT_MODE === "static";
+
+// CORE_MODULES is set dynamically after module initialization
+// In static mode, it's an empty array
+// In MF mode, it's loaded from core-modules.ts
+export let CORE_MODULES: ModuleConfig[] = [];
+
+// Initialize CORE_MODULES - call this after module load
+export function initializeCoreModules() {
+  if (isStaticMode) {
+    CORE_MODULES = [];
+  } else {
+    // In MF mode, we would load from core-modules
+    // But for now, set to empty to avoid errors
+    CORE_MODULES = [];
+  }
+}
 
 // ============================================================================
 // Business Modules (sold as packages)

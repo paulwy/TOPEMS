@@ -6,24 +6,50 @@
 
 ## API 版本
 
-当前版本: v1
+当前版本: v2
 
-所有API路径前缀: `/api/v1`
+所有API路径格式: `/api/{module}/{resource}`
+
+> **说明**: 各服务 API 路径已统一改为 `/api/{服务名}/{资源}` 格式，例如 `/api/iam/auth/login`、`/api/hrm/employees`。
 
 ## 核心API文档
 
 | API名称 | 文档链接 | 服务端口 |
 |--------|---------|---------|
-| 认证授权 | [API_AUTH.md](./API_AUTH.md) | 8000 |
+| 认证授权(IAM) | [API_AUTH.md](./API_AUTH.md) | 8000 |
 | 工作流 | [API_WORKFLOW.md](./API_WORKFLOW.md) | 8006 |
-| 通知服务 | [API_NOTIFICATION.md](./API_NOTIFICATION.md) | 8003 |
+| 通知服务 | [API_NOTIFICATION.md](./API_NOTIFICATION.md) | 8002 |
 | 报表服务 | [API_REPORT.md](./API_REPORT.md) | 8053 |
-| 研发管理 | [API_RS.md](./API_RS.md) | 8020 |
-| 实验室管理 | [API_LIMS.md](./API_LIMS.md) | 8022 |
-| 质量管理 | [API_QMS.md](./API_QMS.md) | 8031 |
-| 安全管理 | [API_EHS.md](./API_EHS.md) | 8032 |
-| 供应商管理 | [API_SRM.md](./API_SRM.md) | 8041 |
-| 产品数据管理 | [API_PDM.md](./API_PDM.md) | 8023 |
+| 研发管理(RS) | [API_RS.md](./API_RS.md) | 8020 |
+| 实验室管理(LIMS) | [API_LIMS.md](./API_LIMS.md) | 8022 |
+| 质量管理(QMS) | [API_QMS.md](./API_QMS.md) | 8031 |
+| 安全环保(EHS) | [API_EHS.md](./API_EHS.md) | 8032 |
+| 供应商管理(SRM) | [API_SRM.md](./API_SRM.md) | 8041 |
+| 产品数据管理(PDM) | [API_PDM.md](./API_PDM.md) | 8023 |
+
+## 服务路径一览
+
+| 服务 | 前缀 | 端口 |
+|------|------|------|
+| IAM | /api/iam/ | 8000 |
+| PM | /api/pm/ | 8001 |
+| HRM | /api/hrm/ | 8011 |
+| CRM | /api/crm/ | 8012 |
+| ERP | /api/erp/ | 8010 |
+| RS | /api/rs/ | 8020 |
+| SCM | /api/scm/ | 8040 |
+| SRM | /api/srm/ | 8041 |
+| WMS | /api/wms/ | 8042 |
+| EHS | /api/ehs/ | 8032 |
+| QMS | /api/qms/ | 8031 |
+| LIMS | /api/lims/ | 8032 |
+| AI | /api/ai/ | 8062 |
+| BI | /api/bi/ | 8060 |
+| GIS | /api/gis/ | 8053 |
+| Mobile | /api/mobile/ | 8070 |
+| Integration | /api/integration/ | 8005 |
+| Mail | /api/mail/ | 8000 |
+| Notification | /api/notification/ | 8000 |
 
 ## 通用规范
 
@@ -77,7 +103,7 @@ Authorization: Bearer {token}
 列表API支持分页参数：
 
 ```http
-GET /api/v1/resources?page=1&per_page=20&sort_by=created_at&sort_order=desc
+GET /api/{module}/resources?page=1&page_size=20
 ```
 
 参数说明：
@@ -111,14 +137,14 @@ GET /health
 ### 1. 认证
 ```bash
 # 登录获取Token
-curl -X POST http://localhost:8000/api/v1/auth/login \
+curl -X POST http://localhost:8000/api/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"password"}'
 ```
 
 ### 2. 使用Token调用API
 ```bash
-curl -X GET http://localhost:8000/api/v1/auth/me \
+curl -X GET http://localhost:8000/api/iam/users/me \
   -H "Authorization: Bearer {token}"
 ```
 

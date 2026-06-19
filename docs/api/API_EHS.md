@@ -1,10 +1,13 @@
 # TOPEMS 环境健康安全系统 API
 
-**服务**: topems-ehs
-**端口**: 待定
-**版本**: v1
+**服务**: topems-ehs (集成在 quality-assurance)
+**端口**: 8032
+**版本**: v2
 
 ---
+
+> **API 路径**: `/api/ehs/` (例如 `/api/ehs/hazards`)
+> **实际访问地址**: `http://localhost:8032/api/ehs/`
 
 ## 1. 概述
 
@@ -14,26 +17,26 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 安全隐患列表 | /api/v1/hazards | GET |
-| 安全隐患详情 | /api/v1/hazards/{id} | GET |
-| 创建安全隐患 | /api/v1/hazards | POST |
-| 更新安全隐患 | /api/v1/hazards/{id} | PUT |
-| 删除安全隐患 | /api/v1/hazards/{id} | DELETE |
-| 安全检查列表 | /api/v1/checks | GET |
-| 安全检查详情 | /api/v1/checks/{id} | GET |
-| 创建安全检查 | /api/v1/checks | POST |
-| 更新安全检查 | /api/v1/checks/{id} | PUT |
-| 删除安全检查 | /api/v1/checks/{id} | DELETE |
-| 应急预案列表 | /api/v1/plans | GET |
-| 应急预案详情 | /api/v1/plans/{id} | GET |
-| 创建应急预案 | /api/v1/plans | POST |
-| 更新应急预案 | /api/v1/plans/{id} | PUT |
-| 删除应急预案 | /api/v1/plans/{id} | DELETE |
-| 演练记录列表 | /api/v1/drills | GET |
-| 演练记录详情 | /api/v1/drills/{id} | GET |
-| 创建演练记录 | /api/v1/drills | POST |
-| 更新演练记录 | /api/v1/drills/{id} | PUT |
-| 删除演练记录 | /api/v1/drills/{id} | DELETE |
+| 安全隐患列表 | /api/ehs/hazards | GET |
+| 安全隐患详情 | /api/ehs/hazards/{id} | GET |
+| 创建安全隐患 | /api/ehs/hazards | POST |
+| 更新安全隐患 | /api/ehs/hazards/{id} | PUT |
+| 删除安全隐患 | /api/ehs/hazards/{id} | DELETE |
+| 安全检查列表 | /api/ehs/checks | GET |
+| 安全检查详情 | /api/ehs/checks/{id} | GET |
+| 创建安全检查 | /api/ehs/checks | POST |
+| 更新安全检查 | /api/ehs/checks/{id} | PUT |
+| 删除安全检查 | /api/ehs/checks/{id} | DELETE |
+| 应急预案列表 | /api/ehs/plans | GET |
+| 应急预案详情 | /api/ehs/plans/{id} | GET |
+| 创建应急预案 | /api/ehs/plans | POST |
+| 更新应急预案 | /api/ehs/plans/{id} | PUT |
+| 删除应急预案 | /api/ehs/plans/{id} | DELETE |
+| 演练记录列表 | /api/ehs/drills | GET |
+| 演练记录详情 | /api/ehs/drills/{id} | GET |
+| 创建演练记录 | /api/ehs/drills | POST |
+| 更新演练记录 | /api/ehs/drills/{id} | PUT |
+| 删除演练记录 | /api/ehs/drills/{id} | DELETE |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -118,7 +121,7 @@
 
 ### 2.1 获取安全隐患列表
 
-**端点**: `GET /api/v1/hazards`
+**端点**: `GET /api/ehs/hazards`
 
 **描述**: 获取所有安全隐患
 
@@ -136,7 +139,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8008/api/v1/hazards?status=open&level=重大风险" \
+curl -X GET "http://localhost:8032/api/ehs/hazards?status=open&level=重大风险" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -168,7 +171,7 @@ curl -X GET "http://localhost:8008/api/v1/hazards?status=open&level=重大风险
 
 ### 2.2 获取安全隐患详情
 
-**端点**: `GET /api/v1/hazards/{id}`
+**端点**: `GET /api/ehs/hazards/{id}`
 
 **描述**: 获取指定安全隐患的详细信息
 
@@ -182,7 +185,7 @@ curl -X GET "http://localhost:8008/api/v1/hazards?status=open&level=重大风险
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8008/api/v1/hazards/hazard-001 \
+curl -X GET http://localhost:8032/api/ehs/hazards/hazard-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -190,7 +193,7 @@ curl -X GET http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 2.3 创建安全隐患
 
-**端点**: `POST /api/v1/hazards`
+**端点**: `POST /api/ehs/hazards`
 
 **描述**: 创建新的安全隐患记录
 
@@ -233,7 +236,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8008/api/v1/hazards \
+curl -X POST http://localhost:8032/api/ehs/hazards \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -252,7 +255,7 @@ curl -X POST http://localhost:8008/api/v1/hazards \
 
 ### 2.4 更新安全隐患
 
-**端点**: `PUT /api/v1/hazards/{id}`
+**端点**: `PUT /api/ehs/hazards/{id}`
 
 **描述**: 更新指定安全隐患
 
@@ -278,7 +281,7 @@ curl -X POST http://localhost:8008/api/v1/hazards \
 
 ### 2.5 删除安全隐患
 
-**端点**: `DELETE /api/v1/hazards/{id}`
+**端点**: `DELETE /api/ehs/hazards/{id}`
 
 **描述**: 删除指定安全隐患
 
@@ -289,7 +292,7 @@ curl -X POST http://localhost:8008/api/v1/hazards \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
+curl -X DELETE http://localhost:8032/api/ehs/hazards/hazard-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -299,7 +302,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 3.1 获取安全检查列表
 
-**端点**: `GET /api/v1/checks`
+**端点**: `GET /api/ehs/checks`
 
 **描述**: 获取所有安全检查记录
 
@@ -316,7 +319,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 3.2 获取安全检查详情
 
-**端点**: `GET /api/v1/checks/{id}`
+**端点**: `GET /api/ehs/checks/{id}`
 
 **描述**: 获取指定安全检查的详细信息
 
@@ -326,7 +329,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 3.3 创建安全检查
 
-**端点**: `POST /api/v1/checks`
+**端点**: `POST /api/ehs/checks`
 
 **描述**: 创建新的安全检查记录
 
@@ -362,7 +365,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 3.4 更新安全检查
 
-**端点**: `PUT /api/v1/checks/{id}`
+**端点**: `PUT /api/ehs/checks/{id}`
 
 **描述**: 更新指定安全检查
 
@@ -389,7 +392,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 3.5 删除安全检查
 
-**端点**: `DELETE /api/v1/checks/{id}`
+**端点**: `DELETE /api/ehs/checks/{id}`
 
 **描述**: 删除指定安全检查
 
@@ -403,7 +406,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 4.1 获取应急预案列表
 
-**端点**: `GET /api/v1/plans`
+**端点**: `GET /api/ehs/plans`
 
 **描述**: 获取所有应急预案
 
@@ -419,7 +422,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 4.2 获取应急预案详情
 
-**端点**: `GET /api/v1/plans/{id}`
+**端点**: `GET /api/ehs/plans/{id}`
 
 **描述**: 获取指定应急预案的详细信息
 
@@ -429,7 +432,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 4.3 创建应急预案
 
-**端点**: `POST /api/v1/plans`
+**端点**: `POST /api/ehs/plans`
 
 **描述**: 创建新的应急预案
 
@@ -469,7 +472,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 4.4 更新应急预案
 
-**端点**: `PUT /api/v1/plans/{id}`
+**端点**: `PUT /api/ehs/plans/{id}`
 
 **描述**: 更新指定应急预案
 
@@ -481,7 +484,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 4.5 删除应急预案
 
-**端点**: `DELETE /api/v1/plans/{id}`
+**端点**: `DELETE /api/ehs/plans/{id}`
 
 **描述**: 删除指定应急预案
 
@@ -495,7 +498,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 5.1 获取演练记录列表
 
-**端点**: `GET /api/v1/drills`
+**端点**: `GET /api/ehs/drills`
 
 **描述**: 获取所有演练记录
 
@@ -511,7 +514,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 5.2 获取演练记录详情
 
-**端点**: `GET /api/v1/drills/{id}`
+**端点**: `GET /api/ehs/drills/{id}`
 
 **描述**: 获取指定演练记录的详细信息
 
@@ -521,7 +524,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 5.3 创建演练记录
 
-**端点**: `POST /api/v1/drills`
+**端点**: `POST /api/ehs/drills`
 
 **描述**: 创建新的演练记录
 
@@ -561,7 +564,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 5.4 更新演练记录
 
-**端点**: `PUT /api/v1/drills/{id}`
+**端点**: `PUT /api/ehs/drills/{id}`
 
 **描述**: 更新指定演练记录
 
@@ -573,7 +576,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 
 ### 5.5 删除演练记录
 
-**端点**: `DELETE /api/v1/drills/{id}`
+**端点**: `DELETE /api/ehs/drills/{id}`
 
 **描述**: 删除指定演练记录
 
@@ -596,7 +599,7 @@ curl -X DELETE http://localhost:8008/api/v1/hazards/hazard-001 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8008/health
+curl -X GET http://localhost:8032/health
 ```
 
 **成功响应** (200 OK):

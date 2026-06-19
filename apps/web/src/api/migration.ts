@@ -42,7 +42,7 @@ export const migrationApi = {
   async listServices(): Promise<MigrationService[]> {
     try {
       const res: ApiResponse<MigrationService[]> =
-        await apiClient.migration.get("/api/v1/migrations/services");
+        await apiClient.migration.get("/api/migrations/services");
       if (res && res.success && Array.isArray(res.data)) {
         return res.data;
       }
@@ -59,7 +59,7 @@ export const migrationApi = {
     try {
       const res: ApiResponse<MigrationApplyResult> =
         await apiClient.migration.post(
-          `/api/v1/migrations/services/${encodeURIComponent(serviceName)}/apply`,
+          `/api/migrations/services/${encodeURIComponent(serviceName)}/apply`,
           { type },
         );
       if (res && res.success && res.data) {
@@ -77,7 +77,7 @@ export const migrationApi = {
   ): Promise<RollbackResult> {
     try {
       const res: ApiResponse<RollbackResult> = await apiClient.migration.post(
-        `/api/v1/migrations/services/${encodeURIComponent(serviceName)}/rollback`,
+        `/api/migrations/services/${encodeURIComponent(serviceName)}/rollback`,
         { version },
       );
       if (res && res.success && res.data) {
@@ -92,7 +92,7 @@ export const migrationApi = {
   async getMigrationStatus(serviceName: string): Promise<MigrationStatus> {
     try {
       const res: ApiResponse<MigrationStatus> = await apiClient.migration.get(
-        `/api/v1/migrations/services/${encodeURIComponent(serviceName)}/status`,
+        `/api/migrations/services/${encodeURIComponent(serviceName)}/status`,
       );
       if (res && res.success && res.data) {
         return {

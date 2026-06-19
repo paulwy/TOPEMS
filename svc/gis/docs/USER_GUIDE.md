@@ -46,13 +46,13 @@ cargo run --release
 
 ```bash
 # 使用 SERVER_PORT 环境变量
-SERVER_PORT=8080 cargo run --release
+SERVER_PORT=8054 cargo run --release
 
 # 或使用 PORT 环境变量
-PORT=8080 cargo run --release
+PORT=8054 cargo run --release
 ```
 
-服务启动后默认监听 `http://localhost:8080`（可通过环境变量配置）
+服务启动后默认监听 `http://localhost:8054`（可通过环境变量配置）
 
 ### 启动日志示例
 
@@ -64,7 +64,7 @@ PORT=8080 cargo run --release
 ...
 2026-06-19T03:25:13.875481Z  INFO topems_gis: ✅ 数据库表初始化成功
 2026-06-19T03:25:13.877620Z  INFO topems_gis: 🚀 TOPEMS-GIS 厂区空间数字化系统启动中...
-2026-06-19T03:25:13.877628Z  INFO topems_gis: 📦 端口: 8080
+2026-06-19T03:25:13.877628Z  INFO topems_gis: 📦 端口: 8054
 2026-06-19T03:25:13.877632Z  INFO topems_gis: 🔒 认证保护已启用
 ```
 
@@ -392,8 +392,8 @@ CMD ["./target/release/topems-gis"]
 | 变量名 | 说明 | 默认值 |
 |--------|------|--------|
 | DATABASE_URL | 数据库连接URL | postgres://topems:topems_secret@localhost:5432/topems |
-| SERVER_PORT | 服务端口（优先） | 8080 |
-| PORT | 服务端口（备选） | 8080 |
+| SERVER_PORT | 服务端口（优先） | 8054 |
+| PORT | 服务端口（备选） | 8054 |
 | JWT_SECRET | JWT密钥 | - |
 | JWT_ALGORITHM | JWT算法 | HS256 |
 
@@ -499,17 +499,17 @@ test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; filtered out; finis
 
 ```bash
 # 健康检查
-curl http://localhost:8080/health
+curl http://localhost:8054/health
 
 # 获取GIS统计
-curl http://localhost:8080/api/gis/statistics
+curl http://localhost:8054/api/gis/statistics
 
 # 获取Prometheus指标
-curl http://localhost:8080/metrics
+curl http://localhost:8054/metrics
 
 # 获取厂区地图列表（需要认证）
 curl -H "Authorization: Bearer <token>" \
-     http://localhost:8080/api/gis/factory-maps
+     http://localhost:8054/api/gis/factory-maps
 ```
 
 ## 版本历史

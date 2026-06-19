@@ -6,7 +6,7 @@ category: "System"
 plugin_type: "business"
 
 deployment:
-  port: 8056
+  port: 8070
   base_path: /api/mobile
 
 permissions:

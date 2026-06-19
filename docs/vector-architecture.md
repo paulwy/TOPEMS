@@ -283,7 +283,7 @@ pub struct OpenAIEmbedding {
 
 /// 本地 BGE 嵌入服务
 pub struct LocalEmbedding {
-    endpoint: String,  // localhost:8080
+    endpoint: String,  // localhost:8000
 }
 ```
 
@@ -300,7 +300,7 @@ providers:
     
   - name: local
     enabled: false
-    endpoint: http://localhost:8080/embed
+    endpoint: http://localhost:8000/embed
     model: BAAI/bge-large-zh-v1.5
     dimension: 1024
 ```

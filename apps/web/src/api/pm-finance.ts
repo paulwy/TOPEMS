@@ -309,116 +309,116 @@ export interface GenerateProjectVoucherParams {
 export const pmFinanceApi = {
   // 项目财务信息
   getProjectFinanceInfo: (projectId: string) =>
-    apiClient.pm.get(`/api/v1/pm/projects/${projectId}/finance`),
+    apiClient.pm.get(`/api/pm/projects/${projectId}/finance`),
 
   // 项目成本记录
   getProjectCostRecords: (params?: GetProjectCostRecordsParams) =>
-    apiClient.pm.get("/api/v1/pm/cost-records", { params }),
+    apiClient.pm.get("/api/pm/cost-records", { params }),
 
   createProjectCostRecord: (data: Partial<ProjectCostRecord>) =>
-    apiClient.pm.post("/api/v1/pm/cost-records", data),
+    apiClient.pm.post("/api/pm/cost-records", data),
 
   updateProjectCostRecord: (costId: string, data: Partial<ProjectCostRecord>) =>
-    apiClient.pm.put(`/api/v1/pm/cost-records/${costId}`, data),
+    apiClient.pm.put(`/api/pm/cost-records/${costId}`, data),
 
   deleteProjectCostRecord: (costId: string) =>
-    apiClient.pm.delete(`/api/v1/pm/cost-records/${costId}`),
+    apiClient.pm.delete(`/api/pm/cost-records/${costId}`),
 
   batchDeleteProjectCostRecords: (costIds: string[]) =>
-    apiClient.pm.post("/api/v1/pm/cost-records/batch-delete", {
+    apiClient.pm.post("/api/pm/cost-records/batch-delete", {
       cost_ids: costIds,
     }),
 
   approveProjectCostRecord: (costId: string) =>
-    apiClient.pm.post(`/api/v1/pm/cost-records/${costId}/approve`),
+    apiClient.pm.post(`/api/pm/cost-records/${costId}/approve`),
 
   batchApproveProjectCostRecords: (costIds: string[]) =>
-    apiClient.pm.post("/api/v1/pm/cost-records/batch-approve", {
+    apiClient.pm.post("/api/pm/cost-records/batch-approve", {
       cost_ids: costIds,
     }),
 
   // 成本归集规则
   getCostAllocationRules: (params?: GetCostAllocationRulesParams) =>
-    apiClient.pm.get("/api/v1/pm/cost-allocation-rules", { params }),
+    apiClient.pm.get("/api/pm/cost-allocation-rules", { params }),
 
   createCostAllocationRule: (data: CreateCostAllocationRuleData) =>
-    apiClient.pm.post("/api/v1/pm/cost-allocation-rules", data),
+    apiClient.pm.post("/api/pm/cost-allocation-rules", data),
 
   updateCostAllocationRule: (
     ruleId: string,
     data: UpdateCostAllocationRuleData,
-  ) => apiClient.pm.put(`/api/v1/pm/cost-allocation-rules/${ruleId}`, data),
+  ) => apiClient.pm.put(`/api/pm/cost-allocation-rules/${ruleId}`, data),
 
   deleteCostAllocationRule: (ruleId: string) =>
-    apiClient.pm.delete(`/api/v1/pm/cost-allocation-rules/${ruleId}`),
+    apiClient.pm.delete(`/api/pm/cost-allocation-rules/${ruleId}`),
 
   applyCostAllocationRules: (projectId: string, costRecordIds?: string[]) =>
     apiClient.pm.post(
-      `/api/v1/pm/projects/${projectId}/apply-allocation-rules`,
+      `/api/pm/projects/${projectId}/apply-allocation-rules`,
       {
         cost_record_ids: costRecordIds,
       },
     ),
 
   previewCostAllocation: (projectId: string, costRecordIds?: string[]) =>
-    apiClient.pm.post(`/api/v1/pm/projects/${projectId}/preview-allocation`, {
+    apiClient.pm.post(`/api/pm/projects/${projectId}/preview-allocation`, {
       cost_record_ids: costRecordIds,
     }),
 
   // 项目发票
   getProjectInvoices: (params?: GetProjectInvoicesParams) =>
-    apiClient.pm.get("/api/v1/pm/invoices", { params }),
+    apiClient.pm.get("/api/pm/invoices", { params }),
 
   getProjectInvoice: (invoiceId: string) =>
-    apiClient.pm.get(`/api/v1/pm/invoices/${invoiceId}`),
+    apiClient.pm.get(`/api/pm/invoices/${invoiceId}`),
 
   createProjectInvoice: (data: CreateProjectInvoiceData) =>
-    apiClient.pm.post("/api/v1/pm/invoices", data),
+    apiClient.pm.post("/api/pm/invoices", data),
 
   updateProjectInvoice: (invoiceId: string, data: UpdateProjectInvoiceData) =>
-    apiClient.pm.put(`/api/v1/pm/invoices/${invoiceId}`, data),
+    apiClient.pm.put(`/api/pm/invoices/${invoiceId}`, data),
 
   deleteProjectInvoice: (invoiceId: string) =>
-    apiClient.pm.delete(`/api/v1/pm/invoices/${invoiceId}`),
+    apiClient.pm.delete(`/api/pm/invoices/${invoiceId}`),
 
   issueProjectInvoice: (invoiceId: string) =>
-    apiClient.pm.post(`/api/v1/pm/invoices/${invoiceId}/issue`),
+    apiClient.pm.post(`/api/pm/invoices/${invoiceId}/issue`),
 
   confirmProjectInvoice: (invoiceId: string) =>
-    apiClient.pm.post(`/api/v1/pm/invoices/${invoiceId}/confirm`),
+    apiClient.pm.post(`/api/pm/invoices/${invoiceId}/confirm`),
 
   // 项目财务汇总
   getProjectFinancialSummary: (params: GetProjectFinancialSummaryParams) =>
-    apiClient.pm.get("/api/v1/pm/reports/financial-summary", { params }),
+    apiClient.pm.get("/api/pm/reports/financial-summary", { params }),
 
   getProjectIncomeStatement: (params: { project_id: string; period: string }) =>
-    apiClient.pm.get("/api/v1/pm/reports/income-statement", { params }),
+    apiClient.pm.get("/api/pm/reports/income-statement", { params }),
 
   getProjectBudgetAnalysis: (params: GetProjectBudgetAnalysisParams) =>
-    apiClient.pm.get("/api/v1/pm/reports/budget-analysis", { params }),
+    apiClient.pm.get("/api/pm/reports/budget-analysis", { params }),
 
   getProjectCashPlan: (projectId: string) =>
-    apiClient.pm.get(`/api/v1/pm/projects/${projectId}/cash-plan`),
+    apiClient.pm.get(`/api/pm/projects/${projectId}/cash-plan`),
 
   createProjectCashPlan: (data: CreateProjectCashPlanData) =>
-    apiClient.pm.post("/api/v1/pm/cash-plan", data),
+    apiClient.pm.post("/api/pm/cash-plan", data),
 
   updateProjectCashPlan: (planId: string, data: UpdateProjectCashPlanData) =>
-    apiClient.pm.put(`/api/v1/pm/cash-plan/${planId}`, data),
+    apiClient.pm.put(`/api/pm/cash-plan/${planId}`, data),
 
   deleteProjectCashPlan: (planId: string) =>
-    apiClient.pm.delete(`/api/v1/pm/cash-plan/${planId}`),
+    apiClient.pm.delete(`/api/pm/cash-plan/${planId}`),
 
   // 生成项目凭证
   generateProjectVoucher: (params: GenerateProjectVoucherParams) =>
-    apiClient.pm.post("/api/v1/pm/vouchers/generate", params),
+    apiClient.pm.post("/api/pm/vouchers/generate", params),
 
   // 批量生成凭证
   batchGenerateProjectVouchers: (
     projectIds: string[],
     voucherType: "cost" | "revenue",
   ) =>
-    apiClient.pm.post("/api/v1/pm/vouchers/batch-generate", {
+    apiClient.pm.post("/api/pm/vouchers/batch-generate", {
       project_ids: projectIds,
       voucher_type: voucherType,
     }),
@@ -434,7 +434,7 @@ export const pmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.pm as any).defaults?.baseURL || config.services.pm;
-    return downloadBlob(baseURL, "/api/v1/pm/cost-records/export", {
+    return downloadBlob(baseURL, "/api/pm/cost-records/export", {
       params,
     });
   },
@@ -449,7 +449,7 @@ export const pmFinanceApi = {
   }): Promise<Blob> => {
     const baseURL =
       (apiClient.pm as any).defaults?.baseURL || config.services.pm;
-    return downloadBlob(baseURL, "/api/v1/pm/invoices/export", { params });
+    return downloadBlob(baseURL, "/api/pm/invoices/export", { params });
   },
 };
 

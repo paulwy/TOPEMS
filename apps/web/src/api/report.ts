@@ -112,21 +112,21 @@ export interface ReportsCenterStats {
 
 export const reportApi = {
   listReports: async (): Promise<ApiResponse<ReportData[]>> => {
-    return apiClient.report.get<ReportData[]>("/api/v1/reports");
+    return apiClient.report.get<ReportData[]>("/api/report/reports");
   },
 
   getReport: async (id: string): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.get<ReportData>(`/api/v1/reports/${id}`);
+    return apiClient.report.get<ReportData>(`/api/report/reports/${id}`);
   },
 
   createReport: async (
     data: CreateReportRequest,
   ): Promise<ApiResponse<ReportData>> => {
-    return apiClient.report.post<ReportData>("/api/v1/reports", data);
+    return apiClient.report.post<ReportData>("/api/report/reports", data);
   },
 
   deleteReport: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.report.delete<boolean>(`/api/v1/reports/${id}`);
+    return apiClient.report.delete<boolean>(`/api/report/reports/${id}`);
   },
 
   exportReport: async (
@@ -134,23 +134,23 @@ export const reportApi = {
     data: ExportReportRequest,
   ): Promise<ApiResponse<ExportResult>> => {
     return apiClient.report.post<ExportResult>(
-      `/api/v1/reports/${id}/export`,
+      `/api/report/reports/${id}/export`,
       data,
     );
   },
 
   listTemplates: async (): Promise<ApiResponse<ReportTemplate[]>> => {
-    return apiClient.report.get<ReportTemplate[]>("/api/v1/templates");
+    return apiClient.report.get<ReportTemplate[]>("/api/report/templates");
   },
 
   createTemplate: async (
     data: Omit<ReportTemplate, "id" | "created_at">,
   ): Promise<ApiResponse<ReportTemplate>> => {
-    return apiClient.report.post<ReportTemplate>("/api/v1/templates", data);
+    return apiClient.report.post<ReportTemplate>("/api/report/templates", data);
   },
 
   listReportTypes: async (): Promise<ApiResponse<ReportTypeInfo[]>> => {
-    return apiClient.report.get<ReportTypeInfo[]>("/api/v1/report-types");
+    return apiClient.report.get<ReportTypeInfo[]>("/api/report/report-types");
   },
 
   health: async (): Promise<ApiResponse<string>> => {
@@ -160,7 +160,7 @@ export const reportApi = {
   // 报表中心专用统计API
   getReportsCenterStats: async (): Promise<ApiResponse<ReportsCenterStats>> => {
     return apiClient.report.get<ReportsCenterStats>(
-      "/api/v1/reports-center/stats",
+      "/api/report/reports-center/stats",
     );
   },
 
@@ -170,7 +170,7 @@ export const reportApi = {
     format: ExportFormat,
   ): Promise<ApiResponse<ExportResult>> => {
     return apiClient.report.post<ExportResult>(
-      `/api/v1/reports-center/export/${reportType}`,
+      `/api/report/reports-center/export/${reportType}`,
       { format },
     );
   },

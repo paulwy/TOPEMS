@@ -83,7 +83,6 @@ import { StatsChart } from "@/components/StatsChart";
 import { MetricCard } from "@/components/MetricCard";
 import { useAppStore } from "../../store";
 import {
-  DashboardHeader,
   DashboardQuickActions,
   defaultQuickActions,
   ModuleCard,
@@ -723,14 +722,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       />
 
       <Box className="desktop-only">
-        <DashboardHeader onLogout={handleLogout} />
-
         <Box
           component="main"
           sx={{
-            maxWidth: "1280px",
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
+            width: "100%",
             py: 4,
           }}
         >

@@ -14,7 +14,7 @@ export const useEmployeeFinance = (employeeId: string) => {
     queryKey: ["employee-finance", employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
-        `/api/v1/hrm/employees/${employeeId}/finance`,
+        `/api/hrm/employees/${employeeId}/finance`,
       );
       return response.data?.data!;
     },
@@ -30,7 +30,7 @@ export const useEmployeeFinanceInfo = (employeeId: string) => {
     queryKey: ["employee-finance-info", employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: EmployeeFinance }>(
-        `/api/v1/hrm/employees/${employeeId}/finance`,
+        `/api/hrm/employees/${employeeId}/finance`,
       );
       return response.data?.data!;
     },
@@ -51,7 +51,7 @@ export const useUpdateEmployeeFinanceInfo = () => {
       data: Partial<EmployeeFinance>;
     }) => {
       const response = await apiClient.hrm.put<{ data: EmployeeFinance }>(
-        `/api/v1/hrm/employees/${employeeId}/finance`,
+        `/api/hrm/employees/${employeeId}/finance`,
         data,
       );
       return response.data;
@@ -67,7 +67,7 @@ export const useEmployeePayrolls = (employeeId: string) => {
     queryKey: ["employee-payrolls", employeeId],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: PayrollRecord[] }>(
-        `/api/v1/hrm/employees/${employeeId}/payrolls`,
+        `/api/hrm/employees/${employeeId}/payrolls`,
       );
       return response.data;
     },
@@ -98,7 +98,7 @@ export const useDepartmentPayrollSummary = (
           total_tax: number;
           total_net_salary: number;
         };
-      }>(`/api/v1/hrm/departments/${departmentId}/payroll-summary`, {
+      }>(`/api/hrm/departments/${departmentId}/payroll-summary`, {
         params: { period },
       });
       return response.data;
@@ -115,7 +115,7 @@ export const usePayrollPeriods = () => {
     queryKey: ["payroll-periods"],
     queryFn: async () => {
       const response = await apiClient.hrm.get<{ data: string[] }>(
-        "/api/v1/hrm/payroll/periods",
+        "/api/hrm/payroll/periods",
       );
       return response.data;
     },

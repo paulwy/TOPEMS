@@ -1755,7 +1755,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // File 服务 URL（可选，用于从 File 服务获取文件）
     let file_service_url =
-        std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+        std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
 
     let document_service = if std::env::var("FILE_SERVICE_URL").is_ok() {
         tracing::info!("🔗 连接 File 服务: {}", file_service_url);
@@ -1914,9 +1914,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let port = std::env::var("SERVER_PORT")
         .or_else(|_| std::env::var("PORT"))
-        .unwrap_or_else(|_| "8062".to_string())
+        .unwrap_or_else(|_| "8050".to_string())
         .parse()
-        .unwrap_or(8062);
+        .unwrap_or(8050);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS-AI 服务运行在 http://{}", addr);

@@ -11,6 +11,8 @@ interface UserSelectProps {
   loading?: boolean;
 }
 
+// MUI v6+ 不再支持 InputProps，需要使用 slotProps
+// 为了兼容性，使用 any 类型绕过类型检查
 export const UserSelect: React.FC<UserSelectProps> = ({
   users,
   value,
@@ -25,29 +27,37 @@ export const UserSelect: React.FC<UserSelectProps> = ({
       onChange={(_, newValue) => onChange?.(newValue)}
       options={users}
       getOptionLabel={(user) => `${user.realName} (${user.username})`}
-      renderOption={(_, user) => (
-        <div>
-          <div>{user.realName}</div>
-          <div style={{ fontSize: '0.8rem', color: '#666' }}>{user.email}</div>
-        </div>
+      renderOption={(props, user) => (
+        <li {...props} key={user.id}>
+          <div>
+            <div>{user.realName}</div>
+            <div style={{ fontSize: '0.8rem', color: '#666' }}>{user.email}</div>
+          </div>
+        </li>
       )}
       loading={loading}
       disabled={disabled}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={placeholder}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-        />
-      )}
+      renderInput={(params) => {
+        // 使用 any 绕过 MUI 版本差异的类型检查
+        const anyParams = params as any;
+        return (
+          <TextField
+            {...anyParams}
+            label={placeholder}
+            slotProps={{
+              input: {
+                ...anyParams.slotProps?.input,
+                endAdornment: (
+                  <>
+                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                    {anyParams.slotProps?.input?.endAdornment}
+                  </>
+                ),
+              },
+            }}
+          />
+        );
+      }}
     />
   );
 };

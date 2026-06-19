@@ -445,7 +445,7 @@ export const qmsApi = {
   listStandards: async (): Promise<ApiResponse<QualityStandard[]>> => {
     const response =
       await apiClient.qms.get<PaginatedResponse<QualityStandardBackend>>(
-        "/api/v1/standards",
+        "/api/qms/standards",
       );
     const adaptedData = (response.data?.standards || []).map(
       adaptStandardToFrontend,
@@ -454,7 +454,7 @@ export const qmsApi = {
   },
   getStandard: async (id: string): Promise<ApiResponse<QualityStandard>> => {
     const response = await apiClient.qms.get<QualityStandardBackend>(
-      `/api/v1/standards/${id}`,
+      `/api/qms/standards/${id}`,
     );
     return {
       ...response,
@@ -466,7 +466,7 @@ export const qmsApi = {
   ): Promise<ApiResponse<QualityStandard>> => {
     const backendData = adaptStandardToBackend(data);
     const response = await apiClient.qms.post<QualityStandardBackend>(
-      "/api/v1/standards",
+      "/api/qms/standards",
       backendData,
     );
     return {
@@ -486,7 +486,7 @@ export const qmsApi = {
       status: data.status,
     };
     const response = await apiClient.qms.put<QualityStandardBackend>(
-      `/api/v1/standards/${id}`,
+      `/api/qms/standards/${id}`,
       backendData,
     );
     return {
@@ -495,14 +495,14 @@ export const qmsApi = {
     };
   },
   deleteStandard: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/v1/standards/${id}`);
+    return apiClient.qms.delete<boolean>(`/api/qms/standards/${id}`);
   },
 
   // Quality Checks
   listChecks: async (): Promise<ApiResponse<QualityCheck[]>> => {
     const response =
       await apiClient.qms.get<PaginatedResponse<QualityInspectionBackend>>(
-        "/api/v1/checks",
+        "/api/qms/checks",
       );
     const adaptedData = (response.data?.inspections || []).map(
       adaptInspectionToFrontend,
@@ -511,7 +511,7 @@ export const qmsApi = {
   },
   getCheck: async (id: string): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.get<QualityInspectionBackend>(
-      `/api/v1/checks/${id}`,
+      `/api/qms/checks/${id}`,
     );
     return {
       ...response,
@@ -525,7 +525,7 @@ export const qmsApi = {
   ): Promise<ApiResponse<QualityCheck>> => {
     const backendData = adaptInspectionToBackend(data);
     const response = await apiClient.qms.post<QualityInspectionBackend>(
-      "/api/v1/checks",
+      "/api/qms/checks",
       backendData,
     );
     return {
@@ -547,7 +547,7 @@ export const qmsApi = {
       findings: data.conclusion,
     };
     const response = await apiClient.qms.put<QualityInspectionBackend>(
-      `/api/v1/checks/${id}`,
+      `/api/qms/checks/${id}`,
       backendData,
     );
     return {
@@ -558,21 +558,21 @@ export const qmsApi = {
     };
   },
   deleteCheck: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/v1/checks/${id}`);
+    return apiClient.qms.delete<boolean>(`/api/qms/checks/${id}`);
   },
 
   // Quality Issues
   listIssues: async (): Promise<ApiResponse<QualityIssue[]>> => {
     const response =
       await apiClient.qms.get<PaginatedResponse<QualityIssueBackend>>(
-        "/api/v1/issues",
+        "/api/qms/issues",
       );
     const adaptedData = (response.data?.issues || []).map(adaptIssueToFrontend);
     return { ...response, data: adaptedData };
   },
   getIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
     const response = await apiClient.qms.get<QualityIssueBackend>(
-      `/api/v1/issues/${id}`,
+      `/api/qms/issues/${id}`,
     );
     return {
       ...response,
@@ -584,7 +584,7 @@ export const qmsApi = {
   ): Promise<ApiResponse<QualityIssue>> => {
     const backendData = adaptIssueToBackend(data);
     const response = await apiClient.qms.post<QualityIssueBackend>(
-      "/api/v1/issues",
+      "/api/qms/issues",
       backendData,
     );
     return {
@@ -604,7 +604,7 @@ export const qmsApi = {
       assigned_to: data.assignee,
     };
     const response = await apiClient.qms.put<QualityIssueBackend>(
-      `/api/v1/issues/${id}`,
+      `/api/qms/issues/${id}`,
       backendData,
     );
     return {
@@ -613,14 +613,14 @@ export const qmsApi = {
     };
   },
   deleteIssue: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/v1/issues/${id}`);
+    return apiClient.qms.delete<boolean>(`/api/qms/issues/${id}`);
   },
 
   // Quality Improvements
   listImprovements: async (): Promise<ApiResponse<QualityImprovement[]>> => {
     const response = await apiClient.qms.get<
       PaginatedResponse<CorrectiveActionBackend>
-    >("/api/v1/improvements");
+    >("/api/qms/improvements");
     const adaptedData = (response.data?.actions || []).map(
       adaptActionToFrontend,
     );
@@ -630,7 +630,7 @@ export const qmsApi = {
     id: string,
   ): Promise<ApiResponse<QualityImprovement>> => {
     const response = await apiClient.qms.get<CorrectiveActionBackend>(
-      `/api/v1/improvements/${id}`,
+      `/api/qms/improvements/${id}`,
     );
     return {
       ...response,
@@ -642,7 +642,7 @@ export const qmsApi = {
   ): Promise<ApiResponse<QualityImprovement>> => {
     const backendData = adaptActionToBackend(data);
     const response = await apiClient.qms.post<CorrectiveActionBackend>(
-      "/api/v1/improvements",
+      "/api/qms/improvements",
       backendData,
     );
     return {
@@ -663,7 +663,7 @@ export const qmsApi = {
       verification_result: data.improvement_effect,
     };
     const response = await apiClient.qms.put<CorrectiveActionBackend>(
-      `/api/v1/improvements/${id}`,
+      `/api/qms/improvements/${id}`,
       backendData,
     );
     return {
@@ -672,7 +672,7 @@ export const qmsApi = {
     };
   },
   deleteImprovement: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/v1/improvements/${id}`);
+    return apiClient.qms.delete<boolean>(`/api/qms/improvements/${id}`);
   },
 
   // Statistics
@@ -784,7 +784,7 @@ export const qmsApi = {
   // Audit Plans
   listAuditPlans: async (): Promise<ApiResponse<AuditPlan[]>> => {
     const response = await apiClient.qms.get<{ plans?: AuditPlan[] }>(
-      "/api/v1/audit-plans",
+      "/api/qms/audit-plans",
     );
     return { ...response, data: response.data?.plans || [] };
   },
@@ -794,8 +794,8 @@ export const qmsApi = {
     planId?: string,
   ): Promise<ApiResponse<AuditTask[]>> => {
     const url = planId
-      ? `/api/v1/audit-tasks?plan_id=${planId}`
-      : "/api/v1/audit-tasks";
+      ? `/api/qms/audit-tasks?plan_id=${planId}`
+      : "/api/qms/audit-tasks";
     const response = await apiClient.qms.get<{ tasks?: AuditTask[] }>(url);
     return { ...response, data: response.data?.tasks || [] };
   },
@@ -805,8 +805,8 @@ export const qmsApi = {
     taskId?: string,
   ): Promise<ApiResponse<AuditFinding[]>> => {
     const url = taskId
-      ? `/api/v1/audit-findings?task_id=${taskId}`
-      : "/api/v1/audit-findings";
+      ? `/api/qms/audit-findings?task_id=${taskId}`
+      : "/api/qms/audit-findings";
     const response = await apiClient.qms.get<{ findings?: AuditFinding[] }>(
       url,
     );
@@ -818,7 +818,7 @@ export const qmsApi = {
     data: Omit<AuditPlan, "id" | "created_at" | "updated_at">,
   ): Promise<ApiResponse<AuditPlan>> => {
     const response = await apiClient.qms.post<AuditPlan>(
-      "/api/v1/audit-plans",
+      "/api/qms/audit-plans",
       data,
     );
     return response;
@@ -829,7 +829,7 @@ export const qmsApi = {
     taskId: string,
   ): Promise<ApiResponse<AuditTask>> => {
     const response = await apiClient.qms.put<AuditTask>(
-      `/api/v1/audit-tasks/${taskId}/complete`,
+      `/api/qms/audit-tasks/${taskId}/complete`,
       { status: "completed" },
     );
     return response;
@@ -841,7 +841,7 @@ export const qmsApi = {
   ): Promise<ApiResponse<StandardRevision[]>> => {
     const response = await apiClient.qms.get<{
       revisions?: StandardRevision[];
-    }>(`/api/v1/standards/${standardId}/revisions`);
+    }>(`/api/qms/standards/${standardId}/revisions`);
     return { ...response, data: response.data?.revisions || [] };
   },
 };

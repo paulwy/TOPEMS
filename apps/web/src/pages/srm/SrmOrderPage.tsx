@@ -273,7 +273,7 @@ const SrmOrderPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: 1, md: 2, lg: 5 },
+            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" },
             gap: 2,
             mb: 4,
           }}

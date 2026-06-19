@@ -357,6 +357,36 @@ async fn get_detailed_statistics(
     .await
     .unwrap_or(0);
 
+    // 订单统计
+    let total_orders = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.purchase_orders",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
+
+    let total_order_amount = sqlx::query_scalar::<_, Option<f64>>(
+        "SELECT COALESCE(SUM(total_amount), 0) FROM plugin_srm.purchase_orders WHERE status != 'cancelled'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(Some(0.0))
+    .unwrap_or(0.0);
+
+    let pending_orders = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE status = 'pending'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
+
+    let completed_orders = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE status = 'completed'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
+
     // 按类别统计
     let supplier_by_category = sqlx::query_as::<_, (String, i64)>(
         "SELECT category, COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted' GROUP BY category",
@@ -390,18 +420,83 @@ async fn get_detailed_statistics(
     .map(|(status, count)| serde_json::json!({"status": status, "count": count}))
     .collect::<Vec<_>>();
 
+    // 订单按状态统计
+    let order_by_status = sqlx::query_as::<_, (String, i64)>(
+        "SELECT status, COUNT(*) FROM plugin_srm.purchase_orders GROUP BY status",
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(status, count)| serde_json::json!({"status": status, "count": count}))
+    .collect::<Vec<_>>();
+
+    // 评估分数分布
+    let evaluation_score_distribution = sqlx::query_as::<_, (String, i64)>(
+        "SELECT \
+            CASE \
+                WHEN overall_score >= 90 THEN '90-100' \
+                WHEN overall_score >= 80 THEN '80-89' \
+                WHEN overall_score >= 70 THEN '70-79' \
+                WHEN overall_score >= 60 THEN '60-69' \
+                ELSE '0-59' \
+            END as range, \
+            COUNT(*) as count \
+        FROM plugin_srm.supplier_evaluations \
+        WHERE overall_score IS NOT NULL \
+        GROUP BY range \
+        ORDER BY range",
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(range, count)| serde_json::json!({"range": range, "count": count}))
+    .collect::<Vec<_>>();
+
+    // 月度订单趋势
+    let monthly_order_trend = sqlx::query_as::<_, (String, i64, f64)>(
+        "SELECT \
+            TO_CHAR(created_at, 'YYYY-MM') as month, \
+            COUNT(*) as order_count, \
+            COALESCE(SUM(total_amount), 0) as total_amount \
+        FROM plugin_srm.purchase_orders \
+        WHERE created_at >= NOW() - INTERVAL '12 months' \
+        GROUP BY TO_CHAR(created_at, 'YYYY-MM') \
+        ORDER BY month",
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|(month, order_count, total_amount)| {
+        serde_json::json!({
+            "month": month,
+            "order_count": order_count,
+            "total_amount": total_amount
+        })
+    })
+    .collect::<Vec<_>>();
+
     let detailed_stats = serde_json::json!({
         "basic": {
             "total_suppliers": total_suppliers,
             "active_suppliers": active_suppliers,
             "total_evaluations": total_evaluations,
             "avg_score": avg_score,
+            "total_orders": total_orders,
+            "total_order_amount": total_order_amount,
+            "pending_orders": pending_orders,
+            "completed_orders": completed_orders,
             "total_contracts": total_contracts,
             "active_contracts": active_contracts,
             "total_products": total_products,
         },
         "supplier_by_category": supplier_by_category,
         "supplier_by_status": supplier_by_status,
+        "order_by_status": order_by_status,
+        "evaluation_score_distribution": evaluation_score_distribution,
+        "monthly_order_trend": monthly_order_trend,
         "contract_by_status": contract_by_status,
     });
 
