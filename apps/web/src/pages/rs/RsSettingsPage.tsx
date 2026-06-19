@@ -236,7 +236,7 @@ const RsSettingsPage: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           仓库列表
         </Typography>
         <Button
@@ -297,7 +297,7 @@ const RsSettingsPage: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           流水线配置
         </Typography>
         <Button
@@ -342,7 +342,7 @@ const RsSettingsPage: React.FC = () => {
         ))}
       </List>
       <Divider sx={{ my: 2 }} />
-      <Typography variant="subtitle1" fontWeight="bold">
+      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
         CI/CD 全局设置
       </Typography>
       <Paper sx={{ p: 2 }}>
@@ -376,7 +376,7 @@ const RsSettingsPage: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           质量规则
         </Typography>
         <Button
@@ -418,7 +418,7 @@ const RsSettingsPage: React.FC = () => {
         ))}
       </List>
       <Divider sx={{ my: 2 }} />
-      <Typography variant="subtitle1" fontWeight="bold">
+      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
         代码规范配置
       </Typography>
       <Paper sx={{ p: 2 }}>
@@ -428,8 +428,10 @@ const RsSettingsPage: React.FC = () => {
             type="number"
             size="small"
             defaultValue={80}
-            InputProps={{
-              endAdornment: <Typography variant="body2">%</Typography>,
+            slotProps={{
+              input: {
+                endAdornment: <Typography variant="body2">%</Typography>,
+              },
             }}
             sx={{ width: 200 }}
           />
@@ -438,8 +440,10 @@ const RsSettingsPage: React.FC = () => {
             type="number"
             size="small"
             defaultValue={500}
-            InputProps={{
-              endAdornment: <Typography variant="body2">行</Typography>,
+            slotProps={{
+              input: {
+                endAdornment: <Typography variant="body2">行</Typography>,
+              },
             }}
             sx={{ width: 200 }}
           />
@@ -457,7 +461,7 @@ const RsSettingsPage: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <Typography variant="subtitle1" fontWeight="bold">
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           第三方集成
         </Typography>
         <Button
@@ -533,7 +537,7 @@ const RsSettingsPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             研发设置
           </Typography>
           <Button

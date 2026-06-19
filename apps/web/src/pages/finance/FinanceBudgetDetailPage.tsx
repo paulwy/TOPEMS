@@ -21,8 +21,8 @@ import {
   DialogActions,
   Stack,
   Divider,
-  Grid,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   ChevronLeft,
   Download,

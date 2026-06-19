@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import type { PrecacheEntry } from "workbox-precaching";
 import { precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
 import { StaleWhileRevalidate } from "workbox-strategies";
@@ -7,13 +8,15 @@ import { CacheFirst } from "workbox-strategies";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 
-declare const self: ServiceWorkerGlobalScope;
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: PrecacheEntry[];
+};
 
 precacheAndRoute(self.__WB_MANIFEST);
 
 // Cache API requests with stale-while-revalidate
 registerRoute(
-  ({ url }) => url.pathname.startsWith("/api/"),
+  ({ url }: { url: URL }) => url.pathname.startsWith("/api/"),
   new StaleWhileRevalidate({
     cacheName: "api-cache",
     plugins: [
@@ -30,7 +33,7 @@ registerRoute(
 
 // Cache static assets with cache-first
 registerRoute(
-  ({ request }) =>
+  ({ request }: { request: Request }) =>
     request.destination === "style" ||
     request.destination === "script" ||
     request.destination === "image",

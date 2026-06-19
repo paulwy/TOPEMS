@@ -388,7 +388,7 @@ export const PluginManagementPage: React.FC = () => {
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <Package size={18} />
                         <Box>
-                          <Typography variant="body2" fontWeight={500}>{plugin.name}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{plugin.name}</Typography>
                           {plugin.description && (
                             <Typography variant="caption" color="text.secondary" sx={{ display: "block", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {plugin.description}
@@ -407,7 +407,7 @@ export const PluginManagementPage: React.FC = () => {
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
                         {plugin.runtime_status === "running" ? (
                           <Tooltip title="Disable">
                             <IconButton size="small" color="warning" onClick={() => handleDisable(plugin.code)} disabled={actionLoading === plugin.code}>
@@ -472,7 +472,7 @@ export const PluginManagementPage: React.FC = () => {
                     You are about to install the following plugin:
                   </Typography>
                   <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
-                    <Typography variant="subtitle1" fontWeight={600}>{installingPlugin.name}</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{installingPlugin.name}</Typography>
                     <Typography variant="body2" color="text.secondary">{installingPlugin.description}</Typography>
                     <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -523,7 +523,7 @@ export const PluginManagementPage: React.FC = () => {
                 </Box>
               )}
 
-              <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
+              <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end', mt: 3 }}>
                 {installStep > 0 && installStep < 2 && (
                   <Button onClick={handleInstallBack} disabled={installLoading}>Back</Button>
                 )}
@@ -544,8 +544,14 @@ export const PluginManagementPage: React.FC = () => {
                 value={marketplaceSearch}
                 onChange={(e) => setMarketplaceSearch(e.target.value)}
                 sx={{ mb: 2 }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start"><Search size={18} /></InputAdornment>,
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search size={18} />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <Tabs value={marketplaceTab} onChange={(_, v) => setMarketplaceTab(v)} sx={{ mb: 2 }}>

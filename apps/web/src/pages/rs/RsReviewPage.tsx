@@ -231,7 +231,7 @@ const RsReviewPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             代码评审
           </Typography>
           <Button
@@ -248,8 +248,7 @@ const RsReviewPage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-            alignItems="center"
-            flexWrap="wrap"
+            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
           >
             <TextField
               size="small"
@@ -257,12 +256,14 @@ const RsReviewPage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ width: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -303,7 +304,7 @@ const RsReviewPage: React.FC = () => {
                 setDateRange({ ...dateRange, start: e.target.value })
               }
               sx={{ width: 150 }}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               size="small"
@@ -314,7 +315,7 @@ const RsReviewPage: React.FC = () => {
                 setDateRange({ ...dateRange, end: e.target.value })
               }
               sx={{ width: 150 }}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Stack>
         </Paper>
@@ -451,7 +452,7 @@ const RsReviewPage: React.FC = () => {
         <DialogContent>
           {selectedReview && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {selectedReview.title}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>

@@ -24,9 +24,9 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Grid,
   Chip,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import ExportButton from "@/components/ExportButton";
 

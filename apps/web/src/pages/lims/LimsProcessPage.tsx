@@ -231,7 +231,7 @@ const LimsProcessPage: React.FC = () => {
           >
             <ClipboardList size={32} color="#0891b2" />
           </Avatar>
-          <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+          <Typography variant="h5"  sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}>
             实验室管理服务未启动
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
@@ -296,7 +296,7 @@ const LimsProcessPage: React.FC = () => {
                   <FileText size={24} color="white" />
                 </Box>
                 <Box>
-                  <Typography variant="h6" fontWeight="bold">
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                     检验流程
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -415,7 +415,7 @@ const LimsProcessPage: React.FC = () => {
                     >
                       流程总数
                     </Typography>
-                    <Typography variant="h4" fontWeight="bold">
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                       {safeProcesses.length}
                     </Typography>
                   </Box>
@@ -440,7 +440,7 @@ const LimsProcessPage: React.FC = () => {
 
         <Paper sx={{ borderRadius: 2 }} variant="outlined">
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="h6" fontWeight="semibold">
+            <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
               检验流程
             </Typography>
           </Box>
@@ -477,8 +477,8 @@ const LimsProcessPage: React.FC = () => {
                     <Box sx={{ flex: 1 }}>
                       <Typography
                         variant="h6"
-                        fontWeight="semibold"
-                        sx={{ mb: 1 }}
+                        
+                        sx={{ ...{ mb: 1 }, fontWeight: 'semibold' }}
                       >
                         {process.name}
                       </Typography>
@@ -488,8 +488,8 @@ const LimsProcessPage: React.FC = () => {
                       <Stack
                         direction="row"
                         spacing={1.5}
-                        flexWrap="wrap"
                         useFlexGap
+                        sx={{ flexWrap: 'wrap' }}
                       >
                         {(process.steps || []).map((step, idx) => (
                           <Box
@@ -557,7 +557,7 @@ const LimsProcessPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" fontWeight="semibold">
+          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
             新建检验任务
           </Typography>
           <IconButton size="small" onClick={() => setShowTaskModal(false)}>

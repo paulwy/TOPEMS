@@ -240,7 +240,7 @@ export default function FormBuilder({
               <DatePicker
                 label={field.label}
                 value={value ? dayjs(value) : null}
-                onChange={(newValue) =>
+                onChange={(newValue: dayjs.Dayjs | null) =>
                   handleChange(field.name, newValue?.toISOString())
                 }
                 disabled={isDisabled}

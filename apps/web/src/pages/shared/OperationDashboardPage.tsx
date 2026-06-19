@@ -13,13 +13,13 @@ import {
   Box,
   Paper,
   Typography,
-  Grid,
   Chip,
   Button,
   Card,
   CardContent,
   useTheme,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   LayoutDashboard,
   Package,

@@ -265,7 +265,7 @@ const DatabaseStructurePage: React.FC = () => {
         }}
       >
         <Container maxWidth="xl" sx={{ py: 3 }}>
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
             <IconButton
               onClick={() => navigate("/dashboard")}
               sx={{
@@ -277,12 +277,12 @@ const DatabaseStructurePage: React.FC = () => {
             <Box>
               <Typography
                 variant="h5"
-                fontWeight={700}
-                sx={{
+                
+                sx={{ ...{
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
-                }}
+                }, fontWeight: 700 }}
               >
                 <Database size={28} color="#2563eb" />
                 数据库结构管理
@@ -380,8 +380,8 @@ const DatabaseStructurePage: React.FC = () => {
                         >
                           <Stack
                             direction="row"
-                            alignItems="center"
                             spacing={1}
+                            sx={{ alignItems: 'center' }}
                           >
                             <Table
                               size={16}
@@ -389,8 +389,8 @@ const DatabaseStructurePage: React.FC = () => {
                             />
                             <Typography
                               variant="body2"
-                              fontWeight={isSelected ? 600 : 500}
                               sx={{
+                                fontWeight: isSelected ? 600 : 500,
                                 color: isSelected ? "#1d4ed8" : "text.primary",
                                 wordBreak: "break-all",
                               }}
@@ -463,11 +463,11 @@ const DatabaseStructurePage: React.FC = () => {
                       <Box>
                         <Typography
                           variant="h6"
-                          fontWeight={600}
-                          sx={{
+                          
+                          sx={{ ...{
                             fontFamily:
                               "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                          }}
+                          }, fontWeight: 600 }}
                         >
                           {selectedTable.table_name}
                         </Typography>
@@ -835,7 +835,7 @@ const DatabaseStructurePage: React.FC = () => {
                   color="#94a3b8"
                   style={{ marginBottom: 16 }}
                 />
-                <Typography variant="h6" fontWeight={500} sx={{ mb: 1 }}>
+                <Typography variant="h6"  sx={{ ...{ mb: 1 }, fontWeight: 500 }}>
                   请选择数据表
                 </Typography>
                 <Typography color="text.secondary">
@@ -965,9 +965,9 @@ const DatabaseStructurePage: React.FC = () => {
         fullWidth
       >
         <DialogTitle sx={{ pb: 1 }}>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <Eye size={20} />
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
               SQL 预览
             </Typography>
           </Stack>
@@ -994,7 +994,7 @@ const DatabaseStructurePage: React.FC = () => {
               maxHeight: 320,
             }}
           >
-            <Stack direction="row" alignItems="flex-start" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
               <FileCode size={16} color="#4ade80" style={{ marginTop: 2 }} />
               <Box
                 component="pre"

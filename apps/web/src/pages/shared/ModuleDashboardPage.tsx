@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
-  Grid,
   Paper,
   Card,
   CardContent,
   Button,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   TrendingUp,
   Users,
@@ -94,7 +94,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
   return (
     <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
       <Box sx={{ padding: "24px 32px", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <Typography variant="h4" fontWeight={600} sx={{ color: "#1e293b" }}>
+        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
           {moduleName}
         </Typography>
         <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
@@ -113,7 +113,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
                       <Typography variant="body2" sx={{ color: "#64748b", mb: 1 }}>
                         {stat.label}
                       </Typography>
-                      <Typography variant="h4" fontWeight={600} sx={{ color: "#1e293b" }}>
+                      <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
                         {stat.value}
                       </Typography>
                       {stat.trend && (
@@ -134,7 +134,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
 
         {quickActions.length > 0 && (
           <Box sx={{ mt: 6 }}>
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 3, color: "#1e293b" }}>
+            <Typography variant="h5" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
               快捷操作
             </Typography>
             <Grid container spacing={3}>
@@ -160,7 +160,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
                       {action.icon}
                     </Box>
                     <Box sx={{ flex: 1, textAlign: "left" }}>
-                      <Typography variant="body1" fontWeight={500} sx={{ color: "#1e293b" }}>
+                      <Typography variant="body1" sx={{  color: "#1e293b" , fontWeight: 500 }} >
                         {action.label}
                       </Typography>
                     </Box>
@@ -174,7 +174,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
 
         <Box sx={{ mt: 6, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
           <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 3, color: "#1e293b" }}>
+            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
               <BarChart3 size={20} sx={{ mr: 1 }} />
               数据概览
             </Typography>
@@ -184,7 +184,7 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
           </Paper>
 
           <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 3, color: "#1e293b" }}>
+            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
               <Activity size={20} sx={{ mr: 1 }} />
               实时状态
             </Typography>

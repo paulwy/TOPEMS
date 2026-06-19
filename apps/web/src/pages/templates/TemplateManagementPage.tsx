@@ -665,8 +665,8 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: { maxHeight: "90vh" },
+      slotProps={{
+        paper: { sx: { maxHeight: "90vh" } },
       }}
     >
       <DialogTitle>{template ? "编辑模板" : "新增模板"}</DialogTitle>
@@ -795,8 +795,8 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      PaperProps={{
-        sx: { maxHeight: "90vh" },
+      slotProps={{
+        paper: { sx: { maxHeight: "90vh" } },
       }}
     >
       <DialogTitle>模板预览</DialogTitle>

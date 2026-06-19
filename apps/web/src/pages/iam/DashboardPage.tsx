@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
   Button,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   Users,
   Shield,
@@ -94,7 +94,7 @@ export const DashboardPage: React.FC = () => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
-        <Typography variant="h4" fontWeight={600} sx={{ color: "#1e293b" }}>
+        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
           系统管理
         </Typography>
         <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
@@ -137,8 +137,8 @@ export const DashboardPage: React.FC = () => {
                         </Typography>
                         <Typography
                           variant="h4"
-                          fontWeight={600}
-                          sx={{ color: "#1e293b" }}
+                          sx={{  color: "#1e293b" , fontWeight: 600 }}
+                          
                         >
                           {stat.value}
                         </Typography>
@@ -193,7 +193,7 @@ export const DashboardPage: React.FC = () => {
                     mb: 2,
                   }}
                 >
-                  <Typography variant="h6" fontWeight={600}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     最近活跃用户
                   </Typography>
                   <Button
@@ -284,7 +284,7 @@ export const DashboardPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ padding: "24px" }}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{  mb: 2 , fontWeight: 600 }} >
                   用户角色分布
                 </Typography>
                 <PieChartComponent data={pieData} />
@@ -295,8 +295,8 @@ export const DashboardPage: React.FC = () => {
 
         <Typography
           variant="h6"
-          fontWeight={600}
-          sx={{ mt: 4, mb: 2, color: "#1e293b" }}
+          sx={{  mt: 4, mb: 2, color: "#1e293b" , fontWeight: 600 }}
+          
         >
           快速操作
         </Typography>

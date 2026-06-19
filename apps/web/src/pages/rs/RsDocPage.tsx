@@ -224,7 +224,7 @@ const RsDocPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             文档管理
           </Typography>
           <Stack direction="row" spacing={1}>
@@ -243,19 +243,21 @@ const RsDocPage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
             <TextField
               size="small"
               placeholder="搜索文档名称、作者..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ width: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -460,7 +462,7 @@ const RsDocPage: React.FC = () => {
         <DialogContent>
           {selectedDoc && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {selectedDoc.doc_name}
               </Typography>
               <Stack spacing={2} sx={{ mt: 2 }}>
@@ -493,7 +495,7 @@ const RsDocPage: React.FC = () => {
                       }}
                     >
                       <Box>
-                        <Typography variant="body1" fontWeight="bold">
+                        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                           {v.version}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">

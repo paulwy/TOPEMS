@@ -156,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
       }}
     >
       <Box sx={{ px: 3, pb: 3 }}>
-        <Typography variant="h6" fontWeight={600} color="primary.main">
+        <Typography variant="h6" sx={{ fontWeight: 600 }} color="primary.main">
           {pluginCode ? pluginCode.toUpperCase() : "TOPEMS"}
         </Typography>
       </Box>

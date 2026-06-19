@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
-  Grid,
   Paper,
   Card,
   CardContent,
   Button,
 } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   TrendingUp,
   Users,
@@ -116,7 +116,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
       <Box sx={{ padding: "24px 32px", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <Typography variant="h4" fontWeight={600} sx={{ color: "#1e293b" }}>
+        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
           人力资源管理
         </Typography>
         <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
@@ -137,7 +137,7 @@ export const DashboardPage: React.FC = () => {
                         <Typography variant="body2" sx={{ color: "#64748b", mb: 1 }}>
                           {stat.label}
                         </Typography>
-                        <Typography variant="h4" fontWeight={600} sx={{ color: "#1e293b" }}>
+                        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
                           {stat.value}
                         </Typography>
                         {stat.trend && (
@@ -159,7 +159,7 @@ export const DashboardPage: React.FC = () => {
 
         <Box sx={{ mt: 6, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: "24px" }}>
           <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 3, color: "#1e293b" }}>
+            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
               <BarChart3 size={20} sx={{ mr: 1 }} />
               数据概览
             </Typography>
@@ -167,7 +167,7 @@ export const DashboardPage: React.FC = () => {
           </Paper>
 
           <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 3, color: "#1e293b" }}>
+            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
               <Activity size={20} sx={{ mr: 1 }} />
               趋势分析
             </Typography>
@@ -177,14 +177,14 @@ export const DashboardPage: React.FC = () => {
 
         <Box sx={{ mt: 6, display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 2fr" }, gap: "24px" }}>
           <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 3, color: "#1e293b" }}>
+            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
               分类占比
             </Typography>
             <PieChartComponent data={pieData} />
           </Paper>
 
           <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 3, color: "#1e293b" }}>
+            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
               快捷操作
             </Typography>
             <Grid container spacing={3}>
@@ -210,7 +210,7 @@ export const DashboardPage: React.FC = () => {
                       <ArrowRight size={18} />
                     </Box>
                     <Box sx={{ flex: 1, textAlign: "left" }}>
-                      <Typography variant="body1" fontWeight={500} sx={{ color: "#1e293b" }}>
+                      <Typography variant="body1" sx={{  color: "#1e293b" , fontWeight: 500 }} >
                         {action.label}
                       </Typography>
                     </Box>

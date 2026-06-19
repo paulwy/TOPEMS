@@ -249,7 +249,7 @@ const RsReleasePage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             发布管理
           </Typography>
           <Button
@@ -266,8 +266,7 @@ const RsReleasePage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-            alignItems="center"
-            flexWrap="wrap"
+            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
           >
             <TextField
               size="small"
@@ -275,12 +274,14 @@ const RsReleasePage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ width: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -318,7 +319,7 @@ const RsReleasePage: React.FC = () => {
                 setDateRange({ ...dateRange, start: e.target.value })
               }
               sx={{ width: 150 }}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               size="small"
@@ -329,7 +330,7 @@ const RsReleasePage: React.FC = () => {
                 setDateRange({ ...dateRange, end: e.target.value })
               }
               sx={{ width: 150 }}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Stack>
         </Paper>
@@ -476,7 +477,7 @@ const RsReleasePage: React.FC = () => {
         <DialogContent>
           {selectedRelease && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {selectedRelease.version}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
@@ -506,7 +507,7 @@ const RsReleasePage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     发布时间
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {selectedRelease.release_time}
                   </Typography>
                 </Box>
@@ -514,7 +515,7 @@ const RsReleasePage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     发布人
                   </Typography>
-                  <Typography variant="body1" fontWeight="bold">
+                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                     {selectedRelease.release_by}
                   </Typography>
                 </Box>

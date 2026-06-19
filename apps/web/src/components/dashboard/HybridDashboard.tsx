@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Container, Paper, Divider } from "@mui/material";
+import { Box, Typography, Container, Paper, Divider } from "@mui/material";
+import { Grid } from "@/components/Grid";
 import {
   Users,
   FileText,
@@ -44,7 +45,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, trend })
       },
     }}
   >
-    <Box display="flex" alignItems="center" gap={3}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
       <Box
         sx={{
           width: 48,
@@ -58,11 +59,11 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, trend })
       >
         {icon}
       </Box>
-      <Box flex={1}>
+      <Box sx={{ flex: 1 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
           {title}
         </Typography>
-        <Typography variant="h4" fontWeight={600}>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
           {value}
         </Typography>
         {trend && (<Typography variant="caption" color="success.main">
@@ -155,7 +156,7 @@ export const HybridDashboard: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 6 }}>
       <DashboardHeader />
       <Box sx={{ mt: 6 }}>
-        <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
           数据概览
         </Typography>
         <Grid container spacing={3}>
@@ -165,13 +166,13 @@ export const HybridDashboard: React.FC = () => {
         </Grid>
       </Box>
       <Box sx={{ mt: 8 }}>
-        <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
           业务分析
         </Typography>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
             <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{  mb: 3 , fontWeight: 600 }} >
                 模块使用量
               </Typography>
               <BarChartComponent data={homeBarData} xKey="name" yKey="value" />
@@ -179,7 +180,7 @@ export const HybridDashboard: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{  mb: 3 , fontWeight: 600 }} >
                 业务分布
               </Typography>
               <PieChartComponent data={homePieData} />
@@ -189,7 +190,7 @@ export const HybridDashboard: React.FC = () => {
         <Grid container spacing={3} sx={{ mt: 3 }}>
           <Grid size={12}>
             <Paper sx={{ p: 4, borderRadius: 2, border: 1, borderColor: "grey.100" }}>
-              <Typography variant="h6" fontWeight={600} sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{  mb: 3 , fontWeight: 600 }} >
                 月度活跃趋势
               </Typography>
               <LineChartComponent data={homeLineData} xKey="name" yKey="value" />
@@ -198,13 +199,13 @@ export const HybridDashboard: React.FC = () => {
         </Grid>
       </Box>
       <Box sx={{ mt: 8 }}>
-        <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
           服务监控
         </Typography>
         <ServiceStatusMonitor />
       </Box>
       <Box sx={{ mt: 8 }}>
-        <Typography variant="h5" fontWeight={600} sx={{ mb: 4 }}>
+        <Typography variant="h5" sx={{  mb: 4 , fontWeight: 600 }} >
           模块入口
         </Typography>
         <Grid container spacing={3}>
@@ -216,13 +217,13 @@ export const HybridDashboard: React.FC = () => {
       <Box sx={{ mt: { xs: 4, sm: 6, lg: 8 } }}>
         <Grid container spacing={{ xs: 3, sm: 4, lg: 6 }}>
           <Grid size={{ xs: 12, md: 8, lg: 8 }}>
-            <Typography variant="h5" fontWeight={600} sx={{ mb: { xs: 2, sm: 3, lg: 4 } }}>
+            <Typography variant="h5" sx={{ mb: { xs: 2, sm: 3, lg: 4 }, fontWeight: 600 }}>
               待办事项
             </Typography>
             <RecentActivities />
           </Grid>
           <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-            <Typography variant="h5" fontWeight={600} sx={{ mb: { xs: 2, sm: 3, lg: 4 } }}>
+            <Typography variant="h5" sx={{ mb: { xs: 2, sm: 3, lg: 4 }, fontWeight: 600 }}>
               系统状态
             </Typography>
             <ModuleStatsCard />

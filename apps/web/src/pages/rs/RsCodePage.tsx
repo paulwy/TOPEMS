@@ -188,7 +188,7 @@ const RsCodePage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight="bold" sx={{ color: "#3b82f6" }}>
+          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             代码管理
           </Typography>
           <Button
@@ -201,19 +201,21 @@ const RsCodePage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
             <TextField
               size="small"
               placeholder="搜索仓库、分支或提交者..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{ width: 300 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={18} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
             <Button
@@ -400,14 +402,14 @@ const RsCodePage: React.FC = () => {
         <DialogContent>
           {selectedRepo && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {selectedRepo.repo_name} / {selectedRepo.branch_name}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 代码行数: {selectedRepo.lines_of_code.toLocaleString()}
               </Typography>
               <Paper sx={{ p: 2, mt: 2, bgcolor: "#f5f5f5" }}>
-                <Typography variant="body2" fontFamily="monospace">
+                <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                   // 代码浏览功能待实现
                 </Typography>
               </Paper>
@@ -429,7 +431,7 @@ const RsCodePage: React.FC = () => {
         <DialogContent>
           {selectedRepo && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {selectedRepo.repo_name} / {selectedRepo.branch_name}
               </Typography>
               <Stack spacing={2} sx={{ mt: 2 }}>
@@ -437,7 +439,7 @@ const RsCodePage: React.FC = () => {
                   <Paper key={i} sx={{ p: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <GitCommit size={16} color="#3b82f6" />
-                      <Typography variant="body2" fontWeight="bold">
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                         commit {selectedRepo.id.padStart(7, "0")}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">

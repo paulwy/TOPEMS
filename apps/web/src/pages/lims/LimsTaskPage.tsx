@@ -499,7 +499,7 @@ const LimsTaskPage: React.FC = () => {
           >
             <ClipboardList size={32} color="#0891b2" />
           </Avatar>
-          <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+          <Typography variant="h5"  sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}>
             实验室管理服务未启动
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
@@ -647,7 +647,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       任务总数
                     </Typography>
-                    <Typography variant="h4" fontWeight="bold">
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                       {safeTasks.length}
                     </Typography>
                   </Box>
@@ -686,7 +686,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       进行中
                     </Typography>
-                    <Typography variant="h4" fontWeight="bold" color="primary">
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="primary">
                       {safeTasks.filter((t) => t.status === "进行中").length}
                     </Typography>
                   </Box>
@@ -727,7 +727,7 @@ const LimsTaskPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant="h4"
-                      fontWeight="bold"
+                      sx={{ fontWeight: 'bold' }}
                       color="success.main"
                     >
                       {safeTasks.filter((t) => t.status === "已完成").length}
@@ -770,8 +770,8 @@ const LimsTaskPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant="h4"
-                      fontWeight="bold"
-                      sx={{ color: "#b45309" }}
+                      
+                      sx={{ ...{ color: "#b45309" }, fontWeight: 'bold' }}
                     >
                       {safeTasks.filter((t) => t.status === "待测试").length}
                     </Typography>
@@ -797,7 +797,7 @@ const LimsTaskPage: React.FC = () => {
 
         <Paper sx={{ borderRadius: 2 }} variant="outlined">
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="h6" fontWeight="semibold">
+            <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
               检验任务
             </Typography>
           </Box>
@@ -842,7 +842,7 @@ const LimsTaskPage: React.FC = () => {
                             mb: 1,
                           }}
                         >
-                          <Typography variant="h6" fontWeight="semibold">
+                          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
                             {getSampleName(task.sample_id)}
                           </Typography>
                           <Chip
@@ -934,7 +934,7 @@ const LimsTaskPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" fontWeight="semibold">
+          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
             新建检验任务
           </Typography>
           <IconButton size="small" onClick={() => setShowTaskModal(false)}>
@@ -1027,7 +1027,7 @@ const LimsTaskPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" fontWeight="semibold">
+          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
             完成检验步骤
           </Typography>
           <IconButton size="small" onClick={() => setShowRecordModal(false)}>
@@ -1040,7 +1040,7 @@ const LimsTaskPage: React.FC = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 当前步骤
               </Typography>
-              <Typography color="secondary.main" fontWeight="medium">
+              <Typography color="secondary.main" sx={{ fontWeight: 'medium' }}>
                 {recordFormData.step_name}
               </Typography>
             </Box>
@@ -1109,7 +1109,7 @@ const LimsTaskPage: React.FC = () => {
         onClose={() => setShowDetailModal(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 2 } }}
+        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
       >
         <DialogContent sx={{ p: 3 }}>
           {selectedTask && (
@@ -1122,7 +1122,7 @@ const LimsTaskPage: React.FC = () => {
                   mb: 3,
                 }}
               >
-                <Typography variant="h5" fontWeight="semibold">
+                <Typography variant="h5" sx={{ fontWeight: 'semibold' }}>
                   检验任务详情
                 </Typography>
                 <IconButton onClick={() => setShowDetailModal(false)}>
@@ -1140,7 +1140,7 @@ const LimsTaskPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <Typography variant="h6" fontWeight="semibold">
+                    <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
                       {getSampleName(selectedTask.sample_id)}
                     </Typography>
                     <Chip
@@ -1157,7 +1157,7 @@ const LimsTaskPage: React.FC = () => {
                   <Typography color="text.secondary" sx={{ mb: 1 }}>
                     检验流程: {getProcessName(selectedTask.process_id)}
                   </Typography>
-                  <Typography color="secondary.main" fontWeight="medium">
+                  <Typography color="secondary.main" sx={{ fontWeight: 'medium' }}>
                     当前步骤: {getCurrentStepName(selectedTask)}
                   </Typography>
                 </Box>
@@ -1176,8 +1176,8 @@ const LimsTaskPage: React.FC = () => {
                       任务编号
                     </Typography>
                     <Typography
-                      fontWeight="medium"
-                      sx={{ fontFamily: "monospace", fontSize: 14 }}
+                      
+                      sx={{ ...{ fontFamily: "monospace", fontSize: 14 }, fontWeight: 'medium' }}
                     >
                       {selectedTask.id}
                     </Typography>
@@ -1190,7 +1190,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       检验员
                     </Typography>
-                    <Typography fontWeight="medium">
+                    <Typography sx={{ fontWeight: 'medium' }}>
                       {selectedTask.inspector}
                     </Typography>
                   </Grid>
@@ -1202,7 +1202,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       开始时间
                     </Typography>
-                    <Typography fontWeight="medium">
+                    <Typography sx={{ fontWeight: 'medium' }}>
                       {new Date(selectedTask.started_at).toLocaleString(
                         "zh-CN",
                       )}
@@ -1216,7 +1216,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       完成时间
                     </Typography>
-                    <Typography fontWeight="medium">
+                    <Typography sx={{ fontWeight: 'medium' }}>
                       {selectedTask.completed_at
                         ? new Date(selectedTask.completed_at).toLocaleString(
                             "zh-CN",
@@ -1227,7 +1227,7 @@ const LimsTaskPage: React.FC = () => {
                 </Grid>
 
                 <Box>
-                  <Typography fontWeight="semibold" sx={{ mb: 1.5 }}>
+                  <Typography  sx={{ ...{ mb: 1.5 }, fontWeight: 'semibold' }}>
                     检验记录
                   </Typography>
                   {selectedTaskRecords.length === 0 ? (
@@ -1254,7 +1254,7 @@ const LimsTaskPage: React.FC = () => {
                             }}
                           >
                             <Typography
-                              fontWeight="medium"
+                              sx={{ fontWeight: 'medium' }}
                               color="secondary.main"
                             >
                               步骤 {idx + 1}: {record.step_name}

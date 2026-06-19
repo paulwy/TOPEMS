@@ -503,7 +503,7 @@ const SrmEvaluationPage: React.FC = () => {
                 setFormData({ ...formData, score: e.target.value })
               }
               placeholder="请输入评分(0-100)"
-              inputProps={{ min: 0, max: 100 }}
+              slotProps={{ htmlInput: { min: 0, max: 100 } }}
             />
             <TextField
               fullWidth
