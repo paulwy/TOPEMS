@@ -413,6 +413,21 @@ const FinanceTaxPage: React.FC = () => {
     [filterType, filterStatus],
   );
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "tax_type", title: "税种" },
+      { key: "declaration_period", title: "申报期" },
+      { key: "taxable_income", title: "应税收入" },
+      { key: "tax_rate", title: "税率" },
+      { key: "tax_amount", title: "税额" },
+      { key: "paid_amount", title: "已缴金额" },
+      { key: "owed_amount", title: "应缴金额" },
+      { key: "status", title: "状态" },
+    ],
+    [],
+  );
+
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <MuiBox
