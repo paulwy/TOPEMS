@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   ArrowLeft,
   Save,
@@ -135,7 +136,7 @@ const PmProjectCreatePage: React.FC = () => {
         navigate(`/pm/projects/${response.data?.id}`);
       }
     } catch (error) {
-      console.error("Failed to create project:", error);
+      apiLogger.error("Failed to create project:", error);
     } finally {
       setSubmitting(false);
     }
@@ -481,7 +482,9 @@ const PmProjectCreatePage: React.FC = () => {
                 </Label>
                 <ImageUpload
                   value={formData.images}
-                  onChange={(files) => setFormData((prev) => ({ ...prev, images: files }))}
+                  onChange={(files) =>
+                    setFormData((prev) => ({ ...prev, images: files }))
+                  }
                   maxCount={9}
                   accept="image/*"
                   cropEnabled

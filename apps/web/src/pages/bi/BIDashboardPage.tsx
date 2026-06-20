@@ -1,5 +1,6 @@
 import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import {
   Activity,
   Clock,
@@ -246,7 +247,7 @@ const BIDashboardPage = () => {
         setLaboratory(labRes.data);
       }
     } catch (error) {
-      console.error("Failed to load data:", error);
+      logger.error("Failed to load data:", error);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -287,7 +288,11 @@ const BIDashboardPage = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(2, 1fr)",
+                lg: "repeat(4, 1fr)",
+              },
               gap: 2,
             }}
           >
@@ -300,7 +305,10 @@ const BIDashboardPage = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                lg: "repeat(3, 1fr)",
+              },
               gap: 3,
             }}
           >
@@ -431,7 +439,11 @@ const BIDashboardPage = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+            gridTemplateColumns: {
+              xs: "repeat(1, 1fr)",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(4, 1fr)",
+            },
             gap: 2,
           }}
         >
@@ -466,7 +478,7 @@ const BIDashboardPage = () => {
               showChartType
               activeChartType="bar"
               onChartTypeChange={(type) =>
-                console.log("Chart type changed:", type)
+                logger.debug("Chart type changed:", type)
               }
             >
               <ResponsiveContainer
@@ -509,7 +521,7 @@ const BIDashboardPage = () => {
               showChartType
               activeChartType="pie"
               onChartTypeChange={(type) =>
-                console.log("Chart type changed:", type)
+                logger.debug("Chart type changed:", type)
               }
             >
               <ResponsiveContainer

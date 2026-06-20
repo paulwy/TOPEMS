@@ -1,4 +1,13 @@
-import { Button, TextField, InputLabel, Box, Card, CardContent, Select, MenuItem } from "@mui/material";
+import {
+  Button,
+  TextField,
+  InputLabel,
+  Box,
+  Card,
+  CardContent,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { useState, useEffect } from "react";
 import {
   RefreshCw,
@@ -13,6 +22,7 @@ import {
 import { AIGenerateModal } from "./AIGenerateModal";
 import { useAIHelper } from "../../hooks/useAIHelper";
 import type { TextOptimizeContext } from "@/types/ai";
+import { logger } from "@/utils/logger";
 
 export interface AITextOptimizerProps {
   isOpen: boolean;
@@ -144,7 +154,7 @@ export function AITextOptimizer({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
-      console.error("Copy failed", e);
+      logger.error("Copy failed", e);
     }
   };
 

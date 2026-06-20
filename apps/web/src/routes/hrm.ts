@@ -8,7 +8,9 @@ const lazy = lazyWithRetry;
 const HrmDashboardPage = lazy(() => import("../pages/hrm/DashboardPage"));
 const HrmCompanyPage = lazy(() => import("../pages/hrm/HrmCompanyPage"));
 const HrmDepartmentPage = lazy(() => import("../pages/hrm/HrmDepartmentPage"));
-const HrmOrganizationPage = lazy(() => import("../pages/hrm/HrmOrganizationPage"));
+const HrmOrganizationPage = lazy(
+  () => import("../pages/hrm/HrmOrganizationPage"),
+);
 const HrmPositionPage = lazy(() => import("../pages/hrm/HrmPositionPage"));
 const HrmEmployeePage = lazy(() => import("../pages/hrm/HrmEmployeePage"));
 const HrmEmployeeDetailPage = lazy(
@@ -16,9 +18,13 @@ const HrmEmployeeDetailPage = lazy(
 );
 const HrmLeavePage = lazy(() => import("../pages/hrm/HrmLeavePage"));
 const HrmContractPage = lazy(() => import("../pages/hrm/HrmContractPage"));
-const HrmRecruitmentPage = lazy(() => import("../pages/hrm/HrmRecruitmentPage"));
+const HrmRecruitmentPage = lazy(
+  () => import("../pages/hrm/HrmRecruitmentPage"),
+);
 const HrmPayrollPage = lazy(() => import("../pages/hrm/HrmPayrollPage"));
-const HrmPerformancePage = lazy(() => import("../pages/hrm/HrmPerformancePage"));
+const HrmPerformancePage = lazy(
+  () => import("../pages/hrm/HrmPerformancePage"),
+);
 const HrmAttendancePage = lazy(() => import("../pages/hrm/HrmAttendancePage"));
 const HrmTrainingPage = lazy(() => import("../pages/hrm/HrmTrainingPage"));
 const HrmReportsPage = lazy(() => import("../pages/hrm/HrmReportsPage"));

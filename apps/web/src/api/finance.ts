@@ -267,10 +267,7 @@ export const voucherApi = {
    * 反审核凭证
    */
   unapprove: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post(
-      `/api/finance/vouchers/${id}/unapprove`,
-      {},
-    );
+    return createApiClient().post(`/api/finance/vouchers/${id}/unapprove`, {});
   },
 
   /**
@@ -632,11 +629,9 @@ export const reportApi = {
   exportBalanceSheet: async (params: ReportQueryParams): Promise<Blob> => {
     const baseURL =
       (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(
-      baseURL,
-      "/api/finance/reports/balance-sheet/export",
-      { params },
-    );
+    return downloadBlob(baseURL, "/api/finance/reports/balance-sheet/export", {
+      params,
+    });
   },
 
   /**
@@ -707,10 +702,7 @@ export const voucherTemplateApi = {
     id: string,
     data: Partial<VoucherTemplate>,
   ): Promise<ApiResponse<VoucherTemplate>> => {
-    return createApiClient().put(
-      `/api/finance/voucher-templates/${id}`,
-      data,
-    );
+    return createApiClient().put(`/api/finance/voucher-templates/${id}`, data);
   },
 
   /**
@@ -727,10 +719,9 @@ export const voucherTemplateApi = {
     id: string,
     newName: string,
   ): Promise<ApiResponse<VoucherTemplate>> => {
-    return createApiClient().post(
-      `/api/finance/voucher-templates/${id}/copy`,
-      { name: newName },
-    );
+    return createApiClient().post(`/api/finance/voucher-templates/${id}/copy`, {
+      name: newName,
+    });
   },
 
   /**

@@ -1,5 +1,6 @@
 import { Grid } from "@/components/Grid";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { logger } from "@/utils/logger";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
@@ -70,7 +71,7 @@ const RsExperimentCreatePage: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    console.log("提交数据:", formData);
+    logger.info("提交数据:", formData);
     navigate("/rs/experiments");
   };
 

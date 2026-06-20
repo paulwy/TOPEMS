@@ -13,7 +13,20 @@ import {
   Edit3,
   Plus,
 } from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions,  Button, TextField, Chip, Card, CardContent, CardHeader, Box, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+} from "@mui/material";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -23,6 +36,7 @@ import type {
   InspectionRecord,
   InspectionProcess,
 } from "@/api/lims";
+import { apiLogger } from "@/utils/logger";
 
 interface TaskRecord extends InspectionRecord {
   step_name: string;
@@ -48,6 +62,7 @@ const LimsTaskDetailPage: React.FC = () => {
     if (id) {
       loadTaskDetail(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadTaskDetail = async (taskId: string) => {
@@ -88,7 +103,7 @@ const LimsTaskDetailPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("加载任务详情失败:", error);
+      apiLogger.error("加载任务详情失败:", error);
     } finally {
       setLoading(false);
     }
@@ -137,7 +152,7 @@ const LimsTaskDetailPage: React.FC = () => {
         loadTaskDetail(task.id);
       }
     } catch (error) {
-      console.error("完成步骤失败:", error);
+      apiLogger.error("完成步骤失败:", error);
     }
   };
 

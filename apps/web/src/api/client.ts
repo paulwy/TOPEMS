@@ -1,7 +1,8 @@
 import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
 import axios from "axios";
 import config, { isProduction, isDevelopment } from "../config/runtime";
-import createLogger from "../utils/logger";
+import { createLogger, apiLogger } from "../utils/logger";
+import { API_TIMEOUT } from "@/constants/timeouts";
 
 const logger = createLogger("ApiClient");
 
@@ -55,9 +56,6 @@ type TypedAxiosInstance = Omit<
     config?: AxiosRequestConfig<D>,
   ): Promise<R>;
 };
-
-const AI_TIMEOUT = 120000;
-const DEFAULT_TIMEOUT = 60000;
 
 const isTimeoutError = (error: any): boolean => {
   return (
@@ -148,14 +146,14 @@ export const downloadBlob = async (
   // 添加认证拦截器 - 始终添加 Authorization 头（下载接口都需要认证）
   client.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
-    console.log("downloadBlob - token found:", !!token);
-    console.log(
+    apiLogger.debug("downloadBlob - token found:", !!token);
+    apiLogger.debug(
       "downloadBlob - request URL:",
       clientBaseURL + (config.url || ""),
     );
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
-      console.log("downloadBlob - Authorization header added");
+      apiLogger.debug("downloadBlob - Authorization header added");
     }
     return config;
   });
@@ -165,7 +163,7 @@ export const downloadBlob = async (
     params: options?.params,
   });
 
-  console.log("downloadBlob - response status:", response.status);
+  apiLogger.debug("downloadBlob - response status:", response.status);
 
   // 检查是否是错误响应
   if (response.status !== 200) {
@@ -173,7 +171,7 @@ export const downloadBlob = async (
     let errorMessage = `请求失败: ${response.status}`;
     if (response.data && typeof response.data.text === "function") {
       const text = await response.data.text();
-      console.log("downloadBlob - error response text:", text);
+      apiLogger.debug("downloadBlob - error response text:", text);
       try {
         const json = JSON.parse(text);
         errorMessage = json.message || errorMessage;
@@ -195,8 +193,8 @@ class ApiClient {
 
   constructor() {
     Object.entries(config.services).forEach(([name, baseURL]) => {
-      // 使用 config 中的超时配置，而不是硬编码的 DEFAULT_TIMEOUT
-      const timeout = name === "ai" ? AI_TIMEOUT : config.api.timeout;
+      // 使用统一的超时配置常量
+      const timeout = name === "ai" ? API_TIMEOUT.AI : config.api.timeout;
       const client = axios.create({
         baseURL,
         timeout,
@@ -235,7 +233,7 @@ class ApiClient {
             url.includes("/hrm") ||
             url.includes("positions")
           ) {
-            console.debug(`[HRM API Request]`, {
+            apiLogger.debug(`[HRM API Request]`, {
               url: `${baseURL}${url}`,
               method: config.method,
               tokenExists: !!token,
@@ -251,7 +249,7 @@ class ApiClient {
             baseURL.includes("notification") ||
             url.includes("/api/notifications")
           ) {
-            console.debug(`[Notification API Request]`, {
+            apiLogger.debug(`[Notification API Request]`, {
               url: `${baseURL}${url}`,
               tokenExists: !!token,
               hasAuthHeader: !!config.headers["Authorization"],
@@ -284,7 +282,7 @@ class ApiClient {
             url.includes("/hrm") ||
             url.includes("positions")
           ) {
-            console.debug(`[HRM API Response]`, {
+            apiLogger.debug(`[HRM API Response]`, {
               url: `${baseURL}${url}`,
               status: response.status,
               statusText: response.statusText,
@@ -302,7 +300,7 @@ class ApiClient {
             url.includes("/hrm") ||
             url.includes("positions")
           ) {
-            console.error(`[HRM API Error]`, {
+            apiLogger.error(`[HRM API Error]`, {
               url: `${baseURL}${url}`,
               method: error.config?.method,
               status: error.response?.status,
@@ -314,10 +312,7 @@ class ApiClient {
             });
           }
 
-          if (
-            error.code === "ERR_CANCELED" ||
-            error.name === "AbortError"
-          ) {
+          if (error.code === "ERR_CANCELED" || error.name === "AbortError") {
             logger.debug("Request was canceled or aborted:", url);
             return Promise.reject(error);
           }

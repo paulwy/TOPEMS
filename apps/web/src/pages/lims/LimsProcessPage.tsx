@@ -34,6 +34,7 @@ import type { InspectionProcess, LimsStatistics } from "@/api/lims";
 import { limsApi } from "@/api/lims";
 import { MetricCard } from "@/components/MetricCard";
 import { StatsChart } from "@/components/StatsChart";
+import { apiLogger } from "@/utils/logger";
 
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();
@@ -113,6 +114,7 @@ const LimsProcessPage: React.FC = () => {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceStatuses.lims]);
 
   const loadStatistics = async () => {
@@ -122,7 +124,7 @@ const LimsProcessPage: React.FC = () => {
         setStats(response.data);
       }
     } catch (err) {
-      console.error("加载统计数据失败:", err);
+      apiLogger.error("加载统计数据失败:", err);
     }
   };
 
@@ -156,7 +158,7 @@ const LimsProcessPage: React.FC = () => {
         setProcesses([]);
       }
     } catch (err) {
-      console.error("加载检验流程失败:", err);
+      apiLogger.error("加载检验流程失败:", err);
       setProcesses([]);
     }
   };
@@ -231,7 +233,7 @@ const LimsProcessPage: React.FC = () => {
           >
             <ClipboardList size={32} color="#0891b2" />
           </Avatar>
-          <Typography variant="h5"  sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}>
+          <Typography variant="h5" sx={{ ...{ mb: 2 }, fontWeight: "bold" }}>
             实验室管理服务未启动
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
@@ -296,7 +298,7 @@ const LimsProcessPage: React.FC = () => {
                   <FileText size={24} color="white" />
                 </Box>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                     检验流程
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
@@ -415,7 +417,7 @@ const LimsProcessPage: React.FC = () => {
                     >
                       流程总数
                     </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                       {safeProcesses.length}
                     </Typography>
                   </Box>
@@ -440,7 +442,7 @@ const LimsProcessPage: React.FC = () => {
 
         <Paper sx={{ borderRadius: 2 }} variant="outlined">
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
               检验流程
             </Typography>
           </Box>
@@ -477,8 +479,7 @@ const LimsProcessPage: React.FC = () => {
                     <Box sx={{ flex: 1 }}>
                       <Typography
                         variant="h6"
-                        
-                        sx={{ ...{ mb: 1 }, fontWeight: 'semibold' }}
+                        sx={{ ...{ mb: 1 }, fontWeight: "semibold" }}
                       >
                         {process.name}
                       </Typography>
@@ -489,7 +490,7 @@ const LimsProcessPage: React.FC = () => {
                         direction="row"
                         spacing={1.5}
                         useFlexGap
-                        sx={{ flexWrap: 'wrap' }}
+                        sx={{ flexWrap: "wrap" }}
                       >
                         {(process.steps || []).map((step, idx) => (
                           <Box
@@ -557,7 +558,7 @@ const LimsProcessPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
             新建检验任务
           </Typography>
           <IconButton size="small" onClick={() => setShowTaskModal(false)}>

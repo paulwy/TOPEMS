@@ -9,6 +9,8 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { Box, Button, IconButton, Typography } from "@mui/material";
+import { logger } from "@/utils/logger";
 
 interface VideoCaptureProps {
   onCapture: (file: File, thumbnail?: string, duration?: number) => void;
@@ -70,7 +72,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       setError(null);
     } catch (err) {
       setError("无法访问摄像头，请确保已授予摄像头和麦克风权限");
-      console.error("Camera error:", err);
+      logger.error("Camera error:", err);
     }
   }, [facingMode]);
 
@@ -118,8 +120,9 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       }, 1000);
     } catch (err) {
       setError("无法开始录制，请重试");
-      console.error("Recording error:", err);
+      logger.error("Recording error:", err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxDuration]);
 
   // Pause/Resume recording
@@ -144,6 +147,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       }
     }
     setIsPaused(!isPaused);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused, maxDuration]);
 
   // Stop recording
@@ -208,14 +212,21 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
   }, [facingMode, initCamera, isRecording, recordedBlob]);
 
   return (
-    <div className="flex flex-col h-full bg-black">
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        bgcolor: "black",
+      }}
+    >
       {/* Video Preview */}
-      <div className="relative flex-1">
+      <Box sx={{ position: "relative", flex: 1 }}>
         {previewUrl ? (
           <video
             src={previewUrl}
             controls
-            className="w-full h-full object-contain"
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
           />
         ) : (
           <>
@@ -224,126 +235,241 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
 
             {/* Recording indicator */}
             {isRecording && (
-              <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                <span className="text-white text-sm font-medium">录制中</span>
-              </div>
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 16,
+                  left: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  bgcolor: "#ef4444",
+                  px: 12,
+                  py: 4,
+                  borderRadius: "9999px",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    bgcolor: "white",
+                    borderRadius: "9999px",
+                    animation: "pulse 1.5s infinite",
+                  }}
+                />
+                <Typography
+                  sx={{ color: "white", fontSize: "0.875rem", fontWeight: 500 }}
+                >
+                  录制中
+                </Typography>
+              </Box>
             )}
 
             {/* Timer */}
-            <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full text-white font-mono">
+            <Box
+              sx={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                bgcolor: "rgba(0,0,0,0.5)",
+                px: 12,
+                py: 4,
+                borderRadius: "9999px",
+                color: "white",
+                fontFamily: "monospace",
+              }}
+            >
               {formatTime(duration)} / {formatTime(maxDuration)}
-            </div>
+            </Box>
 
             {/* Camera Controls */}
-            <div className="absolute bottom-20 left-4 right-4 flex justify-between">
-              <button
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 80,
+                left: 16,
+                right: 16,
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <IconButton
                 onClick={switchCamera}
                 disabled={isRecording}
-                className={`p-2 rounded-full ${
-                  isRecording
-                    ? "bg-gray-800/50 text-gray-500"
-                    : "bg-black/50 text-white hover:bg-black/70"
-                }`}
+                sx={{
+                  borderRadius: "9999px",
+                  bgcolor: isRecording
+                    ? "rgba(31,41,55,0.5)"
+                    : "rgba(0,0,0,0.5)",
+                  color: isRecording ? "#6b7280" : "white",
+                  "&:hover": {
+                    bgcolor: isRecording
+                      ? "rgba(31,41,55,0.5)"
+                      : "rgba(0,0,0,0.7)",
+                  },
+                  "&.Mui-disabled": {
+                    bgcolor: "rgba(31,41,55,0.5)",
+                    color: "#6b7280",
+                  },
+                }}
               >
-                <SwitchCamera className="w-6 h-6" />
-              </button>
-            </div>
+                <SwitchCamera size={24} />
+              </IconButton>
+            </Box>
           </>
         )}
 
         {/* Hidden canvas for thumbnail */}
-        <canvas ref={canvasRef} className="hidden" />
+        <canvas ref={canvasRef} style={{ display: "none" }} />
 
         {/* Error Message */}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-            <div className="text-center text-white p-4">
-              <p className="text-red-400 mb-2">{error}</p>
-              <button
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(0,0,0,0.8)",
+            }}
+          >
+            <Box sx={{ textAlign: "center", color: "white", p: 16 }}>
+              <Typography sx={{ color: "#f87171", mb: 8 }}>{error}</Typography>
+              <Button
                 onClick={onCancel}
-                className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"
+                sx={{
+                  px: 16,
+                  py: 8,
+                  bgcolor: "#374151",
+                  borderRadius: 8,
+                  color: "white",
+                  "&:hover": { bgcolor: "#4b5563" },
+                }}
               >
                 关闭
-              </button>
-            </div>
-          </div>
+              </Button>
+            </Box>
+          </Box>
         )}
 
         {/* Close Button */}
         {!isRecording && (
-          <div className="absolute top-4 left-4">
-            <button
+          <Box sx={{ position: "absolute", top: 16, left: 16 }}>
+            <IconButton
               onClick={onCancel}
-              className="p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
+              sx={{
+                borderRadius: "9999px",
+                bgcolor: "rgba(0,0,0,0.5)",
+                color: "white",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+              }}
             >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+              <X size={24} />
+            </IconButton>
+          </Box>
         )}
-      </div>
+      </Box>
 
       {/* Controls */}
-      <div className="p-6 bg-black flex justify-center">
+      <Box
+        sx={{
+          p: 24,
+          bgcolor: "black",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         {!isRecording && !recordedBlob && (
-          <button
+          <IconButton
             onClick={startRecording}
-            className="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white transition-colors"
+            sx={{
+              p: 16,
+              bgcolor: "#ef4444",
+              borderRadius: "9999px",
+              color: "white",
+              "&:hover": { bgcolor: "#dc2626" },
+            }}
           >
-            <Video className="w-8 h-8" />
-          </button>
+            <Video size={32} />
+          </IconButton>
         )}
 
         {isRecording && (
           <>
-            <button
+            <IconButton
               onClick={togglePause}
-              className="p-3 bg-gray-700 hover:bg-gray-600 rounded-full text-white mx-2"
+              sx={{
+                p: 12,
+                bgcolor: "#374151",
+                borderRadius: "9999px",
+                color: "white",
+                mx: 8,
+                "&:hover": { bgcolor: "#4b5563" },
+              }}
             >
-              {isPaused ? (
-                <Play className="w-6 h-6" />
-              ) : (
-                <Pause className="w-6 h-6" />
-              )}
-            </button>
-            <button
+              {isPaused ? <Play size={24} /> : <Pause size={24} />}
+            </IconButton>
+            <IconButton
               onClick={stopRecording}
-              className="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white mx-2"
+              sx={{
+                p: 16,
+                bgcolor: "#ef4444",
+                borderRadius: "9999px",
+                color: "white",
+                mx: 8,
+                "&:hover": { bgcolor: "#dc2626" },
+              }}
             >
-              <Square className="w-8 h-8" />
-            </button>
+              <Square size={32} />
+            </IconButton>
           </>
         )}
 
         {recordedBlob && !isRecording && (
-          <div className="flex gap-4">
-            <button
+          <Box sx={{ display: "flex", gap: 16 }}>
+            <Button
               onClick={() => {
                 setRecordedBlob(null);
                 setPreviewUrl(null);
                 setDuration(0);
                 initCamera();
               }}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+              sx={{
+                px: 16,
+                py: 8,
+                bgcolor: "#374151",
+                borderRadius: 8,
+                color: "white",
+                "&:hover": { bgcolor: "#4b5563" },
+              }}
             >
               重新录制
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={saveRecording}
-              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center gap-2"
+              startIcon={<Check size={16} />}
+              sx={{
+                px: 16,
+                py: 8,
+                bgcolor: "#22c55e",
+                borderRadius: 8,
+                color: "white",
+                "&:hover": { bgcolor: "#16a34a" },
+              }}
             >
-              <Check className="w-4 h-4" />
               保存
-            </button>
-          </div>
+            </Button>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

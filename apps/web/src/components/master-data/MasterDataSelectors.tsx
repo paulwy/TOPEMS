@@ -3,7 +3,22 @@
  * 包含往来单位选择器、项目选择器、组织架构选择器、会计科目选择器等
  */
 
-import { Dialog, DialogContent, DialogTitle, Button, TextField, Tabs, Tab, Box, Chip, FormControl, InputLabel, Select, MenuItem, CircularProgress } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Button,
+  TextField,
+  Tabs,
+  Tab,
+  Box,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+} from "@mui/material";
 import React, { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -415,6 +430,7 @@ export function ProjectSelector({
     enabled: open,
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const projects = (data?.data?.items || []) as Project[];
 
   const selectedProject = useMemo(() => {
@@ -596,6 +612,7 @@ export function DepartmentSelector({
     enabled: open,
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const departments = data?.data?.items || [];
 
   const selectedDepartment = useMemo(() => {
@@ -772,6 +789,7 @@ export function AccountSelector({
     enabled: open,
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const accounts = data?.data || [];
 
   // 过滤搜索结果
@@ -1007,6 +1025,7 @@ export function EmployeeSelector({
     enabled: open,
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const employees = data?.data?.items || [];
 
   const selectedEmployee = useMemo(() => {

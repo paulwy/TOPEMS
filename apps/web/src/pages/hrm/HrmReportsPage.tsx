@@ -23,6 +23,7 @@ import {
   PieChart,
   Calendar,
 } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 import { useNotification } from "@/hooks/useNotification";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { PageHeader } from "@/components/templates";
@@ -131,7 +132,7 @@ const HrmReportsPage: React.FC = () => {
       if (results[4].code === 200) setAttendanceSummary(results[4].data);
       if (results[5].code === 200) setPayrollSummary(results[5].data);
     } catch (err) {
-      console.error("Failed to load reports:", err);
+      apiLogger.error("Failed to load reports:", err);
       error("加载报表数据失败");
     } finally {
       setLoading(false);

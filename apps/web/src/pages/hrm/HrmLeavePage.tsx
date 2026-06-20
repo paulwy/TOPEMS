@@ -37,6 +37,7 @@ import {
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
 import { StatusBadge } from "@/components/hrm/StatusBadge";
+import { logger } from "@/utils/logger";
 import {
   leaveApi,
   employeeApi,
@@ -75,7 +76,7 @@ const LeaveManagementPage: React.FC = () => {
         setData(response.data!);
       }
     } catch (error) {
-      console.error("Failed to fetch leave requests:", error);
+      logger.error("Failed to fetch leave requests:", error);
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ const LeaveManagementPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch employees:", error);
+      logger.error("Failed to fetch employees:", error);
     }
   };
 
@@ -145,7 +146,7 @@ const LeaveManagementPage: React.FC = () => {
         fetchLeaveRequests();
       }
     } catch (error) {
-      console.error("Failed to delete leave request:", error);
+      logger.error("Failed to delete leave request:", error);
     }
   };
 
@@ -156,7 +157,7 @@ const LeaveManagementPage: React.FC = () => {
         fetchLeaveRequests();
       }
     } catch (error) {
-      console.error("Failed to approve leave request:", error);
+      logger.error("Failed to approve leave request:", error);
     }
   };
 
@@ -167,7 +168,7 @@ const LeaveManagementPage: React.FC = () => {
         fetchLeaveRequests();
       }
     } catch (error) {
-      console.error("Failed to reject leave request:", error);
+      logger.error("Failed to reject leave request:", error);
     }
   };
 
@@ -181,7 +182,7 @@ const LeaveManagementPage: React.FC = () => {
       setIsModalVisible(false);
       fetchLeaveRequests();
     } catch (error) {
-      console.error("Failed to save leave request:", error);
+      logger.error("Failed to save leave request:", error);
     }
   };
 

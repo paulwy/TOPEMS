@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Typography, Button, Chip, SvgIconProps } from "@mui/material";
+import type { SvgIconProps } from "@mui/material";
+import { Box, Typography, Button, Chip } from "@mui/material";
 import {
   Activity,
   CircleDot,
@@ -92,12 +93,21 @@ interface ServiceItem {
 const generateInitialStatuses = (): Record<string, boolean> => {
   const statuses: Record<string, boolean> = {};
   const allServices = [
-    "unified-core", "pm", "integration",
-    "erp", "hrm", "crm",
-    "rs", "manufacturing", "ai",
+    "unified-core",
+    "pm",
+    "integration",
+    "erp",
+    "hrm",
+    "crm",
+    "rs",
+    "manufacturing",
+    "ai",
     "quality-assurance",
-    "scm", "srm", "wms",
-    "gis", "mobile",
+    "scm",
+    "srm",
+    "wms",
+    "gis",
+    "mobile",
   ];
   allServices.forEach((service) => {
     statuses[service] = Math.random() > 0.1;
@@ -105,10 +115,13 @@ const generateInitialStatuses = (): Record<string, boolean> => {
   return statuses;
 };
 
-const simulateStatusChange = (statuses: Record<string, boolean>): Record<string, boolean> => {
+const simulateStatusChange = (
+  statuses: Record<string, boolean>,
+): Record<string, boolean> => {
   const newStatuses = { ...statuses };
   const allServices = Object.keys(newStatuses);
-  const randomService = allServices[Math.floor(Math.random() * allServices.length)];
+  const randomService =
+    allServices[Math.floor(Math.random() * allServices.length)];
   newStatuses[randomService] = !newStatuses[randomService];
   return newStatuses;
 };
@@ -118,11 +131,16 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
   onRefresh = () => {},
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [internalStatuses, setInternalStatuses] = useState<Record<string, boolean>>({});
+  const [internalStatuses, setInternalStatuses] = useState<
+    Record<string, boolean>
+  >({});
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const hasExternalStatuses = externalStatuses && Object.keys(externalStatuses).length > 0;
-  const currentStatuses = hasExternalStatuses ? externalStatuses : internalStatuses;
+  const hasExternalStatuses =
+    externalStatuses && Object.keys(externalStatuses).length > 0;
+  const currentStatuses = hasExternalStatuses
+    ? externalStatuses
+    : internalStatuses;
 
   useEffect(() => {
     if (!hasExternalStatuses) {
@@ -155,46 +173,124 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
     {
       title: "核心服务",
       services: [
-        { name: "统一核心", service: "CORE", port: 8000, key: "unified-core", icon: CircleDot },
-        { name: "项目管理", service: "PM", port: 8001, key: "pm", icon: FolderKanban },
-        { name: "系统集成", service: "INTEGRATION", port: 8005, key: "integration", icon: Link },
+        {
+          name: "统一核心",
+          service: "CORE",
+          port: 8000,
+          key: "unified-core",
+          icon: CircleDot,
+        },
+        {
+          name: "项目管理",
+          service: "PM",
+          port: 8001,
+          key: "pm",
+          icon: FolderKanban,
+        },
+        {
+          name: "系统集成",
+          service: "INTEGRATION",
+          port: 8005,
+          key: "integration",
+          icon: Link,
+        },
       ],
     },
     {
       title: "业务运营",
       services: [
-        { name: "企业资源", service: "ERP", port: 8010, key: "erp", icon: Building },
-        { name: "人力资源", service: "HRM", port: 8011, key: "hrm", icon: Users },
-        { name: "客户关系", service: "CRM", port: 8012, key: "crm", icon: Users },
+        {
+          name: "企业资源",
+          service: "ERP",
+          port: 8010,
+          key: "erp",
+          icon: Building,
+        },
+        {
+          name: "人力资源",
+          service: "HRM",
+          port: 8011,
+          key: "hrm",
+          icon: Users,
+        },
+        {
+          name: "客户关系",
+          service: "CRM",
+          port: 8012,
+          key: "crm",
+          icon: Users,
+        },
       ],
     },
     {
       title: "研发管理",
       services: [
-        { name: "研发管理", service: "RS", port: 8020, key: "rs", icon: FlaskConical },
-        { name: "制造服务", service: "MFG", port: 8023, key: "manufacturing", icon: Factory },
+        {
+          name: "研发管理",
+          service: "RS",
+          port: 8020,
+          key: "rs",
+          icon: FlaskConical,
+        },
+        {
+          name: "制造服务",
+          service: "MFG",
+          port: 8023,
+          key: "manufacturing",
+          icon: Factory,
+        },
         { name: "AI服务", service: "AI", port: 8062, key: "ai", icon: Bot },
       ],
     },
     {
       title: "生产管理",
       services: [
-        { name: "质量保证", service: "QA", port: 8032, key: "quality-assurance", icon: ClipboardList },
+        {
+          name: "质量保证",
+          service: "QA",
+          port: 8032,
+          key: "quality-assurance",
+          icon: ClipboardList,
+        },
       ],
     },
     {
       title: "供应链",
       services: [
-        { name: "供应链管理", service: "SCM", port: 8040, key: "scm", icon: Truck },
-        { name: "供应商管理", service: "SRM", port: 8041, key: "srm", icon: ShoppingCart },
-        { name: "仓储管理", service: "WMS", port: 8042, key: "wms", icon: Warehouse },
+        {
+          name: "供应链管理",
+          service: "SCM",
+          port: 8040,
+          key: "scm",
+          icon: Truck,
+        },
+        {
+          name: "供应商管理",
+          service: "SRM",
+          port: 8041,
+          key: "srm",
+          icon: ShoppingCart,
+        },
+        {
+          name: "仓储管理",
+          service: "WMS",
+          port: 8042,
+          key: "wms",
+          icon: Warehouse,
+        },
       ],
     },
     {
       title: "专业服务",
       services: [
         { name: "地理信息", service: "GIS", port: 8053, key: "gis", icon: Map },
-        { name: "移动服务", service: "MOBILE", port: 8070, key: "mobile", icon: Smartphone },
+        {
+          name: "移动服务",
+          service: "MOBILE",
+          port: 8070,
+          key: "mobile",
+          icon: Smartphone,
+        },
       ],
     },
   ];
@@ -236,7 +332,9 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
             <Activity sx={{ width: 20, height: 20, color: "#22c55e" }} />
           </Box>
           <Box>
-            <Typography sx={{ fontSize: 18, fontWeight: 600, color: "#1e293b" }}>
+            <Typography
+              sx={{ fontSize: 18, fontWeight: 600, color: "#1e293b" }}
+            >
               服务状态监测
             </Typography>
             <Typography sx={{ fontSize: 12, color: "#64748b" }}>
@@ -343,7 +441,9 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
                     marginRight: 1,
                   }}
                 >
-                  <Activity sx={{ width: 14, height: 14, color: colors.iconColor }} />
+                  <Activity
+                    sx={{ width: 14, height: 14, color: colors.iconColor }}
+                  />
                 </Box>
                 <Typography
                   sx={{

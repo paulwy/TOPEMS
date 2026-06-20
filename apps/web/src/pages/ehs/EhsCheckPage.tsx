@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
+import { logger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -65,7 +67,7 @@ const EhsCheckPage: React.FC = () => {
         setChecks([]);
       }
     } catch (err) {
-      console.error("加载安全检查数据失败:", err);
+      apiLogger.error("加载安全检查数据失败:", err);
       setChecks([]);
     } finally {
       setLoading(false);
@@ -175,7 +177,7 @@ const EhsCheckPage: React.FC = () => {
       loadChecks();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建安全检查失败:", err);
+      apiLogger.error("创建安全检查失败:", err);
     }
   };
 

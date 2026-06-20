@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, InputBase, Typography } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
 import { StatsChart } from "@/components/bi/StatsChart";
@@ -91,7 +92,7 @@ const HrmPayrollPage: React.FC = () => {
       }
     } catch (err) {
       error("加载数据失败");
-      console.error(err);
+      apiLogger.error(err);
     } finally {
       setLoading(false);
     }

@@ -34,6 +34,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 
 const ProductionOrderManagementPage: React.FC = () => {
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
@@ -61,6 +62,7 @@ const ProductionOrderManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, searchTerm, statusFilter]);
 
   const loadOrders = async () => {
@@ -79,7 +81,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载生产订单列表失败:", error);
+      apiLogger.error("加载生产订单列表失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -115,7 +117,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       resetForm();
       loadOrders();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",
@@ -135,7 +137,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       });
       loadOrders();
     } catch (error) {
-      console.error("删除失败:", error);
+      apiLogger.error("删除失败:", error);
       addNotification({
         type: "error",
         title: "删除失败",

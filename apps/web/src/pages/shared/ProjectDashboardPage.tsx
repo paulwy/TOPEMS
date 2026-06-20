@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   FolderKanban,
   TrendingUp,
@@ -103,7 +104,7 @@ const ProjectDashboardPage: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error("Failed to load dashboard data:", error);
+      apiLogger.error("Failed to load dashboard data:", error);
     } finally {
       setLoading(false);
     }

@@ -233,11 +233,14 @@ export const dbStructureApi = {
     columnName: string,
     column: DbColumnDefinition,
   ): Promise<ApiResponse<string>> {
-    return apiClient.erp.put(`/api/system/db/columns/${tableName}/${columnName}`, {
-      table_name: tableName,
-      column_name: columnName,
-      column,
-    });
+    return apiClient.erp.put(
+      `/api/system/db/columns/${tableName}/${columnName}`,
+      {
+        table_name: tableName,
+        column_name: columnName,
+        column,
+      },
+    );
   },
 
   async dropColumn(

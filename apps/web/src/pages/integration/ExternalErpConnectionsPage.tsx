@@ -3,7 +3,8 @@
  * 管理金蝶、用友、SAP等外部ERP系统的连接配置
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -19,7 +20,16 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { Card as MuiCard, CardContent, CardHeader, Box, Button, Typography, TextField, Chip } from "@mui/material";
+import {
+  Card as MuiCard,
+  CardContent,
+  CardHeader,
+  Box,
+  Button,
+  Typography,
+  TextField,
+  Chip,
+} from "@mui/material";
 
 import {
   useErpConnections,
@@ -110,7 +120,7 @@ export default function ExternalErpConnectionsPage() {
         timeout: connection.timeout || 30000,
       });
     } catch (error) {
-      console.error("Test connection failed:", error);
+      apiLogger.error("Test connection failed:", error);
     }
   };
 
@@ -122,7 +132,7 @@ export default function ExternalErpConnectionsPage() {
         enabled: !connection.is_active,
       });
     } catch (error) {
-      console.error("Toggle connection failed:", error);
+      apiLogger.error("Toggle connection failed:", error);
     }
   };
 
@@ -132,7 +142,7 @@ export default function ExternalErpConnectionsPage() {
     try {
       await deleteConnection.mutateAsync(connectionId);
     } catch (error) {
-      console.error("Delete connection failed:", error);
+      apiLogger.error("Delete connection failed:", error);
     }
   };
 
@@ -502,7 +512,7 @@ export default function ExternalErpConnectionsPage() {
               await createConnection.mutateAsync(data);
               setShowCreateModal(false);
             } catch (error) {
-              console.error("Create connection failed:", error);
+              apiLogger.error("Create connection failed:", error);
             }
           }}
         />
@@ -520,7 +530,7 @@ export default function ExternalErpConnectionsPage() {
               });
               setEditingConnection(null);
             } catch (error) {
-              console.error("Update connection failed:", error);
+              apiLogger.error("Update connection failed:", error);
             }
           }}
         />

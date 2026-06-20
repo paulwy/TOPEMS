@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import type { Contract } from "@/api/pm";
 import { pmApi } from "@/api/pm";
+import { apiLogger } from "@/utils/logger";
 
 const CONTRACT_TYPES = [
   { value: "", label: "全部类型" },
@@ -42,6 +43,7 @@ const PmContractListPage: React.FC = () => {
 
   useEffect(() => {
     loadContracts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType, selectedStatus]);
 
   const loadContracts = async () => {
@@ -57,7 +59,7 @@ const PmContractListPage: React.FC = () => {
         setContracts(filtered);
       }
     } catch (error) {
-      console.error("Failed to load contracts:", error);
+      apiLogger.error("Failed to load contracts:", error);
     } finally {
       setLoading(false);
     }

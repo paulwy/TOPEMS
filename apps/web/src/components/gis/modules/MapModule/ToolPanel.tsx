@@ -12,6 +12,13 @@ import {
   Box,
   Globe,
 } from "lucide-react";
+import {
+  Box as MuiBox,
+  Button,
+  Typography,
+  Paper,
+  Divider,
+} from "@mui/material";
 import type { DrawFeature } from "../shared/types";
 
 type ToolMode =
@@ -71,206 +78,431 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
 }) => {
   const getToolColor = (tool: ToolMode) => {
     return toolMode === tool
-      ? "bg-blue-500 text-white"
-      : "bg-white text-gray-700 hover:bg-gray-50";
+      ? { bgcolor: "#2563eb", color: "white" }
+      : { bgcolor: "white", color: "#374151", hover: "#f9fafb" };
   };
 
   return (
-    <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="px-3 py-2 border-b border-gray-100">
-        <span className="text-xs font-medium text-gray-500">工具</span>
-      </div>
-      <div className="p-2 space-y-1">
-        <button
+    <Paper
+      sx={{
+        position: "absolute",
+        top: 16,
+        left: 16,
+        borderRadius: 2,
+        boxShadow: 2,
+        overflow: "hidden",
+      }}
+    >
+      <MuiBox sx={{ px: 3, py: 2, borderBottom: 1, borderColor: "#f3f4f6" }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 500, color: "#6b7280" }}
+        >
+          工具
+        </Typography>
+      </MuiBox>
+      <MuiBox sx={{ p: 2 }}>
+        <Button
           onClick={() => onSetTool("select")}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("select")}`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: getToolColor("select").bgcolor,
+            color: getToolColor("select").color,
+            "&:hover": {
+              bgcolor:
+                getToolColor("select").hover || getToolColor("select").bgcolor,
+            },
+            textTransform: "none",
+          }}
           title="选择工具"
         >
-          <div className="w-4 h-4 border-2 border-gray-600 rounded" />
-          <span className="text-xs">选择</span>
-        </button>
-        <button
+          <MuiBox
+            sx={{
+              width: 16,
+              height: 16,
+              border: 2,
+              borderColor: "#374151",
+              borderRadius: 1,
+            }}
+          />
+          <Typography variant="caption">选择</Typography>
+        </Button>
+        <Button
           onClick={() => onSetTool("measure-distance")}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("measure-distance")}`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: getToolColor("measure-distance").bgcolor,
+            color: getToolColor("measure-distance").color,
+            "&:hover": {
+              bgcolor:
+                getToolColor("measure-distance").hover ||
+                getToolColor("measure-distance").bgcolor,
+            },
+            textTransform: "none",
+            mt: 1,
+          }}
           title="距离测量"
         >
-          <Ruler className="w-4 h-4" />
-          <span className="text-xs">测距</span>
-        </button>
-        <button
+          <Ruler size={16} />
+          <Typography variant="caption">测距</Typography>
+        </Button>
+        <Button
           onClick={() => onSetTool("measure-area")}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("measure-area")}`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: getToolColor("measure-area").bgcolor,
+            color: getToolColor("measure-area").color,
+            "&:hover": {
+              bgcolor:
+                getToolColor("measure-area").hover ||
+                getToolColor("measure-area").bgcolor,
+            },
+            textTransform: "none",
+            mt: 1,
+          }}
           title="面积测量"
         >
-          <Ruler className="w-4 h-4" />
-          <span className="text-xs">测面积</span>
-        </button>
-        <div className="border-t border-gray-100 my-2" />
-        <button
+          <Ruler size={16} />
+          <Typography variant="caption">测面积</Typography>
+        </Button>
+        <Divider sx={{ my: 2 }} />
+        <Button
           onClick={() => onSetTool("draw-point")}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("draw-point")}`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: getToolColor("draw-point").bgcolor,
+            color: getToolColor("draw-point").color,
+            "&:hover": {
+              bgcolor:
+                getToolColor("draw-point").hover ||
+                getToolColor("draw-point").bgcolor,
+            },
+            textTransform: "none",
+          }}
           title="绘制点"
         >
-          <Pencil className="w-4 h-4" />
-          <span className="text-xs">绘点</span>
-        </button>
-        <button
+          <Pencil size={16} />
+          <Typography variant="caption">绘点</Typography>
+        </Button>
+        <Button
           onClick={() => onSetTool("draw-line")}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("draw-line")}`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: getToolColor("draw-line").bgcolor,
+            color: getToolColor("draw-line").color,
+            "&:hover": {
+              bgcolor:
+                getToolColor("draw-line").hover ||
+                getToolColor("draw-line").bgcolor,
+            },
+            textTransform: "none",
+            mt: 1,
+          }}
           title="绘制线"
         >
-          <Pencil className="w-4 h-4" />
-          <span className="text-xs">绘线</span>
-        </button>
-        <button
+          <Pencil size={16} />
+          <Typography variant="caption">绘线</Typography>
+        </Button>
+        <Button
           onClick={() => onSetTool("draw-polygon")}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${getToolColor("draw-polygon")}`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: getToolColor("draw-polygon").bgcolor,
+            color: getToolColor("draw-polygon").color,
+            "&:hover": {
+              bgcolor:
+                getToolColor("draw-polygon").hover ||
+                getToolColor("draw-polygon").bgcolor,
+            },
+            textTransform: "none",
+            mt: 1,
+          }}
           title="绘制多边形"
         >
-          <Pencil className="w-4 h-4" />
-          <span className="text-xs">绘多边形</span>
-        </button>
-        <div className="border-t border-gray-100 my-2" />
+          <Pencil size={16} />
+          <Typography variant="caption">绘多边形</Typography>
+        </Button>
+        <Divider sx={{ my: 2 }} />
         {(toolMode === "measure-distance" || toolMode === "measure-area") &&
           measurePointsLength > 0 && (
-            <button
+            <Button
               onClick={onClearMeasure}
-              className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200"
+              sx={{
+                width: "100%",
+                p: 2,
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                bgcolor: "#f1f5f9",
+                color: "#374151",
+                "&:hover": { bgcolor: "#e5e7eb" },
+                textTransform: "none",
+              }}
               title="清除测量"
             >
-              <Eraser className="w-4 h-4" />
-              <span className="text-xs">清除</span>
-            </button>
+              <Eraser size={16} />
+              <Typography variant="caption">清除</Typography>
+            </Button>
           )}
         {drawFeaturesLength > 0 && (
-          <button
+          <Button
             onClick={onClearDrawings}
-            className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100"
+            sx={{
+              width: "100%",
+              p: 2,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              bgcolor: "#fee2e2",
+              color: "#dc2626",
+              "&:hover": { bgcolor: "#fecaca" },
+              textTransform: "none",
+              mt: 1,
+            }}
             title="清除所有绘制"
           >
-            <Trash2 className="w-4 h-4" />
-            <span className="text-xs">清除绘制</span>
-          </button>
+            <Trash2 size={16} />
+            <Typography variant="caption">清除绘制</Typography>
+          </Button>
         )}
         {currentDrawing && (
-          <button
+          <Button
             onClick={onFinishDrawing}
-            className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-green-50 text-green-600 hover:bg-green-100"
+            sx={{
+              width: "100%",
+              p: 2,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              bgcolor: "#dcfce7",
+              color: "#16a34a",
+              "&:hover": { bgcolor: "#bbf7d0" },
+              textTransform: "none",
+              mt: 1,
+            }}
             title="完成绘制 (Enter)"
           >
-            <span className="text-xs">完成绘制</span>
-          </button>
+            <Typography variant="caption">完成绘制</Typography>
+          </Button>
         )}
-        <div className="border-t border-gray-100 my-2" />
-        <button
+        <Divider sx={{ my: 2 }} />
+        <Button
           onClick={onToggleTrackPanel}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-            showTrackPanel
-              ? "bg-purple-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: showTrackPanel ? "#9333ea" : "white",
+            color: showTrackPanel ? "white" : "#374151",
+            "&:hover": { bgcolor: showTrackPanel ? "#7c3aed" : "#f9fafb" },
+            textTransform: "none",
+          }}
           title="设备轨迹追踪"
         >
-          <PlayCircle className="w-4 h-4" />
-          <span className="text-xs">轨迹追踪</span>
-        </button>
-        <div className="border-t border-gray-100 my-2" />
-        <button
+          <PlayCircle size={16} />
+          <Typography variant="caption">轨迹追踪</Typography>
+        </Button>
+        <Divider sx={{ my: 2 }} />
+        <Button
           onClick={onExportGeoJSON}
-          className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100"
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: "#eff6ff",
+            color: "#2563eb",
+            "&:hover": { bgcolor: "#dbeafe" },
+            textTransform: "none",
+          }}
           title="导出GeoJSON"
         >
-          <Download className="w-4 h-4" />
-          <span className="text-xs">导出GeoJSON</span>
-        </button>
-        <button
+          <Download size={16} />
+          <Typography variant="caption">导出GeoJSON</Typography>
+        </Button>
+        <Button
           onClick={onExportDrawings}
-          className="w-full p-2 rounded-lg transition-colors flex items-center gap-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: "#eef2ff",
+            color: "#6366f1",
+            "&:hover": { bgcolor: "#e0e7ff" },
+            textTransform: "none",
+            mt: 1,
+          }}
           title="导出绘制图形"
         >
-          <FileJson className="w-4 h-4" />
-          <span className="text-xs">导出绘制图形</span>
-        </button>
-        <div className="border-t border-gray-100 my-2" />
-        <button
+          <FileJson size={16} />
+          <Typography variant="caption">导出绘制图形</Typography>
+        </Button>
+        <Divider sx={{ my: 2 }} />
+        <Button
           onClick={onToggleMapType}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-            mapType === "amap"
-              ? "bg-blue-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: mapType === "amap" ? "#2563eb" : "white",
+            color: mapType === "amap" ? "white" : "#374151",
+            "&:hover": { bgcolor: mapType === "amap" ? "#1d4ed8" : "#f9fafb" },
+            textTransform: "none",
+          }}
           title="切换地图"
         >
-          <Globe className="w-4 h-4" />
-          <span className="text-xs">
+          <Globe size={16} />
+          <Typography variant="caption">
             {mapType === "osm" ? "切换高德" : "切换OSM"}
-          </span>
-        </button>
-        <div className="border-t border-gray-100 my-2" />
-        <button
+          </Typography>
+        </Button>
+        <Divider sx={{ my: 2 }} />
+        <Button
           onClick={onToggleHeatmap}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-            showHeatmap
-              ? "bg-red-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: showHeatmap ? "#dc2626" : "white",
+            color: showHeatmap ? "white" : "#374151",
+            "&:hover": { bgcolor: showHeatmap ? "#b91c1c" : "#f9fafb" },
+            textTransform: "none",
+          }}
           title="热力图"
         >
-          <Thermometer className="w-4 h-4" />
-          <span className="text-xs">热力图</span>
-        </button>
+          <Thermometer size={16} />
+          <Typography variant="caption">热力图</Typography>
+        </Button>
         {showHeatmap && (
-          <div className="px-2 py-1 space-y-1">
-            <button
+          <MuiBox sx={{ px: 2, py: 1 }}>
+            <Button
               onClick={() => onSetHeatmapMode("density")}
-              className={`w-full p-1.5 rounded text-xs text-left transition-colors ${
-                heatmapMode === "density"
-                  ? "bg-red-100 text-red-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              sx={{
+                width: "100%",
+                p: 1.5,
+                borderRadius: 1,
+                textAlign: "left",
+                bgcolor: heatmapMode === "density" ? "#fee2e2" : "transparent",
+                color: heatmapMode === "density" ? "#b91c1c" : "#4b5563",
+                "&:hover": {
+                  bgcolor: heatmapMode === "density" ? "#fee2e2" : "#f3f4f6",
+                },
+                textTransform: "none",
+                fontSize: "0.75rem",
+              }}
             >
               密度模式
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => onSetHeatmapMode("status")}
-              className={`w-full p-1.5 rounded text-xs text-left transition-colors ${
-                heatmapMode === "status"
-                  ? "bg-red-100 text-red-700"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              sx={{
+                width: "100%",
+                p: 1.5,
+                borderRadius: 1,
+                textAlign: "left",
+                bgcolor: heatmapMode === "status" ? "#fee2e2" : "transparent",
+                color: heatmapMode === "status" ? "#b91c1c" : "#4b5563",
+                "&:hover": {
+                  bgcolor: heatmapMode === "status" ? "#fee2e2" : "#f3f4f6",
+                },
+                textTransform: "none",
+                fontSize: "0.75rem",
+                mt: 1,
+              }}
             >
               状态模式
-            </button>
-          </div>
+            </Button>
+          </MuiBox>
         )}
-        <button
+        <Button
           onClick={onToggle3DView}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-            showHeatmap
-              ? "bg-indigo-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: showHeatmap ? "#6366f1" : "white",
+            color: showHeatmap ? "white" : "#374151",
+            "&:hover": { bgcolor: showHeatmap ? "#4f46e5" : "#f9fafb" },
+            textTransform: "none",
+          }}
           title="3D视图"
         >
-          <Box className="w-4 h-4" />
-          <span className="text-xs">3D视图</span>
-        </button>
-        <div className="border-t border-gray-100 my-2" />
-        <button
+          <Box size={16} />
+          <Typography variant="caption">3D视图</Typography>
+        </Button>
+        <Divider sx={{ my: 2 }} />
+        <Button
           onClick={onToggleOfflineMode}
-          className={`w-full p-2 rounded-lg transition-colors flex items-center gap-2 ${
-            offlineMode
-              ? "bg-green-500 text-white"
-              : "bg-white text-gray-700 hover:bg-gray-50"
-          }`}
+          sx={{
+            width: "100%",
+            p: 2,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            bgcolor: offlineMode ? "#16a34a" : "white",
+            color: offlineMode ? "white" : "#374151",
+            "&:hover": { bgcolor: offlineMode ? "#15803d" : "#f9fafb" },
+            textTransform: "none",
+          }}
           title="离线模式"
         >
-          <span className="text-xs">
+          <Typography variant="caption">
             {offlineMode ? "离线模式" : "在线模式"}
-          </span>
-        </button>
-      </div>
-    </div>
+          </Typography>
+        </Button>
+      </MuiBox>
+    </Paper>
   );
 };
 

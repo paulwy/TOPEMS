@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
-import { ChevronRight, FileText, Clock, AlertTriangle, Users, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  ChevronRight,
+  FileText,
+  Clock,
+  AlertTriangle,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 
 export interface ActivityItem {
   id: string;
@@ -73,10 +81,15 @@ const generateMockActivities = (): ActivityItem[] => [
 export const RecentActivities: React.FC<RecentActivitiesProps> = ({
   activities: externalActivities,
 }) => {
-  const [internalActivities, setInternalActivities] = useState<ActivityItem[]>([]);
+  const [internalActivities, setInternalActivities] = useState<ActivityItem[]>(
+    [],
+  );
 
-  const hasExternalActivities = externalActivities && externalActivities.length > 0;
-  const currentActivities = hasExternalActivities ? externalActivities : internalActivities;
+  const hasExternalActivities =
+    externalActivities && externalActivities.length > 0;
+  const currentActivities = hasExternalActivities
+    ? externalActivities
+    : internalActivities;
 
   useEffect(() => {
     if (!hasExternalActivities) {

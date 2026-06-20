@@ -13,6 +13,7 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppStore } from "@/store";
+import { logger } from "@/utils/logger";
 
 // 定义表单验证 schema
 const workflowFormSchema = z.object({
@@ -55,7 +56,7 @@ export function WorkflowFormExample({
   });
 
   function onFormSubmit(values: WorkflowFormValues) {
-    console.log("表单提交:", values);
+    logger.info("表单提交:", values);
     onSubmit?.(values);
 
     addNotification({

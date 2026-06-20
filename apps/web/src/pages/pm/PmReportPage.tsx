@@ -5,6 +5,7 @@ import { Button, Card, CardContent, TextField, MenuItem } from "@mui/material";
 import ProjectReport from "@/components/pm/ProjectReport";
 import { pmApi } from "@/api/pm";
 import type { PmStatistics, ProjectBenefit } from "@/api/pm";
+import { apiLogger } from "@/utils/logger";
 
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ const PmReportPage: React.FC = () => {
 
   useEffect(() => {
     loadReportData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.projectId, selectedPeriod, startDate, endDate]);
 
   const loadReportData = async () => {
@@ -58,7 +60,7 @@ const PmReportPage: React.FC = () => {
         setBenefits(benefitsResponse.data.benefits || []);
       }
     } catch (error) {
-      console.error("Failed to load report data:", error);
+      apiLogger.error("Failed to load report data:", error);
     } finally {
       setLoading(false);
     }

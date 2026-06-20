@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Collapse, Typography, Divider } from "@mui/material";
+import {
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Collapse,
+  Typography,
+  Divider,
+} from "@mui/material";
 import {
   ChevronRight,
   ChevronDown,
@@ -26,7 +36,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { navigationRegistry, type NavItem } from "../../lib/NavigationRegistry";
 import { usePermission } from "../../hooks/usePermission";
 
-const iconMap: Record<string, React.ComponentType<{ className?: string; size?: number }>> = {
+const iconMap: Record<
+  string,
+  React.ComponentType<{ className?: string; size?: number }>
+> = {
   Building,
   Users,
   Calendar,
@@ -52,7 +65,11 @@ interface SidebarProps {
   pluginCode?: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  open,
+  onClose,
+  pluginCode,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -68,13 +85,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
   useEffect(() => {
     if (pluginCode) {
       const tabs = navigationRegistry.getModuleTabs(pluginCode);
-      const filteredTabs = tabs?.filter((tab) => hasNavPermission(tab.permission)) || [];
+      const filteredTabs =
+        tabs?.filter((tab) => hasNavPermission(tab.permission)) || [];
       setNavItems(filteredTabs);
     } else {
       const items = navigationRegistry.getTopNavItems();
-      const filteredItems = items.filter((item) => hasNavPermission(item.permission));
+      const filteredItems = items.filter((item) =>
+        hasNavPermission(item.permission),
+      );
       setNavItems(filteredItems);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pluginCode, checkPermission, isSuperuser]);
 
   const toggleExpand = (code: string) => {
@@ -121,9 +142,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
             {hasChildren ? (
-              isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />
+              isExpanded ? (
+                <ChevronDown size={18} />
+              ) : (
+                <ChevronRight size={18} />
+              )
             ) : item.icon ? (
-              iconMap[item.icon] ? React.createElement(iconMap[item.icon], { size: 18 }) : <ChevronRight size={18} />
+              iconMap[item.icon] ? (
+                React.createElement(iconMap[item.icon], { size: 18 })
+              ) : (
+                <ChevronRight size={18} />
+              )
             ) : (
               <ChevronRight size={18} />
             )}
@@ -163,10 +192,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
       <Divider />
       <List>
         <ListItem
-          onClick={() => { navigate("/"); onClose(); }}
+          onClick={() => {
+            navigate("/");
+            onClose();
+          }}
           sx={{
-            color: location.pathname === "/" ? "primary.main" : "text.secondary",
-            backgroundColor: location.pathname === "/" ? "primary.50" : "transparent",
+            color:
+              location.pathname === "/" ? "primary.main" : "text.secondary",
+            backgroundColor:
+              location.pathname === "/" ? "primary.50" : "transparent",
             borderRadius: 1,
             marginY: 0.5,
             marginX: 1,

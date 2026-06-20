@@ -2,6 +2,7 @@ import type { ComponentType, LazyExoticComponent, ReactElement } from "react";
 import type React from "react";
 import { lazy } from "react";
 import ErrorPage from "../pages/shared/ErrorPage";
+import { logger } from "@/utils/logger";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
@@ -17,16 +18,30 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
         return await factory();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        console.error(
-          "[Lazy Load] Failed to load component " + (moduleName || "unknown") + " (attempt " + attempt + "/" + MAX_RETRIES + "):",
+        logger.error(
+          "[Lazy Load] Failed to load component " +
+            (moduleName || "unknown") +
+            " (attempt " +
+            attempt +
+            "/" +
+            MAX_RETRIES +
+            "):",
           lastError.message,
         );
         if (attempt < MAX_RETRIES) {
-          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+          await new Promise((resolve) =>
+            setTimeout(resolve, RETRY_DELAY_MS * attempt),
+          );
         }
       }
     }
-    console.error("[Lazy Load] Component " + (moduleName || "unknown") + " failed after " + MAX_RETRIES + " retries");
+    logger.error(
+      "[Lazy Load] Component " +
+        (moduleName || "unknown") +
+        " failed after " +
+        MAX_RETRIES +
+        " retries",
+    );
     return { default: ErrorPage as unknown as T };
   });
 };

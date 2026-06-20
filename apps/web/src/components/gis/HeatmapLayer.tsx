@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import L from "leaflet";
 import { useMap } from "react-leaflet";
+import { Box, Typography, Paper } from "@mui/material";
 import "leaflet/dist/leaflet.css";
 import type { DevicePoint, StorageLocation } from "../../api/gis";
 
@@ -40,7 +41,7 @@ const getCachedColor = (intensity: number): string => {
   const index = Math.min(key, 255);
   const i = index * 4;
   const color = `rgba(${imageData.data[i]}, ${imageData.data[i + 1]}, ${imageData.data[i + 2]}, ${imageData.data[i + 3] / 255})`;
-  
+
   colorCache.set(key, color);
   return color;
 };
@@ -59,11 +60,13 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
 
   const heatmapData = useMemo(() => {
     if (!visible || !effectiveMap) return [];
-    
+
     const result: { x: number; y: number; value: number }[] = [];
 
     devicePoints.forEach((p) => {
-      const pixel = effectiveMap.latLngToContainerPoint(L.latLng(p.latitude, p.longitude));
+      const pixel = effectiveMap.latLngToContainerPoint(
+        L.latLng(p.latitude, p.longitude),
+      );
       let value = 1;
       if (intensityMode === "status") {
         const status = p.status.toLowerCase();
@@ -79,7 +82,9 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     });
 
     storageLocations.forEach((s) => {
-      const pixel = effectiveMap.latLngToContainerPoint(L.latLng(s.latitude, s.longitude));
+      const pixel = effectiveMap.latLngToContainerPoint(
+        L.latLng(s.latitude, s.longitude),
+      );
       result.push({ x: pixel.x, y: pixel.y, value: 1 });
     });
 
@@ -117,7 +122,7 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
     const gridSize = 10;
     const gridRows = Math.ceil(size.y / gridSize);
     const gridCols = Math.ceil(size.x / gridSize);
-    
+
     const grid = new Float32Array(gridRows * gridCols);
     grid.fill(0);
 
@@ -132,7 +137,8 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
           const ny = gridY + dy;
           if (nx >= 0 && nx < gridCols && ny >= 0 && ny < gridRows) {
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const weight = distance <= radius ? (1 - distance / radius) * point.value : 0;
+            const weight =
+              distance <= radius ? (1 - distance / radius) * point.value : 0;
             grid[ny * gridCols + nx] += weight;
           }
         }
@@ -166,7 +172,7 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
       overlay.style.left = "0";
       overlay.style.width = "100%";
       overlay.style.height = "100%";
-      
+
       const pane = effectiveMap.getPane("overlayPane");
       if (pane) {
         pane.appendChild(overlay);
@@ -206,49 +212,76 @@ export const HeatmapLegend: React.FC<{ mode: "density" | "status" }> = ({
   mode,
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-3">
-      <div className="text-xs font-medium text-gray-700 mb-2">
+    <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
+      <Typography
+        variant="caption"
+        sx={{ fontWeight: 500, color: "text.secondary", mb: 2 }}
+      >
         {mode === "density" ? "密度图例" : "状态图例"}
-      </div>
-      <div className="flex items-center gap-1">
-        <div
-          className="w-32 h-3 rounded"
-          style={{
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            width: 128,
+            height: 12,
+            borderRadius: 1,
             background:
               "linear-gradient(to right, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.5), rgba(255, 255, 0, 0.7), rgba(255, 128, 0, 0.8), rgba(255, 0, 0, 1))",
           }}
         />
-      </div>
-      <div className="flex justify-between mt-1 text-xs text-gray-500">
-        <span>低</span>
-        <span>高</span>
-      </div>
+      </Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          低
+        </Typography>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          高
+        </Typography>
+      </Box>
       {mode === "status" && (
-        <div className="mt-2 pt-2 border-t text-xs text-gray-500 space-y-1">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded"
-              style={{ backgroundColor: "rgba(0, 255, 0, 0.5)" }}
+        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: 1,
+                bgcolor: "rgba(0, 255, 0, 0.5)",
+              }}
             />
-            <span>正常运行</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded"
-              style={{ backgroundColor: "rgba(255, 255, 0, 0.7)" }}
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              正常运行
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: 1,
+                bgcolor: "rgba(255, 255, 0, 0.7)",
+              }}
             />
-            <span>待处理</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-3 h-3 rounded"
-              style={{ backgroundColor: "rgba(255, 0, 0, 1)" }}
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              待处理
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: 1,
+                bgcolor: "rgba(255, 0, 0, 1)",
+              }}
             />
-            <span>异常/禁用</span>
-          </div>
-        </div>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              异常/禁用
+            </Typography>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 };
 

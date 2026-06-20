@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import { AIGenerateModal } from "./AIGenerateModal";
 import { aiApi } from "../../api/ai";
+import { logger } from "@/utils/logger";
 
 export interface AIAnalyzerProps {
   isOpen: boolean;
@@ -110,6 +111,7 @@ export function AIAnalyzer({
         runAllAnalysis();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialText]);
 
   const clearResults = () => {
@@ -139,7 +141,7 @@ export function AIAnalyzer({
         keywords: keywordsResult.length > 0 ? keywordsResult : undefined,
       });
     } catch (error) {
-      console.error("分析失败:", error);
+      logger.error("分析失败:", error);
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +161,7 @@ export function AIAnalyzer({
         });
       }
     } catch (error) {
-      console.error("情感分析失败:", error);
+      logger.error("情感分析失败:", error);
     }
   };
 
@@ -174,7 +176,7 @@ export function AIAnalyzer({
         });
       }
     } catch (error) {
-      console.error("文本分类失败:", error);
+      logger.error("文本分类失败:", error);
     }
   };
 
@@ -185,7 +187,7 @@ export function AIAnalyzer({
         setEntitiesResult(response.data.entities);
       }
     } catch (error) {
-      console.error("实体提取失败:", error);
+      logger.error("实体提取失败:", error);
     }
   };
 
@@ -196,7 +198,7 @@ export function AIAnalyzer({
         setKeywordsResult(response.data.keywords);
       }
     } catch (error) {
-      console.error("关键词提取失败:", error);
+      logger.error("关键词提取失败:", error);
     }
   };
 
@@ -212,7 +214,7 @@ export function AIAnalyzer({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("复制失败:", error);
+      logger.error("复制失败:", error);
     }
   };
 

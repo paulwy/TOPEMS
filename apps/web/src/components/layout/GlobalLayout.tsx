@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { logger } from "@/utils/logger";
 import {
   Box,
   Button,
@@ -306,7 +307,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         tabs={moduleTabs}
         onTabsChange={(newTabs) => {
           // 可以在这里保存用户自定义的标签配置到localStorage
-          console.log("Tabs changed:", newTabs);
+          logger.info("Tabs changed:", newTabs);
         }}
       />
     );
@@ -521,7 +522,11 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       </Box>
 
       {/* AI浮动助手 */}
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} pluginCode={currentModule || undefined} />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        pluginCode={currentModule || undefined}
+      />
       <FloatingAIHelper />
     </Box>
   );

@@ -32,6 +32,7 @@ import {
 import { scmApi } from "@/api/modules/scm/scm";
 import { useNotification } from "@/hooks/useNotification";
 import type { Supplier } from "@/api/modules/scm/scm";
+import { apiLogger } from "@/utils/logger";
 
 const SupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +47,7 @@ const SupplierDetailPage: React.FC = () => {
     if (id) {
       loadSupplier(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadSupplier = async (supplierId: string) => {
@@ -56,7 +58,7 @@ const SupplierDetailPage: React.FC = () => {
         setSupplier(res.data);
       }
     } catch (err) {
-      console.error("Failed to load supplier:", err);
+      apiLogger.error("Failed to load supplier:", err);
       error("加载供应商信息失败");
     } finally {
       setLoading(false);

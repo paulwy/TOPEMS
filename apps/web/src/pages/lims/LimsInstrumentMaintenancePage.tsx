@@ -13,13 +13,27 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions,  Button, TextField, Chip, Card, CardContent, CardHeader, Box, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+} from "@mui/material";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { limsApi } from "@/api/lims";
 import type { Instrument, MaintenanceRecord } from "@/api/lims";
 import { PageHeader } from "@/components/templates/PageHeader";
+import { logger } from "@/utils/logger";
 
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -70,7 +84,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         setMaintenanceRecords(recordsArray);
       }
     } catch (error) {
-      console.error("加载仪器详情失败:", error);
+      logger.error("加载仪器详情失败:", error);
     } finally {
       setLoading(false);
     }
@@ -123,7 +137,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         resetForm();
       }
     } catch (error) {
-      console.error("创建维护记录失败:", error);
+      logger.error("创建维护记录失败:", error);
     }
   };
 
@@ -146,7 +160,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         setEditingRecord(null);
       }
     } catch (error) {
-      console.error("更新维护记录失败:", error);
+      logger.error("更新维护记录失败:", error);
     }
   };
 
@@ -158,7 +172,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         loadInstrumentDetail(instrument.id);
       }
     } catch (error) {
-      console.error("删除维护记录失败:", error);
+      logger.error("删除维护记录失败:", error);
     }
   };
 

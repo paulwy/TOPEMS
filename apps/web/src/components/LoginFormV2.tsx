@@ -1,4 +1,15 @@
-import { Button, TextField, FormControl, FormLabel, FormHelperText, Card, CardContent, CardHeader, Checkbox, Box } from "@mui/material";
+import {
+  Button,
+  TextField,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  Card,
+  CardContent,
+  CardHeader,
+  Checkbox,
+  Box,
+} from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
@@ -6,6 +17,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 
+import { logger } from "@/utils/logger";
 import { useAppStore } from "@/store";
 import { isDevelopment } from "../config/runtime";
 
@@ -66,7 +78,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
       } else {
         // 这里可以添加默认的登录逻辑
         // 示例：简单的登录成功模拟
-        console.log("登录表单提交:", values);
+        logger.info("登录表单提交:", values);
 
         // 模拟登录成功
         addNotification({
@@ -77,7 +89,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      console.error("登录错误:", error);
+      logger.error("登录错误:", error);
       addNotification({
         title: "错误",
         message: error.message || "登录失败",

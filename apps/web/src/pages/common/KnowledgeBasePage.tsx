@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { logger } from "@/utils/logger";
 import {
   Upload,
   FileText,
@@ -102,7 +103,7 @@ const KnowledgeBasePage: React.FC = () => {
         setDocuments(docs);
       }
     } catch (err) {
-      console.error("加载文档列表失败:", err);
+      logger.error("加载文档列表失败:", err);
       addNotification({
         title: "加载失败",
         message: "加载文档列表失败",
@@ -200,7 +201,7 @@ const KnowledgeBasePage: React.FC = () => {
       setUploadFiles([]);
       loadDocuments();
     } catch (err) {
-      console.error("上传失败:", err);
+      logger.error("上传失败:", err);
       addNotification({
         title: "上传失败",
         message: "文档上传失败",
@@ -228,7 +229,7 @@ const KnowledgeBasePage: React.FC = () => {
         loadDocuments();
       }
     } catch (err) {
-      console.error("删除失败:", err);
+      logger.error("删除失败:", err);
       addNotification({
         title: "删除失败",
         message: "删除文档失败",
@@ -285,7 +286,7 @@ const KnowledgeBasePage: React.FC = () => {
         loadDocuments();
       }
     } catch (err) {
-      console.error("保存失败:", err);
+      logger.error("保存失败:", err);
       addNotification({
         title: "保存失败",
         message: "更新文档信息失败",

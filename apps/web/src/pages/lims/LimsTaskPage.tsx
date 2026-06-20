@@ -48,8 +48,11 @@ import type {
 } from "@/api/lims";
 import { limsApi } from "@/api/lims";
 import { MetricCard } from "@/components/MetricCard";
+import { STATUS_COLORS, getStatusColorConfig } from "@/constants/colors";
+import { GRADIENTS } from "@/constants/colors";
 import { StatsChart } from "@/components/StatsChart";
 import { PageHeader } from "@/components/templates/PageHeader";
+import { apiLogger } from "@/utils/logger";
 
 const LimsTaskPage: React.FC = () => {
   const navigate = useNavigate();
@@ -153,6 +156,7 @@ const LimsTaskPage: React.FC = () => {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceStatuses.lims]);
 
   const loadStatistics = async () => {
@@ -162,7 +166,7 @@ const LimsTaskPage: React.FC = () => {
         setStats(response.data);
       }
     } catch (err) {
-      console.error("加载统计数据失败:", err);
+      apiLogger.error("加载统计数据失败:", err);
     }
   };
 
@@ -206,7 +210,7 @@ const LimsTaskPage: React.FC = () => {
         setSamples([]);
       }
     } catch (err) {
-      console.error("加载样品失败:", err);
+      apiLogger.error("加载样品失败:", err);
       setSamples([]);
     }
   };
@@ -232,7 +236,7 @@ const LimsTaskPage: React.FC = () => {
         setProcesses([]);
       }
     } catch (err) {
-      console.error("加载检验流程失败:", err);
+      apiLogger.error("加载检验流程失败:", err);
       setProcesses([]);
     }
   };
@@ -274,7 +278,7 @@ const LimsTaskPage: React.FC = () => {
         setTasks([]);
       }
     } catch (err) {
-      console.error("加载检验任务失败:", err);
+      apiLogger.error("加载检验任务失败:", err);
       setTasks([]);
     }
   };
@@ -299,7 +303,7 @@ const LimsTaskPage: React.FC = () => {
         setSelectedTaskRecords([]);
       }
     } catch (err) {
-      console.error("加载检验记录失败:", err);
+      apiLogger.error("加载检验记录失败:", err);
       setSelectedTaskRecords([]);
     }
   };
@@ -334,7 +338,7 @@ const LimsTaskPage: React.FC = () => {
       }
     } catch (err) {
       showNotification("error", "创建检验任务失败");
-      console.error("创建检验任务失败:", err);
+      apiLogger.error("创建检验任务失败:", err);
     } finally {
       setCreating(false);
     }
@@ -364,7 +368,7 @@ const LimsTaskPage: React.FC = () => {
       }
     } catch (err) {
       showNotification("error", "完成检验步骤失败");
-      console.error("完成检验步骤失败:", err);
+      apiLogger.error("完成检验步骤失败:", err);
     } finally {
       setCreating(false);
     }
@@ -452,7 +456,7 @@ const LimsTaskPage: React.FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+          background: GRADIENTS.accent,
         }}
       >
         <Box sx={{ textAlign: "center" }}>
@@ -499,7 +503,7 @@ const LimsTaskPage: React.FC = () => {
           >
             <ClipboardList size={32} color="#0891b2" />
           </Avatar>
-          <Typography variant="h5"  sx={{ ...{ mb: 2 }, fontWeight: 'bold' }}>
+          <Typography variant="h5" sx={{ ...{ mb: 2 }, fontWeight: "bold" }}>
             实验室管理服务未启动
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
@@ -647,7 +651,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       任务总数
                     </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                    <Typography variant="h4" sx={{ fontWeight: "bold" }}>
                       {safeTasks.length}
                     </Typography>
                   </Box>
@@ -686,7 +690,11 @@ const LimsTaskPage: React.FC = () => {
                     >
                       进行中
                     </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold' }} color="primary">
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: "bold" }}
+                      color="primary"
+                    >
                       {safeTasks.filter((t) => t.status === "进行中").length}
                     </Typography>
                   </Box>
@@ -727,7 +735,7 @@ const LimsTaskPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant="h4"
-                      sx={{ fontWeight: 'bold' }}
+                      sx={{ fontWeight: "bold" }}
                       color="success.main"
                     >
                       {safeTasks.filter((t) => t.status === "已完成").length}
@@ -770,8 +778,7 @@ const LimsTaskPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant="h4"
-                      
-                      sx={{ ...{ color: "#b45309" }, fontWeight: 'bold' }}
+                      sx={{ ...{ color: "#b45309" }, fontWeight: "bold" }}
                     >
                       {safeTasks.filter((t) => t.status === "待测试").length}
                     </Typography>
@@ -797,7 +804,7 @@ const LimsTaskPage: React.FC = () => {
 
         <Paper sx={{ borderRadius: 2 }} variant="outlined">
           <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
-            <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+            <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
               检验任务
             </Typography>
           </Box>
@@ -842,7 +849,10 @@ const LimsTaskPage: React.FC = () => {
                             mb: 1,
                           }}
                         >
-                          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+                          <Typography
+                            variant="h6"
+                            sx={{ fontWeight: "semibold" }}
+                          >
                             {getSampleName(task.sample_id)}
                           </Typography>
                           <Chip
@@ -934,7 +944,7 @@ const LimsTaskPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
             新建检验任务
           </Typography>
           <IconButton size="small" onClick={() => setShowTaskModal(false)}>
@@ -1027,7 +1037,7 @@ const LimsTaskPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+          <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
             完成检验步骤
           </Typography>
           <IconButton size="small" onClick={() => setShowRecordModal(false)}>
@@ -1040,7 +1050,7 @@ const LimsTaskPage: React.FC = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 当前步骤
               </Typography>
-              <Typography color="secondary.main" sx={{ fontWeight: 'medium' }}>
+              <Typography color="secondary.main" sx={{ fontWeight: "medium" }}>
                 {recordFormData.step_name}
               </Typography>
             </Box>
@@ -1122,7 +1132,7 @@ const LimsTaskPage: React.FC = () => {
                   mb: 3,
                 }}
               >
-                <Typography variant="h5" sx={{ fontWeight: 'semibold' }}>
+                <Typography variant="h5" sx={{ fontWeight: "semibold" }}>
                   检验任务详情
                 </Typography>
                 <IconButton onClick={() => setShowDetailModal(false)}>
@@ -1140,7 +1150,7 @@ const LimsTaskPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 'semibold' }}>
+                    <Typography variant="h6" sx={{ fontWeight: "semibold" }}>
                       {getSampleName(selectedTask.sample_id)}
                     </Typography>
                     <Chip
@@ -1157,7 +1167,10 @@ const LimsTaskPage: React.FC = () => {
                   <Typography color="text.secondary" sx={{ mb: 1 }}>
                     检验流程: {getProcessName(selectedTask.process_id)}
                   </Typography>
-                  <Typography color="secondary.main" sx={{ fontWeight: 'medium' }}>
+                  <Typography
+                    color="secondary.main"
+                    sx={{ fontWeight: "medium" }}
+                  >
                     当前步骤: {getCurrentStepName(selectedTask)}
                   </Typography>
                 </Box>
@@ -1176,8 +1189,10 @@ const LimsTaskPage: React.FC = () => {
                       任务编号
                     </Typography>
                     <Typography
-                      
-                      sx={{ ...{ fontFamily: "monospace", fontSize: 14 }, fontWeight: 'medium' }}
+                      sx={{
+                        ...{ fontFamily: "monospace", fontSize: 14 },
+                        fontWeight: "medium",
+                      }}
                     >
                       {selectedTask.id}
                     </Typography>
@@ -1190,7 +1205,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       检验员
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedTask.inspector}
                     </Typography>
                   </Grid>
@@ -1202,7 +1217,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       开始时间
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {new Date(selectedTask.started_at).toLocaleString(
                         "zh-CN",
                       )}
@@ -1216,7 +1231,7 @@ const LimsTaskPage: React.FC = () => {
                     >
                       完成时间
                     </Typography>
-                    <Typography sx={{ fontWeight: 'medium' }}>
+                    <Typography sx={{ fontWeight: "medium" }}>
                       {selectedTask.completed_at
                         ? new Date(selectedTask.completed_at).toLocaleString(
                             "zh-CN",
@@ -1227,7 +1242,7 @@ const LimsTaskPage: React.FC = () => {
                 </Grid>
 
                 <Box>
-                  <Typography  sx={{ ...{ mb: 1.5 }, fontWeight: 'semibold' }}>
+                  <Typography sx={{ ...{ mb: 1.5 }, fontWeight: "semibold" }}>
                     检验记录
                   </Typography>
                   {selectedTaskRecords.length === 0 ? (
@@ -1254,7 +1269,7 @@ const LimsTaskPage: React.FC = () => {
                             }}
                           >
                             <Typography
-                              sx={{ fontWeight: 'medium' }}
+                              sx={{ fontWeight: "medium" }}
                               color="secondary.main"
                             >
                               步骤 {idx + 1}: {record.step_name}

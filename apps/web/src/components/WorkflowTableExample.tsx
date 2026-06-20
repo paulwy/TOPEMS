@@ -13,6 +13,7 @@ import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
 import { DataTable } from "@/components/DataTable";
 import { flowApi, type Workflow } from "@/api/flow";
+import { logger } from "@/utils/logger";
 
 export function WorkflowTableExample() {
   const [loading, setLoading] = useState(true);
@@ -38,7 +39,7 @@ export function WorkflowTableExample() {
         setError(response.message || "加载工作流失败");
       }
     } catch (err: any) {
-      console.error("加载工作流失败:", err);
+      logger.error("加载工作流失败:", err);
       setError("加载工作流失败: " + (err.message || "未知错误"));
     } finally {
       setLoading(false);
@@ -173,7 +174,7 @@ export function WorkflowTableExample() {
                 <Divider />
                 <MenuItem
                   onClick={() => {
-                    console.log("查看工作流:", workflow.id);
+                    logger.info("查看工作流:", workflow.id);
                     handleMenuClose();
                   }}
                 >
@@ -181,7 +182,7 @@ export function WorkflowTableExample() {
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    console.log("编辑工作流:", workflow.id);
+                    logger.info("编辑工作流:", workflow.id);
                     handleMenuClose();
                   }}
                 >
@@ -189,7 +190,7 @@ export function WorkflowTableExample() {
                 </MenuItem>
                 <MenuItem
                   onClick={() => {
-                    console.log("查看历史:", workflow.id);
+                    logger.info("查看历史:", workflow.id);
                     handleMenuClose();
                   }}
                 >
@@ -198,7 +199,7 @@ export function WorkflowTableExample() {
                 <Divider />
                 <MenuItem
                   onClick={() => {
-                    console.log("删除工作流:", workflow.id);
+                    logger.info("删除工作流:", workflow.id);
                     handleMenuClose();
                   }}
                   sx={{ color: "error.main" }}
@@ -251,7 +252,7 @@ export function WorkflowTableExample() {
         searchKey="name"
         searchPlaceholder="搜索工作流..."
         onRowClick={(workflow) => {
-          console.log("点击工作流:", workflow);
+          logger.info("点击工作流:", workflow);
         }}
       />
     </Box>

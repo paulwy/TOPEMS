@@ -1,9 +1,13 @@
 import React, { lazy } from "react";
 import type { RouteConfig } from "./utils";
 
-const UserManagementPage = lazy(() => import("../pages/admin/UserManagementPage"));
+const UserManagementPage = lazy(
+  () => import("../pages/admin/UserManagementPage"),
+);
 const IamDashboardPage = lazy(() => import("../pages/iam/DashboardPage"));
-const RoleManagementPage = lazy(() => import("../pages/admin/RoleManagementPage"));
+const RoleManagementPage = lazy(
+  () => import("../pages/admin/RoleManagementPage"),
+);
 const PermissionManagementPage = lazy(
   () => import("../pages/admin/PermissionManagementPage"),
 );
@@ -17,7 +21,9 @@ const DictionaryManagementPage = lazy(
 const DatabaseStructurePage = lazy(
   () => import("../pages/admin/DatabaseStructurePage"),
 );
-const MigrationAdminPage = lazy(() => import("../pages/system/MigrationAdminPage"));
+const MigrationAdminPage = lazy(
+  () => import("../pages/system/MigrationAdminPage"),
+);
 const ConfigDebugPage = lazy(() => import("../pages/admin/ConfigDebugPage"));
 const PluginMarketplacePage = lazy(
   () => import("../pages/plugin/PluginMarketplacePage"),

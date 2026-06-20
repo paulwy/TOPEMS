@@ -1,6 +1,17 @@
 // modules/EvidenceModule/EvidencePanel.tsx
 import React, { useState, useCallback } from "react";
 import { Camera, Mic, Video, List, Grid, Search, X, Tag } from "lucide-react";
+import {
+  Box,
+  Button,
+  Typography,
+  Paper,
+  TextField,
+  IconButton,
+  Chip,
+  Grid as MuiGrid,
+  Stack,
+} from "@mui/material";
 import type { EvidenceRecord, EvidenceType } from "./types";
 import PhotoCapture from "./PhotoCapture";
 import AudioCapture from "./AudioCapture";
@@ -119,230 +130,445 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
   // Render capture mode
   if (captureMode === "photo") {
     return (
-      <div className="h-full">
+      <Box sx={{ height: "100%" }}>
         <PhotoCapture
           onCapture={handlePhotoCapture}
           onCancel={() => setCaptureMode(null)}
         />
-      </div>
+      </Box>
     );
   }
 
   if (captureMode === "audio") {
     return (
-      <div className="h-full">
+      <Box sx={{ height: "100%" }}>
         <AudioCapture
           onCapture={handleAudioCapture}
           onCancel={() => setCaptureMode(null)}
         />
-      </div>
+      </Box>
     );
   }
 
   if (captureMode === "video") {
     return (
-      <div className="h-full">
+      <Box sx={{ height: "100%" }}>
         <VideoCapture
           onCapture={handleVideoCapture}
           onCancel={() => setCaptureMode(null)}
         />
-      </div>
+      </Box>
     );
   }
 
   // Main panel
   return (
-    <div className="flex flex-col h-full bg-white">
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        bgcolor: "white",
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <h2 className="text-lg font-semibold text-gray-900">取证记录</h2>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-          <X className="w-5 h-5 text-gray-500" />
-        </button>
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 16,
+          py: 12,
+          borderBottom: 1,
+          borderColor: "#e5e7eb",
+        }}
+      >
+        <Typography
+          sx={{ fontSize: "1.125rem", fontWeight: 600, color: "#111827" }}
+        >
+          取证记录
+        </Typography>
+        <IconButton
+          onClick={onClose}
+          sx={{ borderRadius: 4, "&:hover": { bgcolor: "#f3f4f6" } }}
+        >
+          <X size={20} style={{ color: "#6b7280" }} />
+        </IconButton>
+      </Box>
 
       {/* Capture Buttons */}
-      <div className="p-4 border-b bg-gray-50">
-        <div className="text-sm text-gray-500 mb-3">采集取证</div>
-        <div className="flex gap-3">
-          <button
+      <Box
+        sx={{
+          p: 16,
+          borderBottom: 1,
+          borderColor: "#e5e7eb",
+          bgcolor: "#f9fafb",
+        }}
+      >
+        <Typography sx={{ fontSize: "0.875rem", color: "#6b7280", mb: 12 }}>
+          采集取证
+        </Typography>
+        <Box sx={{ display: "flex", gap: 12 }}>
+          <Button
             onClick={() => setCaptureMode("photo")}
-            className="flex-1 flex flex-col items-center gap-2 p-4 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              p: 16,
+              bgcolor: "white",
+              border: 1,
+              borderColor: "#e5e7eb",
+              borderRadius: 8,
+              "&:hover": { bgcolor: "#eff6ff", borderColor: "#93c5fd" },
+              textTransform: "none",
+            }}
           >
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Camera className="w-6 h-6 text-blue-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">拍照</span>
-          </button>
-          <button
+            <Box sx={{ p: 12, bgcolor: "#dbeafe", borderRadius: "9999px" }}>
+              <Camera size={24} style={{ color: "#2563eb" }} />
+            </Box>
+            <Typography
+              sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#374151" }}
+            >
+              拍照
+            </Typography>
+          </Button>
+          <Button
             onClick={() => setCaptureMode("audio")}
-            className="flex-1 flex flex-col items-center gap-2 p-4 bg-white border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors"
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              p: 16,
+              bgcolor: "white",
+              border: 1,
+              borderColor: "#e5e7eb",
+              borderRadius: 8,
+              "&:hover": { bgcolor: "#f0fdf4", borderColor: "#86efac" },
+              textTransform: "none",
+            }}
           >
-            <div className="p-3 bg-green-100 rounded-full">
-              <Mic className="w-6 h-6 text-green-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">录音</span>
-          </button>
-          <button
+            <Box sx={{ p: 12, bgcolor: "#dcfce7", borderRadius: "9999px" }}>
+              <Mic size={24} style={{ color: "#16a34a" }} />
+            </Box>
+            <Typography
+              sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#374151" }}
+            >
+              录音
+            </Typography>
+          </Button>
+          <Button
             onClick={() => setCaptureMode("video")}
-            className="flex-1 flex flex-col items-center gap-2 p-4 bg-white border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
+            sx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              p: 16,
+              bgcolor: "white",
+              border: 1,
+              borderColor: "#e5e7eb",
+              borderRadius: 8,
+              "&:hover": { bgcolor: "#faf5ff", borderColor: "#c4b5fd" },
+              textTransform: "none",
+            }}
           >
-            <div className="p-3 bg-purple-100 rounded-full">
-              <Video className="w-6 h-6 text-purple-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">录像</span>
-          </button>
-        </div>
-      </div>
+            <Box sx={{ p: 12, bgcolor: "#f3e8ff", borderRadius: "9999px" }}>
+              <Video size={24} style={{ color: "#9333ea" }} />
+            </Box>
+            <Typography
+              sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#374151" }}
+            >
+              录像
+            </Typography>
+          </Button>
+        </Box>
+      </Box>
 
       {/* Filters */}
-      <div className="p-4 border-b space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
+      <Box sx={{ p: 16, borderBottom: 1, borderColor: "#e5e7eb" }}>
+        <Box sx={{ position: "relative", mb: 12 }}>
+          <Box
+            sx={{
+              position: "absolute",
+              left: 12,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#9ca3af",
+            }}
+          >
+            <Search size={16} />
+          </Box>
+          <TextField
             placeholder="搜索取证记录..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            size="small"
+            sx={{
+              width: "100%",
+              "& .MuiOutlinedInput-root": {
+                pl: 36,
+                fontSize: "0.875rem",
+                "& fieldset": { borderColor: "#e5e7eb" },
+                "&:hover fieldset": { borderColor: "#d1d5db" },
+                "&.Mui-focused fieldset": { borderColor: "#3b82f6" },
+              },
+            }}
           />
-        </div>
-        <div className="flex gap-2">
+        </Box>
+        <Box sx={{ display: "flex", gap: 8 }}>
           {(["all", "photo", "audio", "video"] as const).map((type) => (
-            <button
+            <Chip
               key={type}
+              label={
+                type === "all"
+                  ? "全部"
+                  : type === "photo"
+                    ? "照片"
+                    : type === "audio"
+                      ? "录音"
+                      : "录像"
+              }
               onClick={() => setFilterType(type)}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                filterType === type
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {type === "all"
-                ? "全部"
-                : type === "photo"
-                  ? "照片"
-                  : type === "audio"
-                    ? "录音"
-                    : "录像"}
-            </button>
+              sx={{
+                fontSize: "0.875rem",
+                bgcolor: filterType === type ? "#3b82f6" : "#f3f4f6",
+                color: filterType === type ? "white" : "#4b5563",
+                "&:hover": {
+                  bgcolor: filterType === type ? "#3b82f6" : "#e5e7eb",
+                },
+              }}
+            />
           ))}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* View Mode Toggle */}
-      <div className="px-4 py-2 border-b flex justify-end">
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-          <button
+      <Box
+        sx={{
+          px: 16,
+          py: 8,
+          borderBottom: 1,
+          borderColor: "#e5e7eb",
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            gap: 4,
+            bgcolor: "#f3f4f6",
+            borderRadius: 8,
+            p: 4,
+          }}
+        >
+          <IconButton
             onClick={() => setViewMode("grid")}
-            className={`p-1.5 rounded ${viewMode === "grid" ? "bg-white shadow" : ""}`}
+            sx={{
+              borderRadius: 4,
+              bgcolor: viewMode === "grid" ? "white" : "transparent",
+              boxShadow: viewMode === "grid" ? 1 : 0,
+              "&:hover": { bgcolor: viewMode === "grid" ? "white" : "#e5e7eb" },
+            }}
           >
-            <Grid className="w-4 h-4 text-gray-600" />
-          </button>
-          <button
+            <Grid size={16} style={{ color: "#4b5563" }} />
+          </IconButton>
+          <IconButton
             onClick={() => setViewMode("list")}
-            className={`p-1.5 rounded ${viewMode === "list" ? "bg-white shadow" : ""}`}
+            sx={{
+              borderRadius: 4,
+              bgcolor: viewMode === "list" ? "white" : "transparent",
+              boxShadow: viewMode === "list" ? 1 : 0,
+              "&:hover": { bgcolor: viewMode === "list" ? "white" : "#e5e7eb" },
+            }}
           >
-            <List className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-      </div>
+            <List size={16} style={{ color: "#4b5563" }} />
+          </IconButton>
+        </Box>
+      </Box>
 
       {/* Records List/Grid */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <Box sx={{ flex: 1, overflow: "auto", p: 16 }}>
         {filteredRecords.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <Tag className="w-12 h-12 mb-3 text-gray-300" />
-            <p className="text-sm">暂无取证记录</p>
-          </div>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              color: "#6b7280",
+            }}
+          >
+            <Tag size={48} style={{ color: "#d1d5db", marginBottom: 12 }} />
+            <Typography sx={{ fontSize: "0.875rem" }}>暂无取证记录</Typography>
+          </Box>
         ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-2 gap-3">
+          <MuiGrid container spacing={12}>
             {filteredRecords.map((record) => (
-              <div
-                key={record.id}
-                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-              >
-                {record.thumbnail_url ? (
-                  <img
-                    src={record.thumbnail_url}
-                    alt={record.title}
-                    className="w-full h-24 object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
-                    {record.evidence_type === "photo" && (
-                      <Camera className="w-8 h-8 text-gray-400" />
-                    )}
-                    {record.evidence_type === "audio" && (
-                      <Mic className="w-8 h-8 text-gray-400" />
-                    )}
-                    {record.evidence_type === "video" && (
-                      <Video className="w-8 h-8 text-gray-400" />
-                    )}
-                  </div>
-                )}
-                <div className="p-2">
-                  <div className="text-xs font-medium text-gray-900 truncate">
-                    {record.title}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {record.evidence_type === "photo"
-                      ? "照片"
-                      : record.evidence_type === "audio"
-                        ? "录音"
-                        : "录像"}
-                    {record.duration && ` · ${formatDuration(record.duration)}`}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {filteredRecords.map((record) => (
-              <div
-                key={record.id}
-                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-              >
-                {record.thumbnail_url ? (
-                  <img
-                    src={record.thumbnail_url}
-                    alt={record.title}
-                    className="w-12 h-12 object-cover rounded"
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                    {record.evidence_type === "photo" && (
-                      <Camera className="w-5 h-5 text-gray-400" />
-                    )}
-                    {record.evidence_type === "audio" && (
-                      <Mic className="w-5 h-5 text-gray-400" />
-                    )}
-                    {record.evidence_type === "video" && (
-                      <Video className="w-5 h-5 text-gray-400" />
-                    )}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">
-                    {record.title}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date(record.recorded_at).toLocaleString()}
-                  </div>
-                </div>
-                <div className="text-right text-xs text-gray-500">
-                  <div>{formatFileSize(record.file_size)}</div>
-                  {record.duration && (
-                    <div>{formatDuration(record.duration)}</div>
+              <MuiGrid key={record.id} size={6}>
+                <Paper
+                  sx={{
+                    border: 1,
+                    borderColor: "#e5e7eb",
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    "&:hover": { boxShadow: 2 },
+                  }}
+                >
+                  {record.thumbnail_url ? (
+                    <Box
+                      component="img"
+                      src={record.thumbnail_url}
+                      alt={record.title}
+                      sx={{ width: "100%", height: 96, objectFit: "cover" }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: 96,
+                        bgcolor: "#f3f4f6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {record.evidence_type === "photo" && (
+                        <Camera size={32} style={{ color: "#9ca3af" }} />
+                      )}
+                      {record.evidence_type === "audio" && (
+                        <Mic size={32} style={{ color: "#9ca3af" }} />
+                      )}
+                      {record.evidence_type === "video" && (
+                        <Video size={32} style={{ color: "#9ca3af" }} />
+                      )}
+                    </Box>
                   )}
-                </div>
-              </div>
+                  <Box sx={{ p: 8 }}>
+                    <Typography
+                      sx={{
+                        fontSize: "0.75rem",
+                        fontWeight: 500,
+                        color: "#111827",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {record.title}
+                    </Typography>
+                    <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                      {record.evidence_type === "photo"
+                        ? "照片"
+                        : record.evidence_type === "audio"
+                          ? "录音"
+                          : "录像"}
+                      {record.duration &&
+                        ` · ${formatDuration(record.duration)}`}
+                    </Typography>
+                  </Box>
+                </Paper>
+              </MuiGrid>
             ))}
-          </div>
+          </MuiGrid>
+        ) : (
+          <Stack spacing={8}>
+            {filteredRecords.map((record) => (
+              <Paper
+                key={record.id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  p: 12,
+                  border: 1,
+                  borderColor: "#e5e7eb",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  "&:hover": { bgcolor: "#f9fafb" },
+                }}
+              >
+                {record.thumbnail_url ? (
+                  <Box
+                    component="img"
+                    src={record.thumbnail_url}
+                    alt={record.title}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      objectFit: "cover",
+                      borderRadius: 4,
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: "#f3f4f6",
+                      borderRadius: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {record.evidence_type === "photo" && (
+                      <Camera size={20} style={{ color: "#9ca3af" }} />
+                    )}
+                    {record.evidence_type === "audio" && (
+                      <Mic size={20} style={{ color: "#9ca3af" }} />
+                    )}
+                    {record.evidence_type === "video" && (
+                      <Video size={20} style={{ color: "#9ca3af" }} />
+                    )}
+                  </Box>
+                )}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      color: "#111827",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {record.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                    {new Date(record.recorded_at).toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    textAlign: "right",
+                    fontSize: "0.75rem",
+                    color: "#6b7280",
+                  }}
+                >
+                  <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                    {formatFileSize(record.file_size)}
+                  </Typography>
+                  {record.duration && (
+                    <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                      {formatDuration(record.duration)}
+                    </Typography>
+                  )}
+                </Box>
+              </Paper>
+            ))}
+          </Stack>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

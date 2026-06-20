@@ -1,46 +1,34 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
-  Container,
-  Typography,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  IconButton,
   Button,
-  TextField,
-  InputAdornment,
-  Stack,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
+  TextField,
+  Stack,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import { FileUpload } from "@/components/common";
 import {
   Plus,
-  Search,
   Play,
   FileText,
   Edit,
-  Trash2,
   ClipboardList,
-  Filter,
   CheckCircle,
   XCircle,
   Clock,
 } from "lucide-react";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
 
 interface TestCase {
   id: string;
@@ -52,100 +40,98 @@ interface TestCase {
   related_requirement: string;
 }
 
+const mockTestCases: TestCase[] = [
+  {
+    id: "1",
+    case_no: "TC-001",
+    case_name: "用户登录功能测试",
+    case_type: "功能测试",
+    priority: "high",
+    status: "passed",
+    related_requirement: "REQ-001",
+  },
+  {
+    id: "2",
+    case_no: "TC-002",
+    case_name: "用户注册流程测试",
+    case_type: "功能测试",
+    priority: "high",
+    status: "passed",
+    related_requirement: "REQ-002",
+  },
+  {
+    id: "3",
+    case_no: "TC-003",
+    case_name: "数据导出性能测试",
+    case_type: "性能测试",
+    priority: "medium",
+    status: "failed",
+    related_requirement: "REQ-003",
+  },
+  {
+    id: "4",
+    case_no: "TC-004",
+    case_name: "界面兼容性测试",
+    case_type: "UI测试",
+    priority: "medium",
+    status: "pending",
+    related_requirement: "REQ-004",
+  },
+  {
+    id: "5",
+    case_no: "TC-005",
+    case_name: "压力测试",
+    case_type: "压力测试",
+    priority: "low",
+    status: "pending",
+    related_requirement: "REQ-005",
+  },
+];
+
 const RsTestPage: React.FC = () => {
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [testCases, setTestCases] = useState<TestCase[]>(mockTestCases);
   const [searchTerm, setSearchTerm] = useState("");
-  const [caseTypeFilter, setCaseTypeFilter] = useState<string | null>(null);
-  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [caseTypeFilter, setCaseTypeFilter] = useState<string>("");
+  const [priorityFilter, setPriorityFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [newCaseDialogOpen, setNewCaseDialogOpen] = useState(false);
-  const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [newCaseForm, setNewCaseForm] = useState({
     case_name: "",
     case_type: "功能测试",
     priority: "medium",
     related_requirement: "",
   });
-  const [testReportAttachments, setTestReportAttachments] = useState<string[]>([]);
+  const [testReportAttachments, setTestReportAttachments] = useState<string[]>(
+    [],
+  );
 
-  useEffect(() => {
-    const mockTestCases: TestCase[] = [
-      {
-        id: "1",
-        case_no: "TC-001",
-        case_name: "用户登录功能测试",
-        case_type: "功能测试",
-        priority: "high",
-        status: "passed",
-        related_requirement: "REQ-001",
-      },
-      {
-        id: "2",
-        case_no: "TC-002",
-        case_name: "用户注册流程测试",
-        case_type: "功能测试",
-        priority: "high",
-        status: "passed",
-        related_requirement: "REQ-002",
-      },
-      {
-        id: "3",
-        case_no: "TC-003",
-        case_name: "数据导出性能测试",
-        case_type: "性能测试",
-        priority: "medium",
-        status: "failed",
-        related_requirement: "REQ-003",
-      },
-      {
-        id: "4",
-        case_no: "TC-004",
-        case_name: "接口并发测试",
-        case_type: "压力测试",
-        priority: "medium",
-        status: "pending",
-        related_requirement: "REQ-004",
-      },
-      {
-        id: "5",
-        case_no: "TC-005",
-        case_name: "UI兼容性测试",
-        case_type: "UI测试",
-        priority: "low",
-        status: "passed",
-        related_requirement: "REQ-005",
-      },
-      {
-        id: "6",
-        case_no: "TC-006",
-        case_name: "安全性测试-SQL注入",
-        case_type: "安全测试",
-        priority: "high",
-        status: "passed",
-        related_requirement: "REQ-006",
-      },
-    ];
-    setTestCases(mockTestCases);
-    setLoading(false);
-  }, []);
+  const filteredTestCases = testCases.filter((tc) => {
+    const matchesSearch =
+      tc.case_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tc.case_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tc.related_requirement.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = !caseTypeFilter || tc.case_type === caseTypeFilter;
+    const matchesPriority = !priorityFilter || tc.priority === priorityFilter;
+    const matchesStatus = !statusFilter || tc.status === statusFilter;
+    return matchesSearch && matchesType && matchesPriority && matchesStatus;
+  });
 
-  const getPriorityColor = (
-    priority: string,
-  ): "error" | "warning" | "default" => {
-    switch (priority) {
-      case "high":
-        return "error";
-      case "medium":
-        return "warning";
-      case "low":
-        return "default";
-      default:
-        return "default";
-    }
+  const uniqueCaseTypes = useMemo(
+    () => [...new Set(testCases.map((tc) => tc.case_type))],
+    [testCases],
+  );
+
+  const getCaseTypeLabel = (type: string): string => {
+    const types: Record<string, string> = {
+      功能测试: "功能测试",
+      性能测试: "性能测试",
+      压力测试: "压力测试",
+      UI测试: "UI测试",
+      安全测试: "安全测试",
+    };
+    return types[type] || type;
   };
 
   const getPriorityLabel = (priority: string): string => {
@@ -161,16 +147,16 @@ const RsTestPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (
-    status: string,
-  ): "success" | "error" | "warning" | "default" => {
-    switch (status) {
-      case "passed":
-        return "success";
-      case "failed":
+  const getPriorityColor = (
+    priority: string,
+  ): "error" | "warning" | "default" => {
+    switch (priority) {
+      case "high":
         return "error";
-      case "pending":
+      case "medium":
         return "warning";
+      case "low":
+        return "default";
       default:
         return "default";
     }
@@ -189,39 +175,30 @@ const RsTestPage: React.FC = () => {
     }
   };
 
-  const getCaseTypeLabel = (type: string): string => {
-    const types: Record<string, string> = {
-      功能测试: "功能测试",
-      性能测试: "性能测试",
-      压力测试: "压力测试",
-      UI测试: "UI测试",
-      安全测试: "安全测试",
-    };
-    return types[type] || type;
+  const getStatusColor = (status: string): "success" | "error" | "warning" => {
+    switch (status) {
+      case "passed":
+        return "success";
+      case "failed":
+        return "error";
+      case "pending":
+        return "warning";
+      default:
+        return "warning";
+    }
   };
 
-  const filteredTestCases = testCases.filter((tc) => {
-    const matchesSearch =
-      tc.case_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tc.case_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tc.related_requirement.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !caseTypeFilter || tc.case_type === caseTypeFilter;
-    const matchesPriority = !priorityFilter || tc.priority === priorityFilter;
-    const matchesStatus = !statusFilter || tc.status === statusFilter;
-    return matchesSearch && matchesType && matchesPriority && matchesStatus;
-  });
-
-  const uniqueCaseTypes = [...new Set(testCases.map((tc) => tc.case_type))];
-
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
+  const handleViewDetail = (tc: TestCase) => {
+    setSelectedCase(tc);
+    setDetailDialogOpen(true);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleExecuteTest = (tc: TestCase) => {
+    setTestCases(
+      testCases.map((item) =>
+        item.id === tc.id ? { ...item, status: "passed" } : item,
+      ),
+    );
   };
 
   const handleCreateCase = () => {
@@ -244,232 +221,173 @@ const RsTestPage: React.FC = () => {
     });
   };
 
-  const handleViewDetail = (tc: TestCase) => {
-    setSelectedCase(tc);
-    setDetailDialogOpen(true);
-  };
+  const columns = useMemo<ColumnDef<TestCase>[]>(
+    () => [
+      {
+        id: "case_no",
+        label: "用例编号",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ClipboardList size={16} color="#3b82f6" />
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {row.case_no}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "case_name",
+        label: "用例名称",
+        render: (row) => row.case_name,
+      },
+      {
+        id: "case_type",
+        label: "用例类型",
+        render: (row) => (
+          <Chip
+            label={getCaseTypeLabel(row.case_type)}
+            size="small"
+            variant="outlined"
+          />
+        ),
+      },
+      {
+        id: "priority",
+        label: "优先级",
+        render: (row) => (
+          <Chip
+            label={getPriorityLabel(row.priority)}
+            size="small"
+            color={getPriorityColor(row.priority)}
+          />
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            {row.status === "passed" ? (
+              <CheckCircle size={14} color="green" />
+            ) : row.status === "failed" ? (
+              <XCircle size={14} color="red" />
+            ) : (
+              <Clock size={14} color="orange" />
+            )}
+            <Chip
+              label={getStatusLabel(row.status)}
+              size="small"
+              color={getStatusColor(row.status)}
+            />
+          </Box>
+        ),
+      },
+      {
+        id: "related_requirement",
+        label: "关联需求",
+        render: (row) => row.related_requirement,
+      },
+    ],
+    [],
+  );
 
-  const handleExecuteTest = (tcId: string) => {
-    setTestCases(
-      testCases.map((tc) =>
-        tc.id === tcId ? { ...tc, status: "passed" } : tc,
-      ),
-    );
-  };
+  const rowActions = useMemo<RowAction<TestCase>[]>(
+    () => [
+      {
+        label: "详情",
+        icon: <FileText size={16} />,
+        onClick: (row) => handleViewDetail(row),
+      },
+      {
+        label: "执行",
+        icon: <Play size={16} />,
+        color: "success",
+        onClick: (row) => handleExecuteTest(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: () => {},
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "case_type",
+        label: "用例类型",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          ...uniqueCaseTypes.map((type) => ({
+            value: type,
+            label: getCaseTypeLabel(type),
+          })),
+        ],
+        value: caseTypeFilter,
+        onChange: (value) => setCaseTypeFilter(value as string),
+      },
+      {
+        id: "priority",
+        label: "优先级",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "high", label: "高" },
+          { value: "medium", label: "中" },
+          { value: "low", label: "低" },
+        ],
+        value: priorityFilter,
+        onChange: (value) => setPriorityFilter(value as string),
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "passed", label: "已通过" },
+          { value: "failed", label: "未通过" },
+          { value: "pending", label: "待执行" },
+        ],
+        value: statusFilter,
+        onChange: (value) => setStatusFilter(value as string),
+      },
+    ],
+    [caseTypeFilter, priorityFilter, statusFilter, uniqueCaseTypes],
+  );
 
   return (
-    <Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
-      <Container maxWidth="xl">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
-            测试管理
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Plus size={18} />}
-            sx={{ bgcolor: "#3b82f6" }}
-            onClick={() => {
+    <>
+      <ListPageTemplate<TestCase>
+        title="测试管理"
+        subtitle="管理测试用例和测试计划"
+        backButton={{
+          href: "/dashboard",
+        }}
+        columns={columns}
+        data={filteredTestCases}
+        searchable
+        searchPlaceholder="搜索用例编号、名称..."
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "新建用例",
+            icon: <Plus size={18} />,
+            onClick: () => {
               setTestReportAttachments([]);
               setNewCaseDialogOpen(true);
-            }}
-          >
-            新建用例
-          </Button>
-        </Box>
-
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
-          >
-            <TextField
-              size="small"
-              placeholder="搜索用例编号、名称..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 250 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>用例类型</InputLabel>
-              <Select
-                value={caseTypeFilter || ""}
-                label="用例类型"
-                onChange={(e) => setCaseTypeFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                {uniqueCaseTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {getCaseTypeLabel(type)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>优先级</InputLabel>
-              <Select
-                value={priorityFilter || ""}
-                label="优先级"
-                onChange={(e) => setPriorityFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="high">高</MenuItem>
-                <MenuItem value="medium">中</MenuItem>
-                <MenuItem value="low">低</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={statusFilter || ""}
-                label="状态"
-                onChange={(e) => setStatusFilter(e.target.value || null)}
-              >
-                <MenuItem value="">全部</MenuItem>
-                <MenuItem value="passed">已通过</MenuItem>
-                <MenuItem value="failed">未通过</MenuItem>
-                <MenuItem value="pending">待执行</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Paper>
-
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#3b82f6" }}>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    用例编号
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    用例名称
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    用例类型
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    优先级
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    状态
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    关联需求
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                    操作
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredTestCases
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((tc) => (
-                    <TableRow key={tc.id} hover>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <ClipboardList size={16} color="#3b82f6" />
-                          {tc.case_no}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{tc.case_name}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getCaseTypeLabel(tc.case_type)}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getPriorityLabel(tc.priority)}
-                          size="small"
-                          color={getPriorityColor(tc.priority)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          {tc.status === "passed" ? (
-                            <CheckCircle size={14} color="green" />
-                          ) : tc.status === "failed" ? (
-                            <XCircle size={14} color="red" />
-                          ) : (
-                            <Clock size={14} color="orange" />
-                          )}
-                          <Chip
-                            label={getStatusLabel(tc.status)}
-                            size="small"
-                            color={getStatusColor(tc.status)}
-                          />
-                        </Box>
-                      </TableCell>
-                      <TableCell>{tc.related_requirement}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="查看详情">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewDetail(tc)}
-                            >
-                              <FileText size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="执行测试">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleExecuteTest(tc.id)}
-                            >
-                              <Play size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="编辑">
-                            <IconButton size="small">
-                              <Edit size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50]}
-            component="div"
-            count={filteredTestCases.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-      </Container>
+            },
+            variant: "contained",
+          },
+        ]}
+      />
 
       <Dialog
         open={newCaseDialogOpen}
@@ -530,13 +448,25 @@ const RsTestPage: React.FC = () => {
               }
             />
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                sx={{ mb: 1 }}
+              >
                 测试报告附件
               </Typography>
               <FileUpload
                 value={testReportAttachments}
                 onChange={setTestReportAttachments}
-                accept={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png']}
+                accept={[
+                  ".pdf",
+                  ".doc",
+                  ".docx",
+                  ".xls",
+                  ".xlsx",
+                  ".jpg",
+                  ".png",
+                ]}
                 maxCount={5}
                 maxSize={20}
                 maxTotalSize={100}
@@ -567,7 +497,7 @@ const RsTestPage: React.FC = () => {
         <DialogContent>
           {selectedCase && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {selectedCase.case_no} - {selectedCase.case_name}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
@@ -592,11 +522,6 @@ const RsTestPage: React.FC = () => {
                   关联需求: {selectedCase.related_requirement}
                 </Typography>
               </Box>
-              <Paper sx={{ p: 2, mt: 2, bgcolor: "#f5f5f5" }}>
-                <Typography variant="body2">
-                  测试步骤和预期结果区域 - 待实现
-                </Typography>
-              </Paper>
             </Box>
           )}
         </DialogContent>
@@ -604,7 +529,7 @@ const RsTestPage: React.FC = () => {
           <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

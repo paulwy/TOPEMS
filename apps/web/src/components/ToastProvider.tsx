@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { Box, Typography, IconButton, Paper } from "@mui/material";
 
 interface Toast {
   id: string;
@@ -62,27 +63,61 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
 }) => {
   if (toasts.length === 0) return null;
 
+  const getToastColor = (type: Toast["type"]) => {
+    switch (type) {
+      case "success":
+        return "#22c55e";
+      case "error":
+        return "#ef4444";
+      case "warning":
+        return "#f59e0b";
+      case "info":
+        return "#3b82f6";
+      default:
+        return "#3b82f6";
+    }
+  };
+
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <Box
+      sx={{
+        position: "fixed",
+        top: 16,
+        right: 16,
+        zIndex: 50,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
       {toasts.map((toast) => (
-        <div
+        <Paper
           key={toast.id}
-          className={`px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-in ${
-            toast.type === "success"
-              ? "bg-green-500 text-white"
-              : toast.type === "error"
-                ? "bg-red-500 text-white"
-                : toast.type === "warning"
-                  ? "bg-yellow-500 text-white"
-                  : "bg-blue-500 text-white"
-          }`}
+          sx={{
+            px: 6,
+            py: 3,
+            borderRadius: 2,
+            boxShadow: 3,
+            display: "flex",
+            alignItems: "center",
+            gap: 3,
+            backgroundColor: getToastColor(toast.type),
+            color: "white",
+            cursor: "pointer",
+            animation: "slide-in 0.3s ease-out",
+          }}
           onClick={() => onRemove(toast.id)}
         >
-          <span className="flex-1">{toast.message}</span>
-          <button className="text-white hover:text-gray-200">×</button>
-        </div>
+          <Typography sx={{ flex: 1 }}>{toast.message}</Typography>
+          <IconButton
+            size="small"
+            sx={{ color: "white", "&:hover": { color: "#e5e7eb" } }}
+          >
+            ×
+          </IconButton>
+        </Paper>
       ))}
-    </div>
+    </Box>
   );
 };
 

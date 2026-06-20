@@ -19,8 +19,26 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import {
+  Box,
+  Button,
+  Typography,
+  Paper,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  IconButton,
+  Slider,
+  Chip,
+  Stack,
+  Grid,
+  Divider,
+} from "@mui/material";
 import type { DevicePoint, DeviceLocationRecord } from "../../api/gis";
 import { gisApi } from "../../api/gis";
+import { logger } from "@/utils/logger";
 import "leaflet/dist/leaflet.css";
 
 interface DeviceTrackPanelProps {
@@ -67,6 +85,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
     if (selectedDevice) {
       fetchTrackData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDevice, timeRange]);
 
   useEffect(() => {
@@ -112,7 +131,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
         }
       }
     } catch (error) {
-      console.error("Failed to fetch track data:", error);
+      logger.error("Failed to fetch track data:", error);
     } finally {
       setLoading(false);
     }
@@ -156,363 +175,590 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({
     const currentPoint = trackData[currentIndex];
 
     return (
-      <div className="w-full h-full flex flex-col">
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-          <h3 className="font-semibold flex items-center gap-2">
-            <Navigation className="w-5 h-5" />
+      <Box
+        sx={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 4,
+            py: 3,
+            background: "linear-gradient(to right, #9333ea, #2563eb)",
+            color: "white",
+          }}
+        >
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Navigation size={20} />
             设备轨迹追踪
-          </h3>
-          <button
+          </Typography>
+          <IconButton
             onClick={onClose}
-            className="p-1 hover:bg-white/20 rounded transition-colors"
+            sx={{
+              p: 1,
+              color: "white",
+              "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+            }}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            <X size={20} />
+          </IconButton>
+        </Box>
 
-        <div className="p-4 space-y-4 overflow-y-auto flex-1">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-sm text-gray-500 mb-1">
-                选择设备
-              </label>
-              <select
-                value={selectedDevice}
-                onChange={(e) => setSelectedDevice(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">请选择设备</option>
-                {deviceWithTracks.map((device) => (
-                  <option key={device.id} value={device.id}>
-                    {device.name} ({device.device_type})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-32">
-              <label className="block text-sm text-gray-500 mb-1">
-                开始时间
-              </label>
-              <input
-                type="datetime-local"
-                value={timeRange.start}
-                onChange={(e) =>
-                  setTimeRange((prev) => ({ ...prev, start: e.target.value }))
-                }
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg"
-              />
-            </div>
-            <div className="w-32">
-              <label className="block text-sm text-gray-500 mb-1">
-                结束时间
-              </label>
-              <input
-                type="datetime-local"
-                value={timeRange.end}
-                onChange={(e) =>
-                  setTimeRange((prev) => ({ ...prev, end: e.target.value }))
-                }
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg"
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={() => setTimeRange({ start: "", end: "" })}
-            className="text-xs text-blue-600 hover:text-blue-800"
-          >
-            清除时间筛选
-          </button>
-
-          <button
-            onClick={fetchTrackData}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            刷新数据
-          </button>
-
-          <button
-            onClick={togglePlayback}
-            disabled={trackData.length === 0}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isPlaying
-                ? "bg-orange-500 hover:bg-orange-600 text-white"
-                : "bg-green-500 hover:bg-green-600 text-white"
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {isPlaying ? (
-              <Pause className="w-4 h-4" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-            {isPlaying ? "暂停" : "播放轨迹"}
-          </button>
-
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              轨迹点: <span className="font-medium">{currentIndex + 1}</span> /{" "}
-              {trackData.length}
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={trackData.length - 1}
-              value={currentIndex}
-              onChange={(e) => setCurrentIndex(parseInt(e.target.value))}
-              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              disabled={isPlaying}
-            />
-          </div>
-
-          <button
-            onClick={() => setShowStatistics(!showStatistics)}
-            className="w-full flex items-center justify-between px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg"
-          >
-            <span className="text-sm font-medium text-gray-700">轨迹统计</span>
-            {showStatistics ? (
-              <ChevronUp className="w-4 h-4 text-gray-500" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
-            )}
-          </button>
-
-          {showStatistics && statistics && (
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-blue-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-blue-600 mb-1">
-                  <Navigation className="w-4 h-4" />
-                  <span className="text-xs">总距离</span>
-                </div>
-                <div className="text-lg font-semibold text-blue-800">
-                  {formatDistance(statistics.total_distance)}
-                </div>
-              </div>
-              <div className="bg-green-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-green-600 mb-1">
-                  <Gauge className="w-4 h-4" />
-                  <span className="text-xs">平均速度</span>
-                </div>
-                <div className="text-lg font-semibold text-green-800">
-                  {formatSpeed(statistics.avg_speed)}
-                </div>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-orange-600 mb-1">
-                  <Activity className="w-4 h-4" />
-                  <span className="text-xs">最大速度</span>
-                </div>
-                <div className="text-lg font-semibold text-orange-800">
-                  {formatSpeed(statistics.max_speed)}
-                </div>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-purple-600 mb-1">
-                  <Activity className="w-4 h-4" />
-                  <span className="text-xs">轨迹点数</span>
-                </div>
-                <div className="text-lg font-semibold text-purple-800">
-                  {statistics.track_points}
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-xs">开始时间</span>
-                </div>
-                <div className="text-sm font-semibold text-gray-800">
-                  {formatTime(statistics.start_time)}
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-gray-600 mb-1">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-xs">结束时间</span>
-                </div>
-                <div className="text-sm font-semibold text-gray-800">
-                  {formatTime(statistics.end_time)}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">
-              当前位置详情
-            </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-500">时间:</span>
-                <span className="ml-2 text-gray-700">
-                  {formatTime(currentPoint.timestamp)}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500">坐标:</span>
-                <span className="ml-2 text-gray-700 font-mono text-xs">
-                  {currentPoint.latitude.toFixed(6)},{" "}
-                  {currentPoint.longitude.toFixed(6)}
-                </span>
-              </div>
-              {currentPoint.accuracy !== undefined && (
-                <div>
-                  <span className="text-gray-500">精度:</span>
-                  <span className="ml-2 text-gray-700">
-                    {currentPoint.accuracy} m
-                  </span>
-                </div>
-              )}
-              {currentPoint.speed !== undefined && (
-                <div>
-                  <span className="text-gray-500">速度:</span>
-                  <span className="ml-2 text-gray-700">
-                    {formatSpeed(currentPoint.speed)}
-                  </span>
-                </div>
-              )}
-              {currentPoint.heading !== undefined && (
-                <div>
-                  <span className="text-gray-500">方向:</span>
-                  <span className="ml-2 text-gray-700">
-                    {currentPoint.heading}°
-                  </span>
-                </div>
-              )}
-              {currentPoint.battery_level !== undefined && (
-                <div>
-                  <span className="text-gray-500">电量:</span>
-                  <span className="ml-2 text-gray-700">
-                    <Battery
-                      className={`w-4 h-4 inline ${
-                        currentPoint.battery_level > 50
-                          ? "text-green-500"
-                          : currentPoint.battery_level > 20
-                            ? "text-yellow-500"
-                            : "text-red-500"
-                      }`}
-                    />
-                    {currentPoint.battery_level}%
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="h-64 rounded-lg overflow-hidden border border-gray-200">
-            <MapContainer
-              center={[currentPoint.latitude, currentPoint.longitude]}
-              zoom={16}
-              style={{ height: "100%", width: "100%" }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Polyline
-                positions={trackCoords.slice(0, currentIndex + 1)}
-                color="#3B82F6"
-                weight={3}
-                opacity={0.8}
-              />
-              <Polyline
-                positions={trackCoords.slice(currentIndex + 1)}
-                color="#94A3B8"
-                weight={2}
-                opacity={0.4}
-                dashArray="5,5"
-              />
-              {trackCoords.length > 1 && (
-                <Marker
-                  position={trackCoords[0]}
-                  icon={
-                    new (window as any).L.Icon({
-                      iconUrl:
-                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2322C55E'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
-                      iconSize: [24, 24],
-                      iconAnchor: [12, 24],
-                    })
+        <Box sx={{ p: 4, overflowY: "auto", flex: 1 }}>
+          <Stack spacing={4}>
+            <Grid container spacing={4}>
+              <Grid size="grow">
+                <FormControl fullWidth size="small">
+                  <InputLabel>选择设备</InputLabel>
+                  <Select
+                    value={selectedDevice}
+                    onChange={(e) => setSelectedDevice(e.target.value)}
+                    label="选择设备"
+                  >
+                    <MenuItem value="">请选择设备</MenuItem>
+                    {deviceWithTracks.map((device) => (
+                      <MenuItem key={device.id} value={device.id}>
+                        {device.name} ({device.device_type})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={3}>
+                <TextField
+                  type="datetime-local"
+                  label="开始时间"
+                  value={timeRange.start}
+                  onChange={(e) =>
+                    setTimeRange((prev) => ({ ...prev, start: e.target.value }))
                   }
-                >
-                  <Popup>起点</Popup>
-                </Marker>
-              )}
-              <Marker
-                position={[currentPoint.latitude, currentPoint.longitude]}
-                icon={
-                  new (window as any).L.Icon({
-                    iconUrl:
-                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23EF4444'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 32],
-                  })
-                }
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+              <Grid size={3}>
+                <TextField
+                  type="datetime-local"
+                  label="结束时间"
+                  value={timeRange.end}
+                  onChange={(e) =>
+                    setTimeRange((prev) => ({ ...prev, end: e.target.value }))
+                  }
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
+
+            <Button
+              onClick={() => setTimeRange({ start: "", end: "" })}
+              sx={{
+                fontSize: "0.75rem",
+                color: "#2563eb",
+                textTransform: "none",
+              }}
+            >
+              清除时间筛选
+            </Button>
+
+            <Button
+              onClick={fetchTrackData}
+              disabled={loading}
+              startIcon={
+                <RefreshCw
+                  size={16}
+                  className={loading ? "animate-spin" : ""}
+                />
+              }
+              sx={{
+                bgcolor: "#f1f5f9",
+                "&:hover": { bgcolor: "#e2e8f0" },
+                textTransform: "none",
+                color: "#374151",
+              }}
+            >
+              刷新数据
+            </Button>
+
+            <Button
+              onClick={togglePlayback}
+              disabled={trackData.length === 0}
+              startIcon={isPlaying ? <Pause size={16} /> : <Play size={16} />}
+              sx={{
+                bgcolor: isPlaying ? "#f97316" : "#22c55e",
+                color: "white",
+                "&:hover": { bgcolor: isPlaying ? "#ea580c" : "#16a34a" },
+                "&:disabled": { opacity: 0.5 },
+                textTransform: "none",
+              }}
+            >
+              {isPlaying ? "暂停" : "播放轨迹"}
+            </Button>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <Typography variant="body2" sx={{ color: "#4b5563" }}>
+                轨迹点:{" "}
+                <Box component="span" sx={{ fontWeight: 500 }}>
+                  {currentIndex + 1}
+                </Box>{" "}
+                / {trackData.length}
+              </Typography>
+              <Slider
+                min={0}
+                max={trackData.length - 1}
+                value={currentIndex}
+                onChange={(e, value) => setCurrentIndex(value as number)}
+                disabled={isPlaying}
+                sx={{ flex: 1 }}
+              />
+            </Box>
+
+            <Button
+              onClick={() => setShowStatistics(!showStatistics)}
+              endIcon={
+                showStatistics ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )
+              }
+              sx={{
+                width: "100%",
+                bgcolor: "#f9fafb",
+                "&:hover": { bgcolor: "#f3f4f6" },
+                textTransform: "none",
+                py: 2,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "#374151" }}
               >
-                <Popup>
-                  <div className="text-sm">
-                    <div className="font-medium">当前位置</div>
-                    <div>{formatTime(currentPoint.timestamp)}</div>
-                  </div>
-                </Popup>
-              </Marker>
-              {trackCoords.length > 1 &&
-                trackCoords[trackCoords.length - 1] !==
-                  trackCoords[currentIndex] && (
+                轨迹统计
+              </Typography>
+            </Button>
+
+            {showStatistics && statistics && (
+              <Grid container spacing={3}>
+                <Grid size={4}>
+                  <Paper sx={{ bgcolor: "#eff6ff", borderRadius: 2, p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        color: "#2563eb",
+                        mb: 1,
+                      }}
+                    >
+                      <Navigation size={16} />
+                      <Typography variant="caption">总距离</Typography>
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, color: "#1e3a8a" }}
+                    >
+                      {formatDistance(statistics.total_distance)}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={4}>
+                  <Paper sx={{ bgcolor: "#f0fdf4", borderRadius: 2, p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        color: "#16a34a",
+                        mb: 1,
+                      }}
+                    >
+                      <Gauge size={16} />
+                      <Typography variant="caption">平均速度</Typography>
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, color: "#166534" }}
+                    >
+                      {formatSpeed(statistics.avg_speed)}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={4}>
+                  <Paper sx={{ bgcolor: "#fff7ed", borderRadius: 2, p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        color: "#ea580c",
+                        mb: 1,
+                      }}
+                    >
+                      <Activity size={16} />
+                      <Typography variant="caption">最大速度</Typography>
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, color: "#9a3412" }}
+                    >
+                      {formatSpeed(statistics.max_speed)}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={4}>
+                  <Paper sx={{ bgcolor: "#faf5ff", borderRadius: 2, p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        color: "#9333ea",
+                        mb: 1,
+                      }}
+                    >
+                      <Activity size={16} />
+                      <Typography variant="caption">轨迹点数</Typography>
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, color: "#6b21a8" }}
+                    >
+                      {statistics.track_points}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={4}>
+                  <Paper sx={{ bgcolor: "#f9fafb", borderRadius: 2, p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        color: "#4b5563",
+                        mb: 1,
+                      }}
+                    >
+                      <Clock size={16} />
+                      <Typography variant="caption">开始时间</Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, color: "#1f2937" }}
+                    >
+                      {formatTime(statistics.start_time)}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid size={4}>
+                  <Paper sx={{ bgcolor: "#f9fafb", borderRadius: 2, p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        color: "#4b5563",
+                        mb: 1,
+                      }}
+                    >
+                      <Clock size={16} />
+                      <Typography variant="caption">结束时间</Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, color: "#1f2937" }}
+                    >
+                      {formatTime(statistics.end_time)}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+            )}
+
+            <Paper sx={{ bgcolor: "#f9fafb", borderRadius: 2, p: 4 }}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 500, color: "#374151", mb: 2 }}
+              >
+                当前位置详情
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid size={6}>
+                  <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                    时间:
+                  </Typography>
+                  <Typography variant="body2" sx={{ ml: 2, color: "#374151" }}>
+                    {formatTime(currentPoint.timestamp)}
+                  </Typography>
+                </Grid>
+                <Grid size={6}>
+                  <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                    坐标:
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      ml: 2,
+                      color: "#374151",
+                      fontFamily: "monospace",
+                      fontSize: "0.75rem",
+                    }}
+                  >
+                    {currentPoint.latitude.toFixed(6)},{" "}
+                    {currentPoint.longitude.toFixed(6)}
+                  </Typography>
+                </Grid>
+                {currentPoint.accuracy !== undefined && (
+                  <Grid size={6}>
+                    <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                      精度:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ ml: 2, color: "#374151" }}
+                    >
+                      {currentPoint.accuracy} m
+                    </Typography>
+                  </Grid>
+                )}
+                {currentPoint.speed !== undefined && (
+                  <Grid size={6}>
+                    <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                      速度:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ ml: 2, color: "#374151" }}
+                    >
+                      {formatSpeed(currentPoint.speed)}
+                    </Typography>
+                  </Grid>
+                )}
+                {currentPoint.heading !== undefined && (
+                  <Grid size={6}>
+                    <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                      方向:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ ml: 2, color: "#374151" }}
+                    >
+                      {currentPoint.heading}°
+                    </Typography>
+                  </Grid>
+                )}
+                {currentPoint.battery_level !== undefined && (
+                  <Grid size={6}>
+                    <Typography variant="body2" sx={{ color: "#6b7280" }}>
+                      电量:
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ ml: 2, color: "#374151" }}
+                    >
+                      <Battery
+                        size={16}
+                        style={{
+                          display: "inline",
+                          color:
+                            currentPoint.battery_level > 50
+                              ? "#22c55e"
+                              : currentPoint.battery_level > 20
+                                ? "#eab308"
+                                : "#ef4444",
+                        }}
+                      />
+                      {currentPoint.battery_level}%
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </Paper>
+
+            <Box
+              sx={{
+                height: 256,
+                borderRadius: 2,
+                overflow: "hidden",
+                border: 1,
+                borderColor: "#e5e7eb",
+              }}
+            >
+              <MapContainer
+                center={[currentPoint.latitude, currentPoint.longitude]}
+                zoom={16}
+                style={{ height: "100%", width: "100%" }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Polyline
+                  positions={trackCoords.slice(0, currentIndex + 1)}
+                  color="#3B82F6"
+                  weight={3}
+                  opacity={0.8}
+                />
+                <Polyline
+                  positions={trackCoords.slice(currentIndex + 1)}
+                  color="#94A3B8"
+                  weight={2}
+                  opacity={0.4}
+                  dashArray="5,5"
+                />
+                {trackCoords.length > 1 && (
                   <Marker
-                    position={trackCoords[trackCoords.length - 1]}
+                    position={trackCoords[0]}
                     icon={
                       new (window as any).L.Icon({
                         iconUrl:
-                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2322C55E'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
                         iconSize: [24, 24],
                         iconAnchor: [12, 24],
                       })
                     }
                   >
-                    <Popup>终点</Popup>
+                    <Popup>起点</Popup>
                   </Marker>
                 )}
-            </MapContainer>
-          </div>
-        </div>
-      </div>
+                <Marker
+                  position={[currentPoint.latitude, currentPoint.longitude]}
+                  icon={
+                    new (window as any).L.Icon({
+                      iconUrl:
+                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23EF4444'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
+                      iconSize: [32, 32],
+                      iconAnchor: [16, 32],
+                    })
+                  }
+                >
+                  <Popup>
+                    <Box sx={{ fontSize: "0.875rem" }}>
+                      <Typography sx={{ fontWeight: 500 }}>当前位置</Typography>
+                      <Typography>
+                        {formatTime(currentPoint.timestamp)}
+                      </Typography>
+                    </Box>
+                  </Popup>
+                </Marker>
+                {trackCoords.length > 1 &&
+                  trackCoords[trackCoords.length - 1] !==
+                    trackCoords[currentIndex] && (
+                    <Marker
+                      position={trackCoords[trackCoords.length - 1]}
+                      icon={
+                        new (window as any).L.Icon({
+                          iconUrl:
+                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
+                          iconSize: [24, 24],
+                          iconAnchor: [12, 24],
+                        })
+                      }
+                    >
+                      <Popup>终点</Popup>
+                    </Marker>
+                  )}
+              </MapContainer>
+            </Box>
+          </Stack>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Navigation className="w-5 h-5" />
-          设备轨迹追踪
-        </h3>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-white/20 rounded transition-colors"
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 4,
+          py: 3,
+          background: "linear-gradient(to right, #9333ea, #2563eb)",
+          color: "white",
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+          }}
         >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+          <Navigation size={20} />
+          设备轨迹追踪
+        </Typography>
+        <IconButton
+          onClick={onClose}
+          sx={{
+            p: 1,
+            color: "white",
+            "&:hover": { bgcolor: "rgba(255,255,255,0.2)" },
+          }}
+        >
+          <X size={20} />
+        </IconButton>
+      </Box>
 
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="text-center">
-          <Navigation className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">请选择一个设备查看轨迹</p>
-          <select
-            value={selectedDevice}
-            onChange={(e) => setSelectedDevice(e.target.value)}
-            className="mt-4 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">请选择设备</option>
-            {deviceWithTracks.map((device) => (
-              <option key={device.id} value={device.id}>
-                {device.name} ({device.device_type})
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </div>
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 4,
+        }}
+      >
+        <Box sx={{ textAlign: "center" }}>
+          <Navigation
+            size={48}
+            style={{ color: "#d1d5db", margin: "0 auto 12px" }}
+          />
+          <Typography sx={{ color: "#6b7280" }}>
+            请选择一个设备查看轨迹
+          </Typography>
+          <FormControl sx={{ mt: 4, minWidth: 200 }} size="small">
+            <InputLabel>请选择设备</InputLabel>
+            <Select
+              value={selectedDevice}
+              onChange={(e) => setSelectedDevice(e.target.value)}
+              label="请选择设备"
+            >
+              <MenuItem value="">请选择设备</MenuItem>
+              {deviceWithTracks.map((device) => (
+                <MenuItem key={device.id} value={device.id}>
+                  {device.name} ({device.device_type})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

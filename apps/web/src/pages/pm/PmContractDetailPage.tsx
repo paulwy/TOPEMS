@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import {
   ArrowLeft,
   Edit,
@@ -70,7 +71,7 @@ const PmContractDetailPage: React.FC = () => {
         setPayments(paymentsRes.data);
       }
     } catch (error) {
-      console.error("Failed to load contract data:", error);
+      logger.error("Failed to load contract data:", error);
     } finally {
       setLoading(false);
     }

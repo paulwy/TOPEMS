@@ -23,7 +23,12 @@ interface ModuleDashboardProps {
   moduleName: string;
   moduleCode: string;
   subtitle: string;
-  stats?: { label: string; value: string; icon: React.ReactNode; trend?: string }[];
+  stats?: {
+    label: string;
+    value: string;
+    icon: React.ReactNode;
+    trend?: string;
+  }[];
   quickActions?: { label: string; path: string; icon: React.ReactNode }[];
 }
 
@@ -59,30 +64,33 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
     );
   }
 
-  const defaultStats = stats.length > 0 ? stats : [
-    {
-      label: "总记录",
-      value: "1,234",
-      icon: <FileText size={24} />,
-      trend: "+12%",
-    },
-    {
-      label: "活跃用户",
-      value: "56",
-      icon: <Users size={24} />,
-    },
-    {
-      label: "待处理",
-      value: "23",
-      icon: <Clock size={24} />,
-    },
-    {
-      label: "增长率",
-      value: "18%",
-      icon: <TrendingUp size={24} />,
-      trend: "+5%",
-    },
-  ];
+  const defaultStats =
+    stats.length > 0
+      ? stats
+      : [
+          {
+            label: "总记录",
+            value: "1,234",
+            icon: <FileText size={24} />,
+            trend: "+12%",
+          },
+          {
+            label: "活跃用户",
+            value: "56",
+            icon: <Users size={24} />,
+          },
+          {
+            label: "待处理",
+            value: "23",
+            icon: <Clock size={24} />,
+          },
+          {
+            label: "增长率",
+            value: "18%",
+            icon: <TrendingUp size={24} />,
+            trend: "+5%",
+          },
+        ];
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -93,8 +101,14 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
 
   return (
     <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box sx={{ padding: "24px 32px", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
+      <Box
+        sx={{
+          padding: "24px 32px",
+          background: "white",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        }}
+      >
+        <Typography variant="h4" sx={{ color: "#1e293b", fontWeight: 600 }}>
           {moduleName}
         </Typography>
         <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
@@ -106,23 +120,54 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
         <Grid container spacing={3}>
           {defaultStats.map((stat, index) => (
             <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card sx={{ borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+              <Card
+                sx={{
+                  borderRadius: "12px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                }}
+              >
                 <CardContent sx={{ padding: "20px" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <Box>
-                      <Typography variant="body2" sx={{ color: "#64748b", mb: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "#64748b", mb: 1 }}
+                      >
                         {stat.label}
                       </Typography>
-                      <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
+                      <Typography
+                        variant="h4"
+                        sx={{ color: "#1e293b", fontWeight: 600 }}
+                      >
                         {stat.value}
                       </Typography>
                       {stat.trend && (
-                        <Typography variant="caption" sx={{ color: "#22c55e", mt: 1, display: "block" }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#22c55e", mt: 1, display: "block" }}
+                        >
                           {stat.trend}
                         </Typography>
                       )}
                     </Box>
-                    <Box sx={{ width: "48px", height: "48px", borderRadius: "12px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+                    <Box
+                      sx={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "12px",
+                        background: "#f1f5f9",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#64748b",
+                      }}
+                    >
                       {stat.icon}
                     </Box>
                   </Box>
@@ -134,7 +179,10 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
 
         {quickActions.length > 0 && (
           <Box sx={{ mt: 6 }}>
-            <Typography variant="h5" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
+            <Typography
+              variant="h5"
+              sx={{ mb: 3, color: "#1e293b", fontWeight: 600 }}
+            >
               快捷操作
             </Typography>
             <Grid container spacing={3}>
@@ -156,11 +204,25 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
                     }}
                     onClick={() => navigate(action.path)}
                   >
-                    <Box sx={{ width: "32px", height: "32px", borderRadius: "8px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+                    <Box
+                      sx={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "8px",
+                        background: "#f1f5f9",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#64748b",
+                      }}
+                    >
                       {action.icon}
                     </Box>
                     <Box sx={{ flex: 1, textAlign: "left" }}>
-                      <Typography variant="body1" sx={{  color: "#1e293b" , fontWeight: 500 }} >
+                      <Typography
+                        variant="body1"
+                        sx={{ color: "#1e293b", fontWeight: 500 }}
+                      >
                         {action.label}
                       </Typography>
                     </Box>
@@ -172,23 +234,66 @@ export const ModuleDashboardPage: React.FC<ModuleDashboardProps> = ({
           </Box>
         )}
 
-        <Box sx={{ mt: 6, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-          <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
+        <Box
+          sx={{
+            mt: 6,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "24px",
+          }}
+        >
+          <Paper
+            sx={{
+              padding: "24px",
+              borderRadius: "12px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ mb: 3, color: "#1e293b", fontWeight: 600 }}
+            >
               <BarChart3 size={20} sx={{ mr: 1 }} />
               数据概览
             </Typography>
-            <Box sx={{ height: "200px", background: "#f8fafc", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box
+              sx={{
+                height: "200px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Typography sx={{ color: "#94a3b8" }}>图表占位区域</Typography>
             </Box>
           </Paper>
 
-          <Paper sx={{ padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" sx={{  mb: 3, color: "#1e293b" , fontWeight: 600 }} >
+          <Paper
+            sx={{
+              padding: "24px",
+              borderRadius: "12px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ mb: 3, color: "#1e293b", fontWeight: 600 }}
+            >
               <Activity size={20} sx={{ mr: 1 }} />
               实时状态
             </Typography>
-            <Box sx={{ height: "200px", background: "#f8fafc", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Box
+              sx={{
+                height: "200px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Typography sx={{ color: "#94a3b8" }}>状态监控区域</Typography>
             </Box>
           </Paper>

@@ -27,6 +27,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Plus } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 
 const ScmEvaluationPage: React.FC = () => {
   const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
@@ -51,6 +52,7 @@ const ScmEvaluationPage: React.FC = () => {
 
   useEffect(() => {
     loadEvaluations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadEvaluations = async () => {
@@ -65,7 +67,7 @@ const ScmEvaluationPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载评估列表失败:", error);
+      apiLogger.error("加载评估列表失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -99,7 +101,7 @@ const ScmEvaluationPage: React.FC = () => {
       });
       loadEvaluations();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",

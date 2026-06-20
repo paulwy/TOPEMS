@@ -54,7 +54,12 @@ export const usePermission = () => {
   const canWriteModule = useCallback(
     (module: string): boolean => {
       if (user?.is_superuser) return true;
-      return permissions.some((p) => p === `${module}:write` || p === `${module}:create` || p === `${module}:update`);
+      return permissions.some(
+        (p) =>
+          p === `${module}:write` ||
+          p === `${module}:create` ||
+          p === `${module}:update`,
+      );
     },
     [permissions, user?.is_superuser],
   );

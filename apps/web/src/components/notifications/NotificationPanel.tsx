@@ -8,6 +8,7 @@ import {
   getUnreadCount,
   markAllAsRead,
 } from "@/api/notification";
+import { logger } from "@/utils/logger";
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -27,6 +28,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchNotifications = async () => {
@@ -39,7 +41,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         onUnreadCountChange(response.data.unread_count);
       }
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      logger.error("Failed to fetch notifications:", error);
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         onUnreadCountChange(response.data);
       }
     } catch (error) {
-      console.error("Failed to fetch unread count:", error);
+      logger.error("Failed to fetch unread count:", error);
     }
   };
 
@@ -65,7 +67,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         await fetchUnreadCount();
       }
     } catch (error) {
-      console.error("Failed to mark all as read:", error);
+      logger.error("Failed to mark all as read:", error);
     }
   };
 

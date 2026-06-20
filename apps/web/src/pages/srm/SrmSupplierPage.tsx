@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
@@ -10,16 +10,19 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
-import { Plus, Eye, Users, Search } from "lucide-react";
+import { Plus, Eye, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { ListPageTemplate } from "@/components/templates/ListPageTemplate";
+import type {
+  ColumnDef,
+  RowAction,
+} from "@/components/templates/ListPageTemplate";
 import { srmApi } from "@/api/srm";
 import type { Supplier } from "@/api/srm";
 import { toast } from "react-toastify";
+import { apiLogger } from "@/utils/logger";
 
 const SrmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,10 +30,6 @@ const SrmSupplierPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null,
-  );
   const [formData, setFormData] = useState({
     supplier_no: "",
     name: "",
@@ -71,7 +70,7 @@ const SrmSupplierPage: React.FC = () => {
         setSuppliers([]);
       }
     } catch (err) {
-      console.error("加载供应商数据失败:", err);
+      apiLogger.error("加载供应商数据失败:", err);
       setSuppliers([]);
     } finally {
       setLoading(false);
@@ -112,54 +111,49 @@ const SrmSupplierPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<Supplier>[] = [
-    { accessorKey: "supplier_no", header: "编号" },
-    { accessorKey: "name", header: "名称" },
-    { accessorKey: "contact_person", header: "联系人" },
-    { accessorKey: "contact_phone", header: "电话" },
-    { accessorKey: "category", header: "类别" },
-    {
-      accessorKey: "risk_level",
-      header: "风险等级",
-      cell: ({ row }) => (
-        <RiskChip level={row.original.risk_level || "medium"} />
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => navigate(`/srm/suppliers/${row.original.id}`)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+  const columns: ColumnDef<Supplier>[] = useMemo(
+    () => [
+      { id: "supplier_no", label: "编号" },
+      { id: "name", label: "名称" },
+      { id: "contact_person", label: "联系人" },
+      { id: "contact_phone", label: "电话" },
+      { id: "category", label: "类别" },
+      {
+        id: "risk_level",
+        label: "风险等级",
+        render: (row) => <RiskChip level={row.risk_level || "medium"} />,
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [suppliers],
+  );
 
-  const filteredSuppliers = suppliers.filter((s) => {
-    return (
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.supplier_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.contact_person &&
-        s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  });
+  const rowActions: RowAction<Supplier>[] = useMemo(
+    () => [
+      {
+        label: "详情",
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: (row) => navigate(`/srm/suppliers/${row.id}`),
+      },
+    ],
+    [navigate],
+  );
 
-  const handleView = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
-    setShowDetailModal(true);
-  };
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter((s) => {
+      return (
+        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.supplier_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.contact_person &&
+          s.contact_person.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    });
+  }, [suppliers, searchTerm]);
 
   const handleCreate = () => {
     setFormData({
@@ -195,47 +189,165 @@ const SrmSupplierPage: React.FC = () => {
       loadSuppliers();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建供应商失败:", err);
+      apiLogger.error("创建供应商失败:", err);
     }
   };
 
-  const stats = {
-    total: suppliers.length,
-    active: suppliers.filter((s) => s.status === "启用").length,
-    lowRisk: suppliers.filter((s) => s.risk_level === "low").length,
-    highRisk: suppliers.filter((s) => s.risk_level === "high").length,
-  };
+  const stats = useMemo(() => {
+    return {
+      total: suppliers.length,
+      active: suppliers.filter((s) => s.status === "启用").length,
+      lowRisk: suppliers.filter((s) => s.risk_level === "low").length,
+      highRisk: suppliers.filter((s) => s.risk_level === "high").length,
+    };
+  }, [suppliers]);
 
-  if (loading) {
-    return (
+  const headerContent = useMemo(
+    () => (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)",
+          display: "grid",
+          gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+          gap: 2,
+          mb: 4,
         }}
       >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#a855f7",
-              borderTopColor: "#6366f1",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
+        <Card sx={{ bgcolor: "#faf5ff" }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#ede9fe",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Users sx={{ width: 20, height: 20, color: "#a855f7" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  供应商总数
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.total}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#dcfce7",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  已启用
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.active}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#dcfce7",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  低风险
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.lowRisk}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: "#fee2e2",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Users sx={{ width: 20, height: 20, color: "#dc2626" }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "slate.600", fontSize: "0.875rem" }}
+                >
+                  高风险
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 700, color: "slate.900" }}
+                >
+                  {stats.highRisk}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
-    );
-  }
+    ),
+    [stats],
+  );
 
   return (
     <Box
@@ -244,265 +356,29 @@ const SrmSupplierPage: React.FC = () => {
         background: "linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)",
       }}
     >
-      <Box
-        component="header"
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background:
-                    "linear-gradient(135deg, #a855f7 0%, #6366f1 100%)",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Users sx={{ width: 24, height: 24, color: "white" }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 700,
-                    color: "slate.900",
-                    fontSize: "1.25rem",
-                  }}
-                >
-                  供应商管理
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "slate.500", fontSize: "0.75rem" }}
-                >
-                  Supplier Management
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant="contained"
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: "#a855f7", "&:hover": { bgcolor: "#6366f1" } }}
-            >
-              新增供应商
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component="main"
-        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: "#faf5ff" }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#ede9fe",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Users sx={{ width: 20, height: 20, color: "#a855f7" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    供应商总数
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    已启用
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.active}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#dcfce7",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Users sx={{ width: 20, height: 20, color: "#16a34a" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    低风险
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.lowRisk}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: "#fee2e2",
-                    borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Users sx={{ width: 20, height: 20, color: "#dc2626" }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "slate.600", fontSize: "0.875rem" }}
-                  >
-                    高风险
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "slate.900" }}
-                  >
-                    {stats.highRisk}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <Users style={{ width: 20, height: 20, color: "#a855f7" }} />
-              供应商列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索供应商名称或编号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredSuppliers}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
-      </Box>
-
+      <ListPageTemplate
+        title="供应商管理"
+        subtitle="Supplier Management"
+        columns={columns}
+        data={filteredSuppliers}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索供应商名称或编号..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "新增供应商",
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            onClick: handleCreate,
+            variant: "contained",
+          },
+        ]}
+        headerContent={headerContent}
+        getRowId={(row) => row.id}
+        emptyMessage="暂无供应商数据"
+      />
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -621,7 +497,7 @@ const SrmSupplierPage: React.FC = () => {
             保存
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog>{" "}
     </Box>
   );
 };

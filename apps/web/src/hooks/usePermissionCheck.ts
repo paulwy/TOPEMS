@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { authApi } from "@/api/iam";
 import { useAuth } from "./useAuth";
+import { logger } from "@/utils/logger";
 
 export const usePermissionCheck = () => {
   const { hasPermission } = useAuth();
@@ -10,7 +11,7 @@ export const usePermissionCheck = () => {
       const response = await authApi.checkPermission(permission);
       return response.success && response.data?.allowed;
     } catch (error) {
-      console.error("Permission check error:", error);
+      logger.error("Permission check error:", error);
       return false;
     }
   }, []);
@@ -32,7 +33,7 @@ export const usePermissionCheck = () => {
           ),
         };
       } catch (error) {
-        console.error("Batch permission check error:", error);
+        logger.error("Batch permission check error:", error);
         return {
           allowed: false,
           results: permissions.reduce(
@@ -69,7 +70,7 @@ export const usePermissionCheck = () => {
           resource_id: undefined,
         });
       } catch (error) {
-        console.error("Failed to log access:", error);
+        logger.error("Failed to log access:", error);
       }
     },
     [],

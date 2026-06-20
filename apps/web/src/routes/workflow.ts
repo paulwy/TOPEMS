@@ -5,8 +5,12 @@ import { lazyWithRetry } from "./utils";
 
 const lazy = lazyWithRetry;
 
-const FlowWorkflowPage = lazy(() => import("../pages/workflow/FlowWorkflowPage"));
-const WorkflowDashboardPage = lazy(() => import("../pages/workflow/DashboardPage"));
+const FlowWorkflowPage = lazy(
+  () => import("../pages/workflow/FlowWorkflowPage"),
+);
+const WorkflowDashboardPage = lazy(
+  () => import("../pages/workflow/DashboardPage"),
+);
 const WorkflowDesignerPage = lazy(
   () => import("../pages/templates/WorkflowDesignerPage"),
 );
@@ -16,14 +20,18 @@ const FlowInstanceListPage = lazy(
 const FlowInstanceDetailPage = lazy(
   () => import("../pages/workflow/FlowInstanceDetailPage"),
 );
-const FlowApprovalPage = lazy(() => import("../pages/workflow/FlowApprovalPage"));
+const FlowApprovalPage = lazy(
+  () => import("../pages/workflow/FlowApprovalPage"),
+);
 const FlowApprovalDetailPage = lazy(
   () => import("../pages/workflow/FlowApprovalDetailPage"),
 );
 const FlowNotificationCenter = lazy(
   () => import("../pages/workflow/FlowNotificationCenter"),
 );
-const FlowStatisticsPage = lazy(() => import("../pages/workflow/FlowStatisticsPage"));
+const FlowStatisticsPage = lazy(
+  () => import("../pages/workflow/FlowStatisticsPage"),
+);
 const FlowVersionHistoryPage = lazy(
   () => import("../pages/workflow/FlowVersionHistoryPage"),
 );

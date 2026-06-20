@@ -309,7 +309,9 @@ export const AlertCard: React.FC<AlertCardProps> = ({
   showDivider = true,
   render,
 }) => {
-  const [internalExpanded, setInternalExpanded] = React.useState(expanded ?? true);
+  const [internalExpanded, setInternalExpanded] = React.useState(
+    expanded ?? true,
+  );
 
   const isExpanded = expanded !== undefined ? expanded : internalExpanded;
   const handleExpandedChange = (newExpanded: boolean) => {
@@ -336,7 +338,11 @@ export const AlertCard: React.FC<AlertCardProps> = ({
   const config = LEVEL_CONFIG[level];
   const sizeStyles = SIZE_STYLES[size];
   // 使用 lucide-react 图标组件
-  const IconComponent = (icon || config.icon) as React.ComponentType<{ size?: number | string; className?: string; style?: React.CSSProperties }>;
+  const IconComponent = (icon || config.icon) as React.ComponentType<{
+    size?: number | string;
+    className?: string;
+    style?: React.CSSProperties;
+  }>;
 
   // Alert模式
   if (useAlert) {
@@ -375,7 +381,11 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   color={config.alertColor}
                   onClick={action.onClick}
                   disabled={action.loading}
-                  startIcon={action.loading ? <RefreshCw size={14} className="animate-spin" /> : undefined}
+                  startIcon={
+                    action.loading ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : undefined
+                  }
                 >
                   {action.label}
                 </Button>
@@ -414,7 +424,13 @@ export const AlertCard: React.FC<AlertCardProps> = ({
             "&:last-child": { pb: `${sizeStyles.padding} !important` },
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "flex-start", gap: sizeStyles.gap }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: sizeStyles.gap,
+            }}
+          >
             <Box
               sx={{
                 color: config.color,
@@ -470,39 +486,48 @@ export const AlertCard: React.FC<AlertCardProps> = ({
                   {isExpanded ? "收起" : "展开详情"}
                 </Button>
               )}
-              {actions && actions.length > 0 && (!expandable || isExpanded) && showDivider && (
-                <>
-                  <Divider sx={{ my: 1, borderColor: config.borderColor }} />
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    {actions.map((action, index) => (
-                      <Button
-                        key={index}
-                        size="small"
-                        variant={action.primary ? "contained" : "outlined"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          action.onClick();
-                        }}
-                        disabled={action.loading}
-                        startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
-                        sx={{
-                          borderColor: config.borderColor,
-                          color: action.primary ? "#fff" : config.titleColor,
-                          bgcolor: action.primary ? config.color : "transparent",
-                          "&:hover": {
-                            bgcolor: action.primary ? config.color : config.bgColor,
+              {actions &&
+                actions.length > 0 &&
+                (!expandable || isExpanded) &&
+                showDivider && (
+                  <>
+                    <Divider sx={{ my: 1, borderColor: config.borderColor }} />
+                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                      {actions.map((action, index) => (
+                        <Button
+                          key={index}
+                          size="small"
+                          variant={action.primary ? "contained" : "outlined"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            action.onClick();
+                          }}
+                          disabled={action.loading}
+                          startIcon={
+                            action.loading ? <RefreshCw size={14} /> : undefined
+                          }
+                          sx={{
                             borderColor: config.borderColor,
-                          },
-                          fontSize: sizeStyles.messageSize,
-                          py: 0.5,
-                        }}
-                      >
-                        {action.label}
-                      </Button>
-                    ))}
-                  </Box>
-                </>
-              )}
+                            color: action.primary ? "#fff" : config.titleColor,
+                            bgcolor: action.primary
+                              ? config.color
+                              : "transparent",
+                            "&:hover": {
+                              bgcolor: action.primary
+                                ? config.color
+                                : config.bgColor,
+                              borderColor: config.borderColor,
+                            },
+                            fontSize: sizeStyles.messageSize,
+                            py: 0.5,
+                          }}
+                        >
+                          {action.label}
+                        </Button>
+                      ))}
+                    </Box>
+                  </>
+                )}
             </Box>
             {closable && (
               <IconButton
@@ -604,39 +629,44 @@ export const AlertCard: React.FC<AlertCardProps> = ({
             {isExpanded ? "收起" : "展开详情"}
           </Button>
         )}
-        {actions && actions.length > 0 && (!expandable || isExpanded) && showDivider && (
-          <>
-            <Divider sx={{ my: 1, borderColor: config.borderColor }} />
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {actions.map((action, index) => (
-                <Button
-                  key={index}
-                  size="small"
-                  variant={action.primary ? "contained" : "outlined"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    action.onClick();
-                  }}
-                  disabled={action.loading}
-                  startIcon={action.loading ? <RefreshCw size={14} /> : undefined}
-                  sx={{
-                    borderColor: config.borderColor,
-                    color: action.primary ? "#fff" : config.titleColor,
-                    bgcolor: action.primary ? config.color : "transparent",
-                    "&:hover": {
-                      bgcolor: action.primary ? config.color : config.bgColor,
+        {actions &&
+          actions.length > 0 &&
+          (!expandable || isExpanded) &&
+          showDivider && (
+            <>
+              <Divider sx={{ my: 1, borderColor: config.borderColor }} />
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                {actions.map((action, index) => (
+                  <Button
+                    key={index}
+                    size="small"
+                    variant={action.primary ? "contained" : "outlined"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      action.onClick();
+                    }}
+                    disabled={action.loading}
+                    startIcon={
+                      action.loading ? <RefreshCw size={14} /> : undefined
+                    }
+                    sx={{
                       borderColor: config.borderColor,
-                    },
-                    fontSize: sizeStyles.messageSize,
-                    py: 0.5,
-                  }}
-                >
-                  {action.label}
-                </Button>
-              ))}
-            </Box>
-          </>
-        )}
+                      color: action.primary ? "#fff" : config.titleColor,
+                      bgcolor: action.primary ? config.color : "transparent",
+                      "&:hover": {
+                        bgcolor: action.primary ? config.color : config.bgColor,
+                        borderColor: config.borderColor,
+                      },
+                      fontSize: sizeStyles.messageSize,
+                      py: 0.5,
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </Box>
+            </>
+          )}
       </Box>
       {closable && (
         <IconButton
@@ -663,30 +693,30 @@ export const AlertCard: React.FC<AlertCardProps> = ({
 /**
  * 成功警告卡片
  */
-export const SuccessAlertCard: React.FC<
-  Omit<AlertCardProps, "level">
-> = (props) => <AlertCard {...props} level="success" />;
+export const SuccessAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
+  props,
+) => <AlertCard {...props} level="success" />;
 
 /**
  * 警告警告卡片
  */
-export const WarningAlertCard: React.FC<
-  Omit<AlertCardProps, "level">
-> = (props) => <AlertCard {...props} level="warning" />;
+export const WarningAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
+  props,
+) => <AlertCard {...props} level="warning" />;
 
 /**
  * 错误警告卡片
  */
-export const ErrorAlertCard: React.FC<
-  Omit<AlertCardProps, "level">
-> = (props) => <AlertCard {...props} level="error" />;
+export const ErrorAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
+  props,
+) => <AlertCard {...props} level="error" />;
 
 /**
  * 信息警告卡片
  */
-export const InfoAlertCard: React.FC<
-  Omit<AlertCardProps, "level">
-> = (props) => <AlertCard {...props} level="info" />;
+export const InfoAlertCard: React.FC<Omit<AlertCardProps, "level">> = (
+  props,
+) => <AlertCard {...props} level="info" />;
 
 // ============ 默认导出 ============
 

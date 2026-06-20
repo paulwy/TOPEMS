@@ -60,6 +60,7 @@ export function AIFormValidator({
       setSuggestions([]);
       handleValidate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleValidate = async () => {

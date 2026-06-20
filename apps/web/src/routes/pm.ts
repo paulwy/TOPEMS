@@ -6,8 +6,12 @@ const lazy = lazyWithRetry;
 
 const PmDashboardPage = lazy(() => import("../pages/pm/DashboardPage"));
 const PmProjectListPage = lazy(() => import("../pages/pm/PmProjectListPage"));
-const PmProjectDetailPage = lazy(() => import("../pages/pm/PmProjectDetailPage"));
-const PmProjectCreatePage = lazy(() => import("../pages/pm/PmProjectCreatePage"));
+const PmProjectDetailPage = lazy(
+  () => import("../pages/pm/PmProjectDetailPage"),
+);
+const PmProjectCreatePage = lazy(
+  () => import("../pages/pm/PmProjectCreatePage"),
+);
 const PmContractListPage = lazy(() => import("../pages/pm/PmContractListPage"));
 const PmContractDetailPage = lazy(
   () => import("../pages/pm/PmContractDetailPage"),

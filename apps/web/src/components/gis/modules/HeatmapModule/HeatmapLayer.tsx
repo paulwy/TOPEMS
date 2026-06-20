@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useMemo } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
+import { Box, Typography, Paper } from "@mui/material";
 import type { DevicePoint, StorageLocation } from "../../../../api/gis";
 
 interface HeatmapLayerProps {
@@ -214,38 +215,76 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
 // HeatmapLegend Component
 const HeatmapLegend: React.FC<{ mode: "density" | "status" }> = ({ mode }) => {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-3">
-      <div className="text-xs font-medium text-gray-700 mb-2">热力图</div>
-      <div className="flex items-center gap-1">
-        <div
-          className="w-4 h-4 rounded"
-          style={{
+    <Paper sx={{ borderRadius: 2, boxShadow: 3, p: 3 }}>
+      <Typography
+        variant="caption"
+        sx={{ fontWeight: 500, color: "#374151", mb: 2 }}
+      >
+        力图
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            width: 16,
+            height: 16,
+            borderRadius: 1,
             background:
               "linear-gradient(to right, rgba(0,255,0,0), rgba(255,0,0,1))",
           }}
         />
-      </div>
-      <div className="flex justify-between text-xs text-gray-500 mt-1">
-        <span>低</span>
-        <span>高</span>
-      </div>
+      </Box>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+        <Typography variant="caption" sx={{ color: "#6b7280" }}>
+          低
+        </Typography>
+        <Typography variant="caption" sx={{ color: "#6b7280" }}>
+          高
+        </Typography>
+      </Box>
       {mode === "status" && (
-        <div className="mt-2 pt-2 border-t space-y-1">
-          <div className="flex items-center gap-2 text-xs">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-gray-600">活跃</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span className="text-gray-600">待处理</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-gray-600">禁用</span>
-          </div>
-        </div>
+        <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "#e5e7eb" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                bgcolor: "#22c55e",
+              }}
+            />
+            <Typography variant="caption" sx={{ color: "#4b5563" }}>
+              活跃
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                bgcolor: "#eab308",
+              }}
+            />
+            <Typography variant="caption" sx={{ color: "#4b5563" }}>
+              待处理
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                bgcolor: "#ef4444",
+              }}
+            />
+            <Typography variant="caption" sx={{ color: "#4b5563" }}>
+              禁用
+            </Typography>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 };
 

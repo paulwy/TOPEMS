@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Download, Loader2, CheckCircle } from "lucide-react";
 import type { ExportFormat } from "@/api/report";
+import { logger } from "@/utils/logger";
 
 interface ExportButtonProps {
   data: any[];
@@ -114,7 +115,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         setExportComplete(false);
       }, 2000);
     } catch (error) {
-      console.error("导出失败:", error);
+      logger.error("导出失败:", error);
       onExportError?.(error as Error);
     } finally {
       setExporting(false);

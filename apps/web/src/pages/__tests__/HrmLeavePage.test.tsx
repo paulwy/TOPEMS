@@ -386,7 +386,9 @@ describe("LeaveManagementPage", () => {
       renderWithProviders(<LeaveManagementPage />);
 
       await waitFor(() => {
-        const pageInfo = screen.getByText((content: string) => content.includes("共") && content.includes("条"));
+        const pageInfo = screen.getByText(
+          (content: string) => content.includes("共") && content.includes("条"),
+        );
         expect(pageInfo).toBeInTheDocument();
       });
     });
@@ -399,7 +401,9 @@ describe("LeaveManagementPage", () => {
       renderWithProviders(<LeaveManagementPage />);
 
       await waitFor(() => {
-        expect(screen.getAllByText("暂无休假申请数据").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("暂无休假申请数据").length).toBeGreaterThan(
+          0,
+        );
       });
     });
 

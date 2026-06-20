@@ -77,8 +77,7 @@ export const financialReportApi = {
     currency_code?: string;
     page?: number;
     page_size?: number;
-  }) =>
-    apiClient.erp.get("/api/reports/income-statement/history", { params }),
+  }) => apiClient.erp.get("/api/reports/income-statement/history", { params }),
 
   // -------- 现金流量表 --------
 
@@ -291,10 +290,7 @@ export const financialReportApi = {
    * 更新合并主体
    */
   updateConsolidationEntity: (entityId: string, data: any) =>
-    apiClient.erp.put(
-      `/api/reports/consolidated/entities/${entityId}`,
-      data,
-    ),
+    apiClient.erp.put(`/api/reports/consolidated/entities/${entityId}`, data),
 
   /**
    * 删除合并主体
@@ -445,10 +441,9 @@ export const financialReportApi = {
       page_size?: number;
     },
   ) =>
-    apiClient.erp.get(
-      `/api/reports/subscriptions/${subscriptionId}/history`,
-      { params },
-    ),
+    apiClient.erp.get(`/api/reports/subscriptions/${subscriptionId}/history`, {
+      params,
+    }),
 };
 
 export default financialReportApi;

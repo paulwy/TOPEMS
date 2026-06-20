@@ -18,6 +18,7 @@ import {
   Columns,
 } from "lucide-react";
 import type { ReportData, ExportFormat } from "@/api/report";
+import { logger } from "@/utils/logger";
 
 interface ExportModalProps {
   report: ReportData;
@@ -93,7 +94,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       }, 1500);
     } catch (err) {
       setExportError("导出失败，请重试");
-      console.error("导出失败:", err);
+      logger.error("导出失败:", err);
     } finally {
       setExporting(false);
     }

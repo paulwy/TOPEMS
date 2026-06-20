@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -181,7 +182,7 @@ const RsProjectListPage: React.FC = () => {
 
   const handleExport = () => {
     // 导出功能
-    console.log("导出项目列表");
+    logger.info("导出项目列表");
   };
 
   return (

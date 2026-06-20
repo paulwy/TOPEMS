@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
+import { logger } from "@/utils/logger";
 import {
   Plus,
   Edit,
@@ -194,7 +195,7 @@ export default function AccountManagementPage() {
       await createAccount.mutateAsync(data as any);
       setIsCreating(false);
     } catch (error) {
-      console.error("创建科目失败:", error);
+      logger.error("创建科目失败:", error);
     }
   };
 
@@ -206,7 +207,7 @@ export default function AccountManagementPage() {
       setIsEditing(false);
       setSelectedAccount(null);
     } catch (error) {
-      console.error("更新科目失败:", error);
+      logger.error("更新科目失败:", error);
     }
   };
 
@@ -217,7 +218,7 @@ export default function AccountManagementPage() {
       await deleteAccount.mutateAsync(deletingId);
       setDeletingId(null);
     } catch (error) {
-      console.error("删除科目失败:", error);
+      logger.error("删除科目失败:", error);
     }
   };
 

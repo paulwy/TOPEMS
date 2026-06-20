@@ -1,5 +1,6 @@
 import { Grid } from "@/components/Grid";
 import { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart3,
@@ -217,7 +218,7 @@ const BIAnalyticsPage = () => {
           setOverview(res.data);
         }
       } catch (e) {
-        console.error("Failed to load overview:", e);
+        logger.error("Failed to load overview:", e);
       } finally {
         setLoading(false);
       }
@@ -245,7 +246,10 @@ const BIAnalyticsPage = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                lg: "repeat(3, 1fr)",
+              },
               gap: 3,
             }}
           >
@@ -261,7 +265,11 @@ const BIAnalyticsPage = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(2, 1fr)",
+                lg: "repeat(3, 1fr)",
+              },
               gap: 2,
             }}
           >
@@ -491,7 +499,11 @@ const BIAnalyticsPage = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+            gridTemplateColumns: {
+              xs: "repeat(1, 1fr)",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            },
             gap: 2,
           }}
         >
@@ -529,7 +541,10 @@ const BIAnalyticsPage = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(3, 1fr)",
+              },
               gap: 3,
             }}
           >

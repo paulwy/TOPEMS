@@ -18,7 +18,10 @@ interface ErrorBoundaryState {
   errorInfo?: ErrorInfo;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -53,7 +56,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         return this.props.fallback;
       }
 
-      const showDetails = this.props.showDetails ?? process.env.NODE_ENV !== "production";
+      const showDetails =
+        this.props.showDetails ?? process.env.NODE_ENV !== "production";
 
       return (
         <div
@@ -118,17 +122,50 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   overflowY: "auto",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "12px",
+                  }}
+                >
                   <Code2 style={{ width: 16, height: 16 }} />
-                  <span style={{ fontWeight: 600, fontSize: "14px" }}>错误详情</span>
+                  <span style={{ fontWeight: 600, fontSize: "14px" }}>
+                    错误详情
+                  </span>
                 </div>
                 <div style={{ marginBottom: "12px" }}>
-                  <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>错误信息</div>
-                  <div style={{ fontSize: "13px", fontFamily: "monospace" }}>{this.state.error.message}</div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#9ca3af",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    错误信息
+                  </div>
+                  <div style={{ fontSize: "13px", fontFamily: "monospace" }}>
+                    {this.state.error.message}
+                  </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>组件栈</div>
-                  <div style={{ fontSize: "12px", fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: "#9ca3af",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    组件栈
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      fontFamily: "monospace",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
                     {this.state.errorInfo.componentStack}
                   </div>
                 </div>
@@ -169,7 +206,7 @@ export const withErrorBoundary = <P extends object>(
   options?: {
     fallback?: ReactNode;
     onError?: (error: Error, errorInfo: ErrorInfo) => void;
-  }
+  },
 ): React.ComponentType<P> => {
   return (props: P) => (
     <ErrorBoundary fallback={options?.fallback} onError={options?.onError}>

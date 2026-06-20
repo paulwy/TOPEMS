@@ -1,4 +1,16 @@
-import { Button, Dialog, DialogContent, DialogActions, TextField, Select, MenuItem, Switch, FormLabel, Typography, Box } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Select,
+  MenuItem,
+  Switch,
+  FormLabel,
+  Typography,
+  Box,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 
 import {
@@ -184,7 +196,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(2, 1fr)",
+              },
               gap: 2,
             }}
           >
@@ -220,7 +235,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(2, 1fr)",
+              },
               gap: 2,
             }}
           >
@@ -345,7 +363,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     sx={{
                       flex: 1,
                       display: "grid",
-                      gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(4, 1fr)" },
+                      gridTemplateColumns: {
+                        xs: "repeat(1, 1fr)",
+                        md: "repeat(4, 1fr)",
+                      },
                       gap: 2,
                     }}
                   >
@@ -504,7 +525,10 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(3, 1fr)",
+              },
               gap: 2,
             }}
           >

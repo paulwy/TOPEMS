@@ -1,4 +1,5 @@
 import apiClient from "./client";
+import { apiLogger } from "@/utils/logger";
 
 export interface PermissionError {
   code: number;
@@ -13,7 +14,7 @@ export const createPermissionInterceptor = () => {
       (error) => {
         if (error.response?.status === 403) {
           const errorMessage = error.response?.data?.message || "权限不足";
-          console.warn("Permission denied:", errorMessage);
+          apiLogger.warn("Permission denied:", errorMessage);
 
           window.dispatchEvent(
             new CustomEvent("permission-denied", {
@@ -32,7 +33,7 @@ export const createPermissionInterceptor = () => {
           // 登录页的 401 不处理（避免循环）
           if (currentPath !== "/login" && currentPath !== "/register") {
             if (localStorage.getItem("token")) {
-              console.warn(
+              apiLogger.warn(
                 "Unauthorized, but not redirecting temporarily - token invalid",
               );
               // 暂时不自动重定向
@@ -61,7 +62,7 @@ export const checkPermissionBeforeRequest = (
   if (isSuperuser || permissions.includes(permission)) {
     callback();
   } else {
-    console.warn(`Permission denied: ${permission}`);
+    apiLogger.warn(`Permission denied: ${permission}`);
     window.dispatchEvent(
       new CustomEvent("permission-denied", {
         detail: {
@@ -105,7 +106,7 @@ export const logPermissionAccess = async (
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     if (!user.id) {
-      console.warn("Cannot log access: user not authenticated");
+      apiLogger.warn("Cannot log access: user not authenticated");
       return;
     }
 
@@ -121,7 +122,7 @@ export const logPermissionAccess = async (
       resource_id: undefined,
     });
   } catch (error) {
-    console.error("Failed to log permission access:", error);
+    apiLogger.error("Failed to log permission access:", error);
   }
 };
 

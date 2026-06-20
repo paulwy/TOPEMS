@@ -23,6 +23,7 @@ import type {
   UpdateWorkflowRequest,
 } from "@/api/flow";
 import { flowApi } from "@/api/flow";
+import { apiLogger } from "@/utils/logger";
 import { Save, ArrowLeft } from "lucide-react";
 
 const WorkflowDesignerPage: React.FC = () => {
@@ -46,6 +47,7 @@ const WorkflowDesignerPage: React.FC = () => {
     if (workflowId) {
       loadWorkflow(workflowId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflowId]);
 
   const loadWorkflow = async (id: string) => {
@@ -96,7 +98,7 @@ const WorkflowDesignerPage: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error("加载工作流失败:", error);
+      apiLogger.error("加载工作流失败:", error);
       addNotification({
         title: "加载失败",
         message: "加载工作流失败",
@@ -206,7 +208,7 @@ const WorkflowDesignerPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("保存工作流失败:", error);
+      apiLogger.error("保存工作流失败:", error);
       addNotification({
         title: "保存失败",
         message: "保存工作流失败",

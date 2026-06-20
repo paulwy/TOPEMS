@@ -10,6 +10,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { Clock, RefreshCw, AlertCircle } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 const SessionExpiryWarning: React.FC = () => {
   const { isSessionExpiringSoon, getTimeUntilExpiry, refreshToken } = useAuth();
@@ -55,7 +56,7 @@ const SessionExpiryWarning: React.FC = () => {
         setIsOpen(false);
       }
     } catch (error) {
-      console.error("Failed to refresh session:", error);
+      logger.error("Failed to refresh session:", error);
     }
   };
 

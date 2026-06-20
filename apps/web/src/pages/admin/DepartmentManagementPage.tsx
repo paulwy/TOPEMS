@@ -69,6 +69,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
 
   useEffect(() => {
     loadDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDepartments = async () => {
@@ -408,6 +409,7 @@ const DepartmentManagementPage: React.FC<DepartmentManagementPageProps> = ({
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

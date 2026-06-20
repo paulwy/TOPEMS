@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Box,
   Container,
@@ -227,11 +228,18 @@ const RsDocPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
+          <Typography
+            variant="h5"
+            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
+          >
             文档管理
           </Typography>
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<Upload size={18} />} onClick={() => setUploadDialogOpen(true)}>
+            <Button
+              variant="outlined"
+              startIcon={<Upload size={18} />}
+              onClick={() => setUploadDialogOpen(true)}
+            >
               上传
             </Button>
             <Button
@@ -246,7 +254,7 @@ const RsDocPage: React.FC = () => {
         </Box>
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <TextField
               size="small"
               placeholder="搜索文档名称、作者..."
@@ -465,7 +473,7 @@ const RsDocPage: React.FC = () => {
         <DialogContent>
           {selectedDoc && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
                 {selectedDoc.doc_name}
               </Typography>
               <Stack spacing={2} sx={{ mt: 2 }}>
@@ -498,7 +506,7 @@ const RsDocPage: React.FC = () => {
                       }}
                     >
                       <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                           {v.version}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -543,7 +551,7 @@ const RsDocPage: React.FC = () => {
             variant="contained"
             sx={{ bgcolor: "#3b82f6" }}
             onClick={() => {
-              console.log("上传的文件:", attachments);
+              apiLogger.info("上传的文件:", attachments);
               setUploadDialogOpen(false);
             }}
           >

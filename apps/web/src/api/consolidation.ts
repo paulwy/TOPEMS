@@ -168,9 +168,7 @@ export const updateEliminationRule = async (
 export const deleteEliminationRule = async (
   ruleId: string,
 ): Promise<ApiResponse<void>> => {
-  return apiClient.erp.delete(
-    `/api/consolidation/elimination-rules/${ruleId}`,
-  );
+  return apiClient.erp.delete(`/api/consolidation/elimination-rules/${ruleId}`);
 };
 
 /**
@@ -208,10 +206,7 @@ export const executeElimination = async (params: {
     total_eliminated: number;
   }>
 > => {
-  return apiClient.erp.post(
-    "/api/consolidation/execute-elimination",
-    params,
-  );
+  return apiClient.erp.post("/api/consolidation/execute-elimination", params);
 };
 
 // ============================================
@@ -260,9 +255,7 @@ export const getConsolidationReportLines = async (
 export const approveConsolidationReport = async (
   reportId: string,
 ): Promise<ApiResponse<ConsolidationReport>> => {
-  return apiClient.erp.post(
-    `/api/consolidation/reports/${reportId}/approve`,
-  );
+  return apiClient.erp.post(`/api/consolidation/reports/${reportId}/approve`);
 };
 
 /**
@@ -271,9 +264,7 @@ export const approveConsolidationReport = async (
 export const publishConsolidationReport = async (
   reportId: string,
 ): Promise<ApiResponse<ConsolidationReport>> => {
-  return apiClient.erp.post(
-    `/api/consolidation/reports/${reportId}/publish`,
-  );
+  return apiClient.erp.post(`/api/consolidation/reports/${reportId}/publish`);
 };
 
 /**

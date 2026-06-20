@@ -42,6 +42,7 @@ import OrganizationFilter, {
   type OrganizationFilterValue,
 } from "@/components/ui/OrganizationFilter";
 import { StatsChart } from "@/components/StatsChart";
+import { apiLogger } from "@/utils/logger";
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -81,7 +82,7 @@ const FinanceBudgetPage: React.FC = () => {
         setBudgets(response.data.items || []);
       }
     } catch (err) {
-      console.error("加载预算数据失败:", err);
+      apiLogger.error("加载预算数据失败:", err);
       addNotification({
         title: "错误",
         message: "加载预算数据失败",
@@ -110,7 +111,7 @@ const FinanceBudgetPage: React.FC = () => {
         loadBudgets();
       }
     } catch (err) {
-      console.error("创建预算失败:", err);
+      apiLogger.error("创建预算失败:", err);
       addNotification({
         title: "错误",
         message: "创建预算失败",
@@ -139,7 +140,7 @@ const FinanceBudgetPage: React.FC = () => {
         loadBudgets();
       }
     } catch (err) {
-      console.error("更新预算失败:", err);
+      apiLogger.error("更新预算失败:", err);
       addNotification({
         title: "错误",
         message: "更新预算失败",
@@ -161,7 +162,7 @@ const FinanceBudgetPage: React.FC = () => {
         loadBudgets();
       }
     } catch (err) {
-      console.error("删除预算失败:", err);
+      apiLogger.error("删除预算失败:", err);
       addNotification({
         title: "错误",
         message: "删除预算失败",

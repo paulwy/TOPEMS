@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   HelpCircle,
   Search,
@@ -527,7 +527,10 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(3, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                lg: "repeat(3, 1fr)",
+              },
               gap: 3,
             }}
           >
@@ -768,7 +771,11 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(2, 1fr)",
+                lg: "repeat(3, 1fr)",
+              },
               gap: 3,
             }}
           >

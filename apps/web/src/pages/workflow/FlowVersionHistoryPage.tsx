@@ -30,6 +30,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { Workflow, WorkflowVersion } from "@/api/flow";
 import { flowApi } from "@/api/flow";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 
 const FlowVersionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,6 +55,7 @@ const FlowVersionHistoryPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadData = async () => {
@@ -74,7 +76,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         setVersions(versionList);
       }
     } catch (err) {
-      console.error("加载数据失败:", err);
+      apiLogger.error("加载数据失败:", err);
       addNotification({
         title: "错误",
         message: "加载数据失败",
@@ -129,7 +131,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("创建版本失败:", err);
+      apiLogger.error("创建版本失败:", err);
       addNotification({
         title: "错误",
         message: "创建版本失败",
@@ -162,7 +164,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("激活版本失败:", err);
+      apiLogger.error("激活版本失败:", err);
       addNotification({
         title: "错误",
         message: "激活版本失败",
@@ -203,7 +205,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("回滚失败:", err);
+      apiLogger.error("回滚失败:", err);
       addNotification({ title: "错误", message: "回滚失败", type: "error" });
     } finally {
       setActionLoading(false);
@@ -241,7 +243,7 @@ const FlowVersionHistoryPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error("删除版本失败:", err);
+      apiLogger.error("删除版本失败:", err);
       addNotification({
         title: "错误",
         message: "删除版本失败",

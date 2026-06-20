@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { DataExport } from "@/components/common";
 import { ListPageTemplate, StatCardGroup } from "@/components/mui";
+import { apiLogger } from "@/utils/logger";
 
 import {
   Button,
@@ -178,7 +179,7 @@ const FinanceCostPage: React.FC = () => {
   };
 
   const handleExport = () => {
-    console.log("导出成本数据");
+    apiLogger.info("导出成本数据");
   };
 
   const handleSearch = () => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Box } from "@mui/material";
+import { logger } from "@/utils/logger";
 import { AddressbookSidebar } from "@/components/addressbook/AddressbookSidebar";
 import { AddressbookHeader } from "@/components/addressbook/AddressbookHeader";
 import { AddressbookFilters } from "@/components/addressbook/AddressbookFilters";
@@ -55,7 +56,7 @@ const AddressbookPage: React.FC = () => {
         setContacts(response.data.items);
       }
     } catch (error) {
-      console.error("加载联系人失败:", error);
+      logger.error("加载联系人失败:", error);
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ const AddressbookPage: React.FC = () => {
         setDepartments(response.data);
       }
     } catch (error) {
-      console.error("加载部门失败:", error);
+      logger.error("加载部门失败:", error);
     }
   }, []);
 
@@ -96,7 +97,7 @@ const AddressbookPage: React.FC = () => {
         setSelectedContact(response.data);
       }
     } catch (error) {
-      console.error("加载联系人详情失败:", error);
+      logger.error("加载联系人详情失败:", error);
     }
   }, []);
 
@@ -116,7 +117,7 @@ const AddressbookPage: React.FC = () => {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("导出失败:", error);
+      logger.error("导出失败:", error);
     }
   }, [selectedType]);
 

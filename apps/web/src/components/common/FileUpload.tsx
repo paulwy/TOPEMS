@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from "react";
+import { logger } from "@/utils/logger";
 import {
   Box,
   Typography,
@@ -149,22 +150,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       Array.from(selectedFiles).forEach((file) => {
         if (validFiles.length >= remainingSlots) {
-          console.warn("已达到最大文件数量限制");
+          logger.warn("已达到最大文件数量限制");
           return;
         }
 
         if (!validateFileType(file)) {
-          console.warn(`文件 ${file.name} 类型不允许`);
+          logger.warn(`文件 ${file.name} 类型不允许`);
           return;
         }
 
         if (file.size > maxSize * 1024 * 1024) {
-          console.warn(`文件 ${file.name} 超过大小限制 ${maxSize}MB`);
+          logger.warn(`文件 ${file.name} 超过大小限制 ${maxSize}MB`);
           return;
         }
 
         if (totalSize + file.size > maxTotalSize * 1024 * 1024) {
-          console.warn("文件总大小超过限制");
+          logger.warn("文件总大小超过限制");
           return;
         }
 
@@ -191,6 +192,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       onChange?.(updatedFiles.filter((f) => f.url).map((f) => f.url!));
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [files, maxCount, maxSize, maxTotalSize, accept, onChange],
   );
 

@@ -1,4 +1,15 @@
 import React, { useState } from "react";
+import { logger } from "@/utils/logger";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  IconButton,
+  Paper,
+  Chip,
+  CircularProgress,
+} from "@mui/material";
 import {
   X,
   FileSpreadsheet,
@@ -6,7 +17,6 @@ import {
   FileText,
   Download,
   CheckCircle,
-  Loader2,
   Columns,
 } from "lucide-react";
 import type { ReportData, ExportFormat } from "@/api/report";
@@ -31,21 +41,21 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       label: "Excel (.xlsx)",
       icon: FileSpreadsheet,
       description: "适合数据分析，支持公式和图表",
-      color: "green",
+      color: "#22c55e",
     },
     {
       value: "pdf" as ExportFormat,
       label: "PDF (.pdf)",
       icon: File,
       description: "适合打印和文档分享",
-      color: "red",
+      color: "#ef4444",
     },
     {
       value: "csv" as ExportFormat,
       label: "CSV (.csv)",
       icon: FileText,
       description: "适合数据交换和程序读取",
-      color: "blue",
+      color: "#3b82f6",
     },
   ];
 
@@ -79,7 +89,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
       }, 1500);
     } catch (err) {
       setExportError("导出失败，请重试");
-      console.error("导出失败:", err);
+      logger.error("导出失败:", err);
     } finally {
       setExporting(false);
     }
@@ -165,192 +175,379 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     URL.revokeObjectURL(url);
   };
 
-  const getFormatColor = (color: string) => {
-    const colors: Record<string, string> = {
-      green: "bg-green-50 border-green-200 hover:bg-green-100",
-      red: "bg-red-50 border-red-200 hover:bg-red-100",
-      blue: "bg-blue-50 border-blue-200 hover:bg-blue-100",
-    };
-    return colors[color];
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+    <Box
+      sx={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        p: 4,
+      }}
+    >
+      <Paper
+        sx={{
+          backgroundColor: "white",
+          borderRadius: 3,
+          boxShadow: 20,
+          width: "100%",
+          maxWidth: 600,
+        }}
+      >
         {/* Header */}
-        <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-green-50 to-emerald-50">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-xl font-semibold text-slate-900">导出报表</h3>
-              <p className="text-sm text-slate-600 mt-1">
+        <Box
+          sx={{
+            p: 6,
+            borderBottom: "1px solid #e2e8f0",
+            background: "linear-gradient(90deg, #f0fdf4 0%, #d1fae5 100%)",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{ fontSize: "1.25rem", fontWeight: 600, color: "#0f172a" }}
+              >
+                导出报表
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.875rem", color: "#475569", mt: 1 }}
+              >
                 {report.config.title}
-              </p>
-            </div>
-            <button
+              </Typography>
+            </Box>
+            <IconButton
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+              sx={{
+                p: 2,
+                color: "#94a3b8",
+                borderRadius: 2,
+                "&:hover": {
+                  color: "#475569",
+                  backgroundColor: "#f1f5f9",
+                },
+              }}
             >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+              <X style={{ width: 20, height: 20 }} />
+            </IconButton>
+          </Box>
+        </Box>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <Box sx={{ p: 6, display: "flex", flexDirection: "column", gap: 6 }}>
           {!exporting && !exportComplete && !exportError && (
             <>
               {/* Format Selection */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    color: "#334155",
+                    mb: 3,
+                  }}
+                >
                   选择导出格式
-                </label>
-                <div className="grid grid-cols-3 gap-3">
+                </Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: 3,
+                  }}
+                >
                   {formatOptions.map((option) => {
                     const Icon = option.icon;
                     return (
-                      <button
+                      <Button
                         key={option.value}
                         onClick={() => setFormat(option.value)}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          format === option.value
-                            ? "border-blue-600 bg-blue-50"
-                            : `border-slate-200 ${getFormatColor(option.color)}`
-                        }`}
+                        sx={{
+                          p: 4,
+                          borderRadius: 2,
+                          border: "2px solid",
+                          borderColor:
+                            format === option.value ? "#2563eb" : "#e2e8f0",
+                          backgroundColor:
+                            format === option.value ? "#eff6ff" : "white",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          transition: "all",
+                          "&:hover": {
+                            borderColor:
+                              format === option.value ? "#1d4ed8" : "#cbd5e1",
+                          },
+                        }}
                       >
                         <Icon
-                          className={`w-8 h-8 mx-auto mb-2 ${
-                            format === option.value
-                              ? "text-blue-600"
-                              : `text-${option.color}-600`
-                          }`}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            marginBottom: 8,
+                            color:
+                              format === option.value
+                                ? "#2563eb"
+                                : option.color,
+                          }}
                         />
-                        <p className="font-medium text-slate-900">
+                        <Typography sx={{ fontWeight: 500, color: "#0f172a" }}>
                           {option.label}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
+                        </Typography>
+                        <Typography
+                          sx={{ fontSize: "0.75rem", color: "#64748b", mt: 1 }}
+                        >
                           {option.description}
-                        </p>
-                      </button>
+                        </Typography>
+                      </Button>
                     );
                   })}
-                </div>
-              </div>
+                </Box>
+              </Box>
 
               {/* Options */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "#334155",
+                      mb: 2,
+                    }}
+                  >
                     自定义文件名（可选）
-                  </label>
-                  <input
-                    type="text"
+                  </Typography>
+                  <TextField
+                    fullWidth
                     value={customFilename}
                     onChange={(e) => setCustomFilename(e.target.value)}
                     placeholder={generateFilename()}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    size="small"
                   />
-                  <p className="text-xs text-slate-500 mt-1">
+                  <Typography
+                    sx={{ fontSize: "0.75rem", color: "#64748b", mt: 1 }}
+                  >
                     默认文件名包含报表名称和导出日期
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
 
                 {format === "csv" && (
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <input
                       type="checkbox"
                       checked={includeHeaders}
                       onChange={(e) => setIncludeHeaders(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded"
+                      style={{ width: 16, height: 16 }}
                     />
-                    <span className="text-sm text-slate-700">包含表头</span>
-                  </label>
+                    <Typography sx={{ fontSize: "0.875rem", color: "#334155" }}>
+                      包含表头
+                    </Typography>
+                  </Box>
                 )}
-              </div>
+              </Box>
 
               {/* Preview */}
-              <div className="bg-slate-50 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Columns className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-medium text-slate-700">
+              <Box sx={{ backgroundColor: "#f8fafc", borderRadius: 2, p: 4 }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+                >
+                  <Columns
+                    style={{ width: 16, height: 16, color: "#64748b" }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "#334155",
+                    }}
+                  >
                     导出预览
-                  </span>
-                </div>
-                <div className="space-y-1 text-sm text-slate-600">
-                  <p>• 报表名称：{report.config.title}</p>
-                  <p>• 数据行数：{report.row_count} 条</p>
-                  <p>• 导出列数：{report.config.columns.length} 列</p>
-                  <p>• 导出格式：{format.toUpperCase()}</p>
-                  <p>
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    fontSize: "0.875rem",
+                    color: "#475569",
+                  }}
+                >
+                  <Typography>• 报表名称：{report.config.title}</Typography>
+                  <Typography>• 数据行数：{report.row_count} 条</Typography>
+                  <Typography>
+                    • 导出列数：{report.config.columns.length} 列
+                  </Typography>
+                  <Typography>• 导出格式：{format.toUpperCase()}</Typography>
+                  <Typography>
                     • 文件名：{generateFilename()}.
                     {format === "excel" ? "csv" : format}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Box>
+              </Box>
             </>
           )}
 
           {exporting && (
-            <div className="text-center py-12">
-              <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
-              <p className="text-lg font-medium text-slate-900">
+            <Box sx={{ textAlign: "center", py: 12 }}>
+              <CircularProgress sx={{ color: "#2563eb", mb: 4 }} size={64} />
+              <Typography
+                sx={{ fontSize: "1.125rem", fontWeight: 500, color: "#0f172a" }}
+              >
                 正在导出报表...
-              </p>
-              <div className="mt-4 w-full bg-slate-200 rounded-full h-2.5">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full transition-all"
-                  style={{ width: `${exportProgress}%` }}
+              </Typography>
+              <Box
+                sx={{
+                  mt: 4,
+                  width: "100%",
+                  backgroundColor: "#e2e8f0",
+                  borderRadius: 20,
+                  height: 10,
+                }}
+              >
+                <Box
+                  sx={{
+                    backgroundColor: "#2563eb",
+                    height: 10,
+                    borderRadius: 20,
+                    transition: "all",
+                    width: `${exportProgress}%`,
+                  }}
                 />
-              </div>
-              <p className="text-sm text-slate-600 mt-2">{exportProgress}%</p>
-            </div>
+              </Box>
+              <Typography
+                sx={{ fontSize: "0.875rem", color: "#475569", mt: 2 }}
+              >
+                {exportProgress}%
+              </Typography>
+            </Box>
           )}
 
           {exportComplete && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <p className="text-lg font-medium text-slate-900">导出成功！</p>
-              <p className="text-sm text-slate-600 mt-2">文件已开始下载</p>
-            </div>
+            <Box sx={{ textAlign: "center", py: 12 }}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  backgroundColor: "#dcfce7",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
+                  mb: 4,
+                }}
+              >
+                <CheckCircle
+                  style={{ width: 32, height: 32, color: "#16a34a" }}
+                />
+              </Box>
+              <Typography
+                sx={{ fontSize: "1.125rem", fontWeight: 500, color: "#0f172a" }}
+              >
+                导出成功！
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.875rem", color: "#475569", mt: 2 }}
+              >
+                文件已开始下载
+              </Typography>
+            </Box>
           )}
 
           {exportError && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <X className="w-8 h-8 text-red-600" />
-              </div>
-              <p className="text-lg font-medium text-red-900">{exportError}</p>
-              <button
+            <Box sx={{ textAlign: "center", py: 12 }}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  backgroundColor: "#fee2e2",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mx: "auto",
+                  mb: 4,
+                }}
+              >
+                <X style={{ width: 32, height: 32, color: "#dc2626" }} />
+              </Box>
+              <Typography
+                sx={{ fontSize: "1.125rem", fontWeight: 500, color: "#7f1d1d" }}
+              >
+                {exportError}
+              </Typography>
+              <Button
                 onClick={() => setExportError(null)}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                sx={{
+                  mt: 4,
+                  px: 4,
+                  py: 2,
+                  backgroundColor: "#dc2626",
+                  color: "white",
+                  borderRadius: 2,
+                  "&:hover": { backgroundColor: "#b91c1c" },
+                }}
               >
                 重试
-              </button>
-            </div>
+              </Button>
+            </Box>
           )}
-        </div>
+        </Box>
 
         {/* Footer */}
         {!exporting && !exportComplete && !exportError && (
-          <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-            <button
+          <Box
+            sx={{
+              p: 6,
+              borderTop: "1px solid #e2e8f0",
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 3,
+            }}
+          >
+            <Button
               onClick={onClose}
-              className="px-4 py-2 text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
+              sx={{
+                px: 4,
+                py: 2,
+                color: "#334155",
+                backgroundColor: "#f1f5f9",
+                borderRadius: 2,
+                "&:hover": { backgroundColor: "#e2e8f0" },
+              }}
             >
               取消
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleExport}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+              sx={{
+                px: 6,
+                py: 2,
+                backgroundColor: "#22c55e",
+                color: "white",
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                "&:hover": { backgroundColor: "#16a34a" },
+              }}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
               导出
-            </button>
-          </div>
+            </Button>
+          </Box>
         )}
-      </div>
-    </div>
+      </Paper>
+    </Box>
   );
 };
 

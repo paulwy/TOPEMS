@@ -19,6 +19,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { srmApi } from "@/api/srm";
 import type { SupplierEvaluation } from "@/api/srm";
 import { toast } from "react-toastify";
+import { apiLogger } from "@/utils/logger";
 
 const SrmEvaluationPage: React.FC = () => {
   const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
@@ -55,7 +56,7 @@ const SrmEvaluationPage: React.FC = () => {
         setEvaluations([]);
       }
     } catch (err) {
-      console.error("加载评估数据失败:", err);
+      apiLogger.error("加载评估数据失败:", err);
       setEvaluations([]);
     } finally {
       setLoading(false);
@@ -153,7 +154,7 @@ const SrmEvaluationPage: React.FC = () => {
       loadEvaluations();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建评估失败:", err);
+      apiLogger.error("创建评估失败:", err);
     }
   };
 

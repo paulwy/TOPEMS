@@ -4,6 +4,7 @@ import { Bell, Check, CheckCheck, Clock } from "lucide-react";
 
 import { imApi, type Notification } from "../../api/im";
 import { useAppStore } from "../../store";
+import { logger } from "@/utils/logger";
 
 interface NotificationListProps {
   userId?: string;
@@ -25,7 +26,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
         setNotifications(data.notifications || []);
       }
     } catch (error) {
-      console.error("Failed to load notifications:", error);
+      logger.error("Failed to load notifications:", error);
     } finally {
       setLoading(false);
     }
@@ -33,6 +34,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
 
   useEffect(() => {
     loadNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const handleMarkAsRead = async (notificationId: string) => {
@@ -46,7 +48,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
         );
       }
     } catch (error) {
-      console.error("Failed to mark notification as read:", error);
+      logger.error("Failed to mark notification as read:", error);
     }
   };
 
@@ -62,7 +64,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
         });
       }
     } catch (error) {
-      console.error("Failed to mark all notifications as read:", error);
+      logger.error("Failed to mark all notifications as read:", error);
     }
   };
 

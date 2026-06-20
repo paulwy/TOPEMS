@@ -62,6 +62,7 @@ import {
   formatPercent,
 } from "@/components/charts/CustomTooltip";
 import { StatCardGroup } from "@/components/mui";
+import { apiLogger } from "@/utils/logger";
 
 const FinanceReportsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -215,7 +216,7 @@ const FinanceReportsPage: React.FC = () => {
       if (financialOverviewData.success && financialOverviewData.data)
         setFinancialOverview(financialOverviewData.data);
     } catch (err) {
-      console.error("加载报表失败:", err);
+      apiLogger.error("加载报表失败:", err);
       addNotification({
         title: "错误",
         message: "加载报表数据失败",

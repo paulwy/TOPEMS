@@ -16,10 +16,9 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-export function useDebouncedCallback<T extends (...args: Parameters<T>) => ReturnType<T>>(
-  callback: T,
-  delay: number
-): (...args: Parameters<T>) => void {
+export function useDebouncedCallback<
+  T extends (...args: Parameters<T>) => ReturnType<T>,
+>(callback: T, delay: number): (...args: Parameters<T>) => void {
   const debouncedRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return (...args: Parameters<T>) => {

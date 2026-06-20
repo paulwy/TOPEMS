@@ -12,6 +12,7 @@ import {
 import type { Friend, ContactGroup } from "../../api/im";
 import { imApi } from "../../api/im";
 import { useAppStore } from "../../store";
+import { logger } from "@/utils/logger";
 
 interface ContactListProps {
   onSelectContact?: (friend: Friend) => void;
@@ -45,7 +46,7 @@ export const ContactList: React.FC<ContactListProps> = ({
         setFriends(response.data.friends || []);
       }
     } catch (error) {
-      console.error("Failed to load friends:", error);
+      logger.error("Failed to load friends:", error);
     }
   };
 
@@ -57,7 +58,7 @@ export const ContactList: React.FC<ContactListProps> = ({
         setGroups(response.data.groups || []);
       }
     } catch (error) {
-      console.error("Failed to load groups:", error);
+      logger.error("Failed to load groups:", error);
     }
   };
 
@@ -80,7 +81,7 @@ export const ContactList: React.FC<ContactListProps> = ({
         loadGroups();
       }
     } catch (error) {
-      console.error("Failed to create group:", error);
+      logger.error("Failed to create group:", error);
       addNotification({
         title: "失败",
         message: "分组创建失败",
@@ -105,7 +106,7 @@ export const ContactList: React.FC<ContactListProps> = ({
         loadFriends();
       }
     } catch (error) {
-      console.error("Failed to accept friend:", error);
+      logger.error("Failed to accept friend:", error);
     }
   };
 
@@ -125,7 +126,7 @@ export const ContactList: React.FC<ContactListProps> = ({
         loadFriends();
       }
     } catch (error) {
-      console.error("Failed to reject friend:", error);
+      logger.error("Failed to reject friend:", error);
     }
   };
 
@@ -146,7 +147,7 @@ export const ContactList: React.FC<ContactListProps> = ({
         loadFriends();
       }
     } catch (error) {
-      console.error("Failed to remove friend:", error);
+      logger.error("Failed to remove friend:", error);
     }
   };
 

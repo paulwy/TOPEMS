@@ -20,6 +20,7 @@ import {
   IconButton,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Building,
   Search,
@@ -50,6 +51,7 @@ import { useAppStore } from "../../store";
 import type { TreeNode } from "@/components/TreeView";
 import TreeView from "@/components/TreeView";
 import { StatCardGroup } from "@/components/mui";
+import { logger } from "@/utils/logger";
 
 const HrmCompanyPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -123,7 +125,7 @@ const HrmCompanyPage: React.FC = () => {
       const tree = buildTree(depts, emps);
       setTreeData(tree);
     } catch (error: any) {
-      console.error("Failed to fetch company details:", error);
+      apiLogger.error("Failed to fetch company details:", error);
     } finally {
       setLoading(false);
     }

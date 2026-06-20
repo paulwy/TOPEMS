@@ -88,9 +88,7 @@ export interface PerformanceReport {
 
 export const monitorApi = {
   getSystemMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
-    return apiClient.master.get<SystemMetrics>(
-      "/api/monitor/metrics/system",
-    );
+    return apiClient.master.get<SystemMetrics>("/api/monitor/metrics/system");
   },
 
   getServiceHealth: async (): Promise<ApiResponse<ServiceHealth[]>> => {
@@ -131,9 +129,7 @@ export const monitorApi = {
   },
 
   acknowledgeAlert: async (id: string): Promise<ApiResponse<Alert>> => {
-    return apiClient.master.put<Alert>(
-      `/api/monitor/alerts/${id}/acknowledge`,
-    );
+    return apiClient.master.put<Alert>(`/api/monitor/alerts/${id}/acknowledge`);
   },
 
   resolveAlert: async (id: string): Promise<ApiResponse<Alert>> => {
@@ -154,9 +150,7 @@ export const monitorApi = {
   },
 
   getRealtimeMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
-    return apiClient.master.get<SystemMetrics>(
-      "/api/monitor/metrics/realtime",
-    );
+    return apiClient.master.get<SystemMetrics>("/api/monitor/metrics/realtime");
   },
 
   health: async (): Promise<ApiResponse<string>> => {

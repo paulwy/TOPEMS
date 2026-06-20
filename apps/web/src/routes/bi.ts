@@ -9,7 +9,9 @@ const BIAnalyticsPage = lazy(() => import("../pages/bi/BIAnalyticsPage"));
 const BIComparisonPage = lazy(() => import("../pages/bi/BIComparisonPage"));
 const BIReportPage = lazy(() => import("../pages/bi/BIReportPage"));
 const BIDataSourcePage = lazy(() => import("../pages/bi/BIDataSourcePage"));
-const BIVisualizationPage = lazy(() => import("../pages/bi/BIVisualizationPage"));
+const BIVisualizationPage = lazy(
+  () => import("../pages/bi/BIVisualizationPage"),
+);
 const BIModuleDetailPage = lazy(() => import("../pages/bi/BIModuleDetailPage"));
 
 export const biRoutes: RouteConfig[] = [

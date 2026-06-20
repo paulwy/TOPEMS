@@ -1,33 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Pagination,
-  Select,
-  Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import {
-  Eye,
-  Edit,
-  Copy,
-  Trash2,
-  Plus,
-  Search,
-  FileText,
-  Loader2,
-} from "lucide-react";
+import { Eye, Edit, Copy, Trash2, Plus, FileText } from "lucide-react";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
 
 interface FlowTemplate {
   id: string;
@@ -131,11 +115,8 @@ const getTypeText = (type: string) => {
 
 const FlowTemplatePage: React.FC = () => {
   const [data, setData] = useState<FlowTemplate[]>(mockTemplates);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [typeFilter, setTypeFilter] = useState<string>("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(
     null,
@@ -145,23 +126,16 @@ const FlowTemplatePage: React.FC = () => {
     const matchesSearch = item.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || item.type === typeFilter;
+    const matchesType = !typeFilter || item.type === typeFilter;
     return matchesSearch && matchesType;
   });
 
-  const paginatedData = filteredData.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-
   const handleView = (template: FlowTemplate) => {
-    console.log("查看模板:", template.id);
+    apiLogger.info("查看模板:", template.id);
   };
 
   const handleEdit = (template: FlowTemplate) => {
-    console.log("编辑模板:", template.id);
+    apiLogger.info("编辑模板:", template.id);
   };
 
   const handleCopy = (template: FlowTemplate) => {
@@ -188,200 +162,123 @@ const FlowTemplatePage: React.FC = () => {
     }
   };
 
-  const handleNewTemplate = () => {
-    console.log("新建模板");
-  };
+  const columns = useMemo<ColumnDef<FlowTemplate>[]>(
+    () => [
+      {
+        id: "name",
+        label: "模板名称",
+        render: (row) => (
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            {row.name}
+          </Typography>
+        ),
+      },
+      {
+        id: "type",
+        label: "模板类型",
+        render: (row) => getTypeText(row.type),
+      },
+      {
+        id: "scope",
+        label: "适用范围",
+        render: (row) => row.scope,
+      },
+      {
+        id: "usageCount",
+        label: "使用次数",
+        render: (row) => row.usageCount,
+      },
+      {
+        id: "creator",
+        label: "创建人",
+        render: (row) => row.creator,
+      },
+      {
+        id: "createdAt",
+        label: "创建时间",
+        render: (row) => row.createdAt,
+      },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo<RowAction<FlowTemplate>[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: (row) => handleView(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: "复制",
+        icon: <Copy size={16} />,
+        onClick: (row) => handleCopy(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        color: "error",
+        onClick: (row) => handleDelete(row),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "type",
+        label: "模板类型",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "approval", label: "审批流程" },
+          { value: "reimbursement", label: "报销流程" },
+          { value: "purchase", label: "采购流程" },
+          { value: "contract", label: "合同流程" },
+        ],
+        value: typeFilter,
+        onChange: (value) => {
+          setTypeFilter(value as string);
+        },
+      },
+    ],
+    [typeFilter],
+  );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", p: 3 }}>
-      <Box
-        sx={{ bgcolor: "white", borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}
-      >
-        <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              bgcolor: "primary.light",
-              borderRadius: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <FileText size={24} style={{ color: "#8b5cf6" }} />
-          </Box>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              流程模板
-            </Typography>
-            <Typography variant="body2" sx={{ color: "grey.500" }}>
-              管理和使用流程模板
-            </Typography>
-          </Box>
-        </Stack>
-      </Box>
-
-      <Box
-        sx={{ bgcolor: "white", borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}
-      >
-        <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
-          <TextField
-            size="small"
-            type="text"
-            placeholder="搜索模板名称..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <Search
-                    size={20}
-                    style={{ marginRight: 8, color: "#9ca3af" }}
-                  />
-                ),
-              },
-            }}
-            sx={{ flex: 1, maxWidth: 300 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>模板类型</InputLabel>
-            <Select
-              value={typeFilter}
-              label="模板类型"
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
-              <MenuItem value="all">全部</MenuItem>
-              <MenuItem value="approval">审批流程</MenuItem>
-              <MenuItem value="reimbursement">报销流程</MenuItem>
-              <MenuItem value="purchase">采购流程</MenuItem>
-              <MenuItem value="contract">合同流程</MenuItem>
-            </Select>
-          </FormControl>
-          <Button
-            variant="contained"
-            startIcon={<Plus size={16} />}
-            onClick={handleNewTemplate}
-            sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" } }}
-          >
-            新建模板
-          </Button>
-          <IconButton onClick={() => setLoading(true)} title="刷新">
-            <Loader2
-              size={20}
-              sx={{
-                animation: loading ? "spin 1s linear infinite" : "none",
-              }}
-            />
-          </IconButton>
-        </Stack>
-      </Box>
-
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ overflowX: "auto" }}>
-            <Box
-              component="table"
-              sx={{ width: "100%", borderCollapse: "collapse" }}
-            >
-              <Box component="thead">
-                <Box
-                  component="tr"
-                  sx={{
-                    bgcolor: "grey.100",
-                    "& th": {
-                      px: 3,
-                      py: 2,
-                      textAlign: "left",
-                      fontWeight: 600,
-                      fontSize: 14,
-                      color: "grey.700",
-                    },
-                  }}
-                >
-                  <th>模板名称</th>
-                  <th>模板类型</th>
-                  <th>适用范围</th>
-                  <th>使用次数</th>
-                  <th>创建人</th>
-                  <th>创建时间</th>
-                  <th>操作</th>
-                </Box>
-              </Box>
-              <Box component="tbody">
-                {paginatedData.map((template, index) => (
-                  <Box
-                    component="tr"
-                    key={template.id}
-                    sx={{
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                      bgcolor: index % 2 === 0 ? "white" : "grey.50",
-                      "&:hover": { bgcolor: "primary.light" },
-                      "& td": {
-                        px: 3,
-                        py: 2,
-                        fontSize: 14,
-                      },
-                    }}
-                  >
-                    <td>{template.name}</td>
-                    <td>{getTypeText(template.type)}</td>
-                    <td>{template.scope}</td>
-                    <td>{template.usageCount}</td>
-                    <td>{template.creator}</td>
-                    <td>{template.createdAt}</td>
-                    <td>
-                      <Stack direction="row" spacing={1}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleView(template)}
-                          title="查看"
-                        >
-                          <Eye size={18} />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEdit(template)}
-                          title="编辑"
-                        >
-                          <Edit size={18} />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleCopy(template)}
-                          title="复制"
-                        >
-                          <Copy size={18} />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDelete(template)}
-                          title="删除"
-                          sx={{ color: "error.main" }}
-                        >
-                          <Trash2 size={18} />
-                        </IconButton>
-                      </Stack>
-                    </td>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, newPage) => setPage(newPage)}
-            color="primary"
-          />
-        </Box>
-      )}
+    <>
+      <ListPageTemplate<FlowTemplate>
+        title="流程模板"
+        subtitle="管理和使用流程模板"
+        backButton={{
+          href: "/dashboard",
+        }}
+        columns={columns}
+        data={filteredData}
+        searchable
+        searchPlaceholder="搜索模板名称..."
+        searchValue={searchTerm}
+        onSearch={(value) => {
+          setSearchTerm(value);
+        }}
+        filters={filters}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: "新建模板",
+            icon: <Plus size={18} />,
+            onClick: () => {},
+            variant: "contained",
+          },
+        ]}
+      />
 
       <Dialog
         open={showDeleteDialog}
@@ -405,7 +302,7 @@ const FlowTemplatePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

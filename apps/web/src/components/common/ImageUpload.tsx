@@ -23,6 +23,7 @@ import {
   RotateCw,
   Check,
 } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 /**
  * 图片上传组件属性
@@ -109,12 +110,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         if (validFiles.length >= remainingSlots) return;
 
         if (!file.type.startsWith("image/")) {
-          console.warn(`文件 ${file.name} 不是图片类型`);
+          logger.warn(`文件 ${file.name} 不是图片类型`);
           return;
         }
 
         if (file.size > maxSize * 1024 * 1024) {
-          console.warn(`文件 ${file.name} 超过大小限制 ${maxSize}MB`);
+          logger.warn(`文件 ${file.name} 超过大小限制 ${maxSize}MB`);
           return;
         }
 

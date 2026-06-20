@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -8,7 +9,15 @@ import { Eye, EyeOff, Lock, User, Shield, Fingerprint } from "lucide-react";
 import { isDevelopment } from "../../config/runtime";
 import { useAppStore } from "../../store";
 
-import { Card as MuiCard, CardContent, Box, IconButton, Button, Typography, TextField } from "@mui/material";
+import {
+  Card as MuiCard,
+  CardContent,
+  Box,
+  IconButton,
+  Button,
+  Typography,
+  TextField,
+} from "@mui/material";
 
 import { ModeToggle } from "@/components/ModeToggle";
 
@@ -64,7 +73,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         password: values.password,
       });
 
-      console.log("登录响应:", response);
+      apiLogger.info("登录响应:", response);
 
       if (response.success) {
         addNotification({
@@ -80,7 +89,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         });
       }
     } catch (err: any) {
-      console.error("登录错误:", err);
+      apiLogger.error("登录错误:", err);
       addNotification({
         title: "错误",
         message: err.message || "请求失败",

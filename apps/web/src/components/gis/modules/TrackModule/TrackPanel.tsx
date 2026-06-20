@@ -1,9 +1,20 @@
 // modules/TrackModule/TrackPanel.tsx
 import React, { useState, useMemo } from "react";
 import { Search, Calendar, MapPin } from "lucide-react";
+import {
+  Box,
+  Button,
+  Typography,
+  Paper,
+  TextField,
+  IconButton,
+  Grid,
+  Divider,
+} from "@mui/material";
 import type { DevicePoint } from "../../../../api/gis";
 import type { TrackRecord, TrackStatistics, TrackPoint } from "./types";
 import TrackPlayer from "./TrackPlayer";
+import { logger } from "@/utils/logger";
 
 interface TrackPanelProps {
   devicePoints: DevicePoint[];
@@ -131,22 +142,38 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
   // Handle seek
   const handleSeek = (index: number) => {
     // In a real implementation, this would seek to the specific point
-    console.log("Seek to index:", index);
+    logger.info("Seek to index:", index);
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <h2 className="text-lg font-semibold text-gray-900">设备轨迹追踪</h2>
-        <button
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 4,
+          py: 3,
+          borderBottom: 1,
+          borderColor: "#e5e7eb",
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          sx={{ fontWeight: 600, color: "#111827" }}
+        >
+          设备轨迹追踪
+        </Typography>
+        <IconButton
           onClick={onClose}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
+          sx={{ p: 1, "&:hover": { bgcolor: "#f3f4f6" } }}
         >
           <svg
-            className="w-5 h-5 text-gray-500"
+            width={20}
+            height={20}
             fill="none"
-            stroke="currentColor"
+            stroke="#6b7280"
             viewBox="0 0 24 24"
           >
             <path
@@ -156,63 +183,108 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
-      </div>
+        </IconButton>
+      </Box>
 
-      <div className="flex flex-1 overflow-hidden">
+      <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Device List */}
-        <div className="w-1/3 border-r flex flex-col">
+        <Box
+          sx={{
+            width: "33.33%",
+            borderRight: 1,
+            borderColor: "#e5e7eb",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* Search */}
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
+          <Box sx={{ p: 3, borderBottom: 1, borderColor: "#e5e7eb" }}>
+            <Box sx={{ position: "relative" }}>
+              <Search
+                size={16}
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#9ca3af",
+                }}
+              />
+              <TextField
                 placeholder="搜索设备..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                size="small"
+                fullWidth
+                sx={{ pl: 9 }}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {/* Device List */}
-          <div className="flex-1 overflow-y-auto">
+          <Box sx={{ flex: 1, overflowY: "auto" }}>
             {filteredDevices.map((device) => (
-              <button
+              <Button
                 key={device.id}
                 onClick={() => handleDeviceSelect(device)}
-                className={`w-full px-4 py-3 text-left border-b hover:bg-gray-50 transition-colors ${
-                  selectedDevice?.id === device.id ? "bg-blue-50" : ""
-                }`}
+                sx={{
+                  width: "100%",
+                  px: 4,
+                  py: 3,
+                  textAlign: "left",
+                  borderBottom: 1,
+                  borderColor: "#e5e7eb",
+                  bgcolor:
+                    selectedDevice?.id === device.id
+                      ? "#eff6ff"
+                      : "transparent",
+                  "&:hover": { bgcolor: "#f9fafb" },
+                  textTransform: "none",
+                }}
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-full">
-                    <MapPin className="w-4 h-4 text-green-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 truncate">
+                <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                  <Box sx={{ p: 2, bgcolor: "#dcfce7", borderRadius: "50%" }}>
+                    <MapPin size={16} style={{ color: "#16a34a" }} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        color: "#111827",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {device.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#6b7280" }}>
                       {device.device_type}
-                    </div>
-                  </div>
-                </div>
-              </button>
+                    </Typography>
+                  </Box>
+                </Box>
+              </Button>
             ))}
             {filteredDevices.length === 0 && (
-              <div className="px-4 py-8 text-center text-gray-500 text-sm">
+              <Box
+                sx={{
+                  px: 4,
+                  py: 8,
+                  textAlign: "center",
+                  color: "#6b7280",
+                  fontSize: "0.875rem",
+                }}
+              >
                 未找到设备
-              </div>
+              </Box>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Track Player */}
-        <div className="flex-1 flex flex-col">
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
           {currentTrack ? (
-            <div className="flex-1 p-4 overflow-y-auto">
+            <Box sx={{ flex: 1, p: 4, overflowY: "auto" }}>
               <TrackPlayer
                 track={currentTrack}
                 isPlaying={isPlaying}
@@ -226,40 +298,94 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
               />
 
               {/* Track Points List */}
-              <div className="mt-4">
-                <h4 className="font-medium text-gray-900 mb-2">轨迹点列表</h4>
-                <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 sticky top-0">
+              <Box sx={{ mt: 4 }}>
+                <Typography sx={{ fontWeight: 500, color: "#111827", mb: 2 }}>
+                  轨迹点列表
+                </Typography>
+                <Box
+                  sx={{
+                    maxHeight: 256,
+                    overflowY: "auto",
+                    border: 1,
+                    borderColor: "#e5e7eb",
+                    borderRadius: 2,
+                  }}
+                >
+                  <table style={{ width: "100%", fontSize: "0.875rem" }}>
+                    <thead
+                      style={{
+                        backgroundColor: "#f9fafb",
+                        position: "sticky",
+                        top: 0,
+                      }}
+                    >
                       <tr>
-                        <th className="px-3 py-2 text-left text-gray-500 font-medium">
+                        <th
+                          style={{
+                            padding: "8px 12px",
+                            textAlign: "left",
+                            color: "#6b7280",
+                            fontWeight: 500,
+                          }}
+                        >
                           #
                         </th>
-                        <th className="px-3 py-2 text-left text-gray-500 font-medium">
+                        <th
+                          style={{
+                            padding: "8px 12px",
+                            textAlign: "left",
+                            color: "#6b7280",
+                            fontWeight: 500,
+                          }}
+                        >
                           时间
                         </th>
-                        <th className="px-3 py-2 text-left text-gray-500 font-medium">
+                        <th
+                          style={{
+                            padding: "8px 12px",
+                            textAlign: "left",
+                            color: "#6b7280",
+                            fontWeight: 500,
+                          }}
+                        >
                           坐标
                         </th>
-                        <th className="px-3 py-2 text-left text-gray-500 font-medium">
+                        <th
+                          style={{
+                            padding: "8px 12px",
+                            textAlign: "left",
+                            color: "#6b7280",
+                            fontWeight: 500,
+                          }}
+                        >
                           速度
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody>
                       {currentTrack.points.slice(0, 50).map((point, index) => (
-                        <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-3 py-2 text-gray-500">
+                        <tr
+                          key={index}
+                          style={{ borderBottom: "1px solid #f3f4f6" }}
+                        >
+                          <td style={{ padding: "8px 12px", color: "#6b7280" }}>
                             {index + 1}
                           </td>
-                          <td className="px-3 py-2 text-gray-700">
+                          <td style={{ padding: "8px 12px", color: "#374151" }}>
                             {new Date(point.timestamp).toLocaleTimeString()}
                           </td>
-                          <td className="px-3 py-2 font-mono text-xs text-gray-600">
+                          <td
+                            style={{
+                              padding: "8px 12px",
+                              fontFamily: "monospace",
+                              fontSize: "0.75rem",
+                              color: "#4b5563",
+                            }}
+                          >
                             {point.position[0].toFixed(5)},{" "}
                             {point.position[1].toFixed(5)}
                           </td>
-                          <td className="px-3 py-2 text-gray-700">
+                          <td style={{ padding: "8px 12px", color: "#374151" }}>
                             {point.speed?.toFixed(1) || "-"} km/h
                           </td>
                         </tr>
@@ -267,26 +393,45 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                     </tbody>
                   </table>
                   {currentTrack.points.length > 50 && (
-                    <div className="px-3 py-2 text-center text-xs text-gray-500 bg-gray-50">
+                    <Box
+                      sx={{
+                        px: 3,
+                        py: 2,
+                        textAlign: "center",
+                        fontSize: "0.75rem",
+                        color: "#6b7280",
+                        bgcolor: "#f9fafb",
+                      }}
+                    >
                       显示前 50 个点，共 {currentTrack.points.length} 个点
-                    </div>
+                    </Box>
                   )}
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Box sx={{ textAlign: "center" }}>
+                <Calendar
+                  size={48}
+                  style={{ color: "#d1d5db", margin: "0 auto 12px" }}
+                />
+                <Typography sx={{ color: "#6b7280", fontSize: "0.875rem" }}>
                   从左侧列表选择设备以查看轨迹
-                </p>
-              </div>
-            </div>
+                </Typography>
+              </Box>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

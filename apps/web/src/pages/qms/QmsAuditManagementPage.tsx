@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,7 +15,24 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions,  Button, TextField, Chip, Card, CardContent, CardHeader, Box, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -56,7 +74,7 @@ const QmsAuditManagementPage: React.FC = () => {
         setPlans(plansArray);
       }
     } catch (error) {
-      console.error("加载审核计划失败:", error);
+      apiLogger.error("加载审核计划失败:", error);
     } finally {
       setLoading(false);
     }
@@ -85,7 +103,7 @@ const QmsAuditManagementPage: React.FC = () => {
         setFindings(findingsArray);
       }
     } catch (error) {
-      console.error("加载审核详情失败:", error);
+      apiLogger.error("加载审核详情失败:", error);
     }
   };
 
@@ -123,7 +141,7 @@ const QmsAuditManagementPage: React.FC = () => {
         resetForm();
       }
     } catch (error) {
-      console.error("创建审核计划失败:", error);
+      apiLogger.error("创建审核计划失败:", error);
     }
   };
 
@@ -134,7 +152,7 @@ const QmsAuditManagementPage: React.FC = () => {
         loadPlanDetails(selectedPlan.id);
       }
     } catch (error) {
-      console.error("完成审核任务失败:", error);
+      apiLogger.error("完成审核任务失败:", error);
     }
   };
 

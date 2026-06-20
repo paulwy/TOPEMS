@@ -43,6 +43,7 @@ import {
 import { useAppStore } from "../../store";
 import { AIHelperButton, AICodeGenerator } from "@/components/ai";
 import { StatCardGroup } from "@/components/mui";
+import { apiLogger } from "@/utils/logger";
 
 interface OrganizationNode {
   id: string;
@@ -318,7 +319,7 @@ const HrmOrganizationPage: React.FC = () => {
         setEmployees(filtered);
       }
     } catch (error: any) {
-      console.error("Failed to fetch employees:", error);
+      apiLogger.error("Failed to fetch employees:", error);
     }
   };
 
@@ -332,7 +333,7 @@ const HrmOrganizationPage: React.FC = () => {
         setEmployees((response.data as any).items || []);
       }
     } catch (error: any) {
-      console.error("Failed to fetch employees:", error);
+      apiLogger.error("Failed to fetch employees:", error);
     }
   };
 

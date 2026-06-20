@@ -47,6 +47,7 @@ import {
   Tab,
   CircularProgress,
 } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 
 const FlowWorkflowPage: React.FC = () => {
   const navigate = useNavigate();
@@ -68,6 +69,7 @@ const FlowWorkflowPage: React.FC = () => {
 
   useEffect(() => {
     loadWorkflows();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const loadWorkflows = async () => {
@@ -87,7 +89,7 @@ const FlowWorkflowPage: React.FC = () => {
         setWorkflows([]);
       }
     } catch (err) {
-      console.error("加载工作流列表失败:", err);
+      apiLogger.error("加载工作流列表失败:", err);
       addNotification({
         title: "加载失败",
         message: "加载工作流列表失败",
@@ -139,7 +141,7 @@ const FlowWorkflowPage: React.FC = () => {
         message: "创建工作流失败",
         type: "error",
       });
-      console.error("创建失败:", err);
+      apiLogger.error("创建失败:", err);
     } finally {
       setCreating(false);
     }
@@ -170,7 +172,7 @@ const FlowWorkflowPage: React.FC = () => {
         message: "删除工作流失败",
         type: "error",
       });
-      console.error("删除失败:", err);
+      apiLogger.error("删除失败:", err);
     }
   };
 
@@ -195,7 +197,7 @@ const FlowWorkflowPage: React.FC = () => {
       }
     } catch (err) {
       addNotification({ title: "失败", message: "操作失败", type: "error" });
-      console.error("切换状态失败:", err);
+      apiLogger.error("切换状态失败:", err);
     }
   };
 
@@ -308,6 +310,7 @@ const FlowWorkflowPage: React.FC = () => {
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [navigate],
   );
 

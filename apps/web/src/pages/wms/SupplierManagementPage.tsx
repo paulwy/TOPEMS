@@ -34,6 +34,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 import { ImageUpload } from "@/components/common";
+import { apiLogger } from "@/utils/logger";
 
 const SupplierManagementPage: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -64,6 +65,7 @@ const SupplierManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadSuppliers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, searchTerm, statusFilter]);
 
   const loadSuppliers = async () => {
@@ -82,7 +84,7 @@ const SupplierManagementPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载供应商列表失败:", error);
+      apiLogger.error("加载供应商列表失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -118,7 +120,7 @@ const SupplierManagementPage: React.FC = () => {
       resetForm();
       loadSuppliers();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",
@@ -138,7 +140,7 @@ const SupplierManagementPage: React.FC = () => {
       });
       loadSuppliers();
     } catch (error) {
-      console.error("删除失败:", error);
+      apiLogger.error("删除失败:", error);
       addNotification({
         type: "error",
         title: "删除失败",
@@ -543,12 +545,18 @@ const SupplierManagementPage: React.FC = () => {
                 fullWidth
               />
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mb: 1, display: "block" }}
+                >
                   供应商图片
                 </Typography>
                 <ImageUpload
                   value={(formData as any).images || []}
-                  onChange={(files) => setFormData({ ...formData, images: files } as any)}
+                  onChange={(files) =>
+                    setFormData({ ...formData, images: files } as any)
+                  }
                   maxCount={9}
                   accept="image/*"
                   cropEnabled

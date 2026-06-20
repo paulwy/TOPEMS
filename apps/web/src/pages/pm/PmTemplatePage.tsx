@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { logger } from "@/utils/logger";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -122,7 +123,7 @@ const PmTemplatePage: React.FC = () => {
         navigate("/pm/projects");
       }
     } catch (error) {
-      console.error("Failed to create project:", error);
+      logger.error("Failed to create project:", error);
     } finally {
       setLoading(false);
     }

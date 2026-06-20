@@ -7,6 +7,7 @@ import { StaleWhileRevalidate } from "workbox-strategies";
 import { CacheFirst } from "workbox-strategies";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
+import { logger } from "@/utils/logger";
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: PrecacheEntry[];
@@ -84,7 +85,7 @@ async function syncData() {
         await queue.delete(request);
       }
     } catch (error) {
-      console.error("Sync failed:", error);
+      logger.error("Sync failed:", error);
     }
   }
 }

@@ -176,7 +176,10 @@ export const pdmApi = {
   createStep: async (
     data: CreateProductionStepRequest,
   ): Promise<ApiResponse<ProductionStep>> => {
-    return apiClient.pdm.post<ProductionStep>("/api/pdm/production-steps", data);
+    return apiClient.pdm.post<ProductionStep>(
+      "/api/pdm/production-steps",
+      data,
+    );
   },
   updateStep: async (
     id: string,

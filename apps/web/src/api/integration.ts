@@ -137,9 +137,7 @@ export const integrationApi = {
   },
 
   syncLimsQms: async (id: string): Promise<ApiResponse<LimsQmsSync>> => {
-    return apiClient.integration.post(
-      `/api/integration/lims-qms/${id}/sync`,
-    );
+    return apiClient.integration.post(`/api/integration/lims-qms/${id}/sync`);
   },
 
   // MES-ERP 同步

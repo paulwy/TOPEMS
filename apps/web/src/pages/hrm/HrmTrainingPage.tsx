@@ -28,6 +28,7 @@ import {
   type TrainingRecord,
   type Employee,
 } from "@/api/hrm";
+import { apiLogger } from "@/utils/logger";
 import { useNotification } from "@/hooks/useNotification";
 import { PageHeader } from "@/components/templates";
 
@@ -118,7 +119,7 @@ const HrmTrainingPage: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error("Failed to load data:", err);
+      apiLogger.error("Failed to load data:", err);
       error("加载数据失败");
     } finally {
       setLoading(false);
@@ -132,7 +133,7 @@ const HrmTrainingPage: React.FC = () => {
         setEmployees(res.data?.items || []);
       }
     } catch (err) {
-      console.error("Failed to load employees:", err);
+      apiLogger.error("Failed to load employees:", err);
     }
   };
 
@@ -201,7 +202,7 @@ const HrmTrainingPage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("Failed to save:", err);
+      apiLogger.error("Failed to save:", err);
       error("保存失败");
     }
   };
@@ -224,7 +225,7 @@ const HrmTrainingPage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("Failed to delete:", err);
+      apiLogger.error("Failed to delete:", err);
       error("删除失败");
     }
   };
@@ -239,7 +240,7 @@ const HrmTrainingPage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("Failed to update status:", err);
+      apiLogger.error("Failed to update status:", err);
       error("操作失败");
     }
   };
@@ -259,7 +260,7 @@ const HrmTrainingPage: React.FC = () => {
         loadData();
       }
     } catch (err) {
-      console.error("Failed to enroll:", err);
+      apiLogger.error("Failed to enroll:", err);
       error("报名失败");
     }
   };

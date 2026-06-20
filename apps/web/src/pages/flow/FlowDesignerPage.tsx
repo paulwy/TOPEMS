@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { logger } from "@/utils/logger";
 import {
   Box,
   Button,
@@ -83,11 +84,11 @@ const FlowDesignerPage: React.FC = () => {
   };
 
   const handleSave = () => {
-    console.log("保存流程图", nodes, edges);
+    logger.info("保存流程图", nodes, edges);
   };
 
   const handlePreview = () => {
-    console.log("预览流程");
+    logger.info("预览流程");
   };
 
   return (

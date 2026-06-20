@@ -95,10 +95,7 @@ export const voucherTemplateApi = {
     templateId: string,
     entry: Partial<VoucherTemplateEntry>,
   ) =>
-    apiClient.erp.post(
-      `/api/voucher/templates/${templateId}/entries`,
-      entry,
-    ),
+    apiClient.erp.post(`/api/voucher/templates/${templateId}/entries`, entry),
 
   /**
    * 更新模板分录
@@ -125,10 +122,9 @@ export const voucherTemplateApi = {
    * 重新排序模板分录
    */
   reorderTemplateEntries: (templateId: string, entryIds: string[]) =>
-    apiClient.erp.put(
-      `/api/voucher/templates/${templateId}/entries/reorder`,
-      { entry_ids: entryIds },
-    ),
+    apiClient.erp.put(`/api/voucher/templates/${templateId}/entries/reorder`, {
+      entry_ids: entryIds,
+    }),
 
   // ============================================
   // 三、凭证自动生成

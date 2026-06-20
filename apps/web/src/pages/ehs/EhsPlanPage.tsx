@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -11,23 +11,23 @@ import {
   Chip,
   Card,
   CardContent,
-  CardHeader,
   Typography,
 } from "@mui/material";
-import { Plus, Eye, FileText, Search, Users } from "lucide-react";
-import { DataTable } from "@/components/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
+import { Plus, Eye, FileText, Users } from "lucide-react";
+import { ListPageTemplate } from "@/components/mui";
+import type { ColumnDef, RowAction, FilterConfig } from "@/components/mui";
 import { ehsApi } from "@/api/ehs";
 import type { EmergencyPlan } from "@/api/ehs";
 import { toast } from "react-toastify";
+import { apiLogger } from "@/utils/logger";
 
 const EhsPlanPage: React.FC = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<EmergencyPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null);
@@ -44,7 +44,7 @@ const EhsPlanPage: React.FC = () => {
 
   useEffect(() => {
     loadPlans();
-  }, []);
+  }, [searchTerm, typeFilter, statusFilter]);
 
   const loadPlans = async () => {
     try {
@@ -65,7 +65,7 @@ const EhsPlanPage: React.FC = () => {
         setPlans([]);
       }
     } catch (err) {
-      console.error("加载应急预案数据失败:", err);
+      apiLogger.error("加载应急预案数据失败:", err);
       setPlans([]);
     } finally {
       setLoading(false);
@@ -91,62 +91,119 @@ const EhsPlanPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<EmergencyPlan>[] = [
-    { accessorKey: "plan_no", header: "预案编号" },
-    { accessorKey: "name", header: "预案名称" },
-    { accessorKey: "plan_type", header: "预案类型" },
-    { accessorKey: "scope", header: "适用范围" },
-    {
-      accessorKey: "responsible_persons",
-      header: "负责人",
-      cell: ({ row }) => {
-        const persons = row.original.responsible_persons;
-        const displayText = Array.isArray(persons)
-          ? persons.join(", ")
-          : persons;
-        return (
-          <span className="truncate max-w-[150px]" title={displayText}>
-            {displayText || "-"}
-          </span>
-        );
+  const columns = useMemo<ColumnDef<EmergencyPlan>[]>(
+    () => [
+      {
+        id: "plan_no",
+        label: "预案编号",
+        render: (row) => row.plan_no,
       },
-    },
-    {
-      accessorKey: "status",
-      header: "状态",
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      id: "actions",
-      header: "操作",
-      cell: ({ row }) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            size="small"
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-        </Box>
-      ),
-    },
-  ];
+      {
+        id: "name",
+        label: "预案名称",
+        render: (row) => (
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            {row.name}
+          </Typography>
+        ),
+      },
+      {
+        id: "plan_type",
+        label: "预案类型",
+        render: (row) => row.plan_type || "-",
+      },
+      {
+        id: "scope",
+        label: "适用范围",
+        render: (row) => row.scope || "-",
+      },
+      {
+        id: "responsible_persons",
+        label: "负责人",
+        render: (row) => {
+          const persons = row.responsible_persons;
+          const displayText = Array.isArray(persons)
+            ? persons.join(", ")
+            : persons;
+          return (
+            <Box
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: 150,
+              }}
+              title={displayText}
+            >
+              {displayText || "-"}
+            </Box>
+          );
+        },
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
+      },
+    ],
+    [],
+  );
 
-  const filteredPlans = plans.filter((plan) => {
-    const matchesSearch =
-      plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plan.plan_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || plan.plan_type === typeFilter;
-    const matchesStatus =
-      statusFilter === "all" || plan.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const rowActions = useMemo<RowAction<EmergencyPlan>[]>(
+    () => [
+      {
+        label: "详情",
+        icon: <Eye size={16} />,
+        onClick: (row) => {
+          setSelectedPlan(row);
+          setShowDetailModal(true);
+        },
+      },
+    ],
+    [],
+  );
 
-  const handleView = (plan: EmergencyPlan) => {
-    setSelectedPlan(plan);
-    setShowDetailModal(true);
-  };
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "plan_type",
+        label: "预案类型",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "火灾预案", label: "火灾预案" },
+          { value: "化学品泄漏", label: "化学品泄漏" },
+          { value: "地震预案", label: "地震预案" },
+          { value: "应急预案", label: "应急预案" },
+        ],
+        value: typeFilter,
+        onChange: (value) => setTypeFilter(value as string),
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select",
+        options: [
+          { value: "", label: "全部" },
+          { value: "有效", label: "有效" },
+          { value: "无效", label: "无效" },
+        ],
+        value: statusFilter,
+        onChange: (value) => setStatusFilter(value as string),
+      },
+    ],
+    [typeFilter, statusFilter],
+  );
+
+  const filteredPlans = useMemo(() => {
+    return plans.filter((plan) => {
+      const matchesSearch =
+        plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        plan.plan_no.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = !typeFilter || plan.plan_type === typeFilter;
+      const matchesStatus = !statusFilter || plan.status === statusFilter;
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [plans, searchTerm, typeFilter, statusFilter]);
 
   const handleCreate = () => {
     setFormData({
@@ -183,46 +240,18 @@ const EhsPlanPage: React.FC = () => {
       loadPlans();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建应急预案失败:", err);
+      apiLogger.error("创建应急预案失败:", err);
     }
   };
 
-  const stats = {
-    total: plans.length,
-    active: plans.filter((p) => p.status === "有效").length,
-    inactive: plans.filter((p) => p.status === "无效").length,
-  };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)",
-        }}
-      >
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: "#22c55e",
-              borderTopColor: "#16a34a",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-              mx: "auto",
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: "slate.600" }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
+  const stats = useMemo(
+    () => ({
+      total: plans.length,
+      active: plans.filter((p) => p.status === "有效").length,
+      inactive: plans.filter((p) => p.status === "无效").length,
+    }),
+    [plans],
+  );
 
   return (
     <Box
@@ -411,76 +440,19 @@ const EhsPlanPage: React.FC = () => {
           </Card>
         </Box>
 
-        <Card>
-          <CardHeader
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <FileText style={{ width: 20, height: 20, color: "#22c55e" }} />
-              应急预案列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
-              <TextField
-                size="small"
-                placeholder="搜索预案名称或编号..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        style={{ width: 18, height: 18, marginRight: 8 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-              <TextField
-                size="small"
-                select
-                label="预案类型"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="火灾预案">火灾预案</option>
-                <option value="化学品泄漏">化学品泄漏</option>
-                <option value="地震预案">地震预案</option>
-                <option value="应急预案">应急预案</option>
-              </TextField>
-              <TextField
-                size="small"
-                select
-                label="状态"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
-              >
-                <option value="all">全部</option>
-                <option value="有效">有效</option>
-                <option value="无效">无效</option>
-              </TextField>
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredPlans}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
+        <ListPageTemplate<EmergencyPlan>
+          title="应急预案列表"
+          columns={columns}
+          data={filteredPlans}
+          loading={loading}
+          searchable
+          searchPlaceholder="搜索预案名称或编号..."
+          searchValue={searchTerm}
+          onSearch={(value) => setSearchTerm(value)}
+          filters={filters}
+          rowActions={rowActions}
+          onRefresh={loadPlans}
+        />
       </Box>
 
       <Dialog

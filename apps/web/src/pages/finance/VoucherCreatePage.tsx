@@ -40,6 +40,7 @@ import {
   type VoucherItemRequest,
 } from "@/api/erp";
 import { useAppStore } from "@/store";
+import { apiLogger } from "@/utils/logger";
 
 interface FormSection {
   id: string;
@@ -88,7 +89,7 @@ const VoucherCreatePage: React.FC = () => {
         setSubjects(result.data.items || []);
       }
     } catch (err) {
-      console.error("加载会计科目失败:", err);
+      apiLogger.error("加载会计科目失败:", err);
       addNotification({
         title: "错误",
         message: "加载会计科目失败",

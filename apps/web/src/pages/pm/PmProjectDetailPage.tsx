@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 import {
   ArrowLeft,
   Edit,
@@ -87,7 +88,7 @@ const PmProjectDetailPage: React.FC = () => {
         setMilestones(milestonesResponse.data.milestones || []);
       }
     } catch (error) {
-      console.error("Failed to load project data:", error);
+      logger.error("Failed to load project data:", error);
     } finally {
       setLoading(false);
     }

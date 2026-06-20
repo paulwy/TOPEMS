@@ -33,6 +33,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Plus } from "lucide-react";
+import { apiLogger } from "@/utils/logger";
 
 const ProductionRecordPage: React.FC = () => {
   const [records, setRecords] = useState<ProductionRecord[]>([]);
@@ -54,6 +55,7 @@ const ProductionRecordPage: React.FC = () => {
 
   useEffect(() => {
     loadRecords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const loadRecords = async () => {
@@ -68,7 +70,7 @@ const ProductionRecordPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error) {
-      console.error("加载生产记录失败:", error);
+      apiLogger.error("加载生产记录失败:", error);
       addNotification({
         type: "error",
         title: "加载失败",
@@ -99,7 +101,7 @@ const ProductionRecordPage: React.FC = () => {
       });
       loadRecords();
     } catch (error) {
-      console.error("操作失败:", error);
+      apiLogger.error("操作失败:", error);
       addNotification({
         type: "error",
         title: "操作失败",

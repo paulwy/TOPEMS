@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Image, Download, FileImage, Copy, Check } from "lucide-react";
 import { Button, Menu, MenuItem } from "@mui/material";
+import { logger } from "@/utils/logger";
 
 interface ChartExportProps {
   chartRef: React.RefObject<HTMLDivElement | null>;
@@ -45,7 +46,7 @@ export const ChartExport = ({
         }
       }
     } catch (error) {
-      console.error("Failed to export chart:", error);
+      logger.error("Failed to export chart:", error);
       alert("导出失败，请重试");
     }
     setAnchorEl(null);
@@ -70,7 +71,7 @@ export const ChartExport = ({
         }
       }
     } catch (error) {
-      console.error("Failed to copy chart:", error);
+      logger.error("Failed to copy chart:", error);
       alert("复制失败，请重试");
     }
     setAnchorEl(null);

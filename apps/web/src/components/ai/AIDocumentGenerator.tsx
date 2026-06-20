@@ -1,4 +1,14 @@
-import { Button, TextField, Select, FormControl, InputLabel, MenuItem, Card, CardContent, Box } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Select,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Card,
+  CardContent,
+  Box,
+} from "@mui/material";
 import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Copy, Check } from "lucide-react";
 

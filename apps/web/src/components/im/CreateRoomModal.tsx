@@ -1,4 +1,14 @@
-import { Button, TextField, Dialog, DialogContent, DialogTitle, DialogActions, Tabs, Tab, Box } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Tabs,
+  Tab,
+  Box,
+} from "@mui/material";
 import React, { useState } from "react";
 import { X, Users, User, Save, MessageSquare } from "lucide-react";
 
@@ -8,6 +18,7 @@ import {
   type CreateProjectGroupRequest,
 } from "../../api/im";
 import { useAppStore } from "../../store";
+import { logger } from "@/utils/logger";
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -115,7 +126,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         });
       }
     } catch (error) {
-      console.error("Failed to create chat room:", error);
+      logger.error("Failed to create chat room:", error);
       addNotification({
         title: "Error",
         message: "创建聊天室失败",
@@ -162,7 +173,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         });
       }
     } catch (error) {
-      console.error("Failed to create project group:", error);
+      logger.error("Failed to create project group:", error);
       addNotification({
         title: "Error",
         message: "创建群组失败",

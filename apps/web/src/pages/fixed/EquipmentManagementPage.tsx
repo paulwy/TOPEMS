@@ -1,7 +1,4 @@
 import {
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
   Typography,
   Button,
@@ -9,12 +6,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
   Box,
 } from "@mui/material";
 import React, { useState, useEffect, useMemo } from "react";
@@ -22,10 +17,7 @@ import {
   Plus,
   Edit,
   Trash2,
-  ChevronLeft,
-  AlertCircle,
   DollarSign,
-  Activity,
   ClipboardCheck,
   Wrench,
 } from "lucide-react";
@@ -33,8 +25,10 @@ import { useNavigate } from "react-router-dom";
 import { assetApi, type Asset } from "@/api/erp";
 import { employeeApi, type Employee } from "@/api/hrm";
 import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/DataTable";
+import ListPageTemplate, {
+  type ColumnDef,
+  type RowAction,
+} from "@/components/templates/ListPageTemplate";
 
 const EquipmentManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -64,6 +58,7 @@ const EquipmentManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -214,57 +209,58 @@ const EquipmentManagementPage: React.FC = () => {
     );
   };
 
-  const assetColumns = useMemo<ColumnDef<Asset>[]>(
+  const columns = useMemo<ColumnDef<Asset>[]>(
     () => [
       {
-        accessorKey: "asset_number",
-        header: "设备编号",
-        cell: ({ row }) => (
-          <div style={{ fontWeight: 500, color: "#0f172a" }}>
-            {row.original.asset_number}
-          </div>
+        id: "asset_number",
+        label: "设备编号",
+        render: (row) => (
+          <Typography sx={{ fontWeight: 500, color: "#0f172a" }}>
+            {row.asset_number}
+          </Typography>
         ),
       },
       {
-        accessorKey: "name",
-        header: "设备名称",
-        cell: ({ row }) => (
-          <div style={{ color: "#0f172a" }}>{row.original.name}</div>
+        id: "name",
+        label: "设备名称",
+        render: (row) => (
+          <Typography sx={{ color: "#0f172a" }}>{row.name}</Typography>
         ),
       },
       {
-        accessorKey: "category",
-        header: "类别",
-        cell: ({ row }) => (
-          <span style={{ fontSize: "0.875rem", color: "#64748b" }}>
-            {row.original.category || "-"}
-          </span>
+        id: "category",
+        label: "类别",
+        render: (row) => (
+          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
+            {row.category || "-"}
+          </Typography>
         ),
       },
       {
-        accessorKey: "brand",
-        header: "品牌",
-        cell: ({ row }) => (
-          <span style={{ fontSize: "0.875rem", color: "#64748b" }}>
-            {row.original.brand || "-"}
-          </span>
+        id: "brand",
+        label: "品牌",
+        render: (row) => (
+          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
+            {row.brand || "-"}
+          </Typography>
         ),
       },
       {
-        accessorKey: "department",
-        header: "部门",
-        cell: ({ row }) => (
-          <span style={{ fontSize: "0.875rem", color: "#64748b" }}>
-            {row.original.department || "-"}
-          </span>
+        id: "department",
+        label: "部门",
+        render: (row) => (
+          <Typography sx={{ fontSize: "0.875rem", color: "#64748b" }}>
+            {row.department || "-"}
+          </Typography>
         ),
       },
       {
-        accessorKey: "purchase_amount",
-        header: "采购金额",
-        cell: ({ row }) => (
-          <div
-            style={{
+        id: "purchase_amount",
+        label: "采购金额",
+        align: "right",
+        render: (row) => (
+          <Box
+            sx={{
               display: "flex",
               alignItems: "center",
               fontSize: "0.875rem",
@@ -274,193 +270,83 @@ const EquipmentManagementPage: React.FC = () => {
             <DollarSign
               sx={{ width: 12, height: 12, marginRight: 4, color: "#16a34a" }}
             />
-            {row.original.purchase_amount
-              ? `¥${row.original.purchase_amount.toLocaleString()}`
+            {row.purchase_amount
+              ? `¥${row.purchase_amount.toLocaleString()}`
               : "-"}
-          </div>
+          </Box>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => {
-          const asset = row.original;
-          return (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                gap: 8,
-              }}
-            >
-              <Tooltip title="编辑">
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => {
-                    setSelectedAsset(asset);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <Edit sx={{ width: 16, height: 16 }} />
-                </Button>
-              </Tooltip>
-
-              <Tooltip title="删除">
-                <Button
-                  variant="text"
-                  size="small"
-                  color="error"
-                  onClick={() => handleDeleteAsset(asset.id)}
-                >
-                  <Trash2 sx={{ width: 16, height: 16 }} />
-                </Button>
-              </Tooltip>
-            </div>
-          );
-        },
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [employees],
   );
 
-  return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
-      <div
-        style={{
-          backgroundColor: "#ffffff",
-          borderBottom: "1px solid #e2e8f0",
-          padding: "24px 0",
-        }}
-      >
-        <div
-          style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <Button variant="text" onClick={() => navigate("/dashboard")}>
-                <ChevronLeft sx={{ width: 20, height: 20, marginRight: 4 }} />
-                返回
-              </Button>
-              <div>
-                <h1
-                  style={{
-                    fontSize: "1.5rem",
-                    fontWeight: 700,
-                    color: "#0f172a",
-                    display: "flex",
-                    alignItems: "center",
-                    marginLeft: 16,
-                  }}
-                >
-                  <Activity
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      marginRight: 12,
-                      color: "#2563eb",
-                    }}
-                  />
-                  设备管理
-                </h1>
-                <p
-                  style={{
-                    marginTop: 4,
-                    fontSize: "0.875rem",
-                    color: "#64748b",
-                  }}
-                >
-                  设备台账管理
-                </p>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Button
-                variant="outlined"
-                onClick={() => navigate("/equipment/inspections")}
-              >
-                <ClipboardCheck
-                  sx={{ width: 16, height: 16, marginRight: 8 }}
-                />
-                点检记录
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => navigate("/equipment/maintenances")}
-              >
-                <Wrench sx={{ width: 16, height: 16, marginRight: 8 }} />
-                维护维修
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
-                新增设备
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+  const rowActions = useMemo<RowAction<Asset>[]>(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit sx={{ width: 16, height: 16 }} />,
+        onClick: (row) => {
+          setSelectedAsset(row);
+          setShowEditModal(true);
+        },
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error",
+        onClick: (row) => handleDeleteAsset(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这个设备吗？",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
-      <div
-        style={{ maxWidth: "1280px", margin: "0 auto", padding: "32px 24px" }}
-      >
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <div style={{ padding: 32, textAlign: "center" }}>
-                <div
-                  style={{
-                    display: "inline-block",
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    border: "4px solid #2563eb",
-                    borderTopColor: "transparent",
-                    animation: "spin 1s linear infinite",
-                  }}
-                />
-                <p style={{ marginTop: 8, color: "#64748b" }}>加载中...</p>
-              </div>
-            ) : error ? (
-              <div style={{ padding: 32, textAlign: "center" }}>
-                <AlertCircle
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    color: "#ef4444",
-                    margin: "0 auto 12px",
-                  }}
-                />
-                <p style={{ color: "#dc2626" }}>{error}</p>
-                <Button sx={{ marginTop: 16 }} onClick={loadData}>
-                  重试
-                </Button>
-              </div>
-            ) : (
-              <DataTable
-                columns={assetColumns}
-                data={assets}
-                searchPlaceholder="搜索设备名称、编号、品牌、型号..."
-                searchKey="name"
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+  return (
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#f8fafc" }}>
+      <ListPageTemplate
+        title="设备管理"
+        subtitle="设备台账管理"
+        backButton={{
+          onClick: () => navigate("/dashboard"),
+        }}
+        columns={columns}
+        data={assets}
+        loading={loading}
+        error={error || undefined}
+        getRowId={(row) => row.id}
+        searchable
+        searchPlaceholder="搜索设备名称、编号、品牌、型号..."
+        rowActions={rowActions}
+        onRefresh={loadData}
+        actions={[
+          {
+            label: "点检记录",
+            icon: <ClipboardCheck sx={{ width: 16, height: 16 }} />,
+            onClick: () => navigate("/equipment/inspections"),
+            variant: "outlined",
+          },
+          {
+            label: "维护维修",
+            icon: <Wrench sx={{ width: 16, height: 16 }} />,
+            onClick: () => navigate("/equipment/maintenances"),
+            variant: "outlined",
+          },
+          {
+            label: "新增设备",
+            icon: <Plus sx={{ width: 16, height: 16 }} />,
+            onClick: () => setShowCreateModal(true),
+            variant: "contained",
+          },
+        ]}
+      />
 
       <Dialog
         open={showCreateModal}
@@ -1052,7 +938,7 @@ const EquipmentManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

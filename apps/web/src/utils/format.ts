@@ -10,7 +10,7 @@ import {
   truncateText as sharedTruncateText,
   capitalizeFirstLetter as sharedCapitalizeFirstLetter,
   clearCloneCache,
-} from '@topems/shared-utils';
+} from "@topems/shared-utils";
 
 // 重新导出共享工具
 export {

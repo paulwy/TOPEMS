@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, SvgIconProps } from "@mui/material";
+import type { SvgIconProps } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 interface ServiceStatusCardProps {
   name: string;

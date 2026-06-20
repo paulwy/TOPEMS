@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { logger } from "@/utils/logger";
 import {
   Box,
   Button,
@@ -155,11 +156,11 @@ const FlowSettingsPage: React.FC = () => {
   };
 
   const handleNodeTypeToggle = (id: string) => {
-    console.log("切换节点类型:", id);
+    logger.info("切换节点类型:", id);
   };
 
   const handleTemplateEdit = (template: NotificationTemplate) => {
-    console.log("编辑模板:", template.id);
+    logger.info("编辑模板:", template.id);
   };
 
   const tabs = [

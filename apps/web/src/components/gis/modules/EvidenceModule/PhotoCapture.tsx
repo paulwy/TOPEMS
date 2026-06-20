@@ -1,6 +1,8 @@
 // modules/EvidenceModule/PhotoCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import { Camera, SwitchCamera, Sun, X, Check } from "lucide-react";
+import { Box, Button, IconButton, Typography } from "@mui/material";
+import { logger } from "@/utils/logger";
 
 interface PhotoCaptureProps {
   onCapture: (file: File, thumbnail?: string) => void;
@@ -44,7 +46,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         setError(null);
       } catch (err) {
         setError("无法访问摄像头，请确保已授予摄像头权限");
-        console.error("Camera error:", err);
+        logger.error("Camera error:", err);
       }
     };
 
@@ -55,6 +57,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         stream.getTracks().forEach((track) => track.stop());
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode]);
 
   // Switch camera
@@ -135,77 +138,133 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
   }, [maxFileSize, compressionQuality, onCapture]);
 
   return (
-    <div className="flex flex-col h-full bg-black">
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        bgcolor: "black",
+      }}
+    >
       {/* Video Preview */}
-      <div className="relative flex-1">
+      <Box sx={{ position: "relative", flex: 1 }}>
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
 
         {/* Hidden canvas for capture */}
-        <canvas ref={canvasRef} className="hidden" />
+        <canvas ref={canvasRef} style={{ display: "none" }} />
 
         {/* Error Message */}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-            <div className="text-center text-white p-4">
-              <p className="text-red-400 mb-2">{error}</p>
-              <button
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(0,0,0,0.8)",
+            }}
+          >
+            <Box sx={{ textAlign: "center", color: "white", p: 16 }}>
+              <Typography sx={{ color: "#f87171", mb: 8 }}>{error}</Typography>
+              <Button
                 onClick={onCancel}
-                className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"
+                sx={{
+                  px: 16,
+                  py: 8,
+                  bgcolor: "#374151",
+                  borderRadius: 8,
+                  color: "white",
+                  "&:hover": { bgcolor: "#4b5563" },
+                }}
               >
                 关闭
-              </button>
-            </div>
-          </div>
+              </Button>
+            </Box>
+          </Box>
         )}
 
         {/* Camera Controls Overlay */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <button
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+            right: 16,
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <IconButton
             onClick={onCancel}
-            className="p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
+            sx={{
+              borderRadius: "9999px",
+              bgcolor: "rgba(0,0,0,0.5)",
+              color: "white",
+              "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+            }}
           >
-            <X className="w-6 h-6" />
-          </button>
-          <div className="flex gap-2">
-            <button
+            <X size={24} />
+          </IconButton>
+          <Box sx={{ display: "flex", gap: 8 }}>
+            <IconButton
               onClick={toggleFlash}
-              className={`p-2 rounded-full ${flashOn ? "bg-yellow-500" : "bg-black/50"} text-white hover:bg-black/70`}
+              sx={{
+                borderRadius: "9999px",
+                bgcolor: flashOn ? "#eab308" : "rgba(0,0,0,0.5)",
+                color: "white",
+                "&:hover": { bgcolor: flashOn ? "#eab308" : "rgba(0,0,0,0.7)" },
+              }}
             >
-              <Sun className="w-6 h-6" />
-            </button>
-            <button
+              <Sun size={24} />
+            </IconButton>
+            <IconButton
               onClick={switchCamera}
-              className="p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
+              sx={{
+                borderRadius: "9999px",
+                bgcolor: "rgba(0,0,0,0.5)",
+                color: "white",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+              }}
             >
-              <SwitchCamera className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-      </div>
+              <SwitchCamera size={24} />
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Capture Button */}
-      <div className="p-6 bg-black flex justify-center">
-        <button
+      <Box
+        sx={{
+          p: 24,
+          bgcolor: "black",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <IconButton
           onClick={capturePhoto}
           disabled={isCapturing}
-          className={`p-4 rounded-full transition-all ${
-            isCapturing
-              ? "bg-gray-600"
-              : "bg-white hover:bg-gray-200 active:scale-95"
-          }`}
+          sx={{
+            p: 16,
+            borderRadius: "9999px",
+            bgcolor: isCapturing ? "#4b5563" : "white",
+            color: isCapturing ? "#9ca3af" : "#1f2937",
+            "&:hover": { bgcolor: isCapturing ? "#4b5563" : "#e5e7eb" },
+            "&:active": { transform: "scale(0.95)" },
+            "&.Mui-disabled": { bgcolor: "#4b5563", color: "#9ca3af" },
+          }}
         >
-          <Camera
-            className={`w-8 h-8 ${isCapturing ? "text-gray-400" : "text-gray-800"}`}
-          />
-        </button>
-      </div>
-    </div>
+          <Camera size={32} />
+        </IconButton>
+      </Box>
+    </Box>
   );
 };
 

@@ -17,8 +17,9 @@ import {
  * 管理凭证自动生成规则和模板
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { logger } from "@/utils/logger";
 import {
   Plus,
   RefreshCw,
@@ -100,7 +101,7 @@ export default function VoucherTemplatePage() {
         newName,
       });
     } catch (error) {
-      console.error("Copy template failed:", error);
+      logger.error("Copy template failed:", error);
     }
   };
 
@@ -110,7 +111,7 @@ export default function VoucherTemplatePage() {
     try {
       await deleteTemplate.mutateAsync(templateId);
     } catch (error) {
-      console.error("Delete template failed:", error);
+      logger.error("Delete template failed:", error);
     }
   };
 
@@ -122,7 +123,7 @@ export default function VoucherTemplatePage() {
         isActive: !template.is_active,
       });
     } catch (error) {
-      console.error("Toggle template failed:", error);
+      logger.error("Toggle template failed:", error);
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { X, FileText, AlertCircle, Loader2 } from "lucide-react";
 import { renderAsync } from "docx-preview";
 import { docApi } from "../api/doc";
+import { logger } from "@/utils/logger";
 
 interface DocumentPreviewModalProps {
   isOpen: boolean;
@@ -27,10 +28,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     if (!isOpen) return;
 
     const loadAndPreview = async () => {
-      console.log("开始预览:", { fileName, contentType, fileId });
+      logger.info("开始预览:", { fileName, contentType, fileId });
 
       if (!containerRef.current) {
-        console.error("容器引用为 null");
+        logger.error("容器引用为 null");
         return;
       }
 
@@ -40,10 +41,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       try {
         const container = containerRef.current;
         container.innerHTML = "";
-        console.log("容器已清空");
+        logger.info("容器已清空");
 
         if (contentType.includes("image/")) {
-          console.log("预览图片");
+          logger.info("预览图片");
           const imgUrl = await docApi.preview(fileId);
           const img = document.createElement("img");
           img.src = imgUrl;
@@ -53,9 +54,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           img.alt = fileName;
           container.appendChild(img);
         } else if (contentType.includes("application/pdf")) {
-          console.log("预览 PDF");
+          logger.info("预览 PDF");
           const blob = await docApi.download(fileId);
-          console.log("获取到 PDF Blob，大小:", blob.size);
+          logger.info("获取到 PDF Blob，大小:", blob.size);
           const blobUrl = URL.createObjectURL(blob);
           blobUrlRef.current = blobUrl;
           const iframe = document.createElement("iframe");
@@ -64,10 +65,10 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           iframe.style.height = "80vh";
           iframe.style.border = "0";
           iframe.onload = () => {
-            console.log("PDF iframe loaded");
+            logger.info("PDF iframe loaded");
           };
           iframe.onerror = (e) => {
-            console.error("PDF iframe error:", e);
+            logger.error("PDF iframe error:", e);
             if (blobUrlRef.current) {
               URL.revokeObjectURL(blobUrlRef.current);
               blobUrlRef.current = null;
@@ -75,13 +76,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           };
           container.appendChild(iframe);
         } else if (fileName.endsWith(".docx")) {
-          console.log("预览 DOCX");
+          logger.info("预览 DOCX");
           const blob = await docApi.download(fileId);
-          console.log("获取到 Blob，大小:", blob.size, "类型:", blob.type);
+          logger.info("获取到 Blob，大小:", blob.size, "类型:", blob.type);
 
           // 检查 blob 内容
           const text = await blob.text();
-          console.log("Blob 内容前 100 字符:", text.substring(0, 100));
+          logger.info("Blob 内容前 100 字符:", text.substring(0, 100));
 
           // 如果内容不是以 PK (ZIP 头) 开头，说明返回了错误
           const bytes = await blob.arrayBuffer();
@@ -89,7 +90,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           const header =
             String.fromCharCode(view.getUint8(0)) +
             String.fromCharCode(view.getUint8(1));
-          console.log("文件头:", header, "(应该是 'PK')");
+          logger.info("文件头:", header, "(应该是 'PK')");
 
           if (header !== "PK") {
             throw new Error(
@@ -99,19 +100,19 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
           // 再次检查容器是否还存在
           if (containerRef.current) {
-            console.log("开始调用 docx-preview renderAsync");
+            logger.info("开始调用 docx-preview renderAsync");
             await renderAsync(blob, containerRef.current);
-            console.log("DOCX 渲染完成");
+            logger.info("DOCX 渲染完成");
           }
         } else if (
           contentType.includes("text/") ||
           fileName.endsWith(".md") ||
           fileName.endsWith(".txt")
         ) {
-          console.log("预览文本/Markdown");
+          logger.info("预览文本/Markdown");
           const blob = await docApi.download(fileId);
           const text = await blob.text();
-          console.log("获取到文本内容，长度:", text.length);
+          logger.info("获取到文本内容，长度:", text.length);
           const pre = document.createElement("pre");
           pre.textContent = text;
           pre.style.whiteSpace = "pre-wrap";
@@ -124,11 +125,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           pre.style.fontSize = "14px";
           container.appendChild(pre);
         } else {
-          console.log("不支持的文件类型");
+          logger.info("不支持的文件类型");
           setError(`不支持直接预览 ${fileName}，请下载后查看`);
         }
       } catch (err) {
-        console.error("Preview error:", err);
+        logger.error("Preview error:", err);
         setError(
           `预览失败: ${err instanceof Error ? err.message : "未知错误"}`,
         );

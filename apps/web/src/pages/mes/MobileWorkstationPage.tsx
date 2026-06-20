@@ -1,5 +1,6 @@
 import { Grid } from "@/components/Grid";
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
 import { mobileApi } from "@/api/mobile";
 import MobileHeader from "@/components/MobileHeader";
 import MobileNav from "@/components/MobileNav";
@@ -100,7 +101,7 @@ const MobileWorkstationPage: React.FC = () => {
         setMedia((prev) => [...prev, ...videos]);
       }
     } catch (error) {
-      console.error("加载数据失败:", error);
+      apiLogger.error("加载数据失败:", error);
     } finally {
       setLoading(false);
     }
@@ -125,7 +126,7 @@ const MobileWorkstationPage: React.FC = () => {
       alert("打卡成功！");
       loadData();
     } catch (error) {
-      console.error("打卡失败:", error);
+      apiLogger.error("打卡失败:", error);
       alert("打卡失败，请检查位置权限");
     }
   };
@@ -151,7 +152,7 @@ const MobileWorkstationPage: React.FC = () => {
       alert("扫码成功！");
       loadData();
     } catch (error) {
-      console.error("扫码失败:", error);
+      apiLogger.error("扫码失败:", error);
       alert("扫码失败");
     }
   };
@@ -204,7 +205,7 @@ const MobileWorkstationPage: React.FC = () => {
           justifyContent: "center",
         }}
       >
-        <Stack spacing={2} sx={{ alignItems: 'center' }}>
+        <Stack spacing={2} sx={{ alignItems: "center" }}>
           <CircularProgress />
           <Typography color="text.secondary">加载中...</Typography>
         </Stack>
@@ -495,13 +496,23 @@ const MobileWorkstationPage: React.FC = () => {
                   {patrols.slice(0, 3).map((patrol) => (
                     <Paper key={patrol.id} sx={{ p: 2, borderRadius: 1.5 }}>
                       <Stack
-                      direction="row"
-                      sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
-                    >
-                        <Typography sx={{ fontWeight: 500 }}>{patrol.title}</Typography>
+                        direction="row"
+                        sx={{
+                          justifyContent: "space-between",
+                          alignItems: "flex-start",
+                          mb: 1,
+                        }}
+                      >
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {patrol.title}
+                        </Typography>
                         <StatusChip status={patrol.status} />
                       </Stack>
-                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ alignItems: "center" }}
+                      >
                         <MapPin size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           {patrol.address || "未知位置"}
@@ -529,7 +540,11 @@ const MobileWorkstationPage: React.FC = () => {
             <Stack
               direction="row"
               spacing={2}
-              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
             >
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 巡检记录
@@ -569,10 +584,16 @@ const MobileWorkstationPage: React.FC = () => {
                     <Stack
                       direction="row"
                       spacing={2}
-                      sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
+                      sx={{
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        mb: 1,
+                      }}
                     >
                       <Box>
-                        <Typography sx={{ fontWeight: 500 }}>{patrol.title}</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {patrol.title}
+                        </Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
@@ -586,15 +607,29 @@ const MobileWorkstationPage: React.FC = () => {
                     <Stack
                       direction="row"
                       spacing={2}
-                      sx={{ alignItems: 'center', mt: 1.5, pt: 1.5, borderTop: 1, borderColor: "divider" }}
+                      sx={{
+                        alignItems: "center",
+                        mt: 1.5,
+                        pt: 1.5,
+                        borderTop: 1,
+                        borderColor: "divider",
+                      }}
                     >
-                      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center" }}
+                      >
                         <MapPin size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           {patrol.address || "未知"}
                         </Typography>
                       </Stack>
-                      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center" }}
+                      >
                         <Clock size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           {patrol.checked_at
@@ -653,10 +688,16 @@ const MobileWorkstationPage: React.FC = () => {
                     <Stack
                       direction="row"
                       spacing={2}
-                      sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}
+                      sx={{
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        mb: 1,
+                      }}
                     >
                       <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontWeight: 500 }}>{task.title}</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {task.title}
+                        </Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
@@ -672,15 +713,19 @@ const MobileWorkstationPage: React.FC = () => {
                     <Stack
                       direction="row"
                       sx={{
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
+                        justifyContent: "space-between",
+                        alignItems: "center",
                         mt: 1.5,
                         pt: 1.5,
                         borderTop: 1,
                         borderColor: "divider",
                       }}
                     >
-                      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        sx={{ alignItems: "center" }}
+                      >
                         <AlertCircle size={16} color="#94a3b8" />
                         <Typography variant="body2" color="text.secondary">
                           优先级: {task.priority || "中"}
@@ -702,7 +747,11 @@ const MobileWorkstationPage: React.FC = () => {
             <Stack
               direction="row"
               spacing={2}
-              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
             >
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 扫码记录
@@ -748,7 +797,7 @@ const MobileWorkstationPage: React.FC = () => {
                     <Stack
                       direction="row"
                       spacing={1.5}
-                      sx={{ alignItems: 'flex-start' }}
+                      sx={{ alignItems: "flex-start" }}
                     >
                       <Box
                         sx={{
@@ -764,7 +813,9 @@ const MobileWorkstationPage: React.FC = () => {
                         <QrCode size={20} color="#a855f7" />
                       </Box>
                       <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontWeight: 500 }}>{scan.barcode}</Typography>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {scan.barcode}
+                        </Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
@@ -795,7 +846,11 @@ const MobileWorkstationPage: React.FC = () => {
             <Stack
               direction="row"
               spacing={2}
-              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
+              }}
             >
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 媒体记录

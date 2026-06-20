@@ -1,4 +1,5 @@
 import React from "react";
+import { Box, Typography } from "@mui/material";
 
 interface LoadingProps {
   size?: "sm" | "md" | "lg";
@@ -15,51 +16,58 @@ export const Loading: React.FC<LoadingProps> = ({
   className = "",
   inline = false,
 }) => {
-  const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-8 h-8",
-    lg: "w-12 h-12",
+  const sizeMap = {
+    sm: 16,
+    md: 32,
+    lg: 48,
   };
 
-  const textSizes = {
-    sm: "text-xs",
-    md: "text-sm",
-    lg: "text-base",
+  const textSizeMap = {
+    sm: "0.75rem",
+    md: "0.875rem",
+    lg: "1rem",
   };
 
   const Spinner = () => (
-    <div
-      className={`
-        ${sizeClasses[size]}
-        border-2 border-gray-300 border-t-blue-500
-        rounded-full animate-spin
-      `}
+    <Box
+      sx={{
+        width: sizeMap[size],
+        height: sizeMap[size],
+        border: "2px solid #d1d5db",
+        borderTopColor: "#3b82f6",
+        borderRadius: "50%",
+        animation: "spin 1s linear infinite",
+      }}
     />
   );
 
   const Dots = () => (
-    <div className="flex items-center gap-1">
+    <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
       {[0, 1, 2].map((i) => (
-        <div
+        <Box
           key={i}
-          className={`
-            ${size === "sm" ? "w-1.5 h-1.5" : size === "md" ? "w-2 h-2" : "w-3 h-3"}
-            rounded-full bg-blue-500
-            animate-bounce
-          `}
-          style={{ animationDelay: `${i * 0.15}s` }}
+          sx={{
+            width: size === "sm" ? 6 : size === "md" ? 8 : 12,
+            height: size === "sm" ? 6 : size === "md" ? 8 : 12,
+            borderRadius: "50%",
+            backgroundColor: "#3b82f6",
+            animation: "bounce 1s ease-in-out infinite",
+            animationDelay: `${i * 0.15}s`,
+          }}
         />
       ))}
-    </div>
+    </Box>
   );
 
   const Pulse = () => (
-    <div
-      className={`
-        ${sizeClasses[size]}
-        bg-blue-500 rounded-full
-        animate-ping
-      `}
+    <Box
+      sx={{
+        width: sizeMap[size],
+        height: sizeMap[size],
+        backgroundColor: "#3b82f6",
+        borderRadius: "50%",
+        animation: "ping 1s cubic-bezier(0, 0, 0.2, 1) infinite",
+      }}
     />
   );
 
@@ -76,23 +84,43 @@ export const Loading: React.FC<LoadingProps> = ({
 
   if (inline) {
     return (
-      <span className={`inline-flex items-center gap-2 ${className}`}>
+      <Box
+        component="span"
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+        className={className}
+      >
         {renderLoader()}
-        {text && <span className={textSizes[size]}>{text}</span>}
-      </span>
+        {text && (
+          <Typography component="span" sx={{ fontSize: textSizeMap[size] }}>
+            {text}
+          </Typography>
+        )}
+      </Box>
     );
   }
 
   return (
-    <div
-      className={`
-        flex flex-col items-center justify-center gap-3
-        ${className}
-      `}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 12,
+      }}
+      className={className}
     >
       {renderLoader()}
-      {text && <span className={textSizes[size]}>{text}</span>}
-    </div>
+      {text && (
+        <Typography component="span" sx={{ fontSize: textSizeMap[size] }}>
+          {text}
+        </Typography>
+      )}
+    </Box>
   );
 };
 
@@ -108,11 +136,22 @@ export const LoadingOverlay: React.FC<{
   }
 
   return (
-    <div className="relative">
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
+    <Box sx={{ position: "relative" }}>
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 10,
+        }}
+      >
         <Loading text={text} />
-      </div>
+      </Box>
       {children}
-    </div>
+    </Box>
   );
 };

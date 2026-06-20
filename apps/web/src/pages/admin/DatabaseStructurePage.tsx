@@ -1,4 +1,5 @@
 import { Grid } from "@/components/Grid";
+import { apiLogger } from "@/utils/logger";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -92,6 +93,7 @@ const DatabaseStructurePage: React.FC = () => {
   useEffect(() => {
     loadTables();
     loadDbChanges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -136,7 +138,7 @@ const DatabaseStructurePage: React.FC = () => {
         setDbChanges(res.data.items || []);
       }
     } catch (err: any) {
-      console.error("加载变更历史失败:", err);
+      apiLogger.error("加载变更历史失败:", err);
     }
   };
 
@@ -265,7 +267,7 @@ const DatabaseStructurePage: React.FC = () => {
         }}
       >
         <Container maxWidth="xl" sx={{ py: 3 }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <IconButton
               onClick={() => navigate("/dashboard")}
               sx={{
@@ -277,12 +279,14 @@ const DatabaseStructurePage: React.FC = () => {
             <Box>
               <Typography
                 variant="h5"
-                
-                sx={{ ...{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                }, fontWeight: 700 }}
+                sx={{
+                  ...{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                  },
+                  fontWeight: 700,
+                }}
               >
                 <Database size={28} color="#2563eb" />
                 数据库结构管理
@@ -381,7 +385,7 @@ const DatabaseStructurePage: React.FC = () => {
                           <Stack
                             direction="row"
                             spacing={1}
-                            sx={{ alignItems: 'center' }}
+                            sx={{ alignItems: "center" }}
                           >
                             <Table
                               size={16}
@@ -463,11 +467,13 @@ const DatabaseStructurePage: React.FC = () => {
                       <Box>
                         <Typography
                           variant="h6"
-                          
-                          sx={{ ...{
-                            fontFamily:
-                              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                          }, fontWeight: 600 }}
+                          sx={{
+                            ...{
+                              fontFamily:
+                                "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                            },
+                            fontWeight: 600,
+                          }}
                         >
                           {selectedTable.table_name}
                         </Typography>
@@ -835,7 +841,7 @@ const DatabaseStructurePage: React.FC = () => {
                   color="#94a3b8"
                   style={{ marginBottom: 16 }}
                 />
-                <Typography variant="h6"  sx={{ ...{ mb: 1 }, fontWeight: 500 }}>
+                <Typography variant="h6" sx={{ ...{ mb: 1 }, fontWeight: 500 }}>
                   请选择数据表
                 </Typography>
                 <Typography color="text.secondary">
@@ -965,7 +971,7 @@ const DatabaseStructurePage: React.FC = () => {
         fullWidth
       >
         <DialogTitle sx={{ pb: 1 }}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Eye size={20} />
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               SQL 预览
@@ -994,7 +1000,11 @@ const DatabaseStructurePage: React.FC = () => {
               maxHeight: 320,
             }}
           >
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "flex-start" }}
+            >
               <FileCode size={16} color="#4ade80" style={{ marginTop: 2 }} />
               <Box
                 component="pre"

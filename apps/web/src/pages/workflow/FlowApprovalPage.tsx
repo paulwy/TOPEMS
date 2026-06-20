@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import type { Approval, WorkflowInstance } from "@/api/flow";
 import { flowApi, ApprovalRecord } from "@/api/flow";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 import {
   Button,
   TextField,
@@ -66,6 +67,7 @@ const FlowApprovalPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const loadData = async () => {
@@ -93,7 +95,7 @@ const FlowApprovalPage: React.FC = () => {
         setInstances([]);
       }
     } catch (err) {
-      console.error("加载数据失败:", err);
+      apiLogger.error("加载数据失败:", err);
       addNotification({
         title: "错误",
         message: "加载数据失败",
@@ -147,7 +149,7 @@ const FlowApprovalPage: React.FC = () => {
         message: "处理审批失败",
         type: "error",
       });
-      console.error("处理审批失败:", err);
+      apiLogger.error("处理审批失败:", err);
     } finally {
       setProcessing(false);
     }

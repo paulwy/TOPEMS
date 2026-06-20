@@ -13,6 +13,7 @@ import {
   CardHeader,
   Typography,
 } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 import { Plus, Eye, FlaskConical, Search, Clock } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -64,7 +65,7 @@ const PdmFormulaPage: React.FC = () => {
         setFormulas([]);
       }
     } catch (err) {
-      console.error("加载配方数据失败:", err);
+      apiLogger.error("加载配方数据失败:", err);
       setFormulas([]);
     } finally {
       setLoading(false);
@@ -156,7 +157,7 @@ const PdmFormulaPage: React.FC = () => {
       loadFormulas();
     } catch (err) {
       toast.error("创建失败");
-      console.error("创建配方失败:", err);
+      apiLogger.error("创建配方失败:", err);
     }
   };
 

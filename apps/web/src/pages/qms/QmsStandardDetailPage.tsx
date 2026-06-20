@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiLogger } from "@/utils/logger";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -13,7 +14,20 @@ import {
   Download,
   Upload,
 } from "lucide-react";
-import { Dialog, DialogTitle, DialogContent, DialogActions,  Button, TextField, Chip, Card, CardContent, CardHeader, Box, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+} from "@mui/material";
 
 import { DataTable } from "@/components/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -76,7 +90,7 @@ const QmsStandardDetailPage: React.FC = () => {
         setRevisions(revisionsArray);
       }
     } catch (error) {
-      console.error("加载质量标准详情失败:", error);
+      apiLogger.error("加载质量标准详情失败:", error);
     } finally {
       setLoading(false);
     }
@@ -139,7 +153,7 @@ const QmsStandardDetailPage: React.FC = () => {
         loadStandardDetail(standard.id);
       }
     } catch (error) {
-      console.error("更新质量标准失败:", error);
+      apiLogger.error("更新质量标准失败:", error);
     }
   };
 
@@ -166,7 +180,7 @@ const QmsStandardDetailPage: React.FC = () => {
         navigate("/qms/standards");
       }
     } catch (error) {
-      console.error("创建版本失败:", error);
+      apiLogger.error("创建版本失败:", error);
     }
   };
 

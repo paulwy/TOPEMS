@@ -70,7 +70,9 @@ const RsReleasePage: React.FC = () => {
     environment: "staging",
     release_note: "",
   });
-  const [releasePackageAttachments, setReleasePackageAttachments] = useState<string[]>([]);
+  const [releasePackageAttachments, setReleasePackageAttachments] = useState<
+    string[]
+  >([]);
 
   useEffect(() => {
     const mockReleases: Release[] = [
@@ -251,7 +253,10 @@ const RsReleasePage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
+          <Typography
+            variant="h5"
+            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
+          >
             发布管理
           </Typography>
           <Button
@@ -271,7 +276,7 @@ const RsReleasePage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+            sx={{ alignItems: "center", flexWrap: "wrap" }}
           >
             <TextField
               size="small"
@@ -482,7 +487,7 @@ const RsReleasePage: React.FC = () => {
         <DialogContent>
           {selectedRelease && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {selectedRelease.version}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
@@ -512,7 +517,7 @@ const RsReleasePage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     发布时间
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                     {selectedRelease.release_time}
                   </Typography>
                 </Box>
@@ -520,7 +525,7 @@ const RsReleasePage: React.FC = () => {
                   <Typography variant="caption" color="text.secondary">
                     发布人
                   </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                     {selectedRelease.release_by}
                   </Typography>
                 </Box>
@@ -584,13 +589,26 @@ const RsReleasePage: React.FC = () => {
               }
             />
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                sx={{ mb: 1 }}
+              >
                 发布包附件
               </Typography>
               <FileUpload
                 value={releasePackageAttachments}
                 onChange={setReleasePackageAttachments}
-                accept={['.zip', '.tar', '.gz', '.jar', '.war', '.pdf', '.doc', '.docx']}
+                accept={[
+                  ".zip",
+                  ".tar",
+                  ".gz",
+                  ".jar",
+                  ".war",
+                  ".pdf",
+                  ".doc",
+                  ".docx",
+                ]}
                 maxCount={10}
                 maxSize={500}
                 maxTotalSize={2000}

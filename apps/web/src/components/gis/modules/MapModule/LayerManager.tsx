@@ -9,6 +9,7 @@ import {
   Info,
   Pencil,
 } from "lucide-react";
+import { Box, Button, Typography, Paper, IconButton } from "@mui/material";
 
 interface LayerToggleProps {
   label: string;
@@ -25,19 +26,31 @@ const LayerToggle: React.FC<LayerToggleProps> = ({
   onChange,
   color,
 }) => (
-  <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
-    <div
-      className={`w-3 h-3 rounded-full ${checked ? "" : "bg-gray-300"}`}
-      style={{ backgroundColor: checked ? color : undefined }}
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+      cursor: "pointer",
+      "&:hover": { bgcolor: "#f9fafb" },
+      px: 2,
+      py: 1,
+      borderRadius: 1,
+    }}
+    onClick={() => onChange(!checked)}
+  >
+    <Box
+      sx={{
+        width: 12,
+        height: 12,
+        borderRadius: "50%",
+        bgcolor: checked ? color : "#d1d5db",
+      }}
     />
-    <span className="text-sm text-gray-700">{label}</span>
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="hidden"
-    />
-  </label>
+    <Typography variant="body2" sx={{ color: "#374151" }}>
+      {label}
+    </Typography>
+  </Box>
 );
 
 interface LayerManagerProps {
@@ -60,58 +73,82 @@ const LayerManager: React.FC<LayerManagerProps> = ({
   drawFeaturesLength = 0,
 }) => {
   return (
-    <div className="absolute top-4 right-4 bg-white rounded-lg shadow-md overflow-hidden">
-      <button
+    <Paper
+      sx={{
+        position: "absolute",
+        top: 16,
+        right: 16,
+        borderRadius: 2,
+        boxShadow: 2,
+        overflow: "hidden",
+      }}
+    >
+      <Button
         onClick={onTogglePanel}
-        className="w-full px-4 py-2 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        sx={{
+          width: "100%",
+          px: 4,
+          py: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          "&:hover": { bgcolor: "#f9fafb" },
+          textTransform: "none",
+          bgcolor: "transparent",
+        }}
       >
-        <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-gray-700" />
-          <span className="text-sm font-medium text-gray-700">图层</span>
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Layers size={20} style={{ color: "#374151" }} />
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 500, color: "#374151" }}
+          >
+            图层
+          </Typography>
+        </Box>
         {showPanel ? (
-          <ChevronUp className="w-4 h-4 text-gray-500" />
+          <ChevronUp size={16} style={{ color: "#6b7280" }} />
         ) : (
-          <ChevronDown className="w-4 h-4 text-gray-500" />
+          <ChevronDown size={16} style={{ color: "#6b7280" }} />
         )}
-      </button>
+      </Button>
       {showPanel && (
-        <div className="px-3 py-3 space-y-2 border-t">
+        <Box sx={{ px: 3, py: 3, borderTop: 1, borderColor: "#e5e7eb" }}>
           <LayerToggle
             label="设备点位"
-            icon={<MapPin className="w-4 h-4" />}
+            icon={<MapPin size={16} />}
             checked={visibleLayers.devices}
             onChange={() => onToggleLayer("devices")}
             color="#00C897"
           />
           <LayerToggle
             label="管线"
-            icon={<Navigation className="w-4 h-4" />}
+            icon={<Navigation size={16} />}
             checked={visibleLayers.pipelines}
             onChange={() => onToggleLayer("pipelines")}
             color="#6366F1"
           />
           <LayerToggle
             label="仓储位置"
-            icon={<Info className="w-4 h-4" />}
+            icon={<Info size={16} />}
             checked={visibleLayers.storage}
             onChange={() => onToggleLayer("storage")}
             color="#F59E0B"
           />
           {drawFeaturesLength > 0 && (
-            <div className="border-t pt-2 mt-2">
+            <Box sx={{ borderTop: 1, borderColor: "#e5e7eb", pt: 2, mt: 2 }}>
               <LayerToggle
                 label="绘制图形"
-                icon={<Pencil className="w-4 h-4" />}
+                icon={<Pencil size={16} />}
                 checked={true}
                 onChange={() => {}}
                 color="#EF4444"
               />
-            </div>
+            </Box>
           )}
-        </div>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 };
 

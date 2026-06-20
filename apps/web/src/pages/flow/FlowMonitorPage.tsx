@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { logger } from "@/utils/logger";
 import {
   Box,
   Button,
@@ -176,11 +177,11 @@ const FlowMonitorPage: React.FC = () => {
   const completedCount = data.filter((d) => d.status === "completed").length;
 
   const handleView = (instance: FlowInstance) => {
-    console.log("查看实例:", instance.id);
+    logger.info("查看实例:", instance.id);
   };
 
   const handleUrge = (instance: FlowInstance) => {
-    console.log("催办:", instance.id);
+    logger.info("催办:", instance.id);
   };
 
   const handleTerminate = (instance: FlowInstance) => {
@@ -203,7 +204,7 @@ const FlowMonitorPage: React.FC = () => {
   };
 
   const handleRecall = (instance: FlowInstance) => {
-    console.log("取回:", instance.id);
+    logger.info("取回:", instance.id);
   };
 
   const uniqueFlowNames = [...new Set(data.map((d) => d.name))];

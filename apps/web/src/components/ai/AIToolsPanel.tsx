@@ -172,6 +172,7 @@ const DateCalculator: React.FC = () => {
       date.setDate(date.getDate() + days);
       setStartDate(date.toISOString().split("T")[0]);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [startDate],
   );
 

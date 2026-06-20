@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import type { Notification } from "@/api/flow";
 import { flowApi } from "@/api/flow";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 import {
   Box,
   Button,
@@ -31,6 +32,7 @@ const FlowNotificationCenter: React.FC = () => {
 
   useEffect(() => {
     loadNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const loadNotifications = async () => {
@@ -58,7 +60,7 @@ const FlowNotificationCenter: React.FC = () => {
         setNotifications([]);
       }
     } catch (err) {
-      console.error("加载通知失败:", err);
+      apiLogger.error("加载通知失败:", err);
       addNotification({
         title: "错误",
         message: "加载通知失败",
@@ -83,7 +85,7 @@ const FlowNotificationCenter: React.FC = () => {
       }
     } catch (err) {
       addNotification({ title: "错误", message: "标记失败", type: "error" });
-      console.error("标记失败:", err);
+      apiLogger.error("标记失败:", err);
     }
   };
 

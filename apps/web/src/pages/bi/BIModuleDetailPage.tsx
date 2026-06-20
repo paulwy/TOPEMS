@@ -29,6 +29,7 @@ import {
 import { Grid } from "@/components/Grid";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import ExportButton from "@/components/ExportButton";
+import { apiLogger } from "@/utils/logger";
 
 const moduleConfig: Record<
   string,
@@ -402,6 +403,7 @@ const BIModuleDetailPage = () => {
 
   useEffect(() => {
     loadModuleData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moduleId]);
 
   const loadModuleData = async (showRefreshing = false) => {
@@ -414,7 +416,7 @@ const BIModuleDetailPage = () => {
         setIsRefreshing(false);
       }, 500);
     } catch (error) {
-      console.error("Failed to load module data:", error);
+      apiLogger.error("Failed to load module data:", error);
       setLoading(false);
       setIsRefreshing(false);
     }

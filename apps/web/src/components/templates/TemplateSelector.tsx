@@ -1,4 +1,17 @@
-import { Button, Dialog, DialogContent, DialogActions, TextField, InputLabel, Card, CardContent, CardHeader, Typography, Chip, Box } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  TextField,
+  InputLabel,
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Chip,
+  Box,
+} from "@mui/material";
 import React, { useState, useEffect } from "react";
 
 import {
@@ -18,6 +31,7 @@ import type {
   RenderTemplateResponse,
 } from "../../api/template";
 import { templateApi } from "../../api/template";
+import { apiLogger } from "@/utils/logger";
 
 interface TemplateSelectorProps {
   open: boolean;
@@ -69,6 +83,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       setSelectedTemplate(null);
       setVariableValues({});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, templateType]);
 
   const loadTemplates = async () => {
@@ -84,7 +99,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         setTemplates(response.data.items);
       }
     } catch (error) {
-      console.error("Failed to load templates:", error);
+      apiLogger.error("Failed to load templates:", error);
     }
   };
 
@@ -95,7 +110,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         setCategories(response.data);
       }
     } catch (error) {
-      console.error("Failed to load categories:", error);
+      apiLogger.error("Failed to load categories:", error);
     }
   };
 
@@ -129,7 +144,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           onSelect(selectedTemplate, selectedTemplate.content);
         }
       } catch (error) {
-        console.error("Failed to render template:", error);
+        apiLogger.error("Failed to render template:", error);
         onSelect(selectedTemplate, selectedTemplate.content);
       } finally {
         setIsRendering(false);
@@ -175,7 +190,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           >
             <Box sx={{ flex: 1, position: "relative" }}>
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
                 style={{
                   position: "absolute",
                   left: 12,

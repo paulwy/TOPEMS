@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
+import { logger } from "@/utils/logger";
 
 interface AISettingsModalProps {
   isOpen: boolean;
@@ -61,7 +62,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
         setConfig(JSON.parse(savedConfig));
       }
     } catch (err) {
-      console.error("加载AI设置失败:", err);
+      logger.error("加载AI设置失败:", err);
     }
   };
 
@@ -71,7 +72,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      console.error("保存AI设置失败:", err);
+      logger.error("保存AI设置失败:", err);
       setErrors({ save: "保存设置失败" });
     }
   };

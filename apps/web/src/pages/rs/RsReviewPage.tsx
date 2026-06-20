@@ -231,7 +231,10 @@ const RsReviewPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
+          <Typography
+            variant="h5"
+            sx={{ ...{ color: "#3b82f6" }, fontWeight: "bold" }}
+          >
             代码评审
           </Typography>
           <Button
@@ -248,7 +251,7 @@ const RsReviewPage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+            sx={{ alignItems: "center", flexWrap: "wrap" }}
           >
             <TextField
               size="small"
@@ -452,7 +455,7 @@ const RsReviewPage: React.FC = () => {
         <DialogContent>
           {selectedReview && (
             <Box sx={{ py: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                 {selectedReview.title}
               </Typography>
               <Stack direction="row" spacing={2} sx={{ mt: 2 }}>

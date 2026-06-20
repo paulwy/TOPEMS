@@ -40,6 +40,7 @@ import { useNavigate } from "react-router-dom";
 import type { WorkflowInstance, Workflow } from "@/api/flow";
 import { flowApi } from "@/api/flow";
 import { useAppStore } from "../../store";
+import { apiLogger } from "@/utils/logger";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 import { ModeToggle } from "@/components/ModeToggle";
@@ -63,6 +64,7 @@ const FlowInstanceListPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, workflowFilter]);
 
   const loadData = async () => {
@@ -93,7 +95,7 @@ const FlowInstanceListPage: React.FC = () => {
         setWorkflows(workflowList);
       }
     } catch (err) {
-      console.error("加载数据失败:", err);
+      apiLogger.error("加载数据失败:", err);
       addNotification({
         title: "加载失败",
         message: "加载数据失败",
@@ -140,7 +142,7 @@ const FlowInstanceListPage: React.FC = () => {
         message: "启动工作流实例失败",
         type: "error",
       });
-      console.error("启动失败:", err);
+      apiLogger.error("启动失败:", err);
     } finally {
       setCreating(false);
     }
@@ -301,6 +303,7 @@ const FlowInstanceListPage: React.FC = () => {
         },
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [workflows],
   );
 

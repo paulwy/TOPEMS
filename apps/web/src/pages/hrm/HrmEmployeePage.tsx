@@ -24,6 +24,7 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
+import { apiLogger } from "@/utils/logger";
 import {
   Users,
   Building2,
@@ -164,7 +165,7 @@ const HrmEmployeePage: React.FC = () => {
         setDepartments(depts);
       }
     } catch (error: any) {
-      console.error("Failed to fetch departments:", error);
+      apiLogger.error("Failed to fetch departments:", error);
     }
   }, []);
 
@@ -177,7 +178,7 @@ const HrmEmployeePage: React.FC = () => {
         setCompanies(responseData.items || []);
       }
     } catch (error: any) {
-      console.error("Failed to fetch companies:", error);
+      apiLogger.error("Failed to fetch companies:", error);
     }
   }, []);
 

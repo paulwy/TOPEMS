@@ -15,6 +15,7 @@ import { DataExport } from "@/components/common";
 import { ListPageTemplate, StatCardGroup } from "@/components/mui";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
+import { apiLogger } from "@/utils/logger";
 
 import {
   Button,
@@ -386,7 +387,7 @@ const FinanceReceiptPage: React.FC = () => {
       {
         label: "查看",
         icon: <Eye sx={{ width: 16, height: 16 }} />,
-        onClick: (row: Receipt) => console.log("查看", row),
+        onClick: (row: Receipt) => apiLogger.info("查看", row),
       },
       {
         label: "删除",

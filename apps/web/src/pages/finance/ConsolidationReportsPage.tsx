@@ -4,7 +4,7 @@ import { Grid } from "@/components/Grid";
  * 查看多公司合并后的财务报表
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
 import {

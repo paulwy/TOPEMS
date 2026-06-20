@@ -1,6 +1,7 @@
 // modules/MapModule/MapControls.tsx
 import React from "react";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { Box, IconButton, Paper } from "@mui/material";
 
 interface MapControlsProps {
   zoom: number;
@@ -18,31 +19,58 @@ const MapControls: React.FC<MapControlsProps> = ({
   onFitBounds,
 }) => {
   return (
-    <div className="absolute bottom-4 right-4 flex flex-col gap-2">
-      <button
+    <Box
+      sx={{
+        position: "absolute",
+        bottom: 16,
+        right: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+      }}
+    >
+      <IconButton
         onClick={onZoomIn}
-        className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        sx={{
+          p: 2,
+          bgcolor: "white",
+          borderRadius: 2,
+          boxShadow: 2,
+          "&:hover": { bgcolor: "#f9fafb" },
+        }}
         title="放大"
       >
-        <ZoomIn className="w-5 h-5 text-gray-700" />
-      </button>
-      <button
+        <ZoomIn size={20} style={{ color: "#374151" }} />
+      </IconButton>
+      <IconButton
         onClick={onZoomOut}
-        className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        sx={{
+          p: 2,
+          bgcolor: "white",
+          borderRadius: 2,
+          boxShadow: 2,
+          "&:hover": { bgcolor: "#f9fafb" },
+        }}
         title="缩小"
       >
-        <ZoomOut className="w-5 h-5 text-gray-700" />
-      </button>
+        <ZoomOut size={20} style={{ color: "#374151" }} />
+      </IconButton>
       {bounds && bounds.length >= 2 && (
-        <button
+        <IconButton
           onClick={onFitBounds}
-          className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+          sx={{
+            p: 2,
+            bgcolor: "white",
+            borderRadius: 2,
+            boxShadow: 2,
+            "&:hover": { bgcolor: "#f9fafb" },
+          }}
           title="缩放到所有标记"
         >
-          <Maximize2 className="w-5 h-5 text-gray-700" />
-        </button>
+          <Maximize2 size={20} style={{ color: "#374151" }} />
+        </IconButton>
       )}
-    </div>
+    </Box>
   );
 };
 

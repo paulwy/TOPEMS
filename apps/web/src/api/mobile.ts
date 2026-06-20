@@ -175,7 +175,10 @@ export const mobileApi = {
   createPatrolRecord: async (
     data: CreatePatrolRecordRequest,
   ): Promise<ApiResponse<PatrolRecord>> => {
-    return apiClient.mobile.post<PatrolRecord>("/api/mobile/patrol-records", data);
+    return apiClient.mobile.post<PatrolRecord>(
+      "/api/mobile/patrol-records",
+      data,
+    );
   },
 
   listScanRecords: async (): Promise<ApiResponse<ListResponse<ScanRecord>>> => {

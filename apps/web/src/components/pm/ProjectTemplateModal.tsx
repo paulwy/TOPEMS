@@ -1,4 +1,12 @@
-import { Button, Dialog, DialogContent, DialogTitle, TextField, Typography, Box } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Typography,
+  Box,
+} from "@mui/material";
 import React, { useState } from "react";
 
 import type { ProjectTemplate } from "./ProjectTemplateCard";

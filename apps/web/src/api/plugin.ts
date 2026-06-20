@@ -3,8 +3,10 @@
  * 插件市场 API 客户端
  */
 
-import axios from 'axios';
-import type { ApiResponse } from './client';
+import axios from "axios";
+import type { ApiResponse } from "./client";
+import { apiLogger } from "@/utils/logger";
+import { PLUGIN_TIMEOUT } from "@/constants/timeouts";
 
 // Plugin types
 export interface Plugin {
@@ -85,33 +87,35 @@ export interface PluginRuntimeConfig {
 
 // Plugin registry - maps plugin code to runtime URL
 export const PLUGIN_REGISTRY: Record<string, { url: string; port: number }> = {
-  workflow: { url: 'http://localhost:8000', port: 8000 },
-  erp: { url: 'http://localhost:8010', port: 8010 },
-  hrm: { url: 'http://localhost:8011', port: 8011 },
-  crm: { url: 'http://localhost:8012', port: 8012 },
-  mes: { url: 'http://localhost:8030', port: 8030 },
-  qa: { url: 'http://localhost:8032', port: 8032 },
-  scm: { url: 'http://localhost:8040', port: 8040 },
-  wms: { url: 'http://localhost:8042', port: 8042 },
-  bi: { url: 'http://localhost:8044', port: 8044 },
-  pm: { url: 'http://localhost:8046', port: 8046 },
-  ai: { url: 'http://localhost:8050', port: 8050 },
-  gis: { url: 'http://localhost:8054', port: 8054 },
-  mobile: { url: 'http://localhost:8056', port: 8056 },
-  rs: { url: 'http://localhost:8058', port: 8058 },
-  srm: { url: 'http://localhost:8060', port: 8060 },
-  monitor: { url: 'http://localhost:8064', port: 8064 },
-  portal: { url: 'http://localhost:8066', port: 8066 },
-  integration: { url: 'http://localhost:8068', port: 8068 },
+  workflow: { url: "http://localhost:8000", port: 8000 },
+  erp: { url: "http://localhost:8010", port: 8010 },
+  hrm: { url: "http://localhost:8011", port: 8011 },
+  crm: { url: "http://localhost:8012", port: 8012 },
+  mes: { url: "http://localhost:8030", port: 8030 },
+  qa: { url: "http://localhost:8032", port: 8032 },
+  scm: { url: "http://localhost:8040", port: 8040 },
+  wms: { url: "http://localhost:8042", port: 8042 },
+  bi: { url: "http://localhost:8044", port: 8044 },
+  pm: { url: "http://localhost:8046", port: 8046 },
+  ai: { url: "http://localhost:8050", port: 8050 },
+  gis: { url: "http://localhost:8054", port: 8054 },
+  mobile: { url: "http://localhost:8056", port: 8056 },
+  rs: { url: "http://localhost:8058", port: 8058 },
+  srm: { url: "http://localhost:8060", port: 8060 },
+  monitor: { url: "http://localhost:8064", port: 8064 },
+  portal: { url: "http://localhost:8066", port: 8066 },
+  integration: { url: "http://localhost:8068", port: 8068 },
 };
 
 // Axios instance for plugin runtime API
 const runtimeAxios = axios.create({
-  timeout: 5000,
+  timeout: PLUGIN_TIMEOUT.DEFAULT,
 });
 
 // Fetch plugin info directly from plugin runtime
-export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo | null> => {
+export const fetchPluginInfo = async (
+  code: string,
+): Promise<PluginRuntimeInfo | null> => {
   const config = PLUGIN_REGISTRY[code];
   if (!config) return null;
 
@@ -122,7 +126,7 @@ export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo |
     }
     return null;
   } catch (error) {
-    console.warn(`Failed to fetch plugin info for ${code}:`, error);
+    apiLogger.warn(`Failed to fetch plugin info for ${code}:`, error);
     return null;
   }
 };
@@ -130,16 +134,21 @@ export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo |
 // Fetch all plugin runtime info
 export const fetchAllPluginInfo = async (): Promise<PluginRuntimeInfo[]> => {
   const results = await Promise.allSettled(
-    Object.keys(PLUGIN_REGISTRY).map(code => fetchPluginInfo(code))
+    Object.keys(PLUGIN_REGISTRY).map((code) => fetchPluginInfo(code)),
   );
 
   return results
-    .filter((r): r is PromiseFulfilledResult<PluginRuntimeInfo> => r.status === 'fulfilled' && r.value !== null)
-    .map(r => r.value);
+    .filter(
+      (r): r is PromiseFulfilledResult<PluginRuntimeInfo> =>
+        r.status === "fulfilled" && r.value !== null,
+    )
+    .map((r) => r.value);
 };
 
 // Check plugin health
-export const checkPluginHealth = async (code: string): Promise<{ healthy: boolean; status?: string }> => {
+export const checkPluginHealth = async (
+  code: string,
+): Promise<{ healthy: boolean; status?: string }> => {
   const config = PLUGIN_REGISTRY[code];
   if (!config) return { healthy: false };
 
@@ -148,12 +157,12 @@ export const checkPluginHealth = async (code: string): Promise<{ healthy: boolea
     if (response.data?.data?.status) {
       return { healthy: true, status: response.data.data.status };
     }
-    return { healthy: true, status: 'running' };
+    return { healthy: true, status: "running" };
   } catch (error) {
     // Try basic health endpoint
     try {
       const response = await runtimeAxios.get(`${config.url}/health`);
-      return { healthy: true, status: 'running' };
+      return { healthy: true, status: "running" };
     } catch {
       return { healthy: false };
     }
@@ -161,24 +170,24 @@ export const checkPluginHealth = async (code: string): Promise<{ healthy: boolea
 };
 
 // API base path
-const API_BASE = '/api/core/plugins';
+const API_BASE = "/api/core/plugins";
 
 // Axios instance for plugin API
 const pluginAxios = axios.create({
-  baseURL: '',
+  baseURL: "",
   timeout: 30000,
 });
 
 // Add auth token to requests
 pluginAxios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token && !config.headers['Authorization']) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+  const token = localStorage.getItem("token");
+  if (token && !config.headers["Authorization"]) {
+    config.headers["Authorization"] = `Bearer ${token}`;
   }
   // Add tenant ID header
-  const tenantId = localStorage.getItem('tenant_id');
-  if (tenantId && !config.headers['X-Tenant-ID']) {
-    config.headers['X-Tenant-ID'] = tenantId;
+  const tenantId = localStorage.getItem("tenant_id");
+  if (tenantId && !config.headers["X-Tenant-ID"]) {
+    config.headers["X-Tenant-ID"] = tenantId;
   }
   return config;
 });
@@ -244,14 +253,18 @@ export interface PluginListResponse {
 }
 
 // Marketplace API
-const MARKETPLACE_API = '/api/core/plugin/marketplace';
+const MARKETPLACE_API = "/api/core/plugin/marketplace";
 
-export const getMarketplaceSummary = async (): Promise<ApiResponse<MarketplaceSummary>> => {
+export const getMarketplaceSummary = async (): Promise<
+  ApiResponse<MarketplaceSummary>
+> => {
   const response = await pluginAxios.get(MARKETPLACE_API);
   return response.data;
 };
 
-export const getPluginCategories = async (): Promise<ApiResponse<PluginCategory[]>> => {
+export const getPluginCategories = async (): Promise<
+  ApiResponse<PluginCategory[]>
+> => {
   const response = await pluginAxios.get(`${MARKETPLACE_API}/categories`);
   return response.data;
 };
@@ -272,13 +285,21 @@ export const getPlugin = async (code: string): Promise<ApiResponse<Plugin>> => {
   return response.data;
 };
 
-export const getPluginVersions = async (code: string): Promise<ApiResponse<PluginVersion[]>> => {
-  const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/versions`);
+export const getPluginVersions = async (
+  code: string,
+): Promise<ApiResponse<PluginVersion[]>> => {
+  const response = await pluginAxios.get(
+    `/api/core/plugin/plugins/${code}/versions`,
+  );
   return response.data;
 };
 
-export const getPluginReviews = async (code: string): Promise<ApiResponse<PluginReview[]>> => {
-  const response = await pluginAxios.get(`/api/core/plugin/plugins/${code}/reviews`);
+export const getPluginReviews = async (
+  code: string,
+): Promise<ApiResponse<PluginReview[]>> => {
+  const response = await pluginAxios.get(
+    `/api/core/plugin/plugins/${code}/reviews`,
+  );
   return response.data;
 };
 
@@ -297,7 +318,9 @@ export const pluginApi = {
    * Get plugin details with permissions
    * GET /api/core/plugins/{plugin_code}
    */
-  getDetails: async (pluginCode: string): Promise<ApiResponse<PluginDetails>> => {
+  getDetails: async (
+    pluginCode: string,
+  ): Promise<ApiResponse<PluginDetails>> => {
     const response = await pluginAxios.get(`${API_BASE}/${pluginCode}`);
     return response.data;
   },
@@ -307,7 +330,9 @@ export const pluginApi = {
    * POST /api/core/plugins/{plugin_code}/install
    */
   install: async (pluginCode: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/install`);
+    const response = await pluginAxios.post(
+      `${API_BASE}/${pluginCode}/install`,
+    );
     return response.data;
   },
 
@@ -316,7 +341,9 @@ export const pluginApi = {
    * POST /api/core/plugins/{plugin_code}/uninstall
    */
   uninstall: async (pluginCode: string): Promise<ApiResponse<boolean>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/uninstall`);
+    const response = await pluginAxios.post(
+      `${API_BASE}/${pluginCode}/uninstall`,
+    );
     return response.data;
   },
 
@@ -334,7 +361,9 @@ export const pluginApi = {
    * POST /api/core/plugins/{plugin_code}/disable
    */
   disable: async (pluginCode: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/disable`);
+    const response = await pluginAxios.post(
+      `${API_BASE}/${pluginCode}/disable`,
+    );
     return response.data;
   },
 };

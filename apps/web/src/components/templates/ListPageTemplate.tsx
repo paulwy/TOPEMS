@@ -396,6 +396,7 @@ export function ListPageTemplate<T>({
   onSearch,
   globalSearch,
   filters,
+  filtersValue,
   onFilterChange,
   actions,
   rowActions,
@@ -463,13 +464,15 @@ export function ListPageTemplate<T>({
   // 获取可见的列（按order排序）
   const visibleColumns = useMemo(() => {
     if (!columnConfigurable) return columns;
-    
+
     const sortedColumns = [...columns].sort((a, b) => {
-      const orderA = columnConfig.find(c => c.id === a.id)?.order ?? a.order ?? 0;
-      const orderB = columnConfig.find(c => c.id === b.id)?.order ?? b.order ?? 0;
+      const orderA =
+        columnConfig.find((c) => c.id === a.id)?.order ?? a.order ?? 0;
+      const orderB =
+        columnConfig.find((c) => c.id === b.id)?.order ?? b.order ?? 0;
       return orderA - orderB;
     });
-    
+
     return sortedColumns.filter((col) => {
       const config = columnConfig.find((c) => c.id === col.id);
       return config ? config.visible : true;
@@ -592,7 +595,16 @@ export function ListPageTemplate<T>({
     <TableHead>
       <TableRow>
         {selectable && (
-          <TableCell padding="checkbox" sx={{ width: 48, position: "sticky", left: 0, zIndex: 2, bgcolor: "grey.50" }}>
+          <TableCell
+            padding="checkbox"
+            sx={{
+              width: 48,
+              position: "sticky",
+              left: 0,
+              zIndex: 2,
+              bgcolor: "grey.50",
+            }}
+          >
             <Checkbox
               indeterminate={
                 effectiveSelectedIds.length > 0 &&
@@ -606,7 +618,15 @@ export function ListPageTemplate<T>({
           </TableCell>
         )}
         {showRowNumber && (
-          <TableCell sx={{ width: 60, position: selectable ? "sticky" : "relative", left: selectable ? 48 : 0, zIndex: 2, bgcolor: "grey.50" }}>
+          <TableCell
+            sx={{
+              width: 60,
+              position: selectable ? "sticky" : "relative",
+              left: selectable ? 48 : 0,
+              zIndex: 2,
+              bgcolor: "grey.50",
+            }}
+          >
             #
           </TableCell>
         )}
@@ -766,7 +786,15 @@ export function ListPageTemplate<T>({
             }}
           >
             {selectable && (
-              <TableCell padding="checkbox" sx={{ position: "sticky", left: 0, zIndex: 1, bgcolor: "inherit" }}>
+              <TableCell
+                padding="checkbox"
+                sx={{
+                  position: "sticky",
+                  left: 0,
+                  zIndex: 1,
+                  bgcolor: "inherit",
+                }}
+              >
                 <Checkbox
                   checked={isSelected}
                   onClick={(e) => {
@@ -777,8 +805,17 @@ export function ListPageTemplate<T>({
               </TableCell>
             )}
             {showRowNumber && (
-              <TableCell sx={{ position: selectable ? "sticky" : "relative", left: selectable ? 48 : 0, zIndex: 1, bgcolor: "inherit" }}>
-                {pagination ? pagination.page * pagination.pageSize + index + 1 : index + 1}
+              <TableCell
+                sx={{
+                  position: selectable ? "sticky" : "relative",
+                  left: selectable ? 48 : 0,
+                  zIndex: 1,
+                  bgcolor: "inherit",
+                }}
+              >
+                {pagination
+                  ? pagination.page * pagination.pageSize + index + 1
+                  : index + 1}
               </TableCell>
             )}
             {expandable && (
@@ -1068,12 +1105,19 @@ export function ListPageTemplate<T>({
 
   // 渲染批量操作栏
   const renderBatchActionBar = () => {
-    if (!showBatchActionBar || !selectable || effectiveSelectedIds.length === 0) {
+    if (
+      !showBatchActionBar ||
+      !selectable ||
+      effectiveSelectedIds.length === 0
+    ) {
       return null;
     }
 
     const availableActions = batchActions.filter((action) => {
-      if (action.minSelected && effectiveSelectedIds.length < action.minSelected) {
+      if (
+        action.minSelected &&
+        effectiveSelectedIds.length < action.minSelected
+      ) {
         return false;
       }
       if (action.showWhenSelected === false) {
@@ -1096,10 +1140,13 @@ export function ListPageTemplate<T>({
           borderColor: "primary.200",
         }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 500, color: "primary.main" }}>
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 500, color: "primary.main" }}
+        >
           已选择 {effectiveSelectedIds.length} 条记录
         </Typography>
-        
+
         <Button
           size="small"
           variant="outlined"
@@ -1147,7 +1194,14 @@ export function ListPageTemplate<T>({
         sx={{ minWidth: 280 }}
       >
         <Box sx={{ p: 2, minWidth: 280, maxWidth: 350 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
               配置列显示
             </Typography>
@@ -1159,11 +1213,15 @@ export function ListPageTemplate<T>({
               重置
             </Button>
           </Box>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: 12 }}>
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2, fontSize: 12 }}
+          >
             选择要显示的列
           </Typography>
-          
+
           <List dense sx={{ maxHeight: 300, overflow: "auto" }}>
             {columns.map((column) => {
               const config = columnConfig.find((c) => c.id === column.id);
@@ -1191,15 +1249,18 @@ export function ListPageTemplate<T>({
               );
             })}
           </List>
-          
+
           <Divider sx={{ my: 2 }} />
-          
+
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               size="small"
               fullWidth
               onClick={() => {
-                const allVisible = columns.map((col) => ({ id: col.id, visible: true }));
+                const allVisible = columns.map((col) => ({
+                  id: col.id,
+                  visible: true,
+                }));
                 setColumnConfig(allVisible);
                 onColumnConfigChange?.(allVisible);
               }}
@@ -1211,7 +1272,10 @@ export function ListPageTemplate<T>({
               size="small"
               fullWidth
               onClick={() => {
-                const allHidden = columns.map((col) => ({ id: col.id, visible: false }));
+                const allHidden = columns.map((col) => ({
+                  id: col.id,
+                  visible: false,
+                }));
                 setColumnConfig(allHidden);
                 onColumnConfigChange?.(allHidden);
               }}

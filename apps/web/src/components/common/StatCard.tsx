@@ -50,7 +50,18 @@ export type TrendType = "up" | "down" | "stable" | "neutral";
 /**
  * 颜色类型
  */
-export type CardColor = "green" | "purple" | "blue" | "orange" | "red" | "cyan" | "primary" | "success" | "warning" | "error" | "info";
+export type CardColor =
+  | "green"
+  | "purple"
+  | "blue"
+  | "orange"
+  | "red"
+  | "cyan"
+  | "primary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info";
 
 /**
  * 图表类型
@@ -191,18 +202,76 @@ export interface ChartCardProps {
 /**
  * 颜色配置映射
  */
-const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; main: string }> = {
-  green: { bg: "#10B981", gradient: "linear-gradient(135deg, #10B981, #059669)", light: "#DCFCE7", main: "#10B981" },
-  purple: { bg: "#8B5CF6", gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)", light: "#EDE9FE", main: "#8B5CF6" },
-  blue: { bg: "#3B82F6", gradient: "linear-gradient(135deg, #3B82F6, #2563EB)", light: "#DBEAFE", main: "#3B82F6" },
-  orange: { bg: "#F59E0B", gradient: "linear-gradient(135deg, #F59E0B, #D97706)", light: "#FEF3C7", main: "#F59E0B" },
-  red: { bg: "#EF4444", gradient: "linear-gradient(135deg, #EF4444, #DC2626)", light: "#FEE2E2", main: "#EF4444" },
-  cyan: { bg: "#06B6D4", gradient: "linear-gradient(135deg, #06B6D4, #0891B2)", light: "#CFFAFE", main: "#06B6D4" },
-  primary: { bg: "#1976d2", gradient: "linear-gradient(135deg, #1976d2, #1565c0)", light: "#E3F2FD", main: "#1976d2" },
-  success: { bg: "#388e3c", gradient: "linear-gradient(135deg, #388e3c, #2e7d32)", light: "#E8F5E9", main: "#388e3c" },
-  warning: { bg: "#f57c00", gradient: "linear-gradient(135deg, #f57c00, #ef6c00)", light: "#FFF3E0", main: "#f57c00" },
-  error: { bg: "#d32f2f", gradient: "linear-gradient(135deg, #d32f2f, #c62828)", light: "#FFEBEE", main: "#d32f2f" },
-  info: { bg: "#0288d1", gradient: "linear-gradient(135deg, #0288d1, #0277bd)", light: "#E1F5FE", main: "#0288d1" },
+const COLOR_MAP: Record<
+  string,
+  { bg: string; gradient: string; light: string; main: string }
+> = {
+  green: {
+    bg: "#10B981",
+    gradient: "linear-gradient(135deg, #10B981, #059669)",
+    light: "#DCFCE7",
+    main: "#10B981",
+  },
+  purple: {
+    bg: "#8B5CF6",
+    gradient: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+    light: "#EDE9FE",
+    main: "#8B5CF6",
+  },
+  blue: {
+    bg: "#3B82F6",
+    gradient: "linear-gradient(135deg, #3B82F6, #2563EB)",
+    light: "#DBEAFE",
+    main: "#3B82F6",
+  },
+  orange: {
+    bg: "#F59E0B",
+    gradient: "linear-gradient(135deg, #F59E0B, #D97706)",
+    light: "#FEF3C7",
+    main: "#F59E0B",
+  },
+  red: {
+    bg: "#EF4444",
+    gradient: "linear-gradient(135deg, #EF4444, #DC2626)",
+    light: "#FEE2E2",
+    main: "#EF4444",
+  },
+  cyan: {
+    bg: "#06B6D4",
+    gradient: "linear-gradient(135deg, #06B6D4, #0891B2)",
+    light: "#CFFAFE",
+    main: "#06B6D4",
+  },
+  primary: {
+    bg: "#1976d2",
+    gradient: "linear-gradient(135deg, #1976d2, #1565c0)",
+    light: "#E3F2FD",
+    main: "#1976d2",
+  },
+  success: {
+    bg: "#388e3c",
+    gradient: "linear-gradient(135deg, #388e3c, #2e7d32)",
+    light: "#E8F5E9",
+    main: "#388e3c",
+  },
+  warning: {
+    bg: "#f57c00",
+    gradient: "linear-gradient(135deg, #f57c00, #ef6c00)",
+    light: "#FFF3E0",
+    main: "#f57c00",
+  },
+  error: {
+    bg: "#d32f2f",
+    gradient: "linear-gradient(135deg, #d32f2f, #c62828)",
+    light: "#FFEBEE",
+    main: "#d32f2f",
+  },
+  info: {
+    bg: "#0288d1",
+    gradient: "linear-gradient(135deg, #0288d1, #0277bd)",
+    light: "#E1F5FE",
+    main: "#0288d1",
+  },
 };
 
 /**
@@ -356,31 +425,50 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
     return () => clearInterval(timer);
   }, [value, animate, isVisible]);
 
-  const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
+  const computedTrend =
+    trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
 
   const getTrendIcon = () => {
-    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") {
+    if (
+      !computedTrend ||
+      computedTrend === "neutral" ||
+      computedTrend === "stable"
+    ) {
       return <Minus size={16} />;
     }
-    return computedTrend === "up" ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+    return computedTrend === "up" ? (
+      <TrendingUp size={16} />
+    ) : (
+      <TrendingDown size={16} />
+    );
   };
 
   const getTrendColor = () => {
-    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") {
+    if (
+      !computedTrend ||
+      computedTrend === "neutral" ||
+      computedTrend === "stable"
+    ) {
       return "#64748B";
     }
     return computedTrend === "up" ? "#10B981" : "#EF4444";
   };
 
   const getTrendBgColor = () => {
-    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") {
+    if (
+      !computedTrend ||
+      computedTrend === "neutral" ||
+      computedTrend === "stable"
+    ) {
       return "#F1F5F9";
     }
     return computedTrend === "up" ? "#DCFCE7" : "#FEE2E2";
   };
 
   const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
-  const iconGradient = gradient ? `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` : colorInfo.gradient;
+  const iconGradient = gradient
+    ? `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`
+    : colorInfo.gradient;
 
   return (
     <Box
@@ -396,10 +484,12 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
         overflow: "hidden",
         transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         cursor: onClick ? "pointer" : "default",
-        "&:hover": onClick ? {
-          boxShadow: 4,
-          transform: "translateY(-2px)",
-        } : {},
+        "&:hover": onClick
+          ? {
+              boxShadow: 4,
+              transform: "translateY(-2px)",
+            }
+          : {},
         ...sx,
       }}
     >
@@ -443,7 +533,14 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
 
       <Box sx={{ position: "relative", zIndex: 10 }}>
         {/* 标题和图标行 */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 2,
+          }}
+        >
           <Box sx={{ flex: 1 }}>
             <Typography
               variant="body2"
@@ -468,24 +565,36 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
                   lineHeight: 1.2,
                 }}
               >
-                {typeof displayValue === "number" ? displayValue.toLocaleString() : displayValue}
+                {typeof displayValue === "number"
+                  ? displayValue.toLocaleString()
+                  : displayValue}
               </Typography>
               {unit && (
                 <Typography
                   variant="body1"
-                  sx={{ color: "text.secondary", fontWeight: 600, fontSize: "1rem" }}
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                  }}
                 >
                   {unit}
                 </Typography>
               )}
               {suffix && (
-                <Typography variant="body2" sx={{ color: "text.disabled", fontSize: "0.875rem" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "text.disabled", fontSize: "0.875rem" }}
+                >
                   {suffix}
                 </Typography>
               )}
             </Box>
             {subtitle && (
-              <Typography variant="caption" sx={{ color: "text.disabled", mt: 0.5, display: "block" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+              >
                 {subtitle}
               </Typography>
             )}
@@ -501,7 +610,9 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
                 alignItems: "center",
                 justifyContent: "center",
                 background: iconGradient,
-                boxShadow: isHovered ? "0 8px 25px rgba(0, 0, 0, 0.15)" : "0 4px 15px rgba(0, 0, 0, 0.1)",
+                boxShadow: isHovered
+                  ? "0 8px 25px rgba(0, 0, 0, 0.15)"
+                  : "0 4px 15px rgba(0, 0, 0, 0.1)",
                 transition: "all 0.3s",
                 transform: isHovered ? "scale(1.05)" : "scale(1)",
                 color: "white",
@@ -530,10 +641,21 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
               {getTrendIcon()}
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: getTrendColor(), fontSize: "0.875rem" }}>
-                {change > 0 ? "+" : ""}{change}%
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 700,
+                  color: getTrendColor(),
+                  fontSize: "0.875rem",
+                }}
+              >
+                {change > 0 ? "+" : ""}
+                {change}%
               </Typography>
-              <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.7rem" }}>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.disabled", fontSize: "0.7rem" }}
+              >
                 vs 上期
               </Typography>
             </Box>
@@ -569,17 +691,24 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   showTargetProgress = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
+  const computedTrend =
+    trend ?? (change !== undefined ? (change >= 0 ? "up" : "down") : null);
 
   const getSparklineColor = () => {
-    if (!computedTrend || computedTrend === "neutral" || computedTrend === "stable") {
+    if (
+      !computedTrend ||
+      computedTrend === "neutral" ||
+      computedTrend === "stable"
+    ) {
       return "#64748B";
     }
     return computedTrend === "up" ? "#10B981" : "#EF4444";
   };
 
   const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
-  const iconGradient = gradient ? `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})` : colorInfo.gradient;
+  const iconGradient = gradient
+    ? `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`
+    : colorInfo.gradient;
 
   return (
     <StatCardBase
@@ -614,7 +743,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           )}
           {showTargetProgress && targetProgress !== undefined && (
             <Box sx={{ mt: 2 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mb: 0.5,
+                }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   目标进度
                 </Typography>
@@ -672,8 +807,12 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   trendValue,
   sx,
 }) => {
-  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(null);
-  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
+  const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
 
   const chartTypeIcons: Record<ChartType, React.ReactNode> = {
     bar: <BarChart3 style={{ width: 16, height: 16 }} />,
@@ -725,7 +864,14 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               {title}
             </Typography>
             {trend && trendValue && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: getTrendColor() }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  color: getTrendColor(),
+                }}
+              >
                 {getTrendIcon()}
                 <Typography variant="caption" sx={{ fontWeight: 500 }}>
                   {trendValue}
@@ -760,8 +906,14 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                     onClick={() => onChartTypeChange?.(type)}
                     sx={{
                       borderRadius: 0.5,
-                      bgcolor: activeChartType === type ? "background.paper" : "transparent",
-                      color: activeChartType === type ? "primary.main" : "text.secondary",
+                      bgcolor:
+                        activeChartType === type
+                          ? "background.paper"
+                          : "transparent",
+                      color:
+                        activeChartType === type
+                          ? "primary.main"
+                          : "text.secondary",
                       boxShadow: activeChartType === type ? 1 : 0,
                     }}
                   >
@@ -779,11 +931,15 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 sx={{ textTransform: "none" }}
               >
                 <Calendar style={{ width: 16, height: 16, marginRight: 0.5 }} />
-                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)?.label || "本月"}
+                {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)
+                  ?.label || "本月"}
               </Button>
             )}
 
-            <IconButton size="small" onClick={(e) => setActionMenuAnchor(e.currentTarget)}>
+            <IconButton
+              size="small"
+              onClick={(e) => setActionMenuAnchor(e.currentTarget)}
+            >
               <MoreVertical style={{ width: 16, height: 16 }} />
             </IconButton>
           </Box>
@@ -819,13 +975,20 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 mb: 2,
               }}
             >
-              <AlertCircle style={{ width: 24, height: 24, color: "#EF4444" }} />
+              <AlertCircle
+                style={{ width: 24, height: 24, color: "#EF4444" }}
+              />
             </Box>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
               {error}
             </Typography>
             {onRefresh && (
-              <Button variant="outlined" size="small" onClick={onRefresh} startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={onRefresh}
+                startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
+              >
                 重试
               </Button>
             )}
