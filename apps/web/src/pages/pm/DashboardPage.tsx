@@ -9,6 +9,7 @@ import {
   Button,
 } from "@mui/material";
 import { Grid } from "@/components/Grid";
+import { QuickSearch } from "@/components/common";
 import {
   FileText,
   ArrowRight,
@@ -71,13 +72,22 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box sx={{ padding: "24px 32px", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
-          项目管理
-        </Typography>
-        <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
-          {getGreeting()}，项目进度与任务追踪
-        </Typography>
+      <Box sx={{ padding: "24px 32px", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
+            项目管理
+          </Typography>
+          <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
+            {getGreeting()}，项目进度与任务追踪
+          </Typography>
+        </Box>
+        <QuickSearch
+          placeholder="搜索项目..."
+          onSearch={(query) => {
+            navigate(`/pm/projects?search=${encodeURIComponent(query)}`);
+          }}
+          width={320}
+        />
       </Box>
 
       <Box sx={{ padding: "24px 32px" }}>

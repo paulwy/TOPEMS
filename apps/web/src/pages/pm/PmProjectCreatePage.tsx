@@ -35,6 +35,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/shadcn";
+import { ImageUpload } from "@/components/common";
 
 type ProjectType =
   | "RESEARCH"
@@ -87,6 +88,7 @@ const PmProjectCreatePage: React.FC = () => {
     start_date: "",
     end_date: "",
     tags: "",
+    images: [] as string[],
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -470,6 +472,20 @@ const PmProjectCreatePage: React.FC = () => {
                   value={formData.tags}
                   onChange={(e) => handleChange("tags", e.target.value)}
                   placeholder="多个标签用逗号分隔"
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Label sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  项目封面图片
+                </Label>
+                <ImageUpload
+                  value={formData.images}
+                  onChange={(files) => setFormData((prev) => ({ ...prev, images: files }))}
+                  maxCount={9}
+                  accept="image/*"
+                  cropEnabled
+                  height={200}
                 />
               </div>
 

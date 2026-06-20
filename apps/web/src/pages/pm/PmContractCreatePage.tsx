@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@mui/material";
+import { Button, Box, Typography } from "@mui/material";
+import { FileUpload } from "@/components/common";
 import type { Project } from "@/api/pm";
 import { pmApi } from "@/api/pm";
 import {
@@ -37,6 +38,7 @@ const PmContractCreatePage: React.FC = () => {
   const [showTextOptimizer, setShowTextOptimizer] = useState(false);
   const [showDataCompleter, setShowDataCompleter] = useState(false);
   const [showValidator, setShowValidator] = useState(false);
+  const [contractAttachments, setContractAttachments] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     project_id: "",
@@ -840,6 +842,45 @@ const PmContractCreatePage: React.FC = () => {
                   boxShadow: "0 0 0 2px #3b82f6",
                 }}
               />
+            </div>
+
+            <div
+              style={{
+                borderTop: "1px solid #e5e7eb",
+                paddingTop: "1rem",
+                marginTop: "1.5rem",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "1rem",
+                }}
+              >
+                <h2
+                  style={{
+                    fontSize: "1.125rem",
+                    fontWeight: "600",
+                    color: "#111827",
+                  }}
+                >
+                  合同附件
+                </h2>
+              </div>
+
+              <Box sx={{ mb: 2 }}>
+                <FileUpload
+                  value={contractAttachments}
+                  onChange={setContractAttachments}
+                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.xls', '.xlsx']}
+                  maxCount={10}
+                  maxSize={50}
+                  maxTotalSize={200}
+                  uploadText="上传合同附件"
+                />
+              </Box>
             </div>
           </div>
 

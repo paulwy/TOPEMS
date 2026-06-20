@@ -54,6 +54,7 @@ import {
   Typography,
   FormLabel,
 } from "@mui/material";
+import { ImageUpload } from "@/components/common";
 
 const HrmTrainingPage: React.FC = () => {
   const { success, error } = useNotification();
@@ -1633,6 +1634,21 @@ const HrmTrainingPage: React.FC = () => {
                       rows={3}
                       placeholder="请输入课程描述"
                     />
+                  </Box>
+                  <Box>
+                    <FormLabel htmlFor="course-images">课程图片</FormLabel>
+                    <Box sx={{ mt: 1 }}>
+                      <ImageUpload
+                        value={(formData as TrainingCourse).images || []}
+                        onChange={(files) =>
+                          setFormData({ ...formData, images: files } as any)
+                        }
+                        maxCount={9}
+                        accept="image/*"
+                        cropEnabled
+                        height={150}
+                      />
+                    </Box>
                   </Box>
                 </>
               )}

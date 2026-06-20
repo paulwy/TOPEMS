@@ -27,6 +27,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
+import { FileUpload } from "@/components/common";
 import {
   Plus,
   Search,
@@ -69,6 +70,7 @@ const RsReleasePage: React.FC = () => {
     environment: "staging",
     release_note: "",
   });
+  const [releasePackageAttachments, setReleasePackageAttachments] = useState<string[]>([]);
 
   useEffect(() => {
     const mockReleases: Release[] = [
@@ -256,7 +258,10 @@ const RsReleasePage: React.FC = () => {
             variant="contained"
             startIcon={<Plus size={18} />}
             sx={{ bgcolor: "#3b82f6" }}
-            onClick={() => setNewReleaseDialogOpen(true)}
+            onClick={() => {
+              setReleasePackageAttachments([]);
+              setNewReleaseDialogOpen(true);
+            }}
           >
             新建发布
           </Button>
@@ -578,6 +583,20 @@ const RsReleasePage: React.FC = () => {
                 })
               }
             />
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                发布包附件
+              </Typography>
+              <FileUpload
+                value={releasePackageAttachments}
+                onChange={setReleasePackageAttachments}
+                accept={['.zip', '.tar', '.gz', '.jar', '.war', '.pdf', '.doc', '.docx']}
+                maxCount={10}
+                maxSize={500}
+                maxTotalSize={2000}
+                uploadText="上传发布包"
+              />
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>

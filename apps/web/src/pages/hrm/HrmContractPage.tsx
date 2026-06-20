@@ -54,6 +54,7 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
+import { FileUpload } from "@/components/common";
 
 const contractTypes = [
   { value: "labor", label: "劳动合同" },
@@ -172,6 +173,7 @@ export default function ContractManagementPage() {
     title: string;
     onConfirm: () => void;
   } | null>(null);
+  const [contractAttachments, setContractAttachments] = useState<string[]>([]);
 
   const showNotification = useCallback(
     (type: "success" | "error", message: string) => {
@@ -260,6 +262,7 @@ export default function ContractManagementPage() {
       contract_file_path: "",
       notes: "",
     });
+    setContractAttachments([]);
     setModalVisible(true);
   };
 
@@ -282,6 +285,7 @@ export default function ContractManagementPage() {
       contract_file_path: contract.contract_file_path || "",
       notes: contract.notes || "",
     });
+    setContractAttachments(contract.contract_file_path ? [contract.contract_file_path] : []);
     setModalVisible(true);
   };
 
@@ -1077,19 +1081,18 @@ export default function ContractManagementPage() {
                 />
               </Stack>
 
-              <TextField
-                label="合同文件路径"
-                size="small"
-                fullWidth
-                value={formState.contract_file_path}
-                onChange={(e) =>
-                  setFormState((s) => ({
-                    ...s,
-                    contract_file_path: e.target.value,
-                  }))
-                }
-                placeholder="上传文件路径"
-              />
+              <Box>
+                <FormLabel sx={{ mb: 1, display: 'block' }}>合同附件</FormLabel>
+                <FileUpload
+                  value={contractAttachments}
+                  onChange={setContractAttachments}
+                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
+                  maxCount={5}
+                  maxSize={20}
+                  maxTotalSize={50}
+                  uploadText="上传合同附件"
+                />
+              </Box>
 
               <TextField
                 label="备注"

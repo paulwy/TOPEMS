@@ -9,6 +9,7 @@ import {
   Button,
 } from "@mui/material";
 import { Grid } from "@/components/Grid";
+import { QuickSearch } from "@/components/common";
 import {
   TrendingUp,
   Users,
@@ -71,13 +72,22 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box sx={{ padding: "24px 32px", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
-          客户关系管理
-        </Typography>
-        <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
-          {getGreeting()}，客户管理与销售分析
-        </Typography>
+      <Box sx={{ padding: "24px 32px", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
+            客户关系管理
+          </Typography>
+          <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
+            {getGreeting()}，客户管理与销售分析
+          </Typography>
+        </Box>
+        <QuickSearch
+          placeholder="搜索客户..."
+          onSearch={(query) => {
+            navigate(`/crm/customers?search=${encodeURIComponent(query)}`);
+          }}
+          width={320}
+        />
       </Box>
 
       <Box sx={{ padding: "24px 32px" }}>

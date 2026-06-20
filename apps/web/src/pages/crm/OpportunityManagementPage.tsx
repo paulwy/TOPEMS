@@ -27,7 +27,7 @@ import {
   IconButton,
   Pagination,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import type {
   Opportunity,
   CreateOpportunityRequest,
@@ -38,6 +38,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Search, Plus, Edit, Trash2, Eye, TrendingUp } from "lucide-react";
+import { DataExport } from "@/components/common";
 
 const OpportunityManagementPage: React.FC = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -283,6 +284,20 @@ const OpportunityManagementPage: React.FC = () => {
     setCurrentPage(page);
   };
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "name", title: "商机名称" },
+      { key: "customer_name", title: "客户名称" },
+      { key: "stage", title: "商机阶段" },
+      { key: "value", title: "商机金额" },
+      { key: "probability", title: "概率" },
+      { key: "expected_close_date", title: "预计关闭日期" },
+      { key: "status", title: "状态" },
+    ],
+    [],
+  );
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -410,6 +425,12 @@ const OpportunityManagementPage: React.FC = () => {
                 <MenuItem value="closed_lost">输单</MenuItem>
               </Select>
             </FormControl>
+            <DataExport
+              data={opportunities as Record<string, unknown>[]}
+              fields={exportFields}
+              defaultFileName="商机数据"
+              buttonText="导出"
+            />
             <Button
               variant="contained"
               onClick={() => {
