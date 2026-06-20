@@ -2,29 +2,18 @@ import React, { useState, useMemo } from "react";
 import {
   FileText,
   ChevronLeft,
-  Plus,
-  Edit,
-  Trash2,
-  Download,
   Eye,
-  Search,
-  Calendar,
+  Calculator,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate, StatCardGroup } from "@/components/mui";
 import { DataExport } from "@/components/common";
 
 import {
   Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -34,8 +23,6 @@ import {
   Typography,
   Stack,
   IconButton,
-  Tooltip,
-  InputAdornment,
 } from "@mui/material";
 
 interface LedgerEntry {
@@ -154,7 +141,6 @@ const mockLedgerData: LedgerEntry[] = [
 
 const FinanceLedgerPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
 
   const [ledgerData] = useState<LedgerEntry[]>(mockLedgerData);
   const [filterPeriod, setFilterPeriod] = useState("");
@@ -179,60 +165,121 @@ const FinanceLedgerPage: React.FC = () => {
     });
   }, [ledgerData, filterCategory, searchQuery]);
 
+  // 统计卡片数据
+  const statCards = useMemo(() => {
+    const totalAccounts = ledgerData.length;
+    const totalOpeningBalance = ledgerData.reduce(
+      (sum, entry) => sum + entry.opening_balance,
+      0,
+    );
+    const totalDebitAmount = ledgerData.reduce(
+      (sum, entry) => sum + entry.debit_amount,
+      0,
+    );
+    const totalCreditAmount = ledgerData.reduce(
+      (sum, entry) => sum + entry.credit_amount,
+      0,
+    );
+    const totalClosingBalance = ledgerData.reduce(
+      (sum, entry) => sum + entry.closing_balance,
+      0,
+    );
+
+    return [
+      {
+        title: "科目总数",
+        value: totalAccounts,
+        icon: <Calculator size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "总期初余额",
+        value: `¥${totalOpeningBalance.toLocaleString()}`,
+        icon: <Wallet size={24} />,
+        color: "secondary" as const,
+      },
+      {
+        title: "总借方发生额",
+        value: `¥${totalDebitAmount.toLocaleString()}`,
+        icon: <TrendingUp size={24} />,
+        color: "error" as const,
+      },
+      {
+        title: "总贷方发生额",
+        value: `¥${totalCreditAmount.toLocaleString()}`,
+        icon: <TrendingDown size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "总期末余额",
+        value: `¥${totalClosingBalance.toLocaleString()}`,
+        icon: <FileText size={24} />,
+        color: "info" as const,
+      },
+    ];
+  }, [ledgerData]);
+
   const handleViewDetail = (entry: LedgerEntry) => {
     setSelectedEntry(entry);
     setShowDetailModal(true);
   };
 
-  const columns = useMemo<ColumnDef<LedgerEntry>[]>(
+  const columns = useMemo(
     () => [
       {
-        accessorKey: "account_code",
-        header: "科目编码",
-        cell: ({ row }) => (
+        id: "account_code",
+        label: "科目编码",
+        render: (row: LedgerEntry) => (
           <Box sx={{ fontWeight: 600, color: "success.main" }}>
-            {row.original.account_code}
+            {row.account_code}
           </Box>
         ),
       },
       {
-        accessorKey: "account_name",
-        header: "科目名称",
-        cell: ({ row }) => (
-          <Box sx={{ fontWeight: 500 }}>{row.original.account_name}</Box>
+        id: "account_name",
+        label: "科目名称",
+        render: (row: LedgerEntry) => (
+          <Box sx={{ fontWeight: 500 }}>{row.account_name}</Box>
         ),
       },
       {
-        accessorKey: "opening_balance",
-        header: "期初余额",
-        cell: ({ row }) => (
+        id: "category",
+        label: "科目类别",
+        render: (row: LedgerEntry) => (
+          <Chip label={row.category} size="small" color="success" />
+        ),
+      },
+      {
+        id: "opening_balance",
+        label: "期初余额",
+        render: (row: LedgerEntry) => (
           <Box sx={{ fontFamily: "monospace" }}>
-            ¥{row.original.opening_balance.toLocaleString()}
+            ¥{row.opening_balance.toLocaleString()}
           </Box>
         ),
       },
       {
-        accessorKey: "debit_amount",
-        header: "借方发生额",
-        cell: ({ row }) => (
+        id: "debit_amount",
+        label: "借方发生额",
+        render: (row: LedgerEntry) => (
           <Box sx={{ color: "error.main", fontFamily: "monospace" }}>
-            ¥{row.original.debit_amount.toLocaleString()}
+            ¥{row.debit_amount.toLocaleString()}
           </Box>
         ),
       },
       {
-        accessorKey: "credit_amount",
-        header: "贷方发生额",
-        cell: ({ row }) => (
+        id: "credit_amount",
+        label: "贷方发生额",
+        render: (row: LedgerEntry) => (
           <Box sx={{ color: "success.main", fontFamily: "monospace" }}>
-            ¥{row.original.credit_amount.toLocaleString()}
+            ¥{row.credit_amount.toLocaleString()}
           </Box>
         ),
       },
       {
-        accessorKey: "closing_balance",
-        header: "期末余额",
-        cell: ({ row }) => (
+        id: "closing_balance",
+        label: "期末余额",
+        render: (row: LedgerEntry) => (
           <Box
             sx={{
               fontWeight: 700,
@@ -240,26 +287,20 @@ const FinanceLedgerPage: React.FC = () => {
               fontFamily: "monospace",
             }}
           >
-            ¥{row.original.closing_balance.toLocaleString()}
+            ¥{row.closing_balance.toLocaleString()}
           </Box>
         ),
       },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo(
+    () => [
       {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            <Tooltip title="查看明细账">
-              <IconButton
-                size="small"
-                color="success"
-                onClick={() => handleViewDetail(row.original)}
-              >
-                <Eye sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        ),
+        label: "查看明细账",
+        icon: <Eye sx={{ width: 16, height: 16 }} />,
+        onClick: (row: LedgerEntry) => handleViewDetail(row),
       },
     ],
     [],
@@ -268,10 +309,25 @@ const FinanceLedgerPage: React.FC = () => {
   const advancedFilters = useMemo(
     () => [
       {
-        label: "科目类别",
-        key: "category",
+        id: "period",
+        label: "会计期间",
         type: "select" as const,
         options: [
+          { value: "", label: "全部期间" },
+          { value: "2024-01", label: "2024年1月" },
+          { value: "2024-02", label: "2024年2月" },
+          { value: "2024-03", label: "2024年3月" },
+          { value: "2024-04", label: "2024年4月" },
+        ],
+        value: filterPeriod,
+        onChange: setFilterPeriod,
+      },
+      {
+        id: "category",
+        label: "科目类别",
+        type: "select" as const,
+        options: [
+          { value: "", label: "全部类别" },
           { value: "资产类", label: "资产类" },
           { value: "负债类", label: "负债类" },
           { value: "权益类", label: "权益类" },
@@ -282,7 +338,20 @@ const FinanceLedgerPage: React.FC = () => {
         onChange: setFilterCategory,
       },
     ],
-    [filterCategory],
+    [filterPeriod, filterCategory],
+  );
+
+  const exportFields = useMemo(
+    () => [
+      { key: "account_code", title: "科目编码" },
+      { key: "account_name", title: "科目名称" },
+      { key: "category", title: "类别" },
+      { key: "opening_balance", title: "期初余额" },
+      { key: "debit_amount", title: "借方发生额" },
+      { key: "credit_amount", title: "贷方发生额" },
+      { key: "closing_balance", title: "期末余额" },
+    ],
+    [],
   );
 
   return (
@@ -320,14 +389,19 @@ const FinanceLedgerPage: React.FC = () => {
                     fontWeight: 700,
                   }}
                 >
-                  <FileText
+                  <Box
+                    component="span"
                     sx={{
                       width: 28,
                       height: 28,
                       mr: 1.5,
                       color: "success.main",
+                      display: "flex",
+                      alignItems: "center",
                     }}
-                  />
+                  >
+                    <FileText size={28} />
+                  </Box>
                   总账管理
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -337,16 +411,8 @@ const FinanceLedgerPage: React.FC = () => {
             </Stack>
             <Stack direction="row" spacing={1}>
               <DataExport
-                data={filteredData as Record<string, unknown>[]}
-                fields={[
-                  { key: "account_code", title: "科目编码" },
-                  { key: "account_name", title: "科目名称" },
-                  { key: "category", title: "类别" },
-                  { key: "opening_balance", title: "期初余额" },
-                  { key: "debit_amount", title: "借方发生额" },
-                  { key: "credit_amount", title: "贷方发生额" },
-                  { key: "closing_balance", title: "期末余额" },
-                ]}
+                data={filteredData as unknown as Record<string, unknown>[]}
+                fields={exportFields}
                 defaultFileName="总账数据"
                 buttonText="导出"
               />
@@ -358,64 +424,29 @@ const FinanceLedgerPage: React.FC = () => {
       <Box
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
       >
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            gap: 2,
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
-            <TextField
-              size="small"
-              placeholder="搜索科目编码、名称..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ width: 280 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>会计期间</InputLabel>
-              <Select
-                value={filterPeriod}
-                label="会计期间"
-                onChange={(e) => setFilterPeriod(e.target.value)}
-              >
-                <MenuItem value="">全部期间</MenuItem>
-                <MenuItem value="2024-01">2024年1月</MenuItem>
-                <MenuItem value="2024-02">2024年2月</MenuItem>
-                <MenuItem value="2024-03">2024年3月</MenuItem>
-                <MenuItem value="2024-04">2024年4月</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Stack>
+        {/* 统计卡片 */}
+        <StatCardGroup stats={statCards} columns={5} />
 
-        <Card>
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredData}
-              searchPlaceholder="搜索科目..."
-              searchKey="account_name"
-              enableAdvancedFilter={true}
-              advancedFilters={advancedFilters}
-              exportFileName="finance-ledger"
-            />
-          </CardContent>
-        </Card>
+        <ListPageTemplate
+          columns={columns}
+          data={filteredData}
+          searchable
+          searchPlaceholder="搜索科目编码、名称..."
+          searchValue={searchQuery}
+          onSearch={setSearchQuery}
+          filters={advancedFilters}
+          filtersValue={{
+            period: filterPeriod,
+            category: filterCategory,
+          }}
+          onFilterChange={(filters) => {
+            if (filters.period !== undefined)
+              setFilterPeriod(filters.period as string);
+            if (filters.category !== undefined)
+              setFilterCategory(filters.category as string);
+          }}
+          rowActions={rowActions}
+        />
       </Box>
 
       {/* Detail Modal */}

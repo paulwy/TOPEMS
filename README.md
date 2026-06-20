@@ -201,8 +201,11 @@ cargo check --workspace
 ### 一键启动所有服务（开发环境）
 
 ```bash
-# 使用 macOS 开发环境启动脚本
-./scripts/start-macos-dev.sh
+# 使用统一服务管理脚本
+./scripts/topems.sh start-all
+
+# 或只启动开发环境（不包含前端）
+./scripts/topems.sh dev
 ```
 
 ## 🔌 端口配置规范
@@ -373,46 +376,58 @@ python -m topems_cli db migrate
 
 ## 🛠️ 脚本工具
 
-| 脚本 | 说明 | 使用方法 |
-|------|------|---------|
-| `scripts/init-database.sh` | 初始化数据库 | `./scripts/init-database.sh` |
-| `scripts/manage-services.sh` | 管理单个服务 | `./scripts/manage-services.sh start iam` |
-| `scripts/start-all.sh` | 一键启动所有服务（推荐） | `./scripts/start-all.sh` |
-| `scripts/stop-all.sh` | 一键停止所有服务 | `./scripts/stop-all.sh` |
-| `scripts/cleanup.sh` | 全面清理（端口、进程、缓存） | `./scripts/cleanup.sh` |
-| `scripts/deploy.sh` | 离线部署脚本 | `./scripts/deploy.sh` |
-| `scripts/download-images.sh` | 下载 Docker 镜像 | `./scripts/download-images.sh` |
-| `scripts/build-all-services.sh` | 构建所有服务镜像 | `./scripts/build-all-services.sh build` |
-| `scripts/run-clippy.sh` | 运行 Clippy 代码检查 | `./scripts/run-clippy.sh` |
-| `scripts/run_ci_tests.sh` | 运行 CI 测试 | `./scripts/run_ci_tests.sh` |
+### 统一服务管理脚本（推荐）
 
-### 服务管理脚本使用
+使用 `scripts/topems.sh` 管理所有服务：
 
 ```bash
-# 查看服务状态
-./scripts/manage-services.sh status
+# 查看帮助
+./scripts/topems.sh
 
-# 启动单个服务
-./scripts/manage-services.sh start iam
+# 服务管理
+./scripts/topems.sh status [服务]     # 查看服务状态
+./scripts/topems.sh start <服务>     # 启动服务
+./scripts/topems.sh stop <服务>      # 停止服务
+./scripts/topems.sh restart <服务>   # 重启服务
+./scripts/topems.sh logs <服务> [行数] # 查看服务日志
+./scripts/topems.sh build <服务>     # 编译服务
 
-# 停止单个服务
-./scripts/manage-services.sh stop iam
+# 批量操作
+./scripts/topems.sh start-all        # 启动所有服务（含前端）
+./scripts/topems.sh stop-all         # 停止所有服务（含前端）
 
-# 重启单个服务
-./scripts/manage-services.sh restart iam
+# 开发环境
+./scripts/topems.sh dev              # 启动 macOS 开发环境
 
-# 查看服务日志
-./scripts/manage-services.sh logs iam 100
+# 数据库
+./scripts/topems.sh reset-password [用户名] [密码]  # 重置密码（默认 admin/admin123）
 
-# 列出所有服务
-./scripts/manage-services.sh list
+# 部署
+./scripts/topems.sh deploy           # 一键部署
 
-# 验证环境变量
-./scripts/manage-services.sh validate-env
-
-# 启动核心服务
-./scripts/manage-services.sh start-core
+# 示例
+./scripts/topems.sh status                    # 查看所有服务状态
+./scripts/topems.sh start iam                 # 启动 IAM 服务
+./scripts/topems.sh start-all                 # 启动所有服务
+./scripts/topems.sh start web                 # 启动前端
+./scripts/topems.sh logs hrm 100              # 查看 HRM 最近 100 行日志
+./scripts/topems.sh reset-password            # 重置 admin 密码为 admin123
+./scripts/topems.sh reset-password admin newpass  # 重置 admin 密码为 newpass
 ```
+
+### 其他脚本
+
+| 脚本 | 说明 | 使用方法 |
+|------|------|---------|
+| `scripts/topems.sh` | **统一服务管理脚本**（推荐） | `./scripts/topems.sh --help` |
+| `scripts/install-deps.sh` | 安装依赖 | `./scripts/install-deps.sh` |
+| `scripts/ai-models.sh` | AI 模型管理 | `./scripts/ai-models.sh --help` |
+| `scripts/update_admin_password.sh` | 重置管理员密码 | `./scripts/update_admin_password.sh [用户名] [密码]` |
+| `scripts/deploy.sh` | 离线部署脚本 | `./scripts/deploy.sh deploy` |
+| `deploy/scripts/install.sh` | Linux 服务器安装 | `./deploy/scripts/install.sh` |
+| `deploy/scripts/setup-db.sh` | 数据库设置 | `./deploy/scripts/setup-db.sh` |
+
+详细说明请参考各脚本的 `--help` 输出。
 
 ## 📖 文档
 
@@ -474,55 +489,56 @@ bash scripts/start-local.sh
 TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管理操作：
 
 ```bash
-# 启动核心服务（IAM, HRM, Mail, File）
-./scripts/topems.sh start
+# 查看帮助
+./scripts/topems.sh --help
 
-# 启动所有服务
-./scripts/topems.sh start-all
+# 服务管理
+./scripts/topems.sh status                    # 查看所有服务状态
+./scripts/topems.sh start <服务>               # 启动单个服务
+./scripts/topems.sh stop <服务>                # 停止单个服务
+./scripts/topems.sh restart <服务>             # 重启单个服务
+./scripts/topems.sh logs <服务> [行数]         # 查看服务日志
+./scripts/topems.sh build <服务>               # 编译单个服务
 
-# 停止所有服务
-./scripts/topems.sh stop
+# 批量操作
+./scripts/topems.sh start-all                  # 启动所有服务（含前端）
+./scripts/topems.sh stop-all                   # 停止所有服务（含前端）
 
-# 查看服务状态
-./scripts/topems.sh status
+# 开发环境
+./scripts/topems.sh dev                        # 启动 macOS 开发环境
+./scripts/topems.sh install-deps               # 安装所有依赖
 
-# 编译所有服务
-./scripts/topems.sh build
+# 数据库
+./scripts/topems.sh reset-password             # 重置 admin 密码为 admin123
+./scripts/topems.sh reset-password admin <密码> # 重置指定用户密码
 
-# 检查编译状态
-./scripts/topems.sh check
-
-# 查看服务日志
-./scripts/topems.sh logs <服务名> [行数]
-
-# 清理资源
-./scripts/topems.sh clean
+# 部署
+./scripts/topems.sh deploy                     # 一键部署
 ```
 
-### 脚本工具列表
+### 支持的服务
 
-| 脚本 | 说明 |
-|------|------|
-| `topems.sh` | **统一服务管理脚本**（推荐使用，自动检测环境） |
-| `run-tests.sh` | 运行测试套件（单元测试、集成测试、覆盖率） |
-| `run-clippy.sh` | 运行 Clippy 静态分析 |
-| `run_ci_tests.sh` | CI/CD 测试脚本 |
-| `build-all-services.sh` | 构建所有服务镜像 |
-| `clean-warnings.sh` | 批量清理代码警告 |
-| `test-all-rust-services.sh` | 检查所有 Rust 服务编译状态 |
-| `stop-all.sh` | 停止所有服务 |
-| `cleanup.sh` | 清理环境（端口、进程、缓存） |
-| `setup-db.sh` | 数据库设置脚本 |
-| `init-db-unified.sh` | 统一数据库初始化（自动检测环境） |
-| `init-vector-index.sh` | Redis 向量索引初始化 |
-| `install-pgvector.sh` | 安装配置 pgvector |
-| `deploy.sh` | 离线部署脚本 |
-| `monitor.sh` | 启动监控服务 |
-| `encrypt-env.sh` | 加密环境变量文件 |
-| `test-hrm-api.sh` | HRM API 端到端测试 |
-| `collect-test-data.sh` | 收集测试数据 |
-
-详细说明请参考 [脚本工具文档](./scripts/README.md)。
+| 服务名 | 说明 | 端口 |
+|--------|------|------|
+| iam | 统一身份认证 | 8000 |
+| pm | 项目管理 | 8001 |
+| erp | 企业资源计划 | 8010 |
+| hrm | 人力资源管理 | 8011 |
+| crm | 客户关系管理 | 8012 |
+| integration | 系统集成 | 8005 |
+| manufacturing | 制造执行 | 8023 |
+| quality-assurance | 质量管控 | 8032 |
+| rs | 研发管理 | 8020 |
+| scm | 供应链管理 | 8040 |
+| srm | 供应商管理 | 8041 |
+| wms | 仓库管理 | 8042 |
+| ai | AI 服务 | 8062 |
+| analytics | 数据分析 | 8060 |
+| gis | 地理信息 | 8053 |
+| mobile | 移动端 | 8070 |
+| monitor | 系统监控 | 8064 |
+| portal | 企业门户 | 8066 |
+| web | 前端应用 | 3000 |
 
 ## 📦 配置文件
 
@@ -580,5 +596,5 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-18
+**最后更新**: 2026-06-20
 **版本**: v2.5.0

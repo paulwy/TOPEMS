@@ -36,11 +36,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { DetailPageTemplate } from "@/components/templates";
-import {
-  voucherApi,
-  type FinancialVoucher,
-  type VoucherItem,
-} from "@/api/erp";
+import { voucherApi, type FinancialVoucher, type VoucherItem } from "@/api/erp";
 import { useAppStore } from "@/store";
 
 interface TabConfig {
@@ -64,6 +60,7 @@ const VoucherDetailPage: React.FC = () => {
     if (id) {
       loadVoucherDetail(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadVoucherDetail = async (voucherId: string) => {
@@ -193,7 +190,17 @@ const VoucherDetailPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<
       string,
-      { label: string; color: "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" }
+      {
+        label: string;
+        color:
+          | "default"
+          | "primary"
+          | "secondary"
+          | "error"
+          | "info"
+          | "success"
+          | "warning";
+      }
     > = {
       draft: { label: "草稿", color: "default" },
       pending: { label: "待审核", color: "warning" },
@@ -231,7 +238,10 @@ const VoucherDetailPage: React.FC = () => {
         }}
       >
         <Box sx={{ textAlign: "center" }}>
-          <AlertCircle size={64} style={{ color: "#d32f2f", marginBottom: 16 }} />
+          <AlertCircle
+            size={64}
+            style={{ color: "#d32f2f", marginBottom: 16 }}
+          />
           <Typography variant="h6" color="text.secondary">
             凭证不存在
           </Typography>
@@ -247,7 +257,7 @@ const VoucherDetailPage: React.FC = () => {
     avatar: <FileText size={32} />,
     title: voucher.voucher_number,
     subtitle: `期间: ${voucher.period}`,
-    tags: [getStatusBadge(voucher.status)],
+    tags: [getStatusBadge(voucher.status)] as unknown as string[],
     stats: [
       { label: "借方合计", value: formatCurrency(voucher.total_debit) },
       { label: "贷方合计", value: formatCurrency(voucher.total_credit) },
@@ -263,7 +273,11 @@ const VoucherDetailPage: React.FC = () => {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "repeat(2, 1fr)",
+              lg: "repeat(3, 1fr)",
+            },
             gap: 3,
           }}
         >
@@ -271,7 +285,10 @@ const VoucherDetailPage: React.FC = () => {
             <Typography variant="caption" color="text.secondary">
               凭证编号
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 600, color: "primary.main" }}>
+            <Typography
+              variant="body1"
+              sx={{ fontWeight: 600, color: "primary.main" }}
+            >
               {voucher.voucher_number}
             </Typography>
           </Box>
@@ -379,7 +396,7 @@ const VoucherDetailPage: React.FC = () => {
                 记账人
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {voucher.poster_name || "-"}
+                {(voucher as any).poster_name || "-"}
               </Typography>
             </Box>
           </Box>
@@ -405,13 +422,19 @@ const VoucherDetailPage: React.FC = () => {
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               借方合计:{" "}
-              <Typography component="span" sx={{ fontWeight: 600, color: "error.main" }}>
+              <Typography
+                component="span"
+                sx={{ fontWeight: 600, color: "error.main" }}
+              >
                 {formatCurrency(voucher.total_debit)}
               </Typography>
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               贷方合计:{" "}
-              <Typography component="span" sx={{ fontWeight: 600, color: "success.main" }}>
+              <Typography
+                component="span"
+                sx={{ fontWeight: 600, color: "success.main" }}
+              >
                 {formatCurrency(voucher.total_credit)}
               </Typography>
             </Typography>
@@ -423,13 +446,19 @@ const VoucherDetailPage: React.FC = () => {
             <TableHead>
               <TableRow sx={{ bgcolor: "grey.100" }}>
                 <TableCell sx={{ fontWeight: 600, width: 80 }}>行号</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 150 }}>科目代码</TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 150 }}>
+                  科目代码
+                </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>科目名称</TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>摘要</TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 150, textAlign: "right" }}>
+                <TableCell
+                  sx={{ fontWeight: 600, width: 150, textAlign: "right" }}
+                >
                   借方金额
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, width: 150, textAlign: "right" }}>
+                <TableCell
+                  sx={{ fontWeight: 600, width: 150, textAlign: "right" }}
+                >
                   贷方金额
                 </TableCell>
               </TableRow>
@@ -443,11 +472,27 @@ const VoucherDetailPage: React.FC = () => {
                   </TableCell>
                   <TableCell>{item.subject_name}</TableCell>
                   <TableCell>{item.summary || "-"}</TableCell>
-                  <TableCell sx={{ textAlign: "right", color: "error.main", fontWeight: 500 }}>
-                    {item.debit_amount > 0 ? formatCurrency(item.debit_amount) : ""}
+                  <TableCell
+                    sx={{
+                      textAlign: "right",
+                      color: "error.main",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {item.debit_amount > 0
+                      ? formatCurrency(item.debit_amount)
+                      : ""}
                   </TableCell>
-                  <TableCell sx={{ textAlign: "right", color: "success.main", fontWeight: 500 }}>
-                    {item.credit_amount > 0 ? formatCurrency(item.credit_amount) : ""}
+                  <TableCell
+                    sx={{
+                      textAlign: "right",
+                      color: "success.main",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {item.credit_amount > 0
+                      ? formatCurrency(item.credit_amount)
+                      : ""}
                   </TableCell>
                 </TableRow>
               ))}
@@ -470,7 +515,10 @@ const VoucherDetailPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               借方合计
             </Typography>
-            <Typography variant="h6" sx={{ fontWeight: "bold", color: "error.main" }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: "bold", color: "error.main" }}
+            >
               {formatCurrency(voucher.total_debit)}
             </Typography>
           </Box>
@@ -478,7 +526,10 @@ const VoucherDetailPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               贷方合计
             </Typography>
-            <Typography variant="h6" sx={{ fontWeight: "bold", color: "success.main" }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: "bold", color: "success.main" }}
+            >
               {formatCurrency(voucher.total_credit)}
             </Typography>
           </Box>
@@ -519,7 +570,8 @@ const VoucherDetailPage: React.FC = () => {
                 凭证创建
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {voucher.maker_name || "系统"} - {formatDate(voucher.created_at)}
+                {voucher.maker_name || "系统"} -{" "}
+                {formatDate(voucher.created_at)}
               </Typography>
             </Box>
           </Box>
@@ -549,7 +601,8 @@ const VoucherDetailPage: React.FC = () => {
                   凭证审核
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {voucher.checker_name || "-"} - {formatDate(voucher.checked_at)}
+                  {voucher.checker_name || "-"} -{" "}
+                  {formatDate((voucher as any).checked_at)}
                 </Typography>
               </Box>
             </Box>
@@ -580,7 +633,8 @@ const VoucherDetailPage: React.FC = () => {
                   凭证记账
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {voucher.poster_name || "-"} - {formatDate(voucher.posted_at)}
+                  {(voucher as any).poster_name || "-"} -{" "}
+                  {formatDate((voucher as any).posted_at)}
                 </Typography>
               </Box>
             </Box>
@@ -592,7 +646,12 @@ const VoucherDetailPage: React.FC = () => {
 
   const tabs: TabConfig[] = [
     { id: "basic", label: "基本信息", content: basicInfoTab },
-    { id: "items", label: "凭证明细", badge: voucherItems.length, content: voucherItemsTab },
+    {
+      id: "items",
+      label: "凭证明细",
+      badge: voucherItems.length,
+      content: voucherItemsTab,
+    },
     { id: "logs", label: "操作日志", content: operationLogTab },
   ];
 
@@ -611,30 +670,6 @@ const VoucherDetailPage: React.FC = () => {
       infoCard={infoCard}
       onEdit={handleEdit}
       onDelete={handleDelete}
-      customActions={
-        <>
-          {voucher.status === "draft" && (
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<Check size={18} />}
-              onClick={handleAudit}
-            >
-              审核
-            </Button>
-          )}
-          {voucher.status === "approved" && (
-            <Button
-              variant="outlined"
-              color="success"
-              startIcon={<Building2 size={18} />}
-              onClick={handlePost}
-            >
-              记账
-            </Button>
-          )}
-        </>
-      }
     />
   );
 };

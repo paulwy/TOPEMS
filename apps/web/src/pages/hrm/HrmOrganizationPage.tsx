@@ -42,6 +42,7 @@ import {
 } from "@/api/hrm";
 import { useAppStore } from "../../store";
 import { AIHelperButton, AICodeGenerator } from "@/components/ai";
+import { StatCardGroup } from "@/components/mui";
 
 interface OrganizationNode {
   id: string;
@@ -337,6 +338,7 @@ const HrmOrganizationPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateCompany = () => {
@@ -536,6 +538,47 @@ const HrmOrganizationPage: React.FC = () => {
     );
   }, [selectedNode, departments, deptFormData.id]);
 
+  // 组织统计数据
+  const organizationStats = useMemo(() => {
+    const companyCount = companies.length;
+    const departmentCount = departments.length;
+    const employeeCount = employees.length;
+    const activeDepartmentCount = departments.filter(
+      (d) => d.status === "active",
+    ).length;
+
+    return [
+      {
+        title: "公司数",
+        value: companyCount,
+        unit: "家",
+        icon: <Building style={{ width: 24, height: 24 }} />,
+        color: "primary" as const,
+      },
+      {
+        title: "部门数",
+        value: departmentCount,
+        unit: "个",
+        icon: <Building2 style={{ width: 24, height: 24 }} />,
+        color: "secondary" as const,
+      },
+      {
+        title: "员工总数",
+        value: employeeCount,
+        unit: "人",
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "success" as const,
+      },
+      {
+        title: "启用部门数",
+        value: activeDepartmentCount,
+        unit: "个",
+        icon: <Building2 style={{ width: 24, height: 24 }} />,
+        color: "info" as const,
+      },
+    ];
+  }, [companies, departments, employees]);
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       {/* 页面头部 */}
@@ -595,8 +638,13 @@ const HrmOrganizationPage: React.FC = () => {
         </Box>
       </Box>
 
+      {/* 统计卡片区域 */}
+      <Box sx={{ maxWidth: 1280, mx: "auto", px: 3, py: 2 }}>
+        <StatCardGroup stats={organizationStats} loading={loading} />
+      </Box>
+
       {/* 内容区域 */}
-      <Box sx={{ display: "flex", height: "calc(100vh - 120px)" }}>
+      <Box sx={{ display: "flex", height: "calc(100vh - 200px)" }}>
         <Box
           sx={{
             width: 320,

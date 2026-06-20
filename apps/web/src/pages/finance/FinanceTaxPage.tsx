@@ -1,9 +1,6 @@
 import React, { useState, useMemo } from "react";
 import {
-  ChevronLeft,
-  Plus,
   Download,
-  Search,
   Receipt,
   CheckCircle,
   Clock,
@@ -12,21 +9,14 @@ import {
   TrendingUp,
   DollarSign,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
 import { DataExport } from "@/components/common";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate } from "@/components/templates/ListPageTemplate";
+import { StatCardGroup } from "@/components/mui";
+import type { StatCard } from "@/components/templates/DashboardTemplate";
 
 import {
   Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -37,7 +27,6 @@ import {
   Stack,
   IconButton,
   Tooltip,
-  InputAdornment,
 } from "@mui/material";
 
 interface TaxEntry {
@@ -144,7 +133,6 @@ const mockTaxData: TaxEntry[] = [
 ];
 
 const FinanceTaxPage: React.FC = () => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [taxData] = useState<TaxEntry[]>(mockTaxData);
@@ -244,48 +232,43 @@ const FinanceTaxPage: React.FC = () => {
     });
   };
 
-  const columns = useMemo<ColumnDef<TaxEntry>[]>(
+  // ListPageTemplate 列定义
+  const columns = useMemo(
     () => [
       {
-        accessorKey: "tax_type",
-        header: "税种",
-        cell: ({ row }) => (
-          <Chip label={row.original.tax_type} size="small" color="primary" />
+        id: "tax_type",
+        label: "税种",
+        render: (row: TaxEntry) => (
+          <Chip label={row.tax_type} size="small" color="primary" />
         ),
       },
       {
-        accessorKey: "declaration_period",
-        header: "申报期间",
-        cell: ({ row }) => (
-          <MuiBox sx={{ fontWeight: 500 }}>
-            {row.original.declaration_period}
-          </MuiBox>
+        id: "declaration_period",
+        label: "申报期间",
+        render: (row: TaxEntry) => (
+          <MuiBox sx={{ fontWeight: 500 }}>{row.declaration_period}</MuiBox>
         ),
       },
       {
-        accessorKey: "taxable_income",
-        header: "应税收入",
-        cell: ({ row }) => (
+        id: "taxable_income",
+        label: "应税收入",
+        render: (row: TaxEntry) => (
           <MuiBox sx={{ fontFamily: "monospace", color: "text.secondary" }}>
-            ¥{row.original.taxable_income.toLocaleString()}
+            ¥{row.taxable_income.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "tax_rate",
-        header: "税率",
-        cell: ({ row }) => (
-          <Chip
-            label={`${row.original.tax_rate}%`}
-            size="small"
-            variant="outlined"
-          />
+        id: "tax_rate",
+        label: "税率",
+        render: (row: TaxEntry) => (
+          <Chip label={`${row.tax_rate}%`} size="small" variant="outlined" />
         ),
       },
       {
-        accessorKey: "tax_amount",
-        header: "应纳税额",
-        cell: ({ row }) => (
+        id: "tax_amount",
+        label: "应纳税额",
+        render: (row: TaxEntry) => (
           <MuiBox
             sx={{
               fontWeight: 700,
@@ -293,45 +276,42 @@ const FinanceTaxPage: React.FC = () => {
               fontFamily: "monospace",
             }}
           >
-            ¥{row.original.tax_amount.toLocaleString()}
+            ¥{row.tax_amount.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "paid_amount",
-        header: "已缴税额",
-        cell: ({ row }) => (
+        id: "paid_amount",
+        label: "已缴税额",
+        render: (row: TaxEntry) => (
           <MuiBox sx={{ color: "success.main", fontFamily: "monospace" }}>
-            ¥{row.original.paid_amount.toLocaleString()}
+            ¥{row.paid_amount.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "owed_amount",
-        header: "欠税金额",
-        cell: ({ row }) => {
-          const owed = row.original.owed_amount;
-          return (
-            <MuiBox
-              sx={{
-                fontWeight: 600,
-                color: owed > 0 ? "error.main" : "success.main",
-                fontFamily: "monospace",
-              }}
-            >
-              ¥{owed.toLocaleString()}
-            </MuiBox>
-          );
-        },
+        id: "owed_amount",
+        label: "欠税金额",
+        render: (row: TaxEntry) => (
+          <MuiBox
+            sx={{
+              fontWeight: 600,
+              color: row.owed_amount > 0 ? "error.main" : "success.main",
+              fontFamily: "monospace",
+            }}
+          >
+            ¥{row.owed_amount.toLocaleString()}
+          </MuiBox>
+        ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => {
-          const config = getStatusConfig(row.original.status);
+        id: "status",
+        label: "状态",
+        render: (row: TaxEntry) => {
+          const config = getStatusConfig(row.status);
           return (
             <Chip
-              label={row.original.status}
+              label={row.status}
               size="small"
               color={config.color}
               icon={config.icon as React.ReactElement}
@@ -341,36 +321,33 @@ const FinanceTaxPage: React.FC = () => {
       },
       {
         id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
+        label: "操作",
+        render: (row: TaxEntry) => (
           <Stack direction="row" spacing={1}>
-            {row.original.status === "待申报" && (
+            {row.status === "待申报" && (
               <Tooltip title="税务申报">
                 <IconButton
                   size="small"
                   color="success"
-                  onClick={() => handleDeclare(row.original)}
+                  onClick={() => handleDeclare(row)}
                 >
                   <FileText sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
             )}
-            {row.original.status === "待缴纳" && (
+            {row.status === "待缴纳" && (
               <Tooltip title="税款缴纳">
                 <IconButton
                   size="small"
                   color="warning"
-                  onClick={() => handlePay(row.original)}
+                  onClick={() => handlePay(row)}
                 >
                   <DollarSign sx={{ width: 16, height: 16 }} />
                 </IconButton>
               </Tooltip>
             )}
             <Tooltip title="税务分析">
-              <IconButton
-                size="small"
-                onClick={() => handleAnalysis(row.original)}
-              >
+              <IconButton size="small" onClick={() => handleAnalysis(row)}>
                 <TrendingUp sx={{ width: 16, height: 16 }} />
               </IconButton>
             </Tooltip>
@@ -381,11 +358,43 @@ const FinanceTaxPage: React.FC = () => {
     [],
   );
 
-  const advancedFilters = useMemo(
+  // 统计卡片数据
+  const totalTaxAmount = useMemo(
+    () => taxData.reduce((sum, t) => sum + t.tax_amount, 0),
+    [taxData],
+  );
+
+  const statCards: StatCard[] = [
+    {
+      id: "total-tax",
+      title: "总应纳税额",
+      value: `¥${totalTaxAmount.toLocaleString()}`,
+      color: "primary",
+      icon: <Receipt size={24} />,
+    },
+    {
+      id: "total-paid",
+      title: "已缴税额",
+      value: `¥${totalPaid.toLocaleString()}`,
+      color: "success",
+      icon: <CheckCircle size={24} />,
+    },
+    {
+      id: "total-owed",
+      title: "欠税金额",
+      value: `¥${totalOwed.toLocaleString()}`,
+      color: totalOwed > 0 ? "error" : "success",
+      icon:
+        totalOwed > 0 ? <AlertTriangle size={24} /> : <CheckCircle size={24} />,
+    },
+  ];
+
+  // ListPageTemplate filters
+  const filters = useMemo(
     () => [
       {
+        id: "tax_type",
         label: "税种",
-        key: "tax_type",
         type: "select" as const,
         options: [
           { value: "增值税", label: "增值税" },
@@ -397,8 +406,8 @@ const FinanceTaxPage: React.FC = () => {
         onChange: setFilterType,
       },
       {
+        id: "status",
         label: "申报状态",
-        key: "status",
         type: "select" as const,
         options: [
           { value: "已申报", label: "已申报" },
@@ -430,183 +439,52 @@ const FinanceTaxPage: React.FC = () => {
 
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      {/* 统计卡片区域 */}
       <MuiBox
-        sx={{
-          bgcolor: "background.paper",
-          boxShadow: "sm",
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
+        sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, pt: 3 }}
       >
-        <MuiBox
-          sx={{
-            maxWidth: 1280,
-            mx: "auto",
-            px: { xs: 2, sm: 3, lg: 4 },
-            py: 3,
-          }}
-        >
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
-          >
-            <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
-              <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
-              <MuiBox>
-                <Typography
-                  variant="h5"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontWeight: 700,
-                  }}
-                >
-                  <MuiBox
-                    component="span"
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      mr: 1.5,
-                      color: "success.main",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Receipt size={28} />
-                  </MuiBox>
-                  税务管理
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  管理税务申报、税款缴纳和税务分析
-                </Typography>
-              </MuiBox>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<Download sx={{ width: 20, height: 20 }} />}
-                onClick={handleExport}
-              >
-                导出报表
-              </Button>
-              <DataExport
-                data={taxData as Record<string, unknown>[]}
-                fields={exportFields}
-                defaultFileName="税务数据"
-                buttonText="数据导出"
-              />
-            </Stack>
-          </Stack>
-        </MuiBox>
+        <StatCardGroup stats={statCards} columns={3} />
       </MuiBox>
 
       <MuiBox
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
       >
-        {/* Summary Cards */}
-        <MuiBox
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
-            gap: 2,
-            mb: 3,
+        <ListPageTemplate
+          title="税务管理"
+          subtitle="管理税务申报、税款缴纳和税务分析"
+          backButton={{
+            href: "/dashboard",
           }}
-        >
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                总应纳税额
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "primary.main" }}
-              >
-                ¥
-                {taxData
-                  .reduce((sum, t) => sum + t.tax_amount, 0)
-                  .toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                已缴税额
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "success.main" }}
-              >
-                ¥{totalPaid.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card
-            sx={{ bgcolor: totalOwed > 0 ? "error.light" : "success.light" }}
-          >
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                欠税金额
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 700,
-                  color: totalOwed > 0 ? "error.main" : "success.main",
-                }}
-              >
-                ¥{totalOwed.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-        </MuiBox>
-
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            gap: 2,
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
-            <TextField
-              size="small"
-              placeholder="搜索税种、申报期间..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ width: 280 }}
+          columns={columns}
+          data={filteredData}
+          filters={filters}
+          searchable
+          searchPlaceholder="搜索税种、申报期间..."
+          searchValue={searchQuery}
+          onSearch={setSearchQuery}
+          actions={[
+            {
+              label: "导出报表",
+              icon: <Download size={18} />,
+              onClick: handleExport,
+              variant: "outlined",
+            },
+            {
+              label: "数据导出",
+              icon: <Download size={18} />,
+              onClick: () => {},
+              variant: "outlined",
+            },
+          ]}
+          headerContent={
+            <DataExport
+              data={taxData as unknown as Record<string, unknown>[]}
+              fields={exportFields}
+              defaultFileName="税务数据"
+              buttonText=""
             />
-          </Stack>
-        </Stack>
-
-        <Card>
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredData}
-              searchPlaceholder="搜索税务..."
-              searchKey="tax_type"
-              enableAdvancedFilter={true}
-              advancedFilters={advancedFilters}
-              exportFileName="finance-tax"
-            />
-          </CardContent>
-        </Card>
+          }
+        />
       </MuiBox>
 
       {/* Declare Modal */}

@@ -58,8 +58,7 @@ const SupplierManagementPage: React.FC = () => {
     address: "",
     bank_account: "",
     tax_number: "",
-    images: [],
-  });
+  } as any);
 
   const { addNotification } = useAppStore();
 

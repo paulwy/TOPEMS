@@ -19,7 +19,7 @@ import {
   Stack,
   IconButton,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Building,
   Search,
@@ -49,6 +49,7 @@ import {
 import { useAppStore } from "../../store";
 import type { TreeNode } from "@/components/TreeView";
 import TreeView from "@/components/TreeView";
+import { StatCardGroup } from "@/components/mui";
 
 const HrmCompanyPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -167,12 +168,14 @@ const HrmCompanyPage: React.FC = () => {
 
   useEffect(() => {
     fetchCompanies({ page: currentPage, page_size: pageSize });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize]);
 
   useEffect(() => {
     if (currentCompany) {
       fetchCompanyDetails(currentCompany.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentCompany]);
 
   const handleSearch = () => {

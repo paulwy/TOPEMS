@@ -6,7 +6,6 @@ import {
   Calculator,
   Search,
   Plus,
-  ChevronLeft,
   Download,
   Loader2,
   Users,
@@ -16,19 +15,13 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Button,
-  InputBase,
-  Select,
-  MenuItem,
-  Typography,
-} from "@mui/material";
+import { Box, Button, InputBase, Typography } from "@mui/material";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
-import { MetricCard } from "@/components/bi/MetricCard";
 import { StatsChart } from "@/components/bi/StatsChart";
 import { StatusBadge } from "@/components/hrm/StatusBadge";
+import { ListPageTemplate, StatCard } from "@/components/mui";
+import type { ColumnDef, RowAction } from "@/components/mui";
 import {
   payrollApi,
   payrollItemApi,
@@ -70,6 +63,7 @@ const HrmPayrollPage: React.FC = () => {
   // 加载数据
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -257,6 +251,316 @@ const HrmPayrollPage: React.FC = () => {
     period: selectedPeriod,
   };
 
+  // 统计卡片数据
+  const statCards = useMemo(
+    () => [
+      {
+        title: "发放人数",
+        value: payrollStats.totalEmployees,
+        unit: "人",
+        icon: <Users sx={{ width: 20, height: 20 }} />,
+        color: "primary" as const,
+      },
+      {
+        title: "基本工资合计",
+        value: formatCurrency(payrollStats.totalBaseSalary),
+        icon: <DollarSign sx={{ width: 20, height: 20 }} />,
+        color: "success" as const,
+      },
+      {
+        title: "奖金合计",
+        value: formatCurrency(payrollStats.totalBonus),
+        icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
+        color: "secondary" as const,
+      },
+      {
+        title: "实发工资合计",
+        value: formatCurrency(payrollStats.totalNetSalary),
+        icon: <CreditCard sx={{ width: 20, height: 20 }} />,
+        color: "primary" as const,
+      },
+      {
+        title: "平均工资",
+        value: formatCurrency(payrollStats.avgSalary),
+        icon: <Receipt sx={{ width: 20, height: 20 }} />,
+        color: "info" as const,
+      },
+      {
+        title: "待计算批次",
+        value: payrollStats.pendingRuns,
+        icon: <Clock sx={{ width: 20, height: 20 }} />,
+        color: "warning" as const,
+      },
+      {
+        title: "已发放批次",
+        value: payrollStats.paidRuns,
+        icon: <CheckCircle sx={{ width: 20, height: 20 }} />,
+        color: "success" as const,
+      },
+    ],
+    [payrollStats],
+  );
+
+  // 工资发放批次列定义
+  const payrollColumns: ColumnDef<PayrollRun>[] = useMemo(
+    () => [
+      {
+        id: "pay_period",
+        label: "发放周期",
+        render: (row) => (
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 500, color: "grey.900" }}
+          >
+            {row.pay_period}
+          </Typography>
+        ),
+      },
+      {
+        id: "employee_count",
+        label: "员工人数",
+        render: (row) => (
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
+            {row.employee_count}
+          </Typography>
+        ),
+      },
+      {
+        id: "total_amount",
+        label: "总金额",
+        render: (row) => (
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 700, color: "primary.main" }}
+          >
+            {formatCurrency(Number(row.total_amount))}
+          </Typography>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => getPayrollStatusBadge(row.status),
+      },
+      {
+        id: "paid_at",
+        label: "发放时间",
+        render: (row) => (
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
+            {row.paid_at || "-"}
+          </Typography>
+        ),
+      },
+    ],
+    [],
+  );
+
+  // 工资发放批次行操作
+  const payrollRowActions: RowAction<PayrollRun>[] = useMemo(
+    () => [
+      {
+        label: "查看明细",
+        icon: <FileText size={16} />,
+        onClick: (row) => loadPayrollItems(row.id),
+      },
+      {
+        label: "计算薪资",
+        icon: <Calculator size={16} />,
+        color: "success",
+        show: (row) => row.status === "draft",
+        onClick: (row) => handleCalculate(row.id),
+      },
+      {
+        label: "执行发放",
+        icon: <CreditCard size={16} />,
+        color: "success",
+        show: (row) => row.status === "calculated",
+        onClick: (row) => handlePay(row.id),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 调薪记录列定义
+  const adjustmentColumns: ColumnDef<SalaryAdjustment>[] = useMemo(
+    () => [
+      {
+        id: "employee_name",
+        label: "员工姓名",
+        render: (row) => (
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 500, color: "grey.900" }}
+            >
+              {row.employee_name}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "grey.500" }}>
+              {row.department}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "adjustment_type",
+        label: "调薪类型",
+        render: (row) => (
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
+            {getAdjustmentTypeName(row.adjustment_type)}
+          </Typography>
+        ),
+      },
+      {
+        id: "old_salary",
+        label: "原工资",
+        render: (row) => (
+          <Typography variant="body2" sx={{ color: "grey.500" }}>
+            {formatCurrency(row.old_salary)}
+          </Typography>
+        ),
+      },
+      {
+        id: "new_salary",
+        label: "新工资",
+        render: (row) => (
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
+            {formatCurrency(row.new_salary)}
+          </Typography>
+        ),
+      },
+      {
+        id: "adjustment_amount",
+        label: "调整金额",
+        render: (row) => (
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 500, color: "success.main" }}
+          >
+            +{formatCurrency(row.adjustment_amount)}
+          </Typography>
+        ),
+      },
+      {
+        id: "reason",
+        label: "原因",
+        render: (row) => (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "grey.500",
+              maxWidth: 256,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {row.reason}
+          </Typography>
+        ),
+      },
+      {
+        id: "effective_date",
+        label: "生效日期",
+        render: (row) => (
+          <Typography variant="body2" sx={{ color: "grey.900" }}>
+            {row.effective_date}
+          </Typography>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row) => (
+          <StatusBadge status={row.status} category="employee" showIcon />
+        ),
+      },
+    ],
+    [],
+  );
+
+  // 工资条明细展开行
+  const renderPayrollItemDetail = (runId: string) => {
+    if (payrollItems.length === 0) return null;
+
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography
+          variant="subtitle1"
+          sx={{ fontWeight: 600, color: "grey.900", mb: 2 }}
+        >
+          工资条明细
+        </Typography>
+        <ListPageTemplate
+          columns={[
+            {
+              id: "employee_name",
+              label: "员工",
+              render: (item) => (
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 500, color: "grey.900" }}
+                >
+                  {getEmployeeName(item.employee_id)}
+                </Typography>
+              ),
+            },
+            {
+              id: "gross_amount",
+              label: "应发工资",
+              render: (item) => (
+                <Typography variant="body2" sx={{ color: "grey.900" }}>
+                  {formatCurrency(Number(item.gross_amount))}
+                </Typography>
+              ),
+            },
+            {
+              id: "deductions",
+              label: "扣款",
+              render: (item) => (
+                <Typography variant="body2" sx={{ color: "grey.900" }}>
+                  {formatCurrency(Number(item.deductions))}
+                </Typography>
+              ),
+            },
+            {
+              id: "taxes",
+              label: "个税",
+              render: (item) => (
+                <Typography variant="body2" sx={{ color: "error.main" }}>
+                  {formatCurrency(Number(item.taxes))}
+                </Typography>
+              ),
+            },
+            {
+              id: "net_amount",
+              label: "实发工资",
+              render: (item) => (
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 700, color: "primary.main" }}
+                >
+                  {formatCurrency(Number(item.net_amount))}
+                </Typography>
+              ),
+            },
+            {
+              id: "status",
+              label: "状态",
+              render: (item) => getPayrollStatusBadge(item.status),
+            },
+          ]}
+          data={payrollItems}
+          expandable
+          getRowId={(item) => item.id}
+          rowActions={[]}
+          searchable={false}
+          pagination={undefined}
+        />
+      </Box>
+    );
+  };
+
   if (loading && payrollRuns.length === 0) {
     return (
       <Box
@@ -287,7 +591,7 @@ const HrmPayrollPage: React.FC = () => {
         onClose={hideNotification}
       />
 
-      {/* Summary Cards */}
+      {/* StatCards */}
       <Box
         sx={{
           display: "grid",
@@ -300,34 +604,16 @@ const HrmPayrollPage: React.FC = () => {
           mb: 3,
         }}
       >
-        <MetricCard
-          title="发放人数"
-          value={`${payrollStats.totalEmployees}人`}
-          icon={<Users sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="blue"
-        />
-        <MetricCard
-          title="基本工资合计"
-          value={formatCurrency(payrollStats.totalBaseSalary)}
-          icon={<DollarSign sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="green"
-        />
-        <MetricCard
-          title="奖金合计"
-          value={formatCurrency(payrollStats.totalBonus)}
-          icon={<TrendingUp sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="purple"
-        />
-        <MetricCard
-          title="实发工资合计"
-          value={formatCurrency(payrollStats.totalNetSalary)}
-          icon={<CreditCard sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="blue"
-        />
+        {statCards.slice(0, 4).map((stat, index) => (
+          <StatCard
+            key={index}
+            title={stat.title}
+            value={stat.value}
+            unit={stat.unit}
+            icon={stat.icon}
+            color={stat.color}
+          />
+        ))}
       </Box>
 
       <Box
@@ -335,34 +621,22 @@ const HrmPayrollPage: React.FC = () => {
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(3, 1fr)",
+            sm: "repeat(3, 1fr)",
           },
           gap: 2,
           mb: 3,
         }}
       >
-        <MetricCard
-          title="平均工资"
-          value={formatCurrency(payrollStats.avgSalary)}
-          icon={<Receipt sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="teal"
-        />
-        <MetricCard
-          title="待计算批次"
-          value={payrollStats.pendingRuns}
-          icon={<Clock sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="yellow"
-        />
-        <MetricCard
-          title="已发放批次"
-          value={payrollStats.paidRuns}
-          icon={<CheckCircle sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="green"
-        />
+        {statCards.slice(4).map((stat, index) => (
+          <StatCard
+            key={index}
+            title={stat.title}
+            value={stat.value}
+            unit={stat.unit}
+            icon={stat.icon}
+            color={stat.color}
+          />
+        ))}
       </Box>
 
       {/* Charts */}
@@ -472,515 +746,72 @@ const HrmPayrollPage: React.FC = () => {
         </Button>
       </Box>
 
-      {/* Search Bar */}
-      <Box
-        sx={{
-          bgcolor: "background.paper",
-          borderRadius: 2,
-          boxShadow: 1,
-          p: 2,
-          mb: 3,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Box sx={{ flex: 1, position: "relative" }}>
-            <Search
-              sx={{
-                position: "absolute",
-                left: 2,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 20,
-                height: 20,
-                color: "grey.400",
-              }}
-            />
-            <InputBase
-              type="text"
-              placeholder="搜索..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{
-                width: "100%",
-                pl: 5,
-                pr: 2,
-                py: 1,
-                border: 1,
-                borderColor: "grey.300",
-                borderRadius: 2,
-                "& .MuiInputBase-input": { py: 1 },
-              }}
-            />
-          </Box>
-          <Button
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              px: 2,
-              py: 1,
-              bgcolor: "grey.200",
-              color: "grey.700",
-              borderRadius: 2,
-              "&:hover": { bgcolor: "grey.300" },
-            }}
-          >
-            <Download sx={{ width: 20, height: 20, mr: 1 }} />
-            导出
-          </Button>
-        </Box>
-      </Box>
-
       {/* Content */}
       {activeTab === "payroll" && (
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            overflow: "hidden",
-          }}
-        >
-          <Box sx={{ overflowX: "auto" }}>
-            <Box sx={{ minWidth: 1200 }}>
-              <Box
-                component="table"
+        <ListPageTemplate
+          columns={payrollColumns}
+          data={payrollRuns}
+          loading={loading}
+          getRowId={(row) => row.id}
+          rowActions={payrollRowActions}
+          searchable
+          searchPlaceholder="搜索..."
+          searchValue={searchQuery}
+          onSearch={setSearchQuery}
+          emptyMessage="暂无工资发放批次数据"
+          headerContent={
+            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<Download size={16} />}
                 sx={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  "& th": {
-                    bgcolor: "grey.50",
-                    px: 3,
-                    py: 1.5,
-                    textAlign: "left",
-                    "& .MuiTypography-root": {
-                      fontSize: "0.75rem",
-                      fontWeight: 500,
-                      color: "grey.500",
-                      textTransform: "uppercase",
-                    },
-                  },
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
                 }}
               >
-                <Box component="thead">
-                  <Box component="tr">
-                    <Box component="th">发放周期</Box>
-                    <Box component="th">员工人数</Box>
-                    <Box component="th">总金额</Box>
-                    <Box component="th">状态</Box>
-                    <Box component="th">发放时间</Box>
-                    <Box component="th">操作</Box>
-                  </Box>
-                </Box>
-                <Box
-                  component="tbody"
-                  sx={{
-                    bgcolor: "background.paper",
-                    "& tr": { borderTop: 1, borderColor: "grey.200" },
-                    "& tr:hover": { bgcolor: "grey.50" },
-                  }}
-                >
-                  {payrollRuns.map((run) => (
-                    <Box component="tr" key={run.id}>
-                      <Box
-                        component="td"
-                        sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 500, color: "grey.900" }}
-                        >
-                          {run.pay_period}
-                        </Typography>
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          color: "grey.900",
-                        }}
-                      >
-                        {run.employee_count}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                      >
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 700, color: "primary.main" }}
-                        >
-                          {formatCurrency(Number(run.total_amount))}
-                        </Typography>
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                      >
-                        {getPayrollStatusBadge(run.status)}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          color: "grey.500",
-                        }}
-                      >
-                        {run.paid_at || "-"}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                      >
-                        <Box sx={{ display: "flex", gap: 1 }}>
-                          <Button
-                            onClick={() => loadPayrollItems(run.id)}
-                            sx={{
-                              color: "primary.main",
-                              "&:hover": { color: "primary.dark" },
-                            }}
-                          >
-                            查看明细
-                          </Button>
-                          {run.status === "draft" && (
-                            <Button
-                              onClick={() => handleCalculate(run.id)}
-                              disabled={calculating}
-                              sx={{
-                                color: "success.main",
-                                "&:hover": { color: "success.dark" },
-                                "&.Mui-disabled": { color: "grey.400" },
-                              }}
-                            >
-                              {calculating ? "计算中..." : "计算薪资"}
-                            </Button>
-                          )}
-                          {run.status === "calculated" && (
-                            <Button
-                              onClick={() => handlePay(run.id)}
-                              disabled={paying}
-                              sx={{
-                                color: "success.main",
-                                "&:hover": { color: "success.dark" },
-                                "&.Mui-disabled": { color: "grey.400" },
-                              }}
-                            >
-                              {paying ? "发放中..." : "执行发放"}
-                            </Button>
-                          )}
-                        </Box>
-                      </Box>
-                    </Box>
-                  ))}
-                  {payrollRuns.length === 0 && (
-                    <Box component="tr">
-                      <Box
-                        component="td"
-                        colSpan={6}
-                        sx={{
-                          px: 3,
-                          py: 8,
-                          textAlign: "center",
-                          color: "grey.500",
-                        }}
-                      >
-                        暂无工资发放批次数据
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
+                导出
+              </Button>
             </Box>
-          </Box>
-
-          {/* 工资条明细 */}
-          {payrollItems.length > 0 && (
-            <Box sx={{ borderTop: 1, borderColor: "grey.200", mt: 3 }}>
-              <Box
-                sx={{
-                  px: 3,
-                  py: 2,
-                  borderBottom: 1,
-                  borderColor: "grey.200",
-                  bgcolor: "grey.50",
-                }}
-              >
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, color: "grey.900" }}
-                >
-                  工资条明细
-                </Typography>
-              </Box>
-              <Box sx={{ overflowX: "auto" }}>
-                <Box sx={{ minWidth: 1200 }}>
-                  <Box
-                    component="table"
-                    sx={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      "& th": {
-                        bgcolor: "grey.50",
-                        px: 3,
-                        py: 1.5,
-                        textAlign: "left",
-                        "& .MuiTypography-root": {
-                          fontSize: "0.75rem",
-                          fontWeight: 500,
-                          color: "grey.500",
-                          textTransform: "uppercase",
-                        },
-                      },
-                    }}
-                  >
-                    <Box component="thead">
-                      <Box component="tr">
-                        <Box component="th">员工</Box>
-                        <Box component="th">应发工资</Box>
-                        <Box component="th">扣款</Box>
-                        <Box component="th">个税</Box>
-                        <Box component="th">实发工资</Box>
-                        <Box component="th">状态</Box>
-                      </Box>
-                    </Box>
-                    <Box
-                      component="tbody"
-                      sx={{
-                        bgcolor: "background.paper",
-                        "& tr": { borderTop: 1, borderColor: "grey.200" },
-                        "& tr:hover": { bgcolor: "grey.50" },
-                      }}
-                    >
-                      {payrollItems.map((item) => (
-                        <Box component="tr" key={item.id}>
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 500, color: "grey.900" }}
-                            >
-                              {getEmployeeName(item.employee_id)}
-                            </Typography>
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: "nowrap",
-                              color: "grey.900",
-                            }}
-                          >
-                            {formatCurrency(Number(item.gross_amount))}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: "nowrap",
-                              color: "grey.900",
-                            }}
-                          >
-                            {formatCurrency(Number(item.deductions))}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: "nowrap",
-                              color: "error.main",
-                            }}
-                          >
-                            {formatCurrency(Number(item.taxes))}
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                          >
-                            <Typography
-                              variant="h6"
-                              sx={{ fontWeight: 700, color: "primary.main" }}
-                            >
-                              {formatCurrency(Number(item.net_amount))}
-                            </Typography>
-                          </Box>
-                          <Box
-                            component="td"
-                            sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                          >
-                            {getPayrollStatusBadge(item.status)}
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-          )}
-        </Box>
+          }
+          expandable={(row) =>
+            selectedRunId === row.id ? renderPayrollItemDetail(row.id) : null
+          }
+          onRowClick={(row) =>
+            setSelectedRunId(selectedRunId === row.id ? null : row.id)
+          }
+        />
       )}
 
       {activeTab === "adjustments" && (
-        <Box
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: 1,
-            overflow: "hidden",
-          }}
-        >
-          <Box sx={{ overflowX: "auto" }}>
-            <Box sx={{ minWidth: 1200 }}>
-              <Box
-                component="table"
+        <ListPageTemplate
+          columns={adjustmentColumns}
+          data={adjustments}
+          loading={loading}
+          getRowId={(row) => row.id}
+          searchable
+          searchPlaceholder="搜索..."
+          emptyMessage="暂无调薪记录"
+          headerContent={
+            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<Download size={16} />}
                 sx={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  "& th": {
-                    bgcolor: "grey.50",
-                    px: 3,
-                    py: 1.5,
-                    textAlign: "left",
-                    "& .MuiTypography-root": {
-                      fontSize: "0.75rem",
-                      fontWeight: 500,
-                      color: "grey.500",
-                      textTransform: "uppercase",
-                    },
-                  },
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
                 }}
               >
-                <Box component="thead">
-                  <Box component="tr">
-                    <Box component="th">员工姓名</Box>
-                    <Box component="th">调薪类型</Box>
-                    <Box component="th">原工资</Box>
-                    <Box component="th">新工资</Box>
-                    <Box component="th">调整金额</Box>
-                    <Box component="th">原因</Box>
-                    <Box component="th">生效日期</Box>
-                    <Box component="th">状态</Box>
-                  </Box>
-                </Box>
-                <Box
-                  component="tbody"
-                  sx={{
-                    bgcolor: "background.paper",
-                    "& tr": { borderTop: 1, borderColor: "grey.200" },
-                    "& tr:hover": { bgcolor: "grey.50" },
-                  }}
-                >
-                  {adjustments.map((adj) => (
-                    <Box component="tr" key={adj.id}>
-                      <Box
-                        component="td"
-                        sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{ fontWeight: 500, color: "grey.900" }}
-                        >
-                          {adj.employee_name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: "grey.500" }}>
-                          {adj.department}
-                        </Typography>
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          color: "grey.900",
-                        }}
-                      >
-                        {getAdjustmentTypeName(adj.adjustment_type)}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          color: "grey.500",
-                        }}
-                      >
-                        {formatCurrency(adj.old_salary)}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          color: "grey.900",
-                        }}
-                      >
-                        {formatCurrency(adj.new_salary)}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          fontWeight: 500,
-                          color: "success.main",
-                        }}
-                      >
-                        +{formatCurrency(adj.adjustment_amount)}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          color: "grey.500",
-                          maxWidth: 256,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {adj.reason}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{
-                          px: 3,
-                          py: 2,
-                          whiteSpace: "nowrap",
-                          color: "grey.900",
-                        }}
-                      >
-                        {adj.effective_date}
-                      </Box>
-                      <Box
-                        component="td"
-                        sx={{ px: 3, py: 2, whiteSpace: "nowrap" }}
-                      >
-                        <StatusBadge
-                          status={adj.status}
-                          category="employee"
-                          showIcon
-                        />
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
+                导出
+              </Button>
             </Box>
-          </Box>
-        </Box>
+          }
+        />
       )}
 
       {activeTab === "calculator" && (
@@ -998,7 +829,10 @@ const HrmPayrollPage: React.FC = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)" },
+              gridTemplateColumns: {
+                xs: "repeat(1, 1fr)",
+                md: "repeat(2, 1fr)",
+              },
               gap: 3,
             }}
           >

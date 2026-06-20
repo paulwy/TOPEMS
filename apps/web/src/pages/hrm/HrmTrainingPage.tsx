@@ -55,6 +55,7 @@ import {
   FormLabel,
 } from "@mui/material";
 import { ImageUpload } from "@/components/common";
+import { StatCardGroup } from "@/components/mui";
 
 const HrmTrainingPage: React.FC = () => {
   const { success, error } = useNotification();
@@ -87,6 +88,7 @@ const HrmTrainingPage: React.FC = () => {
   useEffect(() => {
     loadData();
     loadEmployees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const loadData = async () => {
@@ -132,6 +134,22 @@ const HrmTrainingPage: React.FC = () => {
     } catch (err) {
       console.error("Failed to load employees:", err);
     }
+  };
+
+  // 统计数据计算
+  const trainingStats = {
+    totalPlans: plans.length,
+    activeCourses: courses.filter((c) => c.status === "active").length,
+    completedRecords: records.filter((r) => r.completion_status === "completed")
+      .length,
+    avgCompletionRate:
+      records.length > 0
+        ? Math.round(
+            (records.filter((r) => r.completion_status === "completed").length /
+              records.length) *
+              100,
+          )
+        : 0,
   };
 
   const getEmployeeName = (id?: string) => {
@@ -317,6 +335,38 @@ const HrmTrainingPage: React.FC = () => {
               : []
           }
         />
+        <Box sx={{ mb: 3 }}>
+          <StatCardGroup
+            stats={[
+              {
+                title: "培训计划数",
+                value: trainingStats.totalPlans,
+                color: "primary",
+                icon: <Calendar sx={{ width: 24, height: 24 }} />,
+              },
+              {
+                title: "进行中课程",
+                value: trainingStats.activeCourses,
+                color: "warning",
+                icon: <BookOpen sx={{ width: 24, height: 24 }} />,
+              },
+              {
+                title: "已完成培训",
+                value: trainingStats.completedRecords,
+                color: "success",
+                icon: <CheckCircle sx={{ width: 24, height: 24 }} />,
+              },
+              {
+                title: "平均完成率",
+                value: trainingStats.avgCompletionRate,
+                unit: "%",
+                color: "info",
+                icon: <Award sx={{ width: 24, height: 24 }} />,
+              },
+            ]}
+            columns={4}
+          />
+        </Box>
         <Box sx={{ mb: 3 }}>
           <Tabs
             value={activeTab}
@@ -1639,7 +1689,7 @@ const HrmTrainingPage: React.FC = () => {
                     <FormLabel htmlFor="course-images">课程图片</FormLabel>
                     <Box sx={{ mt: 1 }}>
                       <ImageUpload
-                        value={(formData as TrainingCourse).images || []}
+                        value={(formData as any).images || []}
                         onChange={(files) =>
                           setFormData({ ...formData, images: files } as any)
                         }

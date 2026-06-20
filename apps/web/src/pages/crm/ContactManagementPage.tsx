@@ -315,7 +315,7 @@ const ContactManagementPage: React.FC = () => {
               </Select>
             </FormControl>
             <DataExport
-              data={contacts as Record<string, unknown>[]}
+              data={contacts as unknown as Record<string, unknown>[]}
               fields={exportFields}
               defaultFileName="联系人数据"
               buttonText="导出"

@@ -307,7 +307,7 @@ const RsBugPage: React.FC = () => {
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <DataExport
-              data={bugs as Record<string, unknown>[]}
+              data={bugs as unknown as Record<string, unknown>[]}
               fields={exportFields}
               defaultFileName="缺陷数据"
               buttonText="导出"

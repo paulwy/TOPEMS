@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Plus,
-  Search,
   Edit2,
   Trash2,
   Eye,
@@ -11,18 +10,14 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
-  ChevronDown,
-  ChevronUp,
   RefreshCw,
   Calendar,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { budgetApi, type Budget, type PaginatedResult } from "@/api/erp";
 import { useAppStore } from "../../store";
 import {
-  Card,
-  CardContent,
-  CardHeader,
   Typography,
   Box,
   Button,
@@ -36,21 +31,16 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  InputAdornment,
   IconButton,
   LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  Card,
+  CardContent,
+  Stack,
 } from "@mui/material";
+import { ListPageTemplate, StatCardGroup } from "@/components/mui";
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from "@/components/ui/OrganizationFilter";
-import { MetricCard } from "@/components/MetricCard";
 import { StatsChart } from "@/components/StatsChart";
 
 const FinanceBudgetPage: React.FC = () => {
@@ -68,6 +58,7 @@ const FinanceBudgetPage: React.FC = () => {
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [organizationFilter, setOrganizationFilter] =
     useState<OrganizationFilterValue>({});
+  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
 
   const [formData, setFormData] = useState({
     department_id: "",
@@ -79,6 +70,7 @@ const FinanceBudgetPage: React.FC = () => {
 
   useEffect(() => {
     loadBudgets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadBudgets = async () => {
@@ -245,6 +237,61 @@ const FinanceBudgetPage: React.FC = () => {
     [budgets, totalBudget, totalUsed, totalRemaining, avgUsageRate],
   );
 
+  // 统计卡片数据
+  const statCards = useMemo(
+    () => [
+      {
+        title: "总预算",
+        value: formatCurrency(budgetStats.totalBudget),
+        icon: <DollarSign size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "已使用",
+        value: formatCurrency(budgetStats.totalUsed),
+        icon: <PieChart size={24} />,
+        color: "warning" as const,
+      },
+      {
+        title: "剩余预算",
+        value: formatCurrency(budgetStats.totalRemaining),
+        icon: <CheckCircle2 size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "平均使用率",
+        value: formatPercent(budgetStats.avgUsageRate),
+        icon: <Calendar size={24} />,
+        color: "secondary" as const,
+      },
+      {
+        title: "执行中预算",
+        value: budgetStats.activeBudgets,
+        icon: <CheckCircle2 size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "已完成预算",
+        value: budgetStats.completedBudgets,
+        icon: <FileText size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "已冻结预算",
+        value: budgetStats.frozenBudgets,
+        icon: <XCircle size={24} />,
+        color: "info" as const,
+      },
+      {
+        title: "已过期预算",
+        value: budgetStats.expiredBudgets,
+        icon: <AlertCircle size={24} />,
+        color: "error" as const,
+      },
+    ],
+    [budgetStats],
+  );
+
   // 预算类型分布数据
   const budgetTypeData = useMemo(
     () => [
@@ -339,6 +386,158 @@ const FinanceBudgetPage: React.FC = () => {
     return labels[type] || type;
   };
 
+  // 列定义
+  const columns = useMemo(
+    () => [
+      {
+        id: "budget_type",
+        label: "预算类型",
+        render: (row: Budget) => (
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Building2
+              sx={{
+                width: 16,
+                height: 16,
+                mr: 2,
+                color: "grey.400",
+              }}
+            />
+            {getTypeLabel(row.budget_type || "")}
+          </Box>
+        ),
+      },
+      {
+        id: "fiscal_year",
+        label: "预算年度",
+        render: (row: Budget) => (
+          <Box sx={{ color: "text.secondary" }}>{row.fiscal_year}</Box>
+        ),
+      },
+      {
+        id: "total_budget",
+        label: "预算金额",
+        align: "right" as const,
+        render: (row: Budget) => (
+          <Box sx={{ fontWeight: "medium" }}>
+            {formatCurrency(row.total_budget)}
+          </Box>
+        ),
+      },
+      {
+        id: "used_amount",
+        label: "已使用",
+        align: "right" as const,
+        render: (row: Budget) => (
+          <Box sx={{ color: "warning.main" }}>
+            {formatCurrency(row.used_amount || 0)}
+          </Box>
+        ),
+      },
+      {
+        id: "remaining_amount",
+        label: "剩余",
+        align: "right" as const,
+        render: (row: Budget) => (
+          <Box sx={{ color: "success.main" }}>
+            {formatCurrency(row.remaining_amount || 0)}
+          </Box>
+        ),
+      },
+      {
+        id: "usage_rate",
+        label: "使用率",
+        render: (row: Budget) => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Box sx={{ flex: 1, maxWidth: 100 }}>
+              <LinearProgress
+                variant="determinate"
+                value={row.usage_rate || 0}
+                sx={{ height: 8, borderRadius: 1 }}
+              />
+            </Box>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ width: 50 }}
+            >
+              {formatPercent(row.usage_rate || 0)}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        render: (row: Budget) => getStatusChip(row.status),
+      },
+    ],
+    [],
+  );
+
+  // 行操作
+  const rowActions = useMemo(
+    () => [
+      {
+        label: "查看详情",
+        icon: <Eye sx={{ width: 16, height: 16 }} />,
+        onClick: (row: Budget) => openDetailDialog(row),
+      },
+      {
+        label: "编辑",
+        icon: <Edit2 sx={{ width: 16, height: 16 }} />,
+        onClick: (row: Budget) => openEditDialog(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error" as const,
+        onClick: (row: Budget) => handleDelete(row.id),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 筛选器配置
+  const filters = useMemo(
+    () => [
+      {
+        id: "budget_type",
+        label: "类型",
+        type: "select" as const,
+        options: [
+          { value: "operating", label: "运营预算" },
+          { value: "capital", label: "资本预算" },
+          { value: "project", label: "项目预算" },
+          { value: "marketing", label: "市场预算" },
+          { value: "personnel", label: "人事预算" },
+        ],
+        value: filterType,
+        onChange: setFilterType,
+      },
+      {
+        id: "status",
+        label: "状态",
+        type: "select" as const,
+        options: [
+          { value: "active", label: "执行中" },
+          { value: "completed", label: "已完成" },
+          { value: "frozen", label: "已冻结" },
+          { value: "expired", label: "已过期" },
+        ],
+        value: filterStatus,
+        onChange: setFilterStatus,
+      },
+    ],
+    [filterType, filterStatus],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Box
@@ -379,79 +578,8 @@ const FinanceBudgetPage: React.FC = () => {
         />
       </Box>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
-          gap: 2,
-        }}
-      >
-        <MetricCard
-          title="总预算"
-          value={formatCurrency(budgetStats.totalBudget)}
-          icon={<DollarSign sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="blue"
-        />
-        <MetricCard
-          title="已使用"
-          value={formatCurrency(budgetStats.totalUsed)}
-          icon={<PieChart sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="orange"
-        />
-        <MetricCard
-          title="剩余预算"
-          value={formatCurrency(budgetStats.totalRemaining)}
-          icon={<CheckCircle2 sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="green"
-        />
-        <MetricCard
-          title="平均使用率"
-          value={formatPercent(budgetStats.avgUsageRate)}
-          icon={<Calendar sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="purple"
-        />
-      </Box>
-
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
-          gap: 2,
-        }}
-      >
-        <MetricCard
-          title="执行中预算"
-          value={budgetStats.activeBudgets}
-          icon={<CheckCircle2 sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="green"
-        />
-        <MetricCard
-          title="已完成预算"
-          value={budgetStats.completedBudgets}
-          icon={<CheckCircle2 sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="blue"
-        />
-        <MetricCard
-          title="已冻结预算"
-          value={budgetStats.frozenBudgets}
-          icon={<XCircle sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="gray"
-        />
-        <MetricCard
-          title="已过期预算"
-          value={budgetStats.expiredBudgets}
-          icon={<AlertCircle sx={{ width: 20, height: 20 }} />}
-          trend={null}
-          color="red"
-        />
-      </Box>
+      {/* 统计卡片 */}
+      <StatCardGroup stats={statCards} columns={4} />
 
       {/* 图表区域 */}
       <Box
@@ -488,209 +616,45 @@ const FinanceBudgetPage: React.FC = () => {
         </Card>
       </Box>
 
-      <Card>
-        <CardHeader
-          title={
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Typography variant="h6">预算列表</Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={loadBudgets}
-                startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
-              >
-                刷新
-              </Button>
-            </Box>
-          }
-        />
-        <CardContent>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 2,
-              mb: 2,
-            }}
-          >
-            <TextField
-              size="small"
-              placeholder="搜索预算类型或年度..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "grey.400" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ flex: 1 }}
-            />
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>类型</InputLabel>
-                <Select
-                  value={filterType}
-                  label="类型"
-                  onChange={(e) => setFilterType(e.target.value)}
-                >
-                  <MenuItem value="">全部</MenuItem>
-                  <MenuItem value="operating">运营预算</MenuItem>
-                  <MenuItem value="capital">资本预算</MenuItem>
-                  <MenuItem value="project">项目预算</MenuItem>
-                  <MenuItem value="marketing">市场预算</MenuItem>
-                  <MenuItem value="personnel">人事预算</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>状态</InputLabel>
-                <Select
-                  value={filterStatus}
-                  label="状态"
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <MenuItem value="">全部</MenuItem>
-                  <MenuItem value="active">执行中</MenuItem>
-                  <MenuItem value="completed">已完成</MenuItem>
-                  <MenuItem value="frozen">已冻结</MenuItem>
-                  <MenuItem value="expired">已过期</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </Box>
-
-          {loading ? (
-            <Box sx={{ p: 4, textAlign: "center" }}>
-              <LinearProgress />
-              <Typography sx={{ mt: 2 }} color="text.secondary">
-                加载中...
-              </Typography>
-            </Box>
-          ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>预算类型</TableCell>
-                    <TableCell>预算年度</TableCell>
-                    <TableCell align="right">预算金额</TableCell>
-                    <TableCell align="right">已使用</TableCell>
-                    <TableCell align="right">剩余</TableCell>
-                    <TableCell>使用率</TableCell>
-                    <TableCell>状态</TableCell>
-                    <TableCell align="right">操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredBudgets.length > 0 ? (
-                    filteredBudgets.map((budget) => (
-                      <TableRow key={budget.id}>
-                        <TableCell>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Building2
-                              sx={{
-                                width: 16,
-                                height: 16,
-                                mr: 2,
-                                color: "grey.400",
-                              }}
-                            />
-                            {getTypeLabel(budget.budget_type || "")}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{budget.fiscal_year}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: "medium" }}>
-                          {formatCurrency(budget.total_budget)}
-                        </TableCell>
-                        <TableCell align="right">
-                          {formatCurrency(budget.used_amount || 0)}
-                        </TableCell>
-                        <TableCell align="right">
-                          {formatCurrency(budget.remaining_amount || 0)}
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Box sx={{ flex: 1, maxWidth: 100 }}>
-                              <LinearProgress
-                                variant="determinate"
-                                value={budget.usage_rate || 0}
-                                sx={{ height: 8, borderRadius: 1 }}
-                              />
-                            </Box>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ width: 50 }}
-                            >
-                              {formatPercent(budget.usage_rate || 0)}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>{getStatusChip(budget.status)}</TableCell>
-                        <TableCell align="right">
-                          <IconButton
-                            size="small"
-                            onClick={() => openDetailDialog(budget)}
-                          >
-                            <Eye sx={{ width: 16, height: 16 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => openEditDialog(budget)}
-                          >
-                            <Edit2 sx={{ width: 16, height: 16 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDelete(budget.id)}
-                          >
-                            <Trash2 sx={{ width: 16, height: 16 }} />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                        <AlertCircle
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            mx: "auto",
-                            color: "grey.300",
-                            mb: 1,
-                          }}
-                        />
-                        <Typography color="text.secondary">
-                          暂无预算数据
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </CardContent>
-      </Card>
+      {/* 预算列表 */}
+      <ListPageTemplate
+        title="预算列表"
+        columns={columns}
+        data={filteredBudgets}
+        loading={loading}
+        searchable
+        searchPlaceholder="搜索预算类型或年度..."
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{
+          budget_type: filterType,
+          status: filterStatus,
+        }}
+        onFilterChange={(filterValues) => {
+          if (filterValues.budget_type !== undefined)
+            setFilterType(filterValues.budget_type as string);
+          if (filterValues.status !== undefined)
+            setFilterStatus(filterValues.status as string);
+        }}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        rowActions={rowActions}
+        onRefresh={loadBudgets}
+        emptyMessage="暂无预算数据"
+        emptyIcon={
+          <AlertCircle sx={{ width: 48, height: 48, color: "grey.300" }} />
+        }
+        actions={[
+          {
+            label: "刷新",
+            icon: <RefreshCw sx={{ width: 16, height: 16 }} />,
+            variant: "outlined",
+            onClick: loadBudgets,
+          },
+        ]}
+      />
 
       {/* 新增/编辑对话框 */}
       <Dialog

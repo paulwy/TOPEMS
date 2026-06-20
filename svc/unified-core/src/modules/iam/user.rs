@@ -2,6 +2,23 @@
 
 use axum::{extract::{Path, State}, Json};
 use crate::AppState;
+use topems_shared::Claims;
+use axum::Extension;
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Clone, Serialize)]
+struct UserResponse {
+    id: String,
+    username: String,
+    email: String,
+    full_name: Option<String>,
+    role: String,
+    roles: Vec<String>,
+    permissions: Vec<String>,
+    is_active: bool,
+    is_superuser: bool,
+    created_at: Option<String>,
+}
 
 pub async fn list_users(
     State(_state): State<AppState>,
@@ -98,4 +115,101 @@ pub async fn change_password(
         "message": "change_password success",
         "data": null
     }))
+}
+
+pub async fn get_current_user(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("IAM user get_current_user called for user: {}", claims.sub);
+    
+    let user_id = match sqlx::types::Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid user ID format: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "无效的用户ID",
+                "data": null,
+                "code": 400
+            }));
+        }
+    };
+    
+    let user: Option<UserRow> = sqlx::query_as(
+        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or_else(|e| {
+        tracing::error!("Database query failed: {}", e);
+        None
+    });
+
+    match user {
+        Some(u) => {
+            let roles = if u.is_superuser {
+                vec!["admin".to_string(), "user".to_string()]
+            } else {
+                vec!["user".to_string()]
+            };
+
+            let permissions = if u.is_superuser {
+                topems_shared::auth::get_permissions()
+                    .iter()
+                    .map(|p| p.id.clone())
+                    .collect()
+            } else {
+                vec![
+                    "iam:users_read".to_string(),
+                    "iam:roles_read".to_string(),
+                    "iam:permissions_read".to_string(),
+                    "iam:audit_read".to_string(),
+                    "iam:system_read".to_string(),
+                    "iam:dictionaries_read".to_string(),
+                    "iam:plugins_read".to_string(),
+                ]
+            };
+
+            let user_response = UserResponse {
+                id: u.id.to_string(),
+                username: u.username,
+                email: u.email,
+                full_name: u.full_name,
+                role: if u.is_superuser { "admin".to_string() } else { "user".to_string() },
+                roles,
+                permissions,
+                is_active: u.status == "active",
+                is_superuser: u.is_superuser,
+                created_at: u.created_at.map(|t| t.to_string()),
+            };
+
+            Json(serde_json::json!({
+                "success": true,
+                "message": "get_user success",
+                "data": user_response
+            }))
+        }
+        None => {
+            tracing::warn!("User not found: {}", claims.sub);
+            Json(serde_json::json!({
+                "success": false,
+                "message": "用户不存在",
+                "data": null,
+                "code": 404
+            }))
+        }
+    }
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct UserRow {
+    id: uuid::Uuid,
+    username: String,
+    email: String,
+    full_name: Option<String>,
+    status: String,
+    is_superuser: bool,
+    created_at: Option<chrono::NaiveDateTime>,
 }

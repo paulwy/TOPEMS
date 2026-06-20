@@ -13,10 +13,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
-import { MetricCard } from "@/components/bi/MetricCard";
-import { StatsChart } from "@/components/bi/StatsChart";
 import { StatusBadge } from "@/components/hrm/StatusBadge";
 import { PageHeader } from "@/components/templates";
+import { StatCardGroup } from "@/components/mui";
 import {
   performanceReviewApi,
   performanceGoalApi,
@@ -191,6 +190,7 @@ const HrmPerformancePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -813,7 +813,11 @@ const HrmPerformancePage: React.FC = () => {
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+                  gridTemplateColumns: {
+                    xs: "repeat(1, 1fr)",
+                    md: "repeat(2, 1fr)",
+                    lg: "repeat(3, 1fr)",
+                  },
                   gap: 3,
                 }}
               >
@@ -963,78 +967,68 @@ const HrmPerformancePage: React.FC = () => {
             {activeTab === "rankings" && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {/* 统计卡片 */}
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
-                    gap: 2,
-                  }}
-                >
-                  <MetricCard
-                    title="绩效评估总数"
-                    value={performanceStats.totalReviews}
-                    icon={<Award size={20} />}
-                    trend={null}
-                    color="blue"
-                  />
-                  <MetricCard
-                    title="已完成评估"
-                    value={performanceStats.completedReviews}
-                    icon={<CheckCircle size={20} />}
-                    trend={null}
-                    color="green"
-                  />
-                  <MetricCard
-                    title="待完成评估"
-                    value={performanceStats.pendingReviews}
-                    icon={<Clock size={20} />}
-                    trend={null}
-                    color="yellow"
-                  />
-                  <MetricCard
-                    title="平均绩效得分"
-                    value={performanceStats.avgScore}
-                    icon={<TrendingUp size={20} />}
-                    trend={null}
-                    color="purple"
-                  />
-                </Box>
+                <StatCardGroup
+                  stats={[
+                    {
+                      title: "绩效评估总数",
+                      value: performanceStats.totalReviews,
+                      icon: <Award size={20} />,
+                      color: "primary",
+                    },
+                    {
+                      title: "已完成评估",
+                      value: performanceStats.completedReviews,
+                      icon: <CheckCircle size={20} />,
+                      color: "success",
+                    },
+                    {
+                      title: "待完成评估",
+                      value: performanceStats.pendingReviews,
+                      icon: <Clock size={20} />,
+                      color: "warning",
+                    },
+                    {
+                      title: "平均绩效得分",
+                      value: performanceStats.avgScore,
+                      icon: <TrendingUp size={20} />,
+                      color: "info",
+                    },
+                  ]}
+                  columns={4}
+                />
 
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
-                    gap: 2,
-                  }}
-                >
-                  <MetricCard
-                    title="绩效目标总数"
-                    value={performanceStats.totalGoals}
-                    icon={<Target size={20} />}
-                    trend={null}
-                    color="blue"
-                  />
-                  <MetricCard
-                    title="进行中目标"
-                    value={performanceStats.inProgressGoals}
-                    icon={<Clock size={20} />}
-                    trend={null}
-                    color="orange"
-                  />
-                  <MetricCard
-                    title="平均目标进度"
-                    value={`${performanceStats.avgGoalProgress}%`}
-                    icon={<BarChart3 size={20} />}
-                    trend={null}
-                    color="teal"
-                  />
-                </Box>
+                <StatCardGroup
+                  stats={[
+                    {
+                      title: "绩效目标总数",
+                      value: performanceStats.totalGoals,
+                      icon: <Target size={20} />,
+                      color: "primary",
+                    },
+                    {
+                      title: "进行中目标",
+                      value: performanceStats.inProgressGoals,
+                      icon: <Clock size={20} />,
+                      color: "warning",
+                    },
+                    {
+                      title: "平均目标进度",
+                      value: `${performanceStats.avgGoalProgress}%`,
+                      icon: <BarChart3 size={20} />,
+                      color: "info",
+                    },
+                  ]}
+                  columns={3}
+                />
 
-                {/* 图表区域 */}
+                {/* 状态分布表格 */}
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "repeat(1, 1fr)", lg: "repeat(2, 1fr)" },
+                    gridTemplateColumns: {
+                      xs: "repeat(1, 1fr)",
+                      lg: "repeat(2, 1fr)",
+                    },
                     gap: 3,
                   }}
                 >
@@ -1052,11 +1046,80 @@ const HrmPerformancePage: React.FC = () => {
                     >
                       绩效评估状态分布
                     </Typography>
-                    <StatsChart
-                      type="pie"
-                      data={reviewStatusData}
-                      height={250}
-                    />
+                    <Box
+                      component="table"
+                      sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                    >
+                      <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                        <Box component="tr">
+                          <Box
+                            component="th"
+                            sx={{
+                              px: 2,
+                              py: 1,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                            }}
+                          >
+                            状态
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{
+                              px: 2,
+                              py: 1,
+                              textAlign: "right",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                            }}
+                          >
+                            数量
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box component="tbody">
+                        {reviewStatusData.map((item) => (
+                          <Box
+                            component="tr"
+                            key={item.name}
+                            sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                          >
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 1.5,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: "50%",
+                                  bgcolor: item.color,
+                                }}
+                              />
+                              <Typography variant="body2">
+                                {item.name}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 2, py: 1.5, textAlign: "right" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 500 }}
+                              >
+                                {item.value}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
                   </Box>
 
                   <Box
@@ -1073,7 +1136,80 @@ const HrmPerformancePage: React.FC = () => {
                     >
                       绩效目标状态分布
                     </Typography>
-                    <StatsChart type="pie" data={goalStatusData} height={250} />
+                    <Box
+                      component="table"
+                      sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                    >
+                      <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                        <Box component="tr">
+                          <Box
+                            component="th"
+                            sx={{
+                              px: 2,
+                              py: 1,
+                              textAlign: "left",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                            }}
+                          >
+                            状态
+                          </Box>
+                          <Box
+                            component="th"
+                            sx={{
+                              px: 2,
+                              py: 1,
+                              textAlign: "right",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              color: "grey.500",
+                            }}
+                          >
+                            数量
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box component="tbody">
+                        {goalStatusData.map((item) => (
+                          <Box
+                            component="tr"
+                            key={item.name}
+                            sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                          >
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 1.5,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: "50%",
+                                  bgcolor: item.color,
+                                }}
+                              />
+                              <Typography variant="body2">
+                                {item.name}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ px: 2, py: 1.5, textAlign: "right" }}>
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 500 }}
+                              >
+                                {item.value}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
                   </Box>
                 </Box>
 
@@ -1091,11 +1227,78 @@ const HrmPerformancePage: React.FC = () => {
                   >
                     部门平均绩效得分
                   </Typography>
-                  <StatsChart
-                    type="bar"
-                    data={departmentScoreData}
-                    height={300}
-                  />
+                  <Box
+                    component="table"
+                    sx={{ minWidth: "100%", borderCollapse: "collapse" }}
+                  >
+                    <Box component="thead" sx={{ bgcolor: "grey.50" }}>
+                      <Box component="tr">
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 2,
+                            py: 1,
+                            textAlign: "left",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                          }}
+                        >
+                          部门
+                        </Box>
+                        <Box
+                          component="th"
+                          sx={{
+                            px: 2,
+                            py: 1,
+                            textAlign: "right",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            color: "grey.500",
+                          }}
+                        >
+                          平均得分
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
+                      {departmentScoreData.map((item) => (
+                        <Box
+                          component="tr"
+                          key={item.name}
+                          sx={{ "&:hover": { bgcolor: "grey.50" } }}
+                        >
+                          <Box
+                            sx={{
+                              px: 2,
+                              py: 1.5,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: "50%",
+                                bgcolor: item.color,
+                              }}
+                            />
+                            <Typography variant="body2">{item.name}</Typography>
+                          </Box>
+                          <Box sx={{ px: 2, py: 1.5, textAlign: "right" }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {item.value}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
                 </Box>
 
                 {/* 排名表格 */}

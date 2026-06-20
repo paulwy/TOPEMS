@@ -4,12 +4,12 @@ import {
   CardContent,
   Typography,
   Box,
-  Grid2 as Grid,
   Chip,
   LinearProgress,
   Avatar,
   Stack,
 } from "@mui/material";
+import { Grid } from "@/components/common";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -169,7 +169,17 @@ const FinanceDashboardPage: React.FC = () => {
   };
 
   const statsCards = (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }, gap: 3 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "repeat(2, 1fr)",
+          lg: "repeat(4, 1fr)",
+        },
+        gap: 3,
+      }}
+    >
       {mockStats.map((stat, index) => (
         <Card
           key={index}
@@ -179,7 +189,14 @@ const FinanceDashboardPage: React.FC = () => {
           }}
         >
           <CardContent>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                mb: 2,
+              }}
+            >
               <Box
                 sx={{
                   p: 1.5,
@@ -211,7 +228,13 @@ const FinanceDashboardPage: React.FC = () => {
               </Box>
               <Chip
                 size="small"
-                icon={stat.change >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                icon={
+                  stat.change >= 0 ? (
+                    <ArrowUpRight size={14} />
+                  ) : (
+                    <ArrowDownRight size={14} />
+                  )
+                }
                 label={`${stat.change >= 0 ? "+" : ""}${stat.change}%`}
                 sx={{
                   bgcolor: stat.change >= 0 ? "success.light" : "error.light",
@@ -271,11 +294,21 @@ const FinanceDashboardPage: React.FC = () => {
   const recentVouchers = (
     <Card>
       <CardContent>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             最近凭证
           </Typography>
-          <Button size="small" onClick={() => handleViewAll("/finance/vouchers")}>
+          <Button
+            size="small"
+            onClick={() => handleViewAll("/finance/vouchers")}
+          >
             查看全部
           </Button>
         </Box>
@@ -342,7 +375,13 @@ const FinanceDashboardPage: React.FC = () => {
   );
 
   const financialCharts = (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" }, gap: 3 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+        gap: 3,
+      }}
+    >
       <Card>
         <CardContent>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
@@ -350,11 +389,16 @@ const FinanceDashboardPage: React.FC = () => {
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 2 }}>
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   收入
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "success.main" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: "success.main" }}
+                >
                   ¥5,234,567
                 </Typography>
               </Box>
@@ -375,11 +419,16 @@ const FinanceDashboardPage: React.FC = () => {
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   支出
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "error.main" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, color: "error.main" }}
+                >
                   ¥3,876,543
                 </Typography>
               </Box>
@@ -443,13 +492,10 @@ const FinanceDashboardPage: React.FC = () => {
   return (
     <DashboardTemplate
       title="财务概览"
-      breadcrumbs={[
-        { label: "首页", href: "/dashboard" },
-        { label: "财务" },
-      ]}
-      statsCards={statsCards}
-      quickActions={quickActions}
-      recentItems={recentVouchers}
+      breadcrumbs={[{ label: "首页", href: "/dashboard" }, { label: "财务" }]}
+      statsArea={statsCards}
+      recentItemsArea={recentVouchers}
+      quickActionsArea={quickActions}
       chartsArea={financialCharts}
     />
   );

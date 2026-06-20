@@ -1,24 +1,20 @@
 import React, { useState, useMemo } from "react";
 import {
-  Box,
   ChevronLeft,
   Plus,
-  Edit,
   Trash2,
-  Download,
-  Search,
   Banknote,
   CheckCircle,
   Clock,
-  XCircle,
   Eye,
   Check,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store";
 import { DataExport } from "@/components/common";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate, StatCardGroup } from "@/components/mui";
+import { useNotification } from "@/hooks/useNotification";
+import { NotificationContainer } from "@/components/notification/NotificationContainer";
 
 import {
   Button,
@@ -27,8 +23,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -38,8 +32,6 @@ import {
   Typography,
   Stack,
   IconButton,
-  Tooltip,
-  InputAdornment,
 } from "@mui/material";
 
 interface Receipt {
@@ -138,7 +130,7 @@ const mockReceiptData: Receipt[] = [
 
 const FinanceReceiptPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const { success, error, notifications, hideNotification } = useNotification();
 
   const [receiptData, setReceiptData] = useState<Receipt[]>(mockReceiptData);
   const [filterMethod, setFilterMethod] = useState("");
@@ -147,6 +139,7 @@ const FinanceReceiptPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
 
   const [newReceipt, setNewReceipt] = useState({
     customer: "",
@@ -171,6 +164,52 @@ const FinanceReceiptPage: React.FC = () => {
       return true;
     });
   }, [receiptData, filterMethod, filterStatus, searchQuery]);
+
+  // 统计卡片数据
+  const statCards = useMemo(() => {
+    const totalCount = receiptData.length;
+    const receivedCount = receiptData.filter(
+      (r) => r.status === "已到账",
+    ).length;
+    const pendingCount = receiptData.filter(
+      (r) => r.status === "待到账",
+    ).length;
+    const verifyCount = receiptData.filter((r) => r.status === "待核销").length;
+    const totalAmount = receiptData.reduce((sum, r) => sum + r.amount, 0);
+
+    return [
+      {
+        title: "总收款数",
+        value: totalCount,
+        icon: <Banknote size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "已到账",
+        value: receivedCount,
+        icon: <CheckCircle size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "待到账",
+        value: pendingCount,
+        icon: <Clock size={24} />,
+        color: "warning" as const,
+      },
+      {
+        title: "待核销",
+        value: verifyCount,
+        icon: <Clock size={24} />,
+        color: "error" as const,
+      },
+      {
+        title: "总金额",
+        value: `¥${totalAmount.toLocaleString()}`,
+        icon: <Banknote size={24} />,
+        color: "secondary" as const,
+      },
+    ];
+  }, [receiptData]);
 
   const getStatusConfig = (status: string) => {
     const configs: Record<
@@ -200,11 +239,7 @@ const FinanceReceiptPage: React.FC = () => {
       status: "待到账",
     };
     setReceiptData([...receiptData, newEntry]);
-    addNotification({
-      title: "成功",
-      message: "收款登记成功",
-      type: "success",
-    });
+    success("收款登记成功");
     setShowCreateModal(false);
     setNewReceipt({
       customer: "",
@@ -226,11 +261,7 @@ const FinanceReceiptPage: React.FC = () => {
         r.id === selectedReceipt.id ? { ...r, status: "已到账" } : r,
       ),
     );
-    addNotification({
-      title: "成功",
-      message: "收款已确认到账",
-      type: "success",
-    });
+    success("收款已确认到账");
     setShowConfirmModal(false);
   };
 
@@ -240,65 +271,63 @@ const FinanceReceiptPage: React.FC = () => {
         r.id === receipt.id ? { ...r, status: "已核销" } : r,
       ),
     );
-    addNotification({ title: "成功", message: "收款已核销", type: "success" });
+    success("收款已核销");
   };
 
   const handleDelete = (id: string) => {
     if (!confirm("确定要删除该收款记录吗？")) return;
     setReceiptData(receiptData.filter((r) => r.id !== id));
-    addNotification({
-      title: "成功",
-      message: "收款记录已删除",
-      type: "success",
-    });
+    success("收款记录已删除");
   };
 
-  const handleExport = () => {
-    addNotification({
-      title: "导出成功",
-      message: "收款数据已导出",
-      type: "success",
-    });
+  const handleSearch = () => {
+    // 搜索逻辑已在 filteredData 中处理
   };
 
-  const columns = useMemo<ColumnDef<Receipt>[]>(
+  const handleReset = () => {
+    setSearchQuery("");
+    setFilterMethod("");
+    setFilterStatus("");
+  };
+
+  const columns = useMemo(
     () => [
       {
-        accessorKey: "receipt_number",
-        header: "收款单号",
-        cell: ({ row }) => (
+        id: "receipt_number",
+        label: "收款单号",
+        render: (row: Receipt) => (
           <MuiBox sx={{ fontWeight: 600, color: "success.main" }}>
-            {row.original.receipt_number}
+            {row.receipt_number}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "receipt_date",
-        header: "收款日期",
-        cell: ({ row }) => (
+        id: "receipt_date",
+        label: "收款日期",
+        render: (row: Receipt) => (
           <MuiBox sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-            {row.original.receipt_date}
+            {row.receipt_date}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "customer",
-        header: "客户",
-        cell: ({ row }) => (
-          <MuiBox sx={{ fontWeight: 500 }}>{row.original.customer}</MuiBox>
+        id: "customer",
+        label: "客户",
+        render: (row: Receipt) => (
+          <MuiBox sx={{ fontWeight: 500 }}>{row.customer}</MuiBox>
         ),
       },
       {
-        accessorKey: "receipt_method",
-        header: "收款方式",
-        cell: ({ row }) => (
-          <Chip label={row.original.receipt_method} size="small" />
+        id: "receipt_method",
+        label: "收款方式",
+        render: (row: Receipt) => (
+          <Chip label={row.receipt_method} size="small" />
         ),
       },
       {
-        accessorKey: "amount",
-        header: "收款金额",
-        cell: ({ row }) => (
+        id: "amount",
+        label: "收款金额",
+        render: (row: Receipt) => (
           <MuiBox
             sx={{
               fontWeight: 700,
@@ -306,27 +335,27 @@ const FinanceReceiptPage: React.FC = () => {
               fontFamily: "monospace",
             }}
           >
-            ¥{row.original.amount.toLocaleString()}
+            ¥{row.amount.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "bank_account",
-        header: "银行账户",
-        cell: ({ row }) => (
+        id: "bank_account",
+        label: "银行账户",
+        render: (row: Receipt) => (
           <MuiBox sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
-            {row.original.bank_account}
+            {row.bank_account}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => {
-          const config = getStatusConfig(row.original.status);
+        id: "status",
+        label: "状态",
+        render: (row: Receipt) => {
+          const config = getStatusConfig(row.status);
           return (
             <Chip
-              label={row.original.status}
+              label={row.status}
               size="small"
               color={config.color}
               icon={config.icon as React.ReactElement}
@@ -334,59 +363,47 @@ const FinanceReceiptPage: React.FC = () => {
           );
         },
       },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo(
+    () => [
       {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            {row.original.status === "待到账" && (
-              <Tooltip title="确认到账">
-                <IconButton
-                  size="small"
-                  color="success"
-                  onClick={() => handleConfirm(row.original)}
-                >
-                  <CheckCircle sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            {row.original.status === "已到账" && (
-              <Tooltip title="核销">
-                <IconButton
-                  size="small"
-                  color="success"
-                  onClick={() => handleVerify(row.original)}
-                >
-                  <Check sx={{ width: 16, height: 16 }} />
-                </IconButton>
-              </Tooltip>
-            )}
-            <Tooltip title="查看">
-              <IconButton size="small">
-                <Eye sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="删除">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => handleDelete(row.original.id)}
-              >
-                <Trash2 sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        ),
+        label: "确认到账",
+        icon: <CheckCircle sx={{ width: 16, height: 16 }} />,
+        color: "success" as const,
+        show: (row: Receipt) => row.status === "待到账",
+        onClick: (row: Receipt) => handleConfirm(row),
+      },
+      {
+        label: "核销",
+        icon: <Check sx={{ width: 16, height: 16 }} />,
+        color: "success" as const,
+        show: (row: Receipt) => row.status === "已到账",
+        onClick: (row: Receipt) => handleVerify(row),
+      },
+      {
+        label: "查看",
+        icon: <Eye sx={{ width: 16, height: 16 }} />,
+        onClick: (row: Receipt) => console.log("查看", row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error" as const,
+        onClick: (row: Receipt) => handleDelete(row.id),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
   const advancedFilters = useMemo(
     () => [
       {
+        id: "receipt_method",
         label: "收款方式",
-        key: "receipt_method",
         type: "select" as const,
         options: [
           { value: "银行转账", label: "银行转账" },
@@ -398,8 +415,8 @@ const FinanceReceiptPage: React.FC = () => {
         onChange: setFilterMethod,
       },
       {
+        id: "status",
         label: "状态",
-        key: "status",
         type: "select" as const,
         options: [
           { value: "已到账", label: "已到账" },
@@ -414,8 +431,25 @@ const FinanceReceiptPage: React.FC = () => {
     [filterMethod, filterStatus],
   );
 
+  const exportFields = useMemo(
+    () => [
+      { key: "receipt_number", title: "收款单号" },
+      { key: "receipt_date", title: "收款日期" },
+      { key: "customer", title: "客户" },
+      { key: "receipt_method", title: "收款方式" },
+      { key: "amount", title: "收款金额" },
+      { key: "bank_account", title: "银行账户" },
+      { key: "status", title: "状态" },
+    ],
+    [],
+  );
+
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <NotificationContainer
+        notifications={notifications}
+        onClose={hideNotification}
+      />
       <MuiBox
         sx={{
           bgcolor: "background.paper",
@@ -450,6 +484,7 @@ const FinanceReceiptPage: React.FC = () => {
                   }}
                 >
                   <MuiBox
+                    component="span"
                     sx={{
                       width: 28,
                       height: 28,
@@ -469,13 +504,15 @@ const FinanceReceiptPage: React.FC = () => {
               </MuiBox>
             </Stack>
             <Stack direction="row" spacing={1}>
-              <Button
-                variant="outlined"
-                startIcon={<Download sx={{ width: 20, height: 20 }} />}
-                onClick={handleExport}
-              >
-                导出
-              </Button>
+              <IconButton onClick={() => window.location.reload()}>
+                <RefreshCw sx={{ width: 20, height: 20 }} />
+              </IconButton>
+              <DataExport
+                data={receiptData as unknown as Record<string, unknown>[]}
+                fields={exportFields}
+                defaultFileName="收款数据"
+                buttonText="数据导出"
+              />
               <Button
                 variant="contained"
                 startIcon={<Plus sx={{ width: 20, height: 20 }} />}
@@ -491,50 +528,35 @@ const FinanceReceiptPage: React.FC = () => {
       <MuiBox
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
       >
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            gap: 2,
-          }}
-        >
-          <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
-            <TextField
-              size="small"
-              placeholder="搜索收款单号、客户..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ width: 280 }}
-            />
-          </Stack>
-        </Stack>
+        {/* 统计卡片 */}
+        <StatCardGroup stats={statCards} columns={5} />
 
-        <Card>
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredData}
-              searchPlaceholder="搜索收款..."
-              searchKey="receipt_number"
-              enableAdvancedFilter={true}
-              advancedFilters={advancedFilters}
-              exportFileName="finance-receipts"
-            />
-          </CardContent>
-        </Card>
+        <ListPageTemplate
+          columns={columns}
+          data={filteredData}
+          searchable
+          searchPlaceholder="搜索收款单号、客户..."
+          filters={advancedFilters}
+          filtersValue={{
+            receipt_method: filterMethod,
+            status: filterStatus,
+          }}
+          onFilterChange={(filters) => {
+            if (filters.receipt_method !== undefined)
+              setFilterMethod(filters.receipt_method as string);
+            if (filters.status !== undefined)
+              setFilterStatus(filters.status as string);
+          }}
+          onSearch={handleSearch}
+          actions={[
+            { label: "搜索", variant: "outlined", onClick: handleSearch },
+            { label: "重置", variant: "outlined", onClick: handleReset },
+          ]}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          rowActions={rowActions}
+        />
       </MuiBox>
 
       {/* Create Modal */}

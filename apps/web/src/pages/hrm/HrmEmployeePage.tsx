@@ -67,6 +67,7 @@ import {
   AIFormValidator,
 } from "@/components/ai";
 import { ImageUpload, DataExport } from "@/components/common";
+import type { CompletionItem as AICompletionItem } from "@/types/ai";
 
 type ViewMode = "list" | "tree";
 
@@ -431,7 +432,7 @@ const HrmEmployeePage: React.FC = () => {
   }, []);
 
   const handleApplyCompletion = useCallback(
-    (completions: Record<string, CompletionItem>) => {
+    (completions: Record<string, AICompletionItem>) => {
       const updates: Record<string, any> = {};
       Object.entries(completions).forEach(([field, item]) => {
         updates[field] = item.value;
@@ -809,7 +810,7 @@ const HrmEmployeePage: React.FC = () => {
             </Button>
           </Box>
           <DataExport
-            data={data.items as Record<string, unknown>[]}
+            data={data.items as unknown as Record<string, unknown>[]}
             fields={exportFields}
             defaultFileName="员工数据"
             buttonText="导出"
@@ -1119,11 +1120,19 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
         </FormControl>
 
         <Box>
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mb: 1, display: "block" }}
+          >
             员工头像
           </Typography>
           <ImageUpload
-            value={(formData as Employee)?.avatar_url ? [(formData as Employee).avatar_url as string] : []}
+            value={
+              (formData as any)?.avatar_url
+                ? [(formData as any).avatar_url as string]
+                : []
+            }
             onChange={(files) => onChange("avatar_url", files[0] || "")}
             maxCount={1}
             accept="image/*"

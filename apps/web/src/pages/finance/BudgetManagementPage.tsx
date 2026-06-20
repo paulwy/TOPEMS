@@ -13,8 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { budgetApi, type Budget } from "@/api/erp";
 import { departmentApi, type Department } from "@/api/hrm";
 import { useAppStore } from "../../store";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate, StatCardGroup } from "@/components/mui";
+import type { ColumnDef, RowAction, BatchAction } from "@/components/mui";
 
 import {
   Button,
@@ -23,16 +23,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   FormLabel,
   Chip,
-  Checkbox,
-  FormControlLabel,
   Box,
   Typography,
   IconButton,
@@ -54,7 +50,7 @@ const BudgetManagementPage: React.FC = () => {
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [organizationFilter, setOrganizationFilter] =
     useState<OrganizationFilterValue>({});
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [showBatchStatusModal, setShowBatchStatusModal] = useState(false);
   const [batchStatus, setBatchStatus] = useState<string>("");
 
@@ -67,7 +63,7 @@ const BudgetManagementPage: React.FC = () => {
 
     try {
       const promises = selectedIds.map((id) =>
-        budgetApi.update(id, { status: batchStatus }),
+        budgetApi.update(id as string, { status: batchStatus }),
       );
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
@@ -95,7 +91,7 @@ const BudgetManagementPage: React.FC = () => {
     if (selectedIds.length === 0) return;
 
     try {
-      const promises = selectedIds.map((id) => budgetApi.delete(id));
+      const promises = selectedIds.map((id) => budgetApi.delete(id as string));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
 
@@ -124,6 +120,7 @@ const BudgetManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -297,54 +294,88 @@ const BudgetManagementPage: React.FC = () => {
     }
   };
 
+  // 统计卡片数据
+  const totalBudget = budgets.reduce((sum, b) => sum + b.total_budget, 0);
+  const totalUsed = budgets.reduce((sum, b) => sum + (b.used_amount ?? 0), 0);
+  const avgUsageRate =
+    budgets.length > 0
+      ? budgets.reduce((sum, b) => sum + (b.usage_rate ?? 0), 0) /
+        budgets.length
+      : 0;
+
+  const statCards = useMemo(
+    () => [
+      {
+        title: "总预算",
+        value: `¥${totalBudget.toLocaleString()}`,
+        icon: <DollarSign size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "已使用",
+        value: `¥${totalUsed.toLocaleString()}`,
+        icon: <TrendingUp size={24} />,
+        color: "success" as const,
+      },
+      {
+        title: "平均使用率",
+        value: `${avgUsageRate.toFixed(1)}%`,
+        icon: <Calendar size={24} />,
+        color: avgUsageRate > 80 ? ("error" as const) : ("warning" as const),
+      },
+    ],
+    [totalBudget, totalUsed, avgUsageRate],
+  );
+
+  // 列定义
   const columns = useMemo<ColumnDef<Budget>[]>(
     () => [
       {
-        accessorKey: "department_id",
-        header: "部门",
-        cell: ({ row }) => (
+        id: "department_id",
+        label: "部门",
+        render: (row) => (
           <Typography
             variant="body2"
             sx={{ fontWeight: 500, color: "grey.900" }}
           >
-            {getDepartmentName(row.original.department_id || "")}
+            {getDepartmentName(row.department_id || "")}
           </Typography>
         ),
       },
       {
-        accessorKey: "budget_type",
-        header: "预算类型",
-        cell: ({ row }) => (
+        id: "budget_type",
+        label: "预算类型",
+        render: (row) => (
           <Typography variant="body2" sx={{ color: "grey.900" }}>
-            {getBudgetTypeName(row.original.budget_type || "")}
+            {getBudgetTypeName(row.budget_type || "")}
           </Typography>
         ),
       },
       {
-        accessorKey: "fiscal_year",
-        header: "财年",
-        cell: ({ row }) => (
+        id: "fiscal_year",
+        label: "财年",
+        render: (row) => (
           <Typography variant="body2" sx={{ color: "grey.900" }}>
-            {row.original.fiscal_year}年
+            {row.fiscal_year}年
           </Typography>
         ),
       },
       {
-        accessorKey: "total_budget",
-        header: "预算总额",
-        cell: ({ row }) => (
+        id: "total_budget",
+        label: "预算总额",
+        render: (row) => (
           <Typography
             variant="body2"
             sx={{ fontWeight: 700, color: "primary.main" }}
           >
-            ¥{row.original.total_budget.toLocaleString()}
+            ¥{row.total_budget.toLocaleString()}
           </Typography>
         ),
       },
       {
         id: "usage",
-        header: "使用进度",
-        cell: ({ row }) => (
+        label: "使用进度",
+        render: (row) => (
           <Box sx={{ width: "100%", maxWidth: 320 }}>
             <Box
               sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
@@ -353,7 +384,7 @@ const BudgetManagementPage: React.FC = () => {
                 variant="body2"
                 sx={{ fontSize: "0.75rem", color: "grey.600" }}
               >
-                已用: ¥{(row.original.used_amount ?? 0).toLocaleString()}
+                已用: ¥{(row.used_amount ?? 0).toLocaleString()}
               </Typography>
               <Typography
                 variant="body2"
@@ -361,12 +392,10 @@ const BudgetManagementPage: React.FC = () => {
                   fontWeight: 700,
                   fontSize: "0.75rem",
                   color:
-                    (row.original.usage_rate ?? 0) > 80
-                      ? "error.main"
-                      : "primary.main",
+                    (row.usage_rate ?? 0) > 80 ? "error.main" : "primary.main",
                 }}
               >
-                {(row.original.usage_rate ?? 0).toFixed(1)}%
+                {(row.usage_rate ?? 0).toFixed(1)}%
               </Typography>
             </Box>
             <Box
@@ -382,8 +411,8 @@ const BudgetManagementPage: React.FC = () => {
                   height: 8,
                   borderRadius: 1,
                   transition: "width 0.3s",
-                  width: `${Math.min(row.original.usage_rate ?? 0, 100)}%`,
-                  bgcolor: getProgressColor(row.original.usage_rate ?? 0),
+                  width: `${Math.min(row.usage_rate ?? 0, 100)}%`,
+                  bgcolor: getProgressColor(row.usage_rate ?? 0),
                 }}
               />
             </Box>
@@ -391,61 +420,108 @@ const BudgetManagementPage: React.FC = () => {
         ),
       },
       {
-        accessorKey: "remaining_amount",
-        header: "剩余",
-        cell: ({ row }) => (
+        id: "remaining_amount",
+        label: "剩余",
+        render: (row) => (
           <Typography
             variant="body2"
             sx={{
               fontWeight: 700,
               color:
-                (row.original.remaining_amount ?? 0) <
-                row.original.total_budget * 0.2
+                (row.remaining_amount ?? 0) < row.total_budget * 0.2
                   ? "error.main"
                   : "success.main",
             }}
           >
-            ¥{(row.original.remaining_amount ?? 0).toLocaleString()}
+            ¥{(row.remaining_amount ?? 0).toLocaleString()}
           </Typography>
         ),
       },
       {
-        accessorKey: "status",
-        header: "状态",
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-      {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            <IconButton
-              size="small"
-              onClick={() => setEditingBudget(row.original)}
-            >
-              <Edit sx={{ width: 16, height: 16 }} />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleDelete(row.original.id)}
-              sx={{ color: "error.main" }}
-            >
-              <Trash2 sx={{ width: 16, height: 16 }} />
-            </IconButton>
-          </Stack>
-        ),
+        id: "status",
+        label: "状态",
+        render: (row) => getStatusBadge(row.status),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [departments],
   );
 
-  const totalBudget = budgets.reduce((sum, b) => sum + b.total_budget, 0);
-  const totalUsed = budgets.reduce((sum, b) => sum + (b.used_amount ?? 0), 0);
-  const avgUsageRate =
-    budgets.length > 0
-      ? budgets.reduce((sum, b) => sum + (b.usage_rate ?? 0), 0) /
-        budgets.length
-      : 0;
+  // 行操作
+  const rowActions = useMemo<RowAction<Budget>[]>(
+    () => [
+      {
+        label: "编辑",
+        icon: <Edit sx={{ width: 16, height: 16 }} />,
+        onClick: (row) => setEditingBudget(row),
+      },
+      {
+        label: "删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error",
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: "确定要删除这条预算记录吗？",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // 批量操作
+  const batchActions = useMemo<BatchAction[]>(
+    () => [
+      {
+        label: "批量更新状态",
+        icon: <Settings sx={{ width: 16, height: 16 }} />,
+        onClick: handleBatchUpdateStatus,
+        showWhenSelected: true,
+      },
+      {
+        label: "批量删除",
+        icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+        color: "error",
+        onClick: handleBatchDelete,
+        showWhenSelected: true,
+        confirm: true,
+        confirmMessage: "确定要删除选中的预算记录吗？",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedIds],
+  );
+
+  // 筛选器配置
+  const filters = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "状态",
+        type: "select" as const,
+        options: [
+          { value: "", label: "全部" },
+          { value: "active", label: "进行中" },
+          { value: "frozen", label: "已冻结" },
+          { value: "exhausted", label: "已耗尽" },
+        ],
+      },
+      {
+        id: "budget_type",
+        label: "预算类型",
+        type: "select" as const,
+        options: [
+          { value: "", label: "全部" },
+          { value: "office", label: "办公费" },
+          { value: "marketing", label: "市场费" },
+          { value: "development", label: "研发费" },
+          { value: "travel", label: "差旅费" },
+          { value: "training", label: "培训费" },
+          { value: "other", label: "其他" },
+        ],
+      },
+    ],
+    [],
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.100" }}>
@@ -521,251 +597,27 @@ const BudgetManagementPage: React.FC = () => {
         </Box>
 
         {/* 统计卡片 */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
-            gap: 3,
-            mb: 3,
-          }}
-        >
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 500, color: "grey.600" }}
-                  >
-                    总预算
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "grey.900", mt: 1 }}
-                  >
-                    ¥{totalBudget.toLocaleString()}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{ p: 1.5, bgcolor: "primary.100", borderRadius: "50%" }}
-                >
-                  <DollarSign
-                    sx={{ width: 24, height: 24, color: "primary.main" }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 500, color: "grey.600" }}
-                  >
-                    已使用
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 700, color: "grey.900", mt: 1 }}
-                  >
-                    ¥{totalUsed.toLocaleString()}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{ p: 1.5, bgcolor: "success.100", borderRadius: "50%" }}
-                >
-                  <TrendingUp
-                    sx={{ width: 24, height: 24, color: "success.main" }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontWeight: 500, color: "grey.600" }}
-                  >
-                    平均使用率
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontWeight: 700,
-                      mt: 1,
-                      color: avgUsageRate > 80 ? "error.main" : "grey.900",
-                    }}
-                  >
-                    {avgUsageRate.toFixed(1)}%
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{ p: 1.5, bgcolor: "warning.100", borderRadius: "50%" }}
-                >
-                  <Calendar
-                    sx={{ width: 24, height: 24, color: "warning.main" }}
-                  />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+        <Box sx={{ mb: 3 }}>
+          <StatCardGroup stats={statCards} columns={3} />
         </Box>
 
         {/* 预算列表 */}
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: "center" }}>
-                <Box
-                  sx={{
-                    display: "inline-block",
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: "primary.main",
-                    borderTopColor: "transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                    "@keyframes spin": {
-                      "0%": { transform: "rotate(0deg)" },
-                      "100%": { transform: "rotate(360deg)" },
-                    },
-                  }}
-                />
-                <Typography sx={{ mt: 1, color: "grey.500" }}>
-                  加载中...
-                </Typography>
-              </Box>
-            ) : (
-              <>
-                {selectedIds.length > 0 && (
-                  <Box
-                    sx={{
-                      bgcolor: "grey.50",
-                      borderBottom: 1,
-                      borderColor: "divider",
-                      px: 3,
-                      py: 1.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={selectedIds.length === budgets.length}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedIds(budgets.map((b) => b.id));
-                              } else {
-                                setSelectedIds([]);
-                              }
-                            }}
-                          />
-                        }
-                        label={
-                          <Typography
-                            variant="body2"
-                            sx={{ color: "grey.600" }}
-                          >
-                            已选择 {selectedIds.length} 项
-                          </Typography>
-                        }
-                      />
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={handleBatchUpdateStatus}
-                      >
-                        <Settings sx={{ width: 16, height: 16, mr: 0.5 }} />
-                        批量更新状态
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        color="error"
-                        onClick={handleBatchDelete}
-                      >
-                        <Trash2 sx={{ width: 16, height: 16, mr: 0.5 }} />
-                        批量删除
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-                <EnhancedDataTable
-                  columns={columns}
-                  data={budgets}
-                  searchPlaceholder="搜索预算..."
-                  searchKey="fiscal_year"
-                  loading={loading}
-                  enableSelection={true}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                  selectionKey="id"
-                  enableAdvancedFilter={true}
-                  advancedFilters={[
-                    {
-                      key: "status",
-                      label: "状态",
-                      type: "select",
-                      options: [
-                        { value: "", label: "全部" },
-                        { value: "active", label: "进行中" },
-                        { value: "frozen", label: "已冻结" },
-                        { value: "exhausted", label: "已耗尽" },
-                      ],
-                    },
-                    {
-                      key: "budget_type",
-                      label: "预算类型",
-                      type: "select",
-                      options: [
-                        { value: "", label: "全部" },
-                        { value: "office", label: "办公费" },
-                        { value: "marketing", label: "市场费" },
-                        { value: "development", label: "研发费" },
-                        { value: "travel", label: "差旅费" },
-                        { value: "training", label: "培训费" },
-                        { value: "other", label: "其他" },
-                      ],
-                    },
-                  ]}
-                  exportFileName="budget-report"
-                  onRefresh={loadData}
-                />
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <ListPageTemplate
+          columns={columns}
+          data={budgets}
+          loading={loading}
+          searchable
+          searchPlaceholder="搜索预算..."
+          filters={filters}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          rowActions={rowActions}
+          batchActions={batchActions}
+          showBatchActionBar
+          onRefresh={loadData}
+          emptyMessage="暂无预算数据"
+        />
       </Box>
 
       {/* 创建预算弹窗 */}
@@ -1016,6 +868,7 @@ const BudgetManagementPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* 批量更新状态弹窗 */}
       <Dialog
         open={showBatchStatusModal}
         onClose={() => setShowBatchStatusModal(false)}

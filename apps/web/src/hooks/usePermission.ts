@@ -46,7 +46,7 @@ export const usePermission = () => {
   const canAccessModule = useCallback(
     (module: string): boolean => {
       if (user?.is_superuser) return true;
-      return permissions.some((p) => p.startsWith(`${module}:`) && p.endsWith("_read"));
+      return permissions.some((p) => p === `${module}:read`);
     },
     [permissions, user?.is_superuser],
   );
@@ -54,7 +54,7 @@ export const usePermission = () => {
   const canWriteModule = useCallback(
     (module: string): boolean => {
       if (user?.is_superuser) return true;
-      return permissions.some((p) => p.startsWith(`${module}:`) && (p.endsWith("_write") || p.endsWith("_create") || p.endsWith("_update")));
+      return permissions.some((p) => p === `${module}:write` || p === `${module}:create` || p === `${module}:update`);
     },
     [permissions, user?.is_superuser],
   );
@@ -62,7 +62,7 @@ export const usePermission = () => {
   const canDeleteModule = useCallback(
     (module: string): boolean => {
       if (user?.is_superuser) return true;
-      return permissions.some((p) => p.startsWith(`${module}:`) && p.endsWith("_delete"));
+      return permissions.some((p) => p === `${module}:delete`);
     },
     [permissions, user?.is_superuser],
   );
@@ -70,7 +70,7 @@ export const usePermission = () => {
   const canAdminModule = useCallback(
     (module: string): boolean => {
       if (user?.is_superuser) return true;
-      return permissions.some((p) => p.startsWith(`${module}:`) && p.endsWith("_admin"));
+      return permissions.some((p) => p === `${module}:admin`);
     },
     [permissions, user?.is_superuser],
   );

@@ -206,7 +206,7 @@ const PmProjectListPage: React.FC = () => {
             </Typography>
           </Box>
           <DataExport
-            data={projects as Record<string, unknown>[]}
+            data={projects as unknown as Record<string, unknown>[]}
             fields={[
               { key: "name", title: "项目名称" },
               { key: "code", title: "项目编码" },

@@ -58,7 +58,13 @@ import {
   AIFormValidator,
 } from "@/components/ai";
 import type { ValidationIssue, Suggestion } from "@/types/ai";
-import { EmptyState } from "@/components/mui";
+import {
+  EmptyState,
+  ListPageTemplate,
+  StatCardGroup,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/mui";
 import { ImageUpload } from "@/components/common";
 
 const HrmDepartmentPage: React.FC = () => {
@@ -119,6 +125,7 @@ const HrmDepartmentPage: React.FC = () => {
         setLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification],
   );
 
@@ -428,6 +435,241 @@ const HrmDepartmentPage: React.FC = () => {
     );
   }, [departments, formData.id]);
 
+  // 部门统计卡片数据
+  const departmentStats = useMemo(() => {
+    const totalDepts = departments.length;
+    const activeDepts = departments.filter((d) => d.status === "active").length;
+    const totalEmployees = employees.length;
+    return {
+      total: totalDepts,
+      active: activeDepts,
+      inactive: totalDepts - activeDepts,
+      employees: totalEmployees,
+    };
+  }, [departments, employees]);
+
+  // 统计卡片
+  const statCards = useMemo(
+    () => [
+      {
+        id: "total",
+        title: "部门总数",
+        value: departmentStats.total,
+        icon: <Building2 style={{ width: 24, height: 24 }} />,
+        color: "primary" as const,
+      },
+      {
+        id: "active",
+        title: "启用部门",
+        value: departmentStats.active,
+        icon: <Building2 style={{ width: 24, height: 24 }} />,
+        color: "success" as const,
+      },
+      {
+        id: "inactive",
+        title: "禁用部门",
+        value: departmentStats.inactive,
+        icon: <Building2 style={{ width: 24, height: 24 }} />,
+        color: "warning" as const,
+      },
+      {
+        id: "employees",
+        title: "部门员工",
+        value: departmentStats.employees,
+        icon: <Users style={{ width: 24, height: 24 }} />,
+        color: "info" as const,
+      },
+    ],
+    [departmentStats],
+  );
+
+  // 部门列表列定义
+  const departmentColumns = useMemo<ColumnDef<Department>[]>(
+    () => [
+      {
+        id: "name",
+        label: "部门名称",
+        minWidth: 180,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                bgcolor: "success.light",
+                color: "success.main",
+              }}
+            >
+              <Building2 sx={{ width: 18, height: 18 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.name}
+              </Typography>
+              {row.code && (
+                <Typography variant="caption" color="text.secondary">
+                  {row.code}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: "company_id",
+        label: "所属公司",
+        minWidth: 150,
+        render: (row) => (
+          <Typography variant="body2">
+            {row.company_id
+              ? companies.find((c) => c.id === row.company_id)?.name || "-"
+              : "-"}
+          </Typography>
+        ),
+      },
+      {
+        id: "parent_id",
+        label: "上级部门",
+        minWidth: 150,
+        render: (row) => (
+          <Typography variant="body2">
+            {row.parent_id
+              ? departments.find((d) => d.id === row.parent_id)?.name || "-"
+              : "-"}
+          </Typography>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        width: 100,
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: "employee_count",
+        label: "员工数",
+        width: 80,
+        render: (row) => (
+          <Chip
+            size="small"
+            variant="outlined"
+            label={`${getDeptEmployeeCount(row.id)}人`}
+          />
+        ),
+      },
+    ],
+    [companies, departments, getStatusBadge, getDeptEmployeeCount],
+  );
+
+  // 员工列表列定义
+  const employeeColumns = useMemo<ColumnDef<Employee>[]>(
+    () => [
+      {
+        id: "name",
+        label: "员工信息",
+        minWidth: 200,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar sx={{ bgcolor: "primary.main" }}>
+              <User sx={{ width: 20, height: 20 }} />
+            </Avatar>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {row.name}
+              </Typography>
+              {row.employee_no && (
+                <Typography variant="caption" color="text.secondary">
+                  {row.employee_no}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: "position",
+        label: "职位",
+        minWidth: 120,
+        render: (row) => (
+          <Typography variant="body2">{row.position || "-"}</Typography>
+        ),
+      },
+      {
+        id: "email",
+        label: "邮箱",
+        minWidth: 180,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Mail sx={{ width: 14, height: 14, color: "text.secondary" }} />
+            <Typography variant="body2">{row.email || "-"}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "phone",
+        label: "电话",
+        minWidth: 130,
+        render: (row) => (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Phone sx={{ width: 14, height: 14, color: "text.secondary" }} />
+            <Typography variant="body2">{row.phone || "-"}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: "status",
+        label: "状态",
+        width: 100,
+        render: (row) => (
+          <Chip
+            size="small"
+            color={row.status === "active" ? "success" : "default"}
+            label={row.status === "active" ? "在职" : "离职"}
+            sx={{ fontWeight: 500 }}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
+  // 部门行操作
+  const departmentRowActions = useMemo<RowAction<Department>[]>(
+    () => [
+      {
+        label: "查看详情",
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: handleView,
+      },
+      {
+        label: "编辑",
+        icon: <Edit style={{ width: 16, height: 16 }} />,
+        onClick: handleEdit,
+        color: "primary",
+      },
+      {
+        label: "删除",
+        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleDelete(row.id),
+        color: "error",
+        divider: true,
+      },
+    ],
+    [handleView, handleEdit, handleDelete],
+  );
+
+  // 员工行操作
+  const employeeRowActions = useMemo<RowAction<Employee>[]>(
+    () => [
+      {
+        label: "查看详情",
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: () => {},
+      },
+    ],
+    [],
+  );
+
   // 渲染树节点
   const renderTreeItem = useCallback(
     (node: any, level: number = 0) => {
@@ -582,6 +824,16 @@ const HrmDepartmentPage: React.FC = () => {
           新增部门
         </Button>
       </Box>
+
+      {/* 统计概览 */}
+      <Paper sx={{ mb: 3, borderRadius: 2, overflow: "hidden" }}>
+        <Box sx={{ p: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+            部门概览
+          </Typography>
+          <StatCardGroup stats={statCards} columns={4} />
+        </Box>
+      </Paper>
 
       <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
         <Box sx={{ display: "grid", gridTemplateColumns: { md: "1fr 2fr" } }}>
@@ -749,7 +1001,10 @@ const HrmDepartmentPage: React.FC = () => {
                     <Box
                       sx={{
                         display: "grid",
-                        gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+                        gridTemplateColumns: {
+                          xs: "repeat(2, 1fr)",
+                          md: "repeat(4, 1fr)",
+                        },
                         gap: 2,
                         mb: 3,
                       }}
@@ -1353,11 +1608,15 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
         </FormControl>
 
         <Box>
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mb: 1, display: "block" }}
+          >
             部门图片
           </Typography>
           <ImageUpload
-            value={(formData as Department)?.images || []}
+            value={(formData as any)?.images || []}
             onChange={(files) => onChange("images", files)}
             maxCount={9}
             accept="image/*"

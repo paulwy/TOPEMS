@@ -1,30 +1,21 @@
 import React, { useState, useMemo } from "react";
 import {
   ChevronLeft,
-  Plus,
-  Edit,
-  Download,
-  Search,
   TrendingUp,
   TrendingDown,
   AlertCircle,
   BarChart3,
+  DollarSign,
+  Wallet,
+  TrendingDown as TrendingDownIcon,
+  Download,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store";
 import { DataExport } from "@/components/common";
-import type { ColumnDef } from "@tanstack/react-table";
-import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ListPageTemplate, StatCardGroup } from "@/components/mui";
 
 import {
   Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -35,7 +26,6 @@ import {
   Stack,
   IconButton,
   Tooltip,
-  InputAdornment,
 } from "@mui/material";
 
 interface CostEntry {
@@ -125,7 +115,6 @@ const mockCostData: CostEntry[] = [
 
 const FinanceCostPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
 
   const [costData] = useState<CostEntry[]>(mockCostData);
   const [filterCenter, setFilterCenter] = useState("");
@@ -159,58 +148,87 @@ const FinanceCostPage: React.FC = () => {
   );
   const totalVariance = totalBudget - totalActual;
 
+  // 统计卡片数据
+  const statCards = useMemo(() => {
+    return [
+      {
+        title: "总预算",
+        value: `¥${totalBudget.toLocaleString()}`,
+        icon: <Wallet size={24} />,
+        color: "primary" as const,
+      },
+      {
+        title: "实际总成本",
+        value: `¥${totalActual.toLocaleString()}`,
+        icon: <DollarSign size={24} />,
+        color: "secondary" as const,
+      },
+      {
+        title: "总差异",
+        value: `${totalVariance >= 0 ? "¥" : "-¥"}${Math.abs(totalVariance).toLocaleString()}`,
+        icon: <TrendingDownIcon size={24} />,
+        color: totalVariance >= 0 ? ("success" as const) : ("error" as const),
+      },
+    ];
+  }, [totalBudget, totalActual, totalVariance]);
+
   const handleAnalysis = (cost: CostEntry) => {
     setSelectedCost(cost);
     setShowAnalysisModal(true);
   };
 
   const handleExport = () => {
-    addNotification({
-      title: "导出成功",
-      message: "成本数据已导出",
-      type: "success",
-    });
+    console.log("导出成本数据");
   };
 
-  const columns = useMemo<ColumnDef<CostEntry>[]>(
+  const handleSearch = () => {
+    // 搜索逻辑已在 filteredData 中实现
+  };
+
+  const handleReset = () => {
+    setSearchQuery("");
+    setFilterCenter("");
+  };
+
+  const columns = useMemo(
     () => [
       {
-        accessorKey: "cost_center",
-        header: "成本中心",
-        cell: ({ row }) => (
-          <Chip label={row.original.cost_center} size="small" color="primary" />
+        id: "cost_center",
+        label: "成本中心",
+        render: (row: CostEntry) => (
+          <Chip label={row.cost_center} size="small" color="primary" />
         ),
       },
       {
-        accessorKey: "cost_item",
-        header: "成本项目",
-        cell: ({ row }) => (
-          <MuiBox sx={{ fontWeight: 500 }}>{row.original.cost_item}</MuiBox>
+        id: "cost_item",
+        label: "成本项目",
+        render: (row: CostEntry) => (
+          <MuiBox sx={{ fontWeight: 500 }}>{row.cost_item}</MuiBox>
         ),
       },
       {
-        accessorKey: "budget_amount",
-        header: "预算金额",
-        cell: ({ row }) => (
+        id: "budget_amount",
+        label: "预算金额",
+        render: (row: CostEntry) => (
           <MuiBox sx={{ fontFamily: "monospace", color: "text.secondary" }}>
-            ¥{row.original.budget_amount.toLocaleString()}
+            ¥{row.budget_amount.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "actual_cost",
-        header: "实际成本",
-        cell: ({ row }) => (
+        id: "actual_cost",
+        label: "实际成本",
+        render: (row: CostEntry) => (
           <MuiBox sx={{ fontFamily: "monospace", fontWeight: 600 }}>
-            ¥{row.original.actual_cost.toLocaleString()}
+            ¥{row.actual_cost.toLocaleString()}
           </MuiBox>
         ),
       },
       {
-        accessorKey: "variance",
-        header: "差异",
-        cell: ({ row }) => {
-          const variance = row.original.variance;
+        id: "variance",
+        label: "差异",
+        render: (row: CostEntry) => {
+          const variance = row.variance;
           const isPositive = variance >= 0;
           return (
             <MuiBox
@@ -233,10 +251,10 @@ const FinanceCostPage: React.FC = () => {
         },
       },
       {
-        accessorKey: "execution_rate",
-        header: "执行率",
-        cell: ({ row }) => {
-          const rate = row.original.execution_rate;
+        id: "execution_rate",
+        label: "执行率",
+        render: (row: CostEntry) => {
+          const rate = row.execution_rate;
           const color =
             rate <= 100 ? "success" : rate <= 110 ? "warning" : "error";
           return (
@@ -249,22 +267,17 @@ const FinanceCostPage: React.FC = () => {
           );
         },
       },
+    ],
+    [],
+  );
+
+  const rowActions = useMemo(
+    () => [
       {
-        id: "actions",
-        header: "操作",
-        cell: ({ row }) => (
-          <Stack direction="row" spacing={1}>
-            <Tooltip title="成本分析">
-              <IconButton
-                size="small"
-                color="success"
-                onClick={() => handleAnalysis(row.original)}
-              >
-                <BarChart3 sx={{ width: 16, height: 16 }} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        ),
+        label: "成本分析",
+        icon: <BarChart3 size={16} />,
+        color: "success" as const,
+        onClick: (row: CostEntry) => handleAnalysis(row),
       },
     ],
     [],
@@ -273,8 +286,8 @@ const FinanceCostPage: React.FC = () => {
   const advancedFilters = useMemo(
     () => [
       {
+        id: "cost_center",
         label: "成本中心",
-        key: "cost_center",
         type: "select" as const,
         options: [
           { value: "生产部", label: "生产部" },
@@ -326,7 +339,7 @@ const FinanceCostPage: React.FC = () => {
           >
             <Stack direction="row" sx={{ alignItems: "center" }} spacing={2}>
               <IconButton onClick={() => navigate("/dashboard")}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
+                <ChevronLeft size={20} />
               </IconButton>
               <MuiBox>
                 <Typography
@@ -360,13 +373,13 @@ const FinanceCostPage: React.FC = () => {
             <Stack direction="row" spacing={1}>
               <Button
                 variant="outlined"
-                startIcon={<Download sx={{ width: 20, height: 20 }} />}
+                startIcon={<Download size={20} />}
                 onClick={handleExport}
               >
                 导出报表
               </Button>
               <DataExport
-                data={costData as Record<string, unknown>[]}
+                data={costData as unknown as Record<string, unknown>[]}
                 fields={exportFields}
                 defaultFileName="成本数据"
                 buttonText="数据导出"
@@ -379,104 +392,30 @@ const FinanceCostPage: React.FC = () => {
       <MuiBox
         sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}
       >
-        {/* Summary Cards */}
-        <MuiBox
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "repeat(1, 1fr)", md: "repeat(3, 1fr)" },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                总预算
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "primary.main" }}
-              >
-                ¥{totalBudget.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                实际总成本
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "text.primary" }}
-              >
-                ¥{totalActual.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <Typography variant="body2" color="text.secondary">
-                总差异
-              </Typography>
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 700,
-                  color: totalVariance >= 0 ? "success.main" : "error.main",
-                }}
-              >
-                {totalVariance >= 0 ? "¥" : "-¥"}
-                {Math.abs(totalVariance).toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-        </MuiBox>
+        {/* 统计卡片 */}
+        <StatCardGroup stats={statCards} columns={3} />
 
-        <Stack
-          sx={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            gap: 2,
+        <ListPageTemplate
+          columns={columns}
+          data={filteredData}
+          searchable
+          searchPlaceholder="搜索成本中心、项目..."
+          searchValue={searchQuery}
+          onSearch={setSearchQuery}
+          filters={advancedFilters}
+          filtersValue={{
+            cost_center: filterCenter,
           }}
-        >
-          <Stack direction="row" spacing={2} sx={{ flex: 1 }}>
-            <TextField
-              size="small"
-              placeholder="搜索成本中心、项目..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search
-                        sx={{ width: 16, height: 16, color: "text.secondary" }}
-                      />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ width: 280 }}
-            />
-          </Stack>
-        </Stack>
-
-        <Card>
-          <CardContent>
-            <EnhancedDataTable
-              columns={columns}
-              data={filteredData}
-              searchPlaceholder="搜索..."
-              searchKey="cost_item"
-              enableAdvancedFilter={true}
-              advancedFilters={advancedFilters}
-              exportFileName="finance-cost"
-            />
-          </CardContent>
-        </Card>
+          onFilterChange={(filters) => {
+            if (filters.cost_center !== undefined)
+              setFilterCenter(filters.cost_center as string);
+          }}
+          actions={[
+            { label: "搜索", variant: "outlined", onClick: handleSearch },
+            { label: "重置", variant: "outlined", onClick: handleReset },
+          ]}
+          rowActions={rowActions}
+        />
       </MuiBox>
 
       {/* Analysis Modal */}

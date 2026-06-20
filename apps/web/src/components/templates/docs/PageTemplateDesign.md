@@ -4,6 +4,9 @@
 
 | 版本 | 日期 | 作者 | 变更说明 |
 |------|------|------|----------|
+| v2.2 | 2026-06-20 | System | 修复 85 个 TypeScript 错误：修复 DashboardTemplate 图表布局比较问题；修复 FormPageTemplate saveDraft 类型安全；删除 ListPageTemplate、FormPageTemplate、AlertCard、ConfirmDialog、DataTable、StatusBadge 重复类型导出；修复 lucide-react 图标 `Icon` 变量名冲突；修复 Grid2 导入问题；修复 Finance DashboardPage 使用自定义区域 props；修复 common 组件的 sx 属性问题；修复 StatCardBase children 属性支持；修复类型转换 `as unknown as` 问题；修复 FinancialVoucher 缺失属性问题；修复 DialogActions 导入问题 |
+| v2.1 | 2026-06-20 | System | 修复测试套件中的 12 个失败测试用例；完善 formatFileSize 函数格式输出；修复 usePermission hook 权限判断逻辑；修复 DataTable.tsx 泛型语法问题 |
+| v2.0 | 2026-06-20 | System | 增强 FormPageTemplate（表单验证、布局配置、表单联动、草稿保存、进度条、权限配置）；增强 DashboardTemplate（图表集成、数据卡片布局、响应式布局、卡片分组、持久化配置、自定义渲染器）；更新 common/index.ts 标记旧组件为 deprecated；添加 54 个单元测试用例 |
 | v1.6 | 2026-06-16 | System | 为 ListPageTemplate 添加面包屑导航和返回按钮支持；为 HrmEmployeePage.tsx 添加面包屑导航 |
 | v1.5 | 2026-06-16 | System | 重构 EmployeeManagementPage.tsx 使用 ListPageTemplate 组件；修复 Chip color 类型错误 |
 | v1.4 | 2026-06-16 | System | 将统一模板规范推广到 CRM、PM 模块；修复 CRMBillingPage.tsx 中的 TypeScript 错误 |

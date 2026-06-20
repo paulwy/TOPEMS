@@ -1,5 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, Eye, X, Check } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  X,
+  Check,
+  FileText,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import {
   Button,
   TextField,
@@ -10,24 +21,19 @@ import {
   DialogContent,
   DialogActions,
   DialogTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   Box,
-  InputAdornment,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Stack,
-  IconButton,
-  Chip,
-  CircularProgress,
 } from "@mui/material";
+import {
+  ListPageTemplate,
+  StatCard,
+  StatCardGroup,
+  type ColumnDef,
+  type RowAction,
+} from "@/components/mui";
 import { useNotification } from "@/hooks/useNotification";
 import { NotificationContainer } from "@/components/notification/NotificationContainer";
 import { StatusBadge } from "@/components/hrm/StatusBadge";
@@ -199,8 +205,6 @@ const LeaveManagementPage: React.FC = () => {
     return types[type] || type;
   };
 
-  const totalPages = Math.ceil(data.total / data.page_size);
-
   const leaveTypes = [
     { value: "annual", label: "年假" },
     { value: "sick", label: "病假" },
@@ -209,6 +213,135 @@ const LeaveManagementPage: React.FC = () => {
     { value: "paternity", label: "陪产假" },
     { value: "other", label: "其他" },
   ];
+
+  // 统计卡片数据
+  const leaveStats = useMemo(() => {
+    const items = data.items;
+    return {
+      total: data.total,
+      pending: items.filter((i) => i.status === "pending").length,
+      approved: items.filter((i) => i.status === "approved").length,
+      rejected: items.filter((i) => i.status === "rejected").length,
+    };
+  }, [data]);
+
+  const statCards = useMemo(
+    () => [
+      {
+        id: "total",
+        title: "申请总数",
+        value: leaveStats.total,
+        icon: <FileText size={20} />,
+        color: "primary" as const,
+      },
+      {
+        id: "pending",
+        title: "待审批",
+        value: leaveStats.pending,
+        icon: <Clock size={20} />,
+        color: "warning" as const,
+      },
+      {
+        id: "approved",
+        title: "已批准",
+        value: leaveStats.approved,
+        icon: <CheckCircle size={20} />,
+        color: "success" as const,
+      },
+      {
+        id: "rejected",
+        title: "已拒绝",
+        value: leaveStats.rejected,
+        icon: <XCircle size={20} />,
+        color: "error" as const,
+      },
+    ],
+    [leaveStats],
+  );
+
+  // 表格列定义
+  const columns = useMemo<ColumnDef<LeaveRequest>[]>(
+    () => [
+      {
+        id: "employee",
+        label: "员工",
+        minWidth: 150,
+        render: (row) =>
+          employees.find((e) => e.id === row.employee_id)?.name || "-",
+      },
+      {
+        id: "leave_type",
+        label: "休假类型",
+        minWidth: 120,
+        render: (row) => getLeaveTypeText(row.leave_type),
+      },
+      {
+        id: "start_date",
+        label: "开始日期",
+        minWidth: 120,
+        render: (row) => row.start_date,
+      },
+      {
+        id: "end_date",
+        label: "结束日期",
+        minWidth: 120,
+        render: (row) => row.end_date,
+      },
+      {
+        id: "days",
+        label: "天数",
+        minWidth: 80,
+        render: (row) => row.days,
+      },
+      {
+        id: "status",
+        label: "状态",
+        minWidth: 100,
+        render: (row) => getLeaveStatusBadge(row.status),
+      },
+    ],
+    [employees],
+  );
+
+  // 行操作
+  const rowActions = useMemo<RowAction<LeaveRequest>[]>(
+    () => [
+      {
+        label: "查看",
+        icon: <Eye size={16} />,
+        onClick: handleView,
+      },
+      {
+        label: "编辑",
+        icon: <Edit size={16} />,
+        onClick: handleEdit,
+        color: "primary",
+      },
+      {
+        label: "批准",
+        icon: <Check size={16} />,
+        onClick: (row) => handleApprove(row.id),
+        color: "success",
+        show: (row) => row.status === "pending",
+      },
+      {
+        label: "拒绝",
+        icon: <X size={16} />,
+        onClick: (row) => handleReject(row.id),
+        color: "error",
+        show: (row) => row.status === "pending",
+        divider: true,
+      },
+      {
+        label: "删除",
+        icon: <Trash2 size={16} />,
+        onClick: (row) => handleDelete(row.id),
+        color: "error",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
@@ -262,247 +395,90 @@ const LeaveManagementPage: React.FC = () => {
           </Button>
         </Box>
 
-        <Card sx={{ mb: 2, borderRadius: 2 }}>
-          <CardContent>
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 2,
-                alignItems: "center",
-              }}
-            >
-              <TextField
-                placeholder="搜索员工姓名"
-                size="small"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                sx={{ minWidth: 200 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Box sx={{ display: "flex" }}>
-                          <Search size={18} />
-                        </Box>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel>全部员工</InputLabel>
-                <Select
-                  value={employeeFilter}
-                  label="全部员工"
-                  onChange={(e) => setEmployeeFilter(e.target.value)}
-                >
-                  <MenuItem value="">全部员工</MenuItem>
-                  {employees.map((e) => (
-                    <MenuItem key={e.id} value={e.id}>
-                      {e.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>全部类型</InputLabel>
-                <Select
-                  value={typeFilter}
-                  label="全部类型"
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                >
-                  <MenuItem value="">全部类型</MenuItem>
-                  {leaveTypes.map((t) => (
-                    <MenuItem key={t.value} value={t.value}>
-                      {t.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>全部状态</InputLabel>
-                <Select
-                  value={statusFilter}
-                  label="全部状态"
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <MenuItem value="">全部状态</MenuItem>
-                  <MenuItem value="pending">待审批</MenuItem>
-                  <MenuItem value="approved">已批准</MenuItem>
-                  <MenuItem value="rejected">已拒绝</MenuItem>
-                  <MenuItem value="cancelled">已取消</MenuItem>
-                </Select>
-              </FormControl>
-              <Stack direction="row" spacing={1}>
-                <Button variant="outlined" onClick={handleSearch}>
-                  搜索
-                </Button>
-                <Button variant="outlined" onClick={handleReset}>
-                  重置
-                </Button>
-              </Stack>
-            </Box>
+        {/* 统计卡片 */}
+        <Card sx={{ mb: 3, borderRadius: 2 }}>
+          <CardContent sx={{ p: 2 }}>
+            <StatCardGroup stats={statCards} columns={4} />
           </CardContent>
         </Card>
 
-        <Card sx={{ borderRadius: 2, overflow: "hidden" }}>
-          <TableContainer>
-            <Table>
-              <TableHead sx={{ bgcolor: "grey.50" }}>
-                <TableRow>
-                  <TableCell>员工</TableCell>
-                  <TableCell>休假类型</TableCell>
-                  <TableCell>开始日期</TableCell>
-                  <TableCell>结束日期</TableCell>
-                  <TableCell>天数</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>操作</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: "center", py: 6 }}>
-                      <CircularProgress size={32} />
-                    </TableCell>
-                  </TableRow>
-                ) : data.items.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      sx={{
-                        textAlign: "center",
-                        color: "text.secondary",
-                        py: 6,
-                      }}
-                    >
-                      暂无数据
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  data.items.map((item) => (
-                    <TableRow key={item.id} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {employees.find((e) => e.id === item.employee_id)
-                          ?.name || "-"}
-                      </TableCell>
-                      <TableCell>{getLeaveTypeText(item.leave_type)}</TableCell>
-                      <TableCell>{item.start_date}</TableCell>
-                      <TableCell>{item.end_date}</TableCell>
-                      <TableCell>{item.days}</TableCell>
-                      <TableCell>{getLeaveStatusBadge(item.status)}</TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5}>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleView(item)}
-                            title="查看"
-                          >
-                            <Eye size={18} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEdit(item)}
-                            title="编辑"
-                          >
-                            <Edit size={18} />
-                          </IconButton>
-                          {item.status === "pending" && (
-                            <>
-                              <IconButton
-                                size="small"
-                                color="success"
-                                onClick={() => handleApprove(item.id)}
-                                title="批准"
-                              >
-                                <Check size={18} />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleReject(item.id)}
-                                title="拒绝"
-                              >
-                                <X size={18} />
-                              </IconButton>
-                            </>
-                          )}
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDelete(item.id)}
-                            title="删除"
-                          >
-                            <Trash2 size={18} />
-                          </IconButton>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {data.total > data.page_size && (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                px: 3,
-                py: 2,
-                borderTop: "1px solid",
-                borderColor: "divider",
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                显示第 {(data.page - 1) * data.page_size + 1} -{" "}
-                {Math.min(data.page * data.page_size, data.total)} 条，共{" "}
-                {data.total} 条
-              </Typography>
-              <Stack direction="row" spacing={1}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() =>
-                    data.page > 1 && fetchLeaveRequests({ page: data.page - 1 })
-                  }
-                  disabled={data.page <= 1}
-                >
-                  上一页
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <Button
-                      key={page}
-                      size="small"
-                      variant={page === data.page ? "contained" : "outlined"}
-                      onClick={() => fetchLeaveRequests({ page })}
-                    >
-                      {page}
-                    </Button>
-                  ),
-                )}
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() =>
-                    data.page < totalPages &&
-                    fetchLeaveRequests({ page: data.page + 1 })
-                  }
-                  disabled={data.page >= totalPages}
-                >
-                  下一页
-                </Button>
-              </Stack>
-            </Box>
-          )}
-        </Card>
+        <ListPageTemplate
+          columns={columns}
+          data={data.items}
+          loading={loading}
+          pagination={{
+            page: data.page - 1,
+            pageSize: data.page_size,
+            total: data.total,
+            onPageChange: (page) => fetchLeaveRequests({ page: page + 1 }),
+            onPageSizeChange: (pageSize) =>
+              fetchLeaveRequests({ page_size: pageSize }),
+          }}
+          rowActions={rowActions}
+          onRowClick={handleView}
+          emptyMessage="暂无休假申请数据"
+          filters={[
+            {
+              id: "search",
+              label: "搜索",
+              type: "text",
+              placeholder: "搜索员工姓名...",
+            },
+            {
+              id: "employee",
+              label: "员工",
+              type: "select",
+              options: employees.map((e) => ({ label: e.name, value: e.id })),
+            },
+            {
+              id: "type",
+              label: "休假类型",
+              type: "select",
+              options: leaveTypes,
+            },
+            {
+              id: "status",
+              label: "状态",
+              type: "select",
+              options: [
+                { label: "全部状态", value: "" },
+                { label: "待审批", value: "pending" },
+                { label: "已批准", value: "approved" },
+                { label: "已拒绝", value: "rejected" },
+                { label: "已取消", value: "cancelled" },
+              ],
+            },
+          ]}
+          filtersValue={{
+            search: searchText,
+            employee: employeeFilter,
+            type: typeFilter,
+            status: statusFilter,
+          }}
+          onFilterChange={(filters) => {
+            if (filters.search !== undefined)
+              setSearchText(filters.search as string);
+            if (filters.employee !== undefined)
+              setEmployeeFilter(filters.employee as string);
+            if (filters.type !== undefined)
+              setTypeFilter(filters.type as string);
+            if (filters.status !== undefined)
+              setStatusFilter(filters.status as string);
+          }}
+          onSearch={handleSearch}
+          actions={[
+            {
+              label: "搜索",
+              variant: "outlined",
+              onClick: handleSearch,
+            },
+            {
+              label: "重置",
+              variant: "outlined",
+              onClick: handleReset,
+            },
+          ]}
+        />
 
         {/* 新增/编辑 Dialog */}
         <Dialog

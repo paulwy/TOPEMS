@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import type { BoxProps } from "@mui/material";
 import {
   Box,
@@ -20,6 +20,11 @@ import {
   Snackbar,
   Alert as MuiAlert,
   Slide,
+  Chip,
+  Badge,
+  LinearProgress,
+  Tab,
+  Tabs,
 } from "@mui/material";
 import { Grid } from "@/components/Grid";
 import {
@@ -31,6 +36,16 @@ import {
   AlertCircle,
   CheckCircle,
   AlertTriangle,
+  RotateCcw,
+  FileText,
+  History,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  GripVertical,
+  Plus,
+  Minus,
 } from "lucide-react";
 import {
   useForm,
@@ -39,6 +54,7 @@ import {
   useWatch,
   type FieldValues,
   type UseFormReturn,
+  type FieldErrors,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -70,7 +86,8 @@ export interface FormField {
     | "switch"
     | "autocomplete"
     | "file"
-    | "image";
+    | "image"
+    | "group";
   /** 占位符文本 */
   placeholder?: string;
   /** 是否必填 */
@@ -107,6 +124,16 @@ export interface FormField {
     /** 单个文件最大大小（MB） */
     maxSize?: number;
   };
+  /** 字段分组（用于字段分组功能） */
+  group?: string;
+  /** 字段顺序（用于字段排序） */
+  order?: number;
+  /** 字段提示信息 */
+  tooltip?: string;
+  /** 是否可编辑（用于权限控制） */
+  editable?: boolean;
+  /** 字段依赖（用于字段联动） */
+  dependsOn?: string[];
 }
 
 /**
@@ -125,6 +152,12 @@ export interface FormSection {
   collapsible?: boolean;
   /** 默认是否展开 */
   defaultExpanded?: boolean;
+  /** 区块顺序 */
+  order?: number;
+  /** 区块图标 */
+  icon?: React.ReactNode;
+  /** 区块标签颜色 */
+  color?: "primary" | "secondary" | "error" | "warning" | "success" | "info";
 }
 
 /**
@@ -136,11 +169,11 @@ export interface FieldDependency {
   /** 目标字段名称 */
   targetField: string;
   /** 联动类型 */
-  type: "visibility" | "options" | "value" | "required";
+  type: "visibility" | "options" | "value" | "required" | "disabled" | "editable";
   /** 触发条件 */
   condition: {
     /** 条件类型 */
-    type: "equals" | "notEquals" | "contains" | "notEmpty" | "empty";
+    type: "equals" | "notEquals" | "contains" | "notEmpty" | "empty" | "greaterThan" | "lessThan";
     /** 条件值 */
     value?: any;
   };
@@ -149,11 +182,15 @@ export interface FieldDependency {
     /** 可见性（用于visibility类型） */
     visible?: boolean;
     /** 更新选项（用于options类型） */
-    options?: Array<{ label: string; value: any }>;
+    options?: Array<{ label: string; value: any }> | ((value: any) => Array<{ label: string; value: any }>);
     /** 设置值（用于value类型） */
-    value?: any;
+    value?: any | ((value: any) => any);
     /** 是否必填（用于required类型） */
     required?: boolean;
+    /** 是否禁用（用于disabled类型） */
+    disabled?: boolean;
+    /** 是否可编辑（用于editable类型） */
+    editable?: boolean;
   };
 }
 
@@ -167,6 +204,39 @@ export interface ValidationToast {
   type: "success" | "warning" | "error" | "info";
   /** 关联的字段名称 */
   field?: string;
+}
+
+/**
+ * 表单草稿配置
+ */
+export interface DraftConfig {
+  /** 是否启用草稿保存 */
+  enabled?: boolean;
+  /** 草稿存储key */
+  storageKey?: string;
+  /** 自动保存间隔（毫秒） */
+  autoSaveInterval?: number;
+  /** 最大草稿数量 */
+  maxDrafts?: number;
+  /** 草稿过期时间（毫秒） */
+  expirationTime?: number;
+}
+
+/**
+ * 表单版本配置
+ */
+export interface VersionConfig {
+  /** 是否启用版本对比 */
+  enabled?: boolean;
+  /** 当前版本 */
+  currentVersion?: string;
+  /** 历史版本列表 */
+  history?: Array<{
+    version: string;
+    data: Record<string, any>;
+    timestamp: number;
+    user?: string;
+  }>;
 }
 
 /**
@@ -217,13 +287,73 @@ export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
   showValidationHints?: boolean;
   /** 自定义验证消息映射 */
   customValidationMessages?: Record<string, string>;
+  /** 表单草稿配置 */
+  draftConfig?: DraftConfig;
+  /** 表单版本配置 */
+  versionConfig?: VersionConfig;
+  /** 是否显示字段分组标签 */
+  showGroupTabs?: boolean;
+  /** 是否显示表单进度条 */
+  showProgress?: boolean;
+  /** 表单模式 */
+  mode?: "create" | "edit" | "view";
+  /** 权限配置 */
+  permissions?: {
+    canEdit?: boolean;
+    canDelete?: boolean;
+    canViewHistory?: boolean;
+  };
 }
+
+// ============ 工具函数 ============
+
+/**
+ * 从localStorage读取草稿
+ */
+const loadDrafts = (key: string): Array<{ data: Record<string, any>; timestamp: number }> => {
+  try {
+    const stored = localStorage.getItem(`form:draft:${key}`);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+/**
+ * 保存草稿到localStorage
+ */
+const saveDraft = (key: string, data: Record<string, any>, maxDrafts: number = 5): void => {
+  try {
+    const drafts = loadDrafts(key);
+    drafts.unshift({ data, timestamp: Date.now() });
+    if (drafts.length > maxDrafts) {
+      drafts.pop();
+    }
+    localStorage.setItem(`form:draft:${key}`, JSON.stringify(drafts));
+  } catch {
+    // ignore
+  }
+};
+
+/**
+ * 清除草稿
+ */
+const clearDrafts = (key: string): void => {
+  try {
+    localStorage.removeItem(`form:draft:${key}`);
+  } catch {
+    // ignore
+  }
+};
 
 // ============ 表单页模板组件 ============
 
 /**
  * 表单页模板组件
- * 提供完整的表单页面布局，包括字段联动、文件上传、实时验证等功能
+ * 提供完整的表单页面布局，包括字段联动、文件上传、实时验证、草稿保存、版本对比等功能
  *
  * @example
  * ```tsx
@@ -248,6 +378,8 @@ export interface FormPageTemplateProps extends Omit<BoxProps, "onSubmit"> {
  *       effect: { options: businessCategories },
  *     },
  *   ]}
+ *   draftConfig={{ enabled: true, storageKey: 'user-form' }}
+ *   showProgress
  *   onSubmit={handleSubmit}
  * />
  * ```
@@ -279,6 +411,12 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   validationToasts = [],
   showValidationHints = true,
   customValidationMessages = {},
+  draftConfig,
+  versionConfig,
+  showGroupTabs = false,
+  showProgress = false,
+  mode = "edit",
+  permissions = { canEdit: true, canDelete: false, canViewHistory: false },
   ...props
 }) => {
   const theme = useTheme();
@@ -333,11 +471,46 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     return required;
   });
 
+  // 动态禁用状态
+  const [dynamicDisabled, setDynamicDisabled] = useState<
+    Record<string, boolean>
+  >(() => {
+    const disabled: Record<string, boolean> = {};
+    sections.forEach((section) => {
+      section.fields.forEach((field) => {
+        if (field.disabled) {
+          disabled[field.name] = field.disabled;
+        }
+      });
+    });
+    return disabled;
+  });
+
+  // 动态可编辑状态
+  const [dynamicEditable, setDynamicEditable] = useState<
+    Record<string, boolean>
+  >(() => {
+    const editable: Record<string, boolean> = {};
+    sections.forEach((section) => {
+      section.fields.forEach((field) => {
+        editable[field.name] = field.editable !== false;
+      });
+    });
+    return editable;
+  });
+
   // 验证提示状态
   const [validationHint, setValidationHint] = useState<ValidationToast | null>(
     null,
   );
   const [showHint, setShowHint] = useState(false);
+
+  // 草稿状态
+  const [drafts, setDrafts] = useState<Array<{ data: Record<string, any>; timestamp: number }>>([]);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
+
+  // 当前分组标签
+  const [currentGroup, setCurrentGroup] = useState<string>("all");
 
   // 表单初始化
   const methods = useForm({
@@ -352,12 +525,76 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     reset,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    getValues,
+    formState: { errors, isDirty, dirtyFields },
   } = methods;
 
   // 监听表单值变化，处理字段联动
   const formValues = watch();
 
+  // 计算表单进度
+  const formProgress = useMemo(() => {
+    if (!showProgress) return 0;
+    
+    const allFields = sections.flatMap(s => s.fields);
+    const requiredFields = allFields.filter(f => f.required || dynamicRequired[f.name]);
+    if (requiredFields.length === 0) return 100;
+    
+    const filledRequiredFields = requiredFields.filter(f => {
+      const value = formValues[f.name];
+      return value !== undefined && value !== null && value !== "";
+    });
+    
+    return Math.round((filledRequiredFields.length / requiredFields.length) * 100);
+  }, [sections, formValues, dynamicRequired, showProgress]);
+
+  // 获取所有分组
+  const groups = useMemo(() => {
+    const groupSet = new Set<string>();
+    sections.forEach(section => {
+      section.fields.forEach(field => {
+        if (field.group) {
+          groupSet.add(field.group);
+        }
+      });
+    });
+    return Array.from(groupSet);
+  }, [sections]);
+
+  // 加载草稿
+  useEffect(() => {
+    if (draftConfig?.enabled && draftConfig.storageKey) {
+      const savedDrafts = loadDrafts(draftConfig.storageKey);
+      setDrafts(savedDrafts);
+      
+      // 如果有草稿且表单为空，自动加载最新草稿
+      if (savedDrafts.length > 0 && !defaultValues) {
+        const latestDraft = savedDrafts[0];
+        reset(latestDraft.data);
+      }
+    }
+  }, [draftConfig, defaultValues, reset]);
+
+  // 自动保存草稿
+  useEffect(() => {
+    if (!draftConfig?.enabled || !draftConfig.storageKey || !draftConfig.autoSaveInterval) {
+      return;
+    }
+    
+    const storageKey = draftConfig.storageKey as string;
+    const maxDrafts = draftConfig.maxDrafts || 5;
+    
+    const interval = setInterval(() => {
+      if (isDirty) {
+        const currentValues = getValues();
+        saveDraft(storageKey, currentValues, maxDrafts);
+      }
+    }, draftConfig.autoSaveInterval);
+    
+    return () => clearInterval(interval);
+  }, [draftConfig, isDirty, getValues]);
+
+  // 处理字段联动
   useEffect(() => {
     if (dependencies.length === 0) return;
 
@@ -389,6 +626,12 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             sourceValue === null ||
             sourceValue === "";
           break;
+        case "greaterThan":
+          conditionMet = Number(sourceValue) > Number(dep.condition.value);
+          break;
+        case "lessThan":
+          conditionMet = Number(sourceValue) < Number(dep.condition.value);
+          break;
       }
 
       if (conditionMet) {
@@ -401,19 +644,39 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             break;
           case "options":
             if (dep.effect.options) {
+              const newOptions = typeof dep.effect.options === "function"
+                ? dep.effect.options(sourceValue)
+                : dep.effect.options;
               setDynamicOptions((prev) => ({
                 ...prev,
-                [dep.targetField]: dep.effect.options!,
+                [dep.targetField]: newOptions!,
               }));
             }
             break;
           case "value":
-            setValue(dep.targetField, dep.effect.value);
+            if (dep.effect.value) {
+              const newValue = typeof dep.effect.value === "function"
+                ? dep.effect.value(sourceValue)
+                : dep.effect.value;
+              setValue(dep.targetField, newValue);
+            }
             break;
           case "required":
             setDynamicRequired((prev) => ({
               ...prev,
               [dep.targetField]: dep.effect.required ?? false,
+            }));
+            break;
+          case "disabled":
+            setDynamicDisabled((prev) => ({
+              ...prev,
+              [dep.targetField]: dep.effect.disabled ?? false,
+            }));
+            break;
+          case "editable":
+            setDynamicEditable((prev) => ({
+              ...prev,
+              [dep.targetField]: dep.effect.editable ?? true,
             }));
             break;
         }
@@ -463,6 +726,12 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         }
 
         await onSubmit(visibleData);
+        
+        // 清除草稿
+        if (draftConfig?.enabled && draftConfig.storageKey) {
+          clearDrafts(draftConfig.storageKey);
+          setDrafts([]);
+        }
       } catch (err) {
         const errorToast = validationToasts.find((t) => t.type === "error");
         if (errorToast) {
@@ -471,14 +740,30 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         console.error("Form submit error:", err);
       }
     },
-    [onSubmit, fieldVisibility, validationToasts, displayValidationHint],
+    [onSubmit, fieldVisibility, validationToasts, displayValidationHint, draftConfig],
   );
 
   // 处理重置
   const handleReset = useCallback(() => {
     reset();
     onReset?.();
-  }, [reset, onReset]);
+    
+    // 清除草稿
+    if (draftConfig?.enabled && draftConfig.storageKey) {
+      clearDrafts(draftConfig.storageKey);
+      setDrafts([]);
+    }
+  }, [reset, onReset, draftConfig]);
+
+  // 加载草稿
+  const handleLoadDraft = useCallback((draft: { data: Record<string, any>; timestamp: number }) => {
+    reset(draft.data);
+    setShowDraftDialog(false);
+    displayValidationHint({
+      message: `已加载草稿（保存于 ${new Date(draft.timestamp).toLocaleString()}）`,
+      type: "info",
+    });
+  }, [reset, displayValidationHint]);
 
   // 切换区块展开
   const toggleSection = useCallback((sectionId: string) => {
@@ -516,15 +801,22 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
       return null;
     }
 
+    // 检查分组过滤
+    if (showGroupTabs && currentGroup !== "all" && field.group !== currentGroup) {
+      return null;
+    }
+
     const fieldError = errors[field.name];
     const errorMessage = getErrorMessage(field.name, field);
     const isRequired = dynamicRequired[field.name] || field.required;
     const options = dynamicOptions[field.name] || field.options;
+    const isDisabled = dynamicDisabled[field.name] || field.disabled || submitting || mode === "view";
+    const isEditable = dynamicEditable[field.name] && permissions.canEdit && mode !== "view";
 
     const commonProps = {
       label: field.label,
       placeholder: field.placeholder,
-      disabled: field.disabled || submitting,
+      disabled: isDisabled || !isEditable,
       error: !!fieldError,
       helperText: errorMessage || field.helperText,
       size: "small" as const,
@@ -532,258 +824,279 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     };
 
     return (
-      <Controller
-        key={field.name}
-        name={field.name}
-        control={control}
-        defaultValue={field.defaultValue || ""}
-        rules={{
-          required: isRequired ? `${field.label}不能为空` : false,
-        }}
-        render={({ field: controllerField }) => {
-          switch (field.type) {
-            case "textarea":
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  multiline
-                  rows={field.rows || 4}
-                  required={isRequired}
-                />
-              );
+      <Box key={field.name} sx={{ position: "relative" }}>
+        {field.tooltip && (
+          <Tooltip title={field.tooltip} placement="top">
+            <IconButton
+              size="small"
+              sx={{ position: "absolute", top: 0, right: 0 }}
+            >
+              <Info style={{ width: 16, height: 16 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+        
+        {dirtyFields[field.name] && (
+          <Chip
+            label="已修改"
+            size="small"
+            color="primary"
+            sx={{ position: "absolute", top: -8, right: field.tooltip ? 32 : 0 }}
+          />
+        )}
+        
+        <Controller
+          name={field.name}
+          control={control}
+          defaultValue={field.defaultValue || ""}
+          rules={{
+            required: isRequired ? `${field.label}不能为空` : false,
+          }}
+          render={({ field: controllerField }) => {
+            switch (field.type) {
+              case "textarea":
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    multiline
+                    rows={field.rows || 4}
+                    required={isRequired}
+                  />
+                );
 
-            case "select":
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  select
-                  required={isRequired}
-                >
-                  <option value="">请选择</option>
-                  {options?.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </TextField>
-              );
+              case "select":
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    select
+                    required={isRequired}
+                  >
+                    <option value="">请选择</option>
+                    {options?.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </TextField>
+                );
 
-            case "number":
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  type="number"
-                  required={isRequired}
-                  onChange={(e) =>
-                    controllerField.onChange(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                />
-              );
+              case "number":
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    type="number"
+                    required={isRequired}
+                    onChange={(e) =>
+                      controllerField.onChange(
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      )
+                    }
+                  />
+                );
 
-            case "date":
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  type="date"
-                  required={isRequired}
-                  slotProps={{
-                    inputLabel: { shrink: true },
-                  }}
-                />
-              );
+              case "date":
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    type="date"
+                    required={isRequired}
+                    slotProps={{
+                      inputLabel: { shrink: true },
+                    }}
+                  />
+                );
 
-            case "email":
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  type="email"
-                  autoComplete="email"
-                  required={isRequired}
-                />
-              );
+              case "email":
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    type="email"
+                    autoComplete="email"
+                    required={isRequired}
+                  />
+                );
 
-            case "password":
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  type="password"
-                  autoComplete="new-password"
-                  required={isRequired}
-                />
-              );
+              case "password":
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    type="password"
+                    autoComplete="new-password"
+                    required={isRequired}
+                  />
+                );
 
-            case "switch":
-              return (
-                <FormControl error={!!fieldError}>
-                  <FormLabel>
-                    {field.label}
-                    {isRequired && (
-                      <Typography component="span" color="error">
-                        *
-                      </Typography>
+              case "switch":
+                return (
+                  <FormControl error={!!fieldError}>
+                    <FormLabel>
+                      {field.label}
+                      {isRequired && (
+                        <Typography component="span" color="error">
+                          *
+                        </Typography>
+                      )}
+                    </FormLabel>
+                    <Box sx={{ mt: 1 }}>
+                      <Controller
+                        name={field.name}
+                        control={control}
+                        defaultValue={field.defaultValue || false}
+                        render={({ field: switchField }) => (
+                          <Switch
+                            checked={switchField.value || false}
+                            onChange={(e) =>
+                              switchField.onChange(e.target.checked)
+                            }
+                            disabled={isDisabled}
+                          />
+                        )}
+                      />
+                    </Box>
+                    {(errorMessage || field.helperText) && (
+                      <FormHelperText>
+                        {errorMessage || field.helperText}
+                      </FormHelperText>
                     )}
-                  </FormLabel>
-                  <Box sx={{ mt: 1 }}>
+                  </FormControl>
+                );
+
+              case "checkbox":
+                return (
+                  <FormControl error={!!fieldError}>
+                    <FormLabel>
+                      {field.label}
+                      {isRequired && (
+                        <Typography component="span" color="error">
+                          *
+                        </Typography>
+                      )}
+                    </FormLabel>
+                    <Box sx={{ mt: 1 }}>
+                      <Controller
+                        name={field.name}
+                        control={control}
+                        defaultValue={field.defaultValue || false}
+                        render={({ field: checkboxField }) => (
+                          <Checkbox
+                            checked={checkboxField.value || false}
+                            onChange={(e) =>
+                              checkboxField.onChange(e.target.checked)
+                            }
+                            disabled={isDisabled}
+                          />
+                        )}
+                      />
+                    </Box>
+                    {(errorMessage || field.helperText) && (
+                      <FormHelperText>
+                        {errorMessage || field.helperText}
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                );
+
+              case "file":
+                return (
+                  <Box>
+                    <FormLabel sx={{ mb: 1, display: "block" }}>
+                      {field.label}
+                      {isRequired && (
+                        <Typography component="span" color="error">
+                          *
+                        </Typography>
+                      )}
+                    </FormLabel>
                     <Controller
                       name={field.name}
                       control={control}
-                      defaultValue={field.defaultValue || false}
-                      render={({ field: switchField }) => (
-                        <Switch
-                          checked={switchField.value || false}
-                          onChange={(e) =>
-                            switchField.onChange(e.target.checked)
-                          }
-                          disabled={field.disabled || submitting}
+                      defaultValue={field.defaultValue || []}
+                      render={({ field: fileField }) => (
+                        <FileUpload
+                          value={fileField.value || []}
+                          onChange={fileField.onChange}
+                          maxCount={field.uploadConfig?.maxCount}
+                          accept={field.uploadConfig?.accept}
+                          maxSize={field.uploadConfig?.maxSize}
+                          disabled={isDisabled}
                         />
                       )}
                     />
-                  </Box>
-                  {(errorMessage || field.helperText) && (
-                    <FormHelperText>
-                      {errorMessage || field.helperText}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-              );
-
-            case "checkbox":
-              return (
-                <FormControl error={!!fieldError}>
-                  <FormLabel>
-                    {field.label}
-                    {isRequired && (
-                      <Typography component="span" color="error">
-                        *
-                      </Typography>
+                    {(errorMessage || field.helperText) && (
+                      <FormHelperText error={!!fieldError}>
+                        {errorMessage || field.helperText}
+                      </FormHelperText>
                     )}
-                  </FormLabel>
-                  <Box sx={{ mt: 1 }}>
+                  </Box>
+                );
+
+              case "image":
+                return (
+                  <Box>
+                    <FormLabel sx={{ mb: 1, display: "block" }}>
+                      {field.label}
+                      {isRequired && (
+                        <Typography component="span" color="error">
+                          *
+                        </Typography>
+                      )}
+                    </FormLabel>
                     <Controller
                       name={field.name}
                       control={control}
-                      defaultValue={field.defaultValue || false}
-                      render={({ field: checkboxField }) => (
-                        <Checkbox
-                          checked={checkboxField.value || false}
-                          onChange={(e) =>
-                            checkboxField.onChange(e.target.checked)
-                          }
-                          disabled={field.disabled || submitting}
+                      defaultValue={field.defaultValue || []}
+                      render={({ field: imageField }) => (
+                        <ImageUpload
+                          value={imageField.value || []}
+                          onChange={imageField.onChange}
+                          maxCount={field.imageConfig?.maxCount}
+                          disabled={isDisabled}
                         />
                       )}
                     />
+                    {(errorMessage || field.helperText) && (
+                      <FormHelperText error={!!fieldError}>
+                        {errorMessage || field.helperText}
+                      </FormHelperText>
+                    )}
                   </Box>
-                  {(errorMessage || field.helperText) && (
-                    <FormHelperText>
-                      {errorMessage || field.helperText}
-                    </FormHelperText>
-                  )}
-                </FormControl>
-              );
+                );
 
-            case "file":
-              return (
-                <Box>
-                  <FormLabel sx={{ mb: 1, display: "block" }}>
-                    {field.label}
-                    {isRequired && (
-                      <Typography component="span" color="error">
-                        *
-                      </Typography>
-                    )}
-                  </FormLabel>
-                  <Controller
-                    name={field.name}
-                    control={control}
-                    defaultValue={field.defaultValue || []}
-                    render={({ field: fileField }) => (
-                      <FileUpload
-                        value={fileField.value || []}
-                        onChange={fileField.onChange}
-                        maxCount={field.uploadConfig?.maxCount}
-                        accept={field.uploadConfig?.accept}
-                        maxSize={field.uploadConfig?.maxSize}
-                        disabled={field.disabled || submitting}
-                      />
-                    )}
+              case "autocomplete":
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    select
+                    required={isRequired}
+                  >
+                    <option value="">请选择</option>
+                    {options?.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </TextField>
+                );
+
+              default:
+                return (
+                  <TextField
+                    {...commonProps}
+                    {...controllerField}
+                    required={isRequired}
                   />
-                  {(errorMessage || field.helperText) && (
-                    <FormHelperText error={!!fieldError}>
-                      {errorMessage || field.helperText}
-                    </FormHelperText>
-                  )}
-                </Box>
-              );
-
-            case "image":
-              return (
-                <Box>
-                  <FormLabel sx={{ mb: 1, display: "block" }}>
-                    {field.label}
-                    {isRequired && (
-                      <Typography component="span" color="error">
-                        *
-                      </Typography>
-                    )}
-                  </FormLabel>
-                  <Controller
-                    name={field.name}
-                    control={control}
-                    defaultValue={field.defaultValue || []}
-                    render={({ field: imageField }) => (
-                      <ImageUpload
-                        value={imageField.value || []}
-                        onChange={imageField.onChange}
-                        maxCount={field.imageConfig?.maxCount}
-                        disabled={field.disabled || submitting}
-                      />
-                    )}
-                  />
-                  {(errorMessage || field.helperText) && (
-                    <FormHelperText error={!!fieldError}>
-                      {errorMessage || field.helperText}
-                    </FormHelperText>
-                  )}
-                </Box>
-              );
-
-            case "autocomplete":
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  select
-                  required={isRequired}
-                >
-                  <option value="">请选择</option>
-                  {options?.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </TextField>
-              );
-
-            default:
-              return (
-                <TextField
-                  {...commonProps}
-                  {...controllerField}
-                  required={isRequired}
-                />
-              );
-          }
-        }}
-      />
+                );
+            }
+          }}
+        />
+      </Box>
     );
   };
 
@@ -806,25 +1119,33 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             cursor: section.collapsible ? "pointer" : "default",
+            bgcolor: section.color ? `${section.color}.lighter` : "inherit",
           }}
           onClick={() => section.collapsible && toggleSection(section.id)}
         >
-          <Box>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {section.title}
-              {section.fields.some(
-                (f) => dynamicRequired[f.name] || f.required,
-              ) && (
-                <Typography component="span" color="error" sx={{ ml: 0.5 }}>
-                  *
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {section.icon && (
+              <Box sx={{ color: section.color ? `${section.color}.main` : "inherit" }}>
+                {section.icon}
+              </Box>
+            )}
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                {section.title}
+                {section.fields.some(
+                  (f) => dynamicRequired[f.name] || f.required,
+                ) && (
+                  <Typography component="span" color="error" sx={{ ml: 0.5 }}>
+                    *
+                  </Typography>
+                )}
+              </Typography>
+              {section.description && (
+                <Typography variant="caption" color="text.secondary">
+                  {section.description}
                 </Typography>
               )}
-            </Typography>
-            {section.description && (
-              <Typography variant="caption" color="text.secondary">
-                {section.description}
-              </Typography>
-            )}
+            </Box>
           </Box>
           {section.collapsible && (
             <IconButton size="small">
@@ -867,6 +1188,66 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     );
   };
 
+  // 渲染分组标签
+  const renderGroupTabs = () => {
+    if (!showGroupTabs || groups.length === 0) return null;
+
+    return (
+      <Tabs
+        value={currentGroup}
+        onChange={(e, newValue) => setCurrentGroup(newValue)}
+        sx={{ mb: 2 }}
+      >
+        <Tab label="全部" value="all" />
+        {groups.map((group) => (
+          <Tab key={group} label={group} value={group} />
+        ))}
+      </Tabs>
+    );
+  };
+
+  // 渲染进度条
+  const renderProgress = () => {
+    if (!showProgress) return null;
+
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            表单填写进度
+          </Typography>
+          <Typography variant="body2" sx={{ fontWeight: "bold", color: formProgress === 100 ? "success.main" : "primary.main" }}>
+            {formProgress}%
+          </Typography>
+        </Box>
+        <LinearProgress
+          variant="determinate"
+          value={formProgress}
+          color={formProgress === 100 ? "success" : "primary"}
+          sx={{ borderRadius: 1, height: 8 }}
+        />
+      </Box>
+    );
+  };
+
+  // 渲染草稿按钮
+  const renderDraftButton = () => {
+    if (!draftConfig?.enabled || drafts.length === 0) return null;
+
+    return (
+      <Tooltip title={`有 ${drafts.length} 个草稿可恢复`}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => setShowDraftDialog(true)}
+          startIcon={<FileText style={{ width: 16, height: 16 }} />}
+        >
+          草稿 ({drafts.length})
+        </Button>
+      </Tooltip>
+    );
+  };
+
   // 渲染底部操作栏
   const renderFooter = () => (
     <Paper
@@ -905,9 +1286,19 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             </Box>
           </Tooltip>
         )}
+        {renderDraftButton()}
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {onCancel && (
+        {mode === "view" && permissions.canEdit && (
+          <Button
+            variant="outlined"
+            onClick={() => {}}
+            startIcon={<Unlock style={{ width: 16, height: 16 }} />}
+          >
+            编辑
+          </Button>
+        )}
+        {mode !== "view" && onCancel && (
           <Button
             variant="outlined"
             onClick={onCancel}
@@ -917,29 +1308,32 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             {cancelText}
           </Button>
         )}
-        {onReset && (
+        {mode !== "view" && onReset && (
           <Button
             variant="text"
             onClick={handleReset}
             disabled={submitting || !isDirty}
+            startIcon={<RotateCcw style={{ width: 16, height: 16 }} />}
           >
             {resetText}
           </Button>
         )}
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={submitting || loading}
-          startIcon={
-            submitting ? (
-              <Skeleton variant="circular" width={16} height={16} />
-            ) : (
-              <Save style={{ width: 16, height: 16 }} />
-            )
-          }
-        >
-          {submitting ? "保存中..." : submitText}
-        </Button>
+        {mode !== "view" && (
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={submitting || loading}
+            startIcon={
+              submitting ? (
+                <Skeleton variant="circular" width={16} height={16} />
+              ) : (
+                <Save style={{ width: 16, height: 16 }} />
+              )
+            }
+          >
+            {submitting ? "保存中..." : submitText}
+          </Button>
+        )}
       </Box>
     </Paper>
   );
@@ -956,6 +1350,12 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         >
           {headerContent}
         </PageHeader>
+
+        {/* 进度条 */}
+        {renderProgress()}
+
+        {/* 分组标签 */}
+        {renderGroupTabs()}
 
         {/* 错误提示 */}
         {error && (
@@ -1026,6 +1426,46 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             {validationHint?.message}
           </MuiAlert>
         </Snackbar>
+
+        {/* 草稿选择对话框 */}
+        {showDraftDialog && (
+          <Paper sx={{ p: 3, maxWidth: 400, mx: "auto", mt: 2 }}>
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+              选择草稿
+            </Typography>
+            {drafts.map((draft, index) => (
+              <Box
+                key={index}
+                sx={{
+                  p: 2,
+                  mb: 1,
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  cursor: "pointer",
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
+                }}
+                onClick={() => handleLoadDraft(draft)}
+              >
+                <Typography variant="body2">
+                  草稿 #{index + 1}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {new Date(draft.timestamp).toLocaleString()}
+                </Typography>
+              </Box>
+            ))}
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => setShowDraftDialog(false)}
+            >
+              关闭
+            </Button>
+          </Paper>
+        )}
       </Box>
     </FormProvider>
   );
