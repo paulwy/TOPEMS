@@ -33,6 +33,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { ImageUpload } from "@/components/common";
 
 const SupplierManagementPage: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -57,6 +58,7 @@ const SupplierManagementPage: React.FC = () => {
     address: "",
     bank_account: "",
     tax_number: "",
+    images: [],
   });
 
   const { addNotification } = useAppStore();
@@ -541,6 +543,19 @@ const SupplierManagementPage: React.FC = () => {
                 size="small"
                 fullWidth
               />
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                  供应商图片
+                </Typography>
+                <ImageUpload
+                  value={(formData as any).images || []}
+                  onChange={(files) => setFormData({ ...formData, images: files } as any)}
+                  maxCount={9}
+                  accept="image/*"
+                  cropEnabled
+                  height={150}
+                />
+              </Box>
             </Box>
             <DialogActions sx={{ mt: 3 }}>
               <Button

@@ -59,6 +59,7 @@ import {
 } from "@/components/ai";
 import type { ValidationIssue, Suggestion } from "@/types/ai";
 import { EmptyState } from "@/components/mui";
+import { ImageUpload } from "@/components/common";
 
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();
@@ -1350,6 +1351,20 @@ const DepartmentFormDialog: React.FC<DepartmentFormDialogProps> = ({
             <MenuItem value="inactive">禁用</MenuItem>
           </Select>
         </FormControl>
+
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+            部门图片
+          </Typography>
+          <ImageUpload
+            value={(formData as Department)?.images || []}
+            onChange={(files) => onChange("images", files)}
+            maxCount={9}
+            accept="image/*"
+            cropEnabled
+            height={150}
+          />
+        </Box>
 
         <DialogActions sx={{ p: 0, pt: 2, justifyContent: "space-between" }}>
           <AIHelperButton

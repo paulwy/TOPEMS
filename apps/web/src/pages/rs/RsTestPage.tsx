@@ -27,6 +27,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
+import { FileUpload } from "@/components/common";
 import {
   Plus,
   Search,
@@ -69,6 +70,7 @@ const RsTestPage: React.FC = () => {
     priority: "medium",
     related_requirement: "",
   });
+  const [testReportAttachments, setTestReportAttachments] = useState<string[]>([]);
 
   useEffect(() => {
     const mockTestCases: TestCase[] = [
@@ -273,7 +275,10 @@ const RsTestPage: React.FC = () => {
             variant="contained"
             startIcon={<Plus size={18} />}
             sx={{ bgcolor: "#3b82f6" }}
-            onClick={() => setNewCaseDialogOpen(true)}
+            onClick={() => {
+              setTestReportAttachments([]);
+              setNewCaseDialogOpen(true);
+            }}
           >
             新建用例
           </Button>
@@ -524,6 +529,20 @@ const RsTestPage: React.FC = () => {
                 })
               }
             />
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                测试报告附件
+              </Typography>
+              <FileUpload
+                value={testReportAttachments}
+                onChange={setTestReportAttachments}
+                accept={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.png']}
+                maxCount={5}
+                maxSize={20}
+                maxTotalSize={100}
+                uploadText="上传测试报告"
+              />
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>

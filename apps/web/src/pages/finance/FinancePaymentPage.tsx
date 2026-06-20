@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
+import { DataExport } from "@/components/common";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
@@ -416,6 +417,20 @@ const FinancePaymentPage: React.FC = () => {
     [filterMethod, filterStatus],
   );
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "payment_number", title: "付款单号" },
+      { key: "payment_date", title: "付款日期" },
+      { key: "supplier", title: "供应商" },
+      { key: "payment_method", title: "付款方式" },
+      { key: "amount", title: "付款金额" },
+      { key: "bank_account", title: "银行账户" },
+      { key: "status", title: "状态" },
+    ],
+    [],
+  );
+
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <MuiBox
@@ -479,6 +494,12 @@ const FinancePaymentPage: React.FC = () => {
               >
                 导出
               </Button>
+              <DataExport
+                data={paymentData as Record<string, unknown>[]}
+                fields={exportFields}
+                defaultFileName="付款数据"
+                buttonText="数据导出"
+              />
               <Button
                 variant="contained"
                 startIcon={<Plus sx={{ width: 20, height: 20 }} />}

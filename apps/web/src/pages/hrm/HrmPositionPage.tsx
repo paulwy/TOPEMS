@@ -43,6 +43,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/DataTable";
 
 import { ModeToggle } from "@/components/theme/ModeToggle";
+import { DataExport } from "@/components/common";
 
 interface PositionManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -371,6 +372,20 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
     [departments],
   );
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "name", title: "岗位名称" },
+      { key: "code", title: "岗位编码" },
+      { key: "level", title: "岗位级别" },
+      { key: "min_salary", title: "最低薪资" },
+      { key: "max_salary", title: "最高薪资" },
+      { key: "status", title: "状态" },
+      { key: "employee_count", title: "员工数量" },
+    ],
+    [],
+  );
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
       {/* 页面头部 */}
@@ -428,6 +443,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = ({
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <ModeToggle />
+              <DataExport
+                data={data.items as Record<string, unknown>[]}
+                fields={exportFields}
+                defaultFileName="岗位数据"
+                buttonText="导出"
+              />
               <Button
                 variant="contained"
                 onClick={handleAdd}

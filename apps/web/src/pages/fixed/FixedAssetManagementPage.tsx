@@ -36,6 +36,7 @@ import {
   Stack,
 } from "@mui/material";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
+import { ImageUpload } from "@/components/common";
 
 /** 资产状态配置 */
 const STATUS_CONFIG: Record<string, { label: string; sx: object }> = {
@@ -137,6 +138,7 @@ interface FixedAssetFormData {
   department_id?: string;
   project_id?: string;
   description?: string;
+  images?: string[];
 }
 
 // 模拟数据
@@ -993,6 +995,20 @@ function FixedAssetForm({ asset, onSubmit, onCancel }: FixedAssetFormProps) {
           multiline
           rows={2}
         />
+
+        <Box>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+            资产图片
+          </Typography>
+          <ImageUpload
+            value={formData.images || []}
+            onChange={(files) => setFormData({ ...formData, images: files })}
+            maxCount={9}
+            accept="image/*"
+            cropEnabled
+            height={150}
+          />
+        </Box>
       </Stack>
 
       <Stack

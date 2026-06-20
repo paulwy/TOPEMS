@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Button,
   TextField,
@@ -38,6 +38,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
+import { DataExport } from "@/components/common";
 
 const ContactManagementPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -243,6 +244,19 @@ const ContactManagementPage: React.FC = () => {
     setCurrentPage(page);
   };
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "first_name", title: "名" },
+      { key: "last_name", title: "姓" },
+      { key: "email", title: "邮箱" },
+      { key: "phone", title: "电话" },
+      { key: "position", title: "职位" },
+      { key: "status", title: "状态" },
+    ],
+    [],
+  );
+
   if (loading) return <LoadingSpinner />;
 
   return (
@@ -300,6 +314,12 @@ const ContactManagementPage: React.FC = () => {
                 <MenuItem value="inactive">非活跃</MenuItem>
               </Select>
             </FormControl>
+            <DataExport
+              data={contacts as Record<string, unknown>[]}
+              fields={exportFields}
+              defaultFileName="联系人数据"
+              buttonText="导出"
+            />
             <Button
               variant="contained"
               onClick={() => {

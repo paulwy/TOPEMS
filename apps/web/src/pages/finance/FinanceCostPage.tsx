@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
+import { DataExport } from "@/components/common";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
@@ -288,6 +289,19 @@ const FinanceCostPage: React.FC = () => {
     [filterCenter],
   );
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "cost_center", title: "成本中心" },
+      { key: "cost_item", title: "成本项目" },
+      { key: "budget_amount", title: "预算金额" },
+      { key: "actual_cost", title: "实际成本" },
+      { key: "variance", title: "差异" },
+      { key: "execution_rate", title: "执行率" },
+    ],
+    [],
+  );
+
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <MuiBox
@@ -351,6 +365,12 @@ const FinanceCostPage: React.FC = () => {
               >
                 导出报表
               </Button>
+              <DataExport
+                data={costData as Record<string, unknown>[]}
+                fields={exportFields}
+                defaultFileName="成本数据"
+                buttonText="数据导出"
+              />
             </Stack>
           </Stack>
         </MuiBox>

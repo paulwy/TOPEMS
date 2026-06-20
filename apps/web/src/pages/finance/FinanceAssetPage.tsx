@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
+import { DataExport } from "@/components/common";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EnhancedDataTable } from "@/components/EnhancedDataTable";
 
@@ -425,6 +426,20 @@ const FinanceAssetPage: React.FC = () => {
     [filterCategory, filterStatus],
   );
 
+  // 导出字段配置
+  const exportFields = useMemo(
+    () => [
+      { key: "asset_code", title: "资产编码" },
+      { key: "asset_name", title: "资产名称" },
+      { key: "asset_category", title: "资产类别" },
+      { key: "original_value", title: "原值" },
+      { key: "accumulated_depreciation", title: "累计折旧" },
+      { key: "net_value", title: "净值" },
+      { key: "usage_status", title: "使用状态" },
+    ],
+    [],
+  );
+
   return (
     <MuiBox sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <MuiBox
@@ -488,6 +503,12 @@ const FinanceAssetPage: React.FC = () => {
               >
                 导出
               </Button>
+              <DataExport
+                data={assetData as Record<string, unknown>[]}
+                fields={exportFields}
+                defaultFileName="资产数据"
+                buttonText="数据导出"
+              />
               <Button
                 variant="contained"
                 startIcon={<Plus sx={{ width: 20, height: 20 }} />}

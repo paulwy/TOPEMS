@@ -8,6 +8,7 @@ import {
   Button,
 } from "@mui/material";
 import { Grid } from "@/components/Grid";
+import { QuickSearch } from "@/components/common";
 import {
   Warehouse,
   Package,
@@ -97,19 +98,30 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", background: "#f8fafc" }}>
-      <Box
-        sx={{
+      <Box sx={{
           padding: "24px 32px",
           background: "white",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
-          仓储管理
-        </Typography>
-        <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
-          {getGreeting()}，仓库库存与物流概览
-        </Typography>
+        <Box>
+          <Typography variant="h4" sx={{  color: "#1e293b" , fontWeight: 600 }} >
+            仓储管理
+          </Typography>
+          <Typography variant="body1" sx={{ color: "#64748b", mt: 1 }}>
+            {getGreeting()}，仓库库存与物流概览
+          </Typography>
+        </Box>
+        <QuickSearch
+          placeholder="搜索仓储内容..."
+          onSearch={(query) => {
+            navigate(`/wms/inventory?search=${encodeURIComponent(query)}`);
+          }}
+          width={320}
+        />
       </Box>
 
       <Box sx={{ padding: "24px 32px" }}>
