@@ -491,6 +491,12 @@ const FinanceTaxPage: React.FC = () => {
               >
                 导出报表
               </Button>
+              <DataExport
+                data={taxData as Record<string, unknown>[]}
+                fields={exportFields}
+                defaultFileName="税务数据"
+                buttonText="数据导出"
+              />
             </Stack>
           </Stack>
         </MuiBox>
