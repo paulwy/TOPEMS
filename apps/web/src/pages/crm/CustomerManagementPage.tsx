@@ -36,6 +36,7 @@ import { useAppStore } from "@/store";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import { ImportExportModal } from "@/components/ImportExportModal";
+import { DataExport, ImageUpload } from "@/components/common";
 import { Search, Plus, Edit, Trash2, Eye, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { ExportColumn } from "@/utils/importExport";
@@ -356,6 +357,22 @@ const CustomerManagementPage: React.FC = () => {
             >
               导入导出
             </Button>
+            <DataExport
+              data={customers as Record<string, unknown>[]}
+              fields={[
+                { key: "name", title: "客户名称" },
+                { key: "code", title: "客户代码" },
+                { key: "industry", title: "行业" },
+                { key: "website", title: "网站" },
+                { key: "email", title: "邮箱" },
+                { key: "phone", title: "电话" },
+                { key: "address", title: "地址" },
+                { key: "status", title: "状态" },
+                { key: "notes", title: "备注" },
+              ]}
+              defaultFileName="客户数据"
+              buttonText="导出"
+            />
           </Stack>
 
           {selectedIds.length > 0 && (
@@ -600,6 +617,19 @@ const CustomerManagementPage: React.FC = () => {
                 fullWidth
                 sx={{ gridColumn: "span 2" }}
               />
+              <Box sx={{ gridColumn: "span 2" }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                  客户图片
+                </Typography>
+                <ImageUpload
+                  value={formData.images || []}
+                  onChange={(files) => setFormData({ ...formData, images: files })}
+                  maxCount={9}
+                  accept="image/*"
+                  cropEnabled
+                  height={150}
+                />
+              </Box>
               <TextField
                 label="备注"
                 multiline

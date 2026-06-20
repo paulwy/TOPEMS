@@ -18,6 +18,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { FileUpload } from "@/components/common";
 import {
   Eye,
   Plus,
@@ -27,6 +28,7 @@ import {
   Search,
   GitBranch,
   Loader2,
+  Upload,
 } from "lucide-react";
 
 interface FlowDefinition {
@@ -147,7 +149,9 @@ const FlowDefinitionPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<FlowDefinition | null>(null);
+  const [attachments, setAttachments] = useState<string[]>([]);
 
   const filteredData = data.filter((item) => {
     const matchesSearch = item.name
@@ -277,6 +281,13 @@ const FlowDefinitionPage: React.FC = () => {
             sx={{ bgcolor: "#8b5cf6", "&:hover": { bgcolor: "#7c3aed" } }}
           >
             新建流程
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Upload size={16} />}
+            onClick={() => setShowUploadModal(true)}
+          >
+            上传
           </Button>
           <IconButton onClick={() => setLoading(true)} title="刷新">
             <Loader2
@@ -469,6 +480,40 @@ const FlowDefinitionPage: React.FC = () => {
             </Stack>
           )}
         </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>上传流程文件</DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <FileUpload
+              value={attachments}
+              onChange={setAttachments}
+              accept={["bpmn", "xml", "json"]}
+              maxCount={5}
+              maxSize={10}
+              maxTotalSize={50}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowUploadModal(false)}>关闭</Button>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#8b5cf6" }}
+            onClick={() => {
+              console.log("上传的流程文件:", attachments);
+              setShowUploadModal(false);
+            }}
+          >
+            完成上传
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

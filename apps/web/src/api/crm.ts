@@ -26,6 +26,7 @@ export interface Customer {
   address?: string;
   status: string;
   notes?: string;
+  images?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +40,7 @@ export interface CreateCustomerRequest {
   phone?: string;
   address?: string;
   notes?: string;
+  images?: string[];
 }
 
 export interface UpdateCustomerRequest {
@@ -51,6 +53,7 @@ export interface UpdateCustomerRequest {
   address?: string;
   status?: string;
   notes?: string;
+  images?: string[];
 }
 
 /**

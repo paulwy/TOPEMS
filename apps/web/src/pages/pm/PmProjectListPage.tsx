@@ -36,6 +36,7 @@ import {
 } from "@mui/material";
 import type { Project } from "@/api/pm";
 import { pmApi } from "@/api/pm";
+import { DataExport } from "@/components/common";
 
 const PROJECT_TYPES = [
   { value: "__ALL__", label: "全部类型" },
@@ -204,6 +205,21 @@ const PmProjectListPage: React.FC = () => {
               管理所有类型的项目，跟踪进度和状态
             </Typography>
           </Box>
+          <DataExport
+            data={projects as Record<string, unknown>[]}
+            fields={[
+              { key: "name", title: "项目名称" },
+              { key: "code", title: "项目编码" },
+              { key: "project_type", title: "项目类型" },
+              { key: "status", title: "状态" },
+              { key: "progress", title: "进度" },
+              { key: "budget", title: "预算" },
+              { key: "start_date", title: "开始日期" },
+              { key: "end_date", title: "结束日期" },
+            ]}
+            defaultFileName="项目数据"
+            buttonText="导出"
+          />
           <Button
             variant="contained"
             onClick={() => navigate("/pm/projects/create")}

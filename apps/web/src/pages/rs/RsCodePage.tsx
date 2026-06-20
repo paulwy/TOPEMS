@@ -41,6 +41,7 @@ import {
   Code,
   Filter,
 } from "lucide-react";
+import { DataExport } from "@/components/common";
 
 interface CodeRepo {
   id: string;
@@ -191,6 +192,20 @@ const RsCodePage: React.FC = () => {
           <Typography variant="h5"  sx={{ ...{ color: "#3b82f6" }, fontWeight: 'bold' }}>
             代码管理
           </Typography>
+          <DataExport
+            data={filteredRepos as Record<string, unknown>[]}
+            fields={[
+              { key: "repo_name", title: "仓库名称" },
+              { key: "branch_name", title: "分支名称" },
+              { key: "branch_type", title: "分支类型" },
+              { key: "last_commit", title: "最近提交" },
+              { key: "committer", title: "提交者" },
+              { key: "lines_of_code", title: "代码行数" },
+              { key: "last_update", title: "最后更新时间" },
+            ]}
+            defaultFileName="代码仓库数据"
+            buttonText="导出"
+          />
           <Button
             variant="contained"
             startIcon={<Plus size={18} />}

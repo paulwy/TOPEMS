@@ -1,4 +1,5 @@
 import { Grid } from "@/components/Grid";
+import { QuickSearch } from "@/components/common";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
@@ -2180,7 +2181,7 @@ const AdministrationPage: React.FC = () => {
       </Drawer>
 
       <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 2, md: 3 }, py: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
           <Stack
             component="div"
             direction="row"
@@ -2198,6 +2199,15 @@ const AdministrationPage: React.FC = () => {
               行政管理
             </Typography>
           </Stack>
+          <Box sx={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+            <QuickSearch
+              placeholder="搜索行政内容..."
+              onSearch={(query) => {
+                console.log("搜索:", query);
+              }}
+              width={320}
+            />
+          </Box>
         </Box>
 
         <Tabs
